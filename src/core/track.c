@@ -129,6 +129,22 @@ int track_load(const char* path, Track* t) {
         free(w);
     }
 
+    // Light Laplacian smoothing along the track (removes reconstruction kinks that
+    // would otherwise make sharp spots un-navigable). Preserves overall shape.
+    {
+        vec3 (*tmp)[TRACK_K] = malloc(sizeof(*tmp) * t->nribs);
+        for (int pass = 0; pass < 2; pass++) {
+            for (int i = 0; i < t->nribs; i++) {
+                int a = (i-1+t->nribs)%t->nribs, b = (i+1)%t->nribs;
+                for (int k = 0; k < TRACK_K; k++)
+                    tmp[i][k] = v3add(v3scale(t->rib[i][k],0.5f),
+                                      v3add(v3scale(t->rib[a][k],0.25f), v3scale(t->rib[b][k],0.25f)));
+            }
+            memcpy(t->rib, tmp, sizeof(*tmp) * t->nribs);
+        }
+        free(tmp);
+    }
+
     // centerline, width, bbox
     for (int i = 0; i < t->nribs; i++) {
         vec3 c = v3(0,0,0);

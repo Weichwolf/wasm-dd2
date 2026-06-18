@@ -77,7 +77,23 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
+## CURRENT STATE (2026-06-18, session 1)
+- Circuits LEV1,4,5,6 complete 6/6, deterministic (MATCH). LEV2,3,7 (long tracks) partial:
+  cars wedge at sharp spots — approximate AI+cross-section centerline ceiling.
+- Arenas LEV8–B = 32-rib ~125 m bowls (demolition; 2-lap racing ill-fits → handle separately).
+- Non-tracks: LEV0 (menu), LEVF (1 rib), LEVC/D/E (no LEVEL.DAT) → detect & skip gracefully.
+- Sim infra solid: seam-free laps (integrated progress), windowed localization, spur+Laplacian
+  smoothing, reverse-realign recovery, determinism verified.
+
 ## NEXT ACTION (fidelity-first, keep pipeline working & verified)
+**Priority: replace the approximate centerline with the game's REAL racing line** (fixes LEV2/3/7
+navigation faithfully). LEVEL.DAT section 1 = 86% valid vertex indices — likely the track path/strips.
+Cross-ref `Track_Follow`, `Init_Track_Follow_Data`, `Init_Track_Strip_Numbers`, `Search_For_Strip`
+in `re_out/dd2_decomp.c`. Then: arenas → time/demolition completion; guard non-tracks; WASM
+(SDL3+WebGL2)+DVD look; verify all tracks ×N seeds with screenshots.
+Older fidelity items (port real physics/geometry) remain after navigation is robust.
+
+## (orig) NEXT ACTION (fidelity-first, keep pipeline working & verified)
 Work from `re_out/dd2_decomp.c` (use `tools/refunc.sh NAME`). Reconstruct faithfully, verify via screenshots.
 1. **Physics fidelity**: map the 0x1b2 car struct fields by reading `Car_Drive_Motion`(+_3D),
    `Calc_Suspension_*`, `Car_Friction`. Port the real handling (fixed-point ok) into `vehicle.c`,
