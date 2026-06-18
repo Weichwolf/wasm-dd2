@@ -47,8 +47,13 @@ tests/               (planned) headless test harness
 ## Milestones
 - [x] **M0 tooling+extraction** — venv, `Dirinfo` unpacker (114 files, 0 problems, 99.5%),
       headless EGL GLES3 proven.
-- [ ] **M1 asset decoders** — PAL/CLT palette, TX textures (+dims), SPR sprites, LEVEL.DAT
-      geometry, FONT.BNK, VAG audio. Each → PNG/WAV + structural assertions.
+- [~] **M1 asset decoders** — IN PROGRESS.
+      - [x] `LEVEL.PAL` = 256 × `[R][G][B][pad]` (RGB order confirmed: readable white text, natural colors).
+      - [x] `LEVEL.TX*` = `[u32 count]` + count×16B dir records `[tag=4][w u16][h u16][x u16][y u16][...]`,
+            then 8-bit indexed pixels packed sequentially. VISUALLY CONFIRMED (CAPRIO COUNTY billboard, driver art).
+      - [ ] proper per-tile extraction (cut each tile at its true w×h; verify Σ w*h == pixel-bytes).
+      - [ ] `LEVEL.DAT` geometry — header is a u32 section-offset table (first ptr 0x74), then data. Decode next.
+      - [ ] `.CLT` collision, `.SPR` sprites, `.ECL` (fixed 86016 B), `.TDF`, `FONT.BNK`, `VAGS\BANK1.SBK` (VAG ADPCM).
 - [ ] **M2 renderer** — load a track, GLES3 free-fly camera, offscreen screenshot test.
 - [ ] **M3 vehicle + physics + driving**.
 - [ ] **M4 self-play AI + headless race sim** (also the main test harness).
@@ -60,6 +65,12 @@ Common 9-byte field = `[flag u8][reserved u16=0][sector u16][size u32]`, **offse
 Special header records: COPYRIGH.BMP `[u16 sec][u32 size]`; LOADING.BMP `[u8 flag][u16 sec][u32 size]`;
 FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to extract.
 
+## Verification trick
+PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
+Read → judge correctness. Use this for every visual check.
+
 ## NEXT ACTION
-Start M1: decode `LEVEL.PAL` (256×RGBA?) and a `LEVEL.TX*` texture, emit PNG proofs;
-determine texture dimensions (inspect TX headers). Then geometry (`LEVEL.DAT`).
+1. Finish TX decoder: parse full directory, extract every tile at true w×h to PNG; assert Σ(w*h)==pixel-bytes.
+2. Decode `LEVEL.DAT` geometry: parse the u32 section-offset table, identify vertex/face sections
+   (saw u16 index lists `04 00 05 00 07 00 06 00`); cross-ref `dd2.exe` `Init_Track_*` via `objdump -d`.
+3. Then M2: GLES3 renderer skeleton (native EGL headless first), draw the track mesh, screenshot.
