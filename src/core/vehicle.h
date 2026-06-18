@@ -28,6 +28,7 @@ typedef struct {
     float since_prog;   // seconds since meaningful forward progress
     float recover_t;    // >0 => in reverse-and-realign recovery
     int   hits;         // collision count (demolition ranking)
+    float vx, vz;       // world velocity vector (DD2 tire model only)
 } Car;
 
 void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, float skill);

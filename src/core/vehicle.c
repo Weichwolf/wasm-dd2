@@ -9,6 +9,20 @@
 #define CAR_HALF_W 1.1f
 #define LOC_WINDOW 20        // rib search window for monotonic localization
 
+// --- DD2 tire-force model (faithful reconstruction, behind a build flag) ---
+// Velocity is a world vector; lateral slip is resisted by grip (friction-circle limited),
+// giving DD2's momentum + grip-limited cornering + slide. Constants grounded in the
+// decompiled Car_Drive_Motion (surface_friction 1.0/0.5, speed-dependent steering, thrust).
+#ifdef DD2_TIRE
+#define T_ENGINE   18.0f     // longitudinal accel (throttle=1), m/s^2
+#define T_REVERSE  10.0f
+#define T_BRAKE    26.0f
+#define T_DRAG     0.40f     // linear drag on longitudinal speed
+#define T_LATK     9.0f      // lateral grip stiffness (1/s)
+#define T_GRIP     17.0f     // max lateral accel (friction circle cap), m/s^2 (surface 1.0)
+#define T_YAW      2.7f      // steering authority scale
+#endif
+
 static float wrap_angle(float a){ while(a>(float)M_PI)a-=2*(float)M_PI; while(a<-(float)M_PI)a+=2*(float)M_PI; return a; }
 static float clampf(float x,float lo,float hi){ return x<lo?lo:(x>hi?hi:x); }
 
@@ -23,6 +37,7 @@ void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, 
     c->s=start_s; c->prog=0; c->lap=0; c->dist=0;
     c->finished=0; c->finish_time=0; c->skill=skill; c->stuck_t=0;
     c->pref_lat=lateral; c->prog_mark=0; c->since_prog=0; c->recover_t=0; c->hits=0;
+    c->vx=0; c->vz=0;
     // initial rib index for start_s
     c->last_rib = 0;
     for (int i = 0; i < t->nribs; i++) if (t->s_at[i] <= start_s) c->last_rib = i; else break;
@@ -87,21 +102,39 @@ void vehicle_ai_arena(Car* c, const Track* t, vec3 target){
 
 void vehicle_step(Car* c, const Track* t, float dt){
     if (c->finished) { c->throttle = 0; c->brake = 1; }
-    // longitudinal (throttle may be negative for reverse during recovery)
+    vec3 oldpos = c->pos;
+#ifdef DD2_TIRE
+    // --- DD2 slip-angle tire model ---
+    float cy = cosf(c->yaw), sy = sinf(c->yaw);
+    vec3 head = v3(sy, 0, cy), rt = v3(cy, 0, -sy);
+    float vlong = c->vx*head.x + c->vz*head.z;     // longitudinal speed
+    float vlat  = c->vx*rt.x   + c->vz*rt.z;        // lateral (slip) speed
+    float Flong = (c->throttle >= 0 ? c->throttle*T_ENGINE : c->throttle*T_REVERSE)
+                  - T_DRAG*vlong - c->brake*T_BRAKE*(vlong>0?1.0f:(vlong<0?-1.0f:0.0f));
+    float Flat = -vlat * T_LATK;                    // grip resists slip
+    if (Flat >  T_GRIP) Flat =  T_GRIP;             // friction-circle cap
+    if (Flat < -T_GRIP) Flat = -T_GRIP;
+    float spd = sqrtf(vlong*vlong + vlat*vlat);
+    float auth = T_YAW * (spd / (spd + 6.0f));      // steering authority grows then saturates
+    c->yaw += c->steer * auth * dt * (vlong >= 0 ? 1.0f : -1.0f);
+    c->vx += (Flong*head.x + Flat*rt.x) * dt;
+    c->vz += (Flong*head.z + Flat*rt.z) * dt;
+    float sp2 = sqrtf(c->vx*c->vx + c->vz*c->vz);
+    if (sp2 > MAXSPEED) { c->vx *= MAXSPEED/sp2; c->vz *= MAXSPEED/sp2; }
+    c->speed = vlong;                                // report longitudinal for AI/ranking
+    vec3 newpos = v3(c->pos.x + c->vx*dt, c->pos.y, c->pos.z + c->vz*dt);
+#else
+    // --- arcade kinematic model (default) ---
     c->speed += c->throttle * ACCEL * dt;
     c->speed -= c->brake * BRAKE_DEC * dt;
     c->speed -= DRAG * c->speed * dt;
     if (c->speed < -8.0f) c->speed = -8.0f;
     if (c->speed > MAXSPEED) c->speed = MAXSPEED;
-
-    // steering -> yaw (effective once rolling)
     float eff = c->speed / (c->speed + 5.0f);
     c->yaw += c->steer * MAX_YAW * eff * dt;
-
-    // integrate
     vec3 head = v3(sinf(c->yaw), 0, cosf(c->yaw));
-    vec3 oldpos = c->pos;
     vec3 newpos = v3add(c->pos, v3scale(head, c->speed*dt));
+#endif
 
     // localize (windowed) + keep on road
     TrackPoint tp = track_locate_local(t, newpos, c->last_rib, LOC_WINDOW);
@@ -112,6 +145,12 @@ void vehicle_step(Car* c, const Track* t, float dt){
         float sgn = tp.lateral > 0 ? 1.0f : -1.0f;
         newpos = v3add(tp.center, v3scale(tp.right, sgn*limit));
         c->speed *= 0.80f;                  // scrape the wall
+#ifdef DD2_TIRE
+        c->vx *= 0.80f; c->vz *= 0.80f;
+        // kill the into-wall velocity component
+        float vn = c->vx*tp.right.x + c->vz*tp.right.z;
+        if (vn*sgn > 0) { c->vx -= vn*tp.right.x; c->vz -= vn*tp.right.z; }
+#endif
         float talign = atan2f(tp.tangent.x, tp.tangent.z);
         c->yaw += wrap_angle(talign - c->yaw) * 0.20f;
     }
@@ -143,6 +182,9 @@ void vehicle_step(Car* c, const Track* t, float dt){
         c->pos = v3(p.x, p.y + 0.5f, p.z);
         c->yaw = atan2f(tan.x, tan.z);
         c->speed = 3.0f;
+#ifdef DD2_TIRE
+        c->vx = sinf(c->yaw) * 3.0f; c->vz = cosf(c->yaw) * 3.0f;
+#endif
         c->prog += 6.0f;
         c->lap = (int)(c->prog / t->total_len);
         c->recover_t = 0; c->since_prog = 0; c->prog_mark = c->prog;
