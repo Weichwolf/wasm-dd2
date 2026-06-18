@@ -52,6 +52,21 @@ and no ECL/TDF). `TRACK%02d` / `TRACK%02dL` naming in stats.
   (`0x75d5b8`, stride 0x20/car). `Car_Friction` is a global var (friction applied inline), not a function.
   NOTE: some Ghidra names have a stray trailing `"` (e.g. `TransformWheels"`).
 
+## Real driving model (Car_Drive_Motion @004413ac) — extracted, for the faithful port
+DD2 uses a slip-angle tire-force model, fixed-point (0x1000 = 1.0):
+- **Surface tables** (12-bit): `surface_friction_coeff @0x466d90 = {4096,2048,...}` (1.0 grippy / 0.5 slippery),
+  `surface_traction_coeff @0x466d98`. Indexed by `(*input & 7) >> 1` = surface type 0..3 under the car.
+- **Handling types** (field car+0x75a75a = 0/1/2): per-type, per-slip-direction grip split
+  (`local_24` long, `local_1c` lat), baseline 0x800 (=0.5): type0 {0x862/0x79e}, type1 {0x6be/0x942 or 0x894/0x76c},
+  type2 {0x592/0xa6e or 0x8e4/0x71c}. Encodes understeer/oversteer per car class.
+- **Thrust** added to velocity = `(input>>16) * 0xccb0 >> 12` (0xccb0 = 52400) along facing axes.
+- **Steering authority** falls with speed: `factor = 0xc000/(speed+0x10) + 0x400`.
+- `Car_Friction @0x465a20 = {44000,54000,52000,...}` per-track wheel-lock speeds (Caravan/Forest/etc).
+- Velocity stored at car+0x34 (`0x75a610`) & +0x3c (`0x75a618`); decay e.g. x - x/256. `rcos/rsin` = fixed trig.
+- Plan for faithful port: build `vehicle_dd2.c` implementing this exact model + constants behind a build
+  flag, validate it still produces plausible racing on all tracks (vs the current arcade model = fallback),
+  then swap in. (Full bit-exact transliteration incl. collision/AI command lists is a larger multi-pass effort.)
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
