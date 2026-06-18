@@ -25,6 +25,16 @@ static int cmpf(const void* a, const void* b) {
     return (x > y) - (x < y);
 }
 
+static float cross2(float ax, float az, float bx, float bz) { return ax*bz - az*bx; }
+// Do xz-segments a-b and c-d properly intersect?
+static int seg_isect(vec3 a, vec3 b, vec3 c, vec3 d) {
+    float d1 = cross2(d.x-c.x, d.z-c.z, a.x-c.x, a.z-c.z);
+    float d2 = cross2(d.x-c.x, d.z-c.z, b.x-c.x, b.z-c.z);
+    float d3 = cross2(b.x-a.x, b.z-a.z, c.x-a.x, c.z-a.z);
+    float d4 = cross2(b.x-a.x, b.z-a.z, d.x-a.x, d.z-a.z);
+    return ((d1>0) != (d2>0)) && ((d3>0) != (d4>0));
+}
+
 // resample polyline pts[0..n) to K points by arc length
 static void resample(const vec3* pts, int n, vec3* out, int K) {
     if (n <= 0) { for (int i=0;i<K;i++) out[i] = v3(0,0,0); return; }
@@ -101,6 +111,34 @@ int track_load(const char* path, Track* t) {
     }
     free(dist); free(V);
     if (t->nribs < 8) { fprintf(stderr,"track_load: too few ribs (%d)\n", t->nribs); return 0; }
+
+    // Loop self-intersection cleanup. The section-2 vertex order can include a detour
+    // (a sub-strip stored out of loop order) that crosses the main loop, creating a spurious
+    // sliver (e.g. LEV2/LEV7). A valid racing loop is simple, so at each self-intersection
+    // delete the shorter (detour) arc, leaving a clean closed loop.
+    {
+        static vec3 ctr[TRACK_MAX_RIBS];
+        for (int iter = 0; iter < 60; iter++) {
+            int n = t->nribs, ri = -1, rj = -1;
+            for (int i = 0; i < n; i++) {
+                vec3 c = v3(0,0,0);
+                for (int k = 0; k < TRACK_K; k++) c = v3add(c, t->rib[i][k]);
+                ctr[i] = v3scale(c, 1.0f/TRACK_K);
+            }
+            for (int i = 0; i < n && ri < 0; i++)
+                for (int j = i+2; j < n; j++) {
+                    if (i == 0 && j == n-1) continue;          // wrap-adjacent
+                    if (seg_isect(ctr[i], ctr[(i+1)%n], ctr[j], ctr[(j+1)%n])) {
+                        int inner = j - i;                      // ribs i+1..j
+                        if (inner < n - inner && inner < (int)(n*0.4f)) { ri = i; rj = j; break; }
+                    }
+                }
+            if (ri < 0) break;
+            int rem = rj - ri;                                  // delete ribs ri+1..rj
+            for (int x = rj+1; x < n; x++) memcpy(t->rib[x-rem], t->rib[x], sizeof(t->rib[0]));
+            t->nribs -= rem;
+        }
+    }
 
     // Some cross-sections include a far scenery vertex (a "spur"), which would
     // pull the centerline off-road. Detect spur ribs (abnormally wide) and rebuild
