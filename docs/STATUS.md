@@ -77,7 +77,19 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
-## CURRENT STATE (2026-06-18, session 1 — late)
+## CURRENT STATE (2026-06-18, session 1 — very late)
+- **ALL 11 playable tracks PASS** (`./tests/run_all.sh`): circuits LEV1,2,3,4,5,6,7 + arenas LEV8,9,A,B,
+  each 6/6 across 3 seeds, deterministic. Loop self-intersection cleanup fixed LEV2/LEV7 (clean loops).
+  LEV0/F = NON-TRACK; LEVC/D/E = ABSENT (no data) — these 5 of the 16 addresses are not real tracks.
+- **WASM build runs in-browser** (`./build_wasm.sh`, headless Chromium verified).
+- **DVD look works in-browser**: low-res 512x384 FBO → H.264/WebCodecs crunch → bilinear upscale
+  (WebCodecs confirmed active in headless Chromium). `out/wasm_dvd.png`.
+- Verification: native EGL headless screenshots + self-contained Playwright browser shots
+  (`node tools/browser/shot.js web/build out/x.png 12000`).
+- REMAINING: faithful physics/AI/geometry from decompiled `dd2.exe` (still approximate); broader
+  per-track screenshot sequences for the record.
+
+### (earlier) CURRENT STATE (session 1 — mid)
 Verification harness: `./tests/run_all.sh` (3 seeds each, completion + determinism).
 - **9/11 playable levels PASS all seeds deterministically**: circuits LEV1,3,4,5,6 (6/6) + arenas
   LEV8,9,A,B (demolition mode, 6/6). LEV0/F classified NON-TRACK; LEVC/D/E ABSENT (no data).
