@@ -140,6 +140,37 @@ int track_load(const char* path, Track* t) {
         }
     }
 
+    // Thin out-and-back detours don't self-cross but leave a sliver (two legs overlapping closer
+    // than a road width, traversed in opposite directions). Remove the inner arc. Threshold below
+    // a road width so genuine hairpins (legs >= ~1 width apart) are preserved.
+    {
+        static vec3 ctr[TRACK_MAX_RIBS]; static vec3 tan[TRACK_MAX_RIBS];
+        for (int iter = 0; iter < 40; iter++) {
+            int n = t->nribs, ri = -1, rj = -1;
+            float wsum = 0;
+            for (int i = 0; i < n; i++) {
+                vec3 c = v3(0,0,0);
+                for (int k = 0; k < TRACK_K; k++) c = v3add(c, t->rib[i][k]);
+                ctr[i] = v3scale(c, 1.0f/TRACK_K);
+                wsum += v3len(v3sub(t->rib[i][0], t->rib[i][TRACK_K-1]));
+            }
+            for (int i = 0; i < n; i++) tan[i] = v3norm(v3sub(ctr[(i+1)%n], ctr[i]));
+            float thr = (wsum / n) * 0.6f;
+            for (int i = 0; i < n && ri < 0; i++)
+                for (int j = i+3; j < n; j++) {
+                    if (i == 0 && j >= n-2) continue;
+                    int inner = j - i;
+                    if (inner >= (int)(n*0.4f)) continue;
+                    float dx = ctr[i].x-ctr[j].x, dz = ctr[i].z-ctr[j].z;
+                    if (dx*dx+dz*dz < thr*thr && v3dot(tan[i], tan[j]) < -0.3f) { ri=i; rj=j; break; }
+                }
+            if (ri < 0) break;
+            int rem = rj - ri;
+            for (int x = rj+1; x < n; x++) memcpy(t->rib[x-rem], t->rib[x], sizeof(t->rib[0]));
+            t->nribs -= rem;
+        }
+    }
+
     // Some cross-sections include a far scenery vertex (a "spur"), which would
     // pull the centerline off-road. Detect spur ribs (abnormally wide) and rebuild
     // their points by interpolating the nearest normal neighbours, so the road stays smooth.
