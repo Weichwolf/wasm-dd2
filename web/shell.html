@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Destruction Derby 2 — WASM</title>
+  <style>
+    html,body{margin:0;height:100%;background:#0c0d10;color:#cfd3dc;font-family:system-ui,sans-serif;}
+    body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+    h1{font-size:14px;font-weight:500;opacity:.7;margin:8px 0 0;}
+    .hint{font-size:12px;opacity:.45;margin:0;}
+    .hint b{color:#e3b778;}
+    canvas{background:#000;border-radius:4px;outline:none;box-shadow:0 8px 30px rgba(0,0,0,.6);}
+  </style>
+</head>
+<body>
+  <h1>Destruction Derby 2 — from-scratch C → WASM (self-playing AI)</h1>
+  <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+  <p class="hint"><b>N</b> next track &nbsp;·&nbsp; click canvas for keys</p>
+  <script>
+    var Module = {
+      canvas:(()=>{const c=document.getElementById('canvas');c.addEventListener('click',()=>c.focus());return c;})(),
+      print:(...a)=>console.log(...a), printErr:(...a)=>console.error(...a),
+    };
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>
