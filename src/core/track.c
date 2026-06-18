@@ -154,3 +154,28 @@ float track_project(const Track* t, vec3 p, float* lateral_out) {
     }
     return bestacc;
 }
+
+TrackPoint track_locate(const Track* t, vec3 p) {
+    int best = 0; float bd = 1e30f, acc = 0, bestacc = 0;
+    for (int i = 0; i < t->nribs; i++) {
+        float dx = p.x - t->center[i].x, dz = p.z - t->center[i].z;
+        float d = dx*dx + dz*dz;
+        if (d < bd) { bd = d; best = i; bestacc = acc; }
+        acc += t->seglen[i];
+    }
+    int j = (best+1) % t->nribs;
+    TrackPoint tp;
+    tp.rib = best;
+    tp.center = t->center[best];
+    tp.tangent = v3norm(v3sub(t->center[j], t->center[best]));
+    tp.right = v3(tp.tangent.z, 0, -tp.tangent.x);   // rotate tangent -90 about +y
+    vec3 rel = v3sub(p, tp.center);
+    tp.lateral = v3dot(rel, tp.right);
+    // refine s by projecting rel onto tangent within this segment
+    float along = v3dot(rel, tp.tangent);
+    if (along < 0) along = 0;
+    if (along > t->seglen[best]) along = t->seglen[best];
+    tp.s = bestacc + along;
+    tp.halfwidth = t->width[best] * 0.5f;
+    return tp;
+}

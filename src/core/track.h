@@ -27,4 +27,16 @@ void track_sample(const Track* t, float s, vec3* pos, vec3* tangent);
 // Nearest centerline arc-length to a world point (coarse). Also returns lateral offset.
 float track_project(const Track* t, vec3 p, float* lateral_out);
 
+// Rich localization of a world point relative to the track.
+typedef struct {
+    float s;          // arc-length on centerline (loop)
+    float lateral;    // signed offset from centerline (+right)
+    int   rib;        // nearest rib index
+    vec3  center;     // centerline point
+    vec3  tangent;    // unit forward
+    vec3  right;      // unit right (in xz plane)
+    float halfwidth;  // half the road width at this rib
+} TrackPoint;
+TrackPoint track_locate(const Track* t, vec3 p);
+
 #endif
