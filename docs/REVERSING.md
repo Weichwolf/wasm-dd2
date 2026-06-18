@@ -46,6 +46,11 @@ and no ECL/TDF). `TRACK%02d` / `TRACK%02dL` naming in stats.
   1 2pt, 2 2pt_3D, 3 1pt_3D, 4 fly, 5 grounded(rolled). AI/track cars use case 0.
 - Key fns to port: `Car_Drive_Motion`, `Car_Drive_Motion_3D`, `Calc_Suspension_*`, `Car_Friction`,
   `Do_Car_Collisions`/`Check_*_Car_Collision`, `Barrier_Collision`; AI: `Track_Follow`, `AI_CommandList*`.
+- Suspension (`Calc_Suspension_Right_Wheels`): per-wheel spring-damper in fixed-point. Wheel-local state
+  at car+0x6...: pos `+0xce`, vel `+0xde`; spring stiffness const `0x280`, damping `0x200`, travel clamp
+  `±0x1f000`. Ground contact from car orientation rows (`0x75a640/0x75a648`) · wheel pos array
+  (`0x75d5b8`, stride 0x20/car). `Car_Friction` is a global var (friction applied inline), not a function.
+  NOTE: some Ghidra names have a stray trailing `"` (e.g. `TransformWheels"`).
 
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
