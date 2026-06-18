@@ -8,3 +8,5 @@ out/
 *.o
 *.wasm
 node_modules/
+re_out/dd2_decomp.c
+re_out/*.log
