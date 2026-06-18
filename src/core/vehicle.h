@@ -13,16 +13,20 @@ typedef struct {
     float throttle;     // [0,1]
     float brake;        // [0,1]
     // race state
-    float s;            // centerline arc-length
-    float prev_s;
+    float s;            // localized centerline arc-length (for AI lookahead)
+    float prog;         // integrated forward progress (seam-free; drives laps)
     int   lap;
-    float dist;         // cumulative race distance (for ranking)
+    float dist;         // cumulative race distance (for ranking) == prog
     int   finished;
     float finish_time;
     // ai
     float skill;        // 0..1
     float stuck_t;      // seconds at near-zero speed
     float pref_lat;     // preferred lateral racing-line offset (m)
+    int   last_rib;     // last localized rib (for windowed/monotonic tracking)
+    float prog_mark;    // progress watermark for stuck detection
+    float since_prog;   // seconds since meaningful forward progress
+    float recover_t;    // >0 => in reverse-and-realign recovery
 } Car;
 
 void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, float skill);

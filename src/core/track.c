@@ -102,6 +102,33 @@ int track_load(const char* path, Track* t) {
     free(dist); free(V);
     if (t->nribs < 8) { fprintf(stderr,"track_load: too few ribs (%d)\n", t->nribs); return 0; }
 
+    // Some cross-sections include a far scenery vertex (a "spur"), which would
+    // pull the centerline off-road. Detect spur ribs (abnormally wide) and rebuild
+    // their points by interpolating the nearest normal neighbours, so the road stays smooth.
+    {
+        float* w = (float*)malloc(sizeof(float)*t->nribs);
+        for (int i = 0; i < t->nribs; i++) w[i] = v3len(v3sub(t->rib[i][0], t->rib[i][TRACK_K-1]));
+        float* ws = (float*)malloc(sizeof(float)*t->nribs);
+        memcpy(ws, w, sizeof(float)*t->nribs);
+        qsort(ws, t->nribs, sizeof(float), cmpf);
+        float medw = ws[t->nribs/2];
+        free(ws);
+        for (int pass = 0; pass < 4; pass++) {
+            int changed = 0;
+            for (int i = 0; i < t->nribs; i++) {
+                if (w[i] <= medw * 1.7f) continue;
+                int a = (i - 1 + t->nribs) % t->nribs, b = (i + 1) % t->nribs;
+                if (w[a] > medw*1.7f && w[b] > medw*1.7f) continue;  // wait for a good neighbour
+                for (int k = 0; k < TRACK_K; k++)
+                    t->rib[i][k] = v3lerp(t->rib[a][k], t->rib[b][k], 0.5f);
+                w[i] = v3len(v3sub(t->rib[i][0], t->rib[i][TRACK_K-1]));
+                changed = 1;
+            }
+            if (!changed) break;
+        }
+        free(w);
+    }
+
     // centerline, width, bbox
     for (int i = 0; i < t->nribs; i++) {
         vec3 c = v3(0,0,0);
@@ -118,9 +145,38 @@ int track_load(const char* path, Track* t) {
     for (int i = 0; i < t->nribs; i++) {
         int j = (i+1) % t->nribs;
         t->seglen[i] = v3len(v3sub(t->center[j], t->center[i]));
+        t->s_at[i] = t->total_len;
         t->total_len += t->seglen[i];
     }
     return 1;
+}
+
+static TrackPoint locate_at_rib(const Track* t, vec3 p, int best) {
+    int j = (best+1) % t->nribs;
+    TrackPoint tp;
+    tp.rib = best;
+    tp.center = t->center[best];
+    tp.tangent = v3norm(v3sub(t->center[j], t->center[best]));
+    tp.right = v3(tp.tangent.z, 0, -tp.tangent.x);
+    vec3 rel = v3sub(p, tp.center);
+    tp.lateral = v3dot(rel, tp.right);
+    float along = v3dot(rel, tp.tangent);
+    if (along < 0) along = 0;
+    if (along > t->seglen[best]) along = t->seglen[best];
+    tp.s = t->s_at[best] + along;
+    tp.halfwidth = t->width[best] * 0.5f;
+    return tp;
+}
+
+TrackPoint track_locate_local(const Track* t, vec3 p, int near_rib, int window) {
+    int best = near_rib; float bd = 1e30f;
+    for (int d = -window; d <= window; d++) {
+        int i = ((near_rib + d) % t->nribs + t->nribs) % t->nribs;
+        float dx = p.x - t->center[i].x, dz = p.z - t->center[i].z;
+        float dd = dx*dx + dz*dz;
+        if (dd < bd) { bd = dd; best = i; }
+    }
+    return locate_at_rib(t, p, best);
 }
 
 void track_sample(const Track* t, float s, vec3* pos, vec3* tangent) {

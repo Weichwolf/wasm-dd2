@@ -14,6 +14,7 @@ typedef struct {
     vec3  center[TRACK_MAX_RIBS];   // centerline (mean of each rib)
     float width[TRACK_MAX_RIBS];    // edge-to-edge width
     float seglen[TRACK_MAX_RIBS];   // distance center[i]->center[i+1]
+    float s_at[TRACK_MAX_RIBS];     // arc-length at start of each rib
     float total_len;                // centerline loop length
     vec3  bbmin, bbmax;
 } Track;
@@ -38,5 +39,8 @@ typedef struct {
     float halfwidth;  // half the road width at this rib
 } TrackPoint;
 TrackPoint track_locate(const Track* t, vec3 p);
+// Windowed localization: search only ribs within +/-window of near_rib (wraps).
+// Keeps arc-length monotonic so the car doesn't teleport to a parallel track section.
+TrackPoint track_locate_local(const Track* t, vec3 p, int near_rib, int window);
 
 #endif
