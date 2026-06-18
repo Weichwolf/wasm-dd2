@@ -3,7 +3,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p build-native out
-CFLAGS="-O2 -g -Wall -Wno-misleading-indentation -Isrc"
+# Faithful DD2 tire-force physics is the default; build with DD2_ARCADE=1 for the old kinematic model.
+CFLAGS="-O2 -g -Wall -Wno-misleading-indentation -Isrc ${DD2_ARCADE:+}"
+[ -z "${DD2_ARCADE:-}" ] && CFLAGS="$CFLAGS -DDD2_TIRE"
 CORE="src/core/track.c src/core/vehicle.c src/core/race.c"
 RP="src/render/render.c src/platform/headless.c"
 LIBS="-lEGL -lGLESv2 -lm"
