@@ -77,7 +77,16 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
-## CURRENT STATE (2026-06-18, session 1 — very late)
+## CURRENT STATE (2026-06-18, session 2 — autonomous)
+- **Faithful DD2 tire-force physics is now the DEFAULT** (native + WASM). Reconstructed from
+  `Car_Drive_Motion`: world-velocity vector, slip-angle lateral grip (friction-circle limited),
+  speed-dependent steering, real surface-friction concept + constants. Arcade fallback: `DD2_ARCADE=1`.
+  Validated: `tests/run_all.sh` all 11 playable tracks ×3 seeds deterministic; WASM+DVD look in-browser.
+- Everything from session 1 still holds (all 11 playable tracks, WASM, DVD look, montage evidence).
+- Remaining refinements (optional/fidelity-deepening): faithful collision + AI command lists from the
+  binary; real strip geometry (replace cross-section reconstruction); regenerate montage w/ tire model.
+
+### (session 1 — very late)
 - **ALL 11 playable tracks PASS** (`./tests/run_all.sh`): circuits LEV1,2,3,4,5,6,7 + arenas LEV8,9,A,B,
   each 6/6 across 3 seeds, deterministic. Loop self-intersection cleanup fixed LEV2/LEV7 (clean loops).
   LEV0/F = NON-TRACK; LEVC/D/E = ABSENT (no data) — these 5 of the 16 addresses are not real tracks.
