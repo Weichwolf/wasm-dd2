@@ -22,7 +22,7 @@ void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, 
     c->speed=0; c->steer=0; c->throttle=0; c->brake=0;
     c->s=start_s; c->prog=0; c->lap=0; c->dist=0;
     c->finished=0; c->finish_time=0; c->skill=skill; c->stuck_t=0;
-    c->pref_lat=lateral; c->prog_mark=0; c->since_prog=0; c->recover_t=0;
+    c->pref_lat=lateral; c->prog_mark=0; c->since_prog=0; c->recover_t=0; c->hits=0;
     // initial rib index for start_s
     c->last_rib = 0;
     for (int i = 0; i < t->nribs; i++) if (t->s_at[i] <= start_s) c->last_rib = i; else break;
@@ -70,6 +70,19 @@ void vehicle_ai(Car* c, const Track* t){
     // unstick
     if (c->stuck_t > 1.2f) { c->throttle = 1.0f; c->brake = 0.0f;
         c->steer = clampf(center_bias*3.0f + (c->id%2?0.5f:-0.5f), -1.0f, 1.0f); }
+}
+
+void vehicle_ai_arena(Car* c, const Track* t, vec3 target){
+    (void)t;
+    if (c->recover_t > 0) {   // shared reverse-and-realign
+        c->throttle = -1.0f; c->brake = 0.0f; c->steer = (c->id % 2) ? 0.6f : -0.6f; return;
+    }
+    float desired = atan2f(target.x - c->pos.x, target.z - c->pos.z);
+    float err = wrap_angle(desired - c->yaw);
+    c->steer = clampf(err * 1.7f, -1.0f, 1.0f);
+    float tgt = MAXSPEED * (0.45f + 0.15f*c->skill);
+    if (c->speed < tgt) { c->throttle = 1.0f; c->brake = 0.0f; }
+    else { c->throttle = 0.25f; c->brake = 0.0f; }
 }
 
 void vehicle_step(Car* c, const Track* t, float dt){

@@ -27,10 +27,12 @@ typedef struct {
     float prog_mark;    // progress watermark for stuck detection
     float since_prog;   // seconds since meaningful forward progress
     float recover_t;    // >0 => in reverse-and-realign recovery
+    int   hits;         // collision count (demolition ranking)
 } Car;
 
 void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, float skill);
-void vehicle_ai(Car* c, const Track* t);              // sets steer/throttle/brake
+void vehicle_ai(Car* c, const Track* t);              // circuit AI: follow racing line
+void vehicle_ai_arena(Car* c, const Track* t, vec3 target);  // demolition AI: head to target
 void vehicle_step(Car* c, const Track* t, float dt);  // integrate physics + lap logic
 
 #endif

@@ -14,6 +14,7 @@ typedef struct {
     float  time;
     float  max_time;
     int    done;
+    int    arena;        // demolition pit (small track) -> time-based completion
     unsigned seed;
 } Race;
 
