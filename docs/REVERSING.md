@@ -67,6 +67,20 @@ DD2 uses a slip-angle tire-force model, fixed-point (0x1000 = 1.0):
   flag, validate it still produces plausible racing on all tracks (vs the current arcade model = fallback),
   then swap in. (Full bit-exact transliteration incl. collision/AI command lists is a larger multi-pass effort.)
 
+## Real track topology — LEVEL.DAT section 1 = strip graph (decode in progress)
+The engine's `_strip_data` = `*(int*)(_level_data + 4)` → **LEVEL.DAT section 1** (the section with
+86% valid vertex indices; header `[340, ?, 1537, ...]`). It's a **linked-list/graph of strip nodes**
+(from `Init_Track_Strip_Numbers @443da4`):
+- strip record (>=0x20 bytes): `+0x00` type byte (8 = fork/junction, 9 = '\t' terminator),
+  `+0x0e` u16 strip number (assigned by traversal), `+0x14` int "next" offset (relative to `_strip_data+4`),
+  `+0x1c` int alternate/branch "next" offset (forks), `+0x29` a byte (surface/flags?).
+- There's a strip lookup table at stride `0xe` (`_strip_data + n*0xe`).
+- Traversal follows `+0x14` (and `+0x1c` at forks) to order strips along the track.
+**Why this matters**: walking this graph gives the TRUE strip ordering + each strip's geometry refs,
+which replaces the cross-section heuristic and eliminates the infield-chord artifacts (LEV4) and any
+mis-ordering. Next: map each strip's vertex/poly references (into section 2 verts), prototype the real
+road mesh in Python, then integrate into `track.c` behind a flag and validate vs the current model.
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
