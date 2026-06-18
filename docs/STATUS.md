@@ -77,21 +77,33 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
-## CURRENT STATE (2026-06-18, session 1)
-- Circuits LEV1,4,5,6 complete 6/6, deterministic (MATCH). LEV2,3,7 (long tracks) partial:
-  cars wedge at sharp spots — approximate AI+cross-section centerline ceiling.
-- Arenas LEV8–B = 32-rib ~125 m bowls (demolition; 2-lap racing ill-fits → handle separately).
-- Non-tracks: LEV0 (menu), LEVF (1 rib), LEVC/D/E (no LEVEL.DAT) → detect & skip gracefully.
-- Sim infra solid: seam-free laps (integrated progress), windowed localization, spur+Laplacian
-  smoothing, reverse-realign recovery, determinism verified.
+## CURRENT STATE (2026-06-18, session 1 — late)
+Verification harness: `./tests/run_all.sh` (3 seeds each, completion + determinism).
+- **9/11 playable levels PASS all seeds deterministically**: circuits LEV1,3,4,5,6 (6/6) + arenas
+  LEV8,9,A,B (demolition mode, 6/6). LEV0/F classified NON-TRACK; LEVC/D/E ABSENT (no data).
+- **LEV2, LEV7 FAIL (0/6)**: contiguous mis-ordered-vertex branch (a spurious thin sliver in the
+  reconstructed loop, visible in renders) — needs the real track topology, not heuristics.
+- **WASM build works**: `./build_wasm.sh` → `web/build/` (SDL3+WebGL2). Verified rendering IN A REAL
+  BROWSER via headless Chromium (`tools/browser/shot.js`, Playwright) — LEV5 + AI cars on canvas.
+- Sim infra: seam-free laps (integrated progress), windowed localization, spur+Laplacian+spike
+  cleanup, reverse-realign + respawn recovery, arena/demolition mode, hits ranking. Deterministic.
+- Verification paths: native EGL headless screenshots (primary) + headless-browser screenshots (WASM/DVD).
+- STILL APPROXIMATE (not yet from binary): physics/AI/geometry. DVD look not yet added.
 
-## NEXT ACTION (fidelity-first, keep pipeline working & verified)
-**Priority: replace the approximate centerline with the game's REAL racing line** (fixes LEV2/3/7
-navigation faithfully). LEVEL.DAT section 1 = 86% valid vertex indices — likely the track path/strips.
-Cross-ref `Track_Follow`, `Init_Track_Follow_Data`, `Init_Track_Strip_Numbers`, `Search_For_Strip`
-in `re_out/dd2_decomp.c`. Then: arenas → time/demolition completion; guard non-tracks; WASM
-(SDL3+WebGL2)+DVD look; verify all tracks ×N seeds with screenshots.
-Older fidelity items (port real physics/geometry) remain after navigation is robust.
+## NEXT ACTION (priority order)
+1. **Fix LEV2/LEV7** — the only failing playable tracks. Their reconstructed loop has a spurious
+   branch from mis-ordered section-2 verts. Best fix = real track topology: decode LEVEL.DAT
+   section 1 (track path/strips, 86% vertex indices) cross-ref `Init_Track_Strip_Numbers`/`Track_Follow`
+   in `re_out/dd2_decomp.c`. (Fallback: loop-simplification to cut the spurious detour.)
+2. **DVD look** (user signature ask): add the wasm-dvd-gl present pass to `main_sdl.c` — render to a
+   low-res FBO, H.264 encode/decode via WebCodecs, bilinear upscale. Verify in browser via Playwright.
+3. **Faithful physics/AI** from decompiled C (`Car_Drive_Motion`, suspension, `Track_Follow`).
+4. **Full verification**: native `run_all.sh` (all pass) + browser screenshots per track; multiple seeds.
+
+## Browser verification
+`tools/browser/` has Playwright + Chromium (cache at ~/.cache/ms-playwright). To shoot the WASM build:
+serve `web/build` (`python3 -m http.server 8131`) then
+`PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright PORT=8131 node tools/browser/shot.js out/x.png 9000`.
 
 ## (orig) NEXT ACTION (fidelity-first, keep pipeline working & verified)
 Work from `re_out/dd2_decomp.c` (use `tools/refunc.sh NAME`). Reconstruct faithfully, verify via screenshots.
