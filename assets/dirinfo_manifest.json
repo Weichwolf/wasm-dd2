@@ -1,0 +1,704 @@
+{
+  "file_size": 22198272,
+  "sector": 2048,
+  "files": [
+    {
+      "name": "LEV0\\COPYRIGH.BMP",
+      "offset": 10240,
+      "size": 77878,
+      "flag": -1
+    },
+    {
+      "name": "LEV0\\FONT.BNK",
+      "offset": 90112,
+      "size": 23964,
+      "flag": -2
+    },
+    {
+      "name": "LEV0\\LEVEL.CLT",
+      "offset": 114688,
+      "size": 81920,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.DAT",
+      "offset": 196608,
+      "size": 76576,
+      "flag": 78
+    },
+    {
+      "name": "LEV0\\LEVEL.PAL",
+      "offset": 274432,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.SPR",
+      "offset": 276480,
+      "size": 5428,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.TX0",
+      "offset": 282624,
+      "size": 373788,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.TX1",
+      "offset": 657408,
+      "size": 392496,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.TX2",
+      "offset": 1050624,
+      "size": 395692,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.TX3",
+      "offset": 1447936,
+      "size": 397472,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LEVEL.TX4",
+      "offset": 1847296,
+      "size": 84348,
+      "flag": 0
+    },
+    {
+      "name": "LEV0\\LOADING.BMP",
+      "offset": 1933312,
+      "size": 77878,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.CLT",
+      "offset": 2013184,
+      "size": 106496,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.DAT",
+      "offset": 2119680,
+      "size": 246728,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.ECL",
+      "offset": 2367488,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.PAL",
+      "offset": 2453504,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.TDF",
+      "offset": 2455552,
+      "size": 16540,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.TX0",
+      "offset": 2473984,
+      "size": 389932,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.TX1",
+      "offset": 2865152,
+      "size": 397396,
+      "flag": 0
+    },
+    {
+      "name": "LEV1\\LEVEL.TX2",
+      "offset": 3264512,
+      "size": 230884,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.CLT",
+      "offset": 3495936,
+      "size": 139264,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.DAT",
+      "offset": 3635200,
+      "size": 433744,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.ECL",
+      "offset": 4069376,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.PAL",
+      "offset": 4155392,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TDF",
+      "offset": 4157440,
+      "size": 22240,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TX0",
+      "offset": 4179968,
+      "size": 390340,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TX1",
+      "offset": 4571136,
+      "size": 397696,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TX2",
+      "offset": 4970496,
+      "size": 397700,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TX3",
+      "offset": 5369856,
+      "size": 395276,
+      "flag": 0
+    },
+    {
+      "name": "LEV2\\LEVEL.TX4",
+      "offset": 5767168,
+      "size": 13848,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.CLT",
+      "offset": 5781504,
+      "size": 106496,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.DAT",
+      "offset": 5888000,
+      "size": 405920,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.ECL",
+      "offset": 6295552,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.PAL",
+      "offset": 6381568,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.TDF",
+      "offset": 6383616,
+      "size": 12784,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.TX0",
+      "offset": 6397952,
+      "size": 391188,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.TX1",
+      "offset": 6791168,
+      "size": 398692,
+      "flag": 0
+    },
+    {
+      "name": "LEV3\\LEVEL.TX2",
+      "offset": 7190528,
+      "size": 332088,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.CLT",
+      "offset": 7524352,
+      "size": 118784,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.DAT",
+      "offset": 7643136,
+      "size": 384388,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.ECL",
+      "offset": 8028160,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.PAL",
+      "offset": 8114176,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.TDF",
+      "offset": 8116224,
+      "size": 17788,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.TX0",
+      "offset": 8134656,
+      "size": 388524,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.TX1",
+      "offset": 8523776,
+      "size": 395664,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.TX2",
+      "offset": 8921088,
+      "size": 397620,
+      "flag": 0
+    },
+    {
+      "name": "LEV4\\LEVEL.TX3",
+      "offset": 9320448,
+      "size": 33996,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.CLT",
+      "offset": 9355264,
+      "size": 94208,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.DAT",
+      "offset": 9449472,
+      "size": 198108,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.ECL",
+      "offset": 9648128,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.PAL",
+      "offset": 9734144,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.TDF",
+      "offset": 9736192,
+      "size": 9052,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.TX0",
+      "offset": 9746432,
+      "size": 386924,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.TX1",
+      "offset": 10133504,
+      "size": 396828,
+      "flag": 0
+    },
+    {
+      "name": "LEV5\\LEVEL.TX2",
+      "offset": 10530816,
+      "size": 216336,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.CLT",
+      "offset": 10747904,
+      "size": 126976,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.DAT",
+      "offset": 10874880,
+      "size": 267652,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.ECL",
+      "offset": 11143168,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.PAL",
+      "offset": 11229184,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.TDF",
+      "offset": 11231232,
+      "size": 20968,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.TX0",
+      "offset": 11253760,
+      "size": 389876,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.TX1",
+      "offset": 11644928,
+      "size": 395648,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.TX2",
+      "offset": 12042240,
+      "size": 397384,
+      "flag": 0
+    },
+    {
+      "name": "LEV6\\LEVEL.TX3",
+      "offset": 12441600,
+      "size": 19984,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.CLT",
+      "offset": 12462080,
+      "size": 131072,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.DAT",
+      "offset": 12593152,
+      "size": 402856,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.ECL",
+      "offset": 12996608,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.PAL",
+      "offset": 13082624,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.TDF",
+      "offset": 13084672,
+      "size": 19612,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.TX0",
+      "offset": 13105152,
+      "size": 387244,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.TX1",
+      "offset": 13494272,
+      "size": 397700,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.TX2",
+      "offset": 13893632,
+      "size": 397636,
+      "flag": 0
+    },
+    {
+      "name": "LEV7\\LEVEL.TX3",
+      "offset": 14292992,
+      "size": 57128,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.CLT",
+      "offset": 14350336,
+      "size": 139264,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.DAT",
+      "offset": 14489600,
+      "size": 127396,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.ECL",
+      "offset": 14618624,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.PAL",
+      "offset": 14704640,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.TDF",
+      "offset": 14706688,
+      "size": 14992,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.TX0",
+      "offset": 14723072,
+      "size": 388952,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.TX1",
+      "offset": 15112192,
+      "size": 397440,
+      "flag": 0
+    },
+    {
+      "name": "LEV8\\LEVEL.TX2",
+      "offset": 15511552,
+      "size": 334580,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.CLT",
+      "offset": 15847424,
+      "size": 106496,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.DAT",
+      "offset": 15953920,
+      "size": 148184,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.ECL",
+      "offset": 16103424,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.PAL",
+      "offset": 16189440,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.TDF",
+      "offset": 16191488,
+      "size": 6028,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.TX0",
+      "offset": 16197632,
+      "size": 392324,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.TX1",
+      "offset": 16590848,
+      "size": 397700,
+      "flag": 0
+    },
+    {
+      "name": "LEV9\\LEVEL.TX2",
+      "offset": 16990208,
+      "size": 389624,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.CLT",
+      "offset": 17381376,
+      "size": 106496,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.DAT",
+      "offset": 17487872,
+      "size": 139704,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.ECL",
+      "offset": 17629184,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.PAL",
+      "offset": 17715200,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.TDF",
+      "offset": 17717248,
+      "size": 6712,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.TX0",
+      "offset": 17725440,
+      "size": 388872,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.TX1",
+      "offset": 18114560,
+      "size": 397700,
+      "flag": 0
+    },
+    {
+      "name": "LEVA\\LEVEL.TX2",
+      "offset": 18513920,
+      "size": 349616,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.CLT",
+      "offset": 18864128,
+      "size": 131072,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.DAT",
+      "offset": 18995200,
+      "size": 124356,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.ECL",
+      "offset": 19120128,
+      "size": 86016,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.PAL",
+      "offset": 19206144,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.TDF",
+      "offset": 19208192,
+      "size": 7192,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.TX0",
+      "offset": 19216384,
+      "size": 388264,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.TX1",
+      "offset": 19605504,
+      "size": 397700,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.TX2",
+      "offset": 20004864,
+      "size": 396392,
+      "flag": 0
+    },
+    {
+      "name": "LEVB\\LEVEL.TX3",
+      "offset": 20402176,
+      "size": 3356,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.CLT",
+      "offset": 20406272,
+      "size": 53248,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.DAT",
+      "offset": 20459520,
+      "size": 7832,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.PAL",
+      "offset": 20467712,
+      "size": 1024,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.SPR",
+      "offset": 20469760,
+      "size": 2812,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.TX0",
+      "offset": 20473856,
+      "size": 379856,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.TX1",
+      "offset": 20854784,
+      "size": 397528,
+      "flag": 0
+    },
+    {
+      "name": "LEVF\\LEVEL.TX2",
+      "offset": 21254144,
+      "size": 346672,
+      "flag": 0
+    },
+    {
+      "name": "VAGS\\BANK1.SBK",
+      "offset": 21602304,
+      "size": 595872,
+      "flag": 0
+    }
+  ],
+  "special": [
+    {
+      "name": "LEV0\\COPYRIGH.BMP",
+      "field": "050036300100"
+    },
+    {
+      "name": "LEV0\\FONT.BNK",
+      "field": "524157002c009c5d0000"
+    },
+    {
+      "name": "LEV0\\LOADING.BMP",
+      "field": "00b00336300100"
+    }
+  ]
+}
