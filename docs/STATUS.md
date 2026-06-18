@@ -77,6 +77,15 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
+## KNOWN ISSUE — LEV4 infield chords (diagnosed 2026-06-18)
+LEV4's reconstructed centerline has spurious long "chord" segments across the infield (rib clusters
+~205–210, 55–73, 88–91, 230–234: seglen 15–44 m vs 2 m median) where the section-2 vertex order
+jumps across open ground. Cars follow these shortcuts (still completes 6/6 deterministically, but the
+path/render isn't faithful there). Not a single removable detour (mix of real sparse straights +
+spurious jumps), so seglen-thresholding is unsafe. Proper fix = use the REAL strip/poly connectivity
+(LEVEL.DAT section 0/1 + `Init_Track_Strip_Numbers`) instead of the cross-section heuristic — a larger
+RE task; do it deliberately (not via a risky auto-heuristic). Other 10 playable tracks render clean.
+
 ## CURRENT STATE (2026-06-18, session 2 — autonomous)
 - **Faithful DD2 tire-force physics is now the DEFAULT** (native + WASM). Reconstructed from
   `Car_Drive_Motion`: world-velocity vector, slip-angle lateral grip (friction-circle limited),
