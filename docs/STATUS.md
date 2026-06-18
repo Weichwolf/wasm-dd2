@@ -47,6 +47,14 @@ tests/               (planned) headless test harness
 ## Milestones
 - [x] **M0 tooling+extraction** — venv, `Dirinfo` unpacker (114 files, 0 problems, 99.5%),
       headless EGL GLES3 proven.
+- [x] **M2 renderer** — C engine renders real tracks headless (EGL→GLES3→PNG). `build_native.sh`.
+- [x] **M3+M4 (approx) sim** — vehicle physics + AI + deterministic race + screenshots
+      (`build-native/dd2_race`). LEV5 fully completes 2 laps, deterministic, verified.
+      NOTE: this physics/AI is MY approximation, not from the binary (see RE track below).
+- [x] **RE decompiler** — Ghidra (JDK21) decompiled dd2.exe (debug symbols) → 837 named funcs.
+- [ ] **FIDELITY (user requirement): reconstruct logic from dd2.exe**, not approximate. In progress.
+- [ ] **all 16 tracks reliably complete** — currently only LEV5 finishes; most TIME OUT (driving too weak).
+- [ ] **WASM build (SDL3+WebGL2) + DVD look**.
 - [~] **M1 asset decoders** — IN PROGRESS.
       - [x] `LEVEL.PAL` = 256 × `[R][G][B][pad]` (RGB order confirmed: readable white text, natural colors).
       - [x] `LEVEL.TX*` = `[u32 count]` + count×16B dir records `[tag=4][w u16][h u16][x u16][y u16][...]`,
@@ -69,8 +77,20 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
-## NEXT ACTION
-1. Finish TX decoder: parse full directory, extract every tile at true w×h to PNG; assert Σ(w*h)==pixel-bytes.
-2. Decode `LEVEL.DAT` geometry: parse the u32 section-offset table, identify vertex/face sections
-   (saw u16 index lists `04 00 05 00 07 00 06 00`); cross-ref `dd2.exe` `Init_Track_*` via `objdump -d`.
-3. Then M2: GLES3 renderer skeleton (native EGL headless first), draw the track mesh, screenshot.
+## NEXT ACTION (fidelity-first, keep pipeline working & verified)
+Work from `re_out/dd2_decomp.c` (use `tools/refunc.sh NAME`). Reconstruct faithfully, verify via screenshots.
+1. **Physics fidelity**: map the 0x1b2 car struct fields by reading `Car_Drive_Motion`(+_3D),
+   `Calc_Suspension_*`, `Car_Friction`. Port the real handling (fixed-point ok) into `vehicle.c`,
+   replacing the arcade model. Keep deterministic. Verify a car laps LEV5 plausibly.
+2. **Track geometry fidelity**: read the strip/poly loader (LEVEL.DAT section 0 = 28 strips;
+   `Init_Track_Strip_Numbers`, `Search_For_Strip`, `Draw_Screen_Polys`) and render the REAL polygons
+   + textures, replacing the cross-section approximation.
+3. **AI fidelity**: port `Track_Follow` + `AI_CommandList*`.
+4. Make ALL 16 tracks complete; then WASM (SDL3+WebGL2) build + DVD look; verify every track ×N seeds.
+
+## Build/run cheatsheet
+- extract assets: `. .venv/bin/activate && python tools/unpack_dirinfo.py`
+- native build: `./build_native.sh` → `build-native/dd2_view`, `build-native/dd2_race`
+- view a track: `./build-native/dd2_view assets/raw/LEV5/LEVEL.DAT out/x.png`
+- race: `./build-native/dd2_race assets/raw/LEVn/LEVEL.DAT out/dir <laps> <ncars> <seed> <shot_interval_s>`
+- decompiled C: `re_out/dd2_decomp.c`; extract fn: `tools/refunc.sh 'Name @'`
