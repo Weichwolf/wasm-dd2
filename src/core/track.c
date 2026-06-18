@@ -145,6 +145,42 @@ int track_load(const char* path, Track* t) {
         free(tmp);
     }
 
+    // Remove centerline spikes: ribs whose center is a large outlier vs neighbours are
+    // spurious cross-connections (track passing near itself). Replace by neighbour interpolation.
+    {
+        vec3* ctr = (vec3*)malloc(sizeof(vec3) * t->nribs);
+        float* sl = (float*)malloc(sizeof(float) * t->nribs);
+        for (int i = 0; i < t->nribs; i++) {
+            vec3 c = v3(0,0,0);
+            for (int k = 0; k < TRACK_K; k++) c = v3add(c, t->rib[i][k]);
+            ctr[i] = v3scale(c, 1.0f/TRACK_K);
+        }
+        for (int i = 0; i < t->nribs; i++) sl[i] = v3len(v3sub(ctr[(i+1)%t->nribs], ctr[i]));
+        float* sls = (float*)malloc(sizeof(float)*t->nribs); memcpy(sls, sl, sizeof(float)*t->nribs);
+        qsort(sls, t->nribs, sizeof(float), cmpf); float medseg = sls[t->nribs/2]; free(sls);
+        float thr = medseg * 3.0f + 1.0f;
+        char* bad = (char*)calloc(t->nribs, 1);
+        for (int i = 0; i < t->nribs; i++) {
+            int a=(i-1+t->nribs)%t->nribs, b=(i+1)%t->nribs;
+            vec3 mid = v3scale(v3add(ctr[a], ctr[b]), 0.5f);
+            if (v3len(v3sub(ctr[i], mid)) > thr) bad[i] = 1;
+        }
+        for (int pass = 0; pass < 6; pass++) {
+            int changed = 0;
+            for (int i = 0; i < t->nribs; i++) {
+                if (!bad[i]) continue;
+                int a=(i-1+t->nribs)%t->nribs, b=(i+1)%t->nribs;
+                if (bad[a] && bad[b]) continue;            // wait for a good neighbour
+                for (int k = 0; k < TRACK_K; k++)
+                    t->rib[i][k] = v3lerp(t->rib[a][k], t->rib[b][k], 0.5f);
+                vec3 c=v3(0,0,0); for(int k=0;k<TRACK_K;k++) c=v3add(c,t->rib[i][k]);
+                ctr[i]=v3scale(c,1.0f/TRACK_K); bad[i]=0; changed=1;
+            }
+            if (!changed) break;
+        }
+        free(ctr); free(sl); free(bad);
+    }
+
     // centerline, width, bbox
     for (int i = 0; i < t->nribs; i++) {
         vec3 c = v3(0,0,0);

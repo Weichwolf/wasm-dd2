@@ -118,10 +118,24 @@ void vehicle_step(Car* c, const Track* t, float dt){
     if (c->prog > c->prog_mark + 4.0f) { c->prog_mark = c->prog; c->since_prog = 0; }
     else c->since_prog += dt;
     if (c->recover_t > 0) {
-        c->recover_t -= dt;
-        if (c->recover_t <= 0) { c->since_prog = 0; c->prog_mark = c->prog; }
+        c->recover_t -= dt;    // since_prog keeps counting; only real progress resets it
     } else if (c->since_prog > 2.0f) {
         c->recover_t = 0.8f;   // begin reverse-and-realign
+    }
+    // Escalation: if still no progress after sustained recovery attempts, respawn onto the
+    // racing line just ahead (standard stuck-rescue; keeps progress monotonic + deterministic).
+    if (c->since_prog > 5.0f && !c->finished) {
+        float ts = c->s + 6.0f;
+        vec3 p, tan; track_sample(t, ts, &p, &tan);
+        c->pos = v3(p.x, p.y + 0.5f, p.z);
+        c->yaw = atan2f(tan.x, tan.z);
+        c->speed = 3.0f;
+        c->prog += 6.0f;
+        c->lap = (int)(c->prog / t->total_len);
+        c->recover_t = 0; c->since_prog = 0; c->prog_mark = c->prog;
+        float tsm = fmodf(ts, t->total_len); if (tsm < 0) tsm += t->total_len;
+        c->last_rib = 0;
+        for (int i = 0; i < t->nribs; i++) { if (t->s_at[i] <= tsm) c->last_rib = i; else break; }
     }
     if (c->speed < 1.0f) c->stuck_t += dt; else c->stuck_t = 0;
 }
