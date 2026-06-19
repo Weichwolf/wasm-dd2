@@ -81,6 +81,15 @@ which replaces the cross-section heuristic and eliminates the infield-chord arti
 mis-ordering. Next: map each strip's vertex/poly references (into section 2 verts), prototype the real
 road mesh in Python, then integrate into `track.c` behind a flag and validate vs the current model.
 
+Progress (`tools/decode_strips.py`): the list walks cleanly — **LEV1 = 276 strips** (≈283 cross-sections).
+Record (variable len, 92–120 B): `+0x00` type (1 normal, 3/6 corner-ish, 9 end), `+0x01` count byte (4–8),
+`+0x04`/`+0x06` = constant flags on straights (255/49), `+0x14` next, `+0x1c` branch (0 on simple loops).
+The per-strip **geometry** is in the variable tail (likely PSX poly primitives + vertex refs) — NOT yet
+decoded; `+0x04` is not a turn/heading delta (ruled out). **DECISION**: deep decode paused — the
+cross-section reconstruction already yields clean drivable tracks (10/11 clean; LEV4 cosmetic chord only).
+Confirm with user whether full real-geometry is worth the effort/risk before resuming. The strip ORDER
+alone could later be used surgically to fix mis-ordering if a strip→vertex-range map is found.
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
