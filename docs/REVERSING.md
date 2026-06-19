@@ -90,6 +90,15 @@ cross-section reconstruction already yields clean drivable tracks (10/11 clean; 
 Confirm with user whether full real-geometry is worth the effort/risk before resuming. The strip ORDER
 alone could later be used surgically to fix mis-ordering if a strip→vertex-range map is found.
 
+CORRECTION (later analysis): section-1 strip record **tails are mostly zeros** — the earlier "86% valid
+u16 indices" was inflated by those zeros, NOT real vertex references. So **section 1 = pure topology**
+(strip graph: type/links/params, used for AI track-following), and the actual **render geometry is in
+section 0** (the 28 sub-section "strips" with int16 coord/display-list data, ~9% index density) — the
+genuinely hard PSX-primitive decode. This reinforces the pause: the real-geometry fix means decoding
+section-0 display lists, high effort/uncertain payoff vs the already-clean cross-section reconstruction.
+If revisited, the lever is section 0, not section 1. Section-1 topology could still order strips, but
+strip records carry no obvious position (mostly zeros), so it's not a quick ordering fix either.
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
