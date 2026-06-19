@@ -99,6 +99,14 @@ section-0 display lists, high effort/uncertain payoff vs the already-clean cross
 If revisited, the lever is section 0, not section 1. Section-1 topology could still order strips, but
 strip records carry no obvious position (mostly zeros), so it's not a quick ordering fix either.
 
+FURTHER (read `Draw_Screen_Polys @450ed4`): the PC port **emulates the PlayStation GTE** — the draw
+path uses GTE ops (`GTERPT`/`GTERPS`) and the GTE register block at `0x714xxx` (`__vr0..3`, etc.).
+So the real geometry pipeline = display lists transformed through an emulated GTE (PSX-hardware-level).
+Faithfully reproducing it ≈ reimplementing PSX GTE geometry — a very deep effort for exact polygons/
+walls/scenery, low marginal value over the working cross-section reconstruction (clean, drivable, all
+tracks pass). **Conclusion: geometry-fidelity is genuinely a large PSX-RE project; do it only if the
+user wants pixel-faithful tracks. Otherwise the current reconstruction is the pragmatic answer.**
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
