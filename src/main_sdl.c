@@ -106,7 +106,7 @@ static const char* PFS =
     "void main(){ gl_FragColor = texture2D(u_tex, v_uv); }\n";
 
 // ---------------- front-end state ----------------
-typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_STATS, ST_RACE, ST_RESULTS } AppState;
+typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_STATS, ST_CARSEL, ST_RACE, ST_RESULTS } AppState;
 
 static SDL_Window* g_win;
 static GLuint g_fbo, g_fbo_color, g_fbo_depth, g_codec_tex, g_present_prog, g_quad_vbo;
@@ -121,6 +121,7 @@ static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 static GLuint g_mt_norm[MENU_N], g_mt_sel[MENU_N];
 static int    g_mw[MENU_N], g_mh[MENU_N];
 static int    g_sel = 0;
+static int    g_carsel = 0;   // player car colour (index into CAR_COLS)
 // real DD2 track names in the game's menu order (racing-name array @0x4682f8). 11 tracks.
 // (Destruction Derby / Total Destruction are race MODES, not tracks; Black Sail Valley was missing.)
 static const char* TRACKS[] = {
@@ -285,6 +286,17 @@ static void render_scene(void){
             snprintf(b,sizeof(b),"RACES PLAYED   %d",g_races_played[g_tsel]); hud_text(b,70,118,0.6f,0);
             hud_text("UP/DOWN  TRACK      ESC  BACK",70,150,0.5f,0);
             break; }
+        case ST_CARSEL: {
+            ui_blit_rect(g_metal_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);   // metal backdrop
+            int hw=vram_text_measure("SELECT CAR");
+            hud_text("SELECT CAR",(RENDER_W-hw*0.85f)/2.f,30,0.85f,1);
+            for(int i=0;i<8;i++){ int sx=58+i*26, sy=92, sz=(i==g_carsel)?22:15;
+                if(i==g_carsel) ui_blit_rect(g_dim_tex,sx-4,sy-4,sz+8,sz+8,RENDER_W,RENDER_H);
+                ui_blit_rect(g_car_sw[i],sx,sy,sz,sz,RENDER_W,RENDER_H); }
+            char b[32]; snprintf(b,sizeof(b),"CAR %d",g_carsel+1);
+            int cw=vram_text_measure(b); hud_text(b,(RENDER_W-cw*0.7f)/2.f,138,0.7f,1);
+            hud_text("LEFT/RIGHT  COLOUR   ENTER  GO   ESC  BACK",34,178,0.5f,0);
+            break; }
         case ST_RESULTS: {
             ui_blit_fullscreen(g_title_tex);
             ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
@@ -334,7 +346,7 @@ static void render_scene(void){
             render_geo_tex(view,proj);          // VRAM/CLUT-textured faces (trees/walls/scenery)
 #endif
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
-                draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8],cc->hits); }
+                draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[(i==0?g_carsel:i)%8],cc->hits); }   // player car uses selected colour
             // HUD (real bitmap font over the 3D view)
             glDisable(GL_DEPTH_TEST);
             char buf[64]; int order[RACE_MAX_CARS];
@@ -454,12 +466,19 @@ static void frame(void){
                     // route by menu mode: WRECKING(0)->demolition arena, RACING(1)->championship, else track/car select
                     if(g_sel==1) champ_start();
                     else if(g_sel==0){ g_tsel=10; start_race(10); }   // LEV8 bowl (demolition derby)
+                    else if(g_sel==3) g_state=ST_CARSEL;              // ICAR -> car colour select
                     else g_state=ST_TRACKSEL;
                 }
             }
             else if(g_state==ST_STATS){
                 if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
                 else if(sc==SDL_SCANCODE_UP) g_tsel=(g_tsel+TRACK_N-1)%TRACK_N;
+                else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
+            }
+            else if(g_state==ST_CARSEL){
+                if(sc==SDL_SCANCODE_RIGHT||sc==SDL_SCANCODE_DOWN) g_carsel=(g_carsel+1)%8;
+                else if(sc==SDL_SCANCODE_LEFT||sc==SDL_SCANCODE_UP) g_carsel=(g_carsel+7)%8;
+                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) g_state=ST_TRACKSEL;
                 else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
             }
             else if(g_state==ST_TRACKSEL){
