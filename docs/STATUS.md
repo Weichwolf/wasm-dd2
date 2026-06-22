@@ -183,3 +183,22 @@ Remaining in-race gaps vs reference: (1) TREE BILLBOARDS (reference has autumn t
 - biggest visible gap; (2) textured walls/cars (ours flat-shaded); (3) sky cloud texture (ours flat gradient).
 CLUT solved (palette=cy*4). Menu rebuilt as radial icon menu. xdotool still needed for interactive-menu
 reference capture. Wine reference = the verification path now operational.
+
+## COMPLETE PIPELINE DECODED + VALIDATED (2026-06-22, via Wine reference)
+Whole dd2h render chain reverse-engineered AND verified against the real game (Wine):
+- Geometry: LEVEL.DAT sec0 -> 21 LZSS chunks -> object placements -> objdefs (verts int16 @+0x20,
+  faces @+0x28) -> face batches [u16 count][u8 type] -> ~40 face types (flat 12/14 = 87%, textured
+  pict/text/sprite = 26/27/30/31/10/32-35). 3pt-flat 16B idx@+12; 4pt-pict 32B vtx@+0x18..+0x1e.
+- CLUT (SOLVED): __clutspace = LEVEL.CLT (File_Load'd direct); palette for a sprite/face = cy*4
+  (draw @ __clutspace + dth_clut*0x1000, dth_clut=cy; PC port = 256xRGBA palettes). Verified RING/driver.
+- Textures (DECODED+VALIDATED): LEVEL.TDF = [u32 count][12B {clut,flags,uv0-3}] (uv=u8 u,v VRAM coords).
+  Textured face -> texture-index -> TDF entry -> VRAM UV rect + CLUT. TDF entries render real textures
+  (green tree foliage, HUD digits, walls) -> trees are textured TDF faces.
+- Audio: BANK1.SBK = 8-bit PCM (45 samples). Front-end: real radial icon menu (RING+I* icons+logo+modes).
+
+STATE: playable WASM port; reference-matched atmosphere (dirt+stormy cloud sky), real radial menu, solved
+sprite CLUT, near-faithful flat geometry across 7 circuits + 4 arena bowls, car models, HUD, audio, damage.
+IMPLEMENTATION REMAINING (specified, not discovery): (1) textured faces in geo.c+shader (per-type record
+layout for pict/text/sprite + VRAM index-texture + CLUT palette-texture) -> trees/textured walls/road;
+(2) full per-screen reference diff (needs xdotool to drive dd2h menus); (3) logo shine + exact metal bg.
+Wine harness: WINEPREFIX=~/.wine-dd2 DISPLAY=:99; tools/wine_capture.sh, tools/compare_frames.py.
