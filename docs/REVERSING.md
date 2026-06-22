@@ -307,3 +307,12 @@ scenery) for a clearer track read; full real-geo road is a follow-on.
   channel nuance; content is clearly correct.)
 - => in-race texturing is now feasible: assemble per-level VRAM + use the level CLUT (e.g. pal 84) to
   color textured polys/sprites + HUD. Next: pick per-level CLUT (greenness/heuristic) + apply to geo textures.
+
+## Front-end sprite CLUT un-parked (coherence-pick, self-validated)
+- DRIVER0 (LEV0) brute-forced vs 80 RGBA CLT palettes, scored by image COHERENCE (low neighbour diff)
+  -> palettes 56/60/64/52 render a CLEAN helmeted driver portrait (helmet/visor/suit) — not rainbow.
+- So per-sprite CLUT IS recoverable here: pick the palette maximizing coherence (self-validating clean
+  image), no reference needed. Applies to driver portraits + likely track previews. Colours a bit pale
+  (palette variant); image correct. Application: per-sprite coherence-pick in vram_sprite_tex -> colour
+  the front-end sprites (driver select, track-select thumbnails). The exact cy->palette formula (Load_Cluts
+  placement) would be exact, but coherence-pick is a working self-validating substitute.
