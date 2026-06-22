@@ -9262,7 +9262,6 @@ undefined4 Play_Game(void)
   _camera_fd_pt = &car_fd + camera_car * 0x2c;
   Init_Game();
   FUN_0041611c();
-  FUN_0041612c((char)_current_level,1);
   FUN_00415b50(_sound_volume);
   Initialise_Pause_Mode();
   _DAT_0074be98 = 100;
@@ -31195,7 +31194,7 @@ int __cdecl Load_Completion_Status(int param_1)
   short sVar2;
   int iVar3;
   short sVar4;
-  
+  return 0;  /* WASM: loading progress render stubbed (DDraw surface unbacked) */
   FUN_00420b1c();
   if (pal_flag == 0) {
     sVar4 = 0xd0;
