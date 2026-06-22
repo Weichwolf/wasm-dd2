@@ -317,8 +317,9 @@ static void render_scene(void){
             glEnable(GL_DEPTH_TEST);
             Car* c=&g_race.cars[0];
             float sy=sinf(c->yaw), cyy=cosf(c->yaw);
-            vec3 eye=v3(c->pos.x-sy*9.f, c->pos.y+5.f, c->pos.z-cyy*9.f);
-            vec3 at =v3(c->pos.x+sy*6.f, c->pos.y+1.5f, c->pos.z+cyy*6.f);
+            // low-close chase cam (match dd2h framing: car fills the lower third, horizon high)
+            vec3 eye=v3(c->pos.x-sy*6.2f, c->pos.y+3.0f, c->pos.z-cyy*6.2f);
+            vec3 at =v3(c->pos.x+sy*5.f, c->pos.y+1.1f, c->pos.z+cyy*5.f);
             float view[16],proj[16];
             mat4_lookat(view,eye,at,v3(0,1,0));
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
