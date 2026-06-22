@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 unsigned char* g_image = (unsigned char*)0x400000;
@@ -29,9 +30,9 @@ int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
     *(int*)0x46c32c = (int)(long)&dd2_getthread;  /* __GetThreadPtr */
-    /* CRT multithread file/heap-access locks (__Access* undecompiled) -> single-threaded no-ops */
-    *(int*)0x46c330 = (int)(long)&dd2_crt_lock;   /* _AccessFileH */
-    *(int*)0x46c340 = (int)(long)&dd2_crt_lock;   /* _AccessIOB   */
+    /* CRT multithread file/heap-access locks (_Access*/_Release* @0x46c330-0x46c364, __* undecompiled)
+       -> single-threaded no-ops */
+    { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
     __InitRtns();                 /* run global constructors (game data tables) */
     dd2_com_init();               /* set up DirectDraw COM interface vtables */
     { FILE* tf=fopen("Dirinfo","rb"); char b[40]={0};
