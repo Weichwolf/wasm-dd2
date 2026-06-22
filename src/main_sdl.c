@@ -301,7 +301,11 @@ static void render_scene(void){
                                                 //   exists/renders but per-texture colours read multicolored vs
                                                 //   ref's cohesive brown until CLUT-exact; scenery below IS textured)
             render_geo(view,proj);              // flat-shaded authentic faces
+#ifdef DD2_GTE
+            gte_render(view,proj);              // software-GTE affine (near-clipped) textured faces
+#else
             render_geo_tex(view,proj);          // VRAM/CLUT-textured faces (trees/walls/scenery)
+#endif
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
                 draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8],cc->hits); }
             // HUD (real bitmap font over the 3D view)
@@ -364,7 +368,8 @@ static void start_race(int idx){
     if(race_init(&g_race,dat,RACE_MAX_CARS,2,1234u)){
         render_set_track(&g_race.track);
         geo_free(&g_geo); if(geo_load(dat,&g_geo)){ render_geo_set(g_geo.v,g_geo.nverts);
-            render_geo_set_tex(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut); }
+            render_geo_set_tex(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut);
+            gte_render_set(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut); }
         g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);

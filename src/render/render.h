@@ -17,6 +17,10 @@ void render_geo(const float* view, const float* proj);
 void render_geo_set_tex(const float* tv, int ntv, const unsigned char* vram, int vw, int vh,
                         const unsigned char* clut, int nclut);
 void render_geo_tex(const float* view, const float* proj);
+// software-GTE-style affine renderer for textured geo (CPU transform + near-plane clip + affine UV).
+void gte_render_set(const float* tv, int ntv, const unsigned char* vram, int vw, int vh,
+                    const unsigned char* clut, int nclut);
+void gte_render(const float* view, const float* proj);
 void render_shutdown(void);
 
 #endif
