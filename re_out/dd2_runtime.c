@@ -11,4 +11,14 @@ void dd2_load_image(const char* path){
     memcpy((void*)0x400000, tmp, n);   /* image at fixed VA so raw-VA pointers resolve */
     free(tmp);
 }
-int main(){ dd2_load_image("dd2_image.bin"); dd2_relocate(); __WinMain(); return 0; }
+/* MSVC CRT thread-pointer: ~23 call sites do (*(code*)__GetThreadPtr)() for the per-thread data block.
+   Original sets it to &__MultipleThread during init; provide a valid block up-front (single-threaded WASM). */
+static int g_thread[256];
+int dd2_getthread(void){ return (int)(long)g_thread; }
+int main(){
+    dd2_load_image("dd2_image.bin");
+    dd2_relocate();
+    *(int*)0x46c32c = (int)(long)&dd2_getthread;   /* __GetThreadPtr @ image VA 0x46c32c */
+    __WinMain();
+    return 0;
+}

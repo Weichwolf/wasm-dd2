@@ -12,6 +12,8 @@
 
 // x86 calling-convention keywords (no-ops on a flat target)
 #define swi(x) 0  /* Ghidra int-3/software-interrupt intrinsic stub */
+#undef NAN
+#define NAN(x) ((x)!=(x))
 #define ABS(x)   ((x)<0?-(x):(x))
 #define ROUND(x) ((x)<0?(int)((x)-0.5):(int)((x)+0.5))
 #define CARRY1(a,b)  ((((uint32_t)(uint8_t)(a)+(uint32_t)(uint8_t)(b))>>8)&1u)
