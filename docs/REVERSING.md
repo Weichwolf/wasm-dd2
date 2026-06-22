@@ -131,3 +131,13 @@ TX = [u32 count][count x 16B: tag=4, w, h, destX, destY, f5(srcCol,0..240 step16
 Sum(tile w*h) >> pixel bytes => tiles SHARE a compact source pool; VRAM built by copying source
 region (selected by f5/f6) to dest (destX,destY) in the tall virtual VRAM. CAPRIO/(first tile) verified.
 TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch_Object_Block path.
+
+## CLUT system (LEVEL.CLT)
+- `LEVEL.CLT` = RAW 16-bit CLUT data (no header), 81920 B = 160 x 256-colour CLUTs. Loaded into
+  `__clutspace` (PSX CLUT VRAM, row stride 0x100=256 words) by `Load_Cluts` (count+entries built elsewhere).
+- 16-bit colour = PSX 1555 (R low 5, G next 5, B next 5, bit15=STP). Textures are **8-bit** indices
+  (confirmed: 22 TX0 tiles consume exactly Σ(w*h) bytes); a sprite/poly selects a CLUT via (cx,cy):
+  word offset ≈ `cy*256 + cx*16`. DRIVER1 (cx48,cy0 -> off 768) gives the right SHAPE but wrong colours
+  => exact (cx,cy)->CLUT mapping / index base still to pin down. CAPRIO renders fine with LEVEL.PAL.
+- Font glyphs are sprites (Setup_Font->Setup_Sprite); text colour set by `Print_Ink` — so menu text may be
+  ink-tinted intensity rather than CLUT, check `Print`.
