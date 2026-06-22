@@ -103,7 +103,7 @@ static const char* PFS =
     "void main(){ gl_FragColor = texture2D(u_tex, v_uv); }\n";
 
 // ---------------- front-end state ----------------
-typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_STATS, ST_RACE } AppState;
+typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_STATS, ST_RACE, ST_RESULTS } AppState;
 
 static SDL_Window* g_win;
 static GLuint g_fbo, g_fbo_color, g_fbo_depth, g_codec_tex, g_present_prog, g_quad_vbo;
@@ -111,7 +111,7 @@ static GLint  g_u_tex;
 static unsigned char* g_readback;
 static int g_codec_ready = 0, g_frameno = 0;
 static AppState g_state = ST_TITLE;
-static GLuint g_title_tex, g_dim_tex;
+static GLuint g_title_tex, g_dim_tex, g_car_sw[8];
 // main menu (real DD2 front-end strings), rendered in the bitmap font
 static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 #define MENU_N ((int)(sizeof(MENU)/sizeof(MENU[0])))
@@ -227,6 +227,22 @@ static void render_scene(void){
             snprintf(b,sizeof(b),"RACES PLAYED   %d",g_races_played[g_tsel]); hud_text(b,70,118,0.6f,0);
             hud_text("UP/DOWN  TRACK      ESC  BACK",70,150,0.5f,0);
             break; }
+        case ST_RESULTS: {
+            ui_blit_fullscreen(g_title_tex);
+            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
+            int hw=vram_text_measure("RACE RESULTS");
+            hud_text("RACE RESULTS",(RENDER_W-hw*0.85f)/2.f,16,0.85f,1);
+            int hw2=vram_text_measure(TRACKS[g_tsel]);
+            hud_text(TRACKS[g_tsel],(RENDER_W-hw2*0.55f)/2.f,40,0.55f,0);
+            int order[RACE_MAX_CARS]; int nc=race_rank(&g_race,order);
+            static const char* ORD[]={"1ST","2ND","3RD","4TH","5TH","6TH","7TH","8TH"};
+            char b[64];
+            for(int i=0;i<nc;i++){ int ci=order[i];
+                ui_blit_rect(g_car_sw[ci%8], 96, 60+i*15, 9, 9, RENDER_W, RENDER_H);   // colour swatch
+                snprintf(b,sizeof(b),"%s   CAR %d%s",ORD[i],ci+1, ci==0?"  (YOU)":"");
+                hud_text(b,110,58+i*15,0.55f, ci==0); }
+            hud_text("ENTER  CONTINUE",100,60+nc*15+6,0.5f,0);
+            break; }
         case ST_RACE: if(g_racing){
             glEnable(GL_DEPTH_TEST);
             Car* c=&g_race.cars[0];
@@ -326,7 +342,9 @@ static void frame(void){
                 else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
                 else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) start_race(g_tsel);
             }
-            if(sc==SDL_SCANCODE_N){ g_tsel=(g_tsel+1)%TRACK_N; start_race(g_tsel); }  // next track (any state)
+            if(g_state==ST_RESULTS && (sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE||sc==SDL_SCANCODE_ESCAPE)){ g_racing=0; g_state=ST_MENU; }
+            else if(g_state==ST_RACE && sc==SDL_SCANCODE_R){ g_state=ST_RESULTS; }   // show results
+            else if(sc==SDL_SCANCODE_N){ g_tsel=(g_tsel+1)%TRACK_N; start_race(g_tsel); }  // next track
         }
     }
     ++g_ticks;                                                // attract-mode auto-advance (for demo/screenshot)
@@ -339,6 +357,7 @@ static void frame(void){
         audio_engine(SND_ENGINE, 0.55f + sp*0.018f, 0.22f);          // engine pitch by speed
         if(p->hits>g_last_hits) audio_oneshot(SND_CRASH, 0.7f);      // collision
         g_last_hits=p->hits;
+        if(race_done(&g_race)) g_state=ST_RESULTS;                   // race over -> results
     } else { audio_engine(SND_ENGINE, 0.5f, 0.0f); g_last_hits=0; }  // silence engine in menus
     render_scene();
     present();
@@ -355,6 +374,10 @@ int main(void){
     ui_init(); present_init(); render_init();
     { unsigned char d[4]={0,0,0,170}; glGenTextures(1,&g_dim_tex); glBindTexture(GL_TEXTURE_2D,g_dim_tex);
       glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,d);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
+    for(int i=0;i<8;i++){ unsigned char c[4]={(unsigned char)(CAR_COLS[i][0]*255),(unsigned char)(CAR_COLS[i][1]*255),(unsigned char)(CAR_COLS[i][2]*255),255};
+      glGenTextures(1,&g_car_sw[i]); glBindTexture(GL_TEXTURE_2D,g_car_sw[i]);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,c);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
     int tw,th; g_title_tex = ui_load_bmp("assets/raw/LEV0/COPYRIGH.BMP",&tw,&th);
     SDL_Log("title %dx%d tex=%u", tw, th, g_title_tex);
