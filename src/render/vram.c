@@ -8,6 +8,7 @@
 static unsigned char* s_vram;     // 8-bit indices, VRAM_W * s_vram_h
 static int   s_vram_h;
 static unsigned char s_pal[256*3];
+static unsigned char* s_clt; static int s_nclt;   // LEVEL.CLT: s_nclt x 256 x RGB (from 256xRGBA)
 typedef struct { unsigned short u,v,w,h,cx,cy,mode; char name[11]; } Sprite;
 static Sprite* s_spr; static int s_nspr;
 // font glyph metrics (ascii-32 indexed): x,y,w,h relative to FONT sprite origin (v=128)
@@ -28,6 +29,12 @@ int vram_init(const char* level){
     unsigned char* pal=rd(path,&n); if(!pal) return 0;
     for(int i=0;i<256;i++){ s_pal[i*3]=pal[i*4]; s_pal[i*3+1]=pal[i*4+1]; s_pal[i*3+2]=pal[i*4+2]; }
     free(pal);
+    // LEVEL.CLT = N x (256 x RGBA) palettes -> store RGB (per-sprite CLUT, coherence-picked at use)
+    snprintf(path,sizeof(path),"assets/raw/%s/LEVEL.CLT",level);
+    long nclt; unsigned char* clt=rd(path,&nclt);
+    if(clt){ s_nclt=nclt/1024; s_clt=malloc((size_t)s_nclt*256*3);
+        for(int p=0;p<s_nclt;p++) for(int i=0;i<256;i++){ const unsigned char* s=clt+p*1024+i*4; unsigned char* o=s_clt+(p*256+i)*3; o[0]=s[0];o[1]=s[1];o[2]=s[2]; }
+        free(clt); }
 
     // TX0 = directory + page-0 pool; concatenate TX0-pool + TX1..TX4 as the full source pool
     snprintf(path,sizeof(path),"assets/raw/%s/LEVEL.TX0",level);
@@ -91,9 +98,27 @@ GLuint vram_sprite_tex(const char* name, int* wout, int* hout){
     if(!s || !s_vram) return 0;
     int u=s->u,v=s->v,w=s->w,h=s->h;
     if(u+w>VRAM_W)w=VRAM_W-u; if(v+h>s_vram_h)h=s_vram_h-v; if(w<=0||h<=0)return 0;
+    // pick the CLUT palette that renders this sprite most coherently (self-validating; no reference).
+    const unsigned char* pal=s_pal;
+    if(s_clt && s_nclt>0){
+        long bestscore=-1; int best=-1;
+        for(int p=0;p<s_nclt;p++){ const unsigned char* P=s_clt+p*256*3;
+            long diff=0,spread=0; int mn=255,mx=0;
+            for(int y=0;y<h;y+=2)for(int x=0;x<w-1;x+=2){
+                unsigned a=s_vram[(size_t)(v+y)*VRAM_W+(u+x)], b=s_vram[(size_t)(v+y)*VRAM_W+(u+x+1)];
+                for(int c=0;c<3;c++) diff += abs((int)P[a*3+c]-(int)P[b*3+c]);
+                if((int)P[a*3]<mn)mn=P[a*3]; if((int)P[a*3]>mx)mx=P[a*3];
+            }
+            spread=mx-mn;
+            if(spread<24) continue;                               // skip flat/degenerate palettes
+            long score=spread*4000 - diff;                        // coherent (low diff) + has spread
+            if(best<0||score>bestscore){ bestscore=score; best=p; }
+        }
+        if(best>=0) pal=s_clt+best*256*3;
+    }
     unsigned char* rgba=malloc((size_t)w*h*4);
     for(int y=0;y<h;y++)for(int x=0;x<w;x++){ unsigned idx=s_vram[(size_t)(v+y)*VRAM_W+(u+x)];
-        unsigned char* o=rgba+((size_t)y*w+x)*4; o[0]=s_pal[idx*3];o[1]=s_pal[idx*3+1];o[2]=s_pal[idx*3+2];o[3]=idx?255:0; }
+        unsigned char* o=rgba+((size_t)y*w+x)*4; o[0]=pal[idx*3];o[1]=pal[idx*3+1];o[2]=pal[idx*3+2];o[3]=idx?255:0; }
     GLuint t=upload(rgba,w,h); free(rgba); if(wout)*wout=w; if(hout)*hout=h; return t;
 }
 

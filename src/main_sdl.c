@@ -128,6 +128,11 @@ static const char* TRACKS[] = {
 #define TRACK_N ((int)(sizeof(TRACKS)/sizeof(TRACKS[0])))
 static GLuint g_tt_norm[TRACK_N], g_tt_sel[TRACK_N];
 static int    g_tw[TRACK_N], g_th[TRACK_N], g_tsel=0;
+// preview-image sprite name per track (LEVEL.SPR), shown on track-select (CLUT-coloured)
+static const char* PREVIEW_SPR[TRACK_N] = {
+    "CAPRIO","CHALKCAN","DETHBOWL","ULTDEST","LIBCITY","PINEHILL","REDPIKE","MOTRPLEX","COLOSEUM","THEPIT","ULTDEST","ULTDEST"
+};
+static GLuint g_prev_tex[TRACK_N]; static int g_prev_w[TRACK_N], g_prev_h[TRACK_N], g_prev_try[TRACK_N];
 static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
 // track-name index -> LEVEL.DAT level dir (best-effort mapping to the 11 playable levels)
 static const char* TRACK_LEV[TRACK_N] = {
@@ -217,6 +222,11 @@ static void render_scene(void){
         case ST_TRACKSEL: {
             ui_blit_fullscreen(g_title_tex);
             ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
+            // selected track's preview thumbnail (CLUT-coloured), lazily loaded
+            if(!g_prev_try[g_tsel]){ g_prev_try[g_tsel]=1;
+                g_prev_tex[g_tsel]=vram_sprite_tex(PREVIEW_SPR[g_tsel],&g_prev_w[g_tsel],&g_prev_h[g_tsel]); }
+            if(g_prev_tex[g_tsel]){ float pw=92,ph=pw*g_prev_h[g_tsel]/(float)g_prev_w[g_tsel];
+                ui_blit_rect(g_prev_tex[g_tsel],RENDER_W-pw-6,6,pw,ph,RENDER_W,RENDER_H); }
             float sc=0.62f, lh=13.f, y0=66.f;       // scaled list to fit 12 names
             for (int i=0;i<TRACK_N;i++){
                 GLuint t=(i==g_tsel)?g_tt_sel[i]:g_tt_norm[i];
