@@ -55,9 +55,22 @@ NOT a free rigid body — it's a TRACK-RELATIVE, TERRAIN-CONFORMING model:
   track and bank on slopes without a full suspension sim (suspension = visual wheel travel, Calc_Suspension_*).
 - Fly/2pt/1pt states replace this with ballistic/partial integration when airborne or wrecked.
 
-## Drive forces (Car_Drive_Motion @0x4413ac) — TODO read fully
-Input (throttle/brake/steer) → engine torque vs speed curve, grip/slip, → updates the track-pos speed +
-heading + lateral. Per-class (Rookie/Amateur/Pro) accel/topspeed/grip from car-select. (Drill-down next.)
+## Drive forces (Car_Drive_Motion @0x4413ac) — Q12 fixed-point velocity model
+- Car velocity is a 2-component vector in the ground plane: vx @0x75a610, vz @0x75a618 (Q12). A lateral/
+  spin term decays toward 0 each step (`v += -v>>3`-style, ~12.5%/step) when below a speed threshold or on
+  low-grip — this is the grip/slip + natural deceleration.
+- Control source ptr @0x75a2a0 (per-car pad/AI input block): throttle/brake field, steer field, etc.
+- THROTTLE/accel: `force = input * 0xccb0` (Q16 engine scale ≈0.8) `>>0xc` added to the velocity components
+  along the car's facing → forward acceleration; top speed emerges from accel vs the per-step decay.
+- STEERING: a turn delta applied to heading; rate scaled by current speed and clamped to ±0x2000 (Q12 angle
+  rate) — fast = wider turn radius. When a collision flag (@0x75a6c6) is set, steering switches to a
+  recovery/counter response instead of player/AI steer.
+- The resulting velocity integrates the track-relative position (@0x752344 struct) consumed by
+  Car_Grounded_Motion_3D (above). Brake/reverse mirror throttle with opposite/À scaled force.
+- Per-class tuning (Rookie/Amateur/Pro) scales accel/top-speed/grip (from car-select); damage reduces
+  engine force + can lock steering (the @0x75a6a6.. = -0x3fff wheel-lock writes seen on heavy hits).
+- ALL integer Q12/Q16; no float. Bit-exact port must use the same scales (0xccb0, >>0xc, ±0x2000, >>3 decay)
+  and the same per-step order to match trajectories.
 
 ## Port note
 Determinism requires the exact fixed-point math + the fixed per-step order (Car_Movement all cars →
