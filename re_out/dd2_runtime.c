@@ -1,11 +1,14 @@
-#include "ghidra_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
-unsigned char* g_image = 0;   // loaded image of dd2.exe at base 0x400000 (data segment)
-void dd2_load_image(const char* path){
-    FILE* f = fopen(path,"rb"); if(!f){ g_image=calloc(0x540000,1); return; }
-    fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
-    g_image = malloc(n>0x540000?n:0x540000); fread(g_image,1,n,f); fclose(f);
-}
+#include <string.h>
+unsigned char* g_image = (unsigned char*)0x400000;
+extern void dd2_relocate(void);
 extern int __WinMain();
-int main(){ dd2_load_image("dd2_image.bin"); return __WinMain(0,0,0,1); }
+void dd2_load_image(const char* path){
+    FILE* f=fopen(path,"rb"); if(!f){ return; }
+    fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
+    unsigned char* tmp=malloc(n); fread(tmp,1,n,f); fclose(f);
+    memcpy((void*)0x400000, tmp, n);   /* image at fixed VA so raw-VA pointers resolve */
+    free(tmp);
+}
+int main(){ dd2_load_image("dd2_image.bin"); dd2_relocate(); return __WinMain(0,0,0,1); }

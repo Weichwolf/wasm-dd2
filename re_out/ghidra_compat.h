@@ -12,6 +12,13 @@
 
 // x86 calling-convention keywords (no-ops on a flat target)
 #define swi(x) 0  /* Ghidra int-3/software-interrupt intrinsic stub */
+#define ABS(x)   ((x)<0?-(x):(x))
+#define ROUND(x) ((x)<0?(int)((x)-0.5):(int)((x)+0.5))
+#define CARRY1(a,b)  ((((uint32_t)(uint8_t)(a)+(uint32_t)(uint8_t)(b))>>8)&1u)
+#define CARRY2(a,b)  ((((uint32_t)(uint16_t)(a)+(uint32_t)(uint16_t)(b))>>16)&1u)
+#define CARRY4(a,b)  ((uint32_t)(((uint64_t)(uint32_t)(a)+(uint64_t)(uint32_t)(b))>>32))
+#define SCARRY4(a,b) (((((int32_t)(a))^((int32_t)((a)+(b))))&(((int32_t)(b))^((int32_t)((a)+(b)))))<0)
+#define SBORROW4(a,b)(((((int32_t)(a))^((int32_t)(b)))&(((int32_t)(a))^((int32_t)((a)-(b)))))<0)
 #define __cdecl
 #define __stdcall
 #define __fastcall

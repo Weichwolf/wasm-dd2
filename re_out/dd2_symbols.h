@@ -2,7 +2,8 @@
 #define DD2_SYMBOLS_H
 #include "ghidra_compat.h"
 extern unsigned char* g_image;
-#define GIMG(va) (g_image + ((va)-0x400000))
+#define GIMG(va) ((unsigned char*)(uintptr_t)(va))
+extern void draw_text_half(void);
 #define AI_CommandListDEAD (*(int*)GIMG(0x46597c))
 #define AI_CommandListGeneral_Steer_Left (*(int*)GIMG(0x4659b0))
 #define AI_CommandListGeneral_Steer_Right (*(int*)GIMG(0x465998))
@@ -2405,7 +2406,7 @@ extern int ___FirstThreadData;
 extern int ___Is_DLL;
 extern int ___OpenStreams;
 extern int __bcrgb;
-extern int __clutspace;
+extern unsigned char* __clutspace;
 extern int __cmptr;
 extern int __fcrgb;
 extern int __flg;
@@ -2420,7 +2421,7 @@ extern int __rgb0;
 extern int __scrx;
 extern int __scry;
 extern int __sigabort;
-extern int __texturespace;
+extern unsigned char* __texturespace;
 extern int __vr0;
 extern int __vr1;
 extern int __vr2;
@@ -2546,7 +2547,6 @@ extern int _wheeloff_index;
 extern int _whllck;
 extern int _yes_quit;
 extern int _yes_retire;
-extern int draw_text_half;
 extern int fog_col_;
 extern int iRam00749038;
 extern int pHVar1;
