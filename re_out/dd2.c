@@ -38988,9 +38988,8 @@ DWORD getpid(void)
 {
   DWORD DVar1;
   
-                    /* WARNING: Could not recover jumptable at 0x0045c3e2. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-  DVar1 = GetCurrentProcessId();
+  /* import-thunk: Ghidra rendered jmp[GetCurrentProcessId import] as self-recursion; stub pid */
+  DVar1 = 1;
   return DVar1;
 }
 
@@ -44241,9 +44240,8 @@ DWORD GetCurrentProcessId(void)
 {
   DWORD DVar1;
   
-                    /* WARNING: Could not recover jumptable at 0x0045c3e2. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-  DVar1 = GetCurrentProcessId();
+  /* import-thunk: Ghidra rendered jmp[GetCurrentProcessId import] as self-recursion; stub pid */
+  DVar1 = 1;
   return DVar1;
 }
 
