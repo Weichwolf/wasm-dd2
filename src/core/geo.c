@@ -37,6 +37,20 @@ static void push6(Buf* b, float x,float y,float z,float r,float g,float bl){
     float* o=b->b+b->n; o[0]=x;o[1]=y;o[2]=z;o[3]=r;o[4]=g;o[5]=bl; b->n+=6;
 }
 
+// face-record sizes (gpoly stride) by type, from the draw_face_* dispatch table (docs/REVERSING.md)
+static int face_size(int t){
+    switch(t){
+        case 2: case 46: return 16;
+        case 8: case 10: case 12: case 32: case 33: case 34: case 35: case 37: case 40: case 41: return 20;
+        case 18: case 27: return 24;
+        case 26: case 31: return 28;
+        case 30: return 32;
+        default: return 0;   // unknown -> stop walking this object
+    }
+}
+// flat-colored quad types (RGB@+4, four u16 vtx indices @+12) — confirmed by sampling
+static int is_flat20(int t){ return t==8 || t==12 || t==37 || t==41; }
+
 int geo_load(const char* path, Geo* g){
     FILE* f=fopen(path,"rb"); if(!f) return 0;
     fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
@@ -65,26 +79,28 @@ int geo_load(const char* path, Geo* g){
             long vb=off+r20, fb=off+r28;
             if(vb<0||fb<0||vb>ol) continue;
             long gp=fb;
-            for(int it=0; it<64; it++){
+            for(int it=0; it<128; it++){
                 if(gp+4>ol) break;
                 unsigned fc=u16(out+gp); int ft=out[gp+2], term=out[gp+3]; gp+=4;
                 if(term==0||fc==0||fc>3000) break;
-                if(ft!=12) break;                            // type 12 (flat quad) only, for now
-                for(unsigned fi=0;fi<fc;fi++){
-                    long rr=gp+fi*20;
-                    if(rr+20>ol) break;
-                    int id[4]; for(int k=0;k<4;k++) id[k]=u16(out+rr+12+k*2);
-                    float cr=out[rr+4]/255.f, cg=out[rr+5]/255.f, cb=out[rr+6]/255.f;
-                    int ok=1; for(int k=0;k<4;k++) if(id[k]>=nv){ ok=0; break; }
-                    if(!ok) continue;
-                    float P[4][3];
-                    for(int k=0;k<4;k++){ const unsigned char* vp=out+vb+id[k]*8;
-                        P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
-                    // quad (0,1,2,3) -> tris (0,1,2)+(0,2,3)
-                    int tri[6]={0,1,2,0,2,3};
-                    for(int k=0;k<6;k++) push6(&buf,P[tri[k]][0],P[tri[k]][1],P[tri[k]][2],cr,cg,cb);
+                int sz=face_size(ft);
+                if(sz<=0) break;                                  // unknown type -> stop this object
+                if(is_flat20(ft)){                                // flat-colored quad (rgb@+4, idx@+12)
+                    for(unsigned fi=0;fi<fc;fi++){
+                        long rr=gp+fi*sz;
+                        if(rr+20>ol) break;
+                        int id[4]; for(int k=0;k<4;k++) id[k]=u16(out+rr+12+k*2);
+                        float cr=out[rr+4]/255.f, cg=out[rr+5]/255.f, cb=out[rr+6]/255.f;
+                        int ok=1; for(int k=0;k<4;k++) if(id[k]>=nv){ ok=0; break; }
+                        if(!ok) continue;
+                        float P[4][3];
+                        for(int k=0;k<4;k++){ const unsigned char* vp=out+vb+id[k]*8;
+                            P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
+                        int tri[6]={0,1,2,0,2,3};
+                        for(int k=0;k<6;k++) push6(&buf,P[tri[k]][0],P[tri[k]][1],P[tri[k]][2],cr,cg,cb);
+                    }
                 }
-                gp+=fc*20;
+                gp+=fc*sz;
             }
         }
         free(out);
