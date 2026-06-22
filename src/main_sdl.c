@@ -293,8 +293,8 @@ static void render_scene(void){
             mat4_lookat(view,eye,at,v3(0,1,0));
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
             render_sky();                       // gradient sky/horizon
-            render_track(view,proj);
-            render_geo(view,proj);              // authentic scene geometry (flat quads)
+            render_track(view,proj);            // drivable surface (procedural brown dirt matches ref colour)
+            render_geo(view,proj);              // authentic decoded scenery geometry
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
                 draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8],cc->hits); }
             // HUD (real bitmap font over the 3D view)
