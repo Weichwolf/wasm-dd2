@@ -367,3 +367,12 @@ STRUCTURE MATCHES: orange/white "DESTRUCTION DERBY 2" logo top, 7-button radial 
 as in-race textures): (1) buttons render light-blue squares vs ref's dark-grey metal CIRCLES (RING sprite
 front-end CLUT off); (2) logo washed-out vs ref's bold white+orange "2"; (3) backdrop now procedural
 scratched brown-metal (was flat grey). Achievable without xdotool since the demo's title frame = the menu.
+
+## Car model — REAL geometry is static EXE data (extraction roadmap)
+Draw_Car() (named) renders cars via car_object[] (0x38 B/entry) + car_vertices (0x330=816 B/car x 8 cars
+= ~102 int16 xyz+pad verts/car), near VA 0x75a600. Same object format as scenery (verts@+0x20, faces@+0x28),
+so geo.c's decoder applies. InitialiseDenting copies into mid_car_vertices (0xcc dwords) / high_car_vertices
+(0xd6) for runtime denting. Line 13502: level_data+0x40 obj verts ptr = &car_vertices + carIdx*0x330.
+EXTRACTION PATH: disassemble Draw_Car/FUN_00444e3c to pin car_vertices & car_object VAs -> dump bytes from
+.data -> decode object (verts+faces) like geo.c -> render real low-poly car (replaces box stand-in).
+Multi-step; cars are small in chase view so lower priority than the verified menu/in-race fidelity.
