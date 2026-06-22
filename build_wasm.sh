@@ -9,8 +9,12 @@ PRELOAD=()
 for L in 1 2 3 4 5 6 7 8 9 A B; do
   PRELOAD+=( --preload-file "assets/raw/LEV$L/LEVEL.DAT@/assets/raw/LEV$L/LEVEL.DAT" )
 done
+# front-end assets
+for FE in LEV0/COPYRIGH.BMP LEV0/LOADING.BMP LEV0/FONT.BNK LEV0/LEVEL.SPR LEV0/LEVEL.PAL; do
+  PRELOAD+=( --preload-file "assets/raw/$FE@/assets/raw/$FE" )
+done
 emcc -O2 -Isrc -DDD2_TIRE \
-  src/main_sdl.c src/core/track.c src/core/vehicle.c src/core/race.c src/render/render.c \
+  src/main_sdl.c src/core/track.c src/core/vehicle.c src/core/race.c src/render/render.c src/render/ui.c \
   -sUSE_SDL=3 -sFULL_ES3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=0 \
   "${PRELOAD[@]}" \
