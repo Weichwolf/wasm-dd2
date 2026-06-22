@@ -79,11 +79,11 @@ static const char* TFS =
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
     "  if(p.a<0.05) discard;\n"                                 // only true-transparent (alpha 0) = foliage key
-    "  vec3 c=p.rgb;\n"                                         // match dd2h LEV6: warm/brown + BRIGHTER
+    "  vec3 c=p.rgb;\n"                                         // VERIFIED daytime: bright, near-neutral (not warm/saturated)
     "  float l=dot(c,vec3(0.299,0.587,0.114));\n"
-    "  c=mix(vec3(l),c,1.28);\n"                                // mild +saturation
-    "  c*=vec3(1.74,1.44,1.10);\n"                              // brighten + warm toward dd2h (122,105,83)
-    "  c=mix(c, vec3(0.62,0.55,0.45), v_d*0.4);\n"            // warm haze
+    "  c=mix(vec3(l),c,1.05);\n"                                // minimal sat boost (avoid garish scenery)
+    "  c*=vec3(1.5,1.5,1.42);\n"                                // brighten near-neutral toward daytime (overall ~150)
+    "  c=mix(c, vec3(0.74,0.77,0.77), v_d*0.35);\n"           // light daytime haze toward blue sky
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
 static int s_tex_verts; static float s_vsz[2];
