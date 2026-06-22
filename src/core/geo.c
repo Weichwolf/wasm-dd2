@@ -30,6 +30,7 @@ static unsigned char* lzss(const unsigned char* d, long n, long off, long* outle
     *outlen=size; return out;
 }
 
+static int cmp_f(const void* a, const void* b){ float x=*(const float*)a, y=*(const float*)b; return x<y?-1:(x>y?1:0); }
 // grow buffer of floats
 typedef struct { float* b; long n, cap; } Buf;
 static void push6(Buf* b, float x,float y,float z,float r,float g,float bl){
@@ -107,6 +108,16 @@ int geo_load(const char* path, Geo* g){
     }
     free(d);
     g->v=buf.b; g->nverts=(int)(buf.n/6);
+    // Align to the sim plane: the sim's track path is flat at Y=0, but the real geo has true
+    // elevation centered well below. Recenter geo Y to its median so the ground sits near Y=0
+    // (where the cars are). XZ already shares origin with the sim.
+    if(g->nverts>0){
+        float* ys=malloc(sizeof(float)*g->nverts);
+        for(int i=0;i<g->nverts;i++) ys[i]=g->v[i*6+1];
+        qsort(ys,g->nverts,sizeof(float),cmp_f);
+        float medy=ys[g->nverts/2]; free(ys);
+        for(int i=0;i<g->nverts;i++) g->v[i*6+1]-=medy;       // ground -> ~0
+    }
     fprintf(stderr,"geo_load %s: %d verts (%d tris)\n",path,g->nverts,g->nverts/3);
     return g->nverts>0;
 }
