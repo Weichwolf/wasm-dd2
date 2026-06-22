@@ -114,7 +114,7 @@ static GLint  g_u_tex;
 static unsigned char* g_readback;
 static int g_codec_ready = 0, g_frameno = 0;
 static AppState g_state = ST_TITLE;
-static GLuint g_title_tex, g_dim_tex, g_car_sw[8];
+static GLuint g_title_tex, g_dim_tex, g_car_sw[8], g_metal_tex;
 // main menu (real DD2 front-end strings), rendered in the bitmap font
 static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 #define MENU_N ((int)(sizeof(MENU)/sizeof(MENU[0])))
@@ -222,8 +222,7 @@ static void render_scene(void){
     switch(g_state){
         case ST_TITLE: ui_blit_fullscreen(g_title_tex); break;
         case ST_MENU: {
-            ui_blit_fullscreen(g_title_tex);
-            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);   // darken bg toward metal
+            ui_blit_rect(g_metal_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);   // metal backdrop
             if(g_logo_tex && g_logow>0){ float lw=180.f, lh=lw*g_logoh/(float)g_logow;
                 ui_blit_rect(g_logo_tex,(RENDER_W-lw)/2.f,12,lw,lh,RENDER_W,RENDER_H); }
             for(int i=0;i<MBTN_N;i++){
@@ -421,6 +420,9 @@ int main(void){
     ui_init(); present_init(); render_init(); g_raw=em_raw_param();
     { unsigned char d[4]={0,0,0,170}; glGenTextures(1,&g_dim_tex); glBindTexture(GL_TEXTURE_2D,g_dim_tex);
       glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,d);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
+    { unsigned char m[4]={108,105,99,255}; glGenTextures(1,&g_metal_tex); glBindTexture(GL_TEXTURE_2D,g_metal_tex);   // menu metal backdrop
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,m);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
     for(int i=0;i<8;i++){ unsigned char c[4]={(unsigned char)(CAR_COLS[i][0]*255),(unsigned char)(CAR_COLS[i][1]*255),(unsigned char)(CAR_COLS[i][2]*255),255};
       glGenTextures(1,&g_car_sw[i]); glBindTexture(GL_TEXTURE_2D,g_car_sw[i]);
