@@ -158,7 +158,7 @@ void geo_free(Geo* g){ free(g->v); free(g->tv); free(g->vram); free(g->clut); me
 // Load the real car mesh: the LEVEL.DAT object pointed to by _level_data+0x40 (file dword 0x10),
 // nv=102 int16 verts @+0x2c, faces @+0x82c (same objdef format as scenery). Decode flat-colored tris
 // into g->v (pos3+rgb3), centred in car-local space + sat on the ground. CARSCALE tuned to sim car size.
-#define CARSCALE (1.0f/170.0f)
+#define CARSCALE (1.0f/140.0f)
 int geo_load_car(const char* dat_path, Geo* car){
     memset(car,0,sizeof(*car));
     long n; unsigned char* d=rd(dat_path,&n); if(!d) return 0;
@@ -184,12 +184,14 @@ int geo_load_car(const char* dat_path, Geo* car){
             float P[4][3];
             for(int k=0;k<cn;k++){ const unsigned char* vp=d+vb+id[k]*8;
                 P[k][0]=i16(vp)*CARSCALE; P[k][1]=(i16(vp+2)-ymid)*CARSCALE; P[k][2]=i16(vp+4)*CARSCALE; }
-            float cr=d[rr+4]/255.f,cg=d[rr+5]/255.f,cb=d[rr+6]/255.f;   // panel base colour
-            // simple face light so panels read as a 3D body
+            // car panels carry no RGB in the record (those bytes are flag/clut fields); the body is
+            // a light base tinted per-car by render_car. Face-light so panels read as a 3D body.
+            float base=0.92f;
             float e1x=P[1][0]-P[0][0],e1y=P[1][1]-P[0][1],e1z=P[1][2]-P[0][2];
             float e2x=P[2][0]-P[0][0],e2y=P[2][1]-P[0][1],e2z=P[2][2]-P[0][2];
             float ny=e1z*e2x-e1x*e2z; float nl=sqrtf((e1y*e2z-e1z*e2y)*(e1y*e2z-e1z*e2y)+ny*ny+(e1x*e2y-e1y*e2x)*(e1x*e2y-e1y*e2x));
-            float sh=0.6f+0.4f*(nl>1e-6f?(ny/nl<0?-ny/nl:ny/nl):0.5f); cr*=sh;cg*=sh;cb*=sh;
+            float sh=0.55f+0.45f*(nl>1e-6f?(ny/nl<0?-ny/nl:ny/nl):0.5f);
+            float cr=base*sh,cg=base*sh,cb=base*sh;
             int tri[6]={0,1,2,0,2,3};
             for(int k=0;k<(quad?6:3);k++){ int vi=tri[k]; float row[6]={P[vi][0],P[vi][1],P[vi][2],cr,cg,cb}; push(&flat,row,6); }
         }
