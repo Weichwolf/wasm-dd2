@@ -44176,6 +44176,7 @@ DWORD GetCurrentThreadId(void)
 
 /* ===== GetFileType @ 0045c3be ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 DWORD GetFileType(HANDLE hFile)
 
 {
@@ -44186,6 +44187,7 @@ DWORD GetFileType(HANDLE hFile)
   DVar1 = 1;
   return DVar1;
 }
+#endif
 
 
 /* ===== GetLastError @ 0045c3c4 ===== */
@@ -44232,6 +44234,7 @@ BOOL SetStdHandle(DWORD nStdHandle,HANDLE hHandle)
 
 /* ===== WriteFile @ 0045c3d6 ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 BOOL WriteFile(HANDLE hFile,LPCVOID lpBuffer,DWORD nNumberOfBytesToWrite,
               LPDWORD lpNumberOfBytesWritten,LPOVERLAPPED lpOverlapped)
 
@@ -44243,10 +44246,12 @@ BOOL WriteFile(HANDLE hFile,LPCVOID lpBuffer,DWORD nNumberOfBytesToWrite,
   BVar1 = 1;
   return BVar1;
 }
+#endif
 
 
 /* ===== CloseHandle @ 0045c3dc ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 BOOL CloseHandle(HANDLE hObject)
 
 {
@@ -44257,6 +44262,7 @@ BOOL CloseHandle(HANDLE hObject)
   BVar1 = 1;
   return BVar1;
 }
+#endif
 
 
 /* ===== GetCurrentProcessId @ 0045c3e2 ===== */
@@ -44274,6 +44280,7 @@ DWORD GetCurrentProcessId(void)
 
 /* ===== ReadFile @ 0045c3e8 ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 BOOL ReadFile(HANDLE hFile,LPVOID lpBuffer,DWORD nNumberOfBytesToRead,LPDWORD lpNumberOfBytesRead,
              LPOVERLAPPED lpOverlapped)
 
@@ -44285,10 +44292,12 @@ BOOL ReadFile(HANDLE hFile,LPVOID lpBuffer,DWORD nNumberOfBytesToRead,LPDWORD lp
   BVar1 = 1;
   return BVar1;
 }
+#endif
 
 
 /* ===== SetFilePointer @ 0045c3ee ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 DWORD SetFilePointer(HANDLE hFile,LONG lDistanceToMove,PLONG lpDistanceToMoveHigh,DWORD dwMoveMethod
                     )
 
@@ -44300,6 +44309,7 @@ DWORD SetFilePointer(HANDLE hFile,LONG lDistanceToMove,PLONG lpDistanceToMoveHig
   DVar1 = 1;
   return DVar1;
 }
+#endif
 
 
 /* ===== GetModuleHandleA @ 0045c3f4 ===== */
@@ -44387,6 +44397,7 @@ void ExitProcess(UINT uExitCode)
 
 /* ===== CreateFileA @ 0045c418 ===== */
 
+#if 0 /* real shim in dd2_filio.c */
 HANDLE CreateFileA(LPCSTR lpFileName,DWORD dwDesiredAccess,DWORD dwShareMode,
                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,DWORD dwCreationDisposition,
                   DWORD dwFlagsAndAttributes,HANDLE hTemplateFile)
@@ -44399,6 +44410,7 @@ HANDLE CreateFileA(LPCSTR lpFileName,DWORD dwDesiredAccess,DWORD dwShareMode,
   pvVar1 = 1;
   return pvVar1;
 }
+#endif
 
 
 /* ===== joyGetDevCapsA @ 0045c41e ===== */

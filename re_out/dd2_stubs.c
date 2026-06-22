@@ -1,6 +1,5 @@
 /* matching-signature stubs for excluded-CRT + a few Win32 fns (replace emcc abort-stubs to run past CRT init) */
 #include "ghidra_compat.h"
-int __NTAddFileHandle(int p){ return 1; }           /* success */
 unsigned __doclose(void* p,int q){ return 0; }
 char* __cvt(double v,int n,void* d,void* s){ if(d)*(int*)d=0; if(s)*(int*)s=0; return ""; }
 void FUN_0042304c(byte* p){ }

@@ -30,8 +30,7 @@ int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
     *(int*)0x46c32c = (int)(long)&dd2_getthread;  /* __GetThreadPtr */
-    /* CRT multithread file/heap-access locks (_Access*/_Release* @0x46c330-0x46c364, __* undecompiled)
-       -> single-threaded no-ops */
+    /* CRT multithread file/heap-access locks (Access/Release @0x46c330-0x46c364) -> single-threaded no-ops */
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
     __InitRtns();                 /* run global constructors (game data tables) */
     dd2_com_init();               /* set up DirectDraw COM interface vtables */
