@@ -61,7 +61,7 @@ static const char* SFS =
     "  vec3 base=mix(hor,zen,clamp(v_p.y,0.0,1.0));\n"
     "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // cloud variation
     "  base*=0.93+0.10*c;\n"
-    "  base=mix(vec3(0.30,0.32,0.31), base, u_skybright);\n"   // overcast: pull toward dark stormy grey
+    "  base=mix(vec3(0.26,0.30,0.25), base, u_skybright);\n"   // overcast: pull toward dark stormy green-grey (saturated)
     "  gl_FragColor=vec4(base,1.0); }\n";
 static GLuint s_sky_prog, s_sky_vbo; static GLint u_skybright;
 static float g_skybright=1.0f;   // per-level sky overcast factor (1=clear, low=stormy)
