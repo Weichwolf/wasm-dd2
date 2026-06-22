@@ -75,8 +75,8 @@ int geo_load(const char* path, Geo* g){
     load_vram(lev, g);
     // CLUT (RGB palettes)
     char cp[256]; snprintf(cp,sizeof(cp),"assets/raw/%s/LEVEL.CLT",lev); long nclt; unsigned char* clt=rd(cp,&nclt);
-    if(clt){ g->nclut=nclt/1024; g->clut=malloc((size_t)g->nclut*256*3);
-        for(int pi=0;pi<g->nclut;pi++)for(int i=0;i<256;i++){const unsigned char* s=clt+pi*1024+i*4;unsigned char* o=g->clut+(pi*256+i)*3;o[0]=s[0];o[1]=s[1];o[2]=s[2];}
+    if(clt){ g->nclut=nclt/1024; g->clut=malloc((size_t)g->nclut*256*4);  // keep RGBA (4th byte = alpha/key)
+        memcpy(g->clut, clt, (size_t)g->nclut*1024);
         free(clt); }
     // TDF (texture table)
     char tp[256]; snprintf(tp,sizeof(tp),"assets/raw/%s/LEVEL.TDF",lev); long ntdf_b; unsigned char* tdf=rd(tp,&ntdf_b);

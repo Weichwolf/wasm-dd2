@@ -44,7 +44,7 @@ static const char* GVS =
     "void main(){ v_col=a_col; vec4 p=u_mvp*vec4(a_pos,1.0); v_d=clamp(p.z*0.0016,0.0,1.0); gl_Position=p; }\n";
 static const char* GFS =
     "precision mediump float; varying vec3 v_col; varying float v_d;\n"
-    "void main(){ vec3 c=mix(v_col, vec3(0.45,0.55,0.7), v_d*0.55); gl_FragColor=vec4(c,1.0); }\n";
+    "void main(){ vec3 c=mix(v_col, vec3(0.55,0.55,0.52), v_d*0.5); gl_FragColor=vec4(c,1.0); }\n";
 static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts;
 
 // sky gradient (fullscreen NDC quad; horizon light -> zenith deeper blue)
@@ -74,9 +74,9 @@ static const char* TFS =
     "in vec2 v_uv; flat in int v_cl; in float v_d; out vec4 o;\n"
     "uniform sampler2D u_vram; uniform sampler2D u_pal;\n"
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
-    "  if(idx==0) discard;\n"                                   // index 0 = transparent (PSX key) -> foliage gaps
-    "  vec3 c=texelFetch(u_pal, ivec2(idx, v_cl), 0).rgb;\n"
-    "  c=mix(c, vec3(0.45,0.55,0.7), v_d*0.55);\n"
+    "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
+    "  if(p.a<0.3) discard;\n"                                  // CLUT alpha=0 -> transparent (foliage key)
+    "  vec3 c=mix(p.rgb, vec3(0.55,0.55,0.52), v_d*0.5);\n"
     "  o=vec4(c,1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
 static int s_tex_verts; static float s_vsz[2];
@@ -133,7 +133,7 @@ void render_geo_set_tex(const float* tv,int ntv,const unsigned char* vram,int vw
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE); }
     if(clut){ glBindTexture(GL_TEXTURE_2D,s_pal_tex);
         glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-        glTexImage2D(GL_TEXTURE_2D,0,GL_RGB8,256,nclut,0,GL_RGB,GL_UNSIGNED_BYTE,clut);
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,256,nclut,0,GL_RGBA,GL_UNSIGNED_BYTE,clut);  // RGBA: 4th=alpha/key
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
 }
 void render_geo_tex(const float* view,const float* proj){
