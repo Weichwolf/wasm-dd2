@@ -46,6 +46,7 @@ static const char* GFS =
     "precision mediump float; varying vec3 v_col; varying float v_d;\n"
     "void main(){ vec3 c=mix(v_col*1.25, vec3(0.58,0.52,0.43), v_d*0.5); gl_FragColor=vec4(c,1.0); }\n";  // brighten+warm
 static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts;
+static GLuint s_car_vbo; static const float* g_car_tv; static int g_car_nv;   // real car mesh (pos3+rgb3, car-local)
 
 // sky gradient (fullscreen NDC quad; horizon light -> zenith deeper blue)
 static const char* SVS =
@@ -259,6 +260,27 @@ void render_box(const float* view,const float* proj,vec3 c,vec3 he,float yaw,flo
     glBufferData(GL_ARRAY_BUFFER,(size_t)n*7*sizeof(float),verts,GL_DYNAMIC_DRAW);
     set_attribs();
     glDrawArrays(GL_TRIANGLES,0,n);
+}
+
+void render_car_set(const float* tv,int nverts){ g_car_tv=tv; g_car_nv=nverts; }
+void render_car(const float* view,const float* proj,vec3 pos,float yaw,float tr,float tg,float tb){
+    if(!g_car_tv||g_car_nv<=0) return;
+    if(!s_car_vbo) glGenBuffers(1,&s_car_vbo);
+    float cs=cosf(yaw), sn=sinf(yaw);
+    static float* buf=NULL; static int cap=0;
+    if(g_car_nv>cap){ cap=g_car_nv; buf=(float*)realloc(buf,(size_t)cap*6*sizeof(float)); }
+    for(int i=0;i<g_car_nv;i++){ const float* s=g_car_tv+i*6; float* o=buf+i*6;
+        float lx=s[0],ly=s[1],lz=s[2];                       // car-local -> world by yaw+translate
+        o[0]=pos.x+cs*lx-sn*lz; o[1]=pos.y+ly; o[2]=pos.z+sn*lx+cs*lz;
+        o[3]=s[3]*tr; o[4]=s[4]*tg; o[5]=s[5]*tb;             // tint panel colour by car colour
+    }
+    float mvp[16]; mat4_mul(mvp,proj,view);
+    glUseProgram(s_geo_prog); glUniformMatrix4fv(ug_mvp,1,GL_FALSE,mvp);
+    glBindBuffer(GL_ARRAY_BUFFER,s_car_vbo);
+    glBufferData(GL_ARRAY_BUFFER,(size_t)g_car_nv*6*sizeof(float),buf,GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(1); glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(3*sizeof(float)));
+    glDrawArrays(GL_TRIANGLES,0,g_car_nv);
 }
 
 void render_shutdown(void){}

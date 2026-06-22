@@ -206,12 +206,15 @@ static void hud_text(const char* s, float x, float y, float scale, int hi){
 
 // a recognizable stock-car: low wide body + rear cabin + 4 dark wheels (composed from boxes).
 // Battle damage: body darkens + crumples (lower/narrower) with hit count.
+static int g_car_mesh_ok=0;
 static void draw_car(const float* view, const float* proj, vec3 p, float yaw, const float* col, int hits){
     float cs=cosf(yaw), sn=sinf(yaw);
     float dmg = hits>24?1.0f:(float)hits/24.f;            // 0..1 damage
     float k = 1.0f - dmg*0.55f;                           // darken (soot/dents)
     float sq = 1.0f - dmg*0.28f;                          // crumple
     float br=col[0]*k, bg=col[1]*k, bb=col[2]*k;          // body colour
+    if(g_car_mesh_ok){ render_car(view,proj,p,yaw,br,bg,bb); return; }   // real decoded car mesh
+    (void)cs;(void)sn;(void)sq;
     // local-offset box: oriented by yaw (z=forward, x=side, y=up)
     #define PART(ox,oy,oz, hx,hy,hz, r,g,b) render_box(view,proj, \
         v3(p.x+cs*(ox)-sn*(oz), p.y+(oy), p.z+sn*(ox)+cs*(oz)), v3(hx,hy,hz), yaw, r,g,b)
@@ -393,6 +396,7 @@ static void start_race(int idx){
         geo_free(&g_geo); if(geo_load(dat,&g_geo)){ render_geo_set(g_geo.v,g_geo.nverts);
             render_geo_set_tex(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut);
             gte_render_set(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut); }
+        if(!g_car_mesh_ok){ static Geo cm; if(geo_load_car(dat,&cm)){ render_car_set(cm.v,cm.nverts); g_car_mesh_ok=1; } }
         g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);

@@ -63,7 +63,7 @@ static void load_vram(const char* lev, Geo* g){
     free(tx0); free(pool);
 }
 
-static int face_size(int t){ switch(t){case 2:case 46:return 16;case 18:case 27:return 24;case 26:case 31:return 28;case 30:return 32;default:return 20;} }
+static int face_size(int t){ switch(t){case 2:case 4:case 46:return 16;case 18:case 27:return 24;case 26:case 31:return 28;case 30:return 32;default:return 20;} }
 // type 14 (and other 20B textured) carry a texture-index @ +8 into TDF; flat types use rgb@+4.
 static int is_textured(int t){ return t==12 || t==14 || t==30; }
 
@@ -103,8 +103,8 @@ int geo_load(const char* path, Geo* g){
                     // table @0x462d94): type 2 (flat) reads idx@8,10,12; types 12/14 + most 3pt drawers
                     // read idx@12,14,16; only the explicit 4-point types (30/31) are quads. Treating
                     // 3pt faces as quads (old heuristic) fabricated spurious tris from non-vertex bytes.
-                    int vo = (ft==2)?8:((sz==32)?0x18:12);
-                    int quad = (ft==30||ft==31);          // explicit 4pt types; all others are triangles
+                    int vo = (ft==2||ft==4)?8:((sz==32)?0x18:12);
+                    int quad = (ft==4||ft==30||ft==31);   // explicit 4pt types (incl. type-4 16B quad); rest tris
                     int cn = quad?4:3;
                     int id[4]={0,0,0,0}; for(int k=0;k<cn;k++) id[k]=u16(out+rr+vo+k*2);
                     if(id[0]>=nv||id[1]>=nv||id[2]>=nv) continue;
@@ -154,3 +154,49 @@ int geo_load(const char* path, Geo* g){
 }
 
 void geo_free(Geo* g){ free(g->v); free(g->tv); free(g->vram); free(g->clut); memset(g,0,sizeof(*g)); }
+
+// Load the real car mesh: the LEVEL.DAT object pointed to by _level_data+0x40 (file dword 0x10),
+// nv=102 int16 verts @+0x2c, faces @+0x82c (same objdef format as scenery). Decode flat-colored tris
+// into g->v (pos3+rgb3), centred in car-local space + sat on the ground. CARSCALE tuned to sim car size.
+#define CARSCALE (1.0f/170.0f)
+int geo_load_car(const char* dat_path, Geo* car){
+    memset(car,0,sizeof(*car));
+    long n; unsigned char* d=rd(dat_path,&n); if(!d) return 0;
+    unsigned off=u32(d+0x40);                          // mid-detail car object (relative file offset)
+    if(off==0||off+0x2c>=(unsigned)n){ free(d); return 0; }
+    int nv=(u32(d+off+8)>>16)&0xffff; unsigned r20=u32(d+off+0x20),r28=u32(d+off+0x28);
+    long vb=off+r20, fb=off+r28;
+    if(nv<=0||nv>2000||vb+nv*8>n||fb>=n){ free(d); return 0; }
+    // centre the verts (median) so the model sits about its origin; raise so wheels touch ground
+    float miny=1e9f,maxy=-1e9f;
+    for(int i=0;i<nv;i++){ float y=i16(d+vb+i*8+2); if(y<miny)miny=y; if(y>maxy)maxy=y; }
+    float ymid=(miny+maxy)*0.5f;
+    Buf flat={0}; long gp=fb;
+    for(int it=0;it<128;it++){ if(gp+4>n)break;
+        unsigned fc=u16(d+gp); int ft=d[gp+2],term=d[gp+3]; gp+=4;
+        if(term==0||fc==0||fc>3000||ft==0xff) break;
+        int sz=face_size(ft);
+        for(unsigned fi=0;fi<fc;fi++){ long rr=gp+fi*sz; if(rr+sz>n)break;
+            int vo=(ft==2||ft==4)?8:((sz==32)?0x18:12); int quad=(ft==4||ft==30||ft==31); int cn=quad?4:3;
+            int id[4]={0,0,0,0}; for(int k=0;k<cn;k++) id[k]=u16(d+rr+vo+k*2);
+            if(id[0]>=nv||id[1]>=nv||id[2]>=nv) continue;
+            if(quad&&(id[3]>=nv||id[3]==id[0])){ quad=0; cn=3; }
+            float P[4][3];
+            for(int k=0;k<cn;k++){ const unsigned char* vp=d+vb+id[k]*8;
+                P[k][0]=i16(vp)*CARSCALE; P[k][1]=(i16(vp+2)-ymid)*CARSCALE; P[k][2]=i16(vp+4)*CARSCALE; }
+            float cr=d[rr+4]/255.f,cg=d[rr+5]/255.f,cb=d[rr+6]/255.f;   // panel base colour
+            // simple face light so panels read as a 3D body
+            float e1x=P[1][0]-P[0][0],e1y=P[1][1]-P[0][1],e1z=P[1][2]-P[0][2];
+            float e2x=P[2][0]-P[0][0],e2y=P[2][1]-P[0][1],e2z=P[2][2]-P[0][2];
+            float ny=e1z*e2x-e1x*e2z; float nl=sqrtf((e1y*e2z-e1z*e2y)*(e1y*e2z-e1z*e2y)+ny*ny+(e1x*e2y-e1y*e2x)*(e1x*e2y-e1y*e2x));
+            float sh=0.6f+0.4f*(nl>1e-6f?(ny/nl<0?-ny/nl:ny/nl):0.5f); cr*=sh;cg*=sh;cb*=sh;
+            int tri[6]={0,1,2,0,2,3};
+            for(int k=0;k<(quad?6:3);k++){ int vi=tri[k]; float row[6]={P[vi][0],P[vi][1],P[vi][2],cr,cg,cb}; push(&flat,row,6); }
+        }
+        gp+=fc*sz;
+    }
+    free(d);
+    car->v=flat.b; car->nverts=(int)(flat.n/6);
+    fprintf(stderr,"geo_load_car: %d tri-verts (nv=%d)\n",car->nverts,nv);
+    return car->nverts>0;
+}

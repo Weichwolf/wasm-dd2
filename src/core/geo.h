@@ -11,6 +11,7 @@ typedef struct {
 } Geo;
 
 int  geo_load(const char* dat_path, Geo* g);   // 1 on success
+int  geo_load_car(const char* dat_path, Geo* car);  // real car mesh (LEVEL.DAT obj @+0x40) -> flat tris
 void geo_free(Geo* g);
 
 #endif
