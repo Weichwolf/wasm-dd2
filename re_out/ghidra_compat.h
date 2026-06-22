@@ -40,6 +40,8 @@ typedef uint8_t  undefined1;
 typedef uint16_t undefined2;
 typedef uint32_t undefined4;
 typedef uint32_t undefined3;
+typedef int32_t int3; typedef uint32_t uint3;
+typedef int64_t int5,int6,int7; typedef uint64_t uint5,uint6,uint7;
 typedef uint64_t undefined5;
 typedef uint64_t undefined6;
 typedef uint64_t undefined7;

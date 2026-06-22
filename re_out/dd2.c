@@ -8702,6 +8702,7 @@ void __cdecl Translate_Keypress(uint param_1,uint param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiled CRT -> libc */
 void __cdecl FUN_0042304c(byte *param_1)
 
 {
@@ -8728,6 +8729,7 @@ void __cdecl FUN_0042304c(byte *param_1)
   }
   return;
 }
+#endif
 
 
 /* ===== InitCardSystem @ 004230f0 ===== */
@@ -37259,6 +37261,7 @@ FILE * __cdecl fopen(char *_Filename,char *_Mode)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiled CRT -> libc */
 FILE * __cdecl FUN_00455f3b(FILE *param_1)
 
 {
@@ -37297,10 +37300,12 @@ LAB_00455f67:
     puVar2 = (undefined4 *)*puVar2;
   } while( true );
 }
+#endif
 
 
 /* ===== FUN_00455fb0 @ 00455fb0 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 int * __cdecl FUN_00455fb0(char *param_1,byte *param_2,FILE *param_3)
 
 {
@@ -37327,6 +37332,7 @@ int * __cdecl FUN_00455fb0(char *param_1,byte *param_2,FILE *param_3)
   }
   return piVar4;
 }
+#endif
 
 
 /* ===== FUN_00456034 @ 00456034 ===== */
@@ -37425,6 +37431,7 @@ LAB_004560cd:
 
 /* ===== fread @ 00456201 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 size_t __cdecl fread(void *_DstBuf,size_t _ElementSize,size_t _Count,FILE *_File)
 
 {
@@ -37529,6 +37536,7 @@ LAB_0045632c:
   *(byte *)&_File->_flag = (byte)_File->_flag | 0x10;
   goto LAB_004563d3;
 }
+#endif
 
 
 /* ===== fclose @ 004563f1 ===== */
@@ -37620,6 +37628,7 @@ void __cdecl FUN_0045645e(undefined1 *param_1,uint param_2)
 
 /* ===== __doclose @ 004564d3 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 uint __cdecl __doclose(FILE *param_1,int param_2)
 
 {
@@ -37658,6 +37667,7 @@ uint __cdecl __doclose(FILE *param_1,int param_2)
   }
   return uVar3;
 }
+#endif
 
 
 /* ===== strcmp @ 004565b0 ===== */
@@ -37844,6 +37854,7 @@ int __cdecl atoi(char *_Str)
 
 /* ===== fwrite @ 004567ce ===== */
 
+#if 0 /* decompiled CRT -> libc */
 size_t __cdecl fwrite(void *_Str,size_t _Size,size_t _Count,FILE *_File)
 
 {
@@ -37957,10 +37968,12 @@ LAB_00456918:
   }
   return sVar4;
 }
+#endif
 
 
 /* ===== ftell @ 004569e0 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 long __cdecl ftell(FILE *_File)
 
 {
@@ -37983,6 +37996,7 @@ long __cdecl ftell(FILE *_File)
   }
   return iVar2;
 }
+#endif
 
 
 /* ===== __null_int23_exit @ 00456a32 ===== */
@@ -38820,6 +38834,7 @@ DWORD __cdecl FUN_00457408(int param_1,LPVOID param_2,DWORD param_3)
 
 /* ===== fgetc @ 00457497 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 int __cdecl fgetc(FILE *_File)
 
 {
@@ -38863,10 +38878,12 @@ int __cdecl fgetc(FILE *_File)
   (*(code *)_ReleaseFileH)(_File->_file);
   return uVar1;
 }
+#endif
 
 
 /* ===== __filbuf @ 00457542 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 int __cdecl __filbuf(FILE *_File)
 
 {
@@ -38882,6 +38899,7 @@ int __cdecl __filbuf(FILE *_File)
   _File->_ptr = (char *)(pbVar1 + 1);
   return (uint)*pbVar1;
 }
+#endif
 
 
 /* ===== FUN_00457571 @ 00457571 ===== */
@@ -40086,6 +40104,7 @@ DWORD __cdecl __qwrite(uint param_1,LPCVOID param_2,DWORD param_3)
 
 /* ===== fputc @ 004586c4 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 int __cdecl fputc(int _Ch,FILE *_File)
 
 {
@@ -40137,6 +40156,7 @@ LAB_004586f8:
   (*(code *)_ReleaseFileH)(_File->_file);
   return _Ch & 0xff;
 }
+#endif
 
 
 /* ===== __WinMain @ 004587c0 ===== */
@@ -40998,6 +41018,7 @@ void __full_io_exit(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiled CRT -> libc */
 int __cdecl FUN_0045987f(int param_1)
 
 {
@@ -41030,6 +41051,7 @@ LAB_004598c8:
   }
   goto LAB_004598d5;
 }
+#endif
 
 
 /* ===== flushall @ 004598df ===== */
@@ -41812,6 +41834,7 @@ void __cdecl __fatal_runtime_error(char *param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiled CRT -> libc */
 uint __cdecl FUN_0045a174(HANDLE param_1)
 
 {
@@ -41859,6 +41882,7 @@ uint __cdecl FUN_0045a174(HANDLE param_1)
   _DAT_00908704 = local_20.Event.KeyEvent.wRepeatCount - 1;
   return _DAT_00908700;
 }
+#endif
 
 
 /* ===== getch @ 0045a281 ===== */
@@ -43598,6 +43622,7 @@ undefined8 __cdecl __math1err(uint param_1,undefined4 *param_2)
 
 /* ===== __math2err @ 0045bfde ===== */
 
+#if 0 /* decompiled CRT -> libc */
 undefined8 __cdecl __math2err(uint param_1,undefined4 *param_2,undefined4 *param_3)
 
 {
@@ -43667,6 +43692,7 @@ undefined8 __cdecl __math2err(uint param_1,undefined4 *param_2,undefined4 *param
   iVar3 = _matherr(&local_3c);
   return CONCAT44(extraout_EDX,iVar3);
 }
+#endif
 
 
 /* ===== __rterrmsg @ 0045c13b ===== */
@@ -43729,6 +43755,7 @@ undefined * __cdecl __get_std_stream(uint param_1)
 
 /* ===== fputs @ 0045c201 ===== */
 
+#if 0 /* decompiled CRT -> libc */
 int __cdecl fputs(char *_Str,FILE *_File)
 
 {
@@ -43768,6 +43795,7 @@ LAB_0045c268:
   (*(code *)_ReleaseFileH)(_File->_file);
   return iVar4;
 }
+#endif
 
 
 /* ===== FUN_0045c2ab @ 0045c2ab ===== */
