@@ -76,7 +76,8 @@ static const char* TFS =
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
     "  if(p.a<0.05) discard;\n"                                 // only true-transparent (alpha 0) = foliage key
-    "  vec3 c=mix(p.rgb, vec3(0.55,0.55,0.52), v_d*0.5);\n"
+    "  vec3 c=p.rgb*0.8;\n"                                     // mute toward the original's darker/stormy palette
+    "  c=mix(c, vec3(0.5,0.5,0.48), v_d*0.5);\n"
     "  o=vec4(c,1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
 static int s_tex_verts; static float s_vsz[2];
