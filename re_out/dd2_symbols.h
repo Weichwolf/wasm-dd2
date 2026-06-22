@@ -2464,7 +2464,7 @@ extern int _decrunch_flag;
 extern int _draw_frame;
 extern int _dth_shade;
 extern int _euphoria;
-extern int* _fi_levdat;
+#define _fi_levdat (*(int**)GIMG(0x75eb60))
 extern int _flag;
 extern int _flame_frame_count;
 extern int _flash1_frame_count;

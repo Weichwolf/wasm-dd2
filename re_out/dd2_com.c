@@ -22,8 +22,8 @@ static int ok3(int a,int b,int c){return 0;}
 static int ok4(int a,int b,int c,int d){return 0;}
 static int ok5(int a,int b,int c,int d,int e){return 0;}
 
-/* IDirectDraw::CreatePalette(this,caps,colortable,ppPalette,outer) @0x14 */
-static int idd_createpal(int t,int caps,int ct,void** pp,int o){ if(pp)*pp=&g_pal_obj; return 0; }
+/* IDirectDraw::CreatePalette(this,caps,colortable,ppPalette) @0x14 — decompile calls with 4 args (no outer) */
+static int idd_createpal(int t,int caps,int ct,void** pp){ if(pp)*pp=&g_pal_obj; return 0; }
 /* IDirectDraw::CreateSurface(this,desc,ppSurface,outer) @0x18 */
 static int idd_createsurf(int t,int desc,void** pp,int o){ if(pp)*pp=&g_surf_obj; return 0; }
 /* IDirectDrawSurface::GetAttachedSurface(this,caps,ppSurface) @0x30 */

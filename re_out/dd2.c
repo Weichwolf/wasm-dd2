@@ -1569,9 +1569,9 @@ void __cdecl SetPalette(byte *param_1)
   iVar1 = 0;
   do {
     iVar1 = iVar1 + 1;
-    *(undefined1 *)(iVar1 * 4 + 0x70004c) = (&stack0xfffffbd6)[iVar1 * 4];
-    *(undefined1 *)(iVar1 * 4 + 0x70004d) = (&stack0xfffffbd5)[iVar1 * 4];
-    *(undefined1 *)(iVar1 * 4 + 0x70004e) = (&stack0xfffffbd4)[iVar1 * 4];
+    *(undefined1 *)(iVar1 * 4 + 0x70004c) = ((byte *)local_428 - 2)[iVar1 * 4];
+    *(undefined1 *)(iVar1 * 4 + 0x70004d) = ((byte *)local_428 - 3)[iVar1 * 4];
+    *(undefined1 *)(iVar1 * 4 + 0x70004e) = ((byte *)local_428 - 4)[iVar1 * 4];
     *(undefined1 *)(iVar1 * 4 + 0x70004f) = 4;
   } while (iVar1 < 0x100);
   iVar1 = 0;
@@ -3220,17 +3220,16 @@ int __cdecl File_Load(char *param_1,void *param_2)
   FILE *_File;
   int iVar1;
   int iVar2;
-  uint local_20;
-  int local_1c;
+  uint local_20[2];  /* WASM: contiguous lookup result (was non-adjacent x86 stack locals) */
   
-  FUN_00415448(param_1,&local_20);
-  iVar1 = local_1c + 0x7ff;
+  FUN_00415448(param_1,(uint *)local_20);
+  iVar1 = local_20[1] + 0x7ff;
   iVar2 = iVar1 >> 0x1f;
   _File = fopen(&DAT_00716b18,&DAT_0046c7c4);
-  FUN_0045607b((int *)_File,local_20 << 0xb,0);
+  FUN_0045607b((int *)_File,local_20[0] << 0xb,0);
   fread(param_2,0x800,(int)((iVar1 + iVar2 * -0x800) - (uint)(iVar2 << 10 < 0)) >> 0xb,_File);
   fclose(_File);
-  return local_1c;
+  return local_20[1];
 }
 
 

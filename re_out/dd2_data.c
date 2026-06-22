@@ -181,7 +181,6 @@ int _decrunch_flag;
 int _draw_frame;
 int _dth_shade;
 int _euphoria;
-int* _fi_levdat;
 int _flag;
 int _flame_frame_count;
 int _flash1_frame_count;
