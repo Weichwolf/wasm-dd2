@@ -3,6 +3,7 @@
 #include "ghidra_compat.h"
 extern unsigned char* g_image;
 #define GIMG(va) ((unsigned char*)(uintptr_t)(va))
+#define _DAT_00716c18 (*(int*)GIMG(0x716c18))
 #define s__R_JL_T__0046ad0c ((char*)GIMG(0x46ad0c))
 #define s__R_JL_T__0046be14 ((char*)GIMG(0x46be14))
 #define s__R_JL_T__0046b620 ((char*)GIMG(0x46b620))

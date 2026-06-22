@@ -10,3 +10,8 @@ int ReadFile(int h,void* buf,int n,int* nread,void* o){ FILE* fp=(FILE*)(long)h;
 int WriteFile(int h,const void* buf,int n,int* nwr,void* o){ if(nwr)*nwr=n; return 1; }
 int CloseHandle(int h){ FILE* fp=(FILE*)(long)h; if(fp&&fp!=(FILE*)-1)fclose(fp); return 1; }
 int GetFileType(int h){ return 1; }  /* FILE_TYPE_DISK */
+
+/* Game CRT buffered-file seek -> plain fseek on the emscripten FILE* (file layer is shimmed, not decompiled).
+   FUN_00415160 does fopen()+FUN_0045607b(seek)+fread()+fclose(), all emscripten libc -> consistent. */
+#include <stdio.h>
+int FUN_0045607b(void* file, long offset, int whence){ return fseek((FILE*)file, offset, whence); }

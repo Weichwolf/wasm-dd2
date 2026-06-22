@@ -774,8 +774,14 @@ extern int ultoa();
 extern int unlink();
 extern int utoa();
 extern int wstart2_();
+extern int Load_Null();
+extern int FUN_00414fb0();
+extern int Load_Texture2();
 typedef struct{unsigned va;void*fn;}dd2_fnent;
 dd2_fnent dd2_fnmap[]={
+{0x00414f30,(void*)&Load_Null},
+{0x00414fb0,(void*)&FUN_00414fb0},
+{0x00414ff4,(void*)&Load_Texture2},
 {0x431374,(void*)&AI_Com_Server},
 {0x44c48c,(void*)&Add_Computer_Info},
 {0x420fc0,(void*)&Allocate_Font_Buffers},

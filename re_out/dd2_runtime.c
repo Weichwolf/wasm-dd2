@@ -34,10 +34,7 @@ int main(){
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
     __InitRtns();                 /* run global constructors (game data tables) */
     dd2_com_init();               /* set up DirectDraw COM interface vtables */
-    { FILE* tf=fopen("Dirinfo","rb"); char b[40]={0};
-      if(tf){ fread(b,1,32,tf); fclose(tf); fprintf(stderr,"[dd2] Dirinfo OK; idx[0] name='%.20s' bytes %d,%d,%d\n",b,(int)(unsigned char)b[0],(int)(unsigned char)b[18],(int)(unsigned char)b[20]); }
-      else fprintf(stderr,"[dd2] Dirinfo NOT OPENABLE (cwd issue)\n"); }
-    Read_Directory("Dirinfo");    /* load the Dirinfo asset index into dirbuf (skipped by the CRT bypass) */
+    Read_Directory("Dirinfo");
     *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
     Init_Application((void*)1);   /* register class + create window (shimmed) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
