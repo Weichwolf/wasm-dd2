@@ -421,7 +421,7 @@ static void start_race(int idx){
           gte_set_levbright(0.6f+0.4f*(fb/128.f));   // stormy/dark tracks darker (dd2h stormy ground ~60 vs my 101)
           // dark-fog tracks are dirt: pull the drivable surface toward a dark brown (trackbright low);
           // brighter-fog tracks keep the tarmac/grass ramp (trackbright 1).
-          if(fb<64){ render_set_ground_color(0.26f,0.19f,0.13f); render_set_track_bright(0.25f); }   // dark dirt/mud
+          if(fb<64){ render_set_ground_color(0.28f,0.21f,0.15f); render_set_track_bright(0.22f); }   // dark dirt/mud
           else     { render_set_ground_color(0.31f,0.31f,0.31f); render_set_track_bright(1.0f); } }  // tarmac
         g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;

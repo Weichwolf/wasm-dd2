@@ -26,7 +26,7 @@ static const char* AFS =
     "uniform sampler2D u_vram; uniform sampler2D u_pal; uniform vec3 u_fog; uniform float u_levbright;\n"
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0); if(p.a<0.05) discard;\n"
-    "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.7);\n"  // toward dd2h's vivid palette (scenery sat ~0.44)
+    "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.78);\n"  // toward dd2h's vivid palette (scenery sat ~0.44)
     "  c*=vec3(1.22,1.22,1.16)*u_levbright; c=mix(c, u_fog, pow(clamp(v_d,0.0,1.0),2.0)*0.9);\n"  // per-level brightness (stormy tracks darker) + steep fog ramp
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 
