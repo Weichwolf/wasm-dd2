@@ -39341,7 +39341,6 @@ undefined4 __cdecl __prtf(undefined4 param_1,byte *param_2,int *param_3,undefine
   code *local_1c;
   undefined1 local_18 [4];
   
-  return 0;  /* WASM: MSVC printf core no-op'd (its internal per-specifier fn-ptrs are unrelocated raw VAs); debug output, not game logic */
   local_18[0] = 0;
   local_24 = 0;
   local_1c = (code *)param_4;
