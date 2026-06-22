@@ -3157,7 +3157,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
     _Count = (int)((iVar1 + iVar6 * -0x800) - (uint)(iVar6 << 10 < 0)) >> 0xb;
     iVar1 = *(int *)(iVar5 + 8);
     puVar2 = *(undefined4 **)(iVar5 + 0xc);
-    dd2_asset_off = *(int *)iVar5;  /* WASM: save asset offset before free */
+    dd2_asset_off = *(int *)iVar5;  /* WASM: asset offset (entry[0]) */
     MPE_free(iVar5);
     if (param_1 == (void *)0x0) {
       System_Error(s_Buffer_Load__0046c7b4,s_OUT_OF_MEMORY_0046c790);
