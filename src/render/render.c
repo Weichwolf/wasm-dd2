@@ -75,7 +75,7 @@ static const char* TFS =
     "uniform sampler2D u_vram; uniform sampler2D u_pal;\n"
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
-    "  if(p.a<0.3) discard;\n"                                  // CLUT alpha=0 -> transparent (foliage key)
+    "  if(p.a<0.05) discard;\n"                                 // only true-transparent (alpha 0) = foliage key
     "  vec3 c=mix(p.rgb, vec3(0.55,0.55,0.52), v_d*0.5);\n"
     "  o=vec4(c,1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
