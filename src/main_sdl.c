@@ -121,18 +121,18 @@ static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 static GLuint g_mt_norm[MENU_N], g_mt_sel[MENU_N];
 static int    g_mw[MENU_N], g_mh[MENU_N];
 static int    g_sel = 0;
-// real DD2 track names (from dd2h.exe strings), for the track-select screen
+// real DD2 track names in the game's menu order (racing-name array @0x4682f8). 11 tracks.
+// (Destruction Derby / Total Destruction are race MODES, not tracks; Black Sail Valley was missing.)
 static const char* TRACKS[] = {
-    "CAPRIO COUNTY RACEWAY","CHALK CANYON","DEATH BOWL","DESTRUCTION DERBY","LIBERTY CITY",
-    "PINE HILLS RACEWAY","RED PIKE ARENA","S.C.A. MOTORPLEX","THE COLOSSEUM","THE PIT",
-    "TOTAL DESTRUCTION","ULTIMATE DESTRUCTION"
+    "PINE HILLS RACEWAY","CHALK CANYON","S.C.A. MOTORPLEX","CAPRIO COUNTY RACEWAY","BLACK SAIL VALLEY",
+    "LIBERTY CITY","ULTIMATE DESTRUCTION","RED PIKE ARENA","THE COLOSSEUM","THE PIT","DEATH BOWL"
 };
 #define TRACK_N ((int)(sizeof(TRACKS)/sizeof(TRACKS[0])))
 static GLuint g_tt_norm[TRACK_N], g_tt_sel[TRACK_N];
 static int    g_tw[TRACK_N], g_th[TRACK_N], g_tsel=0;
 // preview-image sprite name per track (LEVEL.SPR), shown on track-select (CLUT-coloured)
 static const char* PREVIEW_SPR[TRACK_N] = {
-    "CAPRIO","CHALKCAN","DETHBOWL","ULTDEST","LIBCITY","PINEHILL","REDPIKE","MOTRPLEX","COLOSEUM","THEPIT","ULTDEST","ULTDEST"
+    "PINEHILL","CHALKCAN","MOTRPLEX","CAPRIO","BLAKSAIL","LIBCITY","ULTDEST","REDPIKE","COLOSEUM","THEPIT","DETHBOWL"
 };
 static GLuint g_prev_tex[TRACK_N]; static int g_prev_w[TRACK_N], g_prev_h[TRACK_N], g_prev_try[TRACK_N];
 // radial main menu: icon sprite + screen slot (matches the dd2h metal-button layout)
@@ -144,9 +144,10 @@ static struct { const char* icon; float x,y; } MBTN[] = {
 static GLuint g_icon_tex[MBTN_N]; static int g_iw[MBTN_N], g_ih[MBTN_N];
 static GLuint g_ring_tex, g_logo_tex, g_go_tex; static int g_ringw,g_ringh,g_logow,g_logoh,g_gow,g_goh;
 static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
-// track-name index -> LEVEL.DAT level dir (best-effort mapping to the 11 playable levels)
+// track-name index -> LEVEL.DAT level dir, menu order (LEV5=Caprio/LEV6=Pine Hills confirmed by content;
+// LEV9=Black Sail Valley = the one track with no other name; each of LEV1-B used once. Verify per-level.)
 static const char* TRACK_LEV[TRACK_N] = {
-    "LEV5","LEV1","LEV8","LEV9","LEV3","LEV6","LEVA","LEV4","LEV2","LEVB","LEV7","LEV7"
+    "LEV6","LEV1","LEV4","LEV5","LEV9","LEV3","LEV7","LEVA","LEV2","LEVB","LEV8"
 };
 static Race  g_race; static int g_racing=0; static int g_last_hits=0;
 static Geo   g_geo;
