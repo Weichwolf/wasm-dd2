@@ -21,10 +21,10 @@ static const char* FS =
     "    float e=abs(v_v-0.5)*2.0;\n"                     // 0 center .. 1 edge (across track)
     "    vec2 cell=floor(v_wpos.xz*0.8);\n"
     "    float gr=hash(cell)*0.10-0.05;\n"                // asphalt grain
-    "    vec3 asph=vec3(0.21,0.21,0.235)+gr;\n"
-    "    vec3 grass=vec3(0.16,0.39,0.15)+(hash(cell*1.7)*0.12-0.06);\n"
-    "    base = e<0.80 ? asph : grass;\n"
-    "    if(e>0.745 && e<0.80) base=vec3(0.82,0.82,0.80);\n"  // white edge line
+    "    vec3 asph=vec3(0.22,0.21,0.20)+gr;\n"
+    "    vec3 dirt=vec3(0.34,0.26,0.17)+(hash(cell*1.7)*0.10-0.05);\n"   // brown dirt verge (DD2)
+    "    base = e<0.80 ? asph : dirt;\n"
+    "    if(e>0.745 && e<0.80) base=vec3(0.62,0.58,0.50);\n"  // worn kerb line
     "  }\n"
     "  gl_FragColor=vec4(base*d,1.0);\n"
     "}\n";
@@ -52,7 +52,7 @@ static const char* SVS =
     "attribute vec2 a_pos; varying float v_y; void main(){ v_y=a_pos.y*0.5+0.5; gl_Position=vec4(a_pos,0.999,1.0); }\n";
 static const char* SFS =
     "precision mediump float; varying float v_y;\n"
-    "void main(){ vec3 hor=vec3(0.62,0.70,0.80), zen=vec3(0.20,0.40,0.72);\n"
+    "void main(){ vec3 hor=vec3(0.58,0.58,0.55), zen=vec3(0.28,0.31,0.30);\n"  // DD2 stormy/overcast
     "  gl_FragColor=vec4(mix(hor,zen,clamp(v_y,0.0,1.0)),1.0); }\n";
 static GLuint s_sky_prog, s_sky_vbo;
 
