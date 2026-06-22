@@ -125,3 +125,9 @@ user wants pixel-faithful tracks. Otherwise the current reconstruction is the pr
 - [ ] FONT.BNK bitmap font.
 - [ ] VAGS\BANK1.SBK — PS1 VAG ADPCM bank (header + entries).
 - [ ] CLT collision structure; ECL (86016 fixed) purpose; TDF.
+
+## TX page directory (refined)
+TX = [u32 count][count x 16B: tag=4, w, h, destX, destY, f5(srcCol,0..240 step16), f6(srcPage 0..19), 0][pixels].
+Sum(tile w*h) >> pixel bytes => tiles SHARE a compact source pool; VRAM built by copying source
+region (selected by f5/f6) to dest (destX,destY) in the tall virtual VRAM. CAPRIO/(first tile) verified.
+TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch_Object_Block path.
