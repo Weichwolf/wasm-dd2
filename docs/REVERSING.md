@@ -289,3 +289,12 @@ After Y-alignment + broad face-type coverage, rendering geo-only puts the cars O
 scenery. Path exists to drop the procedural reconstruction road and render the level fully from real geo
 (cars still follow the section-2 path, now over real ground). Kept the hybrid (procedural road + real
 scenery) for a clearer track read; full real-geo road is a follow-on.
+
+## In-race textures (race levels DO have TX pages)
+- Circuits have LEVEL.TX0-2 (~390KB). Decoding LEV5 VRAM (357 tiles): content = TREES (scenery
+  billboards), HUD digits 0-9, gauge faces, signs/logos. NOT the road (road/ground = flat geo).
+- Colors render off under LEVEL.PAL => need per-tile CLUT (LEVEL.CLT = 80x256-RGBA; dth_clut=cy) — the
+  same parked CLUT mapping (needs a reference to validate the (cx,cy)->palette pick).
+- So full in-race texturing = per-level VRAM assembly (have it) + per-object texture page (_gtexture in
+  Draw_Subdiv_Object) + correct CLUT. Adds textured trees/HUD/signs; road stays flat geo (faithful).
+  Gated on the CLUT pick; geometry (flat scene) already faithful.
