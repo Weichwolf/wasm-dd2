@@ -197,3 +197,15 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
 - => authentic per-chunk geometry is now DECOMPRESSABLE (tools/lzss.py). NEXT PHASE: parse the chunk's
   vertex/face record layout + per-poly tpage/CLUT, build meshes, render via software GTE (the exact
   "in-race view as the original draws it"). Large multi-step task; data layer unlocked.
+
+## Authentic geometry data path (traced) + object format (partial)
+Full path: LEVEL.DAT -> section table -> sec0 -> sub-table of ~21 LZSS chunks ->
+  chunk = [u32 count][count x {u32 offset, i32 x,y,z}]  (Setup_Object_Block: scene-object PLACEMENTS;
+  pos snapped (&0xffff8000)+0x4000, rot from (u16&0x7fff)+0xc000).
+  Each placement.offset -> object def in same chunk (Set_Object relocates ptrs @+0x20/+0x24/+0x28).
+Object def header (~44B): u32[2]&0xff = vertex count (obj0=15); verts @ +0x2c = int16 x,y,z,pad (8B);
+  faces @ +0x24 ptr (PSX poly prims: vtx idx + uv + tpage + clut + rgb — exact layout via Draw fn TBD).
+CAVEAT: parsing all 536 objects in LEV5 with the obj0 heuristic gives a NOISY point cloud (74745 pts) =>
+  the header/vertex-count/face layout VARIES per object type and needs the draw/parse fn + validation
+  (ideally a reference). track.c's section-2 reconstruction remains the working in-race geometry.
+=> Decompression + data path: DONE. Correct universal mesh parse + textured GTE render: large remaining phase.
