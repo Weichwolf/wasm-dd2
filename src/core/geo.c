@@ -84,19 +84,27 @@ int geo_load(const char* path, Geo* g){
 
     unsigned sec0=u32(d); unsigned subcount=u32(d+sec0)/4;
     Buf flat={0}, tex={0};
+    int d_lz=0,d_cnt=0,d_obj=0,d_fb=0;
     for(unsigned si=0; si<subcount; si++){
         unsigned suboff=u32(d+sec0+si*4); long ol; unsigned char* out=lzss(d,n,sec0+suboff,&ol);
         if(!out){continue;} if(ol<8){free(out);continue;}
+        d_lz++;
+        // Circuits: chunk = [u32 obj-count][16B placement records]. Arenas (LEV8/9/A/B) use a different
+        // section-0 format that LZSS-decompresses to tiny garbage here -> cnt invalid -> skipped (their bowl
+        // geometry needs separate RE; they currently render ground+cars+physics but no decorative walls).
         unsigned cnt=u32(out); if(cnt==0||cnt>4000){free(out);continue;}
+        d_cnt++;
         for(unsigned r=0;r<cnt;r++){ long rec=4+r*16; if(rec+16>ol)break;
             int off=i32(out+rec),px=i32(out+rec+4),py=i32(out+rec+8),pz=i32(out+rec+12);
             if(off<0||off>ol-0x2c) continue;
             int nv=(u32(out+off+8)>>16)&0xff; unsigned r20=u32(out+off+0x20),r28=u32(out+off+0x28);
             if(nv<=0||nv>2000) continue; long vb=off+r20,fb=off+r28; if(vb<0||fb<0||vb>ol) continue;
+            d_obj++;
             long gp=fb;
             for(int it=0;it<128;it++){ if(gp+4>ol)break;
                 unsigned fc=u16(out+gp); int ft=out[gp+2],term=out[gp+3]; gp+=4;
                 if(term==0||fc==0||fc>3000||ft==0xff) break;
+                d_fb++;
                 int sz=face_size(ft);
                 for(unsigned fi=0;fi<fc;fi++){ long rr=gp+fi*sz; if(rr+sz>ol)break;
                     // Vertex-index offsets per the real drawers (verified by disasm of the dispatch
@@ -147,8 +155,8 @@ int geo_load(const char* path, Geo* g){
         for(int i=0;i<g->nverts;i++) g->v[i*6+1]-=med;
         for(int i=0;i<g->ntverts;i++) g->tv[i*6+1]-=med;
     }
-    fprintf(stderr,"geo_load %s: %d flat-tri-v, %d tex-tri-v, vram %dx%d, %d cluts, %u tdf\n",
-            lev,g->nverts,g->ntverts,g->vram_w,g->vram_h,g->nclut,ntdf);
+    fprintf(stderr,"geo_load %s: %d flat-tri-v, %d tex-tri-v, vram %dx%d, %d cluts, %u tdf [sub=%u lz=%d cnt=%d obj=%d fb=%d]\n",
+            lev,g->nverts,g->ntverts,g->vram_w,g->vram_h,g->nclut,ntdf,subcount,d_lz,d_cnt,d_obj,d_fb);
     (void)pushf;
     return g->nverts>0 || g->ntverts>0;
 }
