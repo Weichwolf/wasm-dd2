@@ -86,13 +86,21 @@ int geo_load(const char* path, Geo* g){
     Buf flat={0}, tex={0};
     int d_lz=0,d_cnt=0,d_obj=0,d_fb=0;
     for(unsigned si=0; si<subcount; si++){
-        unsigned suboff=u32(d+sec0+si*4); long ol; unsigned char* out=lzss(d,n,sec0+suboff,&ol);
-        if(!out){continue;} if(ol<8){free(out);continue;}
+        long chunkbase=sec0+u32(d+sec0+si*4);
+        long ol; unsigned char* out=lzss(d,n,chunkbase,&ol); int owned=1;
+        // Circuits: chunk is LZSS -> [u32 obj-count][16B placement records][objects].
+        int ok = out && ol>=8 && u32(out)>0 && u32(out)<=4000;
+        if(!ok){
+            // Arenas (LEV8/9/A/B): section-0 sub-chunk is the SAME structure but stored UNCOMPRESSED
+            // (LZSS gives garbage). Detect: valid cnt + rec0.off == end of the 16B record table.
+            if(out){ free(out); out=NULL; }
+            if(chunkbase+8<=n){ unsigned rc=u32(d+chunkbase);
+                if(rc>0&&rc<=4000 && chunkbase+4+(long)rc*16<=n && u32(d+chunkbase+4)>=4+rc*16){
+                    out=d+chunkbase; ol=n-chunkbase; owned=0; ok=1; } }
+            if(!ok){ continue; }
+        }
         d_lz++;
-        // Circuits: chunk = [u32 obj-count][16B placement records]. Arenas (LEV8/9/A/B) use a different
-        // section-0 format that LZSS-decompresses to tiny garbage here -> cnt invalid -> skipped (their bowl
-        // geometry needs separate RE; they currently render ground+cars+physics but no decorative walls).
-        unsigned cnt=u32(out); if(cnt==0||cnt>4000){free(out);continue;}
+        unsigned cnt=u32(out); if(cnt==0||cnt>4000){ if(owned)free(out); continue;}
         d_cnt++;
         for(unsigned r=0;r<cnt;r++){ long rec=4+r*16; if(rec+16>ol)break;
             int off=i32(out+rec),px=i32(out+rec+4),py=i32(out+rec+8),pz=i32(out+rec+12);
@@ -142,7 +150,7 @@ int geo_load(const char* path, Geo* g){
                 gp+=fc*sz;
             }
         }
-        free(out);
+        if(owned) free(out);
     }
     free(d); if(tdf) free(tdf);
     g->v=flat.b; g->nverts=(int)(flat.n/6); g->tv=tex.b; g->ntverts=(int)(tex.n/6);
