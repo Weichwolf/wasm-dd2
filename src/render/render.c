@@ -76,11 +76,11 @@ static const char* TFS =
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
     "  if(p.a<0.05) discard;\n"                                 // only true-transparent (alpha 0) = foliage key
-    "  vec3 c=p.rgb;\n"                                         // match dd2h: warm/brown, +saturation, darker
+    "  vec3 c=p.rgb;\n"                                         // match dd2h: warm/brown, gentle grade
     "  float l=dot(c,vec3(0.299,0.587,0.114));\n"
-    "  c=mix(vec3(l),c,1.5);\n"                                 // +50% saturation (ref sat .45 vs ours .25)
-    "  c*=vec3(1.06,0.96,0.80);\n"                              // warm toward brown (ref R>G>B)
-    "  c*=0.82;\n"                                              // darker (ref bright ~50 vs ours ~65)
+    "  c=mix(vec3(l),c,1.22);\n"                                // mild +saturation (avoid noisy ground)
+    "  c*=vec3(1.04,0.98,0.86);\n"                              // gentle warm toward brown
+    "  c*=0.86;\n"                                              // darker toward ref
     "  c=mix(c, vec3(0.42,0.40,0.36), v_d*0.45);\n"            // warm-grey haze
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;

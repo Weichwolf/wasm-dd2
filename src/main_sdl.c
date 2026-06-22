@@ -293,7 +293,9 @@ static void render_scene(void){
             mat4_lookat(view,eye,at,v3(0,1,0));
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
             render_sky();                       // gradient sky/horizon
-            render_track(view,proj);            // solid drivable surface (procedural brown dirt)
+            render_track(view,proj);            // drivable surface: procedural brown (real VRAM/CLUT ground
+                                                //   exists/renders but per-texture colours read multicolored vs
+                                                //   ref's cohesive brown until CLUT-exact; scenery below IS textured)
             render_geo(view,proj);              // flat-shaded authentic faces
             render_geo_tex(view,proj);          // VRAM/CLUT-textured faces (trees/walls/scenery)
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
