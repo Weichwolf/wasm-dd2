@@ -5,7 +5,8 @@
 // (3D in-race view is being built; the race is held behind the menus until it's ready.)
 #include "render/ui.h"
 #include "render/vram.h"
-#include "render/render.h"   // dmath (mat/vec) via track.h include chain
+#include "render/render.h"
+#include "core/race.h"
 #include <SDL3/SDL.h>
 #include <GLES3/gl3.h>
 #ifdef __EMSCRIPTEN__
@@ -94,6 +95,13 @@ static const char* TRACKS[] = {
 #define TRACK_N ((int)(sizeof(TRACKS)/sizeof(TRACKS[0])))
 static GLuint g_tt_norm[TRACK_N], g_tt_sel[TRACK_N];
 static int    g_tw[TRACK_N], g_th[TRACK_N], g_tsel=0;
+// track-name index -> LEVEL.DAT level dir (best-effort mapping to the 11 playable levels)
+static const char* TRACK_LEV[TRACK_N] = {
+    "LEV5","LEV1","LEV8","LEV9","LEV3","LEV6","LEVA","LEV4","LEV2","LEVB","LEV7","LEV7"
+};
+static Race  g_race; static int g_racing=0;
+static const float CAR_COLS[8][3]={{.9f,.2f,.15f},{.2f,.45f,.95f},{.95f,.85f,.15f},{.2f,.8f,.3f},
+    {.95f,.55f,.1f},{.75f,.25f,.85f},{.15f,.85f,.85f},{.85f,.85f,.85f}};
 
 static GLuint psh(GLenum t,const char*s){GLuint h=glCreateShader(t);glShaderSource(h,1,&s,0);glCompileShader(h);return h;}
 static GLuint make_tex(int w,int h){
@@ -149,7 +157,20 @@ static void render_scene(void){
                 if(t) ui_blit_rect(t,(RENDER_W-w)/2.f, y0+i*lh, w, h, RENDER_W, RENDER_H);
             }
             break; }
-        case ST_RACE:  /* held until 3D view ready */ break;
+        case ST_RACE: if(g_racing){
+            glEnable(GL_DEPTH_TEST);
+            Car* c=&g_race.cars[0];
+            float sy=sinf(c->yaw), cyy=cosf(c->yaw);
+            vec3 eye=v3(c->pos.x-sy*9.f, c->pos.y+5.f, c->pos.z-cyy*9.f);
+            vec3 at =v3(c->pos.x+sy*6.f, c->pos.y+1.5f, c->pos.z+cyy*6.f);
+            float view[16],proj[16];
+            mat4_lookat(view,eye,at,v3(0,1,0));
+            mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
+            render_begin(0.45f,0.6f,0.8f);
+            render_track(view,proj);
+            for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i]; const float* col=CAR_COLS[i%8];
+                render_box(view,proj,v3(cc->pos.x,cc->pos.y+0.6f,cc->pos.z),v3(1.f,.6f,2.f),cc->yaw,col[0],col[1],col[2]); }
+        } break;
     }
 }
 
@@ -177,6 +198,14 @@ static void present(void){
     SDL_GL_SwapWindow(g_win);
 }
 
+static void start_race(int idx){
+    char dat[160]; snprintf(dat,sizeof(dat),"assets/raw/%s/LEVEL.DAT",TRACK_LEV[idx]);
+    if(race_init(&g_race,dat,RACE_MAX_CARS,2,1234u)){
+        render_set_track(&g_race.track); g_racing=1; g_state=ST_RACE;
+        SDL_Log("race init %s ncars=%d",dat,g_race.ncars);
+    } else SDL_Log("race_init FAILED %s",dat);
+}
+
 static int g_ticks=0;
 static void frame(void){
     SDL_Event e;
@@ -193,12 +222,15 @@ static void frame(void){
                 if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
                 else if(sc==SDL_SCANCODE_UP) g_tsel=(g_tsel+TRACK_N-1)%TRACK_N;
                 else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
+                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) start_race(g_tsel);
             }
         }
     }
     ++g_ticks;                                                // attract-mode auto-advance (for demo/screenshot)
     if(g_state==ST_TITLE && g_ticks>90) g_state=ST_MENU;
     else if(g_state==ST_MENU && g_ticks>240) g_state=ST_TRACKSEL;
+    else if(g_state==ST_TRACKSEL && g_ticks>420) start_race(g_tsel);
+    if(g_state==ST_RACE && g_racing) race_step(&g_race, 1.f/60.f);
     render_scene();
     present();
 }
@@ -211,7 +243,7 @@ int main(void){
     if(!g_win){SDL_Log("CreateWindow: %s",SDL_GetError());return 1;}
     if(!SDL_GL_CreateContext(g_win)){SDL_Log("GL ctx: %s",SDL_GetError());return 1;}
     SDL_Log("GL_VERSION: %s",(const char*)glGetString(GL_VERSION));
-    ui_init(); present_init();
+    ui_init(); present_init(); render_init();
     int tw,th; g_title_tex = ui_load_bmp("assets/raw/LEV0/COPYRIGH.BMP",&tw,&th);
     SDL_Log("title %dx%d tex=%u", tw, th, g_title_tex);
     if (vram_init("LEV0")) {
