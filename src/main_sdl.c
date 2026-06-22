@@ -448,7 +448,12 @@ static void frame(void){
                 int N=MBTN_N+1;
                 if(sc==SDL_SCANCODE_RIGHT||sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%N;
                 else if(sc==SDL_SCANCODE_LEFT||sc==SDL_SCANCODE_UP) g_sel=(g_sel+N-1)%N;
-                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) g_state=ST_TRACKSEL;
+                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE){
+                    // route by menu mode: WRECKING(0)->demolition arena, RACING(1)->championship, else track/car select
+                    if(g_sel==1) champ_start();
+                    else if(g_sel==0){ g_tsel=10; start_race(10); }   // LEV8 bowl (demolition derby)
+                    else g_state=ST_TRACKSEL;
+                }
             }
             else if(g_state==ST_STATS){
                 if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
