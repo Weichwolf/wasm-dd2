@@ -144,6 +144,11 @@ static struct { const char* icon; float x,y; } MBTN[] = {
 static GLuint g_icon_tex[MBTN_N]; static int g_iw[MBTN_N], g_ih[MBTN_N];
 static GLuint g_ring_tex, g_logo_tex, g_go_tex; static int g_ringw,g_ringh,g_logow,g_logoh,g_gow,g_goh;
 static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
+// Championship game-flow: season 0 race sequence (exe table @0x46758c levels 1,2,5,7,10 -> our track
+// indices) + points by finish position. The "16 levels" = these championship EVENTS over the 11 tracks.
+static const int CHAMP_SEQ[5] = {1,8,3,6,7};          // track indices for levels 1,2,5,7,10
+static const int CHAMP_PTS[8] = {10,8,6,5,4,3,2,1};   // points by finishing position
+static int g_champ_active=0, g_champ_idx=0, g_champ_awarded=0, g_champ_points[RACE_MAX_CARS]={0};
 // track-name index -> LEVEL.DAT level dir, menu order (LEV5=Caprio/LEV6=Pine Hills confirmed by content;
 // LEV9=Black Sail Valley = the one track with no other name; each of LEV1-B used once. Verify per-level.)
 static const char* TRACK_LEV[TRACK_N] = {
@@ -274,18 +279,30 @@ static void render_scene(void){
         case ST_RESULTS: {
             ui_blit_fullscreen(g_title_tex);
             ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
-            int hw=vram_text_measure("RACE RESULTS");
-            hud_text("RACE RESULTS",(RENDER_W-hw*0.85f)/2.f,16,0.85f,1);
-            int hw2=vram_text_measure(TRACKS[g_tsel]);
-            hud_text(TRACKS[g_tsel],(RENDER_W-hw2*0.55f)/2.f,40,0.55f,0);
+            char b[64];
+            const char* ttl = g_champ_active ? "CHAMPIONSHIP" : "RACE RESULTS";
+            int hw=vram_text_measure(ttl); hud_text(ttl,(RENDER_W-hw*0.85f)/2.f,12,0.85f,1);
+            if(g_champ_active){ snprintf(b,sizeof(b),"%s   RACE %d/5",TRACKS[g_tsel],g_champ_idx+1); }
+            else snprintf(b,sizeof(b),"%s",TRACKS[g_tsel]);
+            int hw2=vram_text_measure(b); hud_text(b,(RENDER_W-hw2*0.55f)/2.f,34,0.55f,0);
             int order[RACE_MAX_CARS]; int nc=race_rank(&g_race,order);
             static const char* ORD[]={"1ST","2ND","3RD","4TH","5TH","6TH","7TH","8TH"};
-            char b[64];
-            for(int i=0;i<nc;i++){ int ci=order[i];
-                ui_blit_rect(g_car_sw[ci%8], 96, 60+i*15, 9, 9, RENDER_W, RENDER_H);   // colour swatch
-                snprintf(b,sizeof(b),"%s   CAR %d%s",ORD[i],ci+1, ci==0?"  (YOU)":"");
-                hud_text(b,110,58+i*15,0.55f, ci==0); }
-            hud_text("ENTER  CONTINUE",100,60+nc*15+6,0.5f,0);
+            if(g_champ_active){
+                // championship standings: drivers sorted by accumulated points
+                int so[RACE_MAX_CARS]; for(int i=0;i<nc;i++)so[i]=i;
+                for(int i=0;i<nc;i++)for(int j=i+1;j<nc;j++) if(g_champ_points[so[j]]>g_champ_points[so[i]]){int t=so[i];so[i]=so[j];so[j]=t;}
+                hud_text("STANDINGS         PTS",70,50,0.5f,1);
+                for(int i=0;i<nc&&i<8;i++){ int ci=so[i];
+                    ui_blit_rect(g_car_sw[ci%8],70,64+i*15,9,9,RENDER_W,RENDER_H);
+                    snprintf(b,sizeof(b),"%d. CAR %d%s",i+1,ci+1, ci==0?" (YOU)":"");
+                    hud_text(b,84,62+i*15,0.5f,ci==0);
+                    snprintf(b,sizeof(b),"%d",g_champ_points[ci]); hud_text(b,238,62+i*15,0.5f,ci==0); }
+            } else {
+                for(int i=0;i<nc;i++){ int ci=order[i];
+                    ui_blit_rect(g_car_sw[ci%8], 96, 60+i*15, 9, 9, RENDER_W, RENDER_H);
+                    snprintf(b,sizeof(b),"%s   CAR %d%s",ORD[i],ci+1, ci==0?"  (YOU)":"");
+                    hud_text(b,110,58+i*15,0.55f, ci==0); }
+            }
             break; }
         case ST_RACE: if(g_racing){
             glEnable(GL_DEPTH_TEST);
@@ -376,7 +393,27 @@ static void start_race(int idx){
     } else SDL_Log("race_init FAILED %s",dat);
 }
 
-static int g_ticks=0;
+// begin a championship season: zero points, start the first event in the sequence
+static void champ_start(void){
+    g_champ_active=1; g_champ_idx=0; g_champ_awarded=0;
+    for(int i=0;i<RACE_MAX_CARS;i++) g_champ_points[i]=0;
+    g_tsel=CHAMP_SEQ[0]; start_race(CHAMP_SEQ[0]);
+}
+// award points by finish order for the just-finished race (once)
+static void champ_award(void){
+    if(g_champ_awarded) return;
+    int order[RACE_MAX_CARS]; int nc=race_rank(&g_race,order);
+    for(int p=0;p<nc&&p<8;p++){ int car=order[p]; if(car>=0&&car<RACE_MAX_CARS) g_champ_points[car]+=CHAMP_PTS[p]; }
+    g_champ_awarded=1;
+}
+// advance to the next championship event, or end the season
+static void champ_next(void){
+    if(g_champ_idx+1 < (int)(sizeof(CHAMP_SEQ)/sizeof(CHAMP_SEQ[0]))){
+        g_champ_idx++; g_champ_awarded=0; g_tsel=CHAMP_SEQ[g_champ_idx]; start_race(CHAMP_SEQ[g_champ_idx]);
+    } else { g_champ_active=0; g_racing=0; g_state=ST_MENU; }   // season complete
+}
+
+static int g_ticks=0, g_res_ticks=0;
 static void frame(void){
     SDL_Event e;
     while(SDL_PollEvent(&e)){
@@ -409,15 +446,16 @@ static void frame(void){
     ++g_ticks;                                                // attract-mode auto-advance (for demo/screenshot)
     if(g_state==ST_TITLE && g_ticks>90) g_state=ST_MENU;
     else if(g_state==ST_MENU && g_ticks>240) g_state=ST_TRACKSEL;
-    else if(g_state==ST_TRACKSEL && g_ticks>420) start_race(g_tsel);
+    else if(g_state==ST_TRACKSEL && g_ticks>420) champ_start();   // demo runs the championship season
     if(g_state==ST_RACE && g_racing){
         race_step(&g_race, 1.f/60.f);
         Car* p=&g_race.cars[0]; float sp=fabsf(p->speed);
         audio_engine(SND_ENGINE, 0.55f + sp*0.018f, 0.22f);          // engine pitch by speed
         if(p->hits>g_last_hits) audio_oneshot(SND_CRASH, 0.7f);      // collision
         g_last_hits=p->hits;
-        if(race_done(&g_race)) g_state=ST_RESULTS;                   // race over -> results
+        if(race_done(&g_race)){ if(g_champ_active) champ_award(); g_state=ST_RESULTS; g_res_ticks=0; }  // race over -> results
     } else { audio_engine(SND_ENGINE, 0.5f, 0.0f); g_last_hits=0; }  // silence engine in menus
+    if(g_state==ST_RESULTS && g_champ_active && ++g_res_ticks>300) champ_next();   // demo: auto-advance season
     render_scene();
     present();
 }
