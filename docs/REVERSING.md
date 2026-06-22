@@ -316,3 +316,13 @@ scenery) for a clearer track read; full real-geo road is a follow-on.
   (palette variant); image correct. Application: per-sprite coherence-pick in vram_sprite_tex -> colour
   the front-end sprites (driver select, track-select thumbnails). The exact cy->palette formula (Load_Cluts
   placement) would be exact, but coherence-pick is a working self-validating substitute.
+
+## REAL front-end (from Wine reference) — radial icon menu, NOT a text list
+- dd2h main menu = scratched-metal background + grid of circular metal BUTTONS (RING sprite) each holding
+  an icon sprite (I-prefix): IWRECKIN IRACMODE ITRACK ICONFIG ISTOCK IVIEWSTA ICAR ICHAMP ITOTALD ILINK
+  IVOLUME ICONTROL ICREDITS IMEMCARD ICARDMAN IDRVSTAT IFASTLAP IMULTIPL ICENTRE. Logo = DD2L1/DD2L2.
+  Mode text "Wrecking Racing Practice" = WRECKIN/PRACTICE sprites. GO/▶▶ = GO sprite. Selected = "*P" variants.
+- All in LEVEL.SPR (LEV0). My WASM vertical-text menu is structurally WRONG -> rebuild as radial icon grid.
+- CLUT: heuristic pick (coherence/orange) renders RING + DD2L1 OK (pal ~19) but mis-tints some icons;
+  use the Wine reference frames (docs/reference/real_main_menu.png) as ground truth to pin each sprite's palette.
+- Reference frames saved: real_main_menu.png, demo in-race (validated brown trees / stormy sky / dirt).
