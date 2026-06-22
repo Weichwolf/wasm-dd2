@@ -211,3 +211,11 @@ structure, atmosphere, colour-tone. wasm-dvd-gl look. Build: ./build_wasm.sh -> 
 GATED/BOUNDED remainder: (1) per-screen pixel/menu verification + matched-view colour tuning NEED xdotool
 (sudo apt install xdotool) to drive dd2h's menus; (2) "all 16 levels" - only 11 circuits exist in the
 Dirinfo assets; (3) car models embedded in EXE (procedural stand-in); (4) logo shine (cosmetic).
+
+## VERIFICATION UNLOCKED (python-xlib, no sudo) — 2026-06-22
+tools/wine_xlib_drive.py drives dd2h.exe under Wine (DISPLAY :99) via X11 XTEST key injection + captures
+each screen. NO xdotool/sudo needed (pip install python-xlib). Captured full real flow: title -> main menu
+(orange DD2 logo + grey-metal radial buttons) -> track-select -> in-race (Pine Hills/LEV6). First matched-
+track colour tuning done: dd2h in-race = RGB(122,105,83) bright 103; tuned WASM LEV6 64->89 bright, warm.
+=> per-screen menu+level verification is now ACHIEVABLE (was the main blocker). Next: systematic per-screen
+diff (track-select, stats, car-select, config, credits + each circuit in-race) and logo orange.
