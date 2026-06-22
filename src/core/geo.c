@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define WORLD_SCALE (1.0f/500.0f)
 
@@ -96,6 +97,14 @@ int geo_load(const char* path, Geo* g){
                         int cn=quad?4:3;
                         for(int k=0;k<cn;k++){ const unsigned char* vp=out+vb+id[k]*8;
                             P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
+                        // baked directional lighting (the original lights polys via GTE normals)
+                        float e1x=P[1][0]-P[0][0],e1y=P[1][1]-P[0][1],e1z=P[1][2]-P[0][2];
+                        float e2x=P[2][0]-P[0][0],e2y=P[2][1]-P[0][1],e2z=P[2][2]-P[0][2];
+                        float nx=e1y*e2z-e1z*e2y, ny=e1z*e2x-e1x*e2z, nz=e1x*e2y-e1y*e2x;
+                        float nl=sqrtf(nx*nx+ny*ny+nz*nz); if(nl>1e-6f){nx/=nl;ny/=nl;nz/=nl;}
+                        float d=nx*0.37f+ny*0.84f+nz*0.40f; if(d<0)d=-d;   // |N.L|, light from above
+                        float sh=0.55f+0.45f*d;
+                        cr*=sh; cg*=sh; cb*=sh;
                         push6(&buf,P[0][0],P[0][1],P[0][2],cr,cg,cb);
                         push6(&buf,P[1][0],P[1][1],P[1][2],cr,cg,cb);
                         push6(&buf,P[2][0],P[2][1],P[2][2],cr,cg,cb);
