@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define CANVAS_W 960
 #define CANVAS_H 720
@@ -55,7 +56,38 @@ EM_JS(int, dvd_codec_upload, (int texId), {
 });
 EM_JS(int, canvas_px_w, (), { return GLctx.drawingBufferWidth; });
 EM_JS(int, canvas_px_h, (), { return GLctx.drawingBufferHeight; });
+// ---- WebAudio from BANK1.SBK (8-bit unsigned PCM) ----
+EM_JS(int, audio_init, (), {
+  try{ const C=new (window.AudioContext||window.webkitAudioContext)();
+    Module.__au={ctx:C,buf:[],eng:null,eg:null};
+    const r=()=>{ if(C.state!=='running')C.resume(); };
+    window.addEventListener('pointerdown',r); window.addEventListener('keydown',r);
+    console.log('[audio] WebAudio ready'); return 1;
+  }catch(e){ console.warn('[audio] unavailable',e); return 0; }
+});
+EM_JS(void, audio_add, (int idx,int ptr,int n,int rate), {
+  const A=Module.__au; if(!A)return;
+  const b=A.ctx.createBuffer(1,n,rate||11025); const ch=b.getChannelData(0);
+  for(let i=0;i<n;i++) ch[i]=(HEAPU8[ptr+i]-128)/128.0; A.buf[idx]=b;
+});
+EM_JS(void, audio_engine, (int idx,float rate,float gain), {
+  const A=Module.__au; if(!A||!A.buf[idx])return;
+  if(!A.eng){ const s=A.ctx.createBufferSource(); s.buffer=A.buf[idx]; s.loop=true;
+    const g=A.ctx.createGain(); g.gain.value=0; s.connect(g); g.connect(A.ctx.destination); s.start(); A.eng=s; A.eg=g; }
+  try{ A.eng.playbackRate.value=rate; A.eg.gain.value=gain; }catch(e){}
+});
+EM_JS(void, audio_oneshot, (int idx,float gain), {
+  const A=Module.__au; if(!A||!A.buf[idx]||A.ctx.state!=='running')return;
+  const s=A.ctx.createBufferSource(); s.buffer=A.buf[idx];
+  const g=A.ctx.createGain(); g.gain.value=gain; s.connect(g); g.connect(A.ctx.destination); s.start();
+});
 #else
+static int audio_init(void){return 0;}
+static void audio_add(int i,int p,int n,int r){(void)i;(void)p;(void)n;(void)r;}
+static void audio_engine(int i,float r,float g){(void)i;(void)r;(void)g;}
+static void audio_oneshot(int i,float g){(void)i;(void)g;}
+#endif
+#ifndef __EMSCRIPTEN__
 static int dvd_codec_init(int w,int h){(void)w;(void)h;return 0;}
 static void dvd_codec_push(int p,int w,int h,double t){(void)p;(void)w;(void)h;(void)t;}
 static int dvd_codec_upload(int t){(void)t;return 0;}
@@ -100,7 +132,9 @@ static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-trac
 static const char* TRACK_LEV[TRACK_N] = {
     "LEV5","LEV1","LEV8","LEV9","LEV3","LEV6","LEVA","LEV4","LEV2","LEVB","LEV7","LEV7"
 };
-static Race  g_race; static int g_racing=0;
+static Race  g_race; static int g_racing=0; static int g_last_hits=0;
+#define SND_ENGINE 0
+#define SND_CRASH  1
 static const float CAR_COLS[8][3]={{.9f,.2f,.15f},{.2f,.45f,.95f},{.95f,.85f,.15f},{.2f,.8f,.3f},
     {.95f,.55f,.1f},{.75f,.25f,.85f},{.15f,.85f,.85f},{.85f,.85f,.85f}};
 
@@ -244,6 +278,21 @@ static void present(void){
     SDL_GL_SwapWindow(g_win);
 }
 
+static void audio_load(void){
+    FILE* f=fopen("assets/raw/VAGS/BANK1.SBK","rb"); if(!f){SDL_Log("no SBK");return;}
+    fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
+    unsigned char* d=(unsigned char*)malloc(n);
+    if(!d||fread(d,1,n,f)!=(size_t)n){free(d);fclose(f);return;} fclose(f);
+    if(!audio_init()){free(d);return;}
+    #define RD32(p) ((unsigned)(d[p]|(d[p+1]<<8)|(d[p+2]<<16)|((unsigned)d[p+3]<<24)))
+    unsigned count=RD32(12); int loaded=0;
+    for(unsigned i=0;i<count;i++){ int b=16+i*28; unsigned off=RD32(b),size=RD32(b+4),rate=RD32(b+12);
+        if(off+size<=(unsigned)n){ audio_add(i,(int)(intptr_t)(d+off),(int)size,(int)rate); loaded++; } }
+    SDL_Log("audio: %d/%u samples loaded from BANK1.SBK",loaded,count);
+    free(d);   // audio_add copies into AudioBuffers synchronously
+    #undef RD32
+}
+
 static void start_race(int idx){
     char dat[160]; snprintf(dat,sizeof(dat),"assets/raw/%s/LEVEL.DAT",TRACK_LEV[idx]);
     if(race_init(&g_race,dat,RACE_MAX_CARS,2,1234u)){
@@ -284,7 +333,13 @@ static void frame(void){
     if(g_state==ST_TITLE && g_ticks>90) g_state=ST_MENU;
     else if(g_state==ST_MENU && g_ticks>240) g_state=ST_TRACKSEL;
     else if(g_state==ST_TRACKSEL && g_ticks>420) start_race(g_tsel);
-    if(g_state==ST_RACE && g_racing) race_step(&g_race, 1.f/60.f);
+    if(g_state==ST_RACE && g_racing){
+        race_step(&g_race, 1.f/60.f);
+        Car* p=&g_race.cars[0]; float sp=fabsf(p->speed);
+        audio_engine(SND_ENGINE, 0.55f + sp*0.018f, 0.22f);          // engine pitch by speed
+        if(p->hits>g_last_hits) audio_oneshot(SND_CRASH, 0.7f);      // collision
+        g_last_hits=p->hits;
+    } else { audio_engine(SND_ENGINE, 0.5f, 0.0f); g_last_hits=0; }  // silence engine in menus
     render_scene();
     present();
 }
@@ -314,6 +369,7 @@ int main(void){
         }
         SDL_Log("menu ready: %d items, %d tracks", MENU_N, TRACK_N);
     }
+    audio_load();
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(frame,0,1);
 #else

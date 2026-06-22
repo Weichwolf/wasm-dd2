@@ -9,6 +9,7 @@ PRELOAD=()
 for L in 1 2 3 4 5 6 7 8 9 A B; do
   PRELOAD+=( --preload-file "assets/raw/LEV$L/LEVEL.DAT@/assets/raw/LEV$L/LEVEL.DAT" )
 done
+PRELOAD+=( --preload-file "assets/raw/VAGS/BANK1.SBK@/assets/raw/VAGS/BANK1.SBK" )
 # front-end assets
 for FE in LEV0/COPYRIGH.BMP LEV0/LOADING.BMP LEV0/FONT.BNK LEV0/LEVEL.SPR LEV0/LEVEL.PAL LEV0/LEVEL.TX0 LEV0/LEVEL.TX1 LEV0/LEVEL.TX2 LEV0/LEVEL.TX3 LEV0/LEVEL.TX4; do
   PRELOAD+=( --preload-file "assets/raw/$FE@/assets/raw/$FE" )
