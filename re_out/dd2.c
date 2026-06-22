@@ -3030,18 +3030,15 @@ int * __cdecl Load_Textures(undefined4 *param_1,int *param_2,int param_3)
   int *piVar1;
   int iVar2;
   undefined4 *puVar3;
-  undefined2 local_18;
-  undefined2 local_16;
-  undefined2 local_14;
-  undefined2 local_12;
+  undefined2 dd2_rect[4];  /* WASM: contiguous rect (x86 relied on adjacent stack locals) */
   
   for (puVar3 = param_1; (int)puVar3 - (int)param_1 < param_3;
       puVar3 = (undefined4 *)((int)(puVar3 + 1) + (*piVar1 >> 0x10) * (iVar2 >> 0x10))) {
-    local_18 = *(undefined2 *)((int)param_2 + 6);
-    local_16 = (undefined2)param_2[2];
-    local_14 = (undefined2)((*param_2 >> 0x10) / 2);
-    local_12 = (undefined2)param_2[1];
-    LoadImage((int *)&local_18,puVar3 + 1);
+    dd2_rect[0] = *(undefined2 *)((int)param_2 + 6);
+    dd2_rect[1] = (undefined2)param_2[2];
+    dd2_rect[2] = (undefined2)((*param_2 >> 0x10) / 2);
+    dd2_rect[3] = (undefined2)param_2[1];
+    LoadImage((int *)dd2_rect,puVar3 + 1);
     iVar2 = *param_2;
     piVar1 = (int *)((int)param_2 + 2);
     param_2 = param_2 + 4;
