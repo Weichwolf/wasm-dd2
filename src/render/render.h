@@ -14,7 +14,7 @@ void render_track(const float* view, const float* proj);
 void render_box(const float* view, const float* proj, vec3 c, vec3 he, float yaw, float r, float g, float b);
 // real car mesh (pos3+rgb3 tris in car-local space): upload once, then draw per car (pos/yaw/tint).
 void render_car_set(const float* tv, int nverts);
-void render_car(const float* view, const float* proj, vec3 pos, float yaw, float tr, float tg, float tb);
+void render_car(const float* view, const float* proj, vec3 pos, float yaw, float tr, float tg, float tb, float dmg);
 // authentic level geometry: interleaved pos3+rgb3 vertices (triangles)
 void render_geo_set(const float* verts, int nverts);
 void render_geo(const float* view, const float* proj);

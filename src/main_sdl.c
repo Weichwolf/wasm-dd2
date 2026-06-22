@@ -213,7 +213,7 @@ static void draw_car(const float* view, const float* proj, vec3 p, float yaw, co
     float k = 1.0f - dmg*0.55f;                           // darken (soot/dents)
     float sq = 1.0f - dmg*0.28f;                          // crumple
     float br=col[0]*k, bg=col[1]*k, bb=col[2]*k;          // body colour
-    if(g_car_mesh_ok){ render_car(view,proj,p,yaw,br,bg,bb); return; }   // real decoded car mesh
+    if(g_car_mesh_ok){ render_car(view,proj,p,yaw,br,bg,bb,dmg); return; }   // real decoded car mesh (with denting)
     (void)cs;(void)sn;(void)sq;
     // local-offset box: oriented by yaw (z=forward, x=side, y=up)
     #define PART(ox,oy,oz, hx,hy,hz, r,g,b) render_box(view,proj, \

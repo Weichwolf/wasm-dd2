@@ -270,7 +270,7 @@ void render_box(const float* view,const float* proj,vec3 c,vec3 he,float yaw,flo
 }
 
 void render_car_set(const float* tv,int nverts){ g_car_tv=tv; g_car_nv=nverts; }
-void render_car(const float* view,const float* proj,vec3 pos,float yaw,float tr,float tg,float tb){
+void render_car(const float* view,const float* proj,vec3 pos,float yaw,float tr,float tg,float tb,float dmg){
     if(!g_car_tv||g_car_nv<=0) return;
     if(!s_car_vbo) glGenBuffers(1,&s_car_vbo);
     float cs=cosf(yaw), sn=sinf(yaw);
@@ -278,6 +278,13 @@ void render_car(const float* view,const float* proj,vec3 pos,float yaw,float tr,
     if(g_car_nv>cap){ cap=g_car_nv; buf=(float*)realloc(buf,(size_t)cap*6*sizeof(float)); }
     for(int i=0;i<g_car_nv;i++){ const float* s=g_car_tv+i*6; float* o=buf+i*6;
         float lx=s[0],ly=s[1],lz=s[2];                       // car-local -> world by yaw+translate
+        if(dmg>0.001f){
+            // visible damage: deterministic per-vertex crumple + body compression + roof sag (DD2 denting)
+            float h=sinf(lx*11.3f+ly*7.7f+lz*5.1f)*43758.5453f; h-=floorf(h);   // 0..1 per vertex
+            float d=dmg*0.32f*(h-0.5f);
+            lx+=d*0.5f; lz+=d; ly+=dmg*0.12f*(h-0.7f) - dmg*0.10f*(ly>0?ly:0);   // crumple + roof sag
+            lx*=1.0f-dmg*0.10f; lz*=1.0f-dmg*0.08f;                              // body compresses
+        }
         o[0]=pos.x+cs*lx-sn*lz; o[1]=pos.y+ly; o[2]=pos.z+sn*lx+cs*lz;
         o[3]=s[3]*tr; o[4]=s[4]*tg; o[5]=s[5]*tb;             // tint panel colour by car colour
     }
