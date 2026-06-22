@@ -264,3 +264,11 @@ fidelity; integrate into the C renderer to replace the cross-section reconstruct
   reconstruction the SIM uses. Current build = hybrid: reconstruction road (cars drive on it) + real-geo
   scenery overlay. Full fidelity needs sim+render unified on the real geometry (align coords, find the
   road type, collide vs real polys) — a larger architectural change. Committed render keeps the hybrid.
+
+## Geometry coverage validated across all 11 levels (circuit vs arena)
+Object counts (section-0 placements): LEV1 ChalkCanyon 767, LEV2 Colosseum 930, LEV3 Liberty 905,
+LEV4 Motorplex 1016, LEV5 Caprio 599, LEV6 PineHills 662, LEV7 TotalDest 753 = the 7 CIRCUITS (full
+authentic scene geometry, 12k-24k tris). LEV8 DeathBowl, LEV9 DestrDerby, LEVA RedPike, LEVB ThePit =
+0 objects = the 4 demolition ARENAS (open bowls; arena surface is the section-2 reconstruction). So the
+geo parser is correct for all 11 levels: circuits get real object geometry, arenas correctly have none.
+(DD2's "16 levels" = championship events over these 11 distinct tracks.)
