@@ -135,6 +135,14 @@ static const char* PREVIEW_SPR[TRACK_N] = {
     "CAPRIO","CHALKCAN","DETHBOWL","ULTDEST","LIBCITY","PINEHILL","REDPIKE","MOTRPLEX","COLOSEUM","THEPIT","ULTDEST","ULTDEST"
 };
 static GLuint g_prev_tex[TRACK_N]; static int g_prev_w[TRACK_N], g_prev_h[TRACK_N], g_prev_try[TRACK_N];
+// radial main menu: icon sprite + screen slot (matches the dd2h metal-button layout)
+static struct { const char* icon; float x,y; } MBTN[] = {
+    {"IWRECKIN",58,98},{"IRACMODE",112,98},{"ITRACK",166,98},{"ICAR",220,98},
+    {"IVIEWSTA",86,150},{"ICONFIG",140,150},{"ICREDITS",194,150},
+};
+#define MBTN_N ((int)(sizeof(MBTN)/sizeof(MBTN[0])))
+static GLuint g_icon_tex[MBTN_N]; static int g_iw[MBTN_N], g_ih[MBTN_N];
+static GLuint g_ring_tex, g_logo_tex, g_go_tex; static int g_ringw,g_ringh,g_logow,g_logoh,g_gow,g_goh;
 static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
 // track-name index -> LEVEL.DAT level dir (best-effort mapping to the 11 playable levels)
 static const char* TRACK_LEV[TRACK_N] = {
@@ -213,14 +221,23 @@ static void render_scene(void){
     glClearColor(0,0,0,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     switch(g_state){
         case ST_TITLE: ui_blit_fullscreen(g_title_tex); break;
-        case ST_MENU:
+        case ST_MENU: {
             ui_blit_fullscreen(g_title_tex);
-            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
-            for (int i=0;i<MENU_N;i++){
-                GLuint t = (i==g_sel)?g_mt_sel[i]:g_mt_norm[i];
-                if(t) ui_blit_rect(t, (RENDER_W-g_mw[i])/2.f, 150.f+i*18.f, g_mw[i], g_mh[i], RENDER_W, RENDER_H);
+            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);   // darken bg toward metal
+            if(g_logo_tex && g_logow>0){ float lw=180.f, lh=lw*g_logoh/(float)g_logow;
+                ui_blit_rect(g_logo_tex,(RENDER_W-lw)/2.f,12,lw,lh,RENDER_W,RENDER_H); }
+            for(int i=0;i<MBTN_N;i++){
+                float r=(g_sel==i)?27.f:22.f;
+                if(g_ring_tex) ui_blit_rect(g_ring_tex,MBTN[i].x-r,MBTN[i].y-r,r*2,r*2,RENDER_W,RENDER_H);
+                if(g_icon_tex[i]&&g_iw[i]>0){ float iw=r*1.4f, ih=iw*g_ih[i]/(float)g_iw[i];
+                    ui_blit_rect(g_icon_tex[i],MBTN[i].x-iw/2,MBTN[i].y-ih/2,iw,ih,RENDER_W,RENDER_H); }
             }
-            break;
+            { float gx=252,gy=178,r=(g_sel==MBTN_N)?26.f:21.f;        // GO/forward button
+              if(g_ring_tex) ui_blit_rect(g_ring_tex,gx-r,gy-r,r*2,r*2,RENDER_W,RENDER_H);
+              if(g_go_tex&&g_gow>0){ float iw=r*1.2f, ih=iw*g_goh/(float)g_gow;
+                  ui_blit_rect(g_go_tex,gx-iw/2,gy-ih/2,iw,ih,RENDER_W,RENDER_H); } }
+            hud_text("WRECKING   RACING   PRACTICE", 60, 214, 0.55f, 0);
+            break; }
         case ST_TRACKSEL: {
             ui_blit_fullscreen(g_title_tex);
             ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
@@ -355,10 +372,10 @@ static void frame(void){
             SDL_Scancode sc=e.key.scancode;
             if(g_state==ST_TITLE && (sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE)) g_state=ST_MENU;
             else if(g_state==ST_MENU){
-                if(sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%MENU_N;
-                else if(sc==SDL_SCANCODE_UP) g_sel=(g_sel+MENU_N-1)%MENU_N;
-                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE){
-                    if(g_sel==0) g_state=ST_TRACKSEL; else if(g_sel==1) g_state=ST_STATS; }
+                int N=MBTN_N+1;
+                if(sc==SDL_SCANCODE_RIGHT||sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%N;
+                else if(sc==SDL_SCANCODE_LEFT||sc==SDL_SCANCODE_UP) g_sel=(g_sel+N-1)%N;
+                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) g_state=ST_TRACKSEL;
             }
             else if(g_state==ST_STATS){
                 if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
@@ -420,7 +437,12 @@ int main(void){
             g_tt_norm[i]=vram_text_tex(TRACKS[i],230,170,40,&g_tw[i],&g_th[i]);
             g_tt_sel[i] =vram_text_tex(TRACKS[i],255,255,255,NULL,NULL);
         }
-        SDL_Log("menu ready: %d items, %d tracks", MENU_N, TRACK_N);
+        // radial menu sprites (real dd2h layout)
+        g_logo_tex=vram_sprite_tex("DD2L1",&g_logow,&g_logoh);
+        g_ring_tex=vram_sprite_tex("RING",&g_ringw,&g_ringh);
+        g_go_tex  =vram_sprite_tex("GO",&g_gow,&g_goh);
+        for(int i=0;i<MBTN_N;i++) g_icon_tex[i]=vram_sprite_tex(MBTN[i].icon,&g_iw[i],&g_ih[i]);
+        SDL_Log("menu ready: %d items, %d tracks, radial=%d btns (ring=%u logo=%u)", MENU_N, TRACK_N, MBTN_N, g_ring_tex, g_logo_tex);
     }
     audio_load();
 #ifdef __EMSCRIPTEN__
