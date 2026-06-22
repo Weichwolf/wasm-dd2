@@ -4,6 +4,7 @@
 unsigned char* g_image = (unsigned char*)0x400000;
 extern void dd2_relocate(void);
 extern void dd2_com_init(void);
+extern void __InitMultipleThread(void);
 extern void Read_Directory(const char*);
 extern void __WinMain(void);
 void dd2_load_image(const char* path){
@@ -17,6 +18,7 @@ void dd2_load_image(const char* path){
    Original sets it to &__MultipleThread during init; provide a valid block up-front (single-threaded WASM). */
 static int g_thread[256];
 int dd2_getthread(void){ return (int)(long)g_thread; }
+int dd2_crt_lock(int a){ return a; }   /* CRT lock no-op (single-threaded) */
 /* CRT BYPASS: the user-WinMain that inits the game + runs the menu is buried in the CRT's alloca region
    (x86 stack manip can't run in WASM). Call the game's __InitRtns (C++ global ctors) + Init_Application
    (window) + Play_Game (race state machine, which does Init_Game) directly to reach the GAME LOGIC. */
@@ -26,7 +28,10 @@ extern int Play_Game(void);
 int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
-    *(int*)0x46c32c = (int)(long)&dd2_getthread;
+    *(int*)0x46c32c = (int)(long)&dd2_getthread;  /* __GetThreadPtr */
+    /* CRT multithread file/heap-access locks (__Access* undecompiled) -> single-threaded no-ops */
+    *(int*)0x46c330 = (int)(long)&dd2_crt_lock;   /* _AccessFileH */
+    *(int*)0x46c340 = (int)(long)&dd2_crt_lock;   /* _AccessIOB   */
     __InitRtns();                 /* run global constructors (game data tables) */
     dd2_com_init();               /* set up DirectDraw COM interface vtables */
     { FILE* tf=fopen("Dirinfo","rb"); char b[40]={0};

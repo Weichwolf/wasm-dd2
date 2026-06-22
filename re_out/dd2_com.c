@@ -47,3 +47,10 @@ void dd2_com_init(void){
 
 /* DirectDrawCreate(guid, ppDD, outer) -> emit our IDirectDraw */
 int DirectDrawCreate(int guid, void** ppDD, int outer){ if(ppDD)*ppDD=&g_ddraw_obj; return 0; }
+
+#include <stdarg.h>
+#include <stdio.h>
+/* MSVC sprintf wrapper, reimplemented with real varargs (decompiled version read x86-stack args) */
+int FUN_0045672e(char* buf, const char* fmt, ...){
+    va_list ap; va_start(ap, fmt); int n = vsprintf(buf, fmt, ap); va_end(ap); return n;
+}
