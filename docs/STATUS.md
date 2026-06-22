@@ -77,6 +77,21 @@ FONT.BNK `"RAW\0"[u16 sec][u32 size]`. Run `python tools/unpack_dirinfo.py` to e
 PNGs can be inspected with the Read tool (renders images). So the headless loop = decode/render → PNG →
 Read → judge correctness. Use this for every visual check.
 
+## DIRECTIVE UPDATE (2026-06-22) — faithful port, no shortcuts
+User wants the WASM build to **look and function IDENTICALLY to the original `dd2h`** — a full
+decompile + refactor of the C to WASM (not the abstract sim). No questions; report when it matches.
+- Reference oracle: `qemu-system-i386/x86_64` + `dosbox` present, but **no Windows 9x image / no wine / no sudu**,
+  and `dd2h.exe` is Win32/DirectDraw (DOSBox can't run it). So ground truth = the **decompiled logic**
+  (`re_out/dd2_decomp.c`) + the original assets; pursue a runnable reference if a route appears.
+- Approach: reconstruct system-by-system from the decompilation, compiled to WASM (SDL3+WebGL2),
+  with the wasm-dvd-gl 320x240 DVD-look present. This is a large multi-stage grind via the autonomous loop.
+- DONE so far: WASM boots the **real title screen** at 320x240 through the DVD pipeline (`ui.c` BMP loader+blit).
+- NEXT (front-end): font (`FONT.BNK`) + sprite atlas (`LEVEL.SPR`, format decoded) renderer →
+  main menu + track-select → flow. THEN the 3D engine: PSX VRAM/CLUT texturing + software GTE +
+  section-0 display lists + car models + HUD. Then SFX (VAGS). Verify each vs the original's assets/behavior.
+- The earlier abstract top-down sim + AI race (native `dd2_race`, all-tracks verified) remains as a
+  headless physics/AI testbed, but is NOT the user-facing deliverable anymore.
+
 ## KNOWN ISSUE — LEV4 infield chords (diagnosed 2026-06-18)
 LEV4's reconstructed centerline has spurious long "chord" segments across the infield (rib clusters
 ~205–210, 55–73, 88–91, 230–234: seglen 15–44 m vs 2 m median) where the section-2 vertex order

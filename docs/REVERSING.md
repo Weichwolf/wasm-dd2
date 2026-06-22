@@ -107,6 +107,16 @@ walls/scenery, low marginal value over the working cross-section reconstruction 
 tracks pass). **Conclusion: geometry-fidelity is genuinely a large PSX-RE project; do it only if the
 user wants pixel-faithful tracks. Otherwise the current reconstruction is the pragmatic answer.**
 
+## Front-end / sprite / VRAM model (for the faithful WASM port)
+- `COPYRIGH.BMP`/`LOADING.BMP` = standard 320x240 8-bit Windows BMPs (title/loading), **top-down**.
+- `LEVEL.SPR` = `[u32 count][count x 24B]`; entry = `[u16 u][u16 v][u16 w][u16 h][u16 cx][u16 cy][u16 mode=4]` + 10-byte name @0x0e.
+  `Load_Sprite_Info`: count first; `Search_For_Sprite` strcmp at +0xe; stride 0x18. CAPRIO=(0,0,256,128) = TX top-left billboard.
+  v ranges 0..6256 => sprites address a **tall virtual VRAM** = the TX pages stacked; (cx,cy)=CLUT loc; mode 4 = PSX 4-bit CLUT.
+- Font: `Setup_Font`->`Setup_Sprite` (glyphs are sprites); `Allocate_Font_Buffers` (src path `C:\PcMpe\graphics\font.C`),
+  `Print`/`Print_Locate`/`Print_Ink` render strings. `MPE_malloc` = engine allocator ("MPE" = the Psygnosis/Reflections lib).
+- Renderer = PSX-style: load TX pages into a VRAM atlas, address via (u,v)+CLUT, geometry via emulated GTE (`Draw_Screen_Polys`).
+  => faithful 3D view = software GTE + VRAM/CLUT texturing + the section-0 display lists.
+
 ## TODO formats
 - [ ] LEVEL.PAL / .CLT exact color encoding (RGBA? BGRA? 5551? VGA 6-bit?).
 - [ ] LEVEL.TX* texture page layout (dimensions, header?, palette association).
