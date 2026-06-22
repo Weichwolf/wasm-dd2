@@ -7,3 +7,5 @@ void dd2_load_image(const char* path){
     fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
     g_image = malloc(n>0x540000?n:0x540000); fread(g_image,1,n,f); fclose(f);
 }
+extern int __WinMain();
+int main(){ dd2_load_image("dd2_image.bin"); return __WinMain(0,0,0,1); }

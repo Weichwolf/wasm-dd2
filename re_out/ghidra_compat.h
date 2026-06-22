@@ -11,6 +11,7 @@
 // (decompiled MSVC CRT functions that touch FILE internals are excluded from the build; libc provides stdio)
 
 // x86 calling-convention keywords (no-ops on a flat target)
+#define swi(x) 0  /* Ghidra int-3/software-interrupt intrinsic stub */
 #define __cdecl
 #define __stdcall
 #define __fastcall
