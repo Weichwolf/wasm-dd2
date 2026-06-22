@@ -9493,7 +9493,7 @@ void Init_Debris_(void)
   for (bVar7 = 0; (int)(uint)bVar7 < num_cars; bVar7 = bVar7 + 1) {
     if (bVar7 == 0x12) {
       Setup_Sprite(0,s_CLUT01B_0046c968,local_40);
-      uRam0073c2f4 = (undefined2)(((local_40)>>112)&0xffffffffu);
+      uRam0073c2f4 = (undefined2)((((unsigned __int128)local_40)>>112)&0xffffffffu);
     }
     else {
       if ((bVar7 == 0) && (race_car == 0)) {
@@ -9509,7 +9509,7 @@ void Init_Debris_(void)
         FUN_0045672e((int)local_28,(byte *)s_CLUT_02dB_0046c944);
       }
       Setup_Sprite(0,local_28,local_40);
-      *(short *)(&debris_cluts + (uint)bVar7 * 2) = (short)(((local_40)>>112)&0xffffffffu);
+      *(short *)(&debris_cluts + (uint)bVar7 * 2) = (short)((((unsigned __int128)local_40)>>112)&0xffffffffu);
     }
   }
   uVar5 = 0x1e00;
@@ -38122,6 +38122,7 @@ void __cdecl srand(uint _Seed)
 
 /* ===== FUN_00456b30 @ 00456b30 ===== */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 void __fastcall FUN_00456b30(uint param_1,uint param_2)
 
 {
@@ -38152,6 +38153,7 @@ void __fastcall FUN_00456b30(uint param_1,uint param_2)
   }
   return;
 }
+#endif
 
 
 /* ===== FUN_00456b67 @ 00456b67 ===== */
@@ -40299,6 +40301,7 @@ LAB_004588b2:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 int __cdecl __NTAddFileHandle(int param_1)
 
 {
@@ -40325,12 +40328,14 @@ int __cdecl __NTAddFileHandle(int param_1)
   (*(code *)_ReleaseFList)();
   return iVar2;
 }
+#endif
 
 
 /* ===== FUN_00458964 @ 00458964 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 void __cdecl FUN_00458964(HANDLE param_1,uint param_2)
 
 {
@@ -40364,6 +40369,7 @@ LAB_0045899a:
   (*(code *)_ReleaseFList)();
   return;
 }
+#endif
 
 
 /* ===== __NTRemoveFileHandle @ 00458a0b ===== */
@@ -42906,6 +42912,7 @@ LAB_0045b07c:
 
 /* ===== __cvt @ 0045b0fe ===== */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 char * __cdecl
 __cvt(double param_1,int param_2,int *param_3,undefined4 *param_4,int param_5,char *param_6)
 
@@ -43018,10 +43025,12 @@ __cvt(double param_1,int param_2,int *param_3,undefined4 *param_4,int param_5,ch
   }
   return param_6;
 }
+#endif
 
 
 /* ===== __ZBuf2F @ 0045b38e ===== */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 void __fastcall __ZBuf2F(undefined4 param_1,undefined8 *param_2)
 
 {
@@ -43055,6 +43064,7 @@ void __fastcall __ZBuf2F(undefined4 param_1,undefined8 *param_2)
   *param_2 = uVar9;
   return;
 }
+#endif
 
 
 /* ===== FUN_0045b3d9 @ 0045b3d9 ===== */
@@ -43084,6 +43094,7 @@ void __fastcall FUN_0045b3d9(undefined4 param_1,uint param_2)
 
 /* ===== __CBeginThread @ 0045b4ca ===== */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 DWORD __cdecl __CBeginThread(undefined4 param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
@@ -43135,6 +43146,7 @@ DWORD __cdecl __CBeginThread(undefined4 param_1,undefined4 param_2,int param_3,u
   CloseHandle(local_24);
   return local_18;
 }
+#endif
 
 
 /* ===== FUN_0045b5ae @ 0045b5ae ===== */
@@ -43360,6 +43372,7 @@ LAB_0045b71d:
 /* WARNING: Instruction at (ram,0x0045b7a6) overlaps instruction at (ram,0x0045b7a5)
     */
 
+#if 0 /* decompiler-gap CRT (asm-RE tier) */
 int FUN_0045b75d(void)
 
 {
@@ -43469,6 +43482,7 @@ int FUN_0045b75d(void)
                     /* WARNING: Bad instruction - Truncating control flow here */
   halt_baddata();
 }
+#endif
 
 
 /* ===== FUN_0045b812 @ 0045b812 ===== */
