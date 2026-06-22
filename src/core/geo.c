@@ -82,7 +82,7 @@ int geo_load(const char* path, Geo* g){
             for(int it=0; it<128; it++){
                 if(gp+4>ol) break;
                 unsigned fc=u16(out+gp); int ft=out[gp+2], term=out[gp+3]; gp+=4;
-                if(term==0||fc==0||fc>3000) break;
+                if(term==0||fc==0||fc>3000||ft==0xff) break;     // 0xff type = end-of-list marker
                 int sz=face_size(ft);
                 if(sz==20){                                       // flat/textured poly: rgb@+4, idx@+12
                     for(unsigned fi=0;fi<fc;fi++){
