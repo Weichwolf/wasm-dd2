@@ -79,7 +79,12 @@ static unsigned char* g_readback;
 static int g_codec_ready = 0, g_frameno = 0;
 static AppState g_state = ST_TITLE;
 static GLuint g_title_tex;
-static GLuint g_spr_tex; static int g_spr_w, g_spr_h;
+// main menu (real DD2 front-end strings), rendered in the bitmap font
+static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
+#define MENU_N ((int)(sizeof(MENU)/sizeof(MENU[0])))
+static GLuint g_mt_norm[MENU_N], g_mt_sel[MENU_N];
+static int    g_mw[MENU_N], g_mh[MENU_N];
+static int    g_sel = 0;
 
 static GLuint psh(GLenum t,const char*s){GLuint h=glCreateShader(t);glShaderSource(h,1,&s,0);glCompileShader(h);return h;}
 static GLuint make_tex(int w,int h){
@@ -121,7 +126,10 @@ static void render_scene(void){
         case ST_TITLE: ui_blit_fullscreen(g_title_tex); break;
         case ST_MENU:
             ui_blit_fullscreen(g_title_tex);
-            if (g_spr_tex) ui_blit_rect(g_spr_tex, (RENDER_W-g_spr_w)/2.f, 70, g_spr_w, g_spr_h, RENDER_W, RENDER_H);
+            for (int i=0;i<MENU_N;i++){
+                GLuint t = (i==g_sel)?g_mt_sel[i]:g_mt_norm[i];
+                if(t) ui_blit_rect(t, (RENDER_W-g_mw[i])/2.f, 150.f+i*18.f, g_mw[i], g_mh[i], RENDER_W, RENDER_H);
+            }
             break;
         case ST_RACE:  /* held until 3D view ready */ break;
     }
@@ -158,6 +166,10 @@ static void frame(void){
         if(e.type==SDL_EVENT_KEY_DOWN){
             SDL_Scancode sc=e.key.scancode;
             if(g_state==ST_TITLE && (sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE)) g_state=ST_MENU;
+            else if(g_state==ST_MENU){
+                if(sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%MENU_N;
+                else if(sc==SDL_SCANCODE_UP) g_sel=(g_sel+MENU_N-1)%MENU_N;
+            }
         }
     }
     if(g_state==ST_TITLE && ++g_ticks>120) g_state=ST_MENU;   // attract-mode auto-advance
@@ -176,8 +188,13 @@ int main(void){
     ui_init(); present_init();
     int tw,th; g_title_tex = ui_load_bmp("assets/raw/LEV0/COPYRIGH.BMP",&tw,&th);
     SDL_Log("title %dx%d tex=%u", tw, th, g_title_tex);
-    if (vram_init("LEV0")) { g_spr_tex = vram_sprite_tex("DRIVER1",&g_spr_w,&g_spr_h);
-        SDL_Log("sprite DRIVER1 %dx%d tex=%u", g_spr_w, g_spr_h, g_spr_tex); }
+    if (vram_init("LEV0")) {
+        for(int i=0;i<MENU_N;i++){
+            g_mt_norm[i]=vram_text_tex(MENU[i],230,170,40,&g_mw[i],&g_mh[i]);  // ink: DD2 amber
+            g_mt_sel[i] =vram_text_tex(MENU[i],255,255,255,NULL,NULL);          // selected: white
+        }
+        SDL_Log("menu ready: %d items", MENU_N);
+    }
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(frame,0,1);
 #else

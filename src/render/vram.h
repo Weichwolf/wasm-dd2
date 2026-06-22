@@ -5,7 +5,9 @@
 #define DD_VRAM_H
 #include <GLES3/gl3.h>
 
-int   vram_init(const char* level);                 // load TX0+PAL+SPR for a level; 1 on success
+int   vram_init(const char* level);                 // assemble full VRAM (all TX pages) + PAL/SPR/FONT
 GLuint vram_sprite_tex(const char* name, int* w, int* h);  // upload a named sprite -> RGBA texture (0 if absent)
+int   vram_text_measure(const char* s);             // pixel width of a string in the bitmap font
+GLuint vram_text_tex(const char* s, unsigned char r,unsigned char g,unsigned char b, int* w,int* h); // render text (ink rgb) -> RGBA tex
 
 #endif
