@@ -65,7 +65,7 @@ static void load_vram(const char* lev, Geo* g){
 
 static int face_size(int t){ switch(t){case 2:case 46:return 16;case 18:case 27:return 24;case 26:case 31:return 28;case 30:return 32;default:return 20;} }
 // type 14 (and other 20B textured) carry a texture-index @ +8 into TDF; flat types use rgb@+4.
-static int is_textured(int t){ return t==14 || t==30; }
+static int is_textured(int t){ return t==12 || t==14 || t==30; }
 
 int geo_load(const char* path, Geo* g){
     memset(g,0,sizeof(*g));
