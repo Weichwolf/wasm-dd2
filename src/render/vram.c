@@ -43,7 +43,8 @@ int vram_init(const char* level){
     for(unsigned i=0;i<count;i++){
         const unsigned char* r=tx+diroff+i*16;
         int w=u16(r+2), h=u16(r+4), dx=u16(r+6), dy=u16(r+8);
-        if(p+(size_t)w*h > (unsigned)n) break;             // source pool exhausted -> done (22 tiles)
+        if(p+4+(size_t)w*h > (unsigned)n) break;           // source pool exhausted -> done
+        p+=4;                                              // per-tile 4-byte header (Load_Textures: src=puVar3+1)
         for(int y=0;y<h;y++) if(dy+y<s_vram_h && dx+w<=VRAM_W)
             memcpy(s_vram+(size_t)(dy+y)*VRAM_W+dx, tx+p+(size_t)y*w, w);
         p+=(size_t)w*h;
