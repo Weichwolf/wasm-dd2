@@ -27,7 +27,7 @@ static const char* AFS =
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0); if(p.a<0.05) discard;\n"
     "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.4);\n"  // toward dd2h's vivid palette
-    "  c*=vec3(1.22,1.22,1.16); c=mix(c, u_fog, clamp(v_d*0.85,0.0,1.0));\n"  // engine depth-cue ramps to full fog at far
+    "  c*=vec3(1.22,1.22,1.16); c=mix(c, u_fog, pow(clamp(v_d,0.0,1.0),2.0)*0.9);\n"  // steep ramp: near/mid vivid, far fogged (keeps CLUT saturation)
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 
 static GLuint s_prog, s_vbo, s_vram, s_pal; static GLint uv_vsz, uv_vram, uv_pal, uv_fog;
