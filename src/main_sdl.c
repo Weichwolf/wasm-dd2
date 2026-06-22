@@ -239,19 +239,22 @@ static void render_scene(void){
             hud_text("WRECKING   RACING   PRACTICE", 60, 214, 0.55f, 0);
             break; }
         case ST_TRACKSEL: {
+            // dd2h shows ONE cycling track preview + name (not a list). Match that layout.
             ui_blit_fullscreen(g_title_tex);
             ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
-            // selected track's preview thumbnail (CLUT-coloured), lazily loaded
+            int hw=vram_text_measure("SELECT TRACK");
+            hud_text("SELECT TRACK",(RENDER_W-hw*0.8f)/2.f,18,0.8f,1);
+            // large centred preview of the selected track (lazily loaded)
             if(!g_prev_try[g_tsel]){ g_prev_try[g_tsel]=1;
                 g_prev_tex[g_tsel]=vram_sprite_tex(PREVIEW_SPR[g_tsel],&g_prev_w[g_tsel],&g_prev_h[g_tsel]); }
-            if(g_prev_tex[g_tsel]){ float pw=92,ph=pw*g_prev_h[g_tsel]/(float)g_prev_w[g_tsel];
-                ui_blit_rect(g_prev_tex[g_tsel],RENDER_W-pw-6,6,pw,ph,RENDER_W,RENDER_H); }
-            float sc=0.62f, lh=13.f, y0=66.f;       // scaled list to fit 12 names
-            for (int i=0;i<TRACK_N;i++){
-                GLuint t=(i==g_tsel)?g_tt_sel[i]:g_tt_norm[i];
-                float w=g_tw[i]*sc, h=g_th[i]*sc;
-                if(t) ui_blit_rect(t,(RENDER_W-w)/2.f, y0+i*lh, w, h, RENDER_W, RENDER_H);
-            }
+            if(g_prev_tex[g_tsel]&&g_prev_w[g_tsel]>0){
+                float pw=176.f, ph=pw*g_prev_h[g_tsel]/(float)g_prev_w[g_tsel];
+                if(ph>118.f){ ph=118.f; pw=ph*g_prev_w[g_tsel]/(float)g_prev_h[g_tsel]; }
+                ui_blit_rect(g_prev_tex[g_tsel],(RENDER_W-pw)/2.f, 52, pw, ph, RENDER_W, RENDER_H); }
+            // selected track name (prominent) under the preview
+            GLuint t=g_tt_sel[g_tsel]; float w=g_tw[g_tsel]*0.85f, h=g_th[g_tsel]*0.85f;
+            if(t) ui_blit_rect(t,(RENDER_W-w)/2.f, 182, w, h, RENDER_W, RENDER_H);
+            hud_text("UP/DOWN  SELECT      GO  RACE", 58, 214, 0.5f, 0);
             break; }
         case ST_STATS: {
             ui_blit_fullscreen(g_title_tex);
