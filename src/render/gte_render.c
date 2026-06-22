@@ -23,15 +23,17 @@ static const char* AFS =
     "#version 300 es\n"
     "precision mediump float; precision mediump int;\n"
     "in vec2 v_uv; flat in int v_cl; in float v_d; out vec4 o;\n"
-    "uniform sampler2D u_vram; uniform sampler2D u_pal;\n"
+    "uniform sampler2D u_vram; uniform sampler2D u_pal; uniform vec3 u_fog;\n"
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0); if(p.a<0.05) discard;\n"
     "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.12);\n"
-    "  c*=vec3(1.22,1.22,1.16); c=mix(c, vec3(0.74,0.77,0.77), v_d*0.35);\n"
+    "  c*=vec3(1.22,1.22,1.16); c=mix(c, u_fog, v_d*0.5);\n"
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 
-static GLuint s_prog, s_vbo, s_vram, s_pal; static GLint uv_vsz, uv_vram, uv_pal;
+static GLuint s_prog, s_vbo, s_vram, s_pal; static GLint uv_vsz, uv_vram, uv_pal, uv_fog;
 static float s_vsz[2]; static int s_inited;
+static float s_fog[3]={0.5f,0.5f,0.5f};   // per-level fog/depth-cue colour (from exe fog_col_ @0x46589e)
+void gte_set_fog(float r,float g,float b){ s_fog[0]=r; s_fog[1]=g; s_fog[2]=b; }
 // source geo (kept for per-frame CPU transform)
 static const float* g_tv; static int g_ntv;
 static float* g_out;  static int g_outcap;   // emitted screen verts: ndc.x,ndc.y,z,u,v,clut (6 floats)
@@ -45,6 +47,7 @@ void gte_render_set(const float* tv,int ntv,const unsigned char* vram,int vw,int
         s_prog=glCreateProgram(); glAttachShader(s_prog,compileA(GL_VERTEX_SHADER,AVS));
         glAttachShader(s_prog,compileA(GL_FRAGMENT_SHADER,AFS)); glLinkProgram(s_prog);
         uv_vsz=glGetUniformLocation(s_prog,"u_vsz"); uv_vram=glGetUniformLocation(s_prog,"u_vram"); uv_pal=glGetUniformLocation(s_prog,"u_pal");
+        uv_fog=glGetUniformLocation(s_prog,"u_fog");
         glGenBuffers(1,&s_vbo); glGenTextures(1,&s_vram); glGenTextures(1,&s_pal); s_inited=1;
     }
     g_tv=tv; g_ntv=ntv; s_vsz[0]=(float)vw; s_vsz[1]=(float)vh;
@@ -114,7 +117,7 @@ void gte_render(const float* view,const float* proj){
         }
     }
     if(n<=0) return;
-    glUseProgram(s_prog); glUniform2fv(uv_vsz,1,s_vsz);
+    glUseProgram(s_prog); glUniform2fv(uv_vsz,1,s_vsz); glUniform3fv(uv_fog,1,s_fog);
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D,s_vram); glUniform1i(uv_vram,0);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D,s_pal); glUniform1i(uv_pal,1);
     glBindBuffer(GL_ARRAY_BUFFER,s_vbo); glBufferData(GL_ARRAY_BUFFER,n*sizeof(float),g_out,GL_DYNAMIC_DRAW);

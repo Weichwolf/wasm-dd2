@@ -7,6 +7,7 @@ void render_init(void);
 void render_set_track(const Track* t);
 void render_begin(float r, float g, float b);          // clear color+depth
 void render_sky(void);                                  // vertical gradient sky + depth clear
+void render_set_sky_bright(float k);                    // per-level: 1=clear daytime, 0=overcast/stormy
 void render_track(const float* view, const float* proj);
 // simple oriented box (cars/props): center, half-extents, yaw (rad), rgb
 void render_box(const float* view, const float* proj, vec3 c, vec3 he, float yaw, float r, float g, float b);
@@ -24,6 +25,7 @@ void render_geo_tex(const float* view, const float* proj);
 void gte_render_set(const float* tv, int ntv, const unsigned char* vram, int vw, int vh,
                     const unsigned char* clut, int nclut);
 void gte_render(const float* view, const float* proj);
+void gte_set_fog(float r, float g, float b);   // per-level fog/depth-cue colour
 void render_shutdown(void);
 
 #endif

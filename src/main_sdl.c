@@ -398,6 +398,12 @@ static void start_race(int idx){
             render_geo_set_tex(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut);
             gte_render_set(g_geo.tv,g_geo.ntverts,g_geo.vram,g_geo.vram_w,g_geo.vram_h,g_geo.clut,g_geo.nclut); }
         if(!g_car_mesh_ok){ static Geo cm; if(geo_load_car(dat,&cm)){ render_car_set(cm.v,cm.nverts); g_car_mesh_ok=1; } }
+        // per-level fog/depth-cue colour (exe fog_col_ @0x46589e, indexed by level 1-11). L6=black (moody),
+        // L4=dark, L3=mid, rest=grey -> distant geo fades to the level's fog instead of a fixed light haze.
+        { const char* lv=TRACK_LEV[idx]; int ln=(lv[3]>='A')?(lv[3]-'A'+10):(lv[3]-'0');
+          static const int FOG[12]={128,128,128,80,32,128,0,128,128,128,128,128};   // [level]; idx0 default
+          int fb=(ln>=1&&ln<=11)?FOG[ln]:128; float f=fb/255.f; gte_set_fog(f,f,f);
+          render_set_sky_bright(fb/128.f); }   // fog 128->clear sky, 0->stormy overcast (L6)
         g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);

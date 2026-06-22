@@ -56,12 +56,16 @@ static const char* SFS =
     "float h(vec2 p){return fract(sin(dot(floor(p),vec2(41.3,289.1)))*43758.5);}\n"
     "float noise(vec2 p){vec2 f=fract(p),i=floor(p);f=f*f*(3.0-2.0*f);\n"
     "  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}\n"
-    "void main(){ vec3 hor=vec3(0.84,0.83,0.76), zen=vec3(0.66,0.745,0.75);\n"  // VERIFIED dd2h daytime: near-white horizon -> light blue top
+    "uniform float u_skybright;\n"   // per-level: 1=clear daytime, low=overcast/stormy (from fog_col_)
+    "void main(){ vec3 hor=vec3(0.84,0.83,0.76), zen=vec3(0.66,0.745,0.75);\n"  // clear-daytime gradient
     "  vec3 base=mix(hor,zen,clamp(v_p.y,0.0,1.0));\n"
-    "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // light cloud variation
+    "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // cloud variation
     "  base*=0.93+0.10*c;\n"
+    "  base=mix(vec3(0.30,0.32,0.31), base, u_skybright);\n"   // overcast: pull toward dark stormy grey
     "  gl_FragColor=vec4(base,1.0); }\n";
-static GLuint s_sky_prog, s_sky_vbo;
+static GLuint s_sky_prog, s_sky_vbo; static GLint u_skybright;
+static float g_skybright=1.0f;   // per-level sky overcast factor (1=clear, low=stormy)
+void render_set_sky_bright(float k){ g_skybright=k; }
 
 // textured geometry (GLES3): pos3 + uv2(VRAM px) + clutrow; samples R8 VRAM -> index -> CLUT palette
 static const char* TVS =
@@ -114,6 +118,7 @@ void render_init(void){
     glAttachShader(s_sky_prog,compile(GL_VERTEX_SHADER,SVS));
     glAttachShader(s_sky_prog,compile(GL_FRAGMENT_SHADER,SFS));
     glBindAttribLocation(s_sky_prog,0,"a_pos"); glLinkProgram(s_sky_prog);
+    u_skybright=glGetUniformLocation(s_sky_prog,"u_skybright");
     static const float sq[]={-1,-1, 1,-1, 1,1, -1,-1, 1,1, -1,1};
     glGenBuffers(1,&s_sky_vbo); glBindBuffer(GL_ARRAY_BUFFER,s_sky_vbo);
     glBufferData(GL_ARRAY_BUFFER,sizeof(sq),sq,GL_STATIC_DRAW);
@@ -160,7 +165,7 @@ void render_geo_tex(const float* view,const float* proj){
 
 void render_sky(void){
     glDisable(GL_DEPTH_TEST); glDepthMask(GL_FALSE);
-    glUseProgram(s_sky_prog);
+    glUseProgram(s_sky_prog); glUniform1f(u_skybright,g_skybright);
     glBindBuffer(GL_ARRAY_BUFFER,s_sky_vbo);
     glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,2*sizeof(float),(void*)0);
     glDrawArrays(GL_TRIANGLES,0,6);
