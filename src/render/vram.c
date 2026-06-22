@@ -98,32 +98,11 @@ GLuint vram_sprite_tex(const char* name, int* wout, int* hout){
     if(!s || !s_vram) return 0;
     int u=s->u,v=s->v,w=s->w,h=s->h;
     if(u+w>VRAM_W)w=VRAM_W-u; if(v+h>s_vram_h)h=s_vram_h-v; if(w<=0||h<=0)return 0;
-    // CLUT palette: the engine uses palette = sprite.cy (dth_clut). Use it when non-degenerate
-    // (RING/grey etc. resolve correctly); else fall back to a coherence-pick.
+    // CLUT (engine-faithful): __clutspace = LEVEL.CLT loaded directly; draw clut for a sprite is at
+    // __clutspace + dth_clut*0x1000, dth_clut = sprite.cy. LEVEL.CLT is 256xRGBA palettes (PC port),
+    // so palette index = cy*4 (byte offset cy*0x1000). Verified: RING -> grey metal, DRIVER0 -> clean.
     const unsigned char* pal=s_pal;
-    if(s_clt && s_nclt>0 && s->cy < (unsigned)s_nclt){
-        const unsigned char* P=s_clt + (size_t)s->cy*256*3;
-        long bright=0,nn=0;
-        for(int y=0;y<h;y+=2)for(int x=0;x<w;x+=2){ unsigned idx=s_vram[(size_t)(v+y)*VRAM_W+(u+x)];
-            if(idx){ bright+=P[idx*3]+P[idx*3+1]+P[idx*3+2]; nn++; } }
-        if(nn>0 && bright/nn > 40) pal=P;   // palette=cy renders visible (not all-black) -> use it
-    }
-    if(pal==s_pal && s_clt && s_nclt>0){
-        long bestscore=-1; int best=-1;
-        for(int p=0;p<s_nclt;p++){ const unsigned char* P=s_clt+p*256*3;
-            long diff=0,spread=0; int mn=255,mx=0;
-            for(int y=0;y<h;y+=2)for(int x=0;x<w-1;x+=2){
-                unsigned a=s_vram[(size_t)(v+y)*VRAM_W+(u+x)], b=s_vram[(size_t)(v+y)*VRAM_W+(u+x+1)];
-                for(int c=0;c<3;c++) diff += abs((int)P[a*3+c]-(int)P[b*3+c]);
-                if((int)P[a*3]<mn)mn=P[a*3]; if((int)P[a*3]>mx)mx=P[a*3];
-            }
-            spread=mx-mn;
-            if(spread<24) continue;                               // skip flat/degenerate palettes
-            long score=spread*4000 - diff;                        // coherent (low diff) + has spread
-            if(best<0||score>bestscore){ bestscore=score; best=p; }
-        }
-        if(best>=0) pal=s_clt+best*256*3;
-    }
+    if(s_clt && s_nclt>0){ int pi=s->cy*4; if(pi<s_nclt) pal=s_clt + (size_t)pi*256*3; }
     unsigned char* rgba=malloc((size_t)w*h*4);
     for(int y=0;y<h;y++)for(int x=0;x<w;x++){ unsigned idx=s_vram[(size_t)(v+y)*VRAM_W+(u+x)];
         unsigned char* o=rgba+((size_t)y*w+x)*4; o[0]=pal[idx*3];o[1]=pal[idx*3+1];o[2]=pal[idx*3+2];o[3]=idx?255:0; }
