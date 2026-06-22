@@ -98,9 +98,17 @@ GLuint vram_sprite_tex(const char* name, int* wout, int* hout){
     if(!s || !s_vram) return 0;
     int u=s->u,v=s->v,w=s->w,h=s->h;
     if(u+w>VRAM_W)w=VRAM_W-u; if(v+h>s_vram_h)h=s_vram_h-v; if(w<=0||h<=0)return 0;
-    // pick the CLUT palette that renders this sprite most coherently (self-validating; no reference).
+    // CLUT palette: the engine uses palette = sprite.cy (dth_clut). Use it when non-degenerate
+    // (RING/grey etc. resolve correctly); else fall back to a coherence-pick.
     const unsigned char* pal=s_pal;
-    if(s_clt && s_nclt>0){
+    if(s_clt && s_nclt>0 && s->cy < (unsigned)s_nclt){
+        const unsigned char* P=s_clt + (size_t)s->cy*256*3;
+        long bright=0,nn=0;
+        for(int y=0;y<h;y+=2)for(int x=0;x<w;x+=2){ unsigned idx=s_vram[(size_t)(v+y)*VRAM_W+(u+x)];
+            if(idx){ bright+=P[idx*3]+P[idx*3+1]+P[idx*3+2]; nn++; } }
+        if(nn>0 && bright/nn > 40) pal=P;   // palette=cy renders visible (not all-black) -> use it
+    }
+    if(pal==s_pal && s_clt && s_nclt>0){
         long bestscore=-1; int best=-1;
         for(int p=0;p<s_nclt;p++){ const unsigned char* P=s_clt+p*256*3;
             long diff=0,spread=0; int mn=255,mx=0;
