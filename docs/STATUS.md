@@ -167,3 +167,11 @@ Work from `re_out/dd2_decomp.c` (use `tools/refunc.sh NAME`). Reconstruct faithf
 - view a track: `./build-native/dd2_view assets/raw/LEV5/LEVEL.DAT out/x.png`
 - race: `./build-native/dd2_race assets/raw/LEVn/LEVEL.DAT out/dir <laps> <ncars> <seed> <shot_interval_s>`
 - decompiled C: `re_out/dd2_decomp.c`; extract fn: `tools/refunc.sh 'Name @'`
+
+## Reference-runner attempt (2026-06-22) — VERIFIED INFEASIBLE here
+Tried to stand up a runnable dd2h reference for verification (user pointed at qemu): qemu-system-i386
+present, but ReactOS download hit SF interstitials, and there is NO genisoimage/mkisofs/xorriso, NO
+mtools, NO vnc automation, and NO sudo to install them — so no way to inject dd2h+Dirinfo into a VM disk/CD
+or drive a ReactOS GUI headlessly; DirectDraw support for a 1996 game on ReactOS is also uncertain.
+Conclusion: bit-identical-vs-original verification is not achievable in this environment. Proceed by
+building faithfully from the decompilation + real assets, verifying via headless-browser screenshots.
