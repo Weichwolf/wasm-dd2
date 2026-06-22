@@ -71,7 +71,7 @@ static const char* PFS =
     "void main(){ gl_FragColor = texture2D(u_tex, v_uv); }\n";
 
 // ---------------- front-end state ----------------
-typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_RACE } AppState;
+typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_STATS, ST_RACE } AppState;
 
 static SDL_Window* g_win;
 static GLuint g_fbo, g_fbo_color, g_fbo_depth, g_codec_tex, g_present_prog, g_quad_vbo;
@@ -95,6 +95,7 @@ static const char* TRACKS[] = {
 #define TRACK_N ((int)(sizeof(TRACKS)/sizeof(TRACKS[0])))
 static GLuint g_tt_norm[TRACK_N], g_tt_sel[TRACK_N];
 static int    g_tw[TRACK_N], g_th[TRACK_N], g_tsel=0;
+static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
 // track-name index -> LEVEL.DAT level dir (best-effort mapping to the 11 playable levels)
 static const char* TRACK_LEV[TRACK_N] = {
     "LEV5","LEV1","LEV8","LEV9","LEV3","LEV6","LEVA","LEV4","LEV2","LEVB","LEV7","LEV7"
@@ -175,6 +176,20 @@ static void render_scene(void){
                 if(t) ui_blit_rect(t,(RENDER_W-w)/2.f, y0+i*lh, w, h, RENDER_W, RENDER_H);
             }
             break; }
+        case ST_STATS: {
+            ui_blit_fullscreen(g_title_tex);
+            int hw=vram_text_measure("TRACK STATISTICS");
+            hud_text("TRACK STATISTICS",(RENDER_W-hw*0.85f)/2.f,26,0.85f,1);
+            int nw=vram_text_measure(TRACKS[g_tsel]);
+            hud_text(TRACKS[g_tsel],(RENDER_W-nw*0.7f)/2.f,62,0.7f,0);
+            char b[64];
+            int bl=g_best_lap[g_tsel];
+            if(bl>0){ snprintf(b,sizeof(b),"FASTEST LAP   %d:%02d.%02d",bl/6000,(bl/100)%60,bl%100); }
+            else     snprintf(b,sizeof(b),"FASTEST LAP   --:--.--");
+            hud_text(b,70,98,0.6f,0);
+            snprintf(b,sizeof(b),"RACES PLAYED   %d",g_races_played[g_tsel]); hud_text(b,70,118,0.6f,0);
+            hud_text("UP/DOWN  TRACK      ESC  BACK",70,150,0.5f,0);
+            break; }
         case ST_RACE: if(g_racing){
             glEnable(GL_DEPTH_TEST);
             Car* c=&g_race.cars[0];
@@ -230,6 +245,7 @@ static void start_race(int idx){
     char dat[160]; snprintf(dat,sizeof(dat),"assets/raw/%s/LEVEL.DAT",TRACK_LEV[idx]);
     if(race_init(&g_race,dat,RACE_MAX_CARS,2,1234u)){
         render_set_track(&g_race.track); g_racing=1; g_state=ST_RACE;
+        if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);
     } else SDL_Log("race_init FAILED %s",dat);
 }
@@ -244,7 +260,13 @@ static void frame(void){
             else if(g_state==ST_MENU){
                 if(sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%MENU_N;
                 else if(sc==SDL_SCANCODE_UP) g_sel=(g_sel+MENU_N-1)%MENU_N;
-                else if((sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) && g_sel==0) g_state=ST_TRACKSEL;
+                else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE){
+                    if(g_sel==0) g_state=ST_TRACKSEL; else if(g_sel==1) g_state=ST_STATS; }
+            }
+            else if(g_state==ST_STATS){
+                if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
+                else if(sc==SDL_SCANCODE_UP) g_tsel=(g_tsel+TRACK_N-1)%TRACK_N;
+                else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
             }
             else if(g_state==ST_TRACKSEL){
                 if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
