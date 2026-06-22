@@ -186,3 +186,14 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
   NOT the track. The bulk TRACK geometry is the large uncompressed region (section-2 int32 vertices etc.)
   that the reconstruction already uses. Faithful track render needs section-1 strip/poly connectivity +
   per-poly tpage/CLUT, processed via the software GTE — the remaining deep-fidelity task.
+
+## Section-0 = LZSS-compressed geometry chunks (the authentic track geometry)
+- LEVEL.DAT 29-entry table = SECTION table (track.c reads it). sec0=ptr[0]..ptr[1] (~114KB bulk),
+  sec2=vertices (int32 x,y,z; verified: vert0 LEV5 = (413,0,-14917)). The earlier "object blocks"
+  reading was a misread (413 = a vertex x, not an LZSS size).
+- sec0 begins with a sub-table of ~21 u32 offsets (84,4304,9512,...); each points to a geometry CHUNK
+  that is LZSS-compressed: [u32 uncompressed_size][LZSS]. chunk0 (LEV5) -> 12105B, decoded head u32
+  = [31, 500,413,127,-8818, 832,413,619,-8817, ...] i.e. a count + coordinate records (413 == vertex x).
+- => authentic per-chunk geometry is now DECOMPRESSABLE (tools/lzss.py). NEXT PHASE: parse the chunk's
+  vertex/face record layout + per-poly tpage/CLUT, build meshes, render via software GTE (the exact
+  "in-race view as the original draws it"). Large multi-step task; data layer unlocked.
