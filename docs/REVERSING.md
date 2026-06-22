@@ -167,3 +167,12 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
 - __clutspace is filled by Load_Cluts from a (count+entries+data) struct; LEVEL.CLT is the raw colour data
   but the (cx,cy)->dth_clut->row mapping needs FUN_00416714 fully traced. Font is ink-tinted (no CLUT) so
   menus render correctly already. Image sprites (track previews/drivers/cars) need this mapping for colour.
+
+## CLUT mapping (PC port) — partial, parked
+- Draw-prim CLUT id `dth_clut = sprite.cy` (FUN_00416714: param_1+0xe = piVar6[2]>>16 = cy field);
+  clut ptr = `__clutspace + (dth_clut*0x10 + shade)*0x100`.
+- `LEVEL.CLT` (PC port) = 80 x (256 x RGBA) palettes — SAME format as LEVEL.PAL (NOT 16-bit PSX VAG-style).
+- BUT brute-forcing CHALKCAN's region vs all 80 palettes: logo/text resolve, background stays speckled in
+  every palette => the preview BACKGROUND indices in the assembled VRAM look wrong (tile overlap/compositing
+  or the preview is composited from multiple elements), not purely a palette pick. Font uses ink (no CLUT) so
+  menus are correct. Image-sprite colour needs a runnable reference to pin precisely; PARKED.
