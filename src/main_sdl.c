@@ -423,9 +423,16 @@ int main(void){
     { unsigned char d[4]={0,0,0,170}; glGenTextures(1,&g_dim_tex); glBindTexture(GL_TEXTURE_2D,g_dim_tex);
       glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,d);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
-    { unsigned char m[4]={108,105,99,255}; glGenTextures(1,&g_metal_tex); glBindTexture(GL_TEXTURE_2D,g_metal_tex);   // menu metal backdrop
-      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,m);
-      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
+    { const int MW=128,MH=128; unsigned char* m=malloc((size_t)MW*MH*4); unsigned seed=2463534242u;  // scratched dark brown-metal backdrop (matches dd2h)
+      for(int y=0;y<MH;y++){ seed=seed*1103515245u+12345u; float scr=((seed>>16)&0xff)/255.f;        // per-row horizontal scratch
+        for(int x=0;x<MW;x++){ seed=seed*1103515245u+12345u; float n=((seed>>16)&0xff)/255.f;
+          float base=0.21f+0.06f*scr+0.05f*(n-0.5f); base*=1.0f-0.22f*(y/(float)MH);                 // metal + scratch + grain, darker low
+          unsigned char* px=m+((size_t)y*MW+x)*4;
+          px[0]=(unsigned char)(base*255*1.08f<255?base*255*1.08f:255);   // warm/brown bias
+          px[1]=(unsigned char)(base*255*0.96f); px[2]=(unsigned char)(base*255*0.82f); px[3]=255; } }
+      glGenTextures(1,&g_metal_tex); glBindTexture(GL_TEXTURE_2D,g_metal_tex);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,MW,MH,0,GL_RGBA,GL_UNSIGNED_BYTE,m);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); free(m); }
     for(int i=0;i<8;i++){ unsigned char c[4]={(unsigned char)(CAR_COLS[i][0]*255),(unsigned char)(CAR_COLS[i][1]*255),(unsigned char)(CAR_COLS[i][2]*255),255};
       glGenTextures(1,&g_car_sw[i]); glBindTexture(GL_TEXTURE_2D,g_car_sw[i]);
       glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,c);

@@ -360,3 +360,10 @@ Source: C:\Pcdd2\graphics\drawcar.C (+ handling/car.C, carclsn.C, carstuff.C). N
 in Dirinfo (114 files: LEV0-F + VAGS only); cars are dynamic objects, model embedded in the EXE data
 (no .car/.mdl). Extracting the embedded mesh from the unsymbolized binary = deep/uncertain RE, modest
 payoff (cars small in chase view). WASM uses a procedural stock-car (chassis+hood+cabin+windshield+wheels).
+
+## Main menu comparison (vs Wine ref real_main_menu.png — no xdotool needed, demo shows it)
+STRUCTURE MATCHES: orange/white "DESTRUCTION DERBY 2" logo top, 7-button radial grid + GO button,
+"Wrecking Racing Practice" labels, metal backdrop. Cosmetic diffs (CLUT-exactness refinement, same class
+as in-race textures): (1) buttons render light-blue squares vs ref's dark-grey metal CIRCLES (RING sprite
+front-end CLUT off); (2) logo washed-out vs ref's bold white+orange "2"; (3) backdrop now procedural
+scratched brown-metal (was flat grey). Achievable without xdotool since the demo's title frame = the menu.
