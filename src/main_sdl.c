@@ -57,6 +57,7 @@ EM_JS(int, dvd_codec_upload, (int texId), {
 });
 EM_JS(int, canvas_px_w, (), { return GLctx.drawingBufferWidth; });
 EM_JS(int, canvas_px_h, (), { return GLctx.drawingBufferHeight; });
+EM_JS(int, em_raw_param, (), { return (location.search.indexOf("raw")>=0)?1:0; });
 // ---- WebAudio from BANK1.SBK (8-bit unsigned PCM) ----
 EM_JS(int, audio_init, (), {
   try{ const C=new (window.AudioContext||window.webkitAudioContext)();
@@ -93,6 +94,7 @@ static int dvd_codec_init(int w,int h){(void)w;(void)h;return 0;}
 static void dvd_codec_push(int p,int w,int h,double t){(void)p;(void)w;(void)h;(void)t;}
 static int dvd_codec_upload(int t){(void)t;return 0;}
 static int canvas_px_w(void){return CANVAS_W;} static int canvas_px_h(void){return CANVAS_H;}
+static int em_raw_param(void){return 0;}
 #endif
 
 // ---------------- present pass (fullscreen textured quad, upscale) ----------------
@@ -294,9 +296,10 @@ static void render_scene(void){
     }
 }
 
+static int g_raw=0;   // 1 = present the clean 320x240 FBO (skip DVD crunch) for reference comparison
 static void present(void){
     int use_codec=0;
-    if(g_codec_ready){
+    if(g_codec_ready && !g_raw){
         glBindFramebuffer(GL_FRAMEBUFFER,g_fbo);
         glReadPixels(0,0,RENDER_W,RENDER_H,GL_RGBA,GL_UNSIGNED_BYTE,g_readback);
         dvd_codec_push((int)(intptr_t)g_readback,RENDER_W,RENDER_H,(double)g_frameno*16666.0);
@@ -370,6 +373,7 @@ static void frame(void){
             }
             if(g_state==ST_RESULTS && (sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE||sc==SDL_SCANCODE_ESCAPE)){ g_racing=0; g_state=ST_MENU; }
             else if(g_state==ST_RACE && sc==SDL_SCANCODE_R){ g_state=ST_RESULTS; }   // show results
+            else if(sc==SDL_SCANCODE_C){ g_raw^=1; }                                       // toggle raw (no DVD crunch) for comparison
             else if(sc==SDL_SCANCODE_N){ g_tsel=(g_tsel+1)%TRACK_N; start_race(g_tsel); }  // next track
         }
     }
@@ -397,7 +401,7 @@ int main(void){
     if(!g_win){SDL_Log("CreateWindow: %s",SDL_GetError());return 1;}
     if(!SDL_GL_CreateContext(g_win)){SDL_Log("GL ctx: %s",SDL_GetError());return 1;}
     SDL_Log("GL_VERSION: %s",(const char*)glGetString(GL_VERSION));
-    ui_init(); present_init(); render_init();
+    ui_init(); present_init(); render_init(); g_raw=em_raw_param();
     { unsigned char d[4]={0,0,0,170}; glGenTextures(1,&g_dim_tex); glBindTexture(GL_TEXTURE_2D,g_dim_tex);
       glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,d);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
