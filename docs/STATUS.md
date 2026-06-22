@@ -175,3 +175,11 @@ mtools, NO vnc automation, and NO sudo to install them — so no way to inject d
 or drive a ReactOS GUI headlessly; DirectDraw support for a 1996 game on ReactOS is also uncertain.
 Conclusion: bit-identical-vs-original verification is not achievable in this environment. Proceed by
 building faithfully from the decompilation + real assets, verifying via headless-browser screenshots.
+
+## Reference comparison (Wine dd2h vs WASM) — 2026-06-22
+Wine runs dd2h headless (WINEPREFIX=~/.wine-dd2, DISPLAY=:99, tools/wine_capture.sh).
+Side-by-side (docs/reference/compare_inrace.png): atmosphere MATCHES (brown dirt, grey stormy sky).
+Remaining in-race gaps vs reference: (1) TREE BILLBOARDS (reference has autumn tree sprites; ours absent)
+- biggest visible gap; (2) textured walls/cars (ours flat-shaded); (3) sky cloud texture (ours flat gradient).
+CLUT solved (palette=cy*4). Menu rebuilt as radial icon menu. xdotool still needed for interactive-menu
+reference capture. Wine reference = the verification path now operational.

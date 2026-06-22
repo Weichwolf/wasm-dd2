@@ -49,11 +49,17 @@ static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts
 
 // sky gradient (fullscreen NDC quad; horizon light -> zenith deeper blue)
 static const char* SVS =
-    "attribute vec2 a_pos; varying float v_y; void main(){ v_y=a_pos.y*0.5+0.5; gl_Position=vec4(a_pos,0.999,1.0); }\n";
+    "attribute vec2 a_pos; varying vec2 v_p; void main(){ v_p=a_pos*0.5+0.5; gl_Position=vec4(a_pos,0.999,1.0); }\n";
 static const char* SFS =
-    "precision mediump float; varying float v_y;\n"
-    "void main(){ vec3 hor=vec3(0.58,0.58,0.55), zen=vec3(0.28,0.31,0.30);\n"  // DD2 stormy/overcast
-    "  gl_FragColor=vec4(mix(hor,zen,clamp(v_y,0.0,1.0)),1.0); }\n";
+    "precision mediump float; varying vec2 v_p;\n"
+    "float h(vec2 p){return fract(sin(dot(floor(p),vec2(41.3,289.1)))*43758.5);}\n"
+    "float noise(vec2 p){vec2 f=fract(p),i=floor(p);f=f*f*(3.0-2.0*f);\n"
+    "  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}\n"
+    "void main(){ vec3 hor=vec3(0.60,0.60,0.57), zen=vec3(0.27,0.30,0.30);\n"  // DD2 stormy/overcast
+    "  vec3 base=mix(hor,zen,clamp(v_p.y,0.0,1.0));\n"
+    "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // layered clouds
+    "  base*=0.78+0.32*c;\n"
+    "  gl_FragColor=vec4(base,1.0); }\n";
 static GLuint s_sky_prog, s_sky_vbo;
 
 void render_init(void){
