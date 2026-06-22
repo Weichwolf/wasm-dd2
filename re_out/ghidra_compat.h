@@ -25,6 +25,13 @@ typedef uint32_t MCIDEVICEID; typedef void* PINPUT_RECORD; typedef void* LPTIMEC
 typedef void* LPJOYINFO; typedef void* LPJOYCAPSA; typedef void* _StartAddress; typedef void* HINSTANCE; typedef void* HKEY;
 typedef void* LPWORD; typedef void* LPMMTIME; typedef void* LPWAVEFORMATEX; typedef void* LPHWAVEOUT; typedef void* HWAVEOUT;
 struct _exception { int type; char* name; double arg1, arg2, retval; };
+typedef void *HGLOBAL,*HMENU,*HBRUSH,*HICON,*HCURSOR,*HPALETTE,*HGDIOBJ,*HFONT,*HBITMAP,*HRGN,*HRSRC,*HGLRC,*HACCEL,*HMETAFILE,*HWAVEIN,*HMIDIOUT,*LPMSG,*LPPAINTSTRUCT,*FARPROC,*WNDPROC,*LPCRITICAL_SECTION;
+typedef uint32_t WPARAM,LPARAM,COLORREF,ATOM,HFILE,HRESULT,WAVEHDR;
+// Win32 structs the decompiled shim-layer code touches (functions get replaced by SDL3/WebGL shims)
+typedef struct { uint32_t style; void* lpfnWndProc; int cbClsExtra,cbWndExtra; void *hInstance,*hIcon,*hCursor,*hbrBackground; char *lpszMenuName,*lpszClassName; } WNDCLASSA, WNDCLASS;
+typedef struct { int left,top,right,bottom; } RECT, *LPRECT;
+typedef struct { int x,y; } POINT;
+typedef struct { uint32_t dwSize,dwFlags; int dwWidth,dwHeight; void* lpSurface; uint32_t dw[16]; } DDSURFACEDESC;
 
 typedef uint8_t  undefined;
 typedef uint8_t  undefined1;
@@ -45,7 +52,7 @@ typedef uint32_t ulong;
 #endif
 typedef int64_t  longlong;
 typedef uint64_t ulonglong;
-typedef void     code;   // function-pointer target
+typedef int      code();   // function type: code* is a callable function pointer
 
 // CONCAT: build a wider value from parts (little-endian byte/halfword concat as Ghidra emits).
 #define CONCAT11(a,b)  (((uint16_t)(uint8_t)(a)<<8)|(uint8_t)(b))
