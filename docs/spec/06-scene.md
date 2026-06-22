@@ -49,6 +49,22 @@ An "object" passed to the drawer is a small header; the fields used:
   objects (TransformWheels / wheel_object). Damage denting modifies the vertex buffer in place.
 - Draw_Sky: draws the sky/horizon band primitives (gradient) behind everything (far OT bucket).
 
+## EXACT face-drawer mechanics (from draw_face_3pt_flat_dpq @0x41828c)
+Confirms the precise per-face pipeline (all drawers follow this shape):
+- Vertices are PRE-TRANSFORMED before the face loop: a `rot_points` table holds, per vertex index,
+  {screenX, screenY (@+0x716dc4), Z (@+0x716dc8), w/extra (@+0x716dcc)} stride 0x10, plus a `rot_flags`
+  per-vertex clip mask. (So Pre_Rotate + a vertex pass run RotTransPers over all verts into rot_points;
+  the drawers then just index it — no per-face transform.)
+- The face record (flat = 0x10 bytes): vertex INDICES stored in the high word at +6,+8,+10 (`field>>0x10`),
+  ×0x10 = offset into rot_points. (+4 = colour, set by prim setup.)
+- Backface/clip cull: signed area `__opz = (x0-x1)(y0-y2) - (x0-x2)(y0-y1)`; draw only if `__opz < 1`
+  AND `(cullmask & rot_flags[v]) == 0` (no vertex clipped). (Screen-space winding cull.)
+- OT bucket: `__otz = ((z0+z1+z2) * 0x15 / 0x40) >> 6`, then bucket index `= __otz >> 2`. Larger averaged
+  Z → farther bucket. Primitive linked into `OT_base + bucket*4` by prepend (back-to-front via DrawOTag).
+- Primitive packet (flat = 5 dwords/20 bytes): [0]=next-link, [1]=tag+packed RGB, [2..4]=packed screen
+  coords (`X&0xffff | Y<<16`) for the 3 verts. Quad/textured drawers add a 4th coord + UV/CLUT words.
+- Loop advances prim by its size, poly by the record size; writes back `_gpoly`,`_gprim1`.
+
 ## Port mapping (WebGL2)
 Replicate: object geom (verts/normals/faces) → GTE Q12 transform → per-face-type packet (flat/gouraud/
 textured/sprite) with gte_dpcs/ncds shaded+fogged colour → OT z-bucket → back-to-front draw. Textured faces
