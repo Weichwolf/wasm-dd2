@@ -150,3 +150,12 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
   later entries reference pages 1..n. The FONT atlas is a dir entry at destY=128,h=125 (sources another page).
 - So full VRAM = process ALL 316 entries copying from the page pools. srcY within a page still TBD
   (f5=srcCol 0..240 step16). This fills font/sprites/textures; gates correct front-end + textured 3D.
+
+## FULL VRAM + FONT (SOLVED)
+- Full VRAM = concatenate source pools [TX0 pool after its 316-entry dir] + TX1 + TX2 + TX3 + TX4,
+  then read all 316 dir entries SEQUENTIALLY, each [4-byte header][w*h 8-bit pixels], place at (destX,destY).
+  Σ(4+w*h)=1,638,736 = exact total pool. Fills entire 256-wide VRAM (sprites, font, textures).
+- FONT: sprite "FONT" at VRAM (0,128,256,125); FONT.BNK = [16B hdr][3 font metric tables].
+  Glyph metric = 4 bytes (gx,gy,gw,gh) from offset 32; **glyph index = ascii-32**. Glyph pixels use
+  indices {16=background, 17=body, 18=edge}; tinted by Print_Ink colour. "DESTRUCTION DERBY 2" verified.
+- FONT2/FONT3 = sprites at (0,6256)/(0,1506); LETTERS sprite at (0,1664,256,92).
