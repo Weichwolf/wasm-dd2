@@ -298,3 +298,12 @@ scenery) for a clearer track read; full real-geo road is a follow-on.
 - So full in-race texturing = per-level VRAM assembly (have it) + per-object texture page (_gtexture in
   Draw_Subdiv_Object) + correct CLUT. Adds textured trees/HUD/signs; road stays flat geo (faithful).
   Gated on the CLUT pick; geometry (flat scene) already faithful.
+
+## In-race CLUT UN-PARKED (self-validated, no reference needed)
+- LEV5 LEVEL.CLT = 92 x 256-RGBA palettes. Brute-forcing a tree tile by "greenness" -> palette 84 wins.
+- Palette 84 renders LEV5 textures RECOGNIZABLY: tree shapes w/ foliage, HUD digits "0123456789", gauges
+  (vs bluish noise under LEVEL.PAL). Self-validating (digits/trees unmistakable) => the level's primary
+  texture CLUT is palette 84, found WITHOUT a reference. (Foliage reads brown — desert/autumn or minor
+  channel nuance; content is clearly correct.)
+- => in-race texturing is now feasible: assemble per-level VRAM + use the level CLUT (e.g. pal 84) to
+  color textured polys/sprites + HUD. Next: pick per-level CLUT (greenness/heuristic) + apply to geo textures.
