@@ -29,7 +29,7 @@ typedef void* LPWORD; typedef void* LPMMTIME; typedef void* LPWAVEFORMATEX; type
 struct _exception { int type; char* name; double arg1, arg2, retval; };
 typedef struct _exception _exception;
 typedef char CHAR; typedef int errno_t; typedef int16_t SHORT; typedef const void* LPCVOID;
-typedef int32_t* PLONG; typedef uint64_t unkuint10; typedef uint16_t* LPUSHORT;
+typedef int32_t* PLONG; typedef unsigned __int128 unkuint10; typedef uint16_t* LPUSHORT;
 struct joyinfo_tag { uint32_t a,b,c,d; }; struct tagMSG { void* hwnd; uint32_t message; uint32_t wParam,lParam,time; int ptx,pty; };
 typedef struct joyinfo_tag JOYINFO, joyinfo_tag; typedef struct tagMSG MSG, tagMSG;
 typedef void *HGLOBAL,*HMENU,*HBRUSH,*HICON,*HCURSOR,*HPALETTE,*HGDIOBJ,*HFONT,*HBITMAP,*HRGN,*HRSRC,*HGLRC,*HACCEL,*HMETAFILE,*HWAVEIN,*HMIDIOUT,*LPMSG,*LPPAINTSTRUCT,*FARPROC,*WNDPROC,*LPCRITICAL_SECTION;
@@ -52,7 +52,7 @@ typedef uint64_t undefined6;
 typedef uint64_t undefined7;
 typedef uint64_t undefined8;
 typedef long double float10;
-typedef uint64_t unkbyte10;   // x87 10-byte (approx as 64-bit so shifts/int-ops compile; gap-tier for exactness)
+typedef unsigned __int128 unkbyte10;   // x87 10-byte; 128-bit so >>112 etc. compile (gap-tier for exactness)
 typedef uint8_t  byte;
 #ifndef __USE_MISC   /* when the system (sys/types via __USE_MISC) defines these, don't clash */
 typedef uint16_t ushort;
