@@ -272,3 +272,13 @@ authentic scene geometry, 12k-24k tris). LEV8 DeathBowl, LEV9 DestrDerby, LEVA R
 0 objects = the 4 demolition ARENAS (open bowls; arena surface is the section-2 reconstruction). So the
 geo parser is correct for all 11 levels: circuits get real object geometry, arenas correctly have none.
 (DD2's "16 levels" = championship events over these 11 distinct tracks.)
+
+## Texturing reality (PC port draws mostly FLAT)
+- draw_face_3pt_flat (type 12, 46%) and the 20B types set per-vertex POSITION + a base RGB only — no UV.
+  draw_face_3pt_text (type 10) sets positions + rgb (gte_dpcs) but does NOT read per-vertex UV either:
+  textured prims use FIXED UVs mapping a single per-object texture (_gtexture, set in Draw_Subdiv_Object),
+  not per-poly UV in the record. So the in-race scene is LARGELY FLAT-SHADED polygons.
+- => our flat-colored render of the real geometry (using each poly's real RGB@+4) is faithful for ~99% of
+  faces. "VRAM/CLUT-textured geometry" applies to the textured minority (per-object texture page) + road/sky.
+  Full texturing = assemble per-level VRAM (like vram.c for LEV0) + per-object tpage + fixed-UV sample.
+  Diminishing returns vs the flat majority already rendered.
