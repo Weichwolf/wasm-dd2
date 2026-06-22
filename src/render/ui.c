@@ -106,7 +106,7 @@ GLuint ui_load_bmp(const char* path, int* wout, int* hout){
 void ui_blit_fullscreen(GLuint tex){
     glDisable(GL_DEPTH_TEST);
     glUseProgram(s_prog); glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,tex); glUniform1i(s_u_tex,0);
+    glBindTexture(GL_TEXTURE_2D,tex); glUniform1i(s_u_tex,0); glUniform3f(s_u_tint,1.f,1.f,1.f);
     glBindBuffer(GL_ARRAY_BUFFER,s_vbo);
     glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)0);
     glEnableVertexAttribArray(1); glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(2*sizeof(float)));
