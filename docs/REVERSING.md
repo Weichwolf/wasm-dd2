@@ -282,3 +282,10 @@ geo parser is correct for all 11 levels: circuits get real object geometry, aren
   faces. "VRAM/CLUT-textured geometry" applies to the textured minority (per-object texture page) + road/sky.
   Full texturing = assemble per-level VRAM (like vram.c for LEV0) + per-object tpage + fixed-UV sample.
   Diminishing returns vs the flat majority already rendered.
+
+## Geo-only retest (post Y-align): real geometry HAS a ground/drivable surface
+After Y-alignment + broad face-type coverage, rendering geo-only puts the cars ON the real geometry
+(ground surface present, structures around) — no float. So the real geo includes the ground, not just
+scenery. Path exists to drop the procedural reconstruction road and render the level fully from real geo
+(cars still follow the section-2 path, now over real ground). Kept the hybrid (procedural road + real
+scenery) for a clearer track read; full real-geo road is a follow-on.
