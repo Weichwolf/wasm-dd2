@@ -240,6 +240,7 @@ static void frame(void){
                 else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
                 else if(sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) start_race(g_tsel);
             }
+            if(sc==SDL_SCANCODE_N){ g_tsel=(g_tsel+1)%TRACK_N; start_race(g_tsel); }  // next track (any state)
         }
     }
     ++g_ticks;                                                // attract-mode auto-advance (for demo/screenshot)
