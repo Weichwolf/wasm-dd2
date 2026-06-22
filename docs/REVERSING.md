@@ -209,3 +209,18 @@ CAVEAT: parsing all 536 objects in LEV5 with the obj0 heuristic gives a NOISY po
   the header/vertex-count/face layout VARIES per object type and needs the draw/parse fn + validation
   (ideally a reference). track.c's section-2 reconstruction remains the working in-race geometry.
 => Decompression + data path: DONE. Correct universal mesh parse + textured GTE render: large remaining phase.
+
+## Object mesh format — CORRECTED from Draw_Subdiv_Object @0041fdbc
+Object def (relocated by Set_Object, +base added to ptrs @0x20/0x24/0x28):
+  +0x08: u32 with vertex count = (val>>16)&0xff   (obj0 LEV5 = 15)
+  +0x0a: u16 rotation (Pre_Rotate)
+  +0x20: ptr -> VERTICES  (int16 x,y,z,pad = 8B each)
+  +0x24: ptr -> NORMALS
+  +0x28: ptr -> POLYGON/FACE list
+Face loop (Draw_Subdiv_Object): while (((char*)gpoly)[3]!=0): sVar=*gpoly; type=((byte*)(gpoly+1))[0];
+  gpoly+=2; call draw_face_TABLE[type](sVar). Table = PTR_draw_face_3pt_flat_00462d94 -> the
+  draw_face_3pt/4pt_{flat,text,pict,gour,sprite}_dpq fns (each reads its own vtx-idx/uv/clut/tpage and
+  advances gpoly). So face record size is type-dependent.
+Re-parse with these fixes: 599 objs / 10574 verts (vs 74745 garbage before) -> structured scene
+  (grandstand grids + track features) but full validation needs the per-type draw fns + a reference.
+=> Vertices: parseable. Faces (per-type layout) + textured GTE render: the remaining phase.
