@@ -1,13 +1,18 @@
-// Vehicle: arcade car physics + AI driver. Pure core (deterministic, no GL).
+// Vehicle: car physics + AI driver. Pure core (deterministic, no GL).
 #ifndef DD_VEHICLE_H
 #define DD_VEHICLE_H
 #include "track.h"
+#include "fixed.h"
 
 typedef struct {
     int   id;
     vec3  pos;
     float yaw;          // heading (0 -> +z)
     float speed;        // m/s along heading
+    // Q12 fixed-point sim state (DD2_FIXED): integer-deterministic dynamics per docs/spec/04.
+    fx    qx, qz;       // Q12 world position (metres)
+    fx    qspd;         // Q12 speed along heading (m/s)
+    int   qyaw;         // heading as 0..0xFFF (0x1000 = full circle)
     // inputs (set by AI or player)
     float steer;        // [-1,1]
     float throttle;     // [0,1]

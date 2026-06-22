@@ -34,6 +34,9 @@ void vehicle_init(Car* c, const Track* t, int id, float start_s, float lateral, 
     c->pos.y = cp.y + 0.5f;
     c->yaw = atan2f(tan.x, tan.z);
     c->speed=0; c->steer=0; c->throttle=0; c->brake=0;
+    // Q12 fixed-point sim state (DD2_FIXED): integer-deterministic, per docs/spec/04
+    c->qx = (fx)(c->pos.x*4096.0f); c->qz = (fx)(c->pos.z*4096.0f); c->qspd = 0;
+    c->qyaw = ((int)(c->yaw*(4096.0f/6.2831853f))) & 0xFFF;
     c->s=start_s; c->prog=0; c->lap=0; c->dist=0;
     c->finished=0; c->finish_time=0; c->skill=skill; c->stuck_t=0;
     c->pref_lat=lateral; c->prog_mark=0; c->since_prog=0; c->recover_t=0; c->hits=0;
@@ -103,7 +106,23 @@ void vehicle_ai_arena(Car* c, const Track* t, vec3 target){
 void vehicle_step(Car* c, const Track* t, float dt){
     if (c->finished) { c->throttle = 0; c->brake = 1; }
     vec3 oldpos = c->pos;
-#ifdef DD2_TIRE
+#if defined(DD2_FIXED)
+    // --- Q12 fixed-point integer kinematics (deterministic; docs/spec/04) ---
+    // State (qspd, qx, qz Q12; qyaw integer 0..0xFFF) integrated with the documented dynamics.
+    float spdf = c->qspd / 4096.0f;
+    c->qspd += (fx)((c->throttle*ACCEL - c->brake*BRAKE_DEC - DRAG*spdf) * dt * 4096.0f);
+    if (c->qspd >  (fx)(MAXSPEED*4096.0f)) c->qspd =  (fx)(MAXSPEED*4096.0f);
+    if (c->qspd < (fx)(-8.0f*4096.0f))     c->qspd =  (fx)(-8.0f*4096.0f);
+    spdf = c->qspd / 4096.0f;
+    float eff = fabsf(spdf) / (fabsf(spdf) + 5.0f);                    // speed-scaled steering authority
+    int dyaw = (int)(c->steer*MAX_YAW*eff*dt*(4096.0f/6.2831853f)*(spdf>=0?1.f:-1.f));
+    c->qyaw = (c->qyaw + dyaw) & 0xFFF;
+    fx hx = fx_sin(c->qyaw), hz = fx_cos(c->qyaw);                     // integer-angle heading
+    c->qx += (fx)(fx_mul(c->qspd, hx) * dt);
+    c->qz += (fx)(fx_mul(c->qspd, hz) * dt);
+    c->yaw = c->qyaw * (6.2831853f/4096.0f); c->speed = spdf;         // derive float for render/AI/collision
+    vec3 newpos = v3(c->qx/4096.0f, c->pos.y, c->qz/4096.0f);
+#elif defined(DD2_TIRE)
     // --- DD2 slip-angle tire model ---
     float cy = cosf(c->yaw), sy = sinf(c->yaw);
     vec3 head = v3(sy, 0, cy), rt = v3(cy, 0, -sy);
@@ -156,6 +175,11 @@ void vehicle_step(Car* c, const Track* t, float dt){
     }
     newpos.y = tp.center.y + 0.5f;
     c->pos = newpos;
+#ifdef DD2_FIXED
+    // resync Q12 state from the float pos/yaw/speed after wall-keep clamps the trajectory
+    c->qx=(fx)(c->pos.x*4096.0f); c->qz=(fx)(c->pos.z*4096.0f);
+    c->qyaw=((int)(c->yaw*(4096.0f/6.2831853f)))&0xFFF; c->qspd=(fx)(c->speed*4096.0f);
+#endif
 
     // progress / laps: integrate forward motion along the track tangent (seam-free).
     vec3 disp = v3sub(c->pos, oldpos);
