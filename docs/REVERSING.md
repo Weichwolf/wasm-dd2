@@ -345,3 +345,12 @@ collision likely. Tree/scenery WORLD placement not found in an obvious section -
 object geometry textured faces (pict, rendered flat-grey now) OR a not-yet-identified scenery list.
 Conclusion: faithful trees+ground need per-pixel TDF texturing of the textured faces (turns grey quads
 green/brown). That's the key in-race implementation; flat geometry (87%) already faithful.
+
+## KEY: type 14 (41% of faces) is TEXTURED (texture-index @ record+8)
+The dominant "flat" type 14 is actually TEXTURED: record (20B) = +0 u16, +4 rgb(=texture KEY/modulate,
+e.g. magenta 0xd2,0x42,0xd2), +8 u16 TEXTURE-INDEX into LEVEL.TDF, +10 u16, +12.. four u16 vtx indices.
+Verified: a magenta tree face -> tex-index 595 -> TDF[595] = green/brown FOLIAGE texture (the tree!).
+=> I've been rendering type 14 flat-magenta; texturing it (TDF UV rect from VRAM + CLUT) renders the real
+trees/walls/ground. This is THE in-race fix (vs the ~36 rare pict faces I thought were the only textured ones).
+Likely type 12 (46%) similarly textured (+8 index). Implement: per-level VRAM(8-bit R8 tex) + CLUT(palette
+tex) + textured faces (pos+uv from TDF + clut) -> VRAM/CLUT-textured geometry.
