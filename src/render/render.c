@@ -66,6 +66,8 @@ static const char* SFS =
 static GLuint s_sky_prog, s_sky_vbo; static GLint u_skybright;
 static float g_skybright=1.0f;   // per-level sky overcast factor (1=clear, low=stormy)
 void render_set_sky_bright(float k){ g_skybright=k; }
+static float g_ground_col[3]={0.32f,0.32f,0.32f};   // per-track drivable-surface tint (tarmac grey/dirt brown)
+void render_set_ground_color(float r,float g,float b){ g_ground_col[0]=r; g_ground_col[1]=g; g_ground_col[2]=b; }
 
 // textured geometry (GLES3): pos3 + uv2(VRAM px) + clutrow; samples R8 VRAM -> index -> CLUT palette
 static const char* TVS =
@@ -231,7 +233,7 @@ void render_track(const float* view,const float* proj){
     glUseProgram(s_prog);
     glUniformMatrix4fv(u_mvp,1,GL_FALSE,mvp);
     glUniform1f(u_useramp,1.0f);
-    glUniform3f(u_col,0.3f,0.3f,0.3f);
+    glUniform3f(u_col,g_ground_col[0],g_ground_col[1],g_ground_col[2]);
     glBindBuffer(GL_ARRAY_BUFFER,s_track_vbo);
     set_attribs();
     glDrawArrays(GL_TRIANGLES,0,s_track_verts);

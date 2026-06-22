@@ -403,7 +403,10 @@ static void start_race(int idx){
         { const char* lv=TRACK_LEV[idx]; int ln=(lv[3]>='A')?(lv[3]-'A'+10):(lv[3]-'0');
           static const int FOG[12]={128,128,128,80,32,128,0,128,128,128,128,128};   // [level]; idx0 default
           int fb=(ln>=1&&ln<=11)?FOG[ln]:128; float f=fb/255.f; gte_set_fog(f,f,f);
-          render_set_sky_bright(fb/128.f); }   // fog 128->clear sky, 0->stormy overcast (L6)
+          render_set_sky_bright(fb/128.f);     // fog 128->clear sky, 0->stormy overcast (L6)
+          // dark-fog tracks are dirt (brown drivable surface); brighter-fog are tarmac (grey)
+          if(fb<64) render_set_ground_color(0.40f,0.31f,0.22f);   // dirt/mud
+          else      render_set_ground_color(0.33f,0.33f,0.33f); } // tarmac
         g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);
