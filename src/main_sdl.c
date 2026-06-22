@@ -70,7 +70,7 @@ static const char* PFS =
     "void main(){ gl_FragColor = texture2D(u_tex, v_uv); }\n";
 
 // ---------------- front-end state ----------------
-typedef enum { ST_TITLE, ST_MENU, ST_RACE } AppState;
+typedef enum { ST_TITLE, ST_MENU, ST_TRACKSEL, ST_RACE } AppState;
 
 static SDL_Window* g_win;
 static GLuint g_fbo, g_fbo_color, g_fbo_depth, g_codec_tex, g_present_prog, g_quad_vbo;
@@ -85,6 +85,15 @@ static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 static GLuint g_mt_norm[MENU_N], g_mt_sel[MENU_N];
 static int    g_mw[MENU_N], g_mh[MENU_N];
 static int    g_sel = 0;
+// real DD2 track names (from dd2h.exe strings), for the track-select screen
+static const char* TRACKS[] = {
+    "CAPRIO COUNTY RACEWAY","CHALK CANYON","DEATH BOWL","DESTRUCTION DERBY","LIBERTY CITY",
+    "PINE HILLS RACEWAY","RED PIKE ARENA","S.C.A. MOTORPLEX","THE COLOSSEUM","THE PIT",
+    "TOTAL DESTRUCTION","ULTIMATE DESTRUCTION"
+};
+#define TRACK_N ((int)(sizeof(TRACKS)/sizeof(TRACKS[0])))
+static GLuint g_tt_norm[TRACK_N], g_tt_sel[TRACK_N];
+static int    g_tw[TRACK_N], g_th[TRACK_N], g_tsel=0;
 
 static GLuint psh(GLenum t,const char*s){GLuint h=glCreateShader(t);glShaderSource(h,1,&s,0);glCompileShader(h);return h;}
 static GLuint make_tex(int w,int h){
@@ -131,6 +140,15 @@ static void render_scene(void){
                 if(t) ui_blit_rect(t, (RENDER_W-g_mw[i])/2.f, 150.f+i*18.f, g_mw[i], g_mh[i], RENDER_W, RENDER_H);
             }
             break;
+        case ST_TRACKSEL: {
+            ui_blit_fullscreen(g_title_tex);
+            float sc=0.62f, lh=13.f, y0=66.f;       // scaled list to fit 12 names
+            for (int i=0;i<TRACK_N;i++){
+                GLuint t=(i==g_tsel)?g_tt_sel[i]:g_tt_norm[i];
+                float w=g_tw[i]*sc, h=g_th[i]*sc;
+                if(t) ui_blit_rect(t,(RENDER_W-w)/2.f, y0+i*lh, w, h, RENDER_W, RENDER_H);
+            }
+            break; }
         case ST_RACE:  /* held until 3D view ready */ break;
     }
 }
@@ -169,10 +187,18 @@ static void frame(void){
             else if(g_state==ST_MENU){
                 if(sc==SDL_SCANCODE_DOWN) g_sel=(g_sel+1)%MENU_N;
                 else if(sc==SDL_SCANCODE_UP) g_sel=(g_sel+MENU_N-1)%MENU_N;
+                else if((sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE) && g_sel==0) g_state=ST_TRACKSEL;
+            }
+            else if(g_state==ST_TRACKSEL){
+                if(sc==SDL_SCANCODE_DOWN) g_tsel=(g_tsel+1)%TRACK_N;
+                else if(sc==SDL_SCANCODE_UP) g_tsel=(g_tsel+TRACK_N-1)%TRACK_N;
+                else if(sc==SDL_SCANCODE_ESCAPE) g_state=ST_MENU;
             }
         }
     }
-    if(g_state==ST_TITLE && ++g_ticks>120) g_state=ST_MENU;   // attract-mode auto-advance
+    ++g_ticks;                                                // attract-mode auto-advance (for demo/screenshot)
+    if(g_state==ST_TITLE && g_ticks>90) g_state=ST_MENU;
+    else if(g_state==ST_MENU && g_ticks>240) g_state=ST_TRACKSEL;
     render_scene();
     present();
 }
@@ -193,7 +219,11 @@ int main(void){
             g_mt_norm[i]=vram_text_tex(MENU[i],230,170,40,&g_mw[i],&g_mh[i]);  // ink: DD2 amber
             g_mt_sel[i] =vram_text_tex(MENU[i],255,255,255,NULL,NULL);          // selected: white
         }
-        SDL_Log("menu ready: %d items", MENU_N);
+        for(int i=0;i<TRACK_N;i++){
+            g_tt_norm[i]=vram_text_tex(TRACKS[i],230,170,40,&g_tw[i],&g_th[i]);
+            g_tt_sel[i] =vram_text_tex(TRACKS[i],255,255,255,NULL,NULL);
+        }
+        SDL_Log("menu ready: %d items, %d tracks", MENU_N, TRACK_N);
     }
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(frame,0,1);
