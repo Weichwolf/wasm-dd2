@@ -326,3 +326,13 @@ scenery) for a clearer track read; full real-geo road is a follow-on.
 - CLUT: heuristic pick (coherence/orange) renders RING + DD2L1 OK (pal ~19) but mis-tints some icons;
   use the Wine reference frames (docs/reference/real_main_menu.png) as ground truth to pin each sprite's palette.
 - Reference frames saved: real_main_menu.png, demo in-race (validated brown trees / stormy sky / dirt).
+
+## TEXTURE SYSTEM DECODED: LEVEL.TDF (the _gtexture table)
+- _gtexture (FUN_0041a2f4, draw_face_*_text/pict) = table of 12-byte texture descriptors, loaded from
+  LEVEL.TDF: [u32 count][count x 12B]. Verified: LEV5 4+754*12=9052=filesize; LEV1 4+1378*12=16540.
+- Entry (12B): u16 clut, u16 flags, u16 uv0, u16 uv1, u16 uv2, u16 uv3. UVs = packed u8 (u,v) VRAM coords
+  (e.g. uv0=0x807F -> u=0x7F,v=0x80). 4 corners = the textured quad's VRAM rect. clut = CLUT id.
+- Textured face record: texture-index at gpoly+8 (*(int*)(gpoly+6)>>0x10); face -> TDF entry -> UV rect+clut.
+- => Full textured-geometry path: assemble per-level VRAM (TX pages) + LEVEL.TDF + per-face texture-index ->
+  sample VRAM at the UV rect, apply CLUT (palette = clut*4 per the cy*4 rule). Flat types (12/14, 87%) carry
+  no index (flat rgb). Implement: textured triangles in geo.c (UVs from TDF) + a textured shader sampling VRAM.
