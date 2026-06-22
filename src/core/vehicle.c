@@ -103,8 +103,10 @@ void vehicle_ai_arena(Car* c, const Track* t, vec3 target){
     else { c->throttle = 0.25f; c->brake = 0.0f; }
 }
 
+#define WRECK_HITS 16   /* 100% damage = wrecked: car is disabled (demolition KO) */
 void vehicle_step(Car* c, const Track* t, float dt){
     if (c->finished) { c->throttle = 0; c->brake = 1; }
+    if (c->hits >= WRECK_HITS) { c->throttle = 0; c->brake = 1; }   // wrecked -> dead engine (demolition KO)
     vec3 oldpos = c->pos;
 #if defined(DD2_FIXED)
     // --- Q12 fixed-point integer kinematics (deterministic; docs/spec/04) ---

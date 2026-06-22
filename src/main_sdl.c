@@ -209,7 +209,7 @@ static void hud_text(const char* s, float x, float y, float scale, int hi){
 static int g_car_mesh_ok=0;
 static void draw_car(const float* view, const float* proj, vec3 p, float yaw, const float* col, int hits){
     float cs=cosf(yaw), sn=sinf(yaw);
-    float dmg = hits>24?1.0f:(float)hits/24.f;            // 0..1 damage
+    float dmg = hits>16?1.0f:(float)hits/16.f;            // 0..1 damage (full at 16 = wrecked)
     float k = 1.0f - dmg*0.55f;                           // darken (soot/dents)
     float sq = 1.0f - dmg*0.28f;                          // crumple
     float br=col[0]*k, bg=col[1]*k, bb=col[2]*k;          // body colour
@@ -343,7 +343,9 @@ static void render_scene(void){
             snprintf(buf,sizeof(buf),"LAP %d/%d",lap,g_race.target_laps);    hud_text(buf,6,5,0.6f,0);
             snprintf(buf,sizeof(buf),"POS %d/%d",pos,nc);                    hud_text(buf,6,19,0.6f,0);
             snprintf(buf,sizeof(buf),"%d MPH",(int)(c->speed*2.237f+0.5f));  hud_text(buf,6,33,0.6f,0);
-            { int dp=c->hits>24?100:c->hits*100/24; snprintf(buf,sizeof(buf),"DMG %d%%",dp); hud_text(buf,6,47,0.6f,dp>=70); }
+            { int dp=c->hits>16?100:c->hits*100/16; snprintf(buf,sizeof(buf),"DMG %d%%",dp); hud_text(buf,6,47,0.6f,dp>=70); }
+            { int run=0; for(int i=0;i<g_race.ncars;i++) if(g_race.cars[i].hits<16) run++;   // demolition attrition
+              snprintf(buf,sizeof(buf),"RUNNING %d/%d",run,g_race.ncars); hud_text(buf,6,61,0.6f,run<=2); }
             { int tt=(int)g_race.time; snprintf(buf,sizeof(buf),"%d:%02d",tt/60,tt%60);
               int tw2=vram_text_measure(buf); hud_text(buf,RENDER_W-tw2*0.6f-6,5,0.6f,0); }
         } break;
