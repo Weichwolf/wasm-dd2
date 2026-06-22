@@ -15,16 +15,16 @@ static const char* FS =
     "float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }\n"
     "void main(){\n"
     "  vec3 N=normalize(v_nrm); vec3 L=normalize(vec3(0.4,0.85,0.3));\n"
-    "  float d=0.45+0.55*max(dot(N,L),0.0);\n"
+    "  float d=0.70+0.36*max(dot(N,L),0.0);\n"            // brighter ambient (match dd2h LEV6)
     "  vec3 base = u_col;\n"
     "  if(u_useramp>0.5){\n"
     "    float e=abs(v_v-0.5)*2.0;\n"                     // 0 center .. 1 edge (across track)
     "    vec2 cell=floor(v_wpos.xz*0.8);\n"
     "    float gr=hash(cell)*0.10-0.05;\n"                // asphalt grain
-    "    vec3 asph=vec3(0.22,0.21,0.20)+gr;\n"
-    "    vec3 dirt=vec3(0.34,0.26,0.17)+(hash(cell*1.7)*0.10-0.05);\n"   // brown dirt verge (DD2)
+    "    vec3 asph=vec3(0.40,0.35,0.30)+gr;\n"            // brighter warm asphalt
+    "    vec3 dirt=vec3(0.56,0.45,0.31)+(hash(cell*1.7)*0.10-0.05);\n"   // brighter brown dirt (dd2h 122,105,83)
     "    base = e<0.80 ? asph : dirt;\n"
-    "    if(e>0.745 && e<0.80) base=vec3(0.62,0.58,0.50);\n"  // worn kerb line
+    "    if(e>0.745 && e<0.80) base=vec3(0.74,0.68,0.56);\n"  // worn kerb line
     "  }\n"
     "  gl_FragColor=vec4(base*d,1.0);\n"
     "}\n";
@@ -44,7 +44,7 @@ static const char* GVS =
     "void main(){ v_col=a_col; vec4 p=u_mvp*vec4(a_pos,1.0); v_d=clamp(p.z*0.0016,0.0,1.0); gl_Position=p; }\n";
 static const char* GFS =
     "precision mediump float; varying vec3 v_col; varying float v_d;\n"
-    "void main(){ vec3 c=mix(v_col, vec3(0.55,0.55,0.52), v_d*0.5); gl_FragColor=vec4(c,1.0); }\n";
+    "void main(){ vec3 c=mix(v_col*1.25, vec3(0.58,0.52,0.43), v_d*0.5); gl_FragColor=vec4(c,1.0); }\n";  // brighten+warm
 static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts;
 
 // sky gradient (fullscreen NDC quad; horizon light -> zenith deeper blue)
@@ -55,7 +55,7 @@ static const char* SFS =
     "float h(vec2 p){return fract(sin(dot(floor(p),vec2(41.3,289.1)))*43758.5);}\n"
     "float noise(vec2 p){vec2 f=fract(p),i=floor(p);f=f*f*(3.0-2.0*f);\n"
     "  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}\n"
-    "void main(){ vec3 hor=vec3(0.60,0.60,0.57), zen=vec3(0.27,0.30,0.30);\n"  // DD2 stormy/overcast
+    "void main(){ vec3 hor=vec3(0.66,0.60,0.51), zen=vec3(0.34,0.33,0.30);\n"  // DD2 stormy/overcast, warmer
     "  vec3 base=mix(hor,zen,clamp(v_p.y,0.0,1.0));\n"
     "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // layered clouds
     "  base*=0.78+0.32*c;\n"
@@ -76,12 +76,11 @@ static const char* TFS =
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0);\n"
     "  if(p.a<0.05) discard;\n"                                 // only true-transparent (alpha 0) = foliage key
-    "  vec3 c=p.rgb;\n"                                         // match dd2h: warm/brown, gentle grade
+    "  vec3 c=p.rgb;\n"                                         // match dd2h LEV6: warm/brown + BRIGHTER
     "  float l=dot(c,vec3(0.299,0.587,0.114));\n"
-    "  c=mix(vec3(l),c,1.22);\n"                                // mild +saturation (avoid noisy ground)
-    "  c*=vec3(1.04,0.98,0.86);\n"                              // gentle warm toward brown
-    "  c*=0.86;\n"                                              // darker toward ref
-    "  c=mix(c, vec3(0.42,0.40,0.36), v_d*0.45);\n"            // warm-grey haze
+    "  c=mix(vec3(l),c,1.28);\n"                                // mild +saturation
+    "  c*=vec3(1.74,1.44,1.10);\n"                              // brighten + warm toward dd2h (122,105,83)
+    "  c=mix(c, vec3(0.62,0.55,0.45), v_d*0.4);\n"            // warm haze
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
 static int s_tex_verts; static float s_vsz[2];
