@@ -146,9 +146,15 @@ static GLuint g_ring_tex, g_logo_tex, g_go_tex; static int g_ringw,g_ringh,g_log
 static int    g_best_lap[TRACK_N]={0}, g_races_played[TRACK_N]={0};  // per-track stats (centiseconds)
 // Championship game-flow: season 0 race sequence (exe table @0x46758c levels 1,2,5,7,10 -> our track
 // indices) + points by finish position. The "16 levels" = these championship EVENTS over the 11 tracks.
-static const int CHAMP_SEQ[5] = {1,8,3,6,7};          // track indices for levels 1,2,5,7,10
+// 4 seasons x 5 races (exe table @0x46758c), level numbers mapped to our track indices:
+static const int CHAMP_SEQ[4][5] = {
+    {1,8,3,6,7},   // season 0: levels 1,2,5,7,10
+    {8,3,6,5,10},  // season 1: levels 2,5,7,3,8
+    {1,6,5,0,4},   // season 2: levels 1,7,3,6,9
+    {8,0,5,2,9},   // season 3: levels 2,6,3,4,11
+};
 static const int CHAMP_PTS[8] = {10,8,6,5,4,3,2,1};   // points by finishing position
-static int g_champ_active=0, g_champ_idx=0, g_champ_awarded=0, g_champ_points[RACE_MAX_CARS]={0};
+static int g_champ_active=0, g_champ_season=0, g_champ_idx=0, g_champ_awarded=0, g_champ_points[RACE_MAX_CARS]={0};
 // track-name index -> LEVEL.DAT level dir, menu order (LEV5=Caprio/LEV6=Pine Hills confirmed by content;
 // LEV9=Black Sail Valley = the one track with no other name; each of LEV1-B used once. Verify per-level.)
 static const char* TRACK_LEV[TRACK_N] = {
@@ -282,7 +288,7 @@ static void render_scene(void){
             char b[64];
             const char* ttl = g_champ_active ? "CHAMPIONSHIP" : "RACE RESULTS";
             int hw=vram_text_measure(ttl); hud_text(ttl,(RENDER_W-hw*0.85f)/2.f,12,0.85f,1);
-            if(g_champ_active){ snprintf(b,sizeof(b),"%s   RACE %d/5",TRACKS[g_tsel],g_champ_idx+1); }
+            if(g_champ_active){ snprintf(b,sizeof(b),"SEASON %d  RACE %d/5  %s",g_champ_season+1,g_champ_idx+1,TRACKS[g_tsel]); }
             else snprintf(b,sizeof(b),"%s",TRACKS[g_tsel]);
             int hw2=vram_text_measure(b); hud_text(b,(RENDER_W-hw2*0.55f)/2.f,34,0.55f,0);
             int order[RACE_MAX_CARS]; int nc=race_rank(&g_race,order);
@@ -395,9 +401,9 @@ static void start_race(int idx){
 
 // begin a championship season: zero points, start the first event in the sequence
 static void champ_start(void){
-    g_champ_active=1; g_champ_idx=0; g_champ_awarded=0;
+    g_champ_active=1; g_champ_season=0; g_champ_idx=0; g_champ_awarded=0;
     for(int i=0;i<RACE_MAX_CARS;i++) g_champ_points[i]=0;
-    g_tsel=CHAMP_SEQ[0]; start_race(CHAMP_SEQ[0]);
+    g_tsel=CHAMP_SEQ[0][0]; start_race(CHAMP_SEQ[0][0]);
 }
 // award points by finish order for the just-finished race (once)
 static void champ_award(void){
@@ -408,9 +414,13 @@ static void champ_award(void){
 }
 // advance to the next championship event, or end the season
 static void champ_next(void){
-    if(g_champ_idx+1 < (int)(sizeof(CHAMP_SEQ)/sizeof(CHAMP_SEQ[0]))){
-        g_champ_idx++; g_champ_awarded=0; g_tsel=CHAMP_SEQ[g_champ_idx]; start_race(CHAMP_SEQ[g_champ_idx]);
-    } else { g_champ_active=0; g_racing=0; g_state=ST_MENU; }   // season complete
+    if(g_champ_idx+1 < 5){
+        g_champ_idx++;
+    } else if(g_champ_season+1 < 4){
+        g_champ_season++; g_champ_idx=0;
+        for(int i=0;i<RACE_MAX_CARS;i++) g_champ_points[i]=0;    // new season -> fresh standings
+    } else { g_champ_active=0; g_racing=0; g_state=ST_MENU; return; }  // championship complete
+    g_champ_awarded=0; g_tsel=CHAMP_SEQ[g_champ_season][g_champ_idx]; start_race(CHAMP_SEQ[g_champ_season][g_champ_idx]);
 }
 
 static int g_ticks=0, g_res_ticks=0;
