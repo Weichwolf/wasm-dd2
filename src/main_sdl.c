@@ -7,6 +7,7 @@
 #include "render/vram.h"
 #include "render/render.h"
 #include "core/race.h"
+#include "core/geo.h"
 #include <SDL3/SDL.h>
 #include <GLES3/gl3.h>
 #ifdef __EMSCRIPTEN__
@@ -133,6 +134,7 @@ static const char* TRACK_LEV[TRACK_N] = {
     "LEV5","LEV1","LEV8","LEV9","LEV3","LEV6","LEVA","LEV4","LEV2","LEVB","LEV7","LEV7"
 };
 static Race  g_race; static int g_racing=0; static int g_last_hits=0;
+static Geo   g_geo;
 #define SND_ENGINE 0
 #define SND_CRASH  1
 static const float CAR_COLS[8][3]={{.9f,.2f,.15f},{.2f,.45f,.95f},{.95f,.85f,.15f},{.2f,.8f,.3f},
@@ -258,6 +260,7 @@ static void render_scene(void){
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
             render_begin(0.45f,0.6f,0.8f);
             render_track(view,proj);
+            render_geo(view,proj);              // authentic scene geometry (type-12 flat quads)
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
                 draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8],cc->hits); }
             // HUD (real bitmap font over the 3D view)
@@ -317,7 +320,9 @@ static void audio_load(void){
 static void start_race(int idx){
     char dat[160]; snprintf(dat,sizeof(dat),"assets/raw/%s/LEVEL.DAT",TRACK_LEV[idx]);
     if(race_init(&g_race,dat,RACE_MAX_CARS,2,1234u)){
-        render_set_track(&g_race.track); g_racing=1; g_state=ST_RACE;
+        render_set_track(&g_race.track);
+        geo_free(&g_geo); if(geo_load(dat,&g_geo)) render_geo_set(g_geo.v,g_geo.nverts);
+        g_racing=1; g_state=ST_RACE;
         if(idx>=0&&idx<TRACK_N) g_races_played[idx]++;
         SDL_Log("race init %s ncars=%d",dat,g_race.ncars);
     } else SDL_Log("race_init FAILED %s",dat);

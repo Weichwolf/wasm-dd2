@@ -15,7 +15,7 @@ for FE in LEV0/COPYRIGH.BMP LEV0/LOADING.BMP LEV0/FONT.BNK LEV0/LEVEL.SPR LEV0/L
   PRELOAD+=( --preload-file "assets/raw/$FE@/assets/raw/$FE" )
 done
 emcc -O2 -Isrc -DDD2_TIRE \
-  src/main_sdl.c src/core/track.c src/core/vehicle.c src/core/race.c src/render/render.c src/render/ui.c src/render/vram.c \
+  src/main_sdl.c src/core/track.c src/core/vehicle.c src/core/race.c src/core/geo.c src/render/render.c src/render/ui.c src/render/vram.c \
   -sUSE_SDL=3 -sFULL_ES3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=0 \
   "${PRELOAD[@]}" \

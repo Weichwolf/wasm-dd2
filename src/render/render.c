@@ -38,6 +38,15 @@ static GLuint s_prog, s_track_vbo, s_box_vbo;
 static GLint u_mvp, u_col, u_useramp;
 static int s_track_verts;
 
+// authentic colored-geometry shader (pos3 + rgb3)
+static const char* GVS =
+    "attribute vec3 a_pos; attribute vec3 a_col; uniform mat4 u_mvp; varying vec3 v_col; varying float v_d;\n"
+    "void main(){ v_col=a_col; vec4 p=u_mvp*vec4(a_pos,1.0); v_d=clamp(p.z*0.0016,0.0,1.0); gl_Position=p; }\n";
+static const char* GFS =
+    "precision mediump float; varying vec3 v_col; varying float v_d;\n"
+    "void main(){ vec3 c=mix(v_col, vec3(0.45,0.55,0.7), v_d*0.55); gl_FragColor=vec4(c,1.0); }\n";
+static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts;
+
 void render_init(void){
     s_prog=glCreateProgram();
     GLuint v=compile(GL_VERTEX_SHADER,VS), f=compile(GL_FRAGMENT_SHADER,FS);
@@ -51,7 +60,29 @@ void render_init(void){
     u_useramp=glGetUniformLocation(s_prog,"u_useramp");
     glGenBuffers(1,&s_track_vbo);
     glGenBuffers(1,&s_box_vbo);
+    // geo program
+    s_geo_prog=glCreateProgram();
+    glAttachShader(s_geo_prog,compile(GL_VERTEX_SHADER,GVS));
+    glAttachShader(s_geo_prog,compile(GL_FRAGMENT_SHADER,GFS));
+    glBindAttribLocation(s_geo_prog,0,"a_pos"); glBindAttribLocation(s_geo_prog,1,"a_col");
+    glLinkProgram(s_geo_prog); ug_mvp=glGetUniformLocation(s_geo_prog,"u_mvp");
+    glGenBuffers(1,&s_geo_vbo);
     glEnable(GL_DEPTH_TEST);
+}
+
+void render_geo_set(const float* verts, int nverts){
+    s_geo_verts=nverts;
+    glBindBuffer(GL_ARRAY_BUFFER,s_geo_vbo);
+    glBufferData(GL_ARRAY_BUFFER,(size_t)nverts*6*sizeof(float),verts,GL_STATIC_DRAW);
+}
+void render_geo(const float* view,const float* proj){
+    if(!s_geo_verts) return;
+    float mvp[16]; mat4_mul(mvp,proj,view);
+    glUseProgram(s_geo_prog); glUniformMatrix4fv(ug_mvp,1,GL_FALSE,mvp);
+    glBindBuffer(GL_ARRAY_BUFFER,s_geo_vbo);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(1); glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(3*sizeof(float)));
+    glDrawArrays(GL_TRIANGLES,0,s_geo_verts);
 }
 
 // 7 floats/vertex: pos(3) nrm(3) v(1)

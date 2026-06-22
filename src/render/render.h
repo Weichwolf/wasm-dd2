@@ -9,6 +9,9 @@ void render_begin(float r, float g, float b);          // clear color+depth
 void render_track(const float* view, const float* proj);
 // simple oriented box (cars/props): center, half-extents, yaw (rad), rgb
 void render_box(const float* view, const float* proj, vec3 c, vec3 he, float yaw, float r, float g, float b);
+// authentic level geometry: interleaved pos3+rgb3 vertices (triangles)
+void render_geo_set(const float* verts, int nverts);
+void render_geo(const float* view, const float* proj);
 void render_shutdown(void);
 
 #endif
