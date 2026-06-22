@@ -10,5 +10,7 @@ void ui_init(void);
 GLuint ui_load_bmp(const char* path, int* w, int* h);
 // Draw a texture filling the current viewport (front-end backgrounds/screens).
 void ui_blit_fullscreen(GLuint tex);
+// Draw a texture at a pixel rect within a screen of (sw x sh) pixels (origin top-left). Alpha-blended.
+void ui_blit_rect(GLuint tex, float x, float y, float w, float h, float sw, float sh);
 
 #endif

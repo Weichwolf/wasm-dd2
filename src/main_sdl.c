@@ -4,6 +4,7 @@
 // look), then presents to the canvas. Front-end state machine starts on the real title screen.
 // (3D in-race view is being built; the race is held behind the menus until it's ready.)
 #include "render/ui.h"
+#include "render/vram.h"
 #include "render/render.h"   // dmath (mat/vec) via track.h include chain
 #include <SDL3/SDL.h>
 #include <GLES3/gl3.h>
@@ -78,6 +79,7 @@ static unsigned char* g_readback;
 static int g_codec_ready = 0, g_frameno = 0;
 static AppState g_state = ST_TITLE;
 static GLuint g_title_tex;
+static GLuint g_spr_tex; static int g_spr_w, g_spr_h;
 
 static GLuint psh(GLenum t,const char*s){GLuint h=glCreateShader(t);glShaderSource(h,1,&s,0);glCompileShader(h);return h;}
 static GLuint make_tex(int w,int h){
@@ -117,7 +119,10 @@ static void render_scene(void){
     glClearColor(0,0,0,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     switch(g_state){
         case ST_TITLE: ui_blit_fullscreen(g_title_tex); break;
-        case ST_MENU:  ui_blit_fullscreen(g_title_tex); break;   // TODO real menu (font)
+        case ST_MENU:
+            ui_blit_fullscreen(g_title_tex);
+            if (g_spr_tex) ui_blit_rect(g_spr_tex, (RENDER_W-g_spr_w)/2.f, 70, g_spr_w, g_spr_h, RENDER_W, RENDER_H);
+            break;
         case ST_RACE:  /* held until 3D view ready */ break;
     }
 }
@@ -146,6 +151,7 @@ static void present(void){
     SDL_GL_SwapWindow(g_win);
 }
 
+static int g_ticks=0;
 static void frame(void){
     SDL_Event e;
     while(SDL_PollEvent(&e)){
@@ -154,6 +160,7 @@ static void frame(void){
             if(g_state==ST_TITLE && (sc==SDL_SCANCODE_RETURN||sc==SDL_SCANCODE_SPACE)) g_state=ST_MENU;
         }
     }
+    if(g_state==ST_TITLE && ++g_ticks>120) g_state=ST_MENU;   // attract-mode auto-advance
     render_scene();
     present();
 }
@@ -169,6 +176,8 @@ int main(void){
     ui_init(); present_init();
     int tw,th; g_title_tex = ui_load_bmp("assets/raw/LEV0/COPYRIGH.BMP",&tw,&th);
     SDL_Log("title %dx%d tex=%u", tw, th, g_title_tex);
+    if (vram_init("LEV0")) { g_spr_tex = vram_sprite_tex("DRIVER1",&g_spr_w,&g_spr_h);
+        SDL_Log("sprite DRIVER1 %dx%d tex=%u", g_spr_w, g_spr_h, g_spr_tex); }
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(frame,0,1);
 #else

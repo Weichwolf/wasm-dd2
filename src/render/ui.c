@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static GLuint s_prog, s_vbo;
+static GLuint s_prog, s_vbo, s_dyn_vbo;
 static GLint  s_u_tex;
 
 static const char* VS =
@@ -26,6 +26,25 @@ void ui_init(void){
                              -1,-1, 0,1,  1,1, 1,0,  -1,1, 0,0 };
     glGenBuffers(1,&s_vbo); glBindBuffer(GL_ARRAY_BUFFER,s_vbo);
     glBufferData(GL_ARRAY_BUFFER,sizeof(q),q,GL_STATIC_DRAW);
+    glGenBuffers(1,&s_dyn_vbo);
+}
+
+void ui_blit_rect(GLuint tex, float x, float y, float w, float h, float sw, float sh){
+    // pixel rect (top-left origin) -> NDC; uv 0..1 with row0=top
+    float x0=x/sw*2.f-1.f, x1=(x+w)/sw*2.f-1.f;
+    float y0=1.f-y/sh*2.f,  y1=1.f-(y+h)/sh*2.f;
+    float q[]={ x0,y0, 0,0,  x1,y0, 1,0,  x1,y1, 1,1,
+                x0,y0, 0,0,  x1,y1, 1,1,  x0,y1, 0,1 };
+    glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+    glUseProgram(s_prog); glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,tex); glUniform1i(s_u_tex,0);
+    glBindBuffer(GL_ARRAY_BUFFER,s_dyn_vbo);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(q),q,GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(1); glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(2*sizeof(float)));
+    glDrawArrays(GL_TRIANGLES,0,6);
+    glDisable(GL_BLEND);
 }
 
 static unsigned rd_u32(const unsigned char* p){ return p[0]|(p[1]<<8)|(p[2]<<16)|((unsigned)p[3]<<24); }
