@@ -258,9 +258,9 @@ static void render_scene(void){
             float view[16],proj[16];
             mat4_lookat(view,eye,at,v3(0,1,0));
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
-            render_begin(0.45f,0.6f,0.8f);
+            render_sky();                       // gradient sky/horizon
             render_track(view,proj);
-            render_geo(view,proj);              // authentic scene geometry (type-12 flat quads)
+            render_geo(view,proj);              // authentic scene geometry (flat quads)
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
                 draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8],cc->hits); }
             // HUD (real bitmap font over the 3D view)

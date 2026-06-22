@@ -47,6 +47,15 @@ static const char* GFS =
     "void main(){ vec3 c=mix(v_col, vec3(0.45,0.55,0.7), v_d*0.55); gl_FragColor=vec4(c,1.0); }\n";
 static GLuint s_geo_prog, s_geo_vbo; static GLint ug_mvp; static int s_geo_verts;
 
+// sky gradient (fullscreen NDC quad; horizon light -> zenith deeper blue)
+static const char* SVS =
+    "attribute vec2 a_pos; varying float v_y; void main(){ v_y=a_pos.y*0.5+0.5; gl_Position=vec4(a_pos,0.999,1.0); }\n";
+static const char* SFS =
+    "precision mediump float; varying float v_y;\n"
+    "void main(){ vec3 hor=vec3(0.62,0.70,0.80), zen=vec3(0.20,0.40,0.72);\n"
+    "  gl_FragColor=vec4(mix(hor,zen,clamp(v_y,0.0,1.0)),1.0); }\n";
+static GLuint s_sky_prog, s_sky_vbo;
+
 void render_init(void){
     s_prog=glCreateProgram();
     GLuint v=compile(GL_VERTEX_SHADER,VS), f=compile(GL_FRAGMENT_SHADER,FS);
@@ -67,7 +76,25 @@ void render_init(void){
     glBindAttribLocation(s_geo_prog,0,"a_pos"); glBindAttribLocation(s_geo_prog,1,"a_col");
     glLinkProgram(s_geo_prog); ug_mvp=glGetUniformLocation(s_geo_prog,"u_mvp");
     glGenBuffers(1,&s_geo_vbo);
+    // sky program + fullscreen quad
+    s_sky_prog=glCreateProgram();
+    glAttachShader(s_sky_prog,compile(GL_VERTEX_SHADER,SVS));
+    glAttachShader(s_sky_prog,compile(GL_FRAGMENT_SHADER,SFS));
+    glBindAttribLocation(s_sky_prog,0,"a_pos"); glLinkProgram(s_sky_prog);
+    static const float sq[]={-1,-1, 1,-1, 1,1, -1,-1, 1,1, -1,1};
+    glGenBuffers(1,&s_sky_vbo); glBindBuffer(GL_ARRAY_BUFFER,s_sky_vbo);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(sq),sq,GL_STATIC_DRAW);
     glEnable(GL_DEPTH_TEST);
+}
+
+void render_sky(void){
+    glDisable(GL_DEPTH_TEST); glDepthMask(GL_FALSE);
+    glUseProgram(s_sky_prog);
+    glBindBuffer(GL_ARRAY_BUFFER,s_sky_vbo);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,2*sizeof(float),(void*)0);
+    glDrawArrays(GL_TRIANGLES,0,6);
+    glDepthMask(GL_TRUE); glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void render_geo_set(const float* verts, int nverts){
