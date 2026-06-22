@@ -99,11 +99,16 @@ int geo_load(const char* path, Geo* g){
                 if(term==0||fc==0||fc>3000||ft==0xff) break;
                 int sz=face_size(ft);
                 for(unsigned fi=0;fi<fc;fi++){ long rr=gp+fi*sz; if(rr+sz>ol)break;
-                    // vertex indices (4) at +12 for 20B types; (4) at +0x18 for 32B
-                    int vo = (sz==32)?0x18:12;
-                    int id[4]; for(int k=0;k<4;k++) id[k]=u16(out+rr+vo+k*2);
+                    // Vertex-index offsets per the real drawers (verified by disasm of the dispatch
+                    // table @0x462d94): type 2 (flat) reads idx@8,10,12; types 12/14 + most 3pt drawers
+                    // read idx@12,14,16; only the explicit 4-point types (30/31) are quads. Treating
+                    // 3pt faces as quads (old heuristic) fabricated spurious tris from non-vertex bytes.
+                    int vo = (ft==2)?8:((sz==32)?0x18:12);
+                    int quad = (ft==30||ft==31);          // explicit 4pt types; all others are triangles
+                    int cn = quad?4:3;
+                    int id[4]={0,0,0,0}; for(int k=0;k<cn;k++) id[k]=u16(out+rr+vo+k*2);
                     if(id[0]>=nv||id[1]>=nv||id[2]>=nv) continue;
-                    int quad=(id[3]<nv&&id[3]!=id[0]); int cn=quad?4:3;
+                    if(quad && (id[3]>=nv||id[3]==id[0])){ quad=0; cn=3; }
                     float P[4][3];
                     for(int k=0;k<cn;k++){ const unsigned char* vp=out+vb+id[k]*8;
                         P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
