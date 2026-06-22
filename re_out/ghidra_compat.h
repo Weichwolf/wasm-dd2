@@ -3,10 +3,12 @@
 #ifndef GHIDRA_COMPAT_H
 #define GHIDRA_COMPAT_H
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+// (decompiled MSVC CRT functions that touch FILE internals are excluded from the build; libc provides stdio)
 
 // x86 calling-convention keywords (no-ops on a flat target)
 #define __cdecl
