@@ -3172,7 +3172,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
       (*(code *)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);
     }
     local_14 = local_14 - _Count;
-    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,(uint)puVar2[1] >> 8);
+    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,_Count * 0x800);  /* WASM gap: real byte size (was puVar2[1]>>8=garbage const) */
     param_1 = (void *)((int)param_1 + iVar5);
     iVar5 = iVar1;
   } while (iVar1 != 0);
