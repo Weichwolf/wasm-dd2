@@ -141,3 +141,12 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
   => exact (cx,cy)->CLUT mapping / index base still to pin down. CAPRIO renders fine with LEVEL.PAL.
 - Font glyphs are sprites (Setup_Font->Setup_Sprite); text colour set by `Print_Ink` — so menu text may be
   ink-tinted intensity rather than CLUT, check `Print`.
+
+## VRAM multi-page assembly (key)
+- TX0 = [u32 count=316][316 x 16B dir entries][page-0 pixel pool]. TX1..TXn = RAW source pixel pools
+  (no directory; first bytes are pixels). Dir entry = (tag=4, w, h, destX, destY, f5=srcCol, f6=srcPage, 0).
+- Each entry copies a w*h tile from source page f6 (0=TX0 pool, 1=TX1, ...) at column f5 -> VRAM (destX,destY).
+  First ~22 entries (srcPage 0) read TX0's pool sequentially (each tile preceded by 4-byte header);
+  later entries reference pages 1..n. The FONT atlas is a dir entry at destY=128,h=125 (sources another page).
+- So full VRAM = process ALL 316 entries copying from the page pools. srcY within a page still TBD
+  (f5=srcCol 0..240 step16). This fills font/sprites/textures; gates correct front-end + textured 3D.
