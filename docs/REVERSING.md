@@ -256,3 +256,11 @@ Type 12 record = 20 bytes: +0 u16, +4 RGB(3)+flag, +8 u16 id +u16, +12..+18 FOUR
 geometry (grandstand grids, walls, panels) — verified visually (out/lev5_type12.png). This is the
 ORIGINAL geometry, not the reconstruction. Remaining common types 8/37/41 + textured types for full
 fidelity; integrate into the C renderer to replace the cross-section reconstruction.
+
+## Geo integration status (geo-only test)
+- Rendering real geo ALONE: cars (sim on reconstruction coords) float ABOVE the real-geo scenery, and
+  no drivable road surface appears in the flat types (8/12/37/41). So: (a) the road is in OTHER face
+  types (textured/skipped), and (b) the real geo's coord origin/Y differs from the section-2-based
+  reconstruction the SIM uses. Current build = hybrid: reconstruction road (cars drive on it) + real-geo
+  scenery overlay. Full fidelity needs sim+render unified on the real geometry (align coords, find the
+  road type, collide vs real polys) — a larger architectural change. Committed render keeps the hybrid.
