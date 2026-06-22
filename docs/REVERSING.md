@@ -240,3 +240,11 @@ Re-parse with these fixes: 599 objs / 10574 verts (vs 74745 garbage before) -> s
 STATUS: pipeline fully MAPPED + decompressable + vertices parseable. Faithful render = implement all ~40
 face-type record parsers + software GTE + OT + VRAM/CLUT texturing. Large bounded phase; validation needs
 a reference runner (unavailable here). Current shipping in-race view = section-2 reconstruction.
+
+## Face record specifics (sampled) — per-type, varies
+- Header (Draw_Subdiv): [u16 count][u8 type][u8 term!=0]; then count records, advance by type-size.
+- Type 12 (LEV5 obj0): 20-byte QUAD record: +0 u16 id, +2 u16(0x0d), +4..+10 four u16 vtx indices
+  (0,1,2,3), +12 u16(0x0c), +14 u16(0xffff), +16 rgb+byte. => index offset & record size DIFFER per
+  type (3pt_flat had idx@+8..+12/16B). ~40 types each need individual size+index RE.
+- Real face data confirmed present (clean quad indices). Faithful render still = per-type parsers (~40)
+  + software GTE + VRAM/CLUT + OT, validated vs a reference. Characterized wall for autonomous completion.
