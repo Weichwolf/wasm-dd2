@@ -15,10 +15,18 @@ void dd2_load_image(const char* path){
    Original sets it to &__MultipleThread during init; provide a valid block up-front (single-threaded WASM). */
 static int g_thread[256];
 int dd2_getthread(void){ return (int)(long)g_thread; }
+/* CRT BYPASS: the user-WinMain that inits the game + runs the menu is buried in the CRT's alloca region
+   (x86 stack manip can't run in WASM). Call the game's __InitRtns (C++ global ctors) + Init_Application
+   (window) + Play_Game (race state machine, which does Init_Game) directly to reach the GAME LOGIC. */
+extern void __InitRtns(void);
+extern int Init_Application(void* hInst);
+extern int Play_Game(void);
 int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
-    *(int*)0x46c32c = (int)(long)&dd2_getthread;   /* __GetThreadPtr @ image VA 0x46c32c */
-    __WinMain();
+    *(int*)0x46c32c = (int)(long)&dd2_getthread;
+    __InitRtns();                 /* run global constructors (game data tables) */
+    Init_Application((void*)1);   /* register class + create window (shimmed) */
+    Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
     return 0;
 }
