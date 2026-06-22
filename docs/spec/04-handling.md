@@ -37,6 +37,28 @@ Our-words functional spec from decompiled Car_Movement @0x442cdc + neighbours. F
 - handling/barrclsn.C: Barrier_Collision (side) + Barrier_Corner_Collision (8 corners) vs track edge segments.
 - damage.C/denting.C: hit impulse → damage value + mesh denting (mid/high_car_vertices, FUN_444e3c).
 
+## Grounded integrator (Car_Grounded_Motion_3D @0x43d8e4) — the on-track model
+NOT a free rigid body — it's a TRACK-RELATIVE, TERRAIN-CONFORMING model:
+- Two parallel per-car structs: `car_fd` (working frame, stride **0x2c**: position/orientation the
+  renderer uses) and a track-position struct (stride **0x27c** @0x752344: track-relative state — segment,
+  distance, heading, lateral).
+- Each step: copy track-frame → car_fd; `Track_Follow(car_fd)` advances the car along the track path
+  segments; `Map_Height(car_fd)` samples terrain height under the car; `Get_Corner_Positions` computes the
+  4 wheel-corner world positions.
+- Body height = average of the 4 corner ground heights (sum of corner Y >>2) + body offset → written back
+  to the track-pos Y (@0x752348) and car_fd height (@0x75a634, ×0x1000 Q12).
+- `Calc_Car_Angles_Square(4 corners, dir vectors @0x466b28)` derives pitch+roll from the 4-corner footprint
+  on the terrain (the car tilts to match the ground under its wheels). Direction/corner basis from a table
+  @0x466ad8 (indexed by the car's facing octant @0x75a6be).
+- So: speed/steer (from Car_Drive_Motion, below) drive the TRACK-RELATIVE position; the 3D pose is then
+  reconstructed by snapping to the track surface + tilting to the local terrain. This is why cars hug the
+  track and bank on slopes without a full suspension sim (suspension = visual wheel travel, Calc_Suspension_*).
+- Fly/2pt/1pt states replace this with ballistic/partial integration when airborne or wrecked.
+
+## Drive forces (Car_Drive_Motion @0x4413ac) — TODO read fully
+Input (throttle/brake/steer) → engine torque vs speed curve, grip/slip, → updates the track-pos speed +
+heading + lateral. Per-class (Rookie/Amateur/Pro) accel/topspeed/grip from car-select. (Drill-down next.)
+
 ## Port note
 Determinism requires the exact fixed-point math + the fixed per-step order (Car_Movement all cars →
 Do_Car_Collisions). Implement integrators in Q-format integers, not float, to match the original bit-for-bit.
