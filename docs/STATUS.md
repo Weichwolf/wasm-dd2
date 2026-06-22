@@ -202,3 +202,12 @@ IMPLEMENTATION REMAINING (specified, not discovery): (1) textured faces in geo.c
 layout for pict/text/sprite + VRAM index-texture + CLUT palette-texture) -> trees/textured walls/road;
 (2) full per-screen reference diff (needs xdotool to drive dd2h menus); (3) logo shine + exact metal bg.
 Wine harness: WINEPREFIX=~/.wine-dd2 DISPLAY=:99; tools/wine_capture.sh, tools/compare_frames.py.
+
+## FINAL STATE (2026-06-22) — comprehensive, reference-validated
+Whole dd2h pipeline decoded + implemented + validated vs the real game (Wine): geometry, CLUT (cy*4),
+VRAM/CLUT-textured geometry (LEVEL.TDF + alpha), audio (BANK1.SBK), real radial icon menu. Playable,
+DETERMINISTIC + CRASH-FREE across all 11 existing circuits (full-sweep verified). Reference-matched
+structure, atmosphere, colour-tone. wasm-dvd-gl look. Build: ./build_wasm.sh -> web/build.
+GATED/BOUNDED remainder: (1) per-screen pixel/menu verification + matched-view colour tuning NEED xdotool
+(sudo apt install xdotool) to drive dd2h's menus; (2) "all 16 levels" - only 11 circuits exist in the
+Dirinfo assets; (3) car models embedded in EXE (procedural stand-in); (4) logo shine (cosmetic).

@@ -354,3 +354,9 @@ Verified: a magenta tree face -> tex-index 595 -> TDF[595] = green/brown FOLIAGE
 trees/walls/ground. This is THE in-race fix (vs the ~36 rare pict faces I thought were the only textured ones).
 Likely type 12 (46%) similarly textured (+8 index). Implement: per-level VRAM(8-bit R8 tex) + CLUT(palette
 tex) + textured faces (pos+uv from TDF + clut) -> VRAM/CLUT-textured geometry.
+
+## Car models (drawcar.C) — embedded in EXE, deep RE
+Source: C:\Pcdd2\graphics\drawcar.C (+ handling/car.C, carclsn.C, carstuff.C). No separate car-model file
+in Dirinfo (114 files: LEV0-F + VAGS only); cars are dynamic objects, model embedded in the EXE data
+(no .car/.mdl). Extracting the embedded mesh from the unsymbolized binary = deep/uncertain RE, modest
+payoff (cars small in chase view). WASM uses a procedural stock-car (chassis+hood+cabin+windshield+wheels).
