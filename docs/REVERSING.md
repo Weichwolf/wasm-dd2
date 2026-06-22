@@ -224,3 +224,19 @@ Face loop (Draw_Subdiv_Object): while (((char*)gpoly)[3]!=0): sVar=*gpoly; type=
 Re-parse with these fixes: 599 objs / 10574 verts (vs 74745 garbage before) -> structured scene
   (grandstand grids + track features) but full validation needs the per-type draw fns + a reference.
 => Vertices: parseable. Faces (per-type layout) + textured GTE render: the remaining phase.
+
+## COMPLETE authentic-render pipeline spec (for faithful GTE render)
+1. LEVEL.DAT[0]=table-size; section table -> sec0 (geometry), sec2 (int32 verts).
+2. sec0: sub-table of ~21 u32 -> each a CHUNK [u32 size][LZSS] (tools/lzss.py).
+3. chunk: [u32 count][count x {u32 objdef_off, i32 x,y,z}] = scene-object placements (Setup_Object_Block).
+4. objdef (Set_Object relocates +0x20/24/28): vcount=(u32@+8)>>16; +0x20 verts(int16 x,y,z,pad);
+   +0x24 normals; +0x28 face-list; +0x0a rotation (Pre_Rotate).
+5. face-list (Draw_Subdiv_Object): batched -> [u16 count][u8 type][u8] then count records;
+   dispatch table @0x462d94 has ~40 types -> draw_face_* fns. Record sizes (gpoly stride) vary by type:
+   3pt_flat=16, 3pt_text/sprite=20, 3pt_gour/4pt_lit/3pt_pict=24/28, 4pt_pict/pict_lit=32. 3pt-vtx idx
+   = u16 @ rec+8,+10,+12 (index into per-object vert array). Textured types add uv/clut/tpage in the record.
+6. each vertex GTE-transformed (RotTransPers/GTERPS), backface-culled (cross-product sign), depth-sorted
+   into an ordering table (OT) by otz, then drawn as VRAM/CLUT-textured prims.
+STATUS: pipeline fully MAPPED + decompressable + vertices parseable. Faithful render = implement all ~40
+face-type record parsers + software GTE + OT + VRAM/CLUT texturing. Large bounded phase; validation needs
+a reference runner (unavailable here). Current shipping in-race view = section-2 reconstruction.
