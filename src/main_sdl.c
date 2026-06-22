@@ -183,14 +183,20 @@ static void draw_car(const float* view, const float* proj, vec3 p, float yaw, co
     float cs=cosf(yaw), sn=sinf(yaw);
     float dmg = hits>24?1.0f:(float)hits/24.f;            // 0..1 damage
     float k = 1.0f - dmg*0.55f;                           // darken (soot/dents)
-    float sq = 1.0f - dmg*0.28f;                          // crumple (lower roof/body)
-    render_box(view,proj,v3(p.x,p.y+0.42f*sq,p.z), v3(0.95f,0.34f*sq,2.0f), yaw, col[0]*k,col[1]*k,col[2]*k);
-    float dz=-0.25f; vec3 cab=v3(p.x - sn*dz, p.y+0.92f*sq, p.z + cs*dz);
-    render_box(view,proj,cab, v3(0.72f,0.30f*sq,0.85f), yaw, col[0]*0.78f*k,col[1]*0.78f*k,col[2]*0.78f*k);
-    const float wx=0.86f, wz=1.35f;
+    float sq = 1.0f - dmg*0.28f;                          // crumple
+    float br=col[0]*k, bg=col[1]*k, bb=col[2]*k;          // body colour
+    // local-offset box: oriented by yaw (z=forward, x=side, y=up)
+    #define PART(ox,oy,oz, hx,hy,hz, r,g,b) render_box(view,proj, \
+        v3(p.x+cs*(ox)-sn*(oz), p.y+(oy), p.z+sn*(ox)+cs*(oz)), v3(hx,hy,hz), yaw, r,g,b)
+    PART(0,0.34f,0,        0.92f,0.27f,1.95f, br,bg,bb);                 // chassis
+    PART(0,0.48f*sq,1.0f,  0.84f,0.11f,0.75f, br,bg,bb);                 // hood (front, low)
+    PART(0,0.86f*sq,-0.45f,0.76f,0.27f*sq,0.78f, br*0.82f,bg*0.82f,bb*0.82f); // cabin/roof (rear, raised)
+    PART(0,0.74f*sq,0.32f, 0.70f,0.20f*sq,0.12f, 0.10f,0.12f,0.16f);     // windshield (dark glass)
+    PART(0,0.66f,-1.28f,   0.86f,0.05f,0.16f, 0.10f,0.10f,0.11f);        // rear deck/spoiler
+    const float wx=0.88f, wz=1.26f;
     for(int s=0;s<4;s++){ float lx=(s&1)?wx:-wx, lz=(s&2)?wz:-wz;
-        vec3 w=v3(p.x+cs*lx-sn*lz, p.y+0.22f, p.z+sn*lx+cs*lz);
-        render_box(view,proj,w, v3(0.24f,0.26f,0.40f), yaw, 0.07f,0.07f,0.08f); }
+        PART(lx,0.20f,lz, 0.18f,0.22f,0.34f, 0.07f,0.07f,0.08f); }       // wheels
+    #undef PART
 }
 
 // draw the current front-end screen into the low-res FBO
