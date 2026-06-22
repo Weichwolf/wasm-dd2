@@ -34,3 +34,11 @@ Multiplayer, Championship.
 06-scene     (scene.C/camera.C/drawcar.C/sky.C/damage.C/denting.C: in-race draw via GTE)
 07-frontend  (frontend.c + menu modules: title/menu/tracksel/carsel/stats/results/championship flow)
 08-audio     (frontend/audio.c + VAGS/BANK1.SBK playback)
+
+## Championship / "16 levels" structure (authoritative, from exe table @0x46758c)
+_current_level for championship races = DAT_0046758c[season*0x14 + race*4]. The championship is 4 seasons
+x 5 races = ~20 events over the 11 distinct track files (LEV1-B):
+  season0: 1,2,5,7,10   season1: 2,5,7,3,8   season2: 1,7,3,6,9   season3: 2,6,3,4,11
+All 11 tracks ARE used (levels 1..11 appear). So the goal's "16 levels" = championship EVENTS/divisions over
+the 11 tracks, NOT 16 distinct level files. The 11-track count is the correct/complete asset reality, not a
+missing-data gap. (Single race: race_track index -> level, with bowl/arena remap, racetype/misc.c.)
