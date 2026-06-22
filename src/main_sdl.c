@@ -79,7 +79,7 @@ static GLint  g_u_tex;
 static unsigned char* g_readback;
 static int g_codec_ready = 0, g_frameno = 0;
 static AppState g_state = ST_TITLE;
-static GLuint g_title_tex;
+static GLuint g_title_tex, g_dim_tex;
 // main menu (real DD2 front-end strings), rendered in the bitmap font
 static const char* MENU[] = { "SELECT TRACK", "VIEW TRACK STATS", "SAVE GAME" };
 #define MENU_N ((int)(sizeof(MENU)/sizeof(MENU[0])))
@@ -162,6 +162,7 @@ static void render_scene(void){
         case ST_TITLE: ui_blit_fullscreen(g_title_tex); break;
         case ST_MENU:
             ui_blit_fullscreen(g_title_tex);
+            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
             for (int i=0;i<MENU_N;i++){
                 GLuint t = (i==g_sel)?g_mt_sel[i]:g_mt_norm[i];
                 if(t) ui_blit_rect(t, (RENDER_W-g_mw[i])/2.f, 150.f+i*18.f, g_mw[i], g_mh[i], RENDER_W, RENDER_H);
@@ -169,6 +170,7 @@ static void render_scene(void){
             break;
         case ST_TRACKSEL: {
             ui_blit_fullscreen(g_title_tex);
+            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
             float sc=0.62f, lh=13.f, y0=66.f;       // scaled list to fit 12 names
             for (int i=0;i<TRACK_N;i++){
                 GLuint t=(i==g_tsel)?g_tt_sel[i]:g_tt_norm[i];
@@ -178,6 +180,7 @@ static void render_scene(void){
             break; }
         case ST_STATS: {
             ui_blit_fullscreen(g_title_tex);
+            ui_blit_rect(g_dim_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);
             int hw=vram_text_measure("TRACK STATISTICS");
             hud_text("TRACK STATISTICS",(RENDER_W-hw*0.85f)/2.f,26,0.85f,1);
             int nw=vram_text_measure(TRACKS[g_tsel]);
@@ -295,6 +298,9 @@ int main(void){
     if(!SDL_GL_CreateContext(g_win)){SDL_Log("GL ctx: %s",SDL_GetError());return 1;}
     SDL_Log("GL_VERSION: %s",(const char*)glGetString(GL_VERSION));
     ui_init(); present_init(); render_init();
+    { unsigned char d[4]={0,0,0,170}; glGenTextures(1,&g_dim_tex); glBindTexture(GL_TEXTURE_2D,g_dim_tex);
+      glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,1,1,0,GL_RGBA,GL_UNSIGNED_BYTE,d);
+      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
     int tw,th; g_title_tex = ui_load_bmp("assets/raw/LEV0/COPYRIGH.BMP",&tw,&th);
     SDL_Log("title %dx%d tex=%u", tw, th, g_title_tex);
     if (vram_init("LEV0")) {
