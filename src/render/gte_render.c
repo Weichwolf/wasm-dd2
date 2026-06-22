@@ -67,7 +67,11 @@ static void xf(const float* m,const float* p,float* c){
 // emit a projected vertex (clip xyzw + uv + clut) into the output buffer
 static void emit(float** o,long* n,const float* c,float u,float v,float cl){
     float iw=1.0f/c[3];
-    (*o)[(*n)++]=c[0]*iw; (*o)[(*n)++]=c[1]*iw; (*o)[(*n)++]=c[2]*iw;
+    float nx=c[0]*iw, ny=c[1]*iw;
+    // PSX integer-screen-coord snap to the 320x240 grid (the vertex wobble). Safe here: near-clipped +
+    // correct triangle geometry (the old collapse was the spurious-quad faces, since fixed).
+    nx=floorf(nx*160.0f+0.5f)/160.0f; ny=floorf(ny*120.0f+0.5f)/120.0f;
+    (*o)[(*n)++]=nx; (*o)[(*n)++]=ny; (*o)[(*n)++]=c[2]*iw;
     (*o)[(*n)++]=u; (*o)[(*n)++]=v; (*o)[(*n)++]=cl;
 }
 
