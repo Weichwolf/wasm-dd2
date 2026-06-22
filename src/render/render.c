@@ -62,6 +62,25 @@ static const char* SFS =
     "  gl_FragColor=vec4(base,1.0); }\n";
 static GLuint s_sky_prog, s_sky_vbo;
 
+// textured geometry (GLES3): pos3 + uv2(VRAM px) + clutrow; samples R8 VRAM -> index -> CLUT palette
+static const char* TVS =
+    "#version 300 es\n"
+    "layout(location=0) in vec3 a_pos; layout(location=1) in vec2 a_uv; layout(location=2) in float a_cl;\n"
+    "uniform mat4 u_mvp; uniform vec2 u_vsz; out vec2 v_uv; flat out int v_cl; out float v_d;\n"
+    "void main(){ v_uv=a_uv/u_vsz; v_cl=int(a_cl+0.5); vec4 p=u_mvp*vec4(a_pos,1.0); v_d=clamp(p.z*0.0016,0.0,1.0); gl_Position=p; }\n";
+static const char* TFS =
+    "#version 300 es\n"
+    "precision mediump float; precision mediump int;\n"
+    "in vec2 v_uv; flat in int v_cl; in float v_d; out vec4 o;\n"
+    "uniform sampler2D u_vram; uniform sampler2D u_pal;\n"
+    "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
+    "  if(idx==0) discard;\n"                                   // index 0 = transparent (texture key)
+    "  vec3 c=texelFetch(u_pal, ivec2(idx, v_cl), 0).rgb;\n"
+    "  c=mix(c, vec3(0.45,0.55,0.7), v_d*0.55);\n"
+    "  o=vec4(c,1.0); }\n";
+static GLuint s_tex_prog, s_tex_vbo, s_vram_tex, s_pal_tex; static GLint ut_mvp, ut_vsz, ut_vram, ut_pal;
+static int s_tex_verts; static float s_vsz[2];
+
 void render_init(void){
     s_prog=glCreateProgram();
     GLuint v=compile(GL_VERTEX_SHADER,VS), f=compile(GL_FRAGMENT_SHADER,FS);
@@ -90,7 +109,45 @@ void render_init(void){
     static const float sq[]={-1,-1, 1,-1, 1,1, -1,-1, 1,1, -1,1};
     glGenBuffers(1,&s_sky_vbo); glBindBuffer(GL_ARRAY_BUFFER,s_sky_vbo);
     glBufferData(GL_ARRAY_BUFFER,sizeof(sq),sq,GL_STATIC_DRAW);
+    // textured-geometry program (GLES3)
+    s_tex_prog=glCreateProgram();
+    glAttachShader(s_tex_prog,compile(GL_VERTEX_SHADER,TVS));
+    glAttachShader(s_tex_prog,compile(GL_FRAGMENT_SHADER,TFS));
+    glLinkProgram(s_tex_prog);
+    GLint tok=0; glGetProgramiv(s_tex_prog,GL_LINK_STATUS,&tok);
+    if(!tok){char log[512];glGetProgramInfoLog(s_tex_prog,512,NULL,log);fprintf(stderr,"tex link: %s\n",log);}
+    ut_mvp=glGetUniformLocation(s_tex_prog,"u_mvp"); ut_vsz=glGetUniformLocation(s_tex_prog,"u_vsz");
+    ut_vram=glGetUniformLocation(s_tex_prog,"u_vram"); ut_pal=glGetUniformLocation(s_tex_prog,"u_pal");
+    glGenBuffers(1,&s_tex_vbo); glGenTextures(1,&s_vram_tex); glGenTextures(1,&s_pal_tex);
     glEnable(GL_DEPTH_TEST);
+}
+
+void render_geo_set_tex(const float* tv,int ntv,const unsigned char* vram,int vw,int vh,
+                        const unsigned char* clut,int nclut){
+    s_tex_verts=ntv; s_vsz[0]=(float)vw; s_vsz[1]=(float)vh;
+    if(ntv>0){ glBindBuffer(GL_ARRAY_BUFFER,s_tex_vbo); glBufferData(GL_ARRAY_BUFFER,(size_t)ntv*6*sizeof(float),tv,GL_STATIC_DRAW); }
+    if(vram){ glBindTexture(GL_TEXTURE_2D,s_vram_tex);
+        glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+        glTexImage2D(GL_TEXTURE_2D,0,GL_R8,vw,vh,0,GL_RED,GL_UNSIGNED_BYTE,vram);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE); }
+    if(clut){ glBindTexture(GL_TEXTURE_2D,s_pal_tex);
+        glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGB8,256,nclut,0,GL_RGB,GL_UNSIGNED_BYTE,clut);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST); glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST); }
+}
+void render_geo_tex(const float* view,const float* proj){
+    if(!s_tex_verts) return;
+    float mvp[16]; mat4_mul(mvp,proj,view);
+    glUseProgram(s_tex_prog); glUniformMatrix4fv(ut_mvp,1,GL_FALSE,mvp); glUniform2fv(ut_vsz,1,s_vsz);
+    glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D,s_vram_tex); glUniform1i(ut_vram,0);
+    glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D,s_pal_tex); glUniform1i(ut_pal,1);
+    glBindBuffer(GL_ARRAY_BUFFER,s_tex_vbo);
+    glEnableVertexAttribArray(0); glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(1); glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(2); glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(5*sizeof(float)));
+    glDrawArrays(GL_TRIANGLES,0,s_tex_verts);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void render_sky(void){

@@ -8,6 +8,10 @@ mkdir -p web/build
 PRELOAD=()
 for L in 1 2 3 4 5 6 7 8 9 A B; do
   PRELOAD+=( --preload-file "assets/raw/LEV$L/LEVEL.DAT@/assets/raw/LEV$L/LEVEL.DAT" )
+  # textures for the in-race textured-face renderer (VRAM/CLUT/TDF)
+  for F in LEVEL.CLT LEVEL.TDF LEVEL.TX0 LEVEL.TX1 LEVEL.TX2 LEVEL.TX3 LEVEL.TX4; do
+    [ -f "assets/raw/LEV$L/$F" ] && PRELOAD+=( --preload-file "assets/raw/LEV$L/$F@/assets/raw/LEV$L/$F" )
+  done
 done
 PRELOAD+=( --preload-file "assets/raw/VAGS/BANK1.SBK@/assets/raw/VAGS/BANK1.SBK" )
 # front-end assets
