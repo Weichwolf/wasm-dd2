@@ -176,3 +176,13 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
   every palette => the preview BACKGROUND indices in the assembled VRAM look wrong (tile overlap/compositing
   or the preview is composited from multiple elements), not purely a palette pick. Font uses ink (no CLUT) so
   menus are correct. Image-sprite colour needs a runnable reference to pin precisely; PARKED.
+
+## LZSS + LEVEL.DAT object blocks (Decompress @00415550)
+- Compression = LZSS ("C:\PcMpe\compress\compress.C"). Block=[u32 uncompressed_size][stream].
+  Control byte (8 flags LSB-first): flag1=literal byte; flag0=2 bytes (b1,b2) -> back-offset
+  (b1|(b2&0xf0)<<4)-0x1000, length (b2&0xf)+3, copy output[pos+off] (overlap ok). See tools/lzss.py (verified).
+- LEVEL.DAT: first u32 = table size in bytes (e.g. 116 => 29 entries); table[i]=byte offset of object block i.
+  These compressed blocks are SMALL (decoded 84/234/413/754B) = scenery/prop/object defs+transforms,
+  NOT the track. The bulk TRACK geometry is the large uncompressed region (section-2 int32 vertices etc.)
+  that the reconstruction already uses. Faithful track render needs section-1 strip/poly connectivity +
+  per-poly tpage/CLUT, processed via the software GTE — the remaining deep-fidelity task.
