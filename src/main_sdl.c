@@ -140,6 +140,18 @@ static void hud_text(const char* s, float x, float y, float scale, int hi){
     if(t){ ui_blit_rect(t, x, y, w*scale, h*scale, RENDER_W, RENDER_H); glDeleteTextures(1,&t); }
 }
 
+// a recognizable stock-car: low wide body + rear cabin + 4 dark wheels (composed from boxes)
+static void draw_car(const float* view, const float* proj, vec3 p, float yaw, const float* col){
+    float cs=cosf(yaw), sn=sinf(yaw);
+    render_box(view,proj,v3(p.x,p.y+0.42f,p.z), v3(0.95f,0.34f,2.0f), yaw, col[0],col[1],col[2]);          // body
+    float dz=-0.25f; vec3 cab=v3(p.x - sn*dz, p.y+0.92f, p.z + cs*dz);
+    render_box(view,proj,cab, v3(0.72f,0.30f,0.85f), yaw, col[0]*0.78f,col[1]*0.78f,col[2]*0.78f);          // cabin
+    const float wx=0.86f, wz=1.35f;
+    for(int s=0;s<4;s++){ float lx=(s&1)?wx:-wx, lz=(s&2)?wz:-wz;
+        vec3 w=v3(p.x+cs*lx-sn*lz, p.y+0.22f, p.z+sn*lx+cs*lz);
+        render_box(view,proj,w, v3(0.24f,0.26f,0.40f), yaw, 0.07f,0.07f,0.08f); }                            // wheels
+}
+
 // draw the current front-end screen into the low-res FBO
 static void render_scene(void){
     glBindFramebuffer(GL_FRAMEBUFFER,g_fbo); glViewport(0,0,RENDER_W,RENDER_H);
@@ -174,8 +186,8 @@ static void render_scene(void){
             mat4_perspective(proj,1.0f,(float)RENDER_W/RENDER_H,1.0f,800.0f);
             render_begin(0.45f,0.6f,0.8f);
             render_track(view,proj);
-            for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i]; const float* col=CAR_COLS[i%8];
-                render_box(view,proj,v3(cc->pos.x,cc->pos.y+0.6f,cc->pos.z),v3(1.f,.6f,2.f),cc->yaw,col[0],col[1],col[2]); }
+            for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i];
+                draw_car(view,proj,cc->pos,cc->yaw,CAR_COLS[i%8]); }
             // HUD (real bitmap font over the 3D view)
             glDisable(GL_DEPTH_TEST);
             char buf[64]; int order[RACE_MAX_CARS];
