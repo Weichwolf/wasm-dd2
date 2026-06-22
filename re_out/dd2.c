@@ -3157,6 +3157,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
     _Count = (int)((iVar1 + iVar6 * -0x800) - (uint)(iVar6 << 10 < 0)) >> 0xb;
     iVar1 = *(int *)(iVar5 + 8);
     puVar2 = *(undefined4 **)(iVar5 + 0xc);
+    dd2_asset_off = *(int *)iVar5;  /* WASM: save asset offset before free */
     MPE_free(iVar5);
     if (param_1 == (void *)0x0) {
       System_Error(s_Buffer_Load__0046c7b4,s_OUT_OF_MEMORY_0046c790);
@@ -3164,7 +3165,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
     uVar3 = puVar2[1];
     *puVar2 = param_1;
     puVar2[1] = uVar3 & 0xff;
-    puVar7 = &DAT_00716b18;
+    puVar7 = (undefined1 *)dd2_asset_off;  /* WASM gap fix: real asset offset */
     puVar2[1] = uVar3 & 0xff | 0x46c7c400;
     _File = fopen(&DAT_00716b18,&DAT_0046c7c4);
     FUN_0045607b((int *)_File,(int)puVar7 << 0xb,0);

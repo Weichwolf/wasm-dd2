@@ -15,3 +15,4 @@ int GetFileType(int h){ return 1; }  /* FILE_TYPE_DISK */
    FUN_00415160 does fopen()+FUN_0045607b(seek)+fread()+fclose(), all emscripten libc -> consistent. */
 #include <stdio.h>
 int FUN_0045607b(void* file, long offset, int whence){ return fseek((FILE*)file, offset, whence); }
+int dd2_asset_off;
