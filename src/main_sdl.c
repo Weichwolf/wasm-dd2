@@ -134,6 +134,12 @@ static void present_init(void){
     g_codec_ready = dvd_codec_init(RENDER_W, RENDER_H);
 }
 
+// transient HUD text: build glyph texture, blit, free (small strings, per-frame is fine)
+static void hud_text(const char* s, float x, float y, float scale, int hi){
+    int w,h; GLuint t=vram_text_tex(s, hi?255:235, hi?255:185, hi?255:55, &w,&h);
+    if(t){ ui_blit_rect(t, x, y, w*scale, h*scale, RENDER_W, RENDER_H); glDeleteTextures(1,&t); }
+}
+
 // draw the current front-end screen into the low-res FBO
 static void render_scene(void){
     glBindFramebuffer(GL_FRAMEBUFFER,g_fbo); glViewport(0,0,RENDER_W,RENDER_H);
@@ -170,6 +176,16 @@ static void render_scene(void){
             render_track(view,proj);
             for(int i=0;i<g_race.ncars;i++){ Car* cc=&g_race.cars[i]; const float* col=CAR_COLS[i%8];
                 render_box(view,proj,v3(cc->pos.x,cc->pos.y+0.6f,cc->pos.z),v3(1.f,.6f,2.f),cc->yaw,col[0],col[1],col[2]); }
+            // HUD (real bitmap font over the 3D view)
+            glDisable(GL_DEPTH_TEST);
+            char buf[64]; int order[RACE_MAX_CARS];
+            int nc=race_rank(&g_race,order), pos=1; for(int i=0;i<nc;i++) if(order[i]==0){pos=i+1;break;}
+            int lap=c->lap+1; if(lap>g_race.target_laps)lap=g_race.target_laps;
+            snprintf(buf,sizeof(buf),"LAP %d/%d",lap,g_race.target_laps);    hud_text(buf,6,5,0.6f,0);
+            snprintf(buf,sizeof(buf),"POS %d/%d",pos,nc);                    hud_text(buf,6,19,0.6f,0);
+            snprintf(buf,sizeof(buf),"%d MPH",(int)(c->speed*2.237f+0.5f));  hud_text(buf,6,33,0.6f,0);
+            { int tt=(int)g_race.time; snprintf(buf,sizeof(buf),"%d:%02d",tt/60,tt%60);
+              int tw2=vram_text_measure(buf); hud_text(buf,RENDER_W-tw2*0.6f-6,5,0.6f,0); }
         } break;
     }
 }
