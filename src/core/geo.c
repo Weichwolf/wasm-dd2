@@ -38,19 +38,18 @@ static void push6(Buf* b, float x,float y,float z,float r,float g,float bl){
     float* o=b->b+b->n; o[0]=x;o[1]=y;o[2]=z;o[3]=r;o[4]=g;o[5]=bl; b->n+=6;
 }
 
-// face-record sizes (gpoly stride) by type, from the draw_face_* dispatch table (docs/REVERSING.md)
+// face-record sizes (gpoly stride) by type, from the draw_face_* dispatch table (docs/REVERSING.md).
+// Most poly types are 20-byte records sharing the layout RGB@+4, vtx indices(u16) @+12 (3 for 3pt
+// types, 4 for 4pt). Textured types carry uv/tpage/clut too but the index block is at the same offset.
 static int face_size(int t){
     switch(t){
         case 2: case 46: return 16;
-        case 8: case 10: case 12: case 32: case 33: case 34: case 35: case 37: case 40: case 41: return 20;
         case 18: case 27: return 24;
         case 26: case 31: return 28;
         case 30: return 32;
-        default: return 0;   // unknown -> stop walking this object
+        default: return 20;   // the common case (flat/textured 3pt&4pt all 20B here)
     }
 }
-// flat-colored quad types (RGB@+4, four u16 vtx indices @+12) — confirmed by sampling
-static int is_flat20(int t){ return t==8 || t==12 || t==37 || t==41; }
 
 int geo_load(const char* path, Geo* g){
     FILE* f=fopen(path,"rb"); if(!f) return 0;
@@ -85,20 +84,24 @@ int geo_load(const char* path, Geo* g){
                 unsigned fc=u16(out+gp); int ft=out[gp+2], term=out[gp+3]; gp+=4;
                 if(term==0||fc==0||fc>3000) break;
                 int sz=face_size(ft);
-                if(sz<=0) break;                                  // unknown type -> stop this object
-                if(is_flat20(ft)){                                // flat-colored quad (rgb@+4, idx@+12)
+                if(sz==20){                                       // flat/textured poly: rgb@+4, idx@+12
                     for(unsigned fi=0;fi<fc;fi++){
-                        long rr=gp+fi*sz;
+                        long rr=gp+fi*20;
                         if(rr+20>ol) break;
                         int id[4]; for(int k=0;k<4;k++) id[k]=u16(out+rr+12+k*2);
                         float cr=out[rr+4]/255.f, cg=out[rr+5]/255.f, cb=out[rr+6]/255.f;
-                        int ok=1; for(int k=0;k<4;k++) if(id[k]>=nv){ ok=0; break; }
-                        if(!ok) continue;
+                        if(id[0]>=nv||id[1]>=nv||id[2]>=nv) continue;          // tri must be valid
+                        int quad = (id[3]<nv && id[3]!=id[0]);                 // 4th valid -> quad, else tri
                         float P[4][3];
-                        for(int k=0;k<4;k++){ const unsigned char* vp=out+vb+id[k]*8;
+                        int cn=quad?4:3;
+                        for(int k=0;k<cn;k++){ const unsigned char* vp=out+vb+id[k]*8;
                             P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
-                        int tri[6]={0,1,2,0,2,3};
-                        for(int k=0;k<6;k++) push6(&buf,P[tri[k]][0],P[tri[k]][1],P[tri[k]][2],cr,cg,cb);
+                        push6(&buf,P[0][0],P[0][1],P[0][2],cr,cg,cb);
+                        push6(&buf,P[1][0],P[1][1],P[1][2],cr,cg,cb);
+                        push6(&buf,P[2][0],P[2][1],P[2][2],cr,cg,cb);
+                        if(quad){ push6(&buf,P[0][0],P[0][1],P[0][2],cr,cg,cb);
+                            push6(&buf,P[2][0],P[2][1],P[2][2],cr,cg,cb);
+                            push6(&buf,P[3][0],P[3][1],P[3][2],cr,cg,cb); }
                     }
                 }
                 gp+=fc*sz;
