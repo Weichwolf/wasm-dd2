@@ -11,7 +11,7 @@ static const char* VS =
     "void main(){ v_nrm=a_nrm; v_v=a_v; v_wpos=a_pos; gl_Position=u_mvp*vec4(a_pos,1.0); }\n";
 static const char* FS =
     "precision mediump float; varying vec3 v_nrm; varying float v_v; varying vec3 v_wpos;\n"
-    "uniform vec3 u_col; uniform float u_useramp;\n"
+    "uniform vec3 u_col; uniform float u_useramp; uniform float u_trackbright;\n"
     "float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }\n"
     "void main(){\n"
     "  vec3 N=normalize(v_nrm); vec3 L=normalize(vec3(0.4,0.85,0.3));\n"
@@ -25,6 +25,7 @@ static const char* FS =
     "    vec3 verge=vec3(0.47,0.45,0.38)+(hash(cell*1.7)*0.08-0.04);\n"   // muted grass/dirt verge
     "    base = e<0.80 ? tarmac : verge;\n"
     "    if(e>0.745 && e<0.80) base=vec3(0.80,0.78,0.70);\n"  // worn kerb line
+    "    base=mix(u_col, base, u_trackbright);\n"            // per-level: stormy tracks pull toward dark ground tint
     "  }\n"
     "  gl_FragColor=vec4(base*d,1.0);\n"
     "}\n";
@@ -35,7 +36,7 @@ static GLuint compile(GLenum t, const char* s){
     if(!ok){ char log[512]; glGetShaderInfoLog(sh,512,NULL,log); fprintf(stderr,"shader: %s\n",log);} return sh;
 }
 static GLuint s_prog, s_track_vbo, s_box_vbo;
-static GLint u_mvp, u_col, u_useramp;
+static GLint u_mvp, u_col, u_useramp, u_trackbright;
 static int s_track_verts;
 
 // authentic colored-geometry shader (pos3 + rgb3)
@@ -68,6 +69,8 @@ static float g_skybright=1.0f;   // per-level sky overcast factor (1=clear, low=
 void render_set_sky_bright(float k){ g_skybright=k; }
 static float g_ground_col[3]={0.32f,0.32f,0.32f};   // per-track drivable-surface tint (tarmac grey/dirt brown)
 void render_set_ground_color(float r,float g,float b){ g_ground_col[0]=r; g_ground_col[1]=g; g_ground_col[2]=b; }
+static float g_trackbright=1.0f;   // 1=full tarmac/grass ramp (sunny); low=pull track toward dark ground tint (stormy)
+void render_set_track_bright(float k){ g_trackbright=k; }
 
 // textured geometry (GLES3): pos3 + uv2(VRAM px) + clutrow; samples R8 VRAM -> index -> CLUT palette
 static const char* TVS =
@@ -106,6 +109,7 @@ void render_init(void){
     u_mvp=glGetUniformLocation(s_prog,"u_mvp");
     u_col=glGetUniformLocation(s_prog,"u_col");
     u_useramp=glGetUniformLocation(s_prog,"u_useramp");
+    u_trackbright=glGetUniformLocation(s_prog,"u_trackbright");
     glGenBuffers(1,&s_track_vbo);
     glGenBuffers(1,&s_box_vbo);
     // geo program
@@ -233,6 +237,7 @@ void render_track(const float* view,const float* proj){
     glUseProgram(s_prog);
     glUniformMatrix4fv(u_mvp,1,GL_FALSE,mvp);
     glUniform1f(u_useramp,1.0f);
+    glUniform1f(u_trackbright,g_trackbright);
     glUniform3f(u_col,g_ground_col[0],g_ground_col[1],g_ground_col[2]);
     glBindBuffer(GL_ARRAY_BUFFER,s_track_vbo);
     set_attribs();

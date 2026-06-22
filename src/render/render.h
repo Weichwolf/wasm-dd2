@@ -9,6 +9,7 @@ void render_begin(float r, float g, float b);          // clear color+depth
 void render_sky(void);                                  // vertical gradient sky + depth clear
 void render_set_sky_bright(float k);                    // per-level: 1=clear daytime, 0=overcast/stormy
 void render_set_ground_color(float r, float g, float b);// per-track drivable-surface tint
+void render_set_track_bright(float k);                  // 1=tarmac/grass ramp; low=dark stormy ground
 void render_track(const float* view, const float* proj);
 // simple oriented box (cars/props): center, half-extents, yaw (rad), rgb
 void render_box(const float* view, const float* proj, vec3 c, vec3 he, float yaw, float r, float g, float b);
@@ -27,6 +28,7 @@ void gte_render_set(const float* tv, int ntv, const unsigned char* vram, int vw,
                     const unsigned char* clut, int nclut);
 void gte_render(const float* view, const float* proj);
 void gte_set_fog(float r, float g, float b);   // per-level fog/depth-cue colour
+void gte_set_levbright(float k);                // per-level in-race brightness (stormy tracks < 1)
 void render_shutdown(void);
 
 #endif
