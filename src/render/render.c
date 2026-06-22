@@ -7,17 +7,25 @@
 // ---- shaders (GLSL ES 1.00: valid in both GLES3/WebGL2 and GLES2) ----
 static const char* VS =
     "attribute vec3 a_pos; attribute vec3 a_nrm; attribute float a_v;\n"
-    "uniform mat4 u_mvp; varying vec3 v_nrm; varying float v_v;\n"
-    "void main(){ v_nrm=a_nrm; v_v=a_v; gl_Position=u_mvp*vec4(a_pos,1.0); }\n";
+    "uniform mat4 u_mvp; varying vec3 v_nrm; varying float v_v; varying vec3 v_wpos;\n"
+    "void main(){ v_nrm=a_nrm; v_v=a_v; v_wpos=a_pos; gl_Position=u_mvp*vec4(a_pos,1.0); }\n";
 static const char* FS =
-    "precision mediump float; varying vec3 v_nrm; varying float v_v;\n"
+    "precision mediump float; varying vec3 v_nrm; varying float v_v; varying vec3 v_wpos;\n"
     "uniform vec3 u_col; uniform float u_useramp;\n"
+    "float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }\n"
     "void main(){\n"
     "  vec3 N=normalize(v_nrm); vec3 L=normalize(vec3(0.4,0.85,0.3));\n"
-    "  float d=0.35+0.65*max(dot(N,L),0.0);\n"
+    "  float d=0.45+0.55*max(dot(N,L),0.0);\n"
     "  vec3 base = u_col;\n"
-    "  if(u_useramp>0.5){ float e=abs(v_v-0.5)*2.0;\n"  // road dark, edges lighter
-    "    base = mix(vec3(0.20,0.20,0.22), vec3(0.45,0.42,0.38), e); }\n"
+    "  if(u_useramp>0.5){\n"
+    "    float e=abs(v_v-0.5)*2.0;\n"                     // 0 center .. 1 edge (across track)
+    "    vec2 cell=floor(v_wpos.xz*0.8);\n"
+    "    float gr=hash(cell)*0.10-0.05;\n"                // asphalt grain
+    "    vec3 asph=vec3(0.21,0.21,0.235)+gr;\n"
+    "    vec3 grass=vec3(0.16,0.39,0.15)+(hash(cell*1.7)*0.12-0.06);\n"
+    "    base = e<0.80 ? asph : grass;\n"
+    "    if(e>0.745 && e<0.80) base=vec3(0.82,0.82,0.80);\n"  // white edge line
+    "  }\n"
     "  gl_FragColor=vec4(base*d,1.0);\n"
     "}\n";
 
