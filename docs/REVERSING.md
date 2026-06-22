@@ -248,3 +248,11 @@ a reference runner (unavailable here). Current shipping in-race view = section-2
   type (3pt_flat had idx@+8..+12/16B). ~40 types each need individual size+index RE.
 - Real face data confirmed present (clean quad indices). Faithful render still = per-type parsers (~40)
   + software GTE + VRAM/CLUT + OT, validated vs a reference. Characterized wall for autonomous completion.
+
+## BREAKTHROUGH: authentic geometry decodes + renders (type 12 = ~90% of faces)
+Face-type histogram (LEV5/1/2): type 12 = 18522 faces (dominant), then 41(1000), 8(724), 37(428).
+Type 12 record = 20 bytes: +0 u16, +4 RGB(3)+flag, +8 u16 id +u16, +12..+18 FOUR u16 vertex indices
+(quad). Flat-colored (no texture). Parsing all type-12 quads (4219 in LEV5) renders COHERENT scene
+geometry (grandstand grids, walls, panels) — verified visually (out/lev5_type12.png). This is the
+ORIGINAL geometry, not the reconstruction. Remaining common types 8/37/41 + textured types for full
+fidelity; integrate into the C renderer to replace the cross-section reconstruction.
