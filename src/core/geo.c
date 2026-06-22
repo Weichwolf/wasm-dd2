@@ -129,20 +129,24 @@ int geo_load(const char* path, Geo* g){
                     for(int k=0;k<cn;k++){ const unsigned char* vp=out+vb+id[k]*8;
                         P[k][0]=(px+i16(vp))*WORLD_SCALE; P[k][1]=(py+i16(vp+2))*WORLD_SCALE; P[k][2]=(pz+i16(vp+4))*WORLD_SCALE; }
                     int tidx = u16(out+rr+8);
+                    // face normal up-component -> per-face CLUT shade (textured) + flat lighting
+                    float e1x=P[1][0]-P[0][0],e1y=P[1][1]-P[0][1],e1z=P[1][2]-P[0][2];
+                    float e2x=P[2][0]-P[0][0],e2y=P[2][1]-P[0][1],e2z=P[2][2]-P[0][2];
+                    float nx=e1y*e2z-e1z*e2y,ny=e1z*e2x-e1x*e2z,nz=e1x*e2y-e1y*e2x;
+                    float nl=sqrtf(nx*nx+ny*ny+nz*nz); float up=(nl>1e-6f)?((ny<0?-ny:ny)/nl):0.5f;
                     if(is_textured(ft) && tdf && tidx<(int)ntdf){
-                        const unsigned char* e=tdf+4+tidx*12; int clut=u16(e); int uvr=clut*4;
+                        // engine selects a CLUT sub-palette by per-face lighting (clut*0x10+shade); approximate
+                        // with up-facing-ness: lit/up faces use the brighter sub-palette, side/down the darker.
+                        int shade=(int)(up*3.0f+0.5f); if(shade>3)shade=3; if(shade<0)shade=0;
+                        const unsigned char* e=tdf+4+tidx*12; int clut=u16(e); int uvr=clut*4+shade;
+                        if(uvr>=g->nclut) uvr=clut*4;
                         float uv[4][2]; for(int k=0;k<4;k++){ unsigned p2=u16(e+4+k*2); uv[k][0]=p2&0xff; uv[k][1]=p2>>8; }
                         int tri[6]={0,1,2,0,2,3};
                         for(int k=0;k<(quad?6:3);k++){ int vi=tri[k];
                             float row[6]={P[vi][0],P[vi][1],P[vi][2],uv[vi][0],uv[vi][1],(float)uvr}; push(&tex,row,6); }
                     } else {
                         float cr=out[rr+4]/255.f,cg=out[rr+5]/255.f,cb=out[rr+6]/255.f;
-                        // light + emit flat
-                        float e1x=P[1][0]-P[0][0],e1y=P[1][1]-P[0][1],e1z=P[1][2]-P[0][2];
-                        float e2x=P[2][0]-P[0][0],e2y=P[2][1]-P[0][1],e2z=P[2][2]-P[0][2];
-                        float nx=e1y*e2z-e1z*e2y,ny=e1z*e2x-e1x*e2z,nz=e1x*e2y-e1y*e2x;
-                        float nl=sqrtf(nx*nx+ny*ny+nz*nz); if(nl>1e-6f){ny/=nl;}
-                        float sh=0.55f+0.45f*(ny<0?-ny:ny); cr*=sh;cg*=sh;cb*=sh;
+                        float sh=0.55f+0.45f*up; cr*=sh;cg*=sh;cb*=sh;
                         int tri[6]={0,1,2,0,2,3};
                         for(int k=0;k<(quad?6:3);k++){ int vi=tri[k]; float row[6]={P[vi][0],P[vi][1],P[vi][2],cr,cg,cb}; push(&flat,row,6); }
                     }

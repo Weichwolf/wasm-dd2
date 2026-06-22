@@ -26,8 +26,8 @@ static const char* AFS =
     "uniform sampler2D u_vram; uniform sampler2D u_pal;\n"
     "void main(){ int idx=int(texture(u_vram,v_uv).r*255.0+0.5);\n"
     "  vec4 p=texelFetch(u_pal, ivec2(idx, v_cl), 0); if(p.a<0.05) discard;\n"
-    "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.05);\n"
-    "  c*=vec3(1.5,1.5,1.42); c=mix(c, vec3(0.74,0.77,0.77), v_d*0.35);\n"
+    "  vec3 c=p.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(l),c,1.12);\n"
+    "  c*=vec3(1.22,1.22,1.16); c=mix(c, vec3(0.74,0.77,0.77), v_d*0.35);\n"
     "  o=vec4(clamp(c,0.0,1.0),1.0); }\n";
 
 static GLuint s_prog, s_vbo, s_vram, s_pal; static GLint uv_vsz, uv_vram, uv_pal;
