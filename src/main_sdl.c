@@ -224,7 +224,7 @@ static void render_scene(void){
         case ST_MENU: {
             ui_blit_rect(g_metal_tex,0,0,RENDER_W,RENDER_H,RENDER_W,RENDER_H);   // metal backdrop
             if(g_logo_tex && g_logow>0){ float lw=180.f, lh=lw*g_logoh/(float)g_logow;
-                ui_blit_rect(g_logo_tex,(RENDER_W-lw)/2.f,12,lw,lh,RENDER_W,RENDER_H); }
+                ui_blit_rect_tint(g_logo_tex,(RENDER_W-lw)/2.f,12,lw,lh,RENDER_W,RENDER_H, 1.18f,0.55f,0.16f); }  // dd2h orange logo
             for(int i=0;i<MBTN_N;i++){
                 float r=(g_sel==i)?27.f:22.f;
                 if(g_ring_tex) ui_blit_rect(g_ring_tex,MBTN[i].x-r,MBTN[i].y-r,r*2,r*2,RENDER_W,RENDER_H);

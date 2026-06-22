@@ -4,14 +4,14 @@
 #include <string.h>
 
 static GLuint s_prog, s_vbo, s_dyn_vbo;
-static GLint  s_u_tex;
+static GLint  s_u_tex, s_u_tint;
 
 static const char* VS =
     "attribute vec2 a_pos; attribute vec2 a_uv; varying vec2 v_uv;\n"
     "void main(){ v_uv=a_uv; gl_Position=vec4(a_pos,0.0,1.0); }\n";
 static const char* FS =
-    "precision mediump float; varying vec2 v_uv; uniform sampler2D u_tex;\n"
-    "void main(){ gl_FragColor = texture2D(u_tex, v_uv); }\n";
+    "precision mediump float; varying vec2 v_uv; uniform sampler2D u_tex; uniform vec3 u_tint;\n"
+    "void main(){ vec4 c=texture2D(u_tex, v_uv); gl_FragColor = vec4(c.rgb*u_tint, c.a); }\n";
 
 static GLuint sh(GLenum t, const char* s){ GLuint h=glCreateShader(t); glShaderSource(h,1,&s,0); glCompileShader(h); return h; }
 
@@ -20,7 +20,7 @@ void ui_init(void){
     glAttachShader(s_prog,sh(GL_VERTEX_SHADER,VS));
     glAttachShader(s_prog,sh(GL_FRAGMENT_SHADER,FS));
     glBindAttribLocation(s_prog,0,"a_pos"); glBindAttribLocation(s_prog,1,"a_uv");
-    glLinkProgram(s_prog); s_u_tex=glGetUniformLocation(s_prog,"u_tex");
+    glLinkProgram(s_prog); s_u_tex=glGetUniformLocation(s_prog,"u_tex"); s_u_tint=glGetUniformLocation(s_prog,"u_tint");
     // fullscreen quad (pos.xy, uv.xy); uv.y flipped so texture row0 = top of image
     static const float q[]={ -1,-1, 0,1,  1,-1, 1,1,  1,1, 1,0,
                              -1,-1, 0,1,  1,1, 1,0,  -1,1, 0,0 };
@@ -29,7 +29,7 @@ void ui_init(void){
     glGenBuffers(1,&s_dyn_vbo);
 }
 
-void ui_blit_rect(GLuint tex, float x, float y, float w, float h, float sw, float sh){
+void ui_blit_rect_tint(GLuint tex, float x, float y, float w, float h, float sw, float sh, float tr, float tg, float tb){
     // pixel rect (top-left origin) -> NDC; uv 0..1 with row0=top
     float x0=x/sw*2.f-1.f, x1=(x+w)/sw*2.f-1.f;
     float y0=1.f-y/sh*2.f,  y1=1.f-(y+h)/sh*2.f;
@@ -38,13 +38,16 @@ void ui_blit_rect(GLuint tex, float x, float y, float w, float h, float sw, floa
     glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_DEPTH_TEST);
     glUseProgram(s_prog); glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,tex); glUniform1i(s_u_tex,0);
+    glBindTexture(GL_TEXTURE_2D,tex); glUniform1i(s_u_tex,0); glUniform3f(s_u_tint,tr,tg,tb);
     glBindBuffer(GL_ARRAY_BUFFER,s_dyn_vbo);
     glBufferData(GL_ARRAY_BUFFER,sizeof(q),q,GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0); glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)0);
     glEnableVertexAttribArray(1); glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(2*sizeof(float)));
     glDrawArrays(GL_TRIANGLES,0,6);
     glDisable(GL_BLEND);
+}
+void ui_blit_rect(GLuint tex, float x, float y, float w, float h, float sw, float sh){
+    ui_blit_rect_tint(tex,x,y,w,h,sw,sh,1.f,1.f,1.f);
 }
 
 static unsigned rd_u32(const unsigned char* p){ return p[0]|(p[1]<<8)|(p[2]<<16)|((unsigned)p[3]<<24); }
