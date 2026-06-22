@@ -3,6 +3,7 @@
 #include <string.h>
 unsigned char* g_image = (unsigned char*)0x400000;
 extern void dd2_relocate(void);
+extern void dd2_com_init(void);
 extern void __WinMain(void);
 void dd2_load_image(const char* path){
     FILE* f=fopen(path,"rb"); if(!f){ return; }
@@ -26,6 +27,7 @@ int main(){
     dd2_relocate();
     *(int*)0x46c32c = (int)(long)&dd2_getthread;
     __InitRtns();                 /* run global constructors (game data tables) */
+    dd2_com_init();               /* set up DirectDraw COM interface vtables */
     *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
     Init_Application((void*)1);   /* register class + create window (shimmed) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */

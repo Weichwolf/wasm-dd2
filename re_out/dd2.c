@@ -39341,6 +39341,7 @@ undefined4 __cdecl __prtf(undefined4 param_1,byte *param_2,int *param_3,undefine
   code *local_1c;
   undefined1 local_18 [4];
   
+  return 0;  /* WASM: MSVC printf core no-op'd (its internal per-specifier fn-ptrs are unrelocated raw VAs); debug output, not game logic */
   local_18[0] = 0;
   local_24 = 0;
   local_1c = (code *)param_4;
@@ -44429,14 +44430,13 @@ MCIERROR mciSendCommandA(MCIDEVICEID mciId,UINT uMsg,DWORD_PTR dwParam1,DWORD_PT
 
 /* ===== DirectDrawCreate @ 0045c436 ===== */
 
+#if 0 /* shimmed with a real COM interface in dd2_com.c */
 int DirectDrawCreate()
-
 {
-                    /* WARNING: Could not recover jumptable at 0x0045c436. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
   ;;
   return;
 }
+#endif
 
 
 /* ===== timeKillEvent @ 0045c43c ===== */
