@@ -449,7 +449,7 @@ int main(void){
             g_tt_sel[i] =vram_text_tex(TRACKS[i],255,255,255,NULL,NULL);
         }
         // radial menu sprites (real dd2h layout)
-        g_logo_tex=vram_sprite_tex("DD2L1",&g_logow,&g_logoh);
+        g_logo_tex=vram_sprite_tex_pal("DD2L1",&g_logow,&g_logoh,57);   // pal57 = chrome wordmark (cy*4=32 renders washed)
         g_ring_tex=vram_sprite_tex("RING",&g_ringw,&g_ringh);
         g_go_tex  =vram_sprite_tex("GO",&g_gow,&g_goh);
         for(int i=0;i<MBTN_N;i++) g_icon_tex[i]=vram_sprite_tex(MBTN[i].icon,&g_iw[i],&g_ih[i]);

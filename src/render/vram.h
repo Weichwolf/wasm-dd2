@@ -7,6 +7,7 @@
 
 int   vram_init(const char* level);                 // assemble full VRAM (all TX pages) + PAL/SPR/FONT
 GLuint vram_sprite_tex(const char* name, int* w, int* h);  // upload a named sprite -> RGBA texture (0 if absent)
+GLuint vram_sprite_tex_pal(const char* name, int* w, int* h, int pal_override); // force a CLUT palette (-1 = cy*4)
 int   vram_text_measure(const char* s);             // pixel width of a string in the bitmap font
 GLuint vram_text_tex(const char* s, unsigned char r,unsigned char g,unsigned char b, int* w,int* h); // render text (ink rgb) -> RGBA tex
 

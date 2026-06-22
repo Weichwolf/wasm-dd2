@@ -92,7 +92,7 @@ static GLuint upload(unsigned char* rgba, int w, int h){
     return t;
 }
 
-GLuint vram_sprite_tex(const char* name, int* wout, int* hout){
+GLuint vram_sprite_tex_pal(const char* name, int* wout, int* hout, int pal_override){
     Sprite* s=NULL;
     for(int i=0;i<s_nspr;i++) if(strncmp(s_spr[i].name,name,10)==0){ s=&s_spr[i]; break; }
     if(!s || !s_vram) return 0;
@@ -101,13 +101,15 @@ GLuint vram_sprite_tex(const char* name, int* wout, int* hout){
     // CLUT (engine-faithful): __clutspace = LEVEL.CLT loaded directly; draw clut for a sprite is at
     // __clutspace + dth_clut*0x1000, dth_clut = sprite.cy. LEVEL.CLT is 256xRGBA palettes (PC port),
     // so palette index = cy*4 (byte offset cy*0x1000). Verified: RING -> grey metal, DRIVER0 -> clean.
+    // pal_override>=0 forces a palette (e.g. logo DD2L1 -> pal57 chrome, not cy*4=32 washed).
     const unsigned char* pal=s_pal;
-    if(s_clt && s_nclt>0){ int pi=s->cy*4; if(pi<s_nclt) pal=s_clt + (size_t)pi*256*3; }
+    if(s_clt && s_nclt>0){ int pi = pal_override>=0 ? pal_override : s->cy*4; if(pi<s_nclt) pal=s_clt + (size_t)pi*256*3; }
     unsigned char* rgba=malloc((size_t)w*h*4);
     for(int y=0;y<h;y++)for(int x=0;x<w;x++){ unsigned idx=s_vram[(size_t)(v+y)*VRAM_W+(u+x)];
         unsigned char* o=rgba+((size_t)y*w+x)*4; o[0]=pal[idx*3];o[1]=pal[idx*3+1];o[2]=pal[idx*3+2];o[3]=idx?255:0; }
     GLuint t=upload(rgba,w,h); free(rgba); if(wout)*wout=w; if(hout)*hout=h; return t;
 }
+GLuint vram_sprite_tex(const char* name, int* wout, int* hout){ return vram_sprite_tex_pal(name,wout,hout,-1); }
 
 int vram_text_measure(const char* s){
     int w=0; for(const char* c=s;*c;c++){ int gi=(unsigned char)*c-32; if(gi<0||gi>=95)continue; w+=s_glyph[gi][2]+1; } return w;
