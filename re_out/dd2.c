@@ -3052,7 +3052,7 @@ int * __cdecl Load_Textures(undefined4 *param_1,int *param_2,int param_3)
 
 /* ===== Load_Cluts @ 0041501c ===== */
 
-undefined4 __cdecl Load_Cluts(int *param_1)
+undefined4 __cdecl Load_Cluts(int *param_1,int param_2)
 
 {
   int *piVar1;
@@ -3300,7 +3300,7 @@ void __cdecl FUN_00415448(char *param_1,uint *param_2)
 
 /* ===== FUN_004154b8 @ 004154b8 ===== */
 
-undefined4 __cdecl FUN_004154b8(int param_1)
+undefined4 __cdecl FUN_004154b8(int param_1,int param_2)
 
 {
   int iVar1;
@@ -31188,7 +31188,7 @@ void FUN_0044b684(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __cdecl Load_Completion_Status(int param_1)
+int __cdecl Load_Completion_Status(int param_1)
 
 {
   short sVar1;
