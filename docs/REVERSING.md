@@ -336,3 +336,12 @@ scenery) for a clearer track read; full real-geo road is a follow-on.
 - => Full textured-geometry path: assemble per-level VRAM (TX pages) + LEVEL.TDF + per-face texture-index ->
   sample VRAM at the UV rect, apply CLUT (palette = clut*4 per the cy*4 rule). Flat types (12/14, 87%) carry
   no index (flat rgb). Implement: textured triangles in geo.c (UVs from TDF) + a textured shader sampling VRAM.
+
+## LEVEL.DAT section map (LEV5, 29 sections)
+sec0=geometry (LZSS object chunks). sec1=27988B (strip/topology?). sec2=int32 verts (track path, flat Y=0).
+sec3=embedded SPRITE table (376 entries, LEVEL.SPR 24B format: u,v,w,h,cx,cy,mode + name; entry0="UNDER").
+sec4=embedded TDF (count 754 = LEVEL.TDF). sec5-28=various small tables (228-1000B): AI/cameras/sound/
+collision likely. Tree/scenery WORLD placement not found in an obvious section -> trees likely placed via
+object geometry textured faces (pict, rendered flat-grey now) OR a not-yet-identified scenery list.
+Conclusion: faithful trees+ground need per-pixel TDF texturing of the textured faces (turns grey quads
+green/brown). That's the key in-race implementation; flat geometry (87%) already faithful.
