@@ -26,6 +26,7 @@ int main(){
     dd2_relocate();
     *(int*)0x46c32c = (int)(long)&dd2_getthread;
     __InitRtns();                 /* run global constructors (game data tables) */
+    *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
     Init_Application((void*)1);   /* register class + create window (shimmed) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
     return 0;
