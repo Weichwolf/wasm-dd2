@@ -43,3 +43,13 @@ Init_Primitive_Buffer, DrawOTag.
   are what define the look, not GL's float pipeline.
 - Primitive types map to GL draws: flat poly (0x60)=colored tri/quad; textured (0x1c/0x2c/pict)=VRAM/CLUT
   textured quad (see 01-data-io textures); sprite=2D billboard; font=2D quad.
+
+## Affine texture mapping (PSX look) — needs geometry-level near clipping
+The original projects integer screen coords (RotTransPers) and the GPU maps textures AFFINELY (no
+perspective correction) → the characteristic texture warp/swim + integer vertex wobble. Tried a shader-only
+emulation (manual persp-divide, snap NDC to 320x240, emit w=1 for affine UV interp): the warp is correct but
+tris with a vertex near/behind the camera stretch into garbage because a per-vertex shader can't cull a whole
+triangle — the original's GTE clip flag drops those at geometry level. FAITHFUL PATH (TODO): near-plane clip
+the geometry (subdivide/drop tris crossing the near plane) before affine projection, OR keep perspective-
+correct (current) as the clean approximation. Vertex snapping alone (perspective-correct + snap) is a safe
+partial step toward the wobble without the affine artifacts.

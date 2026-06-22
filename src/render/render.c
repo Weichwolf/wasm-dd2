@@ -67,6 +67,9 @@ static const char* TVS =
     "#version 300 es\n"
     "layout(location=0) in vec3 a_pos; layout(location=1) in vec2 a_uv; layout(location=2) in float a_cl;\n"
     "uniform mat4 u_mvp; uniform vec2 u_vsz; out vec2 v_uv; flat out int v_cl; out float v_d;\n"
+    // NOTE: authentic PSX affine mapping + vertex snap needs proper near-plane CLIPPING (the GTE clip
+    // flag); a shader-only affine path stretches near/behind-camera tris into garbage. Kept perspective-
+    // correct until geometry-level near clipping is added (see docs/spec/02-gte-gpu.md affine TODO).
     "void main(){ v_uv=a_uv/u_vsz; v_cl=int(a_cl+0.5); vec4 p=u_mvp*vec4(a_pos,1.0); v_d=clamp(p.z*0.0016,0.0,1.0); gl_Position=p; }\n";
 static const char* TFS =
     "#version 300 es\n"
