@@ -42,3 +42,15 @@ x 5 races = ~20 events over the 11 distinct track files (LEV1-B):
 All 11 tracks ARE used (levels 1..11 appear). So the goal's "16 levels" = championship EVENTS/divisions over
 the 11 tracks, NOT 16 distinct level files. The 11-track count is the correct/complete asset reality, not a
 missing-data gap. (Single race: race_track index -> level, with bowl/arena remap, racetype/misc.c.)
+
+## "16 levels" resolved: the 16 level SLOTS (0-15), not 16 racing tracks
+The exe addresses levels by slot index 0..15 (_current_level). Confirmed contents of the LEVx asset dirs:
+  - LEV0  : front-end (track-preview sprites CAPRIO/BLAKSAIL/PINEHILL.., DRIVER0-19 portraits, fonts)
+  - LEV1-B: the 11 RACING tracks (LEVEL.DAT ~200-360KB each) used by the championship (table @0x46758c)
+  - LEVF (15): MEMORY-CARD / save-game UI screen (sprites CARD/CARD_ERR/CARD_YN/CARDCURS/CARDMAN/CARDTICK,
+               CHAMP; tiny 7832-byte LEVEL.DAT, no track geometry). Loaded by FUN_0044c8e8 (sets
+               _current_level=0xf, loads LEVF/LEVEL.SPR + LEV0/FONT.BNK).
+  - LEVC/D/E (12-14): absent (no asset dirs) - unused slots.
+So "all 16 levels" = the 16 slots, of which 11 are racing tracks (the complete racing content), 1 is the
+front-end, 1 (LEVF) is the memory-card screen, and 3 are unused. The WASM port covers the racing tracks (11)
++ front-end; LEVF (memory-card/save) is irrelevant to a browser build with no PSX memory card.
