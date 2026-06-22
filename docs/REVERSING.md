@@ -376,3 +376,14 @@ so geo.c's decoder applies. InitialiseDenting copies into mid_car_vertices (0xcc
 EXTRACTION PATH: disassemble Draw_Car/FUN_00444e3c to pin car_vertices & car_object VAs -> dump bytes from
 .data -> decode object (verts+faces) like geo.c -> render real low-poly car (replaces box stand-in).
 Multi-step; cars are small in chase view so lower priority than the verified menu/in-race fidelity.
+
+## Car mesh — CORRECTION: it's a LEVEL.DAT object (not static EXE data)
+Earlier "car_vertices = static EXE data" was WRONG. Actual chain: the car mesh is a level OBJECT pointed to
+by _level_data+0x40 (mid) / +0x44 (high), loaded from LEVEL.DAT at level load. InitialiseDenting copies that
+object's verts (+0x20) into mid_car_vertices/high_car_vertices; Draw_Car repoints the object's vert ptr to
+car_vertices (a .bss WORKING buffer, stride 0x330/car) which is then DENTED at runtime (damage) and partly
+reset by Boot_Lost_Geometry (writes 0xff7e/0x98/0xfe62 defaults for non-player/lost geometry). So car_vertices
+is runtime-filled (why it's not in the EXE file) and the SOURCE mesh is a LEVEL.DAT object. To extract:
+trace the level-load code that sets _level_data+0x40 to its LEVEL.DAT section/offset, then decode that object
+with the same verts@+0x20/faces@+0x28 format as scenery. Deep multi-step trace; low visual priority (cars are
+small in chase view). Box stand-in retained meanwhile.
