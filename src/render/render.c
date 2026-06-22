@@ -15,16 +15,16 @@ static const char* FS =
     "float hash(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }\n"
     "void main(){\n"
     "  vec3 N=normalize(v_nrm); vec3 L=normalize(vec3(0.4,0.85,0.3));\n"
-    "  float d=0.70+0.36*max(dot(N,L),0.0);\n"            // brighter ambient (match dd2h LEV6)
+    "  float d=0.80+0.26*max(dot(N,L),0.0);\n"            // bright daytime ambient (VERIFIED dd2h)
     "  vec3 base = u_col;\n"
     "  if(u_useramp>0.5){\n"
     "    float e=abs(v_v-0.5)*2.0;\n"                     // 0 center .. 1 edge (across track)
     "    vec2 cell=floor(v_wpos.xz*0.8);\n"
-    "    float gr=hash(cell)*0.10-0.05;\n"                // asphalt grain
-    "    vec3 asph=vec3(0.40,0.35,0.30)+gr;\n"            // brighter warm asphalt
-    "    vec3 dirt=vec3(0.56,0.45,0.31)+(hash(cell*1.7)*0.10-0.05);\n"   // brighter brown dirt (dd2h 122,105,83)
-    "    base = e<0.80 ? asph : dirt;\n"
-    "    if(e>0.745 && e<0.80) base=vec3(0.74,0.68,0.56);\n"  // worn kerb line
+    "    float gr=hash(cell)*0.08-0.04;\n"                // tarmac grain
+    "    vec3 tarmac=vec3(0.46,0.49,0.46)+gr;\n"          // grey tarmac (VERIFIED road 96,104,97)
+    "    vec3 verge=vec3(0.47,0.45,0.38)+(hash(cell*1.7)*0.08-0.04);\n"   // muted grass/dirt verge
+    "    base = e<0.80 ? tarmac : verge;\n"
+    "    if(e>0.745 && e<0.80) base=vec3(0.80,0.78,0.70);\n"  // worn kerb line
     "  }\n"
     "  gl_FragColor=vec4(base*d,1.0);\n"
     "}\n";
@@ -55,10 +55,10 @@ static const char* SFS =
     "float h(vec2 p){return fract(sin(dot(floor(p),vec2(41.3,289.1)))*43758.5);}\n"
     "float noise(vec2 p){vec2 f=fract(p),i=floor(p);f=f*f*(3.0-2.0*f);\n"
     "  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}\n"
-    "void main(){ vec3 hor=vec3(0.66,0.60,0.51), zen=vec3(0.34,0.33,0.30);\n"  // DD2 stormy/overcast, warmer
+    "void main(){ vec3 hor=vec3(0.84,0.83,0.76), zen=vec3(0.66,0.745,0.75);\n"  // VERIFIED dd2h daytime: near-white horizon -> light blue top
     "  vec3 base=mix(hor,zen,clamp(v_p.y,0.0,1.0));\n"
-    "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // layered clouds
-    "  base*=0.78+0.32*c;\n"
+    "  float c=noise(v_p*vec2(7.0,4.0))*0.6+noise(v_p*vec2(15.0,8.0))*0.4;\n"  // light cloud variation
+    "  base*=0.93+0.10*c;\n"
     "  gl_FragColor=vec4(base,1.0); }\n";
 static GLuint s_sky_prog, s_sky_vbo;
 
