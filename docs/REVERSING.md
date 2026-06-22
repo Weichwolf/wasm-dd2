@@ -159,3 +159,11 @@ TODO: exact source addressing from f5/f6 (+ srcY?) — read the TX-load/Decrunch
   Glyph metric = 4 bytes (gx,gy,gw,gh) from offset 32; **glyph index = ascii-32**. Glyph pixels use
   indices {16=background, 17=body, 18=edge}; tinted by Print_Ink colour. "DESTRUCTION DERBY 2" verified.
 - FONT2/FONT3 = sprites at (0,6256)/(0,1506); LETTERS sprite at (0,1664,256,92).
+
+## CLUT addressing (sprite colours)
+- Draw CLUT pointer = `__clutspace + (dth_clut*0x10 + _dth_shade)*0x100` bytes (__clutspace=0x6c0100 fixed,
+  stride 0x100=256B/row=128 16-bit colours/row; shade=row offset for palette-anim).
+- `dth_clut = *(u16*)(drawstruct+0xe)`, built from the sprite entry's cx/cy in FUN_00416714 (Setup_Sprite).
+- __clutspace is filled by Load_Cluts from a (count+entries+data) struct; LEVEL.CLT is the raw colour data
+  but the (cx,cy)->dth_clut->row mapping needs FUN_00416714 fully traced. Font is ink-tinted (no CLUT) so
+  menus render correctly already. Image sprites (track previews/drivers/cars) need this mapping for colour.
