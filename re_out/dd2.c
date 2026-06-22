@@ -37074,6 +37074,7 @@ LAB_00455c3e:
 
 /* ===== memset @ 00455cd0 ===== */
 
+#if 0 /* libc CRT */
 void * __cdecl memset(void *_Dst,int _Val,size_t _Size)
 
 {
@@ -37083,10 +37084,12 @@ void * __cdecl memset(void *_Dst,int _Val,size_t _Size)
   FUN_00456b30(_Size,CONCAT31(CONCAT21(CONCAT11(uVar1,uVar1),uVar1),uVar1));
   return _Dst;
 }
+#endif
 
 
 /* ===== printf @ 00455cf2 ===== */
 
+#if 0 /* libc CRT */
 int __cdecl printf(char *_Format,...)
 
 {
@@ -37097,6 +37100,7 @@ int __cdecl printf(char *_Format,...)
   iVar1 = FUN_00456bf3((undefined4 *)&DAT_0046c12e,(byte *)_Format,(int *)&local_4);
   return iVar1;
 }
+#endif
 
 
 /* ===== __open_flags @ 00455d15 ===== */
@@ -37247,6 +37251,7 @@ int * __cdecl FUN_00455edb(char *param_1,byte *param_2,int param_3)
 
 /* ===== fopen @ 00455f24 ===== */
 
+#if 0 /* libc CRT */
 FILE * __cdecl fopen(char *_Filename,char *_Mode)
 
 {
@@ -37255,6 +37260,7 @@ FILE * __cdecl fopen(char *_Filename,char *_Mode)
   pFVar1 = (FILE *)FUN_00455edb(_Filename,(byte *)_Mode,0);
   return pFVar1;
 }
+#endif
 
 
 /* ===== FUN_00455f3b @ 00455f3b ===== */
@@ -37432,6 +37438,7 @@ LAB_004560cd:
 /* ===== fread @ 00456201 ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 size_t __cdecl fread(void *_DstBuf,size_t _ElementSize,size_t _Count,FILE *_File)
 
 {
@@ -37537,12 +37544,14 @@ LAB_0045632c:
   goto LAB_004563d3;
 }
 #endif
+#endif
 
 
 /* ===== fclose @ 004563f1 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+#if 0 /* libc CRT */
 int __cdecl fclose(FILE *_File)
 
 {
@@ -37562,6 +37571,7 @@ int __cdecl fclose(FILE *_File)
   uVar2 = __shutdown_stream(_File,1);
   return uVar2;
 }
+#endif
 
 
 /* ===== __shutdown_stream @ 00456428 ===== */
@@ -37672,6 +37682,7 @@ uint __cdecl __doclose(FILE *param_1,int param_2)
 
 /* ===== strcmp @ 004565b0 ===== */
 
+#if 0 /* libc CRT */
 int __cdecl strcmp(char *_Str1,char *_Str2)
 
 {
@@ -37737,6 +37748,7 @@ LAB_00456633:
   }
   return 0;
 }
+#endif
 
 
 /* ===== __CHP @ 0045665c ===== */
@@ -37752,12 +37764,14 @@ float10 __CHP(void)
 
 /* ===== free @ 0045667a ===== */
 
+#if 0 /* libc CRT */
 void __cdecl free(void *_Memory)
 
 {
   nfree((uint)_Memory);
   return;
 }
+#endif
 
 
 /* ===== nfree @ 00456688 ===== */
@@ -37825,6 +37839,7 @@ void __cdecl FUN_0045672e(int param_1,byte *param_2)
 
 /* ===== atoi @ 00456761 ===== */
 
+#if 0 /* libc CRT */
 int __cdecl atoi(char *_Str)
 
 {
@@ -37850,11 +37865,13 @@ int __cdecl atoi(char *_Str)
   }
   return iVar3;
 }
+#endif
 
 
 /* ===== fwrite @ 004567ce ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 size_t __cdecl fwrite(void *_Str,size_t _Size,size_t _Count,FILE *_File)
 
 {
@@ -37969,11 +37986,13 @@ LAB_00456918:
   return sVar4;
 }
 #endif
+#endif
 
 
 /* ===== ftell @ 004569e0 ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 long __cdecl ftell(FILE *_File)
 
 {
@@ -37997,6 +38016,7 @@ long __cdecl ftell(FILE *_File)
   return iVar2;
 }
 #endif
+#endif
 
 
 /* ===== __null_int23_exit @ 00456a32 ===== */
@@ -38010,6 +38030,7 @@ void __null_int23_exit(void)
 
 /* ===== exit @ 00456a33 ===== */
 
+#if 0 /* libc CRT */
 void __cdecl exit(int _Code)
 
 {
@@ -38018,6 +38039,7 @@ void __cdecl exit(int _Code)
                     /* WARNING: Subroutine does not return */
   _exit(_Code);
 }
+#endif
 
 
 /* ===== _exit @ 00456a4d ===== */
@@ -38063,6 +38085,7 @@ int FUN_00456af2(void)
 
 /* ===== rand @ 00456afc ===== */
 
+#if 0 /* libc CRT */
 int __cdecl rand(void)
 
 {
@@ -38077,10 +38100,12 @@ int __cdecl rand(void)
   *puVar1 = uVar2;
   return uVar2 >> 0x10 & 0x7fff;
 }
+#endif
 
 
 /* ===== srand @ 00456b1f ===== */
 
+#if 0 /* libc CRT */
 void __cdecl srand(uint _Seed)
 
 {
@@ -38092,6 +38117,7 @@ void __cdecl srand(uint _Seed)
   }
   return;
 }
+#endif
 
 
 /* ===== FUN_00456b30 @ 00456b30 ===== */
@@ -38835,6 +38861,7 @@ DWORD __cdecl FUN_00457408(int param_1,LPVOID param_2,DWORD param_3)
 /* ===== fgetc @ 00457497 ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 int __cdecl fgetc(FILE *_File)
 
 {
@@ -38878,6 +38905,7 @@ int __cdecl fgetc(FILE *_File)
   (*(code *)_ReleaseFileH)(_File->_file);
   return uVar1;
 }
+#endif
 #endif
 
 
@@ -38995,6 +39023,7 @@ undefined4 __cdecl FUN_00457631(int param_1)
 
 /* ===== remove @ 004576b7 ===== */
 
+#if 0 /* libc CRT */
 int __cdecl remove(char *_Filename)
 
 {
@@ -39003,6 +39032,7 @@ int __cdecl remove(char *_Filename)
   iVar1 = unlink(_Filename);
   return iVar1;
 }
+#endif
 
 
 /* ===== FUN_004576c5 @ 004576c5 ===== */
@@ -39049,6 +39079,7 @@ void __cdecl _fpreset(void)
 
 /* ===== malloc @ 0045776f ===== */
 
+#if 0 /* libc CRT */
 void * __cdecl malloc(size_t _Size)
 
 {
@@ -39057,6 +39088,7 @@ void * __cdecl malloc(size_t _Size)
   puVar1 = nmalloc(_Size);
   return puVar1;
 }
+#endif
 
 
 /* ===== nmalloc @ 0045777d ===== */
@@ -40105,6 +40137,7 @@ DWORD __cdecl __qwrite(uint param_1,LPCVOID param_2,DWORD param_3)
 /* ===== fputc @ 004586c4 ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 int __cdecl fputc(int _Ch,FILE *_File)
 
 {
@@ -40156,6 +40189,7 @@ LAB_004586f8:
   (*(code *)_ReleaseFileH)(_File->_file);
   return _Ch & 0xff;
 }
+#endif
 #endif
 
 
@@ -40909,6 +40943,7 @@ void __InitMultipleThread(void)
 
 /* ===== strdup @ 0045970a ===== */
 
+#if 0 /* libc CRT */
 char * __cdecl strdup(char *_Src)
 
 {
@@ -40943,6 +40978,7 @@ char * __cdecl strdup(char *_Src)
   }
   return pcVar2;
 }
+#endif
 
 
 /* ===== __InitRtns @ 00459756 ===== */
@@ -41775,6 +41811,7 @@ LAB_0045a0a9:
 
 /* ===== calloc @ 0045a0e1 ===== */
 
+#if 0 /* libc CRT */
 void * __cdecl calloc(size_t _Count,size_t _Size)
 
 {
@@ -41788,6 +41825,7 @@ void * __cdecl calloc(size_t _Count,size_t _Size)
   }
   return pvVar1;
 }
+#endif
 
 
 /* ===== FUN_0045a10b @ 0045a10b ===== */
@@ -42238,6 +42276,7 @@ LAB_0045a630:
 
 /* ===== strtod @ 0045a7a8 ===== */
 
+#if 0 /* libc CRT */
 double __cdecl strtod(char *_Str,char **_EndPtr)
 
 {
@@ -42346,6 +42385,7 @@ LAB_0045a845:
   }
   return (double)in_ST0;
 }
+#endif
 
 
 /* ===== _nheapshrink @ 0045a9e5 ===== */
@@ -43756,6 +43796,7 @@ undefined * __cdecl __get_std_stream(uint param_1)
 /* ===== fputs @ 0045c201 ===== */
 
 #if 0 /* decompiled CRT -> libc */
+#if 0 /* libc CRT */
 int __cdecl fputs(char *_Str,FILE *_File)
 
 {
@@ -43795,6 +43836,7 @@ LAB_0045c268:
   (*(code *)_ReleaseFileH)(_File->_file);
   return iVar4;
 }
+#endif
 #endif
 
 

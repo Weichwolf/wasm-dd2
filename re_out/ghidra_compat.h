@@ -51,7 +51,7 @@ typedef uint64_t undefined6;
 typedef uint64_t undefined7;
 typedef uint64_t undefined8;
 typedef long double float10;
-typedef struct { uint8_t b[10]; } unkbyte10;
+typedef uint64_t unkbyte10;   // x87 10-byte (approx as 64-bit so shifts/int-ops compile; gap-tier for exactness)
 typedef uint8_t  byte;
 #ifndef __USE_MISC   /* when the system (sys/types via __USE_MISC) defines these, don't clash */
 typedef uint16_t ushort;
