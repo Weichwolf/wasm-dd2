@@ -26,6 +26,7 @@ int dd2_crt_lock(int a){ return a; }   /* CRT lock no-op (single-threaded) */
 extern void __InitRtns(void);
 extern int Init_Application(void* hInst);
 extern int Play_Game(void);
+extern void Set_Draw_Mode(int);
 int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
@@ -37,6 +38,11 @@ int main(){
     Read_Directory("Dirinfo");
     *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
     Init_Application((void*)1);   /* register class + create window (shimmed) */
+    /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;
+       the cold Play_Game bypass skips it -> Set_Draw_Mode(0) here so SetPalette's surface exists.
+       Force DAT_00463010 (current mode) != 0 so Set_Draw_Mode(0) actually runs the mode-set. */
+    *(int*)0x463010 = -1;
+    Set_Draw_Mode(0);             /* -> SetVideoMode -> FUN_004130b0 -> CreateSurface (primary) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
     return 0;
 }

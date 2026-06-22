@@ -28,7 +28,10 @@ static int idd_createpal(int t,int caps,int ct,void** pp){ if(pp)*pp=&g_pal_obj;
 static int idd_createsurf(int t,int desc,void** pp,int o){ if(pp)*pp=&g_surf_obj; return 0; }
 /* IDirectDrawSurface::GetAttachedSurface(this,caps,ppSurface) @0x30 */
 static int ids_getattached(int t,int caps,void** pp){ if(pp)*pp=&g_back_obj; return 0; }
-/* IDirectDrawSurface::Lock(this,rect,descPtr,flags,event) @0x58 — fill desc->lpSurface(+0x24)+pitch */
+/* IDirectDrawSurface::GetSurfaceDesc(this,descPtr) @0x58 — fill height/width/pitch/lpSurface */
+static int ids_getdesc(int t,int* desc){
+    if(desc){ desc[2]=480; desc[3]=640; desc[4]=640; desc[9]=(int)(long)g_pixels; } return 0; }
+/* IDirectDrawSurface::Lock(this,rect,descPtr,flags,event) @0x64 — fill desc->lpSurface(+0x24)+pitch */
 static int ids_lock(int t,int rect,int* desc,int flags,int ev){
     if(desc){ desc[9]=(int)(long)g_pixels; desc[4]=640; } return 0; }
 
@@ -41,7 +44,8 @@ void dd2_com_init(void){
     g_ddraw_vtbl[0x54/4]=(void*)&ok4;            /* SetDisplayMode(this,w,h,bpp) */
     g_surf_vtbl[0x2c/4]=(void*)&ok3; g_surf_vtbl[0x30/4]=(void*)&ids_getattached;
     g_surf_vtbl[0x6c/4]=(void*)&ok1; g_surf_vtbl[0x7c/4]=(void*)&ok2;
-    g_back_vtbl[0x58/4]=(void*)&ids_lock; g_back_vtbl[0x6c/4]=(void*)&ok1; g_back_vtbl[0x80/4]=(void*)&ok2;
+    g_back_vtbl[0x58/4]=(void*)&ids_getdesc; g_back_vtbl[0x64/4]=(void*)&ids_lock; g_back_vtbl[0x6c/4]=(void*)&ok1; g_back_vtbl[0x80/4]=(void*)&ok2;
+    g_surf_vtbl[0x58/4]=(void*)&ids_getdesc; g_surf_vtbl[0x64/4]=(void*)&ids_lock;
     g_pal_vtbl[0x08/4]=(void*)&ok1;  g_pal_vtbl[0x18/4]=(void*)&ok4;   /* SetEntries(this,flags,start,count) */
 }
 
