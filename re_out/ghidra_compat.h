@@ -27,6 +27,10 @@ typedef uint32_t MCIDEVICEID; typedef void* PINPUT_RECORD; typedef void* LPTIMEC
 typedef void* LPJOYINFO; typedef void* LPJOYCAPSA; typedef void* _StartAddress; typedef void* HINSTANCE; typedef void* HKEY;
 typedef void* LPWORD; typedef void* LPMMTIME; typedef void* LPWAVEFORMATEX; typedef void* LPHWAVEOUT; typedef void* HWAVEOUT;
 struct _exception { int type; char* name; double arg1, arg2, retval; };
+typedef struct _exception _exception;
+typedef char CHAR; typedef int errno_t; typedef int16_t SHORT; typedef const void* LPCVOID;
+struct joyinfo_tag { uint32_t a,b,c,d; }; struct tagMSG { void* hwnd; uint32_t message; uint32_t wParam,lParam,time; int ptx,pty; };
+typedef struct joyinfo_tag JOYINFO; typedef struct tagMSG MSG;
 typedef void *HGLOBAL,*HMENU,*HBRUSH,*HICON,*HCURSOR,*HPALETTE,*HGDIOBJ,*HFONT,*HBITMAP,*HRGN,*HRSRC,*HGLRC,*HACCEL,*HMETAFILE,*HWAVEIN,*HMIDIOUT,*LPMSG,*LPPAINTSTRUCT,*FARPROC,*WNDPROC,*LPCRITICAL_SECTION;
 typedef uint32_t WPARAM,LPARAM,COLORREF,ATOM,HFILE,HRESULT,WAVEHDR;
 // Win32 structs the decompiled shim-layer code touches (functions get replaced by SDL3/WebGL shims)

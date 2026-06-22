@@ -8965,7 +8965,7 @@ undefined4 __cdecl LoadCardFile(char *param_1,undefined4 param_2,undefined4 *par
 
 /* ===== FirstSavedGame @ 004234c0 ===== */
 
-void FirstSavedGame(void)
+int FirstSavedGame(void)
 
 {
   LoadCardFiles();
@@ -39577,7 +39577,7 @@ char * __cdecl FUN_00457e84(char *param_1,int param_2)
 
 /* ===== FUN_00457ee9 @ 00457ee9 ===== */
 
-void __cdecl FUN_00457ee9(char *param_1,undefined4 param_2,int param_3)
+int __cdecl FUN_00457ee9(char *param_1,undefined4 param_2,int param_3)
 
 {
   char cVar1;
@@ -39592,7 +39592,7 @@ void __cdecl FUN_00457ee9(char *param_1,undefined4 param_2,int param_3)
 
 /* ===== FUN_00457f0f @ 00457f0f ===== */
 
-void __cdecl FUN_00457f0f(short *param_1,undefined4 param_2,int param_3)
+int __cdecl FUN_00457f0f(short *param_1,undefined4 param_2,int param_3)
 
 {
   short sVar1;
@@ -39717,7 +39717,7 @@ void __cdecl FUN_00457f9f(char *param_1,uint param_2,int param_3)
 
 /* ===== FUN_0045809c @ 0045809c ===== */
 
-void __cdecl FUN_0045809c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+int __cdecl FUN_0045809c(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   (*(code *)__EFG_printf)(param_1,param_2,param_3);
@@ -40506,7 +40506,7 @@ undefined4 __cdecl FUN_00458bc7(uint param_1)
 
 /* ===== __set_errno_nt @ 00458c19 ===== */
 
-void __set_errno_nt(void)
+int __set_errno_nt(void)
 
 {
   DWORD DVar1;
@@ -41367,7 +41367,7 @@ undefined4 __cdecl FUN_00459bc5(uint param_1)
 
 /* ===== __ExpandDGROUP @ 00459c55 ===== */
 
-void __cdecl __ExpandDGROUP(uint param_1)
+int __cdecl __ExpandDGROUP(uint param_1)
 
 {
   _nheapshrink();
@@ -42580,7 +42580,7 @@ void __cdecl _endthread(void)
 
 /* ===== __initthread @ 0045ace2 ===== */
 
-void __cdecl __initthread(undefined4 param_1)
+int __cdecl __initthread(undefined4 param_1)
 
 {
   (*(code *)PTR_FUN_0046c528)(param_1);
@@ -43320,7 +43320,7 @@ LAB_0045b71d:
 /* WARNING: Instruction at (ram,0x0045b7a6) overlaps instruction at (ram,0x0045b7a5)
     */
 
-void FUN_0045b75d(void)
+int FUN_0045b75d(void)
 
 {
   short sVar1;
@@ -44352,7 +44352,7 @@ MMRESULT joyGetPos(UINT uJoyID,LPJOYINFO pji)
 
 /* ===== DirectSoundCreate @ 0045c42a ===== */
 
-void DirectSoundCreate(void)
+int DirectSoundCreate(void)
 
 {
                     /* WARNING: Could not recover jumptable at 0x0045c42a. Too many branches */
@@ -44378,7 +44378,7 @@ MCIERROR mciSendCommandA(MCIDEVICEID mciId,UINT uMsg,DWORD_PTR dwParam1,DWORD_PT
 
 /* ===== DirectDrawCreate @ 0045c436 ===== */
 
-void DirectDrawCreate(void)
+int DirectDrawCreate(void)
 
 {
                     /* WARNING: Could not recover jumptable at 0x0045c436. Too many branches */
