@@ -44394,7 +44394,7 @@ MMRESULT joyGetPos(UINT uJoyID,LPJOYINFO pji)
 
 /* ===== DirectSoundCreate @ 0045c42a ===== */
 
-int DirectSoundCreate(void)
+int DirectSoundCreate()
 
 {
                     /* WARNING: Could not recover jumptable at 0x0045c42a. Too many branches */
@@ -44420,7 +44420,7 @@ MCIERROR mciSendCommandA(MCIDEVICEID mciId,UINT uMsg,DWORD_PTR dwParam1,DWORD_PT
 
 /* ===== DirectDrawCreate @ 0045c436 ===== */
 
-int DirectDrawCreate(void)
+int DirectDrawCreate()
 
 {
                     /* WARNING: Could not recover jumptable at 0x0045c436. Too many branches */

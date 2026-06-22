@@ -31,7 +31,7 @@ typedef struct _exception _exception;
 typedef char CHAR; typedef int errno_t; typedef int16_t SHORT; typedef const void* LPCVOID;
 typedef int32_t* PLONG; typedef uint64_t unkuint10; typedef uint16_t* LPUSHORT;
 struct joyinfo_tag { uint32_t a,b,c,d; }; struct tagMSG { void* hwnd; uint32_t message; uint32_t wParam,lParam,time; int ptx,pty; };
-typedef struct joyinfo_tag JOYINFO; typedef struct tagMSG MSG;
+typedef struct joyinfo_tag JOYINFO, joyinfo_tag; typedef struct tagMSG MSG, tagMSG;
 typedef void *HGLOBAL,*HMENU,*HBRUSH,*HICON,*HCURSOR,*HPALETTE,*HGDIOBJ,*HFONT,*HBITMAP,*HRGN,*HRSRC,*HGLRC,*HACCEL,*HMETAFILE,*HWAVEIN,*HMIDIOUT,*LPMSG,*LPPAINTSTRUCT,*FARPROC,*WNDPROC,*LPCRITICAL_SECTION;
 typedef uint32_t WPARAM,LPARAM,COLORREF,ATOM,HFILE,HRESULT,WAVEHDR;
 // Win32 structs the decompiled shim-layer code touches (functions get replaced by SDL3/WebGL shims)
