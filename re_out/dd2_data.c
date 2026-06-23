@@ -66,7 +66,6 @@ int DAT_0045953b;
 int DAT_009063b4_1;
 int DAT_009063b8_1;
 int DAT_5af34e72;
-int FireCtrl;
 int LAB_0041341c;
 int LAB_004239b0;
 int LAB_00445670;
@@ -93,10 +92,7 @@ int PTR_LAB_00426740;
 int PTR_LAB_00426764;
 int PTR_LAB_0042a4c0;
 
-int SmokeCtrl;
-int SparksCtrl;
 
-int SteamCtrl;
 int UNK_00458895;
 int View_MultiLeague;
 int _DummyPoly;

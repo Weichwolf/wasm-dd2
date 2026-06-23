@@ -5,6 +5,18 @@ extern unsigned char* g_image;
 extern int dd2_asset_off;
 extern int dd2_asset_size;
 #define GIMG(va) ((unsigned char*)(uintptr_t)(va))
+#define DAT_00466432 (*(undefined1*)GIMG(0x00466432))
+#define DAT_004664f0 (*(undefined1*)GIMG(0x004664f0))
+#define DAT_004664f2 (*(undefined1*)GIMG(0x004664f2))
+#define DAT_004664f6 (*(undefined1*)GIMG(0x004664f6))
+#define DAT_004664f7 (*(undefined1*)GIMG(0x004664f7))
+#define DAT_00466370 (*(undefined1*)GIMG(0x00466370))
+#define DAT_00466372 (*(undefined1*)GIMG(0x00466372))
+#define DAT_00466376 (*(undefined1*)GIMG(0x00466376))
+#define DAT_00466377 (*(undefined1*)GIMG(0x00466377))
+#define DAT_00466430 (*(undefined1*)GIMG(0x00466430))
+#define DAT_00466436 (*(undefined1*)GIMG(0x00466436))
+#define DAT_00466437 (*(undefined1*)GIMG(0x00466437))
 #define _DAT_00716c18 (*(int*)GIMG(0x716c18))
 #define s__R_JL_T__0046ad0c ((char*)GIMG(0x46ad0c))
 #define s__R_JL_T__0046be14 ((char*)GIMG(0x46be14))
@@ -2350,7 +2362,7 @@ extern int DAT_0045953b;
 extern int DAT_009063b4_1;
 extern int DAT_009063b8_1;
 extern int DAT_5af34e72;
-extern int FireCtrl;
+extern undefined4 FireCtrl(int);
 extern int LAB_0041341c;
 extern int LAB_004239b0;
 extern int LAB_00445670;
@@ -2377,10 +2389,10 @@ extern int PTR_LAB_00426740;
 extern int PTR_LAB_00426764;
 extern int PTR_LAB_0042a4c0;
 #define SCA_Corner_Data_ (*(int*)GIMG(0x00465cf8))
-extern int SmokeCtrl;
-extern int SparksCtrl;
+extern undefined4 SmokeCtrl(int);
+extern undefined4 SparksCtrl(int);
 #define Speedway_Track_Type_ (*(int*)GIMG(0x00465d60))
-extern int SteamCtrl;
+extern undefined4 SteamCtrl(int);
 extern int UNK_00458895;
 extern int View_MultiLeague;
 extern int _DummyPoly;
