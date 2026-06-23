@@ -9935,7 +9935,7 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
     }
     *(undefined4 *)(iVar5 + 0x743374) = 0;
     _DAT_00744344 = _DAT_00744344 + 1;
-    puVar6 = (undefined4 *)(&car_wheel_fd + param_3 * 0x2c + param_4 * 0xb0);
+    puVar6 = (undefined4 *)((int)&car_wheel_fd + param_3 * 0x2c + param_4 * 0xb0);
     puVar7 = (undefined4 *)(iVar5 + 0x7432fc);
     for (iVar3 = 0xb; iVar3 != 0; iVar3 = iVar3 + -1) {
       *puVar7 = *puVar6;
@@ -13045,7 +13045,7 @@ void __cdecl Bonnet_Smoke(int param_1)
   int local_14;
   
   iVar4 = param_1 * 0x1b2;
-  local_30 = &car_handling + iVar4;
+  local_30 = (int)&car_handling + iVar4;
   iVar1 = param_1 * 0x27c;
   if (*(int *)(iVar1 + 0x752398) != 0) {
     if ((0x32 < *(int *)(&DAT_0075a676 + iVar4)) && (*(int *)(&DAT_0075a692 + iVar4) == 0)) {
@@ -16466,7 +16466,7 @@ void __cdecl AI_Com_Server(byte param_1)
   
   uVar8 = (uint)param_1;
   iVar6 = uVar8 * 0x1b2;
-  puVar18 = &car_handling + iVar6;
+  puVar18 = (int)&car_handling + iVar6;
   local_58 = 0;
   if ((*(int *)(&DAT_0075a6c6 + iVar6) != 0) || (*(int *)(&DAT_0075a692 + iVar6) == 5)) {
     *(undefined4 *)(iVar6 + 0x75a682) = 0;
@@ -18120,8 +18120,8 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
   
   local_1c = 0;
   local_18 = (int *)0x0;
-  piVar10 = (int *)(&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
-  local_14 = &car_handling + param_2 * 0x1b2;
+  piVar10 = (int *)((int)&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
+  local_14 = (int)&car_handling + param_2 * 0x1b2;
   uVar9 = 0;
   local_2c = *(int *)(&Forest_Track_Type + _current_level * 4);
   local_48 = piVar10;
@@ -18246,7 +18246,7 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
   *(int *)(&DAT_0075234c + param_2 * 0x27c) = *(int *)(local_14 + 0x38) >> 0xc;
   iVar1 = (int)((iVar5 + (iVar5 >> 0x1f) * -0x1000) - (uint)((iVar5 >> 0x1f) << 0xb < 0)) >> 0xc;
   iVar6 = param_2 * 0xb0;
-  *(int *)(&car_wheel_fd + iVar6) = *(int *)(&car_wheel_fd + iVar6) + iVar1;
+  *(int *)((int)&car_wheel_fd + iVar6) = *(int *)((int)&car_wheel_fd + iVar6) + iVar1;
   iVar5 = (int)((local_5c + (local_5c >> 0x1f) * -0x1000) - (uint)((local_5c >> 0x1f) << 0xb < 0))
           >> 0xc;
   *(int *)(iVar6 + 0x75c7f0) = *(int *)(iVar6 + 0x75c7f0) + iVar5;
@@ -18272,7 +18272,7 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
         Check_Bonnet_Removal(param_2);
       }
       puVar3 = (int)&car_object + param_2 * 0x38;
-      puVar8 = &car_handling + param_2 * 0x1b2;
+      puVar8 = (int)&car_handling + param_2 * 0x1b2;
       if (param_2 == _current_player_car) {
         iVar5 = 0;
         uVar12 = 0;
@@ -18309,7 +18309,7 @@ LAB_004347e7:
         Check_Boot_Removal(param_2);
       }
       puVar3 = (int)&car_object + param_2 * 0x38;
-      puVar8 = &car_handling + param_2 * 0x1b2;
+      puVar8 = (int)&car_handling + param_2 * 0x1b2;
       if (param_2 == _current_player_car) {
         iVar5 = 0;
         uVar12 = 1;
@@ -18336,7 +18336,7 @@ LAB_004347e7:
         Check_Bonnet_Removal(param_2);
       }
       puVar3 = (int)&car_object + param_2 * 0x38;
-      puVar8 = &car_handling + param_2 * 0x1b2;
+      puVar8 = (int)&car_handling + param_2 * 0x1b2;
       if (param_2 != _current_player_car) goto LAB_00434537;
       iVar5 = 0;
       uVar12 = 0;
@@ -18364,7 +18364,7 @@ LAB_004347e7:
         Check_Boot_Removal(param_2);
       }
       puVar3 = (int)&car_object + param_2 * 0x38;
-      puVar8 = &car_handling + param_2 * 0x1b2;
+      puVar8 = (int)&car_handling + param_2 * 0x1b2;
       if (param_2 != _current_player_car) {
         uVar12 = 1;
         goto LAB_004347e7;
@@ -18379,7 +18379,7 @@ LAB_004347e7:
     FUN_00425e74((int)puVar3,(int)puVar8,uVar12,iVar5,iVar1);
 switchD_00434472_default:
     if (param_2 == 0) {
-      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)(&car_wheel_fd + param_1 * 0x2c));
+      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)((int)&car_wheel_fd + param_1 * 0x2c));
     }
   }
   if ((*(int *)(param_2 * 0x27c + 0x752398) != 0) &&
@@ -18400,7 +18400,7 @@ switchD_00434472_default:
     uVar12 = 0;
     iVar4 = FUN_00436c04();
     piVar10 = (int *)(local_14 + 0x10);
-    piVar11 = (int *)(&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
+    piVar11 = (int *)((int)&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
     Sparks(piVar11,piVar10,(int)(&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
            uVar15,uVar16,uVar17,uVar18,uVar19,uVar20,uVar21);
     if (0x32000 < local_40) {
@@ -19644,7 +19644,7 @@ void __cdecl FUN_0043709c(int param_1,int param_2,int param_3)
       if (iVar2 == -1) {
         return;
       }
-      *(int *)(&car_handling + iVar1) = -0x19000 - iVar3;
+      *(int *)((int)&car_handling + iVar1) = -0x19000 - iVar3;
     }
     else {
       iVar2 = *(int *)(iVar5 + 0x466694);
@@ -19652,7 +19652,7 @@ void __cdecl FUN_0043709c(int param_1,int param_2,int param_3)
       if (iVar2 == -1) {
         return;
       }
-      *(int *)(&car_handling + iVar1) = iVar3 + 0x19000;
+      *(int *)((int)&car_handling + iVar1) = iVar3 + 0x19000;
     }
     *(int *)(&DAT_0075a692 + param_1 * 0x1b2) = iVar2;
     *(undefined4 *)(param_1 * 0x1b2 + 0x75a6ba) = uVar4;
@@ -19837,7 +19837,7 @@ LAB_00437405:
     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       Check_Bonnet_Removal(param_2);
     }
-    puVar10 = &car_handling + param_2 * 0x1b2;
+    puVar10 = (int)&car_handling + param_2 * 0x1b2;
     puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
@@ -19865,7 +19865,7 @@ LAB_00437812:
     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       Check_Bonnet_Removal(param_2);
     }
-    puVar10 = &car_handling + param_2 * 0x1b2;
+    puVar10 = (int)&car_handling + param_2 * 0x1b2;
     puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 != _current_player_car) goto LAB_00437812;
     iVar11 = 0;
@@ -19893,7 +19893,7 @@ LAB_00437812:
     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       FUN_004450dc(param_2,1);
     }
-    puVar10 = &car_handling + param_2 * 0x1b2;
+    puVar10 = (int)&car_handling + param_2 * 0x1b2;
     puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
@@ -19929,7 +19929,7 @@ LAB_00437812:
       FUN_004450dc(param_2,3);
     }
     puVar2 = (int)&car_object + param_2 * 0x38;
-    puVar10 = &car_handling + param_2 * 0x1b2;
+    puVar10 = (int)&car_handling + param_2 * 0x1b2;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
       iVar1 = _current_player_car;
@@ -19974,7 +19974,7 @@ switchD_0043774e_default:
       puVar10 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar10,(int)(&car_handling + param_1 * 0x1b2),3,iVar11,iVar1);
+    FUN_00425e74((int)puVar10,(int)((int)&car_handling + param_1 * 0x1b2),3,iVar11,iVar1);
     Start_Roll(param_1,(uVar3 ^ uVar4) - uVar4,1);
     break;
   case 1:
@@ -20004,7 +20004,7 @@ switchD_0043774e_default:
       puVar10 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar10,(int)(&car_handling + param_1 * 0x1b2),2,iVar11,iVar1);
+    FUN_00425e74((int)puVar10,(int)((int)&car_handling + param_1 * 0x1b2),2,iVar11,iVar1);
     Start_Roll(param_1,(uVar3 ^ uVar4) - uVar4,0);
     break;
   case 2:
@@ -20050,7 +20050,7 @@ switchD_0043774e_default:
       puVar10 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar10,(int)(&car_handling + param_1 * 0x1b2),1,iVar11,iVar1);
+    FUN_00425e74((int)puVar10,(int)((int)&car_handling + param_1 * 0x1b2),1,iVar11,iVar1);
     iVar1 = 1;
     goto LAB_00437f04;
   case 3:
@@ -20086,7 +20086,7 @@ switchD_0043774e_default:
       puVar10 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar10,(int)(&car_handling + param_1 * 0x1b2),0,iVar11,iVar1);
+    FUN_00425e74((int)puVar10,(int)((int)&car_handling + param_1 * 0x1b2),0,iVar11,iVar1);
     iVar1 = 0;
 LAB_00437f04:
     FUN_0043709c(param_1,(uVar3 ^ uVar4) - uVar4,iVar1);
@@ -20458,7 +20458,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
       puVar2 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + param_1 * 0x1b2),2,iVar3,iVar1);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + param_1 * 0x1b2),2,iVar3,iVar1);
     Start_Roll(param_1,(uVar9 ^ uVar8) - uVar8,1);
     break;
   case 1:
@@ -20485,7 +20485,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
       puVar2 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar1 = param_1;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + param_1 * 0x1b2),3,iVar3,iVar1);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + param_1 * 0x1b2),3,iVar3,iVar1);
     Start_Roll(param_1,(uVar9 ^ uVar8) - uVar8,0);
     break;
   case 2:
@@ -20528,7 +20528,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
       puVar2 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar3 = param_1;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + iVar1),1,iVar4,iVar3);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + iVar1),1,iVar4,iVar3);
     iVar1 = 1;
     goto LAB_00438e8d;
   case 3:
@@ -20561,7 +20561,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
       puVar2 = (undefined1 *)(param_1 * 0x38 + 0x749034);
       iVar3 = param_1;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + iVar1),0,iVar4,iVar3);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + iVar1),0,iVar4,iVar3);
     iVar1 = 0;
 LAB_00438e8d:
     FUN_0043709c(param_1,(uVar9 ^ uVar8) - uVar8,iVar1);
@@ -20591,7 +20591,7 @@ LAB_00438e8d:
       puVar2 = (undefined1 *)(param_2 * 0x38 + 0x749034);
       iVar1 = param_2;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + param_2 * 0x1b2),2,iVar3,iVar1);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + param_2 * 0x1b2),2,iVar3,iVar1);
     Start_Roll(param_2,(uVar9 ^ uVar8) - uVar8,1);
     break;
   case 1:
@@ -20634,7 +20634,7 @@ LAB_00438e8d:
       puVar2 = (undefined1 *)(param_2 * 0x38 + 0x749034);
       iVar3 = param_2;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + iVar1),1,iVar4,iVar3);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + iVar1),1,iVar4,iVar3);
     iVar1 = 1;
     goto LAB_00439253;
   case 2:
@@ -20667,7 +20667,7 @@ LAB_00438e8d:
       puVar2 = (undefined1 *)(param_2 * 0x38 + 0x749034);
       iVar3 = param_2;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + iVar1),0,iVar4,iVar3);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + iVar1),0,iVar4,iVar3);
     iVar1 = 0;
 LAB_00439253:
     FUN_0043709c(param_2,(uVar9 ^ uVar8) - uVar8,iVar1);
@@ -20696,7 +20696,7 @@ LAB_00439253:
       puVar2 = (undefined1 *)(param_2 * 0x38 + 0x749034);
       iVar1 = param_2;
     }
-    FUN_00425e74((int)puVar2,(int)(&car_handling + param_2 * 0x1b2),3,iVar3,iVar1);
+    FUN_00425e74((int)puVar2,(int)((int)&car_handling + param_2 * 0x1b2),3,iVar3,iVar1);
     Start_Roll(param_2,(uVar9 ^ uVar8) - uVar8,0);
   }
   iVar1 = (uVar9 ^ uVar8) - uVar8;
@@ -22741,7 +22741,7 @@ void __cdecl Get_Corner_Positions(int param_1)
   Track_Follow((int *)&DAT_0075a214);
   Map_Height((int *)&DAT_0075a214);
   iVar1 = param_1 * 0xb0;
-  *(int *)(&car_wheel_fd + iVar1) = _corner_fd;
+  *(int *)((int)&car_wheel_fd + iVar1) = _corner_fd;
   *(int *)(iVar1 + 0x75c7ec) = _DAT_0075a0e4;
   *(int *)(iVar1 + 0x75c7f0) = _DAT_0075a0e8;
   *(undefined4 *)(iVar1 + 0x75c7f4) = _DAT_0075a0ec;
@@ -23206,7 +23206,7 @@ void __cdecl Car_Rolled_Edge_Onto_Wheels_(int param_1)
   int *piVar5;
   
   iVar3 = param_1 * 0x1b2;
-  piVar5 = (int *)(&car_handling + iVar3);
+  piVar5 = (int *)((int)&car_handling + iVar3);
   iVar4 = param_1 * 0xb0;
   *(undefined4 *)(&DAT_0075a692 + iVar3) = 0;
   FUN_00440ac4(param_1);
@@ -23463,7 +23463,7 @@ void __cdecl Car_2pt_Motion_3D(int param_1)
   int iVar11;
   
   iVar11 = param_1 * 0x1b2;
-  piVar5 = (int *)(&car_handling + iVar11);
+  piVar5 = (int *)((int)&car_handling + iVar11);
   uVar4 = *(undefined4 *)(iVar11 + 0x75a6ba);
   iVar6 = param_1 * 0x27c;
   iVar7 = param_1 * 0x2c;
@@ -23500,28 +23500,28 @@ void __cdecl Car_2pt_Motion_3D(int param_1)
     iVar10 = rcos((int)((*(int *)(iVar11 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0))
                   >> 0xc);
     iVar6 = *(int *)(iVar11 + 0x75a620);
-    *(int *)(&car_handling + iVar11) = *(int *)(&car_handling + iVar11) + iVar10 * -4;
+    *(int *)((int)&car_handling + iVar11) = *(int *)((int)&car_handling + iVar11) + iVar10 * -4;
     iVar10 = iVar6 >> 0x1f;
     if ((0xc00 < (((int)((iVar6 + iVar10 * -0x1000) - (uint)(iVar10 << 0xb < 0)) >> 0xc) -
-                  (iVar7 + 0x1000) & 0xfffU)) && (*(int *)(&car_handling + param_1 * 0x1b2) < 1)) {
+                  (iVar7 + 0x1000) & 0xfffU)) && (*(int *)((int)&car_handling + param_1 * 0x1b2) < 1)) {
       Car_Rolled_Edge_Onto_Wheels_(param_1);
       return;
     }
     iVar6 = *(int *)(param_1 * 0x1b2 + 0x75a620) >> 0x1f;
     if (((((int)((*(int *)(param_1 * 0x1b2 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0)
                 ) >> 0xc) - (iVar7 + 0x800) & 0xfffU) < 0xc01) ||
-       (*(int *)(&car_handling + param_1 * 0x1b2) < 0)) {
+       (*(int *)((int)&car_handling + param_1 * 0x1b2) < 0)) {
       iVar6 = param_1 * 0x1b2;
       iVar11 = *(int *)(iVar6 + 0x75a620) >> 0x1f;
       *(short *)(&DAT_00752390 + param_1 * 0x27c) =
            (short)((int)((*(int *)(iVar6 + 0x75a620) + iVar11 * -0x1000) - (uint)(iVar11 << 0xb < 0)
                         ) >> 0xc);
-      iVar7 = *(int *)(&car_handling + iVar6) >> 0x1f;
+      iVar7 = *(int *)((int)&car_handling + iVar6) >> 0x1f;
       iVar11 = *(int *)(iVar6 + 0x75a620);
-      iVar7 = *(int *)(&car_handling + iVar6) -
-              ((int)((*(int *)(&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >>
+      iVar7 = *(int *)((int)&car_handling + iVar6) -
+              ((int)((*(int *)((int)&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >>
               6);
-      *(int *)(&car_handling + iVar6) = iVar7;
+      *(int *)((int)&car_handling + iVar6) = iVar7;
       *(int *)(iVar6 + 0x75a620) = iVar11 + iVar7;
       return;
     }
@@ -23557,28 +23557,28 @@ void __cdecl Car_2pt_Motion_3D(int param_1)
     iVar10 = rcos((int)((*(int *)(iVar11 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0))
                   >> 0xc);
     iVar6 = *(int *)(iVar11 + 0x75a620);
-    *(int *)(&car_handling + iVar11) = *(int *)(&car_handling + iVar11) + iVar10 * 4;
+    *(int *)((int)&car_handling + iVar11) = *(int *)((int)&car_handling + iVar11) + iVar10 * 4;
     iVar10 = iVar6 >> 0x1f;
     if ((0xc00 < (((int)((iVar6 + iVar10 * -0x1000) - (uint)(iVar10 << 0xb < 0)) >> 0xc) -
-                  (iVar7 + 0x400) & 0xfffU)) && (-1 < *(int *)(&car_handling + param_1 * 0x1b2))) {
+                  (iVar7 + 0x400) & 0xfffU)) && (-1 < *(int *)((int)&car_handling + param_1 * 0x1b2))) {
       Car_Rolled_Edge_Onto_Wheels_(param_1);
       return;
     }
     iVar6 = *(int *)(param_1 * 0x1b2 + 0x75a620) >> 0x1f;
     if (((((int)((*(int *)(param_1 * 0x1b2 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0)
                 ) >> 0xc) - (iVar7 + 0xc00) & 0xfffU) < 0xc01) ||
-       (0 < *(int *)(&car_handling + param_1 * 0x1b2))) {
+       (0 < *(int *)((int)&car_handling + param_1 * 0x1b2))) {
       iVar6 = param_1 * 0x1b2;
       iVar11 = *(int *)(iVar6 + 0x75a620) >> 0x1f;
       *(short *)(&DAT_00752390 + param_1 * 0x27c) =
            (short)((int)((*(int *)(iVar6 + 0x75a620) + iVar11 * -0x1000) - (uint)(iVar11 << 0xb < 0)
                         ) >> 0xc);
-      iVar7 = *(int *)(&car_handling + iVar6) >> 0x1f;
+      iVar7 = *(int *)((int)&car_handling + iVar6) >> 0x1f;
       iVar11 = *(int *)(iVar6 + 0x75a620);
-      iVar7 = *(int *)(&car_handling + iVar6) -
-              ((int)((*(int *)(&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >>
+      iVar7 = *(int *)((int)&car_handling + iVar6) -
+              ((int)((*(int *)((int)&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >>
               6);
-      *(int *)(&car_handling + iVar6) = iVar7;
+      *(int *)((int)&car_handling + iVar6) = iVar7;
       *(int *)(iVar6 + 0x75a620) = iVar11 + iVar7;
       return;
     }
@@ -23772,10 +23772,10 @@ LAB_0043e952:
     iVar10 = rcos((int)((*(int *)(iVar11 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0))
                   >> 0xc);
     iVar6 = *(int *)(iVar11 + 0x75a620);
-    *(int *)(&car_handling + iVar11) = *(int *)(&car_handling + iVar11) + iVar10 * -4;
+    *(int *)((int)&car_handling + iVar11) = *(int *)((int)&car_handling + iVar11) + iVar10 * -4;
     iVar10 = iVar6 >> 0x1f;
     if ((0xc00 < (((int)((iVar6 + iVar10 * -0x1000) - (uint)(iVar10 << 0xb < 0)) >> 0xc) -
-                  (0x400 - iVar7) & 0xfffU)) && (*(int *)(&car_handling + param_1 * 0x1b2) < 1)) {
+                  (0x400 - iVar7) & 0xfffU)) && (*(int *)((int)&car_handling + param_1 * 0x1b2) < 1)) {
       *(undefined4 *)(iVar11 + 0x75a6ba) = 2;
       if (param_1 != 0) {
         return;
@@ -23786,7 +23786,7 @@ LAB_0043e952:
     iVar6 = *(int *)(param_1 * 0x1b2 + 0x75a620) >> 0x1f;
     if ((0xc00 < (((int)((*(int *)(param_1 * 0x1b2 + 0x75a620) + iVar6 * -0x1000) -
                         (uint)(iVar6 << 0xb < 0)) >> 0xc) - (0xc00 - iVar7) & 0xfffU)) &&
-       (-1 < *(int *)(&car_handling + param_1 * 0x1b2))) {
+       (-1 < *(int *)((int)&car_handling + param_1 * 0x1b2))) {
       if (param_1 == 0) {
         Allocate_Sound_Effect(3,0x9c4,(undefined4 *)&car_fd);
       }
@@ -23841,10 +23841,10 @@ LAB_0043e952:
     iVar10 = rcos((int)((*(int *)(iVar11 + 0x75a620) + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0))
                   >> 0xc);
     iVar6 = *(int *)(iVar11 + 0x75a620);
-    *(int *)(&car_handling + iVar11) = *(int *)(&car_handling + iVar11) + iVar10 * 4;
+    *(int *)((int)&car_handling + iVar11) = *(int *)((int)&car_handling + iVar11) + iVar10 * 4;
     iVar10 = iVar6 >> 0x1f;
     if ((0xc00 < (((int)((iVar6 + iVar10 * -0x1000) - (uint)(iVar10 << 0xb < 0)) >> 0xc) -
-                  (0x1000 - iVar7) & 0xfffU)) && (-1 < *(int *)(&car_handling + param_1 * 0x1b2))) {
+                  (0x1000 - iVar7) & 0xfffU)) && (-1 < *(int *)((int)&car_handling + param_1 * 0x1b2))) {
       *(undefined4 *)(iVar11 + 0x75a6ba) = 3;
       if (param_1 != 0) {
         return;
@@ -23855,7 +23855,7 @@ LAB_0043e952:
     iVar6 = *(int *)(param_1 * 0x1b2 + 0x75a620) >> 0x1f;
     if ((0xc00 < (((int)((*(int *)(param_1 * 0x1b2 + 0x75a620) + iVar6 * -0x1000) -
                         (uint)(iVar6 << 0xb < 0)) >> 0xc) - (0x800 - iVar7) & 0xfffU)) &&
-       (*(int *)(&car_handling + param_1 * 0x1b2) < 1)) {
+       (*(int *)((int)&car_handling + param_1 * 0x1b2) < 1)) {
       if (param_1 == 0) {
         Allocate_Sound_Effect(3,0x9c4,(undefined4 *)&car_fd);
       }
@@ -23890,12 +23890,12 @@ LAB_0043fa94:
     *(short *)(&DAT_00752390 + param_1 * 0x27c) =
          (short)((int)((*(int *)(iVar6 + 0x75a620) + iVar11 * -0x1000) - (uint)(iVar11 << 0xb < 0))
                 >> 0xc);
-    iVar7 = *(int *)(&car_handling + iVar6) >> 0x1f;
+    iVar7 = *(int *)((int)&car_handling + iVar6) >> 0x1f;
     iVar11 = *(int *)(iVar6 + 0x75a620);
-    iVar7 = *(int *)(&car_handling + iVar6) -
-            ((int)((*(int *)(&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6)
+    iVar7 = *(int *)((int)&car_handling + iVar6) -
+            ((int)((*(int *)((int)&car_handling + iVar6) + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6)
     ;
-    *(int *)(&car_handling + iVar6) = iVar7;
+    *(int *)((int)&car_handling + iVar6) = iVar7;
     *(int *)(iVar6 + 0x75a620) = iVar11 + iVar7;
   }
   return;
@@ -23958,7 +23958,7 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
   short sStack_18;
   short sStack_14;
   
-  local_34 = &car_handling + param_1 * 0x1b2;
+  local_34 = (int)&car_handling + param_1 * 0x1b2;
   local_30 = *(int *)(param_1 * 0x1b2 + 0x75a6c2);
   local_28 = (short *)(param_1 * 0x27c + 0x752354);
   local_38 = &corner_fd;
@@ -24159,7 +24159,7 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
       *(int *)(iVar8 + 0x75a620) = local_3c;
       iVar7 = *(int *)(&DAT_00752390 + param_1 * 0x27c);
       *(int *)(iVar8 + 0x75a628) = (*(int *)(&DAT_00752392 + param_1 * 0x27c) >> 0x10) << 0xc;
-      *(int *)(&car_handling + iVar8) = (int)local_50 << 0xc;
+      *(int *)((int)&car_handling + iVar8) = (int)local_50 << 0xc;
       *(int *)(iVar8 + 0x75a604) = (int)sStack_18 << 0xc;
       *(int *)(iVar8 + 0x75a624) = (iVar7 >> 0x10) << 0xc;
       *(int *)(iVar8 + 0x75a608) = (int)local_4c << 0xc;
@@ -24287,7 +24287,7 @@ void __cdecl Car_Drive_Motion_3D_(int param_1)
   case 0xd:
   case 0xe:
   case 0xf:
-    Make_Car_Fly((int)(&car_handling + iVar1),param_1);
+    Make_Car_Fly((int)((int)&car_handling + iVar1),param_1);
   }
   return;
 }
@@ -24576,7 +24576,7 @@ void __cdecl FUN_00440f60(int param_1)
   iVar4 = param_1 * 0xb0;
   iVar11 = param_1 * 0x1b2;
   iVar8 = *(int *)(iVar4 + 0x75c844);
-  iVar5 = (*(int *)(&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c840)) -
+  iVar5 = (*(int *)((int)&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c840)) -
           (*(int *)(iVar4 + 0x75c814) + *(int *)(iVar4 + 0x75c86c));
   iVar1 = *(int *)(iVar4 + 0x75c7ec);
   iVar2 = *(int *)(iVar4 + 0x75c818);
@@ -24591,7 +24591,7 @@ void __cdecl FUN_00440f60(int param_1)
                         ((int)((iVar6 + iVar9 * -0x1000) - (uint)(iVar9 << 0xb < 0)) >> 0xc)),uVar7)
   ;
   *(short *)(&DAT_00752390 + param_1 * 0x27c) = (short)iVar8;
-  iVar5 = (*(int *)(&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c814)) -
+  iVar5 = (*(int *)((int)&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c814)) -
           (*(int *)(iVar4 + 0x75c840) + *(int *)(iVar4 + 0x75c86c));
   iVar8 = *(int *)(iVar4 + 0x75c818);
   iVar1 = *(int *)(iVar4 + 0x75c7ec);
@@ -25022,7 +25022,7 @@ void __cdecl Car_Drive_Motion(int param_1)
       uVar3 = rand();
       local_6c = (uVar3 & 0x7f) - 0x40;
       uVar3 = rand();
-      local_9c = local_6c + (*(int *)(&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c840)) / 2;
+      local_9c = local_6c + (*(int *)((int)&car_wheel_fd + iVar4) + *(int *)(iVar4 + 0x75c840)) / 2;
       local_98 = (*(int *)(iVar4 + 0x75c7ec) + *(int *)(iVar4 + 0x75c844)) / 2;
       local_94 = (*(int *)(iVar4 + 0x75c7f0) + *(int *)(iVar4 + 0x75c848)) / 2 +
                  ((uVar3 & 0x7f) - 0x40);
@@ -25053,7 +25053,7 @@ void __cdecl Car_Drive_Motion(int param_1)
     uVar3 = rand();
     uVar11 = rand();
     iVar7 = param_1 * 0xb0;
-    local_9c = (*(int *)(&car_wheel_fd + iVar7) + *(int *)(iVar7 + 0x75c840)) / 2 +
+    local_9c = (*(int *)((int)&car_wheel_fd + iVar7) + *(int *)(iVar7 + 0x75c840)) / 2 +
                ((uVar3 & 0x7f) - 0x40);
     local_98 = (*(int *)(iVar7 + 0x75c7ec) + *(int *)(iVar7 + 0x75c844)) / 2;
     iVar4 = local_38 * DAT_00462fcc;
@@ -25931,7 +25931,7 @@ LAB_004434bc:
       *(undefined4 *)(uVar9 + 0x75a682) = 0;
       *(undefined4 *)(uVar9 + 0x75a6ba) = 0;
       *(undefined4 *)(uVar9 + 0x75a6be) = 0;
-      *(undefined4 *)(&car_handling + uVar9) = 0;
+      *(undefined4 *)((int)&car_handling + uVar9) = 0;
       *(undefined4 *)(uVar9 + 0x75a604) = 0;
       *(undefined4 *)(uVar9 + 0x75a608) = 0;
       *(undefined4 *)((int)&DAT_0075a614 + uVar9) = 0;
@@ -26519,7 +26519,7 @@ void __cdecl FUN_00444048(int param_1)
     iVar11 = iVar9;
   } while (iVar9 != local_44 + 0xc80);
   iVar11 = *(int *)(iVar12 + 0x75c86c) +
-           *(int *)(&car_wheel_fd + iVar12) + *(int *)(iVar12 + 0x75c814) +
+           *(int *)((int)&car_wheel_fd + iVar12) + *(int *)(iVar12 + 0x75c814) +
            *(int *)(iVar12 + 0x75c840);
   iVar9 = iVar11 >> 0x1f;
   local_90 = (int)((iVar11 + iVar9 * -4) - (uint)(iVar9 << 1 < 0)) >> 2;
@@ -26531,7 +26531,7 @@ void __cdecl FUN_00444048(int param_1)
            *(int *)(iVar12 + 0x75c7f0) + *(int *)(iVar12 + 0x75c81c) + *(int *)(iVar12 + 0x75c848);
   iVar9 = iVar11 >> 0x1f;
   local_88 = (int)((iVar11 + iVar9 * -4) - (uint)(iVar9 << 1 < 0)) >> 2;
-  iVar11 = (*(int *)(&car_wheel_fd + iVar12) - local_90) * 9;
+  iVar11 = (*(int *)((int)&car_wheel_fd + iVar12) - local_90) * 9;
   iVar9 = iVar11 >> 0x1f;
   iVar11 = (iVar11 + iVar9 * -8) - (uint)(iVar9 << 2 < 0);
   local_80 = (short)(iVar11 >> 3);
@@ -26738,7 +26738,7 @@ void __cdecl FUN_004448e0(int param_1)
   
   iVar1 = param_1 * 0x1b2;
   iVar8 = 0;
-  puVar7 = &car_handling + iVar1;
+  puVar7 = (int)&car_handling + iVar1;
   psVar9 = (short *)(param_1 * 0x20 + 0x75d5a8);
   do {
     iVar2 = (int)*psVar9 * *(int *)(iVar1 + 0x75a640) +
@@ -26806,7 +26806,7 @@ void __cdecl FUN_00444a60(int param_1)
   
   iVar1 = param_1 * 0x1b2;
   iVar9 = 0;
-  puVar2 = &car_handling + iVar1;
+  puVar2 = (int)&car_handling + iVar1;
   psVar10 = (short *)(param_1 * 0x20 + 0x75d5a8);
   do {
     iVar3 = *(int *)(iVar1 + 0x75a640) * (int)*psVar10 +
@@ -26926,7 +26926,7 @@ LAB_00444d71:
     FUN_00445030(param_1,iVar11);
     iVar11 = iVar11 + 1;
     if (3 < iVar11) {
-      puVar9 = &car_handling + iVar1;
+      puVar9 = (int)&car_handling + iVar1;
       do {
         puVar10 = puVar9 + 4;
         *(int *)(puVar9 + 0xce) = *(int *)(puVar9 + 0xce) + (0x1f000 - *(int *)(puVar9 + 0xce)) / 4;
@@ -26948,7 +26948,7 @@ void __cdecl Calc_Null_Suspension(int param_1)
   int iVar3;
   int iVar4;
   
-  puVar2 = &car_handling + param_1 * 0x1b2;
+  puVar2 = (int)&car_handling + param_1 * 0x1b2;
   iVar3 = 0;
   do {
     iVar1 = *(int *)(puVar2 + 0xce) >> 0x1f;
@@ -26975,7 +26975,7 @@ void __cdecl FUN_00444e3c(int param_1)
   int iVar4;
   int iVar5;
   
-  puVar3 = &car_handling + param_1 * 0x1b2;
+  puVar3 = (int)&car_handling + param_1 * 0x1b2;
   iVar4 = 0;
   do {
     iVar1 = 0x1f000 - *(int *)(puVar3 + 0xce);
@@ -28397,11 +28397,11 @@ void __cdecl FUN_004471c0(int param_1)
     Get_Direction_Cosines(&local_14,&local_18);
     if ((int)local_14 < 0x801) {
       if ((int)local_14 < 0x401) {
-        Interpolate_Direction_Vectors_Left((int)(&car_handling + param_1 * 0x1b2),local_14,0);
+        Interpolate_Direction_Vectors_Left((int)((int)&car_handling + param_1 * 0x1b2),local_14,0);
       }
     }
     else if (0xbff < (int)local_14) {
-      Interpolate_Direction_Vectors_Right_((int)(&car_handling + param_1 * 0x1b2),local_18,0);
+      Interpolate_Direction_Vectors_Right_((int)((int)&car_handling + param_1 * 0x1b2),local_18,0);
     }
     if (PIT_STOP == 0) {
       if (PIT_DONE != 0) {
