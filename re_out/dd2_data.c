@@ -211,7 +211,7 @@ int _gprim2;
 int _grounded_count;
 int _gtexture;
 int _gtexture_def;
-int _h_norm;
+/* _h_norm wired to image slot 0x71bde8 (overlapping-read dual-symbol fix) */
 /* _highlight_colour wired to image slot 0x4699c8 (dual-symbol: C-global was 0, baked value lives in image) */
 int _hlf_transparency_table;
 int _last_time;

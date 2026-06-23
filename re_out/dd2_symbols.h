@@ -2519,7 +2519,7 @@ extern int _gprim2;
 extern int _grounded_count;
 extern int _gtexture;
 extern int _gtexture_def;
-extern int _h_norm;
+#define _h_norm (*(short*)GIMG(0x71bde8))
 #define _highlight_colour (*(int*)GIMG(0x4699c8))
 extern int _hlf_transparency_table;
 extern int _last_time;
