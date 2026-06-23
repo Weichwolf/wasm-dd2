@@ -6653,6 +6653,7 @@ void __cdecl Pre_Rotate(int param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
+void draw_face_4pt_tilt_sprite(int); void draw_face_tilt_sprite_dpq(int); void draw_face_3pt_tilt_sprite_dpq(int);
 void __cdecl Draw_Subdiv_Object(undefined4 *param_1)
 
 {
@@ -6706,6 +6707,16 @@ void __cdecl Draw_Subdiv_Object(undefined4 *param_1)
       case 0x41dbf4: draw_face_4pt_pict_lit((int)sVar2); break;
       case 0x41df54: draw_face_4pt_pict_dpq((int)sVar2); break;
       case 0x41e184: draw_face_4pt_pict_dpq_lit((int)sVar2); break;
+      case 0x41e4f4: draw_face_sprite((int)sVar2); break;
+      case 0x41e948: draw_face_sprite_dpq((int)sVar2); break;
+      case 0x41edbc: draw_face_4pt_tilt_sprite((int)sVar2); break;
+      case 0x41f220: draw_face_tilt_sprite_dpq((int)sVar2); break;
+      case 0x41f6a0: FUN_0041f6a0((int)sVar2); break;
+      case 0x41f900: draw_face_3pt_tilt_sprite_dpq((int)sVar2); break;
+      case 0x418fe0: draw_face_3pt_text((int)sVar2); break;
+      case 0x4199b0: draw_face_3pt_text_dpq((int)sVar2); break;
+      case 0x41a40c: draw_face_4pt_text((int)sVar2); break;
+      case 0x41b054: draw_face_4pt_text_dpq((int)sVar2); break;
       default: break;
     }
   }
