@@ -24371,8 +24371,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d52;
-  _DAT_00714108 = (int)(((DAT_00466d52)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d4e)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d52 >> 0x10);
+  __vr0 = ((int)DAT_00466d4e >> 0x10);
   GTERT();
   *piVar4 = __vr0;
   *(int *)(iVar3 + 0x75c7ec) = _DAT_00714104;
@@ -24392,8 +24392,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d5a;
-  _DAT_00714108 = (int)(((DAT_00466d5a)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d56)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d5a >> 0x10);
+  __vr0 = ((int)DAT_00466d56 >> 0x10);
   GTERT();
   *(int *)(iVar3 + 0x75c814) = __vr0;
   *(int *)(iVar3 + 0x75c818) = _DAT_00714104;
@@ -24413,8 +24413,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d62;
-  _DAT_00714108 = (int)(((DAT_00466d62)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d5e)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d62 >> 0x10);
+  __vr0 = ((int)DAT_00466d5e >> 0x10);
   GTERT();
   *(int *)(iVar3 + 0x75c840) = __vr0;
   *(int *)(iVar3 + 0x75c844) = _DAT_00714104;
@@ -24434,9 +24434,9 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d6a;
-  _DAT_00714108 = (int)(((DAT_00466d6a)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d6a >> 0x10);
   piVar4 = (int *)(iVar3 + 0x75c86c);
-  __vr0 = (int)(((DAT_00466d66)>>16)&0xffffu);
+  __vr0 = ((int)DAT_00466d66 >> 0x10);
   GTERT();
   *piVar4 = __vr0;
   *(int *)(iVar3 + 0x75c870) = _DAT_00714104;
@@ -24457,8 +24457,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d72;
   iVar5 = param_1 * 0x20;
-  _DAT_00714108 = (int)(((DAT_00466d72)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d6e)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d72 >> 0x10);
+  __vr0 = ((int)DAT_00466d6e >> 0x10);
   FUN_00413b4e();
   *(undefined2 *)(iVar5 + 0x75d5a8) = __vr0;
   *(undefined2 *)(iVar5 + 0x75d5aa) = _DAT_00714104;
@@ -24476,8 +24476,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d7a;
-  _DAT_00714108 = (int)(((DAT_00466d7a)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d76)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d7a >> 0x10);
+  __vr0 = ((int)DAT_00466d76 >> 0x10);
   FUN_00413b4e();
   *(undefined2 *)(iVar5 + 0x75d5b0) = __vr0;
   *(undefined2 *)(iVar5 + 0x75d5b2) = _DAT_00714104;
@@ -24495,8 +24495,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d82;
-  _DAT_00714108 = (int)(((DAT_00466d82)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d7e)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d82 >> 0x10);
+  __vr0 = ((int)DAT_00466d7e >> 0x10);
   FUN_00413b4e();
   *(undefined2 *)(iVar5 + 0x75d5b8) = __vr0;
   *(undefined2 *)(iVar5 + 0x75d5ba) = _DAT_00714104;
@@ -24514,8 +24514,8 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d8a;
-  _DAT_00714108 = (int)(((DAT_00466d8a)>>16)&0xffffu);
-  __vr0 = (int)(((DAT_00466d86)>>16)&0xffffu);
+  _DAT_00714108 = ((int)DAT_00466d8a >> 0x10);
+  __vr0 = ((int)DAT_00466d86 >> 0x10);
   FUN_00413b4e();
   *(undefined2 *)(iVar5 + 0x75d5c0) = __vr0;
   *(undefined2 *)(iVar5 + 0x75d5c2) = _DAT_00714104;
