@@ -1469,7 +1469,7 @@ undefined2 __cdecl Init_Application(HINSTANCE param_1)
     if (DAT_0046047c != (HWND)0x0) {
       ShowWindow(DAT_0046047c,1);
       UpdateWindow(DAT_0046047c);
-      FUN_004159a8(DAT_0046047c);
+      Init_DirectSound(DAT_0046047c);
       FUN_00416044();
       iVar3 = FUN_00413070();
       uVar2 = 0;
@@ -3493,7 +3493,7 @@ int * __cdecl DSLoadSoundBuffer(int *param_1,HGLOBAL param_2)
   uStack_20 = DAT_00415650;
   local_1c = DAT_00415654;
   piVar1 = LockResource(param_2);
-  iVar2 = FUN_00415894(piVar1,&local_1c,(int *)&local_14,&local_24);
+  iVar2 = Parse_RIFF_Wave(piVar1,&local_1c,(int *)&local_14,&local_24);
   if (iVar2 != 0) {
     local_2c = 0x14;
     local_28 = 0xe6;
@@ -3535,7 +3535,7 @@ undefined4 __cdecl FUN_0041574c(int *param_1,HGLOBAL param_2)
   uint local_10;
   
   piVar1 = LockResource(param_2);
-  iVar2 = FUN_00415894(piVar1,(int *)0x0,(int *)&local_14,&local_10);
+  iVar2 = Parse_RIFF_Wave(piVar1,(int *)0x0,(int *)&local_14,&local_10);
   if (((iVar2 != 0) && (iVar2 = (**(code **)(*param_1 + 0x50))(param_1), -1 < iVar2)) &&
      (iVar2 = FUN_004157e8(param_1,local_14,local_10), iVar2 != 0)) {
     return 1;
@@ -3553,7 +3553,7 @@ bool __cdecl DSGetWaveResource(HGLOBAL param_1,int *param_2,int *param_3,uint *p
   int iVar2;
   
   piVar1 = LockResource(param_1);
-  iVar2 = FUN_00415894(piVar1,param_2,param_3,param_4);
+  iVar2 = Parse_RIFF_Wave(piVar1,param_2,param_3,param_4);
   return iVar2 != 0;
 }
 
@@ -3612,9 +3612,10 @@ undefined4 __cdecl FUN_004157e8(int *param_1,undefined4 *param_2,int param_3)
 }
 
 
-/* ===== FUN_00415894 @ 00415894 ===== */
+/* ===== Parse_RIFF_Wave @ 00415894 ===== */
 
-undefined4 __cdecl FUN_00415894(int *param_1,int *param_2,int *param_3,uint *param_4)
+/* originally FUN_00415894 */
+undefined4 __cdecl Parse_RIFF_Wave(int *param_1,int *param_2,int *param_3,uint *param_4)
 
 {
   uint uVar1;
@@ -3671,11 +3672,12 @@ undefined4 __cdecl FUN_00415894(int *param_1,int *param_2,int *param_3,uint *par
 }
 
 
-/* ===== FUN_004159a8 @ 004159a8 ===== */
+/* ===== Init_DirectSound @ 004159a8 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __cdecl FUN_004159a8(undefined4 param_1)
+/* originally FUN_004159a8 */
+void __cdecl Init_DirectSound(undefined4 param_1)
 
 {
   int iVar1;
@@ -3907,7 +3909,7 @@ Play_Sound(int param_1,int param_2,int param_3,uint param_4,undefined4 param_5,i
       piVar1 = (int *)FUN_004164d4(*(int *)(iVar4 + 4),param_1);
       iVar4 = *(int *)(iVar4 + 8);
       iVar5 = param_2 + param_3 * 0x1c;
-      iVar2 = FUN_004165a4(param_4);
+      iVar2 = Sound_Volume_To_dB(param_4);
       uVar7 = 0;
       piVar6 = piVar1;
       (**(code **)(*piVar1 + 0x34))(piVar1,0);
@@ -3958,7 +3960,7 @@ void __cdecl Modify_Sound(int param_1,uint param_2,undefined4 param_3,int param_
   if (DAT_00462d68 != 0) {
     piVar1 = *(int **)((int)&DAT_00716d20 + param_1 * 0x14);
     if (piVar1 != (int *)0x0) {
-      iVar2 = FUN_004165a4(param_2);
+      iVar2 = Sound_Volume_To_dB(param_2);
       piVar3 = piVar1;
       (**(code **)(*piVar1 + 0x40))(piVar1,param_4 * 2);
       (**(code **)(*piVar1 + 0x3c))(piVar1,iVar2);
@@ -4209,11 +4211,12 @@ void Sound_Timer_(void)
 }
 
 
-/* ===== FUN_004163b4 @ 004163b4 ===== */
+/* ===== Parse_Sound_Bank @ 004163b4 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int __cdecl FUN_004163b4(int param_1)
+/* originally FUN_004163b4 */
+int __cdecl Parse_Sound_Bank(int param_1)
 
 {
   int iVar1;
@@ -4320,11 +4323,12 @@ undefined4 __cdecl FUN_004164d4(int param_1,int param_2)
 }
 
 
-/* ===== FUN_004165a4 @ 004165a4 ===== */
+/* ===== Sound_Volume_To_dB @ 004165a4 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int __cdecl FUN_004165a4(uint param_1)
+/* originally FUN_004165a4 */
+int __cdecl Sound_Volume_To_dB(uint param_1)
 
 {
   float10 fVar1;
@@ -6745,11 +6749,12 @@ extern void draw_face_4pt_pict_lit(int param_1);
 extern void __cdecl draw_face_4pt_pict_dpq(int param_1);
 extern void __cdecl draw_face_4pt_pict_dpq_lit(int param_1);
 
-/* ===== FUN_0041fe68 @ 0041fe68 ===== */
+/* ===== Draw_Object_Polys @ 0041fe68 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __cdecl FUN_0041fe68(undefined4 *param_1,int param_2)
+/* originally FUN_0041fe68 */
+void __cdecl Draw_Object_Polys(undefined4 *param_1,int param_2)
 
 {
   byte *pbVar1;
@@ -6819,7 +6824,7 @@ void __cdecl Update_Object(undefined4 *param_1)
   if ((*(byte *)(param_1[1] + 4) & 1) != 0) {
     __lmptr = _light_matrix;
   }
-  FUN_0041fe68(param_1,(uint)*(byte *)((int)param_1 + 0x1a));
+  Draw_Object_Polys(param_1,(uint)*(byte *)((int)param_1 + 0x1a));
   return;
 }
 
@@ -9544,7 +9549,7 @@ undefined4 Play_Game(void)
         Get_Race_Positions();
         FUN_00440980();
         CheckPointScoring();
-        FUN_00448228();
+        Update_Commentary();
         Update_Scene_Objects();
         if (0 < num_cars) {
           iVar3 = 0;
@@ -9559,9 +9564,9 @@ undefined4 Play_Game(void)
         if (0 < _race_finished) {
           UpdateFlag();
         }
-        FUN_00436cfc();
+        Update_Particles();
         Update_Other_Objects();
-        FUN_00447a9c();
+        Update_Engine_Sound();
         iVar3 = 0;
         if (0 < num_cars) {
           do {
@@ -9618,7 +9623,7 @@ undefined4 Play_Game(void)
         iVar4 = iVar4 + 1;
       } while (iVar4 < num_cars);
     }
-    FUN_00430698();
+    Draw_Scene_Object_Blocks();
     Update_Flying_Objects();
     Update_Debris();
     if (demo_mode == 0) {
@@ -11224,11 +11229,12 @@ Mask_Point_In_Quad(int *param_1,int *param_2,int *param_3,int *param_4,int *para
 }
 
 
-/* ===== FUN_00426ab4 @ 00426ab4 ===== */
+/* ===== Compute_Bowl_Cell_Normals @ 00426ab4 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00426ab4(void)
+/* originally FUN_00426ab4 */
+void Compute_Bowl_Cell_Normals(void)
 
 {
   char *pcVar1;
@@ -12132,11 +12138,12 @@ void __cdecl FUN_004288d0(int param_1)
 }
 
 
-/* ===== FUN_0042895c @ 0042895c ===== */
+/* ===== Play_Race_Start_Sounds @ 0042895c ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void __cdecl FUN_0042895c(int param_1)
+/* originally FUN_0042895c */
+void __cdecl Play_Race_Start_Sounds(int param_1)
 
 {
   uint uVar1;
@@ -12542,7 +12549,7 @@ void __cdecl Car_Camera(int param_1)
   
   if (DAT_00467074 == 0) {
     if (_DAT_00463ef4 != 0) {
-      FUN_0042895c(param_1);
+      Play_Race_Start_Sounds(param_1);
       return;
     }
     if ((_current_level == 0xb) && (iVar1 = param_1 * 0x27c, *(int *)((int)&DAT_00752348 + iVar1) < -100)
@@ -12565,7 +12572,7 @@ void __cdecl Car_Camera(int param_1)
     case 5:
     case 6:
     case 7:
-      FUN_0042895c(0);
+      Play_Race_Start_Sounds(0);
       break;
     default:
       Do_The_Floaty_Camera_Thing((int *)0x0,0);
@@ -12972,7 +12979,7 @@ int __cdecl Do_The_Floaty_Camera_Thing(int *param_1,int param_2)
     DAT_00463f04 = DAT_00463f04 + (&DAT_00463f1c)[DAT_00464aa4 * 7];
     DAT_00463f00 = (&DAT_00463f24)[DAT_00464aa4 * 7];
     DAT_00463efc = (&DAT_00463f20)[DAT_00464aa4 * 7];
-    FUN_0042895c(DAT_00464aa8);
+    Play_Race_Start_Sounds(DAT_00464aa8);
   }
   else if (uVar3 == 2) {
     iVar5 = 0;
@@ -15849,7 +15856,7 @@ undefined4 __cdecl VVDraw_Object(undefined4 *param_1)
       if ((_DAT_0071be52 * _DAT_0071bdf2 + _DAT_0071bdf4 * _DAT_0071be56 >> 0xc < (int)uVar1) &&
          (_DAT_0071bdf4 * _DAT_0071be56 + (int)_DAT_0071bdf2 * -_DAT_0071be52 >> 0xc < (int)uVar1))
       {
-        FUN_0041fe68(param_1,1);
+        Draw_Object_Polys(param_1,1);
         return 1;
       }
     }
@@ -15940,7 +15947,7 @@ joined_r0x004305f9:
 LAB_00430645:
           iVar6 = 2;
         }
-        FUN_0041fe68(param_1,iVar6);
+        Draw_Object_Polys(param_1,iVar6);
         goto LAB_00430650;
       }
     }
@@ -15965,11 +15972,12 @@ LAB_00430650:
 }
 
 
-/* ===== FUN_00430698 @ 00430698 ===== */
+/* ===== Draw_Scene_Object_Blocks @ 00430698 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00430698(void)
+/* originally FUN_00430698 */
+void Draw_Scene_Object_Blocks(void)
 
 {
   int *piVar1;
@@ -19605,9 +19613,10 @@ void DrawParticles(void)
 }
 
 
-/* ===== FUN_00436cfc @ 00436cfc ===== */
+/* ===== Update_Particles @ 00436cfc ===== */
 
-void FUN_00436cfc(void)
+/* originally FUN_00436cfc */
+void Update_Particles(void)
 
 {
   short sVar1;
@@ -25720,9 +25729,10 @@ void __cdecl FUN_0044282c(int param_1)
 }
 
 
-/* ===== FUN_00442b08 @ 00442b08 ===== */
+/* ===== Compute_Car_Screen_Pos @ 00442b08 ===== */
 
-void __cdecl FUN_00442b08(int param_1)
+/* originally FUN_00442b08 */
+void __cdecl Compute_Car_Screen_Pos(int param_1)
 
 {
   int iVar1;
@@ -25800,7 +25810,7 @@ void __cdecl Car_Movement(int param_1)
     if ((_DAT_0074be98 < 1) && ((DAT_0073c2c0 & 1) != 0)) {
       Car_Drive_Motion(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     Car_Drive_Motion_3D_(param_1);
     iVar1 = Barrier_Collision(0,param_1);
     iVar2 = Barrier_Collision(1,param_1);
@@ -25813,14 +25823,14 @@ void __cdecl Car_Movement(int param_1)
     if ((DAT_0073c2c0 & 1) != 0) {
       Car_Drive_2pt_Motion(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     FUN_0043dd00(param_1);
     goto LAB_00442f59;
   case 2:
     if ((DAT_0073c2c0 & 1) != 0) {
       FUN_0044282c(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     Car_2pt_Motion_3D(param_1);
     *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     break;
@@ -25828,7 +25838,7 @@ void __cdecl Car_Movement(int param_1)
     if ((DAT_0073c2c0 & 1) != 0) {
       FUN_0044282c(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     Car_1pt_Motion_3D(param_1);
 LAB_00442f59:
     *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
@@ -25847,7 +25857,7 @@ LAB_00442f59:
                  (uint)(iVar3 << 0xb < 0)) >> 0xc);
       FUN_00444e3c(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     Car_Fly_Motion_3D(param_1);
     *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     break;
@@ -25855,7 +25865,7 @@ LAB_00442f59:
     if ((DAT_0073c2c0 & 1) != 0) {
       FUN_0044282c(param_1);
     }
-    FUN_00442b08(param_1);
+    Compute_Car_Screen_Pos(param_1);
     Car_Grounded_Motion_3D(param_1);
     *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     Barrier_Corner_Collision(0,param_1);
@@ -27820,7 +27830,7 @@ void Init_Game(void)
   FUN_00445b78();
   Init_Graphics();
   Init_Overlays();
-  FUN_00426ab4();
+  Compute_Bowl_Cell_Normals();
   Init_Track_Strip_Numbers();
   Init_Sky();
   InitialiseParticleSystem();
@@ -27851,7 +27861,7 @@ void Play_Intro(void)
   Set_Draw_Mode(1);
   Play_Movie(s_INTRO_AVI_0046cfd4);
   Set_Draw_Mode(0);
-  FUN_004159a8(DAT_0046047c);
+  Init_DirectSound(DAT_0046047c);
   Init_Main();
   return;
 }
@@ -28076,7 +28086,7 @@ LAB_00446b91:
           FUN_00415b50(_sound_volume);
           if (_yes_quit != 1) {
             CD_Restart();
-            FUN_00447a9c();
+            Update_Engine_Sound();
           }
           _DAT_0071c048 = local_28;
           _DAT_0071c04c = uVar1;
@@ -29007,11 +29017,12 @@ void FUN_00447960(void)
 }
 
 
-/* ===== FUN_00447a9c @ 00447a9c ===== */
+/* ===== Update_Engine_Sound @ 00447a9c ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00447a9c(void)
+/* originally FUN_00447a9c */
+void Update_Engine_Sound(void)
 
 {
   undefined4 *puVar1;
@@ -29340,7 +29351,7 @@ void Load_Game_Vags(void)
   undefined4 *puVar3;
   
   File_Load(s_VAGS_BANK1_SBK_0046d070,&level_data_buffer);
-  FUN_004163b4(0x75ebf0);
+  Parse_Sound_Bank(0x75ebf0);
   puVar2 = (undefined4 *)&DAT_0075ec00;
   puVar3 = (undefined4 *)&DAT_00901010;
   for (iVar1 = 0x1c0; iVar1 != 0; iVar1 = iVar1 + -1) {
@@ -29357,11 +29368,12 @@ void Load_Game_Vags(void)
 }
 
 
-/* ===== FUN_00448228 @ 00448228 ===== */
+/* ===== Update_Commentary @ 00448228 ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00448228(void)
+/* originally FUN_00448228 */
+void Update_Commentary(void)
 
 {
   byte bVar1;

@@ -138,8 +138,8 @@ extern int FUN_00415448();
 extern int FUN_004154b8();
 extern int FUN_0041574c();
 extern int FUN_004157e8();
-extern int FUN_00415894();
-extern int FUN_004159a8();
+extern int Parse_RIFF_Wave();
+extern int Init_DirectSound();
 extern int FUN_00415a94();
 extern int FUN_00415b50();
 extern int FUN_00415f64();
@@ -147,18 +147,18 @@ extern int FUN_00416044();
 extern int FUN_0041611c();
 extern int FUN_0041612c();
 extern int FUN_00416264();
-extern int FUN_004163b4();
+extern int Parse_Sound_Bank();
 extern int FUN_0041643c();
 extern int FUN_00416494();
 extern int FUN_004164d4();
-extern int FUN_004165a4();
+extern int Sound_Volume_To_dB();
 extern int FUN_004166c4();
 extern int FUN_00416714();
 extern int FUN_00416a10();
 extern int FUN_0041a2f4();
 extern int FUN_0041f6a0();
 extern int FUN_0041fb7c();
-extern int FUN_0041fe68();
+extern int Draw_Object_Polys();
 extern int FUN_0041ff50();
 extern int FUN_0042003c();
 extern int FUN_00420060();
@@ -187,11 +187,11 @@ extern int FUN_00425314();
 extern int FUN_00425a98();
 extern int FUN_00425b88();
 extern int FUN_00425e74();
-extern int FUN_00426ab4();
+extern int Compute_Bowl_Cell_Normals();
 extern int FUN_00428548();
 extern int FUN_004287c0();
 extern int FUN_004288d0();
-extern int FUN_0042895c();
+extern int Play_Race_Start_Sounds();
 extern int FUN_004295e4();
 extern int FUN_00429994();
 extern int FUN_0042a4d8();
@@ -199,7 +199,7 @@ extern int FUN_0042b5f0();
 extern int FUN_0042c1a4();
 extern int FUN_0042fa4c();
 extern int FUN_0042fd58();
-extern int FUN_00430698();
+extern int Draw_Scene_Object_Blocks();
 extern int FUN_004308b8();
 extern int FUN_00430a30();
 extern int FUN_00430bde();
@@ -209,7 +209,7 @@ extern int FUN_00433a70();
 extern int FUN_004351d0();
 extern int FUN_00435254();
 extern int FUN_00436c04();
-extern int FUN_00436cfc();
+extern int Update_Particles();
 extern int FUN_00436dd0();
 extern int FUN_0043709c();
 extern int FUN_004371fc();
@@ -226,7 +226,7 @@ extern int FUN_00440ac4();
 extern int FUN_00440f60();
 extern int FUN_00441394();
 extern int FUN_0044282c();
-extern int FUN_00442b08();
+extern int Compute_Car_Screen_Pos();
 extern int FUN_004430b8();
 extern int FUN_00443b10();
 extern int FUN_00443f90();
@@ -243,9 +243,9 @@ extern int FUN_00446c10();
 extern int FUN_004471c0();
 extern int FUN_004477a0();
 extern int FUN_00447960();
-extern int FUN_00447a9c();
+extern int Update_Engine_Sound();
 extern int FUN_004480bc();
-extern int FUN_00448228();
+extern int Update_Commentary();
 extern int FUN_004496d8();
 extern int FUN_00449728();
 extern int FUN_00449928();
@@ -919,8 +919,8 @@ dd2_fnent dd2_fnmap[]={
 {0x4154b8,(void*)&FUN_004154b8},
 {0x41574c,(void*)&FUN_0041574c},
 {0x4157e8,(void*)&FUN_004157e8},
-{0x415894,(void*)&FUN_00415894},
-{0x4159a8,(void*)&FUN_004159a8},
+{0x415894,(void*)&Parse_RIFF_Wave},
+{0x4159a8,(void*)&Init_DirectSound},
 {0x415a94,(void*)&FUN_00415a94},
 {0x415b50,(void*)&FUN_00415b50},
 {0x415f64,(void*)&FUN_00415f64},
@@ -928,18 +928,18 @@ dd2_fnent dd2_fnmap[]={
 {0x41611c,(void*)&FUN_0041611c},
 {0x41612c,(void*)&FUN_0041612c},
 {0x416264,(void*)&FUN_00416264},
-{0x4163b4,(void*)&FUN_004163b4},
+{0x4163b4,(void*)&Parse_Sound_Bank},
 {0x41643c,(void*)&FUN_0041643c},
 {0x416494,(void*)&FUN_00416494},
 {0x4164d4,(void*)&FUN_004164d4},
-{0x4165a4,(void*)&FUN_004165a4},
+{0x4165a4,(void*)&Sound_Volume_To_dB},
 {0x4166c4,(void*)&FUN_004166c4},
 {0x416714,(void*)&FUN_00416714},
 {0x416a10,(void*)&FUN_00416a10},
 {0x41a2f4,(void*)&FUN_0041a2f4},
 {0x41f6a0,(void*)&FUN_0041f6a0},
 {0x41fb7c,(void*)&FUN_0041fb7c},
-{0x41fe68,(void*)&FUN_0041fe68},
+{0x41fe68,(void*)&Draw_Object_Polys},
 {0x41ff50,(void*)&FUN_0041ff50},
 {0x42003c,(void*)&FUN_0042003c},
 {0x420060,(void*)&FUN_00420060},
@@ -968,11 +968,11 @@ dd2_fnent dd2_fnmap[]={
 {0x425a98,(void*)&FUN_00425a98},
 {0x425b88,(void*)&FUN_00425b88},
 {0x425e74,(void*)&FUN_00425e74},
-{0x426ab4,(void*)&FUN_00426ab4},
+{0x426ab4,(void*)&Compute_Bowl_Cell_Normals},
 {0x428548,(void*)&FUN_00428548},
 {0x4287c0,(void*)&FUN_004287c0},
 {0x4288d0,(void*)&FUN_004288d0},
-{0x42895c,(void*)&FUN_0042895c},
+{0x42895c,(void*)&Play_Race_Start_Sounds},
 {0x4295e4,(void*)&FUN_004295e4},
 {0x429994,(void*)&FUN_00429994},
 {0x42a4d8,(void*)&FUN_0042a4d8},
@@ -980,7 +980,7 @@ dd2_fnent dd2_fnmap[]={
 {0x42c1a4,(void*)&FUN_0042c1a4},
 {0x42fa4c,(void*)&FUN_0042fa4c},
 {0x42fd58,(void*)&FUN_0042fd58},
-{0x430698,(void*)&FUN_00430698},
+{0x430698,(void*)&Draw_Scene_Object_Blocks},
 {0x4308b8,(void*)&FUN_004308b8},
 {0x430a30,(void*)&FUN_00430a30},
 {0x430bde,(void*)&FUN_00430bde},
@@ -990,7 +990,7 @@ dd2_fnent dd2_fnmap[]={
 {0x4351d0,(void*)&FUN_004351d0},
 {0x435254,(void*)&FUN_00435254},
 {0x436c04,(void*)&FUN_00436c04},
-{0x436cfc,(void*)&FUN_00436cfc},
+{0x436cfc,(void*)&Update_Particles},
 {0x436dd0,(void*)&FUN_00436dd0},
 {0x43709c,(void*)&FUN_0043709c},
 {0x4371fc,(void*)&FUN_004371fc},
@@ -1007,7 +1007,7 @@ dd2_fnent dd2_fnmap[]={
 {0x440f60,(void*)&FUN_00440f60},
 {0x441394,(void*)&FUN_00441394},
 {0x44282c,(void*)&FUN_0044282c},
-{0x442b08,(void*)&FUN_00442b08},
+{0x442b08,(void*)&Compute_Car_Screen_Pos},
 {0x4430b8,(void*)&FUN_004430b8},
 {0x443b10,(void*)&FUN_00443b10},
 {0x443f90,(void*)&FUN_00443f90},
@@ -1024,9 +1024,9 @@ dd2_fnent dd2_fnmap[]={
 {0x4471c0,(void*)&FUN_004471c0},
 {0x4477a0,(void*)&FUN_004477a0},
 {0x447960,(void*)&FUN_00447960},
-{0x447a9c,(void*)&FUN_00447a9c},
+{0x447a9c,(void*)&Update_Engine_Sound},
 {0x4480bc,(void*)&FUN_004480bc},
-{0x448228,(void*)&FUN_00448228},
+{0x448228,(void*)&Update_Commentary},
 {0x4496d8,(void*)&FUN_004496d8},
 {0x449728,(void*)&FUN_00449728},
 {0x449928,(void*)&FUN_00449928},
