@@ -1,5 +1,6 @@
 #include "ghidra_compat.h"
 #include "dd2_symbols.h"
+#include <stdio.h>
 int _g_esi=0x714100,_g_edi=0x4604b6,_g_ebx=0x714100,_g_ebp=0x714140; /* GTE fragment register file (recovered from x86 GTERPT/GTERPS/GTERPT4_ caller reg-sets) */
 
 /* ALL face-draw handler forward decls (hoisted) */
@@ -14250,7 +14251,6 @@ int Update_Other_Objects(void)
 void Draw_Other_Objects(void)
 
 {
-  return; /* TEMP STUB: scene decorations (wild_bill/cigar models) have garbage geometry - core track+car render runs 600+ frames crash-free without them; reconstruct scene-object model load next */
   uint uVar1;
   int iVar2;
   int iVar3;

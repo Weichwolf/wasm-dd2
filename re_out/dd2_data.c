@@ -106,7 +106,7 @@ int _Replay_Level;
 int _Replay_Script;
 int* _Replay_Script_Ptr;
 int _Timing_Delay;
-int _Z_DISTANCE;
+/* _Z_DISTANCE wired to image slot 0x4604c2 (was uninit C global=0; real far-clip=26000) */
 int __AccessFHeap;
 int __AccessFList;
 int __AccessFileH;

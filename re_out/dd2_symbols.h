@@ -2410,7 +2410,7 @@ extern int _Replay_Level;
 extern int _Replay_Script;
 extern int* _Replay_Script_Ptr;
 extern int _Timing_Delay;
-extern int _Z_DISTANCE;
+#define _Z_DISTANCE (*(int*)GIMG(0x4604c2))
 extern int __AccessFHeap;
 extern int __AccessFList;
 extern int __AccessFileH;
