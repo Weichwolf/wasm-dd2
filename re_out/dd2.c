@@ -2164,7 +2164,7 @@ void __cdecl gte_MulMatrix0(undefined4 *param_1,short *param_2,short *param_3)
 void __cdecl MulMatrix2(undefined4 *param_1,short *param_2)
 
 {
-  undefined4 *extraout_ECX;
+  undefined4 *extraout_ECX = (undefined4 *)param_2; /* recovered: x86 ecx=[ebp+0xc]=param_2 (output dest), preserved across FUN_00413dc8 */
   
   FUN_00413dc8(param_2,(short *)param_1,(short *)0x4604a0);
   *extraout_ECX = DAT_004604a0;
