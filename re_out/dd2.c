@@ -7944,6 +7944,7 @@ void __cdecl Init_Primitive_Buffer(uint param_1)
                     /* START-> C:\PcMpe\graphics\misc.C: ? */
   _prim_buf = MPE_malloc(param_1);
   _DAT_0071bf94 = MPE_malloc(param_1);
+  prim_buf = (int)_prim_buf;  /* FIX: image prim_buf[0]@0x71bf90 is the render's buffer_num==0 base; decompile split _prim_buf into a standalone C-global, leaving 0x71bf90=0 -> OOB prim write. Connect them. */
   if ((_prim_buf == (undefined4 *)0x0) || (_DAT_0071bf94 == (undefined4 *)0x0)) {
     System_Error(s_Init_Primitive_Buffer_0046c880,s_Out_of_heap_space_0046c86c);
   }
