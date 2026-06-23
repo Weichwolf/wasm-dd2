@@ -15794,7 +15794,7 @@ void Init_Scene(void)
     *(undefined4 **)((int)&active_object_blocks + iVar2) = puVar1;
     iVar2 = iVar3;
   } while (iVar3 != 0x38);
-  FUN_00456b67(0xe,0xffffffff);
+  { int _i; for(_i=0;_i<0xe;_i++) *(int*)((int)&active_block_numbers + _i*4) = -1; }  /* FUN_00456b67(active_block_numbers,0xe,-1) recovered eax */
   switch(_current_level) {
   case 1:
     Init_Wild_Bill();
@@ -16339,7 +16339,7 @@ void Init_Scene_Objects(void)
   { int _i; for(_i=0;_i<14;_i++){ local_4c[_i] = -1; *(int*)((int)&active_block_numbers + _i*4) = -1; } }  /* WASM: FUN_00456b67 register-ABI int-memset(local_4c/active_block_numbers,-1,0xe) - Ghidra lost eax dest */
   
   if (7 < _current_level) {
-    FUN_00456b67(0xe,0xffffffff);
+    /* removed wild FUN_00456b67 re-clear; active_block_numbers already -1 from fn-entry inline */
     iVar2 = 0;
     iVar3 = 0;
     do {
@@ -16353,8 +16353,7 @@ void Init_Scene_Objects(void)
     return;
   }
   iVar3 = *(int *)(_camera_fd_pt + 0x14);
-  FUN_00456b67(0xe,0xffffffff);
-  FUN_00456b67(0xe,0xffffffff);
+  /* removed 2 wild FUN_00456b67 re-clears; active_block_numbers + local_4c already -1 from fn-entry inline */
   iVar2 = 0;
   do {
     iVar6 = _strip_data;
@@ -28829,7 +28828,7 @@ void FUN_004477a0(void)
 
 {
   if (DAT_00467074 == 0) {
-    FUN_00456b30(0x1c00,0);
+    { int _i; for(_i=0;_i<0x1c00;_i++) *((char*)&Replay_Script + _i) = 0; }  /* FUN_00456b30(Replay_Script,0x1c00,0) recovered eax */
   }
   _Replay_Script_Ptr = &Replay_Script;
   if (DAT_00467074 != 0) {
@@ -29841,7 +29840,7 @@ undefined4 __cdecl LoadSave(uint param_1,undefined4 *param_2)
     Debug_Stub();
     FUN_00420b1c();
     FUN_00422c74();
-    FUN_00456b67(2,0);
+    { int _i; for(_i=0;_i<2;_i++) *(int*)((int)&_DAT_00901780 + _i*4) = 0; }  /* FUN_00456b67(_DAT_00901780,2,0) recovered eax */
     if ((_DAT_0071c04a & 0x80) == 0) {
       if ((_DAT_0071c04a & 0x20) != 0) {
         Play_Click_FX();
