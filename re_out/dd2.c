@@ -1335,6 +1335,34 @@ void __cdecl ClearOTagR(undefined4 *param_1,int param_2)
 }
 
 
+/* OT-primitive handler fwd-decls + dispatch helper */
+extern void FUN_00410d50(void);
+extern void FUN_00410d58(int param_1);
+extern void FUN_00410e44(int param_1);
+extern void FUN_004114c0(int param_1);
+extern void FUN_00411654(int param_1);
+extern void FUN_004117e8(int param_1);
+extern void FUN_004118d4(int param_1);
+static void _ot_dispatch(int *piVar1,int *piVar2,int *param_1){
+  switch((&_primfuncs)[*(byte *)((int)piVar1 + 7)]) {
+    case 0x410d50: FUN_00410d50(); break;
+    case 0x410d58: FUN_00410d58(piVar1); break;
+    case 0x410e44: FUN_00410e44(piVar1); break;
+    case 0x410f74: FUN_00410f74(piVar1); break;
+    case 0x4110a4: FUN_004110a4(piVar1); break;
+    case 0x4111e8: FUN_004111e8(piVar1); break;
+    case 0x41132c: FUN_0041132c(piVar1); break;
+    case 0x4114c0: FUN_004114c0(piVar1); break;
+    case 0x411654: FUN_00411654(piVar1); break;
+    case 0x4117e8: FUN_004117e8(piVar1); break;
+    case 0x4118d4: FUN_004118d4(piVar1); break;
+    case 0x411a04: FUN_00411a04(piVar1); break;
+    case 0x411b34: FUN_00411b34(piVar1); break;
+    case 0x411c78: FUN_00411c78(piVar1); break;
+    default: break;
+  }
+}
+
 /* ===== DrawOTag @ 00412843 ===== */
 
 void __cdecl DrawOTag(int *param_1)
@@ -1346,7 +1374,7 @@ void __cdecl DrawOTag(int *param_1)
   piVar2 = param_1;
   while (piVar1 = (int *)*param_1, piVar1 != (int *)0xffffffff) {
     if ((piVar1 == (int *)0x0) ||
-       ((*(code *)(&_primfuncs)[*(byte *)((int)piVar1 + 7)])(piVar1,piVar2,param_1),
+       (_ot_dispatch(piVar1,piVar2,param_1),
        param_1 = piVar1, param_1 == (int *)0x0)) {
       param_1 = piVar2 + -1;
       piVar2 = param_1;
@@ -47779,6 +47807,346 @@ void draw_face_4pt_text_dpq_squash(int param_1)
   }
   _gpoly = iStack_20;
   _gprim1 = puVar6;
+  return;
+}
+
+
+
+/* ===== re-exported OT primitive handlers (7) ===== */
+/* ===== FUN_00410d50 ===== */
+
+void FUN_00410d50(void)
+
+{
+                    /* START-> C:\PCMPE\libs\gfx.c: ? */
+  return;
+}
+
+
+/* ===== FUN_00410d58 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_00410d58(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0xc) < 0;
+  if (poly_clipx < *(int *)(param_1 + 10) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar3 = 2;
+  }
+  if ((bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar3 != 0 || (bVar1 != 0 || bVar2 != 0));
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 10) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0xc) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x10) >> 0x10;
+    _dth_shade = (uint)*(byte *)(param_1 + 4);
+    FUN_0041243c(&iStack_40,draw_half);
+  }
+  return;
+}
+
+
+/* ===== FUN_00410e44 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_00410e44(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  byte bVar4;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0xc) < 0;
+  if (poly_clipx < *(int *)(param_1 + 10) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar3 = 2;
+  }
+  bVar4 = *(short *)(param_1 + 0x14) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x12) >> 0x10) {
+    bVar4 = 2;
+  }
+  if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar4 != 0 || ((bVar1 != 0 || bVar2 != 0) || bVar3 != 0));
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 10) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0xc) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x10) >> 0x10;
+    _dth_shade = (uint)*(byte *)(param_1 + 4);
+    FUN_0041243c(&iStack_40,draw_half);
+    iStack_40 = *(int *)(param_1 + 0x12) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 0x14) >> 0x10;
+    FUN_0041243c(&iStack_40,draw_half);
+  }
+  return;
+}
+
+
+/* ===== FUN_004114c0 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_004114c0(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  byte bVar4;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  uint uStack_28;
+  uint uStack_24;
+  uint uStack_20;
+  uint uStack_1c;
+  uint uStack_18;
+  uint uStack_14;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x18) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x16) >> 0x10) {
+    bVar3 = 2;
+  }
+  bVar4 = *(short *)(param_1 + 0x20) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x1e) >> 0x10) {
+    bVar4 = 2;
+  }
+  if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar4 != 0 || (bVar3 != 0 || (bVar1 != 0 || bVar2 != 0)));
+    dth_clut = (uint)*(ushort *)(param_1 + 0xe);
+    dth_tpage = (uint)*(ushort *)(param_1 + 0x16);
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+    uStack_28 = (uint)*(byte *)(param_1 + 0xc);
+    uStack_20 = (uint)*(byte *)(param_1 + 0x14);
+    uStack_18 = (uint)*(byte *)(param_1 + 0x1c);
+    uStack_24 = (uint)*(byte *)(param_1 + 0xd);
+    uStack_1c = (uint)*(byte *)(param_1 + 0x15);
+    uStack_14 = (uint)*(byte *)(param_1 + 0x1d);
+    _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;
+    FUN_00411ebc(&iStack_40,draw_text_half_trans);
+    iStack_40 = *(int *)(param_1 + 0x1e) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+    uStack_28 = (uint)*(byte *)(param_1 + 0x24);
+    uStack_24 = (uint)*(byte *)(param_1 + 0x25);
+    FUN_00411ebc(&iStack_40,draw_text_half_trans);
+  }
+  return;
+}
+
+
+/* ===== FUN_00411654 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_00411654(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  byte bVar4;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  uint uStack_28;
+  uint uStack_24;
+  uint uStack_20;
+  uint uStack_1c;
+  uint uStack_18;
+  uint uStack_14;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x18) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x16) >> 0x10) {
+    bVar3 = 2;
+  }
+  bVar4 = *(short *)(param_1 + 0x20) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x1e) >> 0x10) {
+    bVar4 = 2;
+  }
+  if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar4 != 0 || (bVar3 != 0 || (bVar1 != 0 || bVar2 != 0)));
+    dth_clut = (uint)*(ushort *)(param_1 + 0xe);
+    dth_tpage = (uint)*(ushort *)(param_1 + 0x16);
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+    uStack_28 = (uint)*(byte *)(param_1 + 0xc);
+    uStack_20 = (uint)*(byte *)(param_1 + 0x14);
+    uStack_18 = (uint)*(byte *)(param_1 + 0x1c);
+    uStack_24 = (uint)*(byte *)(param_1 + 0xd);
+    uStack_1c = (uint)*(byte *)(param_1 + 0x15);
+    uStack_14 = (uint)*(byte *)(param_1 + 0x1d);
+    _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;
+    FUN_00411ebc(&iStack_40,FUN_0041033a);
+    iStack_40 = *(int *)(param_1 + 0x1e) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+    uStack_28 = (uint)*(byte *)(param_1 + 0x24);
+    uStack_24 = (uint)*(byte *)(param_1 + 0x25);
+    FUN_00411ebc(&iStack_40,FUN_0041033a);
+  }
+  return;
+}
+
+
+/* ===== FUN_004117e8 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_004117e8(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x18) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x16) >> 0x10) {
+    bVar3 = 2;
+  }
+  if ((bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar3 != 0 || (bVar1 != 0 || bVar2 != 0));
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+    _dth_shade = (uint)*(byte *)(param_1 + 4);
+    FUN_0041243c(&iStack_40,draw_half);
+  }
+  return;
+}
+
+
+/* ===== FUN_004118d4 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_004118d4(int param_1)
+
+{
+  byte bVar1;
+  byte bVar2;
+  byte bVar3;
+  byte bVar4;
+  int iStack_40;
+  int iStack_3c;
+  int iStack_38;
+  int iStack_34;
+  int iStack_30;
+  int iStack_2c;
+  
+  bVar1 = *(short *)(param_1 + 8) < 0;
+  if (poly_clipx < *(int *)(param_1 + 6) >> 0x10) {
+    bVar1 = 2;
+  }
+  bVar2 = *(short *)(param_1 + 0x10) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0xe) >> 0x10) {
+    bVar2 = 2;
+  }
+  bVar3 = *(short *)(param_1 + 0x18) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x16) >> 0x10) {
+    bVar3 = 2;
+  }
+  bVar4 = *(short *)(param_1 + 0x20) < 0;
+  if (poly_clipx < *(int *)(param_1 + 0x1e) >> 0x10) {
+    bVar4 = 2;
+  }
+  if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+    dth_clip = (uint)(bVar4 != 0 || ((bVar1 != 0 || bVar2 != 0) || bVar3 != 0));
+    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+    _dth_shade = (uint)*(byte *)(param_1 + 4);
+    FUN_0041243c(&iStack_40,draw_half);
+    iStack_40 = *(int *)(param_1 + 0x1e) >> 0x10;
+    iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+    FUN_0041243c(&iStack_40,draw_half);
+  }
   return;
 }
 
