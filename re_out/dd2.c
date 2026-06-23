@@ -1054,7 +1054,7 @@ void __cdecl FUN_00411ebc(int *param_1,undefined *param_2)
       DAT_0048001c = local_2c * iVar10 >> 8;
       dth_y2 = iVar13;
       dth_v1 = iVar8;
-      (*(code *)param_2)();
+      (*(void (*)(void))param_2)();
       return;
     }
     iVar10 = (int)(0x10000 / (longlong)iVar3);
@@ -1069,7 +1069,7 @@ void __cdecl FUN_00411ebc(int *param_1,undefined *param_2)
       iVar11 = dth_delta2;
       dth_delta2 = dth_delta1;
       dth_delta1 = iVar11;
-      (*(code *)param_2)();
+      (*(void (*)(void))param_2)();
       if (iVar14 != iVar13) {
         iVar11 = (int)(0x10000 / (longlong)(iVar13 - iVar14));
         DAT_0048001c = local_2c * iVar11 >> 8;
@@ -1080,20 +1080,20 @@ void __cdecl FUN_00411ebc(int *param_1,undefined *param_2)
         dth_x1 = iVar7;
         dth_v1 = iVar8;
         dth_u1 = iVar9;
-        (*(code *)param_2)();
+        (*(void (*)(void))param_2)();
         return;
       }
     }
     else {
       DAT_0048001c = iVar2 * iVar1 >> 8;
       DAT_00480034 = iVar1 * iVar4 >> 8;
-      (*(code *)param_2)();
+      (*(void (*)(void))param_2)();
       if (iVar14 != iVar13) {
         dth_delta2 = (int)(0x10000 / (longlong)(iVar13 - iVar14)) * iVar5 >> 8;
         dth_y2 = iVar13;
         dth_y1 = iVar14;
         dth_x2 = iVar7;
-        (*(code *)param_2)();
+        (*(void (*)(void))param_2)();
       }
     }
   }
@@ -1198,7 +1198,7 @@ void __cdecl FUN_0041243c(int *param_1,undefined *param_2)
         iVar4 = dth_delta2;
         dth_delta2 = dth_delta1;
         dth_delta1 = iVar4;
-        (*(code *)param_2)();
+        (*(void (*)(void))param_2)();
         if (iVar6 == iVar5) {
           return;
         }
@@ -1208,7 +1208,7 @@ void __cdecl FUN_0041243c(int *param_1,undefined *param_2)
         dth_x1 = iVar2;
       }
       else {
-        (*(code *)param_2)();
+        (*(void (*)(void))param_2)();
         if (iVar6 == iVar5) {
           return;
         }
@@ -1218,7 +1218,7 @@ void __cdecl FUN_0041243c(int *param_1,undefined *param_2)
     }
     dth_x2 = iVar1;
     dth_y2 = iVar5;
-    (*(code *)param_2)();
+    (*(void (*)(void))param_2)();
     return;
   }
   return;
