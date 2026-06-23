@@ -2699,45 +2699,39 @@ void __cdecl RotMatrixX(uint param_1,undefined4 *param_2)
   int iVar4;
   undefined4 *puVar5;
   undefined4 *puVar6;
-  undefined4 local_44;
-  short sStack_3e;
-  short sStack_3c;
-  short local_3a;
-  short sStack_38;
-  short local_36;
-  short sStack_34;
+  short rmx[16];   /* WASM: matrix packed (was non-contiguous adjacent stack locals -> 7-int copy overflowed) */
   
   iVar1 = rcos(param_1);
   iVar2 = rsin(param_1);
   puVar5 = param_2;
-  puVar6 = &local_44;
+  puVar6 = (undefined4 *)rmx;
   for (iVar3 = 7; iVar3 != 0; iVar3 = iVar3 + -1) {
     *puVar6 = *puVar5;
     puVar5 = puVar5 + 1;
     puVar6 = puVar6 + 1;
   }
   *(undefined2 *)puVar6 = *(undefined2 *)puVar5;
-  iVar3 = sStack_3e * iVar1 - iVar2 * sStack_38;
+  iVar3 = rmx[3] * iVar1 - iVar2 * rmx[6];
   iVar4 = iVar3 >> 0x1f;
   *(short *)((int)param_2 + 6) =
        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = sStack_3c * iVar1 - local_36 * iVar2;
+  iVar3 = rmx[4] * iVar1 - rmx[7] * iVar2;
   iVar4 = iVar3 >> 0x1f;
   *(short *)(param_2 + 2) =
        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = local_3a * iVar1 - sStack_34 * iVar2;
+  iVar3 = rmx[5] * iVar1 - rmx[8] * iVar2;
   iVar4 = iVar3 >> 0x1f;
   *(short *)((int)param_2 + 10) =
        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = sStack_3e * iVar2 + sStack_38 * iVar1;
+  iVar3 = rmx[3] * iVar2 + rmx[6] * iVar1;
   iVar4 = iVar3 >> 0x1f;
   *(short *)(param_2 + 3) =
        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = local_36 * iVar1 + sStack_3c * iVar2;
+  iVar3 = rmx[7] * iVar1 + rmx[4] * iVar2;
   iVar4 = iVar3 >> 0x1f;
   *(short *)((int)param_2 + 0xe) =
        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar1 = sStack_34 * iVar1 + local_3a * iVar2;
+  iVar1 = rmx[8] * iVar1 + rmx[5] * iVar2;
   iVar2 = iVar1 >> 0x1f;
   *(short *)(param_2 + 4) =
        (short)((int)((iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
