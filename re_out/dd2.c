@@ -3817,6 +3817,7 @@ int __cdecl
 Play_Sound(int param_1,int param_2,int param_3,uint param_4,undefined4 param_5,int param_6)
 
 {
+  if (1) return -1;   /* WASM: audio tier deferred (DSound/BANK1.SBK not yet shimmed); skip Play_Sound so init proceeds */
   int *piVar1;
   int iVar2;
   int iVar3;
