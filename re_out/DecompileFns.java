@@ -6,11 +6,10 @@ import java.io.*;
 
 public class DecompileFns extends GhidraScript {
     public void run() throws Exception {
-        long[] addrs = {0x417ea0L,0x41861cL,0x418ed0L,0x41bc0cL,0x41bc68L,0x41c3e4L,
-                        0x41c440L,0x41ccf8L,0x41cdd0L,0x41d834L,0x41d918L,0x41e418L};
+        long[] addrs = {0x448d10L,0x448d18L,0x448d48L,0x448e0cL,0x448e48L};
         DecompInterface di = new DecompInterface();
         di.openProgram(currentProgram);
-        PrintWriter out = new PrintWriter(new FileWriter("/home/cosmo/Git/wasm-dd2/re_out/handlers.c"));
+        PrintWriter out = new PrintWriter(new FileWriter("/home/cosmo/Git/wasm-dd2/re_out/trighandlers.c"));
         for (long a : addrs) {
             Address addr = toAddr(a);
             Function f = getFunctionAt(addr);

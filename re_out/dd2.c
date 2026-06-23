@@ -29417,6 +29417,8 @@ void FUN_00448228(void)
 }
 
 
+void FUN_00448d10(void); void PitOut(int); void PitIn(int); void Pit_Stop1(int); void Pit_Stop2(void);
+
 /* ===== Strip_Trigger_Handler @ 00448e4c ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
@@ -29433,7 +29435,14 @@ void Strip_Trigger_Handler(void)
     do {
       if ((*(char *)(iVar3 + 0x75a2bb) != '\0') &&
          (uVar1 = (uint)*(byte *)(_strip_data + *(int *)(&DAT_0075a2a4 + iVar3) + 6), uVar1 < 7)) {
-        (*(code *)(&PTR_LAB_00467084)[uVar1])(iVar2);
+        switch((&PTR_LAB_00467084)[uVar1]) {
+        case 0x448d10: FUN_00448d10(); break;
+        case 0x448d18: PitOut(iVar2); break;
+        case 0x448d48: PitIn(iVar2); break;
+        case 0x448e0c: Pit_Stop1(iVar2); break;
+        case 0x448e48: Pit_Stop2(); break;
+        default: break;
+      }
       }
       iVar2 = iVar2 + 1;
       iVar3 = iVar3 + 0x2c;
@@ -45049,6 +45058,76 @@ void setup_face_sprite(int param_1)
     _gprim1 = _gprim1 + 10;
   }
   _gprim2 = puStack_14;
+  return;
+}
+
+
+
+/* ===== re-exported strip-trigger (pit-stop) handlers ===== */
+/* ===== FUN_00448d10 ===== */
+
+void FUN_00448d10(void)
+
+{
+  return;
+}
+
+
+/* ===== FUN_00448d18 ===== */
+
+void PitOut(int param_1)
+
+{
+  if (((param_1 == 0) && (PIT_IN != 0)) && (PIT_IN = param_1, race_mode == 1)) {
+    PIT_DONE = param_1;
+  }
+  return;
+}
+
+
+/* ===== FUN_00448d48 ===== */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void PitIn(int param_1)
+
+{
+  byte bVar1;
+  int iVar2;
+  int iStack_18;
+  uint uStack_14;
+  
+  bVar1 = *(byte *)(_strip_data + *(int *)(&DAT_0075a2a4 + param_1 * 0x2c) + 9);
+  iVar2 = Get_Car_Angle((int)(short)(_DAT_00752392 & 0xfff));
+  uStack_14 = (iVar2 + *(int *)(param_1 * 0x1b2 + 0x75a682) & 0xfffU) -
+              ((uint)bVar1 * 0x10 + 0x400 & 0xfff);
+  Get_Direction_Cosines(&uStack_14,&iStack_18);
+  if ((((int)uStack_14 < 0x200) || (0xe00 < (int)uStack_14)) && (param_1 == 0)) {
+    PIT_IN = 1;
+  }
+  return;
+}
+
+
+/* ===== FUN_00448e0c ===== */
+
+void Pit_Stop1(int param_1)
+
+{
+  if (((param_1 == 0) && (PIT_DONE == 0)) && (PIT_IN != 0)) {
+    Pit_Timer = param_1;
+    DAT_00467060 = 5;
+    PIT_STOP = 1;
+  }
+  return;
+}
+
+
+/* ===== FUN_00448e48 ===== */
+
+void Pit_Stop2(void)
+
+{
   return;
 }
 
