@@ -2,6 +2,7 @@
 #include "dd2_symbols.h"
 
 
+
 /* ===== FUN_0041033a @ 0041033a ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
@@ -14357,6 +14358,7 @@ void Init_Flag(void)
   _DAT_0074a6ea = 0;
   _DAT_0074a6e6 = 0;
   DAT_0074a6d7 = 0x24;
+  fprintf(stderr,"[dd2] fl-preFUN\n");fflush(stderr);_hc(201);
   FUN_004166c4(0x74a9b0,&DAT_0046cc58,(ushort *)&sdRacedata);
   FUN_004166c4(0x74a6f0,&DAT_0046cc60,(ushort *)&sdOverdata);
   FUN_004166c4(0x74a9d8,&DAT_0046cc58,(ushort *)&sdRacedata);

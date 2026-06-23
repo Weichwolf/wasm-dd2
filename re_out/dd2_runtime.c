@@ -34,17 +34,17 @@ int main(){
     *(int*)0x46c32c = (int)(long)&dd2_getthread;  /* __GetThreadPtr */
     /* CRT multithread file/heap-access locks (Access/Release @0x46c330-0x46c364) -> single-threaded no-ops */
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
-    __InitRtns();                 /* run global constructors (game data tables) */
-    dd2_com_init();               /* set up DirectDraw COM interface vtables */
+    __InitRtns();
+    dd2_com_init();
     Read_Directory("Dirinfo");
     *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
-    Init_Application((void*)1);   /* register class + create window (shimmed) */
+    Init_Application((void*)1);
     /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;
        the cold Play_Game bypass skips it -> Set_Draw_Mode(0) here so SetPalette's surface exists.
        Force DAT_00463010 (current mode) != 0 so Set_Draw_Mode(0) actually runs the mode-set. */
     _current_level = 1;
     *(int*)0x463010 = -1;
-    Set_Draw_Mode(0);             /* -> SetVideoMode -> FUN_004130b0 -> CreateSurface (primary) */
+    Set_Draw_Mode(0);
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
     return 0;
 }
