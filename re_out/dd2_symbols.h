@@ -5,6 +5,10 @@ extern unsigned char* g_image;
 extern int dd2_asset_off;
 extern int dd2_asset_size;
 #define GIMG(va) ((unsigned char*)(uintptr_t)(va))
+#define DAT_00744de4 (*(undefined1*)GIMG(0x00744de4))
+#define PTR_DAT_00464bf8 (*(undefined4*)GIMG(0x00464bf8))
+#define PTR_FUN_0042a4c4 (*(undefined4*)GIMG(0x0042a4c4))
+#define PTR_LAB_0042a4c4 (*(undefined4*)GIMG(0x0042a4c4))
 #define DAT_00466432 (*(undefined1*)GIMG(0x00466432))
 #define DAT_004664f0 (*(undefined1*)GIMG(0x004664f0))
 #define DAT_004664f2 (*(undefined1*)GIMG(0x004664f2))
