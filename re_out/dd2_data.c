@@ -136,7 +136,6 @@ int __bcrgb;
 int __cmptr;
 int __fcrgb;
 int __flg;
-int __globmat;
 int* __lmptr;
 int __op0;
 int __opvr0;

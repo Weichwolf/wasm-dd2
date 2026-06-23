@@ -2419,7 +2419,7 @@ extern unsigned char* __clutspace;
 extern int __cmptr;
 extern int __fcrgb;
 extern int __flg;
-extern int __globmat;
+#define __globmat (*(short*)GIMG(0x7142f0))
 extern int* __lmptr;
 extern int __op0;
 extern int __opvr0;
