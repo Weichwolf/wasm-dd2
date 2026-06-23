@@ -13082,6 +13082,8 @@ extern void FUN_0042a79e(void);
 void __cdecl FUN_0042a4d8(int param_1)
 
 {
+  return; /* TEMP STUB: nested-jumptable car-damage-decal builder needs full reconstruction (frame-sharing fragments); skipped to advance crash-chain */
+
   int iVar1;
   int iVar2;
   int *piVar3;
