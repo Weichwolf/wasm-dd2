@@ -2513,7 +2513,7 @@ extern int _fx_8;
 extern int _fx_9;
 extern int _g_sprite_info;
 extern int _gnormals;
-extern int* _gpoly;
+extern short* _gpoly;
 extern int* _gprim1;
 extern int _gprim2;
 extern int _grounded_count;

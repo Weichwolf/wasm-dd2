@@ -205,7 +205,7 @@ int _fx_8;
 int _fx_9;
 int _g_sprite_info;
 int _gnormals;
-int* _gpoly;
+short* _gpoly;
 int* _gprim1;
 int _gprim2;
 int _grounded_count;
