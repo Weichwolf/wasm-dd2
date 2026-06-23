@@ -25807,7 +25807,7 @@ void __cdecl Car_Movement(int param_1)
     local_18 = (byte)iVar1;
     iVar1 = Barrier_Collision(2,param_1);
     iVar3 = Barrier_Collision(3,param_1);
-    (&DAT_0075a7ae)[param_1 * 0x1b2] = local_18 | (byte)iVar2 | (byte)iVar1 | (byte)iVar3;
+    *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = local_18 | (byte)iVar2 | (byte)iVar1 | (byte)iVar3;
     goto switchD_00442d09_default;
   case 1:
     if ((DAT_0073c2c0 & 1) != 0) {
@@ -25822,7 +25822,7 @@ void __cdecl Car_Movement(int param_1)
     }
     FUN_00442b08(param_1);
     Car_2pt_Motion_3D(param_1);
-    (&DAT_0075a7ae)[param_1 * 0x1b2] = 0;
+    *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     break;
   case 3:
     if ((DAT_0073c2c0 & 1) != 0) {
@@ -25831,7 +25831,7 @@ void __cdecl Car_Movement(int param_1)
     FUN_00442b08(param_1);
     Car_1pt_Motion_3D(param_1);
 LAB_00442f59:
-    (&DAT_0075a7ae)[param_1 * 0x1b2] = 0;
+    *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     break;
   case 4:
     if ((DAT_0073c2c0 & 1) != 0) {
@@ -25849,7 +25849,7 @@ LAB_00442f59:
     }
     FUN_00442b08(param_1);
     Car_Fly_Motion_3D(param_1);
-    (&DAT_0075a7ae)[param_1 * 0x1b2] = 0;
+    *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     break;
   case 5:
     if ((DAT_0073c2c0 & 1) != 0) {
@@ -25857,7 +25857,7 @@ LAB_00442f59:
     }
     FUN_00442b08(param_1);
     Car_Grounded_Motion_3D(param_1);
-    (&DAT_0075a7ae)[param_1 * 0x1b2] = 0;
+    *(undefined4 *)((int)&DAT_0075a7ae + param_1 * 0x1b2) = 0;
     Barrier_Corner_Collision(0,param_1);
     Barrier_Corner_Collision(1,param_1);
     Barrier_Corner_Collision(2,param_1);
