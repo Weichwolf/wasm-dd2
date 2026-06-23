@@ -9791,8 +9791,8 @@ void Init_Debris_(void)
       do {
         uVar6 = uVar5;
         bVar7 = (char)uVar6 + 1;
-        RotTrans((int *)(&DAT_0073c348 + (uVar6 & 0xff) * 8 + (uVar6 >> 8) * 0x7c),
-                 (int *)(&Anim + (uVar6 & 0xff) * 0x10 +
+        RotTrans((int *)((int)&DAT_0073c348 + (uVar6 & 0xff) * 8 + (uVar6 >> 8) * 0x7c),
+                 (int *)((int)&Anim + (uVar6 & 0xff) * 0x10 +
                                  (uint)local_14 * 0x30 + (uVar6 >> 8) * 0x1800),&local_18);
         uVar5 = CONCAT31((int3)(uVar6 >> 8),bVar7);
       } while (bVar7 < 3);
