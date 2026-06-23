@@ -9297,7 +9297,7 @@ undefined4 Play_Game(void)
     _DAT_00463ef4 = 1;
     camera_car = 4;
   }
-  _camera_fd_pt = &car_fd + camera_car * 0x2c;
+  _camera_fd_pt = (int)&car_fd + camera_car * 0x2c;
   Init_Game();
   FUN_0041611c();
   FUN_00415b50(_sound_volume);
@@ -10005,7 +10005,7 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
       puVar7 = puVar7 + 1;
     }
     *(undefined4 *)(iVar5 + 0x743374) = 1;
-    puVar6 = (undefined4 *)(&car_fd + param_4 * 0x2c);
+    puVar6 = (undefined4 *)((int)&car_fd + param_4 * 0x2c);
     puVar7 = (undefined4 *)(iVar5 + 0x7432fc);
     for (iVar1 = 0xb; iVar1 != 0; iVar1 = iVar1 + -1) {
       *puVar7 = *puVar6;
@@ -10068,7 +10068,7 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
       puVar7 = puVar7 + 1;
     }
     *(undefined4 *)(iVar5 + 0x743374) = 2;
-    puVar6 = (undefined4 *)(&car_fd + param_4 * 0x2c);
+    puVar6 = (undefined4 *)((int)&car_fd + param_4 * 0x2c);
     puVar7 = (undefined4 *)(iVar5 + 0x7432fc);
     for (iVar1 = 0xb; iVar1 != 0; iVar1 = iVar1 + -1) {
       *puVar7 = *puVar6;
@@ -12130,7 +12130,7 @@ void __cdecl FUN_0042895c(int param_1)
          _DAT_00744b08 +
          ((int)((-DAT_00463f00 * iVar2 + iVar3 * -0x1000) - (uint)(iVar3 << 0xb < 0)) >> 0xc);
     _DAT_00744b04 = _DAT_00744b04 + DAT_00463efc;
-    puVar7 = (undefined4 *)(&car_fd + param_1 * 0x2c);
+    puVar7 = (undefined4 *)((int)&car_fd + param_1 * 0x2c);
     puVar9 = (undefined4 *)&camera_fd;
     for (iVar2 = 0xb; iVar2 != 0; iVar2 = iVar2 + -1) {
       *puVar9 = *puVar7;
@@ -12570,7 +12570,7 @@ void __cdecl Pit_Camera_Control(int param_1)
       uVar5 = uVar5 | 0x4000;
     }
     if ((_DAT_0071c04a & 0x4000) != 0) {
-      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)(&car_fd + param_1 * 0x2c));
+      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)((int)&car_fd + param_1 * 0x2c));
       uVar5 = uVar5 | 0x1000;
       UndentCar(param_1,camera_section);
     }
@@ -12652,7 +12652,7 @@ void __cdecl Pit_Camera_Control(int param_1)
       }
     }
     if ((uVar5 & 0x1000) != 0) {
-      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)(&car_fd + param_1 * 0x2c));
+      Allocate_Sound_Effect(3,0x9c4,(undefined4 *)((int)&car_fd + param_1 * 0x2c));
       UndentCar(param_1,camera_section);
     }
     SetHighLight(camera_section,1);
@@ -12711,7 +12711,7 @@ void __cdecl Init_The_Floaty_Camera(int param_1)
   DAT_00463efc = 0xa0;
   DAT_00463f00 = 0x2e8;
   DAT_00463f04 = 0x758;
-  puVar2 = (undefined4 *)(&car_fd + param_1 * 0x2c);
+  puVar2 = (undefined4 *)((int)&car_fd + param_1 * 0x2c);
   puVar3 = (undefined4 *)&floaty_camera_fd;
   for (iVar1 = 0xb; iVar1 != 0; iVar1 = iVar1 + -1) {
     *puVar3 = *puVar2;
@@ -12791,7 +12791,7 @@ int __cdecl Do_The_Floaty_Camera_Thing(int *param_1,int param_2)
     DAT_00463efc = 0xa0;
     DAT_00463f00 = 0x2e8;
     DAT_00463f04 = 0x758;
-    puVar6 = (undefined4 *)(&car_fd + DAT_00464aa8 * 0x2c);
+    puVar6 = (undefined4 *)((int)&car_fd + DAT_00464aa8 * 0x2c);
     puVar7 = (undefined4 *)&floaty_camera_fd;
     for (iVar5 = 0xb; iVar5 != 0; iVar5 = iVar5 + -1) {
       *puVar7 = *puVar6;
@@ -18182,7 +18182,7 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
   local_40 = local_64 * (*(int *)(local_14 + 0x18) >> 4) -
              (*(int *)(local_14 + 0x10) >> 4) * local_24 >> 8;
   local_60 = *(int *)(param_2 * 0x2c + 0x75a298) - piVar10[2];
-  local_58 = (int *)(*(int *)(&car_fd + param_2 * 0x2c) - *piVar10);
+  local_58 = (int *)(*(int *)((int)&car_fd + param_2 * 0x2c) - *piVar10);
   iVar1 = (int)local_58 * local_64 + local_60 * local_24;
   iVar6 = iVar1 >> 0x1f;
   local_30 = (int)((iVar1 + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0)) >> 0xc;
@@ -18609,7 +18609,7 @@ int __cdecl Barrier_Corner_Collision(int param_1,int param_2)
     local_68 = (*(int *)(&DAT_0075a618 + iVar1) >> 4) * local_64 -
                (*(int *)(&DAT_0075a610 + iVar1) >> 4) * local_60 >> 8;
     local_5c = *(int *)(param_2 * 0x2c + 0x75a298) - *(int *)(&DAT_0075a0e8 + iVar2);
-    local_58 = *(int *)(&car_fd + param_2 * 0x2c) - *piVar8;
+    local_58 = *(int *)((int)&car_fd + param_2 * 0x2c) - *piVar8;
     iVar3 = local_58 * local_64 + local_5c * local_60;
     iVar7 = iVar3 >> 0x1f;
     local_34 = (int)((iVar3 + iVar7 * -0x1000) - (uint)(iVar7 << 0xb < 0)) >> 0xc;
@@ -22820,7 +22820,7 @@ void __cdecl Ground_Collision(int param_1,int param_2)
   iVar5 = *(int *)(&corner_fd + param_2 * 0x2c);
   *(int *)(&DAT_0075a618 + iVar1) =
        *(int *)(&DAT_0075a618 + iVar1) - (*(int *)(iVar4 + 4) >> 0x10) * local_20;
-  iVar5 = iVar5 - *(int *)(&car_fd + param_1 * 0x2c);
+  iVar5 = iVar5 - *(int *)((int)&car_fd + param_1 * 0x2c);
   iVar4 = *(int *)(&DAT_0075a0e8 + param_2 * 0x2c) - *(int *)(param_1 * 0x2c + 0x75a298);
   uVar3 = SquareRoot0_(iVar4 * iVar4 + iVar5 * iVar5);
   if (uVar3 != 0) {
@@ -23080,12 +23080,12 @@ void __cdecl Car_Fly_Motion_3D(int param_1)
   iVar3 = param_1 * 0x1b2;
   iVar4 = param_1 * 0x27c;
   iVar5 = param_1 * 0x2c;
-  *(undefined4 *)(&car_fd + iVar5) = *(undefined4 *)(&DAT_00752344 + iVar4);
+  *(undefined4 *)((int)&car_fd + iVar5) = *(undefined4 *)(&DAT_00752344 + iVar4);
   *(undefined4 *)(&DAT_0075a294 + iVar5) = *(undefined4 *)(&DAT_00752348 + iVar4);
   *(undefined4 *)(iVar5 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + iVar4);
   *(undefined4 *)(iVar5 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + iVar4);
-  Track_Follow((int *)(&car_fd + iVar5));
-  Map_Height((int *)(&car_fd + iVar5));
+  Track_Follow((int *)((int)&car_fd + iVar5));
+  Map_Height((int *)((int)&car_fd + iVar5));
   MulMatrix2((undefined4 *)(iVar3 + 0x75a650),(short *)(iVar4 + 0x752354));
   if ((DAT_0073c2c0 & 0x3f) == 0) {
     sVar1 = *(short *)(iVar3 + 0x75a66e);
@@ -23161,12 +23161,12 @@ void __cdecl Car_Grounded_Motion_3D(int param_1)
   iVar6 = *(int *)(&DAT_00466ae4 + iVar6);
   iVar2 = param_1 * 0x2c;
   iVar11 = param_1 * 0x27c;
-  *(undefined4 *)(&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + iVar11);
+  *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + iVar11);
   *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + iVar11);
   *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + iVar11);
   *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + iVar11);
-  Track_Follow((int *)(&car_fd + iVar2));
-  Map_Height((int *)(&car_fd + iVar2));
+  Track_Follow((int *)((int)&car_fd + iVar2));
+  Map_Height((int *)((int)&car_fd + iVar2));
   FUN_004203a0((short *)(iVar11 + 0x752354),(int *)(&DAT_00752390 + iVar11));
   Get_Corner_Positions(param_1);
   iVar3 = iVar3 * 0x2c;
@@ -23288,13 +23288,13 @@ void __cdecl FUN_0043dd00(int param_1)
   iVar6 = *(int *)(iVar5 + 0x75a6ba);
   iVar1 = param_1 * 0x27c;
   iVar2 = param_1 * 0x2c;
-  *(undefined4 *)(&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + iVar1);
+  *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + iVar1);
   *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + iVar1);
   *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + iVar1);
   *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + iVar1);
   FUN_004203a0((short *)(iVar1 + 0x752354),(int *)(&DAT_00752390 + iVar1));
-  Track_Follow((int *)(&car_fd + iVar2));
-  Map_Height((int *)(&car_fd + iVar2));
+  Track_Follow((int *)((int)&car_fd + iVar2));
+  Map_Height((int *)((int)&car_fd + iVar2));
   Get_Corner_Positions(param_1);
   if (iVar6 == 0) {
     iVar6 = ((*(int *)(iVar2 + 0x75a2ae) >> 0x10) -
@@ -23468,12 +23468,12 @@ void __cdecl Car_2pt_Motion_3D(int param_1)
   uVar4 = *(undefined4 *)(iVar11 + 0x75a6ba);
   iVar6 = param_1 * 0x27c;
   iVar7 = param_1 * 0x2c;
-  *(undefined4 *)(&car_fd + iVar7) = *(undefined4 *)(&DAT_00752344 + iVar6);
+  *(undefined4 *)((int)&car_fd + iVar7) = *(undefined4 *)(&DAT_00752344 + iVar6);
   *(undefined4 *)(&DAT_0075a294 + iVar7) = *(undefined4 *)(&DAT_00752348 + iVar6);
   *(undefined4 *)(iVar7 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + iVar6);
   *(undefined4 *)(iVar7 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + iVar6);
-  Track_Follow((int *)(&car_fd + iVar7));
-  Map_Height((int *)(&car_fd + iVar7));
+  Track_Follow((int *)((int)&car_fd + iVar7));
+  Map_Height((int *)((int)&car_fd + iVar7));
   switch(uVar4) {
   case 2:
     Calc_Object_MatrixYZX((short *)(iVar6 + 0x752354),(int *)(&DAT_00752390 + iVar6));
@@ -24009,15 +24009,15 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
   sStack_14 = __vr0;
   local_24 = _DAT_00714108;
   local_3c = param_1 * 0x2c;
-  *(undefined4 *)(&car_fd + local_3c) = *(undefined4 *)(&DAT_00752344 + local_40);
+  *(undefined4 *)((int)&car_fd + local_3c) = *(undefined4 *)(&DAT_00752344 + local_40);
   *(undefined4 *)(&DAT_0075a294 + local_3c) = *(undefined4 *)(&DAT_00752348 + local_40);
   *(undefined4 *)(local_3c + 0x75a298) = *(undefined4 *)(&DAT_0075234c + local_40);
   *(undefined4 *)(local_3c + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + local_40);
-  piVar6 = (int *)(&car_fd + local_3c);
+  piVar6 = (int *)((int)&car_fd + local_3c);
   Track_Follow(piVar6);
   Map_Height(piVar6);
   Get_Corner_Positions(param_1);
-  iVar8 = *(int *)(&corner_fd + local_30 * 0x2c) - *(int *)(&car_fd + local_3c);
+  iVar8 = *(int *)(&corner_fd + local_30 * 0x2c) - *(int *)((int)&car_fd + local_3c);
   iVar7 = *(int *)(&DAT_0075a0e8 + local_30 * 0x2c) - *(int *)(local_3c + 0x75a298);
   uVar5 = SquareRoot0_(iVar7 * iVar7 + iVar8 * iVar8);
   if (uVar5 != 0) {
@@ -24206,12 +24206,12 @@ void __cdecl Car_Drive_Motion_3D_(int param_1)
   iVar3 = param_1 * 0xb0;
   iVar4 = param_1 * 0x27c;
   iVar5 = param_1 * 0x2c;
-  *(undefined4 *)(&car_fd + iVar5) = *(undefined4 *)(&DAT_00752344 + iVar4);
+  *(undefined4 *)((int)&car_fd + iVar5) = *(undefined4 *)(&DAT_00752344 + iVar4);
   *(undefined4 *)(&DAT_0075a294 + iVar5) = *(undefined4 *)(&DAT_00752348 + iVar4);
   *(undefined4 *)(iVar5 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + iVar4);
   *(undefined4 *)(iVar5 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + iVar4);
-  Track_Follow((int *)(&car_fd + iVar5));
-  Map_Height((int *)(&car_fd + iVar5));
+  Track_Follow((int *)((int)&car_fd + iVar5));
+  Map_Height((int *)((int)&car_fd + iVar5));
   FUN_004203a0((short *)(iVar4 + 0x752354),(int *)(&DAT_00752390 + iVar4));
   FUN_00440ac4(param_1);
   iVar6 = (*(int *)(iVar3 + 0x75c85e) >> 0x10) +
@@ -25786,7 +25786,7 @@ void FUN_004430b8(void)
         iVar2 = local_14 * 0x2c;
         *(short *)(&DAT_00752392 + local_18) = (short)((local_14 * -0x800) / num_cars) + 0x400;
         iVar7 = iVar7 + 0x800;
-        *(undefined4 *)(&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_18);
+        *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_18);
         *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_18);
         *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + local_18);
         *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + local_18);
@@ -25818,7 +25818,7 @@ void FUN_004430b8(void)
         iVar2 = local_14 * 0x2c;
         *(short *)(&DAT_00752392 + local_1c) = (short)((local_14 * -0x1000) / num_cars);
         iVar7 = iVar7 + 0x1000;
-        *(undefined4 *)(&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_1c);
+        *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_1c);
         *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_1c);
         *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + local_1c);
         *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + local_1c);
@@ -25889,14 +25889,14 @@ LAB_004433bc:
                    (int)(&DAT_00752390 + uVar9 * 0x27c));
       FUN_004287c0((int)local_74,1);
       puVar10 = local_74;
-      puVar11 = (undefined4 *)(&car_fd + uVar9 * 0x2c);
+      puVar11 = (undefined4 *)((int)&car_fd + uVar9 * 0x2c);
       for (iVar7 = 0xb; iVar7 != 0; iVar7 = iVar7 + -1) {
         *puVar11 = *puVar10;
         puVar10 = puVar10 + 1;
         puVar11 = puVar11 + 1;
       }
-      Track_Follow((int *)(&car_fd + uVar9 * 0x2c));
-      Map_Height((int *)(&car_fd + uVar9 * 0x2c));
+      Track_Follow((int *)((int)&car_fd + uVar9 * 0x2c));
+      Map_Height((int *)((int)&car_fd + uVar9 * 0x2c));
       local_14 = local_14 + 1;
     } while (local_14 < num_cars);
   }
