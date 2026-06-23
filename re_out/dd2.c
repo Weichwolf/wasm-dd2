@@ -6440,8 +6440,8 @@ int __cdecl FUN_0041fb7c(undefined4 *param_1)
   if (iVar4 != -1) {
     _gtexture = *param_1;
     _gpoly = *(short **)(iVar3 + 0x28);
-    _gprim1 = _prim_buf + iVar4;
-    _gprim2 = _DAT_0071bf94 + iVar4;
+    _gprim1 = (undefined4 *)((int)_prim_buf + iVar4);   /* WASM: byte (int* scaled iVar4) */
+    _gprim2 = (int)_DAT_0071bf94 + iVar4;   /* WASM: byte */
     while (*(char *)((int)_gpoly + 3) != '\0') {
       sVar2 = *_gpoly;
       pbVar1 = (byte *)(_gpoly + 1);
