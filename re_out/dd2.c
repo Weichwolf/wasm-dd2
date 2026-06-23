@@ -2182,10 +2182,21 @@ uint __cdecl SquareRoot0_(uint param_1)
 /* ===== GTERT @ 0041397e ===== */
 
 void GTERT(void)
-
 {
-  FUN_00413fd2();
-  FUN_00414055();
+  /* WASM: reconstructed from dd2.exe disasm (esi/edi register-ABI Ghidra dropped as unaff_).
+     GTE Rotate+Translate: rot[4604b6] = M[7142f0] * in[714100] (Q12); out[714100] = T[714302] + rot. */
+  short *M  = (short *)(uintptr_t)0x7142f0;          /* 3x3 rotation matrix (9 shorts) */
+  short *iv = (short *)(uintptr_t)0x714100;          /* input vector: shorts @ +0,+4,+8 */
+  int   *rot= (int   *)(uintptr_t)0x4604b6;          /* rotated intermediate */
+  int   *T  = (int   *)(uintptr_t)0x714302;          /* translation (3 ints) = 0x7142f0+0x12 */
+  int   *out= (int   *)(uintptr_t)0x714100;          /* output (in place) */
+  int x = iv[0], y = iv[2], z = iv[4];
+  rot[0] = ((M[0]*x)>>12) + ((M[1]*y)>>12) + ((M[2]*z)>>12);
+  rot[1] = ((M[3]*x)>>12) + ((M[4]*y)>>12) + ((M[5]*z)>>12);
+  rot[2] = ((M[6]*x)>>12) + ((M[7]*y)>>12) + ((M[8]*z)>>12);
+  out[0] = T[0] + rot[0];
+  out[1] = T[1] + rot[1];
+  out[2] = T[2] + rot[2];
   return;
 }
 
