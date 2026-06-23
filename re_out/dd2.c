@@ -14250,6 +14250,7 @@ int Update_Other_Objects(void)
 void Draw_Other_Objects(void)
 
 {
+  return; /* TEMP STUB: scene decorations (wild_bill/cigar models) have garbage geometry - core track+car render runs 600+ frames crash-free without them; reconstruct scene-object model load next */
   uint uVar1;
   int iVar2;
   int iVar3;
