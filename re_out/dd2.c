@@ -15820,7 +15820,7 @@ void FUN_00430698(void)
       iVar2 = 0;
       piVar1 = local_24;
       puVar3 = local_28;
-      if (0 < *(int *)(&num_scene_objects + local_1c)) {
+      if (0 < *(int *)((int)&num_scene_objects + local_1c)) {
         do {
           FUN_004202ac((short *)0x0,local_14);
           iVar2 = iVar2 + 1;
@@ -15828,7 +15828,7 @@ void FUN_00430698(void)
           piVar1 = piVar1 + 2;
           puVar3 = puVar3 + 7;
           local_14 = local_14 + 4;
-        } while (iVar2 < *(int *)(&num_scene_objects + local_1c));
+        } while (iVar2 < *(int *)((int)&num_scene_objects + local_1c));
       }
     }
     local_24 = local_24 + 0x40;
@@ -15854,14 +15854,14 @@ void __cdecl Setup_Object_Block(undefined4 *param_1,int param_2)
   undefined4 *local_20;
   int local_14;
   
-  local_20 = (undefined4 *)(&scene_objects + param_2 * 0x380);
+  local_20 = (undefined4 *)((int)&scene_objects + param_2 * 0x380);
   iVar1 = param_2 * 4;
-  *(undefined4 *)(&num_scene_objects + iVar1) = *param_1;
+  *(undefined4 *)((int)&num_scene_objects + iVar1) = *param_1;
   piVar3 = param_1 + 1;
-  piVar5 = (int *)(&scene_position + param_2 * 0x200);
+  piVar5 = (int *)((int)&scene_position + param_2 * 0x200);
   psVar4 = (short *)(param_2 * 0x100 + 0x750f58);
   local_14 = 0;
-  if (0 < *(int *)(&num_scene_objects + iVar1)) {
+  if (0 < *(int *)((int)&num_scene_objects + iVar1)) {
     do {
       iVar2 = *piVar3;
       Set_Object(local_20,(int)param_1 + iVar2);
@@ -15886,7 +15886,7 @@ void __cdecl Setup_Object_Block(undefined4 *param_1,int param_2)
       piVar5 = piVar5 + 4;
       psVar4 = psVar4 + 4;
       piVar3 = piVar3 + 4;
-    } while (local_14 < *(int *)(&num_scene_objects + iVar1));
+    } while (local_14 < *(int *)((int)&num_scene_objects + iVar1));
   }
   return;
 }
@@ -15945,13 +15945,13 @@ void __cdecl FUN_00430a30(int param_1)
   iVar2 = 0;
   iVar3 = param_1 * 4;
   puVar1 = &scene_objects + param_1 * 0x380;
-  if (0 < *(int *)(&num_scene_objects + iVar3)) {
+  if (0 < *(int *)((int)&num_scene_objects + iVar3)) {
     do {
       Remove_Object((int)puVar1,1);
       iVar2 = iVar2 + 1;
       Remove_Object((int)puVar1,2);
       puVar1 = puVar1 + 0x1c;
-    } while (iVar2 < *(int *)(&num_scene_objects + iVar3));
+    } while (iVar2 < *(int *)((int)&num_scene_objects + iVar3));
   }
   *(undefined4 *)((int)&active_block_numbers + iVar3) = 0xffffffff;
   return;
