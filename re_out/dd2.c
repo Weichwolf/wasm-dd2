@@ -15611,7 +15611,7 @@ void Init_Scene(void)
   do {
     iVar3 = iVar2 + 4;
     puVar1 = MPE_malloc(0x4000);
-    *(undefined4 **)(&active_object_blocks + iVar2) = puVar1;
+    *(undefined4 **)((int)&active_object_blocks + iVar2) = puVar1;
     iVar2 = iVar3;
   } while (iVar3 != 0x38);
   FUN_00456b67(0xe,0xffffffff);
@@ -15815,7 +15815,7 @@ void FUN_00430698(void)
   local_28 = (undefined4 *)&scene_objects;
   __lmptr = &scene_light_matrix;
   do {
-    if (-1 < *(int *)(&active_block_numbers + local_1c)) {
+    if (-1 < *(int *)((int)&active_block_numbers + local_1c)) {
       local_14 = local_20;
       iVar2 = 0;
       piVar1 = local_24;
@@ -15901,9 +15901,9 @@ void FUN_004308b8(void)
 {
   _DAT_00750f54 = 0x4000;
   Decompress((undefined4 *)&dec_info);
-  Setup_Object_Block(*(undefined4 **)(&active_object_blocks + _DAT_00751d5c * 4),_DAT_00751d5c);
+  Setup_Object_Block(*(undefined4 **)((int)&active_object_blocks + _DAT_00751d5c * 4),_DAT_00751d5c);
   _decrunch_flag = 0;
-  *(undefined4 *)(&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
+  *(undefined4 *)((int)&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
   return;
 }
 
@@ -15918,16 +15918,16 @@ void __cdecl Decrunch_Object_Block(int param_1,int param_2)
   if (_decrunch_flag != 0) {
     _DAT_00750f54 = 0x4000;
     Decompress((undefined4 *)&dec_info);
-    Setup_Object_Block(*(undefined4 **)(&active_object_blocks + _DAT_00751d5c * 4),_DAT_00751d5c);
-    *(int *)(&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
+    Setup_Object_Block(*(undefined4 **)((int)&active_object_blocks + _DAT_00751d5c * 4),_DAT_00751d5c);
+    *(int *)((int)&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
   }
   _dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);
   _DAT_00750f54 = 0x400;
   _DAT_00750f56 = 0;
   _decrunch_flag = 1;
-  _DAT_00750f4c = *(undefined4 *)(&active_object_blocks + param_2 * 4);
+  _DAT_00750f4c = *(undefined4 *)((int)&active_object_blocks + param_2 * 4);
   _DAT_00751d5c = param_2;
-  *(undefined4 *)(&active_block_numbers + param_2 * 4) = 0xfffffffd;
+  *(undefined4 *)((int)&active_block_numbers + param_2 * 4) = 0xfffffffd;
   _decrunch_block = param_1;
   return;
 }
@@ -15953,7 +15953,7 @@ void __cdecl FUN_00430a30(int param_1)
       puVar1 = puVar1 + 0x1c;
     } while (iVar2 < *(int *)(&num_scene_objects + iVar3));
   }
-  *(undefined4 *)(&active_block_numbers + iVar3) = 0xffffffff;
+  *(undefined4 *)((int)&active_block_numbers + iVar3) = 0xffffffff;
   return;
 }
 
@@ -15977,7 +15977,7 @@ void Update_Scene_Objects(void)
     iVar5 = 0;
     iVar1 = 0;
     do {
-      if (*(int *)(&active_block_numbers + iVar5) == -2) {
+      if (*(int *)((int)&active_block_numbers + iVar5) == -2) {
         FUN_00430a30(iVar1);
       }
       iVar1 = iVar1 + 1;
@@ -16003,7 +16003,7 @@ void Update_Scene_Objects(void)
           iVar4 = iVar4 + 4;
         }
         if (iVar2 != 0xe) {
-          *(undefined4 *)(&active_block_numbers + iVar2 * 4) = 0xfffffffe;
+          *(undefined4 *)((int)&active_block_numbers + iVar2 * 4) = 0xfffffffe;
         }
       }
       if (*(char *)(iVar6 + 0x2b) == '\x01') {
@@ -16083,10 +16083,10 @@ void __fastcall FUN_00430bde(int param_1)
               Decrunch_Object_Block(iVar1,iVar4);
               _DAT_00750f54 = 0x4000;
               Decompress((undefined4 *)&dec_info);
-              Setup_Object_Block(*(undefined4 **)(&active_object_blocks + _DAT_00751d5c * 4),
+              Setup_Object_Block(*(undefined4 **)((int)&active_object_blocks + _DAT_00751d5c * 4),
                                  _DAT_00751d5c);
               _decrunch_flag = 0;
-              *(undefined4 *)(&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
+              *(undefined4 *)((int)&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
             }
             iVar4 = iVar4 + 1;
             iVar5 = iVar5 + 4;
@@ -16164,7 +16164,7 @@ void Init_Scene_Objects(void)
       piVar7 = (int *)(*(int *)(iVar3 + *_level_data) + *_level_data);
       local_4c[0xd] = 0x430c95;
       Setup_Object_Block(piVar7,iVar2);
-      *(int *)(&active_block_numbers + iVar3) = iVar2;
+      *(int *)((int)&active_block_numbers + iVar3) = iVar2;
       iVar2 = iVar2 + 1;
       iVar3 = iVar3 + 4;
     } while (*piVar7 == 0x20);
@@ -16233,10 +16233,10 @@ void Init_Scene_Objects(void)
           Decrunch_Object_Block(*(int *)((int)local_4c + iVar2),iVar3);
           _DAT_00750f54 = 0x4000;
           Decompress((undefined4 *)&dec_info);
-          Setup_Object_Block(*(undefined4 **)(&active_object_blocks + _DAT_00751d5c * 4),
+          Setup_Object_Block(*(undefined4 **)((int)&active_object_blocks + _DAT_00751d5c * 4),
                              _DAT_00751d5c);
           _decrunch_flag = 0;
-          *(undefined4 *)(&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
+          *(undefined4 *)((int)&active_block_numbers + _DAT_00751d5c * 4) = _decrunch_block;
         }
         iVar3 = iVar3 + 1;
         iVar2 = iVar2 + 4;
@@ -16258,7 +16258,7 @@ void Remove_Scene_Objects(void)
   iVar2 = 0;
   iVar1 = 0;
   do {
-    if (*(int *)(&active_block_numbers + iVar2) != -1) {
+    if (*(int *)((int)&active_block_numbers + iVar2) != -1) {
       FUN_00430a30(iVar1);
     }
     iVar1 = iVar1 + 1;
