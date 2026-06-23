@@ -262,7 +262,7 @@ extern void draw_text_half(void);
 #define DAT_00465dd0 (*(int*)GIMG(0x465dd0))
 #define DAT_00465dd4 (*(int*)GIMG(0x465dd4))
 #define DAT_00465e34 (*(int*)GIMG(0x465e34))
-#define DAT_00466290 (*(int**)GIMG(0x466290))
+#define DAT_00466290 (*(short**)GIMG(0x466290))  /* free-list stack ptr: short* not int* (deref=2-byte short, +/-1 = 2-byte stride) */
 #define DAT_004662f8 (*(int*)GIMG(0x4662f8))
 #define DAT_00466304 (*(int*)GIMG(0x466304))
 #define DAT_00466306 (*(int*)GIMG(0x466306))
