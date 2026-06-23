@@ -1,6 +1,7 @@
 #include "ghidra_compat.h"
 #include "dd2_symbols.h"
 
+
 /* ===== FUN_0041033a @ 0041033a ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
