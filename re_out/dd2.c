@@ -16213,14 +16213,14 @@ void Init_Scene_Objects(void)
       }
       if (iVar5 == 0xe) {
         iVar1 = 0;
-        iVar6 = local_4c[0];
+        iVar5 = local_4c[0];
         while( true ) {
-          if (iVar6 == -1) {
-            FUN_00430bde(iVar2);
-            return;
+          if (iVar5 == -1) {
+            *(int *)((int)local_4c + iVar1) = iVar6;   /* WASM: insert block idx at first -1 slot; was FUN_00430bde (register-ABI loop-continuation, unaff_EBP/ESI/EBX). iVar6 = vis-flag block index (+0x1d). Then continue the sort loop -> decrunch at iVar2==0 */
+            break;
           }
           if (0x37 < iVar1 + 4) break;
-          iVar6 = *(int *)((int)local_4c + iVar1 + 4);
+          iVar5 = *(int *)((int)local_4c + iVar1 + 4);
           iVar1 = iVar1 + 4;
         }
       }
