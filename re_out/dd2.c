@@ -7162,8 +7162,8 @@ void FUN_00420b1c(void)
 
 {
   buffer_num = buffer_num ^ 1;
-  _cdb_ = &db + buffer_num * 0x8e;
-  ClearOTagR(*(undefined4 **)(&DAT_0071beee + buffer_num * 0x8e),_otsize);
+  _cdb_ = (int)&db + buffer_num * 0x8e;
+  ClearOTagR(*(undefined4 **)((int)&DAT_0071beee + buffer_num * 0x8e),_otsize);
   return;
 }
 
