@@ -17813,7 +17813,7 @@ switchD_00433208_default:
   *(undefined4 *)(iVar3 + 0x75a776) = 0;
   *(undefined4 *)(iVar3 + 0x75a76e) = 0;
   *(undefined4 *)(iVar3 + 0x75a772) = 0;
-  (&DAT_0075a7ae)[iVar3] = 0;
+  *(undefined4 *)((int)&DAT_0075a7ae + iVar3) = 0;  /* FIX scaled-ptr-arith: iVar3 is a byte offset (param_1*0x1b2); int*-index scaled it x4 -> wild write to _level_data+0x12 */
   *(undefined **)(iVar3 + 0x75a76a) = &DAT_00465980;
   *(undefined **)(iVar3 + 0x75a766) = &DAT_00465980;
   *(undefined4 *)(iVar3 + 0x75a79e) = 0;
