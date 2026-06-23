@@ -2075,10 +2075,10 @@ void __cdecl Generate_Transparency_Tables(int param_1)
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Restarted to delay deadcode elimination for space: stack */
 
-void __cdecl gte_MulMatrix0(undefined4 *param_1,short *param_2)
+void __cdecl gte_MulMatrix0(undefined4 *param_1,short *param_2,short *param_3)
 
 {
-  FUN_00413dc8(param_2);
+  FUN_00413dc8(param_2,(short *)param_1,param_3);
   __globmat = *param_1;
   _DAT_007142f4 = param_1[1];
   _DAT_007142f8 = param_1[2];
@@ -2098,7 +2098,7 @@ void __cdecl MulMatrix2(undefined4 *param_1,short *param_2)
 {
   undefined4 *extraout_ECX;
   
-  FUN_00413dc8(param_2);
+  FUN_00413dc8(param_2,(short *)param_1,(short *)0x4604a0);
   *extraout_ECX = DAT_004604a0;
   extraout_ECX[1] = DAT_004604a4;
   extraout_ECX[2] = DAT_004604a8;
@@ -2334,12 +2334,10 @@ void __cdecl ApplyMatrixLV(short *param_1,int *param_2,uint *param_3)
 
 /* ===== FUN_00413dc8 @ 00413dc8 ===== */
 
-void __fastcall FUN_00413dc8(short *param_1)
+void FUN_00413dc8(short *param_1,short *unaff_ESI,short *unaff_EDI)
 
 {
   int iVar1;
-  short *unaff_ESI;
-  short *unaff_EDI;
   
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (short)(*param_1 * iVar1 >> 0xc);
@@ -6851,7 +6849,7 @@ void __cdecl FUN_004202ac(short *param_1,int *param_2)
     local_1c = param_2[1] - DAT_00462fba;
     local_18 = param_2[2] - DAT_00462fbe;
     ApplyMatrixLV(&world_matrix,&local_20,(uint *)&DAT_0071be4e);
-    gte_MulMatrix0((undefined4 *)&world_matrix,param_1);
+    gte_MulMatrix0((undefined4 *)&world_matrix,param_1,(short *)0x71be3c);
     gte_SetRotMatrix((undefined2 *)0x71be3c);
   }
   _DAT_0071430a = _DAT_0071be56;
@@ -7015,7 +7013,7 @@ void __cdecl FUN_004205d8(undefined4 param_1,int *param_2,uint param_3)
   uStack_3a = local_5e;
   local_38 = local_58;
   MulMatrix2(&local_48,&local_88);
-  gte_MulMatrix0((undefined4 *)&local_88,&local_68);
+  gte_MulMatrix0((undefined4 *)&local_88,&local_68,(short *)param_1);
   return;
 }
 
@@ -10152,7 +10150,7 @@ void Update_Flying_Objects(void)
       return;
     }
     FUN_004203a0(local_54,(int *)(iVar2 + 0x743358));
-    gte_MulMatrix0(&scene_light_matrix,local_54);
+    gte_MulMatrix0(&scene_light_matrix,local_54,(short *)local_34);
     __lmptr = local_34;
     __cmptr = &scene_colour_matrix_;
     FUN_004202ac(local_54,(int *)(iVar2 + 0x743328));
@@ -13525,7 +13523,7 @@ void __cdecl Draw_Car(int param_1)
   
   FUN_0042b5f0(param_1);
   psVar1 = (short *)(param_1 * 0x27c + 0x752354);
-  gte_MulMatrix0(&car_light_matrix,psVar1);
+  gte_MulMatrix0(&car_light_matrix,psVar1,&sStack_30);
   iVar3 = *(int *)(param_1 * 0x1e + 0x744dfe) >> 0x10;
   iVar4 = sStack_30 * iVar3 >> 0x1f;
   sStack_30 = (short)((int)((sStack_30 * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
@@ -13568,7 +13566,7 @@ void __cdecl FUN_0042c1a4(int param_1)
   FUN_0042b5f0(param_1);
   iVar3 = param_1 * 0x27c;
   local_14 = (short *)(iVar3 + 0x752354);
-  gte_MulMatrix0(&car_light_matrix,local_14);
+  gte_MulMatrix0(&car_light_matrix,local_14,&sStack_34);
   iVar1 = *(int *)(param_1 * 0x1e + 0x744dfe) >> 0x10;
   iVar2 = sStack_34 * iVar1 >> 0x1f;
   sStack_34 = (short)((int)((sStack_34 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
@@ -14291,7 +14289,7 @@ void __cdecl Draw_Dynamic_Objects(undefined4 *param_1,int *param_2,int *param_3)
   short local_2c [16];
   
   FUN_004203a0(local_2c,param_2);
-  gte_MulMatrix0(&scene_light_matrix,local_2c);
+  gte_MulMatrix0(&scene_light_matrix,local_2c,(short *)local_4c);
   __lmptr = local_4c;
   __cmptr = &scene_colour_matrix_;
   FUN_004202ac(local_2c,param_3);
@@ -24098,7 +24096,7 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
     case 0:
       iVar7 = param_1 * 0x27c;
       Calc_Object_Angles((short *)(iVar7 + 0x752354),(short *)((int)&DAT_00752390 + iVar7));
-      gte_MulMatrix0((undefined4 *)(local_34 + 0x50),(short *)(iVar7 + 0x752354));
+      gte_MulMatrix0((undefined4 *)(local_34 + 0x50),(short *)(iVar7 + 0x752354),(short *)local_a0);
       Calc_Object_Angles(local_a0,(short *)local_58);
       uVar5 = (local_58[0] >> 0x10) - (*(int *)((int)&DAT_00752390 + iVar7) >> 0x10);
       if (0x7ff < (int)uVar5) {
@@ -24129,7 +24127,7 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
     case 5:
       iVar7 = param_1 * 0x27c;
       Calc_Object_Angles((short *)(iVar7 + 0x752354),(short *)((int)&DAT_00752390 + iVar7));
-      gte_MulMatrix0((undefined4 *)(local_34 + 0x50),(short *)(iVar7 + 0x752354));
+      gte_MulMatrix0((undefined4 *)(local_34 + 0x50),(short *)(iVar7 + 0x752354),(short *)local_80);
       Calc_Object_Angles(local_80,&local_50);
       local_50 = local_50 - *(short *)((int)&DAT_00752390 + iVar7);
       sStack_18 = sStack_4e - *(short *)((int)&DAT_00752392 + iVar7);
@@ -33177,7 +33175,7 @@ void FUN_0044e618(void)
   __bcrgb = 0x60;
   DAT_00468eb8 = DAT_00468eb8 + -0x10;
   FUN_004203a0((short *)0x907950,(int *)&DAT_00468eb4);
-  gte_MulMatrix0((undefined4 *)&DAT_00468ebc,(short *)0x907950);
+  gte_MulMatrix0((undefined4 *)&DAT_00468ebc,(short *)0x907950,(short *)0x907970);
   __lmptr = 0x907970;
   __cmptr = &DAT_00468edc;
   FUN_004202ac((short *)0x907950,(int *)&DAT_00468ea4);
@@ -34729,7 +34727,7 @@ void Draw_Slab(void)
   }
   Set_World_Position((undefined4 *)&DAT_004699b4);
   FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);
-  gte_MulMatrix0((undefined4 *)&slab_light_matrix,(short *)0x907ddc);
+  gte_MulMatrix0((undefined4 *)&slab_light_matrix,(short *)0x907ddc,(short *)0x907dbc);
   __lmptr = 0x907dbc;
   __cmptr = &DAT_00469974;
   FUN_004202ac((short *)0x907ddc,(int *)&slab_position);
