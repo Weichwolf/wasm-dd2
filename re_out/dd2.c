@@ -10930,27 +10930,23 @@ void __cdecl Generate_Surface_Normals(byte *param_1)
       local_30 = local_2c << 2;
       local_1c = 0;
       do {
-        if (local_28 == 0) {
-          if (local_2c < 9) {
-                    /* WARNING: Could not recover jumptable at 0x00426813. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-            (**(code **)((int)&PTR_LAB_00426740 + local_30))();
-            return;
-          }
+        /* WASM: reconstructed jumptables @0x426813 (table1) + @0x42683f (table2) from dd2.exe disasm.
+           Both select 3 vertex indices (iVar2=va, iVar5=vb, iVar6=vc) for the surface-normal cross product. */
+        if ((local_28 == 0) && (local_2c < 9)) {
+          if ((local_2c == 1) || (local_2c == 3)) { iVar2 = local_14; iVar5 = iVar8; iVar6 = iVar7; }       /* 0x426877 */
+          else if ((local_2c == 4) || (local_2c == 6)) { iVar2 = local_14; iVar5 = local_18; iVar6 = iVar7; } /* 0x426829 */
+          else { if (local_1c != 0) { iVar2 = local_14; iVar5 = iVar8; iVar6 = iVar7; }                      /* 0x42681a */
+                 else { iVar2 = local_18; iVar5 = iVar7; iVar6 = iVar8; } }
         }
         else if ((local_28 == local_34) && (local_2c < 9)) {
-                    /* WARNING: Could not recover jumptable at 0x0042683f. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-          (**(code **)((int)&PTR_LAB_00426764 + local_30))();
-          return;
+          if ((local_2c == 2) || (local_2c == 3)) { iVar2 = local_14; iVar5 = iVar8; iVar6 = local_18; }     /* 0x426855 */
+          else if ((local_2c == 5) || (local_2c == 6)) { iVar2 = iVar8; iVar5 = local_18; iVar6 = iVar7; }   /* 0x42685f */
+          else { if (local_1c != 0) { iVar2 = local_14; iVar5 = iVar8; iVar6 = iVar7; }                      /* 0x426846 */
+                 else { iVar2 = local_18; iVar5 = iVar7; iVar6 = iVar8; } }
         }
-        iVar2 = local_18;
-        iVar5 = iVar7;
-        iVar6 = iVar8;
-        if (local_1c != 0) {
-          iVar2 = local_14;
-          iVar5 = iVar8;
-          iVar6 = iVar7;
+        else {                                                                                               /* 0x426868 */
+          if (local_1c != 0) { iVar2 = local_14; iVar5 = iVar8; iVar6 = iVar7; }
+          else { iVar2 = local_18; iVar5 = iVar7; iVar6 = iVar8; }
         }
         piVar4 = (int *)(local_24 + iVar5 * 0xc);
         piVar3 = (int *)(iVar2 * 0xc + local_24);
