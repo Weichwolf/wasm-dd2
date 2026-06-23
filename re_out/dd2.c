@@ -2816,10 +2816,7 @@ void __cdecl RotMatrixY(uint param_1,short *param_2)
   int iVar4;
   short *psVar5;
   short *psVar6;
-  short asStack_44 [6];
-  short sStack_38;
-  short local_36;
-  short sStack_34;
+  short asStack_44 [16];
   
   iVar1 = rcos(param_1);
   iVar2 = rsin(param_1);
@@ -2831,23 +2828,23 @@ void __cdecl RotMatrixY(uint param_1,short *param_2)
     psVar6 = psVar6 + 2;
   }
   *psVar6 = *psVar5;
-  iVar3 = asStack_44[0] * iVar1 + iVar2 * sStack_38;
+  iVar3 = asStack_44[0] * iVar1 + iVar2 * asStack_44[6];
   iVar4 = iVar3 >> 0x1f;
   *param_2 = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = iVar2 * local_36 + asStack_44[1] * iVar1;
+  iVar3 = iVar2 * asStack_44[7] + asStack_44[1] * iVar1;
   iVar4 = iVar3 >> 0x1f;
   param_2[1] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = sStack_34 * iVar2 + asStack_44[2] * iVar1;
+  iVar3 = asStack_44[8] * iVar2 + asStack_44[2] * iVar1;
   iVar4 = iVar3 >> 0x1f;
   param_2[2] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
   iVar2 = -iVar2;
-  iVar3 = asStack_44[0] * iVar2 + sStack_38 * iVar1;
+  iVar3 = asStack_44[0] * iVar2 + asStack_44[6] * iVar1;
   iVar4 = iVar3 >> 0x1f;
   param_2[6] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar3 = local_36 * iVar1 + asStack_44[1] * iVar2;
+  iVar3 = asStack_44[7] * iVar1 + asStack_44[1] * iVar2;
   iVar4 = iVar3 >> 0x1f;
   param_2[7] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar1 = sStack_34 * iVar1 + iVar2 * asStack_44[2];
+  iVar1 = asStack_44[8] * iVar1 + iVar2 * asStack_44[2];
   iVar2 = iVar1 >> 0x1f;
   param_2[8] = (short)((int)((iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
   return;
