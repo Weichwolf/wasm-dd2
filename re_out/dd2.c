@@ -3,6 +3,7 @@
 int _g_esi=0x714100,_g_edi=0x4604b6,_g_ebx=0x714100,_g_ebp=0x714140; /* GTE fragment register file (recovered from x86 GTERPT/GTERPS/GTERPT4_ caller reg-sets) */
 
 /* ALL face-draw handler forward decls (hoisted) */
+extern void setup_face_sprite(int);
 extern void draw_face_3pt_flat(int);
 extern void draw_face_3pt_flat_dpq(int);
 extern void draw_face_3pt_flat_dpq_lit(int);
@@ -6479,7 +6480,6 @@ void FUN_0041ccf8(int);
 void FUN_0041cdd0(int);
 void FUN_0041d834(int);
 void FUN_0041d918(int);
-void FUN_0041e418(int);
 
 /* ===== FUN_0041fb7c @ 0041fb7c ===== */
 
@@ -6517,7 +6517,7 @@ int __cdecl FUN_0041fb7c(undefined4 *param_1)
         case 0x41cdd0: FUN_0041cdd0((int)sVar2); break;
         case 0x41d834: FUN_0041d834((int)sVar2); break;
         case 0x41d918: FUN_0041d918((int)sVar2); break;
-        case 0x41e418: FUN_0041e418((int)sVar2); break;
+        case 0x41e418: setup_face_sprite((int)sVar2); break;
         default: break;
       }
     }
