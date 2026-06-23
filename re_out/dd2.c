@@ -13278,8 +13278,8 @@ void __cdecl FUN_0042b5f0(int param_1)
   int *piVar11;
   uint uVar12;
   bool bVar13;
-  int local_24c [4];
-  int aiStack_23c [130];
+  int local_24c [200];
+  int *aiStack_23c = local_24c + 4;
   int local_34;
   
   piVar9 = &DAT_0042a7e0;
@@ -13300,7 +13300,7 @@ void __cdecl FUN_0042b5f0(int param_1)
       *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x40;
       iVar6 = _current_level * 8;
       iVar2 = param_1 * 0x1e;
-      *(undefined2 *)(&car_colour_matrix + iVar2) = *(undefined2 *)(&scene_colour_vectors + iVar6);
+      *(undefined2 *)((int)&car_colour_matrix + iVar2) = *(undefined2 *)(&scene_colour_vectors + iVar6);
       *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)(&DAT_00465924 + iVar6);
       *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)(&DAT_00465926 + iVar6);
     }
@@ -13330,7 +13330,7 @@ void __cdecl FUN_0042b5f0(int param_1)
       if (uVar12 == 0) {
         *(undefined2 *)(iVar2 + 0x744e06) = 0;
         *(undefined2 *)(iVar2 + 0x744e0c) = 0;
-        *(undefined2 *)(&car_colour_matrix + iVar2) = 0;
+        *(undefined2 *)((int)&car_colour_matrix + iVar2) = 0;
       }
       else {
         aiStack_23c[0x70] = local_24c[uVar12 * 4];
@@ -13349,20 +13349,20 @@ void __cdecl FUN_0042b5f0(int param_1)
         if ((iVar6 < iVar10) || (iVar4 < iVar6)) {
           iVar2 = param_1 * 0x1e;
           if (iVar6 < iVar10) {
-            *(short *)(&car_colour_matrix + iVar2) = sRam00465932;
+            *(short *)((int)&car_colour_matrix + iVar2) = sRam00465932;
             *(short *)(iVar2 + 0x744e06) = sRam00465934;
             *(short *)(iVar2 + 0x744e0c) = sRam00465936;
           }
           else if (iVar4 < iVar6) {
             *(undefined2 *)(iVar2 + 0x744e06) = 0;
             *(undefined2 *)(iVar2 + 0x744e0c) = 0;
-            *(undefined2 *)(&car_colour_matrix + iVar2) = 0;
+            *(undefined2 *)((int)&car_colour_matrix + iVar2) = 0;
           }
         }
         else {
           iVar6 = iVar4 - iVar6;
           iVar5 = iVar4 - iVar10;
-          *(short *)(&car_colour_matrix + iVar2) = (short)((iVar6 * sRam00465932) / iVar5);
+          *(short *)((int)&car_colour_matrix + iVar2) = (short)((iVar6 * sRam00465932) / iVar5);
           *(short *)(iVar2 + 0x744e06) = (short)((iVar6 * sRam00465934) / iVar5);
           *(short *)(iVar2 + 0x744e0c) = (short)((iVar6 * sRam00465936) / iVar5);
           local_34 = *(int *)(iVar2 + 0x744dfe) >> 0x10;
@@ -13390,7 +13390,7 @@ void __cdecl FUN_0042b5f0(int param_1)
        ((sVar1 = *(short *)(param_1 * 0x2c + 0x75a2b2), sVar1 < 0x1f7 || (0x221 < sVar1)))) {
       *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x40;
       uVar3 = *(undefined2 *)(&scene_colour_vectors + _current_level * 8);
-      *(undefined2 *)(&car_colour_matrix + param_1 * 0x1e) = uVar3;
+      *(undefined2 *)((int)&car_colour_matrix + param_1 * 0x1e) = uVar3;
       *(undefined2 *)(param_1 * 0x1e + 0x744e06) = uVar3;
       *(undefined2 *)(param_1 * 0x1e + 0x744e0c) = uVar3;
     }
@@ -13450,7 +13450,7 @@ void __cdecl FUN_0042b5f0(int param_1)
         uVar3 = (undefined2)local_34;
         *(undefined2 *)(iVar2 + 0x744e06) = uVar3;
         *(undefined2 *)(iVar2 + 0x744e0c) = uVar3;
-        *(undefined2 *)(&car_colour_matrix + iVar2) = uVar3;
+        *(undefined2 *)((int)&car_colour_matrix + iVar2) = uVar3;
       }
       else {
         aiStack_23c[0x70] = local_24c[uVar12 * 4];
@@ -13469,7 +13469,7 @@ void __cdecl FUN_0042b5f0(int param_1)
         if ((iVar10 < iVar6) && (iVar6 < iVar4)) {
           iVar6 = iVar4 - iVar6;
           iVar4 = iVar4 - iVar10;
-          *(short *)(&car_colour_matrix + iVar2) = (short)((sRam00465942 * iVar6) / iVar4);
+          *(short *)((int)&car_colour_matrix + iVar2) = (short)((sRam00465942 * iVar6) / iVar4);
           *(short *)(iVar2 + 0x744e06) = (short)((sRam00465944 * iVar6) / iVar4);
           *(short *)(iVar2 + 0x744e0c) = (short)((sRam00465946 * iVar6) / iVar4);
           local_34 = *(int *)(iVar2 + 0x744dfe) >> 0x10;
@@ -13480,11 +13480,11 @@ void __cdecl FUN_0042b5f0(int param_1)
             if (iVar4 <= iVar6) {
               *(undefined2 *)(iVar2 + 0x744e06) = 0;
               *(undefined2 *)(iVar2 + 0x744e0c) = 0;
-              *(undefined2 *)(&car_colour_matrix + iVar2) = 0;
+              *(undefined2 *)((int)&car_colour_matrix + iVar2) = 0;
             }
           }
           else {
-            *(short *)(&car_colour_matrix + iVar2) = sRam00465942;
+            *(short *)((int)&car_colour_matrix + iVar2) = sRam00465942;
             sVar1 = sRam00465946;
             *(short *)(iVar2 + 0x744e06) = sRam00465944;
             *(short *)(iVar2 + 0x744e0c) = sVar1;
@@ -13611,7 +13611,7 @@ void Init_Car_Graphics(void)
     puVar5 = (undefined4 *)0x749034;
     do {
       iVar1 = _current_level;
-      *(undefined2 *)(&car_colour_matrix + iVar2) =
+      *(undefined2 *)((int)&car_colour_matrix + iVar2) =
            *(undefined2 *)(&DAT_0046591a + _current_level * 8);
       *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)(&DAT_0046591c + iVar1 * 8);
       *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)(&DAT_0046591e + iVar1 * 8);
