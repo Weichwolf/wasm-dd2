@@ -1,5 +1,7 @@
 #include "ghidra_compat.h"
 #include "dd2_symbols.h"
+int _g_esi=0x714100,_g_edi=0x4604b6,_g_ebx=0x714100,_g_ebp=0x714140; /* GTE fragment register file (recovered from x86 GTERPT/GTERPS/GTERPT4_ caller reg-sets) */
+
 /* ALL face-draw handler forward decls (hoisted) */
 extern void draw_face_3pt_flat(int);
 extern void draw_face_3pt_flat_dpq(int);
@@ -2277,9 +2279,9 @@ void GTERPS(void)
 
 {
   __flg = 0;
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
+  _g_esi=0x714100; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x714100; FUN_00414055();
+  _g_ebx=0x714100; _g_ebp=0x714140; FUN_00413f45();
   return;
 }
 
@@ -2292,15 +2294,15 @@ void GTERPT(void)
 
 {
   __flg = 0;
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
+  _g_esi=0x714100; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x714100; FUN_00414055();
+  _g_ebx=0x714100; _g_ebp=0x714140; FUN_00413f45();
+  _g_esi=0x714110; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x714110; FUN_00414055();
+  _g_ebx=0x714110; _g_ebp=0x714150; FUN_00413f45();
+  _g_esi=0x7140e0; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x7140e0; FUN_00414055();
+  _g_ebx=0x7140e0; _g_ebp=0x714120; FUN_00413f45();
   return;
 }
 
@@ -2313,18 +2315,18 @@ void GTERPT4_(void)
 
 {
   __flg = 0;
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
-  FUN_00413fd2();
-  FUN_00414055();
-  FUN_00413f45();
+  _g_esi=0x714100; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x714100; FUN_00414055();
+  _g_ebx=0x714100; _g_ebp=0x714140; FUN_00413f45();
+  _g_esi=0x714110; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x714110; FUN_00414055();
+  _g_ebx=0x714110; _g_ebp=0x714150; FUN_00413f45();
+  _g_esi=0x7140e0; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x7140e0; FUN_00414055();
+  _g_ebx=0x7140e0; _g_ebp=0x714120; FUN_00413f45();
+  _g_esi=0x7140f0; _g_edi=0x4604b6; FUN_00413fd2();
+  _g_esi=0x4604b6; _g_edi=0x7140f0; FUN_00414055();
+  _g_ebx=0x7140f0; _g_ebp=0x714130; FUN_00413f45();
   return;
 }
 
@@ -2336,7 +2338,7 @@ void GTERPT4_(void)
 void FUN_00413b4e(void)
 
 {
-  FUN_00413fd2();
+  _g_esi=0x714100; _g_edi=0x4604b6; FUN_00413fd2();
   __vr0 = DAT_004604b6;
   _DAT_00714104 = DAT_004604ba;
   _DAT_00714108 = DAT_004604be;
@@ -2455,8 +2457,8 @@ void FUN_00413f45(void)
 {
   uint uVar1;
   int iVar2;
-  int *unaff_EBX;
-  int *unaff_EBP;
+  int *unaff_EBX=(int*)(uintptr_t)_g_ebx;
+  int *unaff_EBP=(int*)(uintptr_t)_g_ebp;
   uint uVar3;
   
   uVar1 = _DAT_007142d4;
@@ -2498,8 +2500,8 @@ void FUN_00413fd2(void)
 
 {
   int iVar1;
-  short *unaff_ESI;
-  uint *unaff_EDI;
+  short *unaff_ESI=(short*)(uintptr_t)_g_esi;
+  uint *unaff_EDI=(uint*)(uintptr_t)_g_edi;
   
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (uint)((longlong)(int)__globmat * (longlong)iVar1) >> 0xc |
@@ -2541,9 +2543,9 @@ void FUN_00413fd2(void)
 void FUN_00414055(void)
 
 {
-  int unaff_EBP;
-  int *unaff_ESI;
-  int *unaff_EDI;
+  int unaff_EBP=_g_ebp;
+  int *unaff_ESI=(int*)(uintptr_t)_g_esi;
+  int *unaff_EDI=(int*)(uintptr_t)_g_edi;
   
   *unaff_EDI = *(int *)(unaff_EBP + 0x12) + *unaff_ESI;
   unaff_EDI[1] = *(int *)(unaff_EBP + 0x16) + unaff_ESI[1];
