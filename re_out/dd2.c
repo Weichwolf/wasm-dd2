@@ -24342,7 +24342,7 @@ void __cdecl FUN_00440ac4(int param_1)
   int iVar5;
   
   iVar3 = param_1 * 0xb0;
-  piVar4 = (int *)(&car_wheel_fd + iVar3);
+  piVar4 = (int *)((int)&car_wheel_fd + iVar3);   /* WASM: byte offset (Ghidra scaled int* by 4 -> overlapped level buf) */
   uVar2 = *(undefined4 *)(&DAT_0075a2a4 + param_1 * 0x2c);
   *(undefined4 *)(iVar3 + 0x75c880) = uVar2;
   *(undefined4 *)(iVar3 + 0x75c854) = uVar2;
