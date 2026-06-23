@@ -9859,17 +9859,17 @@ void FUN_00424930(void)
   } while (iVar2 != 0xea0);
   puVar3 = (undefined4 *)&wheeloff_object_;
   do {
-    Create_Object(puVar3,*(int *)(_level_data + 0x48));
+    Create_Object(puVar3,*(int *)((char *)_level_data + 0x48));
     puVar3 = puVar3 + 7;
   } while (puVar3 != (undefined4 *)&Debris);
   puVar3 = (undefined4 *)&bonnetoff_object;
   do {
-    Create_Object(puVar3,*(int *)(_level_data + 0x4c));
+    Create_Object(puVar3,*(int *)((char *)_level_data + 0x4c));
     puVar3 = puVar3 + 7;
   } while (puVar3 != (undefined4 *)&wheeloff_index);
   puVar3 = (undefined4 *)&bootoff_object;
   do {
-    Create_Object(puVar3,*(int *)(_level_data + 0x50));
+    Create_Object(puVar3,*(int *)((char *)_level_data + 0x50));
     puVar3 = puVar3 + 7;
   } while (puVar3 != (undefined4 *)&bonnetoff_object);
   return;
@@ -10517,7 +10517,7 @@ void InitialiseDenting(void)
   undefined4 *puVar4;
   undefined4 *puVar5;
   
-  puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x40) + 0x20);
+  puVar4 = *(undefined4 **)(*(int *)((char *)_level_data + 0x40) + 0x20);
   puVar5 = (undefined4 *)&mid_car_vertices;
   for (iVar2 = 0xcc; iVar2 != 0; iVar2 = iVar2 + -1) {
     *puVar5 = *puVar4;
@@ -10529,7 +10529,7 @@ void InitialiseDenting(void)
     puVar4 = (undefined4 *)((int)puVar4 + 1);
     puVar5 = (undefined4 *)((int)puVar5 + 1);
   }
-  puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x44) + 0x20);
+  puVar4 = *(undefined4 **)(*(int *)((char *)_level_data + 0x44) + 0x20);
   puVar5 = (undefined4 *)&high_car_vertices;
   for (iVar2 = 0xd6; iVar2 != 0; iVar2 = iVar2 + -1) {
     *puVar5 = *puVar4;
@@ -13512,8 +13512,8 @@ void __cdecl Draw_Car(int param_1)
   __lmptr = &sStack_30;
   FUN_004202ac(psVar1,(int *)(&DAT_00752344 + param_1 * 0x27c));
   bVar2 = _DAT_0071be56 < 4000;
-  *(undefined1 **)(*(int *)(_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
-  iVar3 = VVDraw_Object((undefined4 *)(&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
+  *(undefined1 **)(*(int *)((char *)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
+  iVar3 = VVDraw_Object((undefined4 *)((int)&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
   *(int *)(param_1 * 0x27c + 0x752398) = iVar3;
   if ((iVar3 != 0) && (bVar2 == 1)) {
     *(short *)(param_1 * 0x27c + 0x7522b0) = -*(short *)(param_1 * 0x1b2 + 0x75a682);
@@ -13554,7 +13554,7 @@ void __cdecl FUN_0042c1a4(int param_1)
                      );
   __lmptr = &sStack_34;
   FUN_004202ac(local_14,(int *)(&DAT_00752344 + iVar3));
-  iVar1 = VVDraw_Object((undefined4 *)(&car_object + param_1 * 0x38));
+  iVar1 = VVDraw_Object((undefined4 *)((int)&car_object + param_1 * 0x38));
   *(int *)(iVar3 + 0x752398) = iVar1;
   if (iVar1 != 0) {
     *(short *)(iVar3 + 0x7522b0) = -*(short *)(param_1 * 0x1b2 + 0x75a682);
@@ -13581,9 +13581,9 @@ void Init_Car_Graphics(void)
   undefined4 *puVar6;
   
   Init_Car_Cluts();
-  Create_Object((undefined4 *)(&car_object + _current_player_car * 0x38),
-                *(int *)(_level_data + 0x44));
-  Create_Object((undefined4 *)(_current_player_car * 0x38 + 0x749034),*(int *)(_level_data + 0x40));
+  Create_Object((undefined4 *)((int)&car_object + _current_player_car * 0x38),
+                *(int *)((char *)_level_data + 0x44));
+  Create_Object((undefined4 *)(_current_player_car * 0x38 + 0x749034),*(int *)((char *)_level_data + 0x40));
   FUN_0043b26c(_current_player_car,_current_player_car,0);
   iVar3 = 0;
   if (0 < num_cars) {
@@ -13603,8 +13603,8 @@ void Init_Car_Graphics(void)
       iVar1 = _current_player_car;
       *(undefined2 *)(iVar2 + 0x744e10) = 0;
       if (iVar3 != iVar1) {
-        Create_Object((undefined4 *)(&car_object + iVar3 * 0x38),*(int *)(_level_data + 0x3c));
-        Create_Object(puVar5,*(int *)(_level_data + 0x40));
+        Create_Object((undefined4 *)((int)&car_object + iVar3 * 0x38),*(int *)((char *)_level_data + 0x3c));
+        Create_Object(puVar5,*(int *)((char *)_level_data + 0x40));
         FUN_0043b26c(iVar3,iVar3,1);
         FUN_0043b26c(iVar3,iVar3,2);
       }
@@ -13618,7 +13618,7 @@ void Init_Car_Graphics(void)
     puVar5 = (undefined4 *)&car_vertices;
     do {
       if (iVar3 != _current_player_car) {
-        puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x40) + 0x20);
+        puVar4 = *(undefined4 **)(*(int *)((char *)_level_data + 0x40) + 0x20);
         puVar6 = puVar5;
         for (iVar2 = 0xcc; iVar2 != 0; iVar2 = iVar2 + -1) {
           *puVar6 = *puVar4;
@@ -13662,8 +13662,8 @@ void Init_Car_Graphics(void)
 void Init_Wild_Bill(void)
 
 {
-  Create_Object((undefined4 *)0x749b6c,*(int *)(_level_data + 0x54));
-  Create_Object((undefined4 *)&cigar_object,*(int *)(_level_data + 0x58));
+  Create_Object((undefined4 *)0x749b6c,*(int *)((char *)_level_data + 0x54));
+  Create_Object((undefined4 *)&cigar_object,*(int *)((char *)_level_data + 0x58));
   return;
 }
 
@@ -13706,12 +13706,12 @@ void Init_Rollercoaster(void)
     *(int *)(iVar1 + 0x749588) = local_1c;
     *(undefined4 *)(iVar1 + 0x74958c) = 0xffffffff;
     if (local_18 == 0) {
-      Create_Object((undefined4 *)&coaster_car_object,*(int *)(_level_data + 0x54));
+      Create_Object((undefined4 *)&coaster_car_object,*(int *)((char *)_level_data + 0x54));
       *(undefined4 *)(iVar1 + 0x749584) = 0;
       *(undefined4 *)(iVar1 + 0x74958c) = 0xffffffff;
     }
     else {
-      Create_Object(local_14,*(int *)(_level_data + 0x58));
+      Create_Object(local_14,*(int *)((char *)_level_data + 0x58));
     }
     iVar1 = iVar1 + 0x50;
     local_14 = local_14 + 7;
@@ -14771,7 +14771,7 @@ void Init_Overlays(void)
   }
   local_64 = 0x74bab8;
   local_5c = 0x74bb58;
-  Load_Sprite_Info(*(undefined4 **)(_level_data + 0xc));
+  Load_Sprite_Info(*(undefined4 **)((char *)_level_data + 0xc));
   local_4c = 0x74bce8;
   local_44 = 0x74b3d8;
   local_6c = 0x74bc98;
@@ -16248,14 +16248,14 @@ void Remove_Scene_Objects(void)
 void Init_Sky(void)
 
 {
-  _sky_shape1 = *(int *)(_level_data + 0x1c);
-  _sky_shape2 = *(int *)(_level_data + 0x20);
-  _sky_shape3 = *(int *)(_level_data + 0x24);
-  _sky_shape4 = *(int *)(_level_data + 0x28);
-  _sky_shape5 = *(int *)(_level_data + 0x2c);
-  _sky_shape6 = *(int *)(_level_data + 0x30);
-  _sky_shape7 = *(int *)(_level_data + 0x34);
-  _sky_shape8 = *(int *)(_level_data + 0x38);
+  _sky_shape1 = *(int *)((char *)_level_data + 0x1c);
+  _sky_shape2 = *(int *)((char *)_level_data + 0x20);
+  _sky_shape3 = *(int *)((char *)_level_data + 0x24);
+  _sky_shape4 = *(int *)((char *)_level_data + 0x28);
+  _sky_shape5 = *(int *)((char *)_level_data + 0x2c);
+  _sky_shape6 = *(int *)((char *)_level_data + 0x30);
+  _sky_shape7 = *(int *)((char *)_level_data + 0x34);
+  _sky_shape8 = *(int *)((char *)_level_data + 0x38);
   Create_Object((undefined4 *)&sky_object,_sky_shape1);
   Create_Object((undefined4 *)0x751d8c,_sky_shape2);
   Create_Object((undefined4 *)0x751da8,_sky_shape3);
@@ -18243,7 +18243,7 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
         Check_Bonnet_Removal(param_2);
       }
-      puVar3 = &car_object + param_2 * 0x38;
+      puVar3 = (int)&car_object + param_2 * 0x38;
       puVar8 = &car_handling + param_2 * 0x1b2;
       if (param_2 == _current_player_car) {
         iVar5 = 0;
@@ -18280,7 +18280,7 @@ LAB_004347e7:
       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
         Check_Boot_Removal(param_2);
       }
-      puVar3 = &car_object + param_2 * 0x38;
+      puVar3 = (int)&car_object + param_2 * 0x38;
       puVar8 = &car_handling + param_2 * 0x1b2;
       if (param_2 == _current_player_car) {
         iVar5 = 0;
@@ -18307,7 +18307,7 @@ LAB_004347e7:
       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
         Check_Bonnet_Removal(param_2);
       }
-      puVar3 = &car_object + param_2 * 0x38;
+      puVar3 = (int)&car_object + param_2 * 0x38;
       puVar8 = &car_handling + param_2 * 0x1b2;
       if (param_2 != _current_player_car) goto LAB_00434537;
       iVar5 = 0;
@@ -18335,7 +18335,7 @@ LAB_004347e7:
       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
         Check_Boot_Removal(param_2);
       }
-      puVar3 = &car_object + param_2 * 0x38;
+      puVar3 = (int)&car_object + param_2 * 0x38;
       puVar8 = &car_handling + param_2 * 0x1b2;
       if (param_2 != _current_player_car) {
         uVar12 = 1;
@@ -18693,10 +18693,10 @@ void FUN_004351d0(void)
       uVar1 = uVar1 + 1;
     } while (uVar1 < num_cars);
   }
-  Create_Object((undefined4 *)&wheel_object,*(int *)(_level_data + 0x14));
-  Create_Object((undefined4 *)0x7552ec,*(int *)(_level_data + 0x18));
-  Create_Object((undefined4 *)0x755308,*(int *)(_level_data + 0x14));
-  Create_Object((undefined4 *)0x755324,*(int *)(_level_data + 0x18));
+  Create_Object((undefined4 *)&wheel_object,*(int *)((char *)_level_data + 0x14));
+  Create_Object((undefined4 *)0x7552ec,*(int *)((char *)_level_data + 0x18));
+  Create_Object((undefined4 *)0x755308,*(int *)((char *)_level_data + 0x14));
+  Create_Object((undefined4 *)0x755324,*(int *)((char *)_level_data + 0x18));
   return;
 }
 
@@ -19810,7 +19810,7 @@ LAB_00437405:
       Check_Bonnet_Removal(param_2);
     }
     puVar10 = &car_handling + param_2 * 0x1b2;
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
       uVar13 = 0;
@@ -19838,7 +19838,7 @@ LAB_00437812:
       Check_Bonnet_Removal(param_2);
     }
     puVar10 = &car_handling + param_2 * 0x1b2;
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 != _current_player_car) goto LAB_00437812;
     iVar11 = 0;
     uVar13 = 0;
@@ -19866,7 +19866,7 @@ LAB_00437812:
       FUN_004450dc(param_2,1);
     }
     puVar10 = &car_handling + param_2 * 0x1b2;
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
       uVar13 = 1;
@@ -19900,7 +19900,7 @@ LAB_00437812:
     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       FUN_004450dc(param_2,3);
     }
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     puVar10 = &car_handling + param_2 * 0x1b2;
     if (param_2 == _current_player_car) {
       iVar11 = 0;
@@ -19936,7 +19936,7 @@ switchD_0043774e_default:
     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       FUN_004450dc(param_1,0);
     }
-    puVar10 = &car_object + param_1 * 0x38;
+    puVar10 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar11 = 0;
       iVar1 = _current_player_car;
@@ -19966,7 +19966,7 @@ switchD_0043774e_default:
     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       FUN_004450dc(param_1,2);
     }
-    puVar10 = &car_object + param_1 * 0x38;
+    puVar10 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar11 = 0;
       iVar1 = _current_player_car;
@@ -20012,7 +20012,7 @@ switchD_0043774e_default:
     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       Check_Boot_Removal(param_1);
     }
-    puVar10 = &car_object + param_1 * 0x38;
+    puVar10 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar11 = 0;
       iVar1 = _current_player_car;
@@ -20048,7 +20048,7 @@ switchD_0043774e_default:
     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
       Check_Bonnet_Removal(param_1);
     }
-    puVar10 = &car_object + param_1 * 0x38;
+    puVar10 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar11 = 0;
       iVar1 = _current_player_car;
@@ -20420,7 +20420,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
         *(undefined4 *)(iVar1 + 0x75a712) = 0xfff;
       }
     }
-    puVar2 = &car_object + param_1 * 0x38;
+    puVar2 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar3 = 0;
       iVar1 = _current_player_car;
@@ -20447,7 +20447,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
         *(undefined4 *)(iVar1 + 0x75a6fe) = 0xfff;
       }
     }
-    puVar2 = &car_object + param_1 * 0x38;
+    puVar2 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar3 = 0;
       iVar1 = _current_player_car;
@@ -20490,7 +20490,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
     iVar1 = param_1 * 0x1b2;
     *(undefined4 *)(iVar1 + 0x75a706) = *(undefined4 *)(iVar1 + 0x75a702);
     *(undefined4 *)(iVar1 + 0x75a70e) = *(undefined4 *)(iVar1 + 0x75a70a);
-    puVar2 = &car_object + param_1 * 0x38;
+    puVar2 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar4 = 0;
       iVar3 = _current_player_car;
@@ -20523,7 +20523,7 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
     iVar1 = param_1 * 0x1b2;
     *(undefined4 *)(iVar1 + 0x75a6f2) = *(undefined4 *)(iVar1 + 0x75a6ee);
     *(undefined4 *)(iVar1 + 0x75a6fa) = *(undefined4 *)(iVar1 + 0x75a6f6);
-    puVar2 = &car_object + param_1 * 0x38;
+    puVar2 = (int)&car_object + param_1 * 0x38;
     if (param_1 == _current_player_car) {
       iVar4 = 0;
       iVar3 = _current_player_car;
@@ -20553,7 +20553,7 @@ LAB_00438e8d:
         *(undefined4 *)(iVar1 + 0x75a712) = 0xfff;
       }
     }
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar3 = 0;
       iVar1 = _current_player_car;
@@ -20596,7 +20596,7 @@ LAB_00438e8d:
     iVar1 = param_2 * 0x1b2;
     *(undefined4 *)(iVar1 + 0x75a706) = *(undefined4 *)(iVar1 + 0x75a702);
     *(undefined4 *)(iVar1 + 0x75a70e) = *(undefined4 *)(iVar1 + 0x75a70a);
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar4 = 0;
       iVar3 = _current_player_car;
@@ -20629,7 +20629,7 @@ LAB_00438e8d:
     iVar1 = param_2 * 0x1b2;
     *(undefined4 *)(iVar1 + 0x75a6f2) = *(undefined4 *)(iVar1 + 0x75a6ee);
     *(undefined4 *)(iVar1 + 0x75a6fa) = *(undefined4 *)(iVar1 + 0x75a6f6);
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar4 = 0;
       iVar3 = _current_player_car;
@@ -20658,7 +20658,7 @@ LAB_00439253:
         *(undefined4 *)(iVar1 + 0x75a6fe) = 0xfff;
       }
     }
-    puVar2 = &car_object + param_2 * 0x38;
+    puVar2 = (int)&car_object + param_2 * 0x38;
     if (param_2 == _current_player_car) {
       iVar3 = 0;
       iVar1 = _current_player_car;
@@ -27361,8 +27361,8 @@ void Modify_TDF(void)
   uint local_18;
   ushort *local_14;
   
-  local_14 = (ushort *)(*(int **)(_level_data + 0x10) + 1);
-  iVar1 = **(int **)(_level_data + 0x10);
+  local_14 = (ushort *)(*(int **)((char *)_level_data + 0x10) + 1);
+  iVar1 = **(int **)((char *)_level_data + 0x10);
   local_30 = 0;
   if (0 < iVar1) {
     do {
@@ -27514,7 +27514,7 @@ void Init_Graphics(void)
   byte local_820 [2048];
   char local_20 [20];
   
-  FUN_0041ff50(*(int *)(_level_data + 0x10) + 4);
+  FUN_0041ff50(*(int *)((char *)_level_data + 0x10) + 4);
   Modify_TDF();
   FUN_0045672e((int)local_20,(byte *)s_LEV_X_LEVEL_PAL_0046cf94,_current_level);
   File_Load(local_20,local_820);
@@ -31062,21 +31062,21 @@ void Init_Front_End(void)
   Duplicate_Font(0,3,s_CFONT_0046d494);
   Duplicate_Font(1,4,s_CFONT2_0046d49c);
   Duplicate_Font(1,5,s_CFONT2A_0046d4a4);
-  Create_Object((undefined4 *)0x907d30,*(int *)(_level_data + 0x54));
-  Create_Object((undefined4 *)0x907c18,*(int *)(_level_data + 0x58));
-  Create_Object((undefined4 *)&dpadbuttons_object,*(int *)(_level_data + 0x5c));
-  Create_Object((undefined4 *)&dpadlabels_object,*(int *)(_level_data + 0x60));
+  Create_Object((undefined4 *)0x907d30,*(int *)((char *)_level_data + 0x54));
+  Create_Object((undefined4 *)0x907c18,*(int *)((char *)_level_data + 0x58));
+  Create_Object((undefined4 *)&dpadbuttons_object,*(int *)((char *)_level_data + 0x5c));
+  Create_Object((undefined4 *)&dpadlabels_object,*(int *)((char *)_level_data + 0x60));
   Create_Object((undefined4 *)&negleft_object,*(int *)(_level_data + 100));
-  Create_Object((undefined4 *)0x907ca4,*(int *)(_level_data + 0x68));
-  Create_Object((undefined4 *)&negbut1_object,*(int *)(_level_data + 0x3c));
-  Create_Object((undefined4 *)&negbut2_object,*(int *)(_level_data + 0x40));
-  Create_Object((undefined4 *)&negbut3_object,*(int *)(_level_data + 0x44));
-  Create_Object((undefined4 *)&madjoy_object,*(int *)(_level_data + 0x1c));
-  Create_Object((undefined4 *)&madbut_object,*(int *)(_level_data + 0x20));
-  Create_Object((undefined4 *)&madbase_object,*(int *)(_level_data + 0x24));
-  Create_Object((undefined4 *)0x907d4c,*(int *)(_level_data + 0x28));
-  Create_Object((undefined4 *)&carselect_object,*(int *)(_level_data + 0x6c));
-  Create_Object((undefined4 *)&track_object,*(int *)(_level_data + 0x70));
+  Create_Object((undefined4 *)0x907ca4,*(int *)((char *)_level_data + 0x68));
+  Create_Object((undefined4 *)&negbut1_object,*(int *)((char *)_level_data + 0x3c));
+  Create_Object((undefined4 *)&negbut2_object,*(int *)((char *)_level_data + 0x40));
+  Create_Object((undefined4 *)&negbut3_object,*(int *)((char *)_level_data + 0x44));
+  Create_Object((undefined4 *)&madjoy_object,*(int *)((char *)_level_data + 0x1c));
+  Create_Object((undefined4 *)&madbut_object,*(int *)((char *)_level_data + 0x20));
+  Create_Object((undefined4 *)&madbase_object,*(int *)((char *)_level_data + 0x24));
+  Create_Object((undefined4 *)0x907d4c,*(int *)((char *)_level_data + 0x28));
+  Create_Object((undefined4 *)&carselect_object,*(int *)((char *)_level_data + 0x6c));
+  Create_Object((undefined4 *)&track_object,*(int *)((char *)_level_data + 0x70));
   FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);
   FUN_004205d8(local_58,&local_38,0xc);
   FUN_0044b5c0();
@@ -32320,7 +32320,7 @@ void FUN_0044c8e8(void)
   Duplicate_Font(1,4,s_CFONT2_0046d5d0);
   Duplicate_Font(1,5,s_CFONT2A_0046d5d8);
   Setup_Font(s_FONT3_0046d5e0,2,1);
-  Create_Object((undefined4 *)0x907d30,*(int *)(_level_data + 0x54));
+  Create_Object((undefined4 *)0x907d30,*(int *)((char *)_level_data + 0x54));
   FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);
   FUN_004205d8(local_58,&local_38,0xc);
   FUN_0044b5c0();
