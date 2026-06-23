@@ -716,7 +716,7 @@ extern void draw_text_half(void);
 #define DAT_0073c348 (*(int*)GIMG(0x73c348))
 #define DAT_00744b00 (*(int*)GIMG(0x744b00))
 #define DAT_00744b37 (*(int*)GIMG(0x744b37))
-#define DAT_00744b38 (*(int*)GIMG(0x744b38))
+#define DAT_00744b38 (*(unsigned char*)GIMG(0x744b38))  /* byte not int: x86 reads "mov cl,byte[0x744b38]"; int read pulled in adjacent DAT_00744b3a counter -> garbage strip index */
 #define DAT_00744b3a (*(int*)GIMG(0x744b3a))
 #define DAT_00744de0 (*(int*)GIMG(0x744de0))
 #define DAT_0074505c (*(int*)GIMG(0x74505c))
