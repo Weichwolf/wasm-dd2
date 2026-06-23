@@ -3155,6 +3155,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
     iVar1 = *(int *)(iVar5 + 8);
     puVar2 = *(undefined4 **)(iVar5 + 0xc);
     dd2_asset_off = *(int *)iVar5;  /* WASM: asset offset (entry[0]) */
+    dd2_asset_size = *(int *)(iVar5 + 4);  /* WASM: exact byte size (entry[1]) */
     MPE_free(iVar5);
     if (param_1 == (void *)0x0) {
       System_Error(s_Buffer_Load__0046c7b4,s_OUT_OF_MEMORY_0046c790);
@@ -3172,7 +3173,7 @@ void __cdecl FUN_00415160(void *param_1,undefined *param_2)
       (*(code *)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);
     }
     local_14 = local_14 - _Count;
-    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,_Count * 0x800);  /* WASM gap: real byte size (was puVar2[1]>>8=garbage const) */
+    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);  /* WASM gap: EXACT byte size (was puVar2[1]>>8 garbage; _Count*0x800 overshot padding) */
     param_1 = (void *)((int)param_1 + iVar5);
     iVar5 = iVar1;
   } while (iVar1 != 0);

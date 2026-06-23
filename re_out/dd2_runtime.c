@@ -42,6 +42,7 @@ int main(){
     /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;
        the cold Play_Game bypass skips it -> Set_Draw_Mode(0) here so SetPalette's surface exists.
        Force DAT_00463010 (current mode) != 0 so Set_Draw_Mode(0) actually runs the mode-set. */
+    _current_level = 1;
     *(int*)0x463010 = -1;
     Set_Draw_Mode(0);             /* -> SetVideoMode -> FUN_004130b0 -> CreateSurface (primary) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */

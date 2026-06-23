@@ -16,3 +16,4 @@ int GetFileType(int h){ return 1; }  /* FILE_TYPE_DISK */
 #include <stdio.h>
 int FUN_0045607b(void* file, long offset, int whence){ return fseek((FILE*)file, offset, whence); }
 int dd2_asset_off;
+int dd2_asset_size;
