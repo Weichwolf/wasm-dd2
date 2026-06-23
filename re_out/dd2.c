@@ -12148,7 +12148,7 @@ void __cdecl FUN_0042895c(int param_1)
   int *piVar8;
   undefined4 *puVar9;
   int *piVar10;
-  int local_64 [2];
+  int local_64 [4]; /* FUN_00414360 writes 3 ints (param_2[0..2]); [2] overflowed adjacent piVar8/piVar10 -> layout-sensitive camera OOB */
   int local_5c;
   int local_54;
   int local_50;
