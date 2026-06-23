@@ -85,6 +85,13 @@ typedef int      code();   // function type: code* is a callable function pointe
 #define SUB41(x,o)     ((uint8_t)((uint32_t)(x)>>((o)*8)))
 #define SUB42(x,o)     ((uint16_t)((uint32_t)(x)>>((o)*8)))
 #define SUB84(x,o)     ((uint32_t)((uint64_t)(x)>>((o)*8)))
+
+/* missing Ghidra intrinsics (gap-tier): 10-byte concat/extract for x87 float10 + lock no-ops */
+#define CONCAT28(a,b) (((unkuint10)(uint16_t)(a)<<64)|(uint64_t)(b))
+#define SUB104(x,o)   ((uint32_t)((unkuint10)(x)>>((o)*8)))
+#define LOCK()   ((void)0)
+#define UNLOCK() ((void)0)
+
 #define ZEXT14(x)      ((uint32_t)(uint8_t)(x))
 #define ZEXT24(x)      ((uint32_t)(uint16_t)(x))
 #define ZEXT48(x)      ((uint64_t)(uint32_t)(x))
