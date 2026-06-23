@@ -24370,11 +24370,12 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714114 = _DAT_00714104;
   _DAT_00714118 = _DAT_00714108;
   _DAT_0071411c = _DAT_0071410c;
-  _DAT_00714104 = (int)(short)DAT_00466d52;
-  _DAT_00714108 = ((int)DAT_00466d52 >> 0x10);
+  _DAT_00714100 = ((int)DAT_00466d4e >> 0x10);   /* WASM: GTE input in0 (x86 sar; Ghidra dropped to __vr0) */
+  _DAT_00714104 = ((int)DAT_00466d50 >> 0x10);   /* WASM: in1 (x86 reads d50 sar, not (short)d52) */
+  _DAT_00714108 = ((int)DAT_00466d52 >> 0x10);   /* in2 */
   __vr0 = ((int)DAT_00466d4e >> 0x10);
   GTERT();
-  *piVar4 = __vr0;
+  *piVar4 = _DAT_00714100;   /* WASM: GTE output x = read 0x714100 after GTERT (not __vr0=input) */
   *(int *)(iVar3 + 0x75c7ec) = _DAT_00714104;
   *(int *)(iVar3 + 0x75c7f0) = _DAT_00714108;
   Track_Follow(piVar4);
@@ -24393,9 +24394,10 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d5a;
   _DAT_00714108 = ((int)DAT_00466d5a >> 0x10);
+  _DAT_00714100 = ((int)DAT_00466d56 >> 0x10);
   __vr0 = ((int)DAT_00466d56 >> 0x10);
   GTERT();
-  *(int *)(iVar3 + 0x75c814) = __vr0;
+  *(int *)(iVar3 + 0x75c814) = _DAT_00714100;
   *(int *)(iVar3 + 0x75c818) = _DAT_00714104;
   *(int *)(iVar3 + 0x75c81c) = _DAT_00714108;
   Track_Follow((int *)(iVar3 + 0x75c814));
@@ -24414,9 +24416,10 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_0071411c = _DAT_0071410c;
   _DAT_00714104 = (int)(short)DAT_00466d62;
   _DAT_00714108 = ((int)DAT_00466d62 >> 0x10);
+  _DAT_00714100 = ((int)DAT_00466d5e >> 0x10);
   __vr0 = ((int)DAT_00466d5e >> 0x10);
   GTERT();
-  *(int *)(iVar3 + 0x75c840) = __vr0;
+  *(int *)(iVar3 + 0x75c840) = _DAT_00714100;
   *(int *)(iVar3 + 0x75c844) = _DAT_00714104;
   *(int *)(iVar3 + 0x75c848) = _DAT_00714108;
   Track_Follow((int *)(iVar3 + 0x75c840));
@@ -24436,9 +24439,10 @@ void __cdecl FUN_00440ac4(int param_1)
   _DAT_00714104 = (int)(short)DAT_00466d6a;
   _DAT_00714108 = ((int)DAT_00466d6a >> 0x10);
   piVar4 = (int *)(iVar3 + 0x75c86c);
+  _DAT_00714100 = ((int)DAT_00466d66 >> 0x10);
   __vr0 = ((int)DAT_00466d66 >> 0x10);
   GTERT();
-  *piVar4 = __vr0;
+  *piVar4 = _DAT_00714100;
   *(int *)(iVar3 + 0x75c870) = _DAT_00714104;
   *(int *)(iVar3 + 0x75c874) = _DAT_00714108;
   Track_Follow(piVar4);
