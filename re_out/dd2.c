@@ -13083,7 +13083,6 @@ extern void FUN_0042a79e(void);
 void __cdecl FUN_0042a4d8(int param_1)
 
 {
-  return; /* TEMP STUB: nested-jumptable car-damage-decal builder needs full reconstruction (frame-sharing fragments); skipped to advance crash-chain */
 
   int iVar1;
   int iVar2;
@@ -13169,8 +13168,14 @@ void __cdecl FUN_0042a4d8(int param_1)
       if (uVar4 < 6) {
                     /* WARNING: Could not recover jumptable at 0x0042a6d3. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-        switch(iVar2){case 0:FUN_0042a6da();break;case 4:FUN_0042a703();break;case 8:FUN_0042a72c();break;case 0xc:FUN_0042a752();break;case 0x10:FUN_0042a778();break;case 0x14:FUN_0042a79e();break;}
-        return;
+        switch(iVar2){   /* reconstructed: jumptable@0x42a6d3 targets are frame-sharing fragments, each = 2x FUN_004166c4, then FALL THROUGH (Ghidra mis-rendered indirect jmp as call+return) */
+        case 0:    FUN_004166c4(0x744bd0,(char *)local_1c,(ushort *)0x464c24); FUN_004166c4(0x744bf8,(char *)local_1c,(ushort *)0x464c24); break;
+        case 4:    FUN_004166c4(0x744c20,(char *)local_1c,(ushort *)0x464c3c); FUN_004166c4(0x744c48,(char *)local_1c,(ushort *)0x464c3c); break;
+        case 8:    FUN_004166c4(0x744cc0,(char *)local_1c,(ushort *)0x464c54); FUN_004166c4(0x744ce8,(char *)local_1c,(ushort *)0x464c54); break;
+        case 0xc:  FUN_004166c4(0x744d60,(char *)local_1c,(ushort *)0x464c6c); FUN_004166c4(0x744d88,(char *)local_1c,(ushort *)0x464c6c); break;
+        case 0x10: FUN_004166c4(0x744c70,(char *)local_1c,(ushort *)0x464c84); FUN_004166c4(0x744c98,(char *)local_1c,(ushort *)0x464c84); break;
+        case 0x14: FUN_004166c4(0x744d10,(char *)local_1c,(ushort *)0x464c9c); FUN_004166c4(0x744d38,(char *)local_1c,(ushort *)0x464c9c); break;
+        }
       }
     }
     uVar4 = uVar4 + 1;
