@@ -13517,23 +13517,21 @@ void __cdecl Draw_Car(int param_1)
   bool bVar2;
   int iVar3;
   int iVar4;
-  short sStack_30;
-  short local_2e;
-  short sStack_2c;
+  short lmout[16];
   
   FUN_0042b5f0(param_1);
   psVar1 = (short *)(param_1 * 0x27c + 0x752354);
-  gte_MulMatrix0(&car_light_matrix,psVar1,&sStack_30);
+  gte_MulMatrix0(&car_light_matrix,psVar1,lmout);
   iVar3 = *(int *)(param_1 * 0x1e + 0x744dfe) >> 0x10;
-  iVar4 = sStack_30 * iVar3 >> 0x1f;
-  sStack_30 = (short)((int)((sStack_30 * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
+  iVar4 = lmout[0] * iVar3 >> 0x1f;
+  lmout[0] = (short)((int)((lmout[0] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
                      );
-  iVar4 = local_2e * iVar3 >> 0x1f;
-  local_2e = (short)((int)((local_2e * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
-  iVar4 = sStack_2c * iVar3 >> 0x1f;
-  sStack_2c = (short)((int)((sStack_2c * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
+  iVar4 = lmout[1] * iVar3 >> 0x1f;
+  lmout[1] = (short)((int)((lmout[1] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+  iVar4 = lmout[2] * iVar3 >> 0x1f;
+  lmout[2] = (short)((int)((lmout[2] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
                      );
-  __lmptr = &sStack_30;
+  __lmptr = (int *)lmout;
   FUN_004202ac(psVar1,(int *)((int)&DAT_00752344 + param_1 * 0x27c));
   bVar2 = _DAT_0071be56 < 4000;
   *(undefined1 **)(*(int *)((char *)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
@@ -13558,25 +13556,23 @@ void __cdecl FUN_0042c1a4(int param_1)
   int iVar1;
   int iVar2;
   int iVar3;
-  short sStack_34;
-  short local_32;
-  short sStack_30;
+  short lmout[16];
   short *local_14;
   
   FUN_0042b5f0(param_1);
   iVar3 = param_1 * 0x27c;
   local_14 = (short *)(iVar3 + 0x752354);
-  gte_MulMatrix0(&car_light_matrix,local_14,&sStack_34);
+  gte_MulMatrix0(&car_light_matrix,local_14,lmout);
   iVar1 = *(int *)(param_1 * 0x1e + 0x744dfe) >> 0x10;
-  iVar2 = sStack_34 * iVar1 >> 0x1f;
-  sStack_34 = (short)((int)((sStack_34 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
+  iVar2 = lmout[0] * iVar1 >> 0x1f;
+  lmout[0] = (short)((int)((lmout[0] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
                      );
-  iVar2 = local_32 * iVar1 >> 0x1f;
-  local_32 = (short)((int)((local_32 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
-  iVar2 = sStack_30 * iVar1 >> 0x1f;
-  sStack_30 = (short)((int)((sStack_30 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
+  iVar2 = lmout[1] * iVar1 >> 0x1f;
+  lmout[1] = (short)((int)((lmout[1] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
+  iVar2 = lmout[2] * iVar1 >> 0x1f;
+  lmout[2] = (short)((int)((lmout[2] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
                      );
-  __lmptr = &sStack_34;
+  __lmptr = (int *)lmout;
   FUN_004202ac(local_14,(int *)((int)&DAT_00752344 + iVar3));
   iVar1 = VVDraw_Object((undefined4 *)((int)&car_object + param_1 * 0x38));
   *(int *)(iVar3 + 0x752398) = iVar1;
