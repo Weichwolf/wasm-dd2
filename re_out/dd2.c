@@ -99,7 +99,7 @@ void FUN_0041033a(void)
             pbVar3 = (byte *)((uint)DAT_0046000c & 0xffff0000);
             puVar6 = DAT_00460004;
             iVar5 = dth_u1;
-            puVar10 = &_screenbuffer + dth_y1 * 0x140 + (dth_x1 >> 8);
+            puVar10 = (int)&_screenbuffer + dth_y1 * 0x140 + (dth_x1 >> 8);
             do {
               uVar1 = (uint)iVar5 >> 8;
               iVar5 = iVar5 + iVar7;
@@ -143,7 +143,7 @@ void FUN_0041033a(void)
               uVar4 = uVar4 & 0xffff | ((iVar5 - iVar8) + -1) * 0x10000;
               pbVar3 = DAT_0046000c;
               puVar6 = DAT_00460004;
-              puVar10 = &_screenbuffer + dth_y1 * 0x140 + iVar8;
+              puVar10 = (int)&_screenbuffer + dth_y1 * 0x140 + iVar8;
               do {
                 uVar1 = (uint)iVar9 >> 8;
                 iVar9 = iVar9 + iVar7;
@@ -401,7 +401,7 @@ void draw_text_half_trans(void)
             iVar4 = DAT_00460004;
             iVar7 = dth_u1;
             puVar9 = DAT_00460010;
-            puVar10 = &_screenbuffer + dth_y1 * 0x140 + (dth_x1 >> 8);
+            puVar10 = (int)&_screenbuffer + dth_y1 * 0x140 + (dth_x1 >> 8);
             do {
               uVar5 = (undefined3)((uint)iVar4 >> 8);
               puVar9 = (undefined1 *)
@@ -449,7 +449,7 @@ void draw_text_half_trans(void)
                                          (char)((uVar2 & 0xffff) >> 8)),(char)((uint)iVar8 >> 8));
               iVar4 = DAT_00460004;
               puVar9 = DAT_00460010;
-              puVar10 = &_screenbuffer + dth_y1 * 0x140 + iVar7;
+              puVar10 = (int)&_screenbuffer + dth_y1 * 0x140 + iVar7;
               do {
                 uVar5 = (undefined3)((uint)iVar4 >> 8);
                 puVar9 = (undefined1 *)
@@ -3356,13 +3356,13 @@ undefined4 __cdecl FUN_004154b8(int param_1,int param_2)
     local_18 = 0;
     do {
       iVar2 = local_18 * 4;
-      *(char *)(*(int *)(&DAT_0071bfd0 + local_14 * 4) + iVar2) = (char)piVar3[local_18 + 4];
-      *(undefined1 *)(*(int *)(&DAT_0071bfd0 + local_14 * 4) + 1 + iVar2) =
+      *(char *)(*(int *)((int)&DAT_0071bfd0 + local_14 * 4) + iVar2) = (char)piVar3[local_18 + 4];
+      *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + local_14 * 4) + 1 + iVar2) =
            *(undefined1 *)((int)piVar3 + iVar2 + 0x11);
-      *(undefined1 *)(*(int *)(&DAT_0071bfd0 + local_14 * 4) + 2 + iVar2) =
+      *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + local_14 * 4) + 2 + iVar2) =
            *(undefined1 *)((int)piVar3 + iVar2 + 0x12);
       local_18 = local_18 + 1;
-      *(undefined1 *)(*(int *)(&DAT_0071bfd0 + local_14 * 4) + iVar2 + 3) =
+      *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + local_14 * 4) + iVar2 + 3) =
            *(undefined1 *)((int)piVar3 + iVar2 + 0x13);
     } while (local_18 < 0x60);
     piVar3 = (int *)((int)piVar3 + *piVar3);
@@ -3706,15 +3706,15 @@ void FUN_00415a94(void)
   
   iVar1 = 0;
   do {
-    *(undefined4 *)(&DAT_00716d20 + iVar1 * 0x14) = 0;
-    *(undefined4 *)(&DAT_00716d24 + iVar1 * 0x14) = 0;
-    *(undefined2 *)(&DAT_00716d2a + iVar1 * 0x14) = 0x100;
-    *(undefined2 *)(&DAT_00716d28 + iVar1 * 0x14) = 0;
-    *(undefined2 *)(&DAT_00716d2c + iVar1 * 0x14) = 0xffff;
-    *(undefined2 *)(&DAT_00716d2e + iVar1 * 0x14) = 0;
-    *(undefined2 *)(&DAT_00716d32 + iVar1 * 0x14) = 0xd8f0;
+    *(undefined4 *)((int)&DAT_00716d20 + iVar1 * 0x14) = 0;
+    *(undefined4 *)((int)&DAT_00716d24 + iVar1 * 0x14) = 0;
+    *(undefined2 *)((int)&DAT_00716d2a + iVar1 * 0x14) = 0x100;
+    *(undefined2 *)((int)&DAT_00716d28 + iVar1 * 0x14) = 0;
+    *(undefined2 *)((int)&DAT_00716d2c + iVar1 * 0x14) = 0xffff;
+    *(undefined2 *)((int)&DAT_00716d2e + iVar1 * 0x14) = 0;
+    *(undefined2 *)((int)&DAT_00716d32 + iVar1 * 0x14) = 0xd8f0;
     iVar2 = iVar1 + 1;
-    *(undefined2 *)(&DAT_00716d30 + iVar1 * 0x14) = 0;
+    *(undefined2 *)((int)&DAT_00716d30 + iVar1 * 0x14) = 0;
     iVar1 = iVar2;
   } while (iVar2 < 4);
   return;
@@ -3784,7 +3784,7 @@ void Sound_Pause_(void)
   if (DAT_00462d68 != 0) {
     iVar2 = 0;
     do {
-      piVar1 = *(int **)(&DAT_00716d20 + iVar2 * 0x14);
+      piVar1 = *(int **)((int)&DAT_00716d20 + iVar2 * 0x14);
       if (piVar1 != (int *)0x0) {
         (**(code **)(*piVar1 + 0x3c))(piVar1,0xffffd8f0);
       }
@@ -3806,9 +3806,9 @@ void Sound_Restart(void)
   if (DAT_00462d68 != 0) {
     iVar2 = 0;
     do {
-      piVar1 = *(int **)(&DAT_00716d20 + iVar2 * 0x14);
+      piVar1 = *(int **)((int)&DAT_00716d20 + iVar2 * 0x14);
       if (piVar1 != (int *)0x0) {
-        (**(code **)(*piVar1 + 0x3c))(piVar1,*(int *)(&DAT_00716d30 + iVar2 * 0x14) >> 0x10);
+        (**(code **)(*piVar1 + 0x3c))(piVar1,*(int *)((int)&DAT_00716d30 + iVar2 * 0x14) >> 0x10);
       }
       iVar2 = iVar2 + 1;
     } while (iVar2 < 4);
@@ -3830,19 +3830,19 @@ void __cdecl Kill_Sound(int param_1)
   }
   if (DAT_00462d68 != 0) {
     iVar2 = param_1 * 0x14;
-    piVar1 = *(int **)(&DAT_00716d20 + iVar2);
+    piVar1 = *(int **)((int)&DAT_00716d20 + iVar2);
     if (piVar1 != (int *)0x0) {
       (**(code **)(*piVar1 + 0x48))(piVar1);
-      if (*(short *)(&DAT_00716d30 + iVar2) != 0) {
-        (**(code **)(**(int **)(&DAT_00716d20 + iVar2) + 8))(*(int **)(&DAT_00716d20 + iVar2));
+      if (*(short *)((int)&DAT_00716d30 + iVar2) != 0) {
+        (**(code **)(**(int **)((int)&DAT_00716d20 + iVar2) + 8))(*(int **)((int)&DAT_00716d20 + iVar2));
       }
-      *(undefined2 *)(&DAT_00716d2c + param_1 * 0x14) = 0xffff;
-      *(undefined2 *)(&DAT_00716d2a + param_1 * 0x14) = 0x100;
-      *(undefined4 *)(&DAT_00716d24 + param_1 * 0x14) = 0;
-      *(undefined4 *)(&DAT_00716d20 + param_1 * 0x14) = 0;
-      *(undefined2 *)(&DAT_00716d32 + param_1 * 0x14) = 0xd8f0;
-      *(undefined2 *)(&DAT_00716d28 + param_1 * 0x14) = 0;
-      *(undefined2 *)(&DAT_00716d30 + param_1 * 0x14) = 0;
+      *(undefined2 *)((int)&DAT_00716d2c + param_1 * 0x14) = 0xffff;
+      *(undefined2 *)((int)&DAT_00716d2a + param_1 * 0x14) = 0x100;
+      *(undefined4 *)((int)&DAT_00716d24 + param_1 * 0x14) = 0;
+      *(undefined4 *)((int)&DAT_00716d20 + param_1 * 0x14) = 0;
+      *(undefined2 *)((int)&DAT_00716d32 + param_1 * 0x14) = 0xd8f0;
+      *(undefined2 *)((int)&DAT_00716d28 + param_1 * 0x14) = 0;
+      *(undefined2 *)((int)&DAT_00716d30 + param_1 * 0x14) = 0;
     }
   }
   return;
@@ -3890,24 +3890,24 @@ Play_Sound(int param_1,int param_2,int param_3,uint param_4,undefined4 param_5,i
       iVar4 = (**(code **)(*piVar1 + 0x30))(piVar1,0,0,iVar4 != 0);
       iVar3 = param_1 * 0x14;
       if (iVar4 == 0) {
-        *(int **)(&DAT_00716d20 + iVar3) = piVar1;
-        *(undefined2 *)(&DAT_00716d28 + iVar3) = *(undefined2 *)(iVar5 + 8);
-        *(undefined2 *)(&DAT_00716d2a + iVar3) = *(undefined2 *)(iVar5 + 0x10);
-        *(undefined4 *)(&DAT_00716d24 + iVar3) = *(undefined4 *)(iVar5 + 0xc);
-        *(undefined2 *)(&DAT_00716d2c + iVar3) = *(undefined2 *)(iVar5 + 4);
-        *(short *)(&DAT_00716d32 + iVar3) = (short)iVar2;
+        *(int **)((int)&DAT_00716d20 + iVar3) = piVar1;
+        *(undefined2 *)((int)&DAT_00716d28 + iVar3) = *(undefined2 *)(iVar5 + 8);
+        *(undefined2 *)((int)&DAT_00716d2a + iVar3) = *(undefined2 *)(iVar5 + 0x10);
+        *(undefined4 *)((int)&DAT_00716d24 + iVar3) = *(undefined4 *)(iVar5 + 0xc);
+        *(undefined2 *)((int)&DAT_00716d2c + iVar3) = *(undefined2 *)(iVar5 + 4);
+        *(short *)((int)&DAT_00716d32 + iVar3) = (short)iVar2;
       }
       else {
-        if (*(short *)(&DAT_00716d30 + iVar3) != 0) {
+        if (*(short *)((int)&DAT_00716d30 + iVar3) != 0) {
           (**(code **)(*piVar1 + 8))(piVar1);
         }
-        *(undefined2 *)(&DAT_00716d28 + param_1 * 0x14) = 0;
-        *(undefined2 *)(&DAT_00716d2a + param_1 * 0x14) = 0x100;
-        *(undefined2 *)(&DAT_00716d32 + param_1 * 0x14) = 0xd8f0;
-        *(undefined2 *)(&DAT_00716d30 + param_1 * 0x14) = 0;
-        *(undefined4 *)(&DAT_00716d20 + param_1 * 0x14) = 0;
-        *(undefined4 *)(&DAT_00716d24 + param_1 * 0x14) = 0;
-        *(undefined2 *)(&DAT_00716d2c + param_1 * 0x14) = 0xffff;
+        *(undefined2 *)((int)&DAT_00716d28 + param_1 * 0x14) = 0;
+        *(undefined2 *)((int)&DAT_00716d2a + param_1 * 0x14) = 0x100;
+        *(undefined2 *)((int)&DAT_00716d32 + param_1 * 0x14) = 0xd8f0;
+        *(undefined2 *)((int)&DAT_00716d30 + param_1 * 0x14) = 0;
+        *(undefined4 *)((int)&DAT_00716d20 + param_1 * 0x14) = 0;
+        *(undefined4 *)((int)&DAT_00716d24 + param_1 * 0x14) = 0;
+        *(undefined2 *)((int)&DAT_00716d2c + param_1 * 0x14) = 0xffff;
         param_1 = -1;
       }
     }
@@ -3929,14 +3929,14 @@ void __cdecl Modify_Sound(int param_1,uint param_2,undefined4 param_3,int param_
     System_Error(s_Modify_Sound_0046c810,s_Invalid_Channel_0046c7e8);
   }
   if (DAT_00462d68 != 0) {
-    piVar1 = *(int **)(&DAT_00716d20 + param_1 * 0x14);
+    piVar1 = *(int **)((int)&DAT_00716d20 + param_1 * 0x14);
     if (piVar1 != (int *)0x0) {
       iVar2 = FUN_004165a4(param_2);
       piVar3 = piVar1;
       (**(code **)(*piVar1 + 0x40))(piVar1,param_4 * 2);
       (**(code **)(*piVar1 + 0x3c))(piVar1,iVar2);
       (**(code **)(*piVar1 + 0x44))(piVar1,piVar3);
-      *(short *)(&DAT_00716d32 + param_1 * 0x14) = (short)iVar2;
+      *(short *)((int)&DAT_00716d32 + param_1 * 0x14) = (short)iVar2;
     }
   }
   return;
@@ -3953,7 +3953,7 @@ void __cdecl FUN_00415f64(int param_1,int param_2)
       System_Error(s_Lock_Channel_0046c834,s_Invalid_Channels_0046c820);
     }
     for (; param_1 <= param_2; param_1 = param_1 + 1) {
-      *(undefined2 *)(&DAT_00716d2e + param_1 * 0x14) = 1;
+      *(undefined2 *)((int)&DAT_00716d2e + param_1 * 0x14) = 1;
     }
   }
   return;
@@ -3970,7 +3970,7 @@ void __cdecl Unlock_Channel(int param_1,int param_2)
       System_Error(s_Lock_Channel_0046c834,s_Invalid_Channels_0046c820);
     }
     for (; param_1 <= param_2; param_1 = param_1 + 1) {
-      *(undefined2 *)(&DAT_00716d2e + param_1 * 0x14) = 0;
+      *(undefined2 *)((int)&DAT_00716d2e + param_1 * 0x14) = 0;
     }
   }
   return;
@@ -4162,17 +4162,17 @@ void Sound_Timer_(void)
     iVar2 = 0;
     do {
       iVar3 = iVar2 * 0x14;
-      if ((*(short *)(&DAT_00716d28 + iVar3) == 0) &&
-         (piVar1 = *(int **)(&DAT_00716d20 + iVar3), piVar1 != (int *)0x0)) {
+      if ((*(short *)((int)&DAT_00716d28 + iVar3) == 0) &&
+         (piVar1 = *(int **)((int)&DAT_00716d20 + iVar3), piVar1 != (int *)0x0)) {
         (**(code **)(*piVar1 + 0x24))(piVar1,&local_14);
         if (local_14 != 1) {
-          if (*(short *)(&DAT_00716d30 + iVar3) != 0) {
-            (**(code **)(**(int **)(&DAT_00716d20 + iVar3) + 8))(*(int **)(&DAT_00716d20 + iVar3));
+          if (*(short *)((int)&DAT_00716d30 + iVar3) != 0) {
+            (**(code **)(**(int **)((int)&DAT_00716d20 + iVar3) + 8))(*(int **)((int)&DAT_00716d20 + iVar3));
           }
-          *(undefined4 *)(&DAT_00716d20 + iVar2 * 0x14) = 0;
-          *(undefined2 *)(&DAT_00716d2c + iVar2 * 0x14) = 0xffff;
-          *(undefined2 *)(&DAT_00716d2a + iVar2 * 0x14) = 0x100;
-          *(undefined2 *)(&DAT_00716d32 + iVar2 * 0x14) = 0xd8f0;
+          *(undefined4 *)((int)&DAT_00716d20 + iVar2 * 0x14) = 0;
+          *(undefined2 *)((int)&DAT_00716d2c + iVar2 * 0x14) = 0xffff;
+          *(undefined2 *)((int)&DAT_00716d2a + iVar2 * 0x14) = 0x100;
+          *(undefined2 *)((int)&DAT_00716d32 + iVar2 * 0x14) = 0xd8f0;
         }
       }
       iVar2 = iVar2 + 1;
@@ -4260,7 +4260,7 @@ int FUN_00416494(void)
   do {
     iVar1 = DAT_00462d8c;
     DAT_00462d8c = (iVar1 + 1) % 4;
-  } while (*(short *)(&DAT_00716d2e + iVar1 * 0x14) != 0);
+  } while (*(short *)((int)&DAT_00716d2e + iVar1 * 0x14) != 0);
   return iVar1;
 }
 
@@ -4277,17 +4277,17 @@ undefined4 __cdecl FUN_004164d4(int param_1,int param_2)
   
   iVar1 = 0;
   do {
-    if (param_1 == *(int *)(&DAT_00716d2a + iVar1 * 0x14) >> 0x10) {
+    if (param_1 == *(int *)((int)&DAT_00716d2a + iVar1 * 0x14) >> 0x10) {
       (**(code **)(*_DAT_00716d9c + 0x14))
                 (_DAT_00716d9c,*(undefined4 *)(param_1 * 4 + 0x716c20),&local_14);
-      *(undefined2 *)(&DAT_00716d30 + param_2 * 0x14) = 1;
+      *(undefined2 *)((int)&DAT_00716d30 + param_2 * 0x14) = 1;
       break;
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 4);
   if (iVar1 == 4) {
     local_14 = *(undefined4 *)(param_1 * 4 + 0x716c20);
-    *(undefined2 *)(&DAT_00716d30 + param_2 * 0x14) = 0;
+    *(undefined2 *)((int)&DAT_00716d30 + param_2 * 0x14) = 0;
   }
   return local_14;
 }
@@ -5284,25 +5284,25 @@ void __cdecl draw_face_3pt_flat_dpq(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar5 = (*(int *)(local_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(local_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(local_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       local_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -5348,25 +5348,25 @@ void __cdecl draw_face_3pt_text_dpq(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar6 = (*(int *)(local_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(local_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(local_18 + 0xe) >> 0x10;
     iVar7 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) &&
        (iVar6 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar6 >> 0x1f,
        __otz = (int)((iVar6 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       local_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -5418,19 +5418,19 @@ void __cdecl draw_face_3pt_text_dpq_squash(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar3 = (*(int *)(local_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071414c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (*(int *)(local_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071415c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (*(int *)(local_18 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714120 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714120 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071412c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15;
     iVar6 = iVar3 >> 0x1f;
@@ -5605,25 +5605,25 @@ void __cdecl draw_face_3pt_gour_dpq(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar5 = (*(int *)(local_18 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(local_18 + 0x10) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(local_18 + 0x12) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       local_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -5690,26 +5690,26 @@ void __cdecl draw_face_3pt_pict_dpq(int param_1)
     _DAT_00714138 = _DAT_00714148;
     _DAT_0071413c = _DAT_0071414c;
     iVar7 = (*(int *)(local_14 + 0x12) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar7);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071414c = *(undefined4 *)(iVar7 + 0x716dcc);
     iVar8 = (*(int *)(local_14 + 0x14) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar8);
-    iVar7 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar8);
+    iVar7 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071415c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = *(int *)(local_14 + 0x16) >> 0x10;
     iVar10 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar10);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar10);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar10);
+    uVar1 = *(uint *)((int)&rot_points + iVar10);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar10);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar10);
     _DAT_0071412c = *(undefined4 *)(iVar10 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar7) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar7;
-    if (((*(uint *)(&rot_flags + iVar8 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar8 * 4) & uVar3) == 0) &&
        (iVar8 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar10 = iVar8 >> 0x1f,
        __otz = (int)((iVar8 + iVar10 * -0x40) - (uint)(iVar10 << 5 < 0)) >> 6, __opz < 1)) {
       local_18[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -5761,25 +5761,25 @@ void __cdecl draw_face_3pt_pict_dpq_lit(int param_1)
   local_14 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar8 = (*(int *)(local_14 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = (*(int *)(local_14 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071415c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = *(int *)(local_14 + 0xe) >> 0x10;
     iVar9 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar8 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar8 * 4)) == 0) &&
        (iVar8 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar9 = iVar8 >> 0x1f,
        __otz = (int)((iVar8 + iVar9 * -0x40) - (uint)(iVar9 << 5 < 0)) >> 6, __opz < 1)) {
       local_18[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -5845,41 +5845,41 @@ void __cdecl draw_face_4pt_pict_dpq(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar7 = (*(int *)(local_18 + 0x16) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar7);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071414c = *(undefined4 *)(iVar7 + 0x716dcc);
     iVar5 = (*(int *)(local_18 + 0x18) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    iVar7 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    iVar7 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(local_18 + 0x1a) >> 0x10;
     iVar8 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar7) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar7;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) && (__opz < 1)) {
       local_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       local_14[5] = _DAT_00714150 & 0xffff | iVar7 << 0x10;
       local_14[8] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar5 = *(int *)(local_18 + 0x1c) >> 0x10;
       iVar8 = iVar5 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar7 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar7 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar7 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar7;
-      if ((*(uint *)(&rot_flags + iVar5 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar3) == 0) {
         local_14[0xb] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar6 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -5929,40 +5929,40 @@ void __cdecl draw_face_4pt_pict_dpq_lit(int param_1)
   local_18 = _gpoly;
   for (local_1c = 0; local_1c < param_1; local_1c = local_1c + 1) {
     iVar6 = (*(int *)(local_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(local_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(local_18 + 0xe) >> 0x10;
     iVar9 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - _DAT_00714154) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       local_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       local_14[5] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       local_14[8] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar9 = *(int *)(local_18 + 0x10) >> 0x10;
       iVar10 = iVar9 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar10);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar10);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar10);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar10);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar10);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar10);
       _DAT_0071414c = *(undefined4 *)(iVar10 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar10 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar10 * -4) - (uint)(iVar10 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar9 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar9 * 4) & uVar3) == 0) {
         local_14[0xb] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar7 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -6636,7 +6636,7 @@ void __cdecl Draw_Subdiv_Object(undefined4 *param_1)
   _DAT_0071bdc0 = *(undefined4 *)(iVar3 + 0x20);
   _gnormals = *(undefined4 *)(iVar3 + 0x24);
   _gpoly = *(short **)(iVar3 + 0x28);
-  _gprim1 = *(int *)(&prim_buf + buffer_num * 4) + param_1[5];
+  _gprim1 = *(int *)((int)&prim_buf + buffer_num * 4) + param_1[5];
   Pre_Rotate((uint)*(ushort *)(iVar3 + 10));
   while( true ) {
     if (*(char *)((int)_gpoly + 3) == '\0') break;
@@ -6736,7 +6736,7 @@ void __cdecl FUN_0041fe68(undefined4 *param_1,int param_2)
   _DAT_0071bdc0 = *(undefined4 *)(iVar3 + 0x20);
   _gnormals = *(undefined4 *)(iVar3 + 0x24);
   _gpoly = *(short **)(iVar3 + 0x28);
-  _gprim1 = *(int *)(&prim_buf + buffer_num * 4) + param_1[(param_2 + -1) * 3 + 2];
+  _gprim1 = *(int *)((int)&prim_buf + buffer_num * 4) + param_1[(param_2 + -1) * 3 + 2];
   Pre_Rotate((uint)*(ushort *)(iVar3 + 10));
   while( true ) {
     if (*(char *)((int)_gpoly + 3) == '\0') break;
@@ -7282,11 +7282,11 @@ void __cdecl Set_Draw_Mode(int param_1)
                     /* START-> C:\PCMPE\graphics\draw.C: ? */
   if (param_1 != DAT_00463010) {
     iVar1 = param_1 * 6;
-    SetVideoMode(*(int *)(&DAT_00463002 + iVar1) >> 0x10,*(int *)(&dr_modes + iVar1) >> 0x10,
-                 *(int *)(&DAT_00463006 + iVar1) >> 0x10);
-    screen_width = *(int *)(&DAT_00463002 + iVar1) >> 0x10;
+    SetVideoMode(*(int *)((int)&DAT_00463002 + iVar1) >> 0x10,*(int *)((int)&dr_modes + iVar1) >> 0x10,
+                 *(int *)((int)&DAT_00463006 + iVar1) >> 0x10);
+    screen_width = *(int *)((int)&DAT_00463002 + iVar1) >> 0x10;
     DAT_00463010 = param_1;
-    screen_height = *(int *)(&dr_modes + iVar1) >> 0x10;
+    screen_height = *(int *)((int)&dr_modes + iVar1) >> 0x10;
     _frames_per_sec = 0x3c;
     _DAT_00463000 = screen_height;
   }
@@ -7636,15 +7636,15 @@ void __cdecl Duplicate_Font(int param_1,int param_2,char *param_3)
   *(undefined2 *)(iVar1 + 6 + param_2 * 8) = *(undefined2 *)(iVar1 + 6 + param_1 * 8);
   do {
     iVar1 = iVar2 * 4;
-    *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_2 * 4) + iVar1) =
-         *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_1 * 4) + iVar1);
-    *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_2 * 4) + iVar1 + 1) =
-         *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_1 * 4) + iVar1 + 1);
-    *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_2 * 4) + iVar1 + 2) =
-         *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_1 * 4) + iVar1 + 2);
+    *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_2 * 4) + iVar1) =
+         *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_1 * 4) + iVar1);
+    *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_2 * 4) + iVar1 + 1) =
+         *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_1 * 4) + iVar1 + 1);
+    *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_2 * 4) + iVar1 + 2) =
+         *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_1 * 4) + iVar1 + 2);
     iVar2 = iVar2 + 1;
-    *(undefined1 *)(iVar1 + *(int *)(&DAT_0071bfd0 + param_2 * 4) + 3) =
-         *(undefined1 *)(*(int *)(&DAT_0071bfd0 + param_1 * 4) + iVar1 + 3);
+    *(undefined1 *)(iVar1 + *(int *)((int)&DAT_0071bfd0 + param_2 * 4) + 3) =
+         *(undefined1 *)(*(int *)((int)&DAT_0071bfd0 + param_1 * 4) + iVar1 + 3);
   } while (iVar2 < 0x60);
   return;
 }
@@ -7859,32 +7859,32 @@ LAB_00421315:
                 local_40 = (int)(local_60 << 0x10) / iVar12;
                 iVar3 = buffer_num * 4;
                 iVar4 = local_4c * 0x28;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + 0xc + iVar4) = (char)local_6c;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + 0xd + iVar4) = (char)local_68;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x14) =
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 0xc + iVar4) = (char)local_6c;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 0xd + iVar4) = (char)local_68;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x14) =
                      (char)local_6c + (char)local_64;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x15) = (char)local_68;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x1c) = (char)local_6c;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x15) = (char)local_68;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x1c) = (char)local_6c;
                 cVar10 = (char)local_68 + bVar1;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x1d) = cVar10;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x24) =
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x1d) = cVar10;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x24) =
                      (char)local_6c + (char)local_64;
-                *(char *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x25) = cVar10;
+                *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x25) = cVar10;
                 local_18 = local_48 >> 8;
                 uVar7 = (undefined2)((uint)local_48 >> 8);
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + 8 + iVar4) = uVar7;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 8 + iVar4) = uVar7;
                 local_14 = local_48 + local_34 >> 8;
                 uVar8 = (undefined2)((uint)(local_48 + local_34) >> 8);
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + 0x10 + iVar4) = uVar8;
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + 0x18 + iVar4) = uVar7;
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + 0x20 + iVar4) = uVar8;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 0x10 + iVar4) = uVar8;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 0x18 + iVar4) = uVar7;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + 0x20 + iVar4) = uVar8;
                 uVar7 = (undefined2)((uint)local_50 >> 8);
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 10) = uVar7;
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x12) = uVar7;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 10) = uVar7;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x12) = uVar7;
                 uVar7 = (undefined2)((uint)(local_50 + local_40) >> 8);
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x1a) = uVar7;
-                *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4 + 0x22) = uVar7;
-                FUN_00420cf0(*(int *)(&DAT_0071bfa0 + iVar3) + iVar4,
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x1a) = uVar7;
+                *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4 + 0x22) = uVar7;
+                FUN_00420cf0(*(int *)((int)&DAT_0071bfa0 + iVar3) + iVar4,
                              (ushort)((uint)_local_26 >> 0x10),(short)((uint)_local_1e >> 0x10),
                              &local_70,*(int *)(local_38 + 0x4e) >> 0x18);
                 local_48 = local_48 + (local_54 << 0x10) / iVar12 + local_34;
@@ -8136,7 +8136,7 @@ void Print_Draw(void)
     FUN_00422548(iVar2,iVar4,iVar3);
     FUN_0042293c(iVar2,iVar4,iVar3);
     for (local_14 = 0; local_14 < iVar4; local_14 = local_14 + 1) {
-      Draw_Font_Poly((undefined4 *)(iVar3 * 0x28 + *(int *)(&DAT_0071bfa0 + buffer_num * 4)),
+      Draw_Font_Poly((undefined4 *)(iVar3 * 0x28 + *(int *)((int)&DAT_0071bfa0 + buffer_num * 4)),
                      iVar1 >> 0x10);
       iVar3 = iVar3 + 1;
     }
@@ -8275,7 +8275,7 @@ void FUN_004221ec(void)
     iVar5 = *(int *)(iVar3 + 0x4d) >> 0x18;
     for (iVar3 = 0; iVar3 < DAT_0046301c; iVar3 = iVar3 + 1) {
       local_14 = local_14 +
-                 (*(byte *)(*(int *)(&DAT_0071bfd0 + iVar5 * 4) + 2 +
+                 (*(byte *)(*(int *)((int)&DAT_0071bfd0 + iVar5 * 4) + 2 +
                            (uint)(byte)(*(char *)(*(int *)(iVar2 * 0x60 + 4 + _DAT_0071c008) + iVar3
                                                  + _DAT_0071c000) - 0x20) * 4) - 1) +
                  (*(int *)(_DAT_0071c00c + 4 + iVar5 * 8) >> 0x10);
@@ -8366,11 +8366,11 @@ void __cdecl FUN_00422358(int param_1,int param_2,int param_3)
       for (iVar6 = 0; iVar3 = buffer_num, iVar6 < param_2; iVar6 = iVar6 + 1) {
         iVar7 = _DAT_0071c008 + param_1 * 0x60;
         iVar5 = (param_3 + iVar6) * 0x28;
-        *(char *)(*(int *)(&DAT_0071bfa0 + buffer_num * 4) + iVar5 + 4) =
+        *(char *)(*(int *)((int)&DAT_0071bfa0 + buffer_num * 4) + iVar5 + 4) =
              (char)(*(int *)(iVar7 + 0x2c) >> 0xc);
-        *(char *)(*(int *)(&DAT_0071bfa0 + iVar3 * 4) + 5 + iVar5) =
+        *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3 * 4) + 5 + iVar5) =
              (char)(*(int *)(iVar7 + 0x30) >> 0xc);
-        *(char *)(*(int *)(&DAT_0071bfa0 + iVar3 * 4) + 6 + iVar5) =
+        *(char *)(*(int *)((int)&DAT_0071bfa0 + iVar3 * 4) + 6 + iVar5) =
              (char)(*(int *)(iVar7 + 0x34) >> 0xc);
       }
       pbVar4 = (byte *)(param_1 * 0x60 + _DAT_0071c008);
@@ -8439,22 +8439,22 @@ void __cdecl FUN_00422548(int param_1,int param_2,int param_3)
         iVar4 = (buffer_num ^ 1) * 4;
         iVar5 = (param_3 + iVar8) * 0x28;
         iVar13 = buffer_num * 4;
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 8) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + iVar5 + 8);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 0x10) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + 0x10 + iVar5);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 0x18) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + iVar5 + 0x18);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 0x20) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + iVar5 + 0x20);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 10) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + 10 + iVar5);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + iVar5 + 0x12) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + 0x12 + iVar5);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + 0x1a + iVar5) =
-             *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar4) + 0x1a + iVar5);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar13) + 0x22 + iVar5) =
-             *(undefined2 *)(iVar5 + 0x22 + *(int *)(&DAT_0071bfa0 + iVar4));
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 8) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + iVar5 + 8);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 0x10) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + 0x10 + iVar5);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 0x18) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + iVar5 + 0x18);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 0x20) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + iVar5 + 0x20);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 10) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + 10 + iVar5);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + iVar5 + 0x12) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + 0x12 + iVar5);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + 0x1a + iVar5) =
+             *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar4) + 0x1a + iVar5);
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar13) + 0x22 + iVar5) =
+             *(undefined2 *)(iVar5 + 0x22 + *(int *)((int)&DAT_0071bfa0 + iVar4));
       }
     }
     pbVar11 = (byte *)(_DAT_0071c008 + param_1 * 0x60);
@@ -8477,17 +8477,17 @@ void __cdecl FUN_00422548(int param_1,int param_2,int param_3)
         iVar6 = buffer_num * 4;
         iVar12 = (local_1c + param_3) * 0x28;
         uVar10 = (undefined2)((uint)iVar13 >> 8);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + 8 + iVar12) = uVar10;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + 8 + iVar12) = uVar10;
         uVar14 = (undefined2)((uint)(iVar5 + iVar13) >> 8);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + 0x10 + iVar12) = uVar14;
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + 0x18 + iVar12) = uVar10;
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + 0x20 + iVar12) = uVar14;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + 0x10 + iVar12) = uVar14;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + 0x18 + iVar12) = uVar10;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + 0x20 + iVar12) = uVar14;
         uVar10 = (undefined2)((uint)iVar4 >> 8);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + iVar12 + 10) = uVar10;
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + iVar12 + 0x12) = uVar10;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + iVar12 + 10) = uVar10;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + iVar12 + 0x12) = uVar10;
         uVar10 = (undefined2)((uint)(iVar4 + (int)((uint)bVar9 << 0x10) / iVar8) >> 8);
-        *(undefined2 *)(*(int *)(&DAT_0071bfa0 + iVar6) + iVar12 + 0x1a) = uVar10;
-        *(undefined2 *)(iVar12 + 0x22 + *(int *)(&DAT_0071bfa0 + iVar6)) = uVar10;
+        *(undefined2 *)(*(int *)((int)&DAT_0071bfa0 + iVar6) + iVar12 + 0x1a) = uVar10;
+        *(undefined2 *)(iVar12 + 0x22 + *(int *)((int)&DAT_0071bfa0 + iVar6)) = uVar10;
         iVar13 = iVar13 + ((iVar3 >> 0x10) << 0x10) / iVar8 + iVar5;
       }
       puVar7 = (ushort *)(param_1 * 0x60 + _DAT_0071c008);
@@ -8540,7 +8540,7 @@ void __cdecl FUN_0042293c(int param_1,int param_2,int param_3)
         local_14 = (short)iVar10;
         iVar5 = iVar1 + param_3;
         bVar2 = *(byte *)(_DAT_0071c000 + iVar5);
-        iVar4 = *(int *)(&DAT_0071bfd0 + iVar8 * 4) + (uint)bVar2 * 4;
+        iVar4 = *(int *)((int)&DAT_0071bfd0 + iVar8 * 4) + (uint)bVar2 * 4;
         iVar9 = *(byte *)(iVar4 + -0x7e) - 1;
         __vr2 = (int)local_14;
         _DAT_00714104 = (int)local_30;
@@ -8559,11 +8559,11 @@ void __cdecl FUN_0042293c(int param_1,int param_2,int param_3)
         _DAT_00714134 = _DAT_00714144;
         _DAT_00714138 = _DAT_00714148;
         _DAT_0071413c = _DAT_0071414c;
-        *(uint *)(*(int *)(&DAT_0071bfa0 + buffer_num * 4) + 8 + iVar5 * 0x28) =
+        *(uint *)(*(int *)((int)&DAT_0071bfa0 + buffer_num * 4) + 8 + iVar5 * 0x28) =
              _DAT_00714144 * 0x10000 + (_DAT_00714140 & 0xffff);
-        *(uint *)(*(int *)(&DAT_0071bfa0 + iVar4 * 4) + 0x10 + iVar5 * 0x28) =
+        *(uint *)(*(int *)((int)&DAT_0071bfa0 + iVar4 * 4) + 0x10 + iVar5 * 0x28) =
              _DAT_00714154 * 0x10000 + (_DAT_00714150 & 0xffff);
-        *(uint *)(*(int *)(&DAT_0071bfa0 + iVar4 * 4) + 0x18 + iVar5 * 0x28) =
+        *(uint *)(*(int *)((int)&DAT_0071bfa0 + iVar4 * 4) + 0x18 + iVar5 * 0x28) =
              (_DAT_00714120 & 0xffff) + _DAT_00714124 * 0x10000;
         __vr3 = __vr2;
         _DAT_007140f4 = _DAT_007140e4;
@@ -8581,7 +8581,7 @@ void __cdecl FUN_0042293c(int param_1,int param_2,int param_3)
         __vr0 = iVar6;
         _DAT_00714104 = iVar7;
         GTERPS();
-        *(uint *)(*(int *)(&DAT_0071bfa0 + buffer_num * 4) + 0x20 + iVar5 * 0x28) =
+        *(uint *)(*(int *)((int)&DAT_0071bfa0 + buffer_num * 4) + 0x20 + iVar5 * 0x28) =
              (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         iVar10 = iVar10 + iVar9 + (uVar3 >> 0x10);
         if (bVar2 == 0x2e) {
@@ -9061,10 +9061,10 @@ void LoadCardFiles(void)
   iVar4 = 0;
   do {
     (&card_data)[iVar4 * 0x24] = 0;
-    *(short *)(&DAT_0073c086 + iVar4 * 0x24) = (short)iVar4;
+    *(short *)((int)&DAT_0073c086 + iVar4 * 0x24) = (short)iVar4;
     (&DAT_0073c07a)[iVar4 * 0x24] = 0;
     iVar3 = iVar4 + 1;
-    *(undefined2 *)(&DAT_0073c084 + iVar4 * 0x24) = 0;
+    *(undefined2 *)((int)&DAT_0073c084 + iVar4 * 0x24) = 0;
     iVar4 = iVar3;
   } while (iVar3 < 0xf);
   iVar4 = 0;
@@ -9072,7 +9072,7 @@ void LoadCardFiles(void)
     if (*(int *)(iVar4 * 0x200 + 0x71c060) != 0) {
       pcVar7 = (char *)(iVar4 * 0x200 + 0x71c064);
       iVar3 = iVar5 * 0x24;
-      pcVar2 = &card_data + iVar3;
+      pcVar2 = (int)&card_data + iVar3;
       pcVar6 = pcVar7;
       do {
         cVar1 = *pcVar6;
@@ -9083,7 +9083,7 @@ void LoadCardFiles(void)
         pcVar2[1] = cVar1;
         pcVar2 = pcVar2 + 2;
       } while (cVar1 != '\0');
-      pcVar6 = &DAT_0073c07a + iVar3;
+      pcVar6 = (int)&DAT_0073c07a + iVar3;
       do {
         cVar1 = *pcVar7;
         *pcVar6 = cVar1;
@@ -9093,8 +9093,8 @@ void LoadCardFiles(void)
         pcVar6[1] = cVar1;
         pcVar6 = pcVar6 + 2;
       } while (cVar1 != '\0');
-      *(undefined2 *)(&DAT_0073c084 + iVar3) = 1;
-      *(short *)(&DAT_0073c086 + iVar3) = (short)iVar5;
+      *(undefined2 *)((int)&DAT_0073c084 + iVar3) = 1;
+      *(short *)((int)&DAT_0073c086 + iVar3) = (short)iVar5;
       iVar5 = iVar5 + 1;
     }
     iVar4 = iVar4 + 1;
@@ -9186,7 +9186,7 @@ int FUN_0042353c(void)
   int iVar1;
   
   iVar1 = 0;
-  while ((*(short *)(&DAT_0073c084 + iVar1 * 0x24) != 1 ||
+  while ((*(short *)((int)&DAT_0073c084 + iVar1 * 0x24) != 1 ||
          (*(short *)(iVar1 * 0x2000 + 0x71e060) != 0x1010))) {
     iVar1 = iVar1 + 1;
     if (0xe < iVar1) {
@@ -9694,11 +9694,11 @@ void Init_Debris_(void)
     *(undefined1 *)(iVar4 + 0x73c30c) = uVar9;
     *(undefined1 *)(iVar4 + 0x73c30d) = uVar9;
     *(undefined1 *)(iVar4 + 0x73c30e) = uVar9;
-    *(undefined2 *)(&polygon_angles + uVar6 * 8) = 0;
+    *(undefined2 *)((int)&polygon_angles + uVar6 * 8) = 0;
     *(undefined1 *)(iVar4 + 0x73c32c) = uVar9;
-    *(undefined2 *)(&DAT_0073c2fa + uVar6 * 8) = 0;
+    *(undefined2 *)((int)&DAT_0073c2fa + uVar6 * 8) = 0;
     *(undefined1 *)(iVar4 + 0x73c32d) = uVar9;
-    *(undefined2 *)(&DAT_0073c2fc + uVar6 * 8) = 0;
+    *(undefined2 *)((int)&DAT_0073c2fc + uVar6 * 8) = 0;
     *(undefined1 *)(iVar4 + 0x73c32e) = uVar9;
     bVar7 = (char)uVar5 + 1;
     uVar5 = CONCAT31((int3)(uVar5 >> 8),bVar7);
@@ -9827,7 +9827,7 @@ void __cdecl Setup_Debris(undefined4 *param_1,int *param_2,uint param_3,int para
       *(undefined4 *)(iVar5 + 0x73c538) = *param_1;
       *(undefined4 *)(iVar5 + 0x73c53c) = param_1[1];
       *(undefined4 *)(iVar5 + 0x73c540) = param_1[2];
-      uVar1 = *(undefined2 *)(&debris_cluts + param_4 * 2);
+      uVar1 = *(undefined2 *)((int)&debris_cluts + param_4 * 2);
       *(undefined2 *)(iVar5 + 0x73c4ee) = uVar1;
       *(undefined2 *)(iVar5 + 0x73c50e) = uVar1;
       uVar3 = rand();
@@ -9965,8 +9965,8 @@ void Update_Debris(void)
                (((int)((__otz + iVar7 * -4) - (uint)(iVar7 << 1 < 0)) >> 2) * 4 +
                *(int *)(_cdb_ + 0x8a));
       uVar1 = *puVar5;
-      *puVar5 = &Debris + iVar11 + iVar4;
-      *(undefined4 *)(&Debris + iVar11 + iVar4) = uVar1;
+      *puVar5 = (int)&Debris + iVar11 + iVar4;
+      *(undefined4 *)((int)&Debris + iVar11 + iVar4) = uVar1;
       __rgb0 = (uint)DAT_00463896;
       gte_dpcs();
       *(undefined1 *)(buffer_num * 0x20 + iVar4 + 0x73c4e4) = _rgb0;
@@ -10066,8 +10066,8 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
   *(undefined4 *)(iVar5 + 0x743334) = *(undefined4 *)((int)&DAT_00752350 + iVar1);
   if (param_1 == 0) {
     _wheeloff_index = _wheeloff_index + 1 & 7;
-    puVar6 = (undefined4 *)(&wheeloff_object_ + _wheeloff_index * 0x1c);
-    puVar7 = (undefined4 *)(&Flying_Objects + iVar5);
+    puVar6 = (undefined4 *)((int)&wheeloff_object_ + _wheeloff_index * 0x1c);
+    puVar7 = (undefined4 *)((int)&Flying_Objects + iVar5);
     for (iVar3 = 7; iVar3 != 0; iVar3 = iVar3 + -1) {
       *puVar7 = *puVar6;
       puVar6 = puVar6 + 1;
@@ -10134,8 +10134,8 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
   if (param_1 == 1) {
     _DAT_00744358 = _DAT_00744358 + 1 & 7;
     iVar5 = uVar4 * 0x9c;
-    puVar6 = (undefined4 *)(&bonnetoff_object + _DAT_00744358 * 0x1c);
-    puVar7 = (undefined4 *)(&Flying_Objects + iVar5);
+    puVar6 = (undefined4 *)((int)&bonnetoff_object + _DAT_00744358 * 0x1c);
+    puVar7 = (undefined4 *)((int)&Flying_Objects + iVar5);
     for (iVar1 = 7; iVar1 != 0; iVar1 = iVar1 + -1) {
       *puVar7 = *puVar6;
       puVar6 = puVar6 + 1;
@@ -10197,8 +10197,8 @@ void __cdecl Setup_Flying_Objects(int param_1,int *param_2,int param_3,int param
   if (param_1 == 2) {
     _bootoff_index = _bootoff_index + 1 & 7;
     iVar5 = uVar4 * 0x9c;
-    puVar6 = (undefined4 *)(&bootoff_object + _bootoff_index * 0x1c);
-    puVar7 = (undefined4 *)(&Flying_Objects + iVar5);
+    puVar6 = (undefined4 *)((int)&bootoff_object + _bootoff_index * 0x1c);
+    puVar7 = (undefined4 *)((int)&Flying_Objects + iVar5);
     for (iVar1 = 7; iVar1 != 0; iVar1 = iVar1 + -1) {
       *puVar7 = *puVar6;
       puVar6 = puVar6 + 1;
@@ -10296,7 +10296,7 @@ void Update_Flying_Objects(void)
     __lmptr = local_34;
     __cmptr = &scene_colour_matrix_;
     FUN_004202ac(local_54,(int *)(iVar2 + 0x743328));
-    VVDraw_Object((undefined4 *)(&Flying_Objects + iVar2));
+    VVDraw_Object((undefined4 *)((int)&Flying_Objects + iVar2));
     iVar3 = *(int *)(iVar2 + 0x743368) + -1;
     *(int *)(iVar2 + 0x743368) = iVar3;
     if (*(int *)(iVar2 + 0x743374) == 0) {
@@ -10647,9 +10647,9 @@ undefined4 __cdecl FUN_00425b88(int param_1)
   iVar7 = *(int *)(iVar1 + 0x743323) >> 0x18;
   uVar4 = (uint)*(byte *)(iVar1 + 0x743324);
   if (iVar7 == 0) {
-    piVar3 = (int *)(*(int *)(&DAT_00465dd0 + uVar4 * 8) * 0xc +
+    piVar3 = (int *)(*(int *)((int)&DAT_00465dd0 + uVar4 * 8) * 0xc +
                     (*(int *)(iVar1 + 0x74331e) >> 0x10) * 0xc + _strip_vertex);
-    piVar6 = (int *)(*(int *)(&DAT_00465dd4 + uVar4 * 8) * 0xc +
+    piVar6 = (int *)(*(int *)((int)&DAT_00465dd4 + uVar4 * 8) * 0xc +
                     (*(int *)(iVar1 + 0x743320) >> 0x10) * 0xc + _strip_vertex);
     if ((*piVar2 - *piVar3) * (piVar6[2] - piVar3[2]) -
         (*piVar6 - *piVar3) * (*(int *)(iVar1 + 0x743304) - piVar3[2]) < 0) {
@@ -10658,9 +10658,9 @@ undefined4 __cdecl FUN_00425b88(int param_1)
   }
   if (iVar7 == *(byte *)(*(int *)(iVar1 + 0x743310) + _strip_data + 5) - 1) {
     piVar3 = (int *)((*(int *)(iVar1 + 0x743320) >> 0x10) * 0xc + _strip_vertex + 0xc +
-                    *(int *)(&DAT_00465e34 + uVar4 * 8) * 0xc);
+                    *(int *)((int)&DAT_00465e34 + uVar4 * 8) * 0xc);
     piVar6 = (int *)(_strip_vertex + (*(int *)(iVar1 + 0x74331e) >> 0x10) * 0xc + 0xc +
-                    *(int *)(&left_collision_offsets + uVar4 * 8) * 0xc);
+                    *(int *)((int)&left_collision_offsets + uVar4 * 8) * 0xc);
     if ((*piVar2 - *piVar3) * (piVar6[2] - piVar3[2]) -
         (*(int *)(iVar1 + 0x743304) - piVar3[2]) * (*piVar6 - *piVar3) < 0) {
       uVar5 = 1;
@@ -11003,7 +11003,7 @@ void __cdecl FUN_00425e74(int param_1,int param_2,undefined4 param_3,int param_4
   local_20 = local_24 << 3;
   local_1c = 0;
   do {
-    _DAT_00744ad8 = *(int *)(&dent_area_lookup + local_20);
+    _DAT_00744ad8 = *(int *)((int)&dent_area_lookup + local_20);
     if (_DAT_00744ad8 == -1) break;
     puVar6 = (&dent_area)[_DAT_00744ad8 + param_4];
     while( true ) {
@@ -11024,7 +11024,7 @@ void __cdecl FUN_00425e74(int param_1,int param_2,undefined4 param_3,int param_4
   local_28 = local_24 << 3;
   iVar4 = 0;
   do {
-    _DAT_00744adc = *(int *)(&dent_area_lookup + local_28);
+    _DAT_00744adc = *(int *)((int)&dent_area_lookup + local_28);
     if (_DAT_00744adc == -1) {
       return;
     }
@@ -11092,13 +11092,13 @@ void __cdecl Generate_Surface_Normals(byte *param_1)
   local_24 = _strip_vertex;
   local_3c = (uint)param_1[1];
   uVar1 = (uint)*param_1;
-  local_18 = *(int *)(&DAT_00463dcc + uVar1 * 8) + (uint)*(ushort *)(param_1 + 0x10);
+  local_18 = *(int *)((int)&DAT_00463dcc + uVar1 * 8) + (uint)*(ushort *)(param_1 + 0x10);
   local_28 = 0;
   if (local_3c != 0) {
     local_2c = uVar1 - 1;
     local_34 = local_3c - 1;
     local_38 = param_1;
-    local_14 = (uint)*(ushort *)(param_1 + 0x10) + *(int *)(&DAT_00463dd0 + uVar1 * 8) + local_3c;
+    local_14 = (uint)*(ushort *)(param_1 + 0x10) + *(int *)((int)&DAT_00463dd0 + uVar1 * 8) + local_3c;
     do {
       iVar8 = local_14 + 1;
       local_14 = local_14 + 2;
@@ -11269,9 +11269,9 @@ void FUN_00426ab4(void)
         uVar4 = (uint)*pbVar7;
         do {
           local_38 = (uint)bVar2;
-          local_14 = local_14 + *(int *)(&DAT_00463e8c + uVar4 * 4);
+          local_14 = local_14 + *(int *)((int)&DAT_00463e8c + uVar4 * 4);
           pbVar7[3] = (byte)local_14;
-          local_14 = local_14 + *(int *)(&strip_postincrements + uVar4 * 4);
+          local_14 = local_14 + *(int *)((int)&strip_postincrements + uVar4 * 4);
           uVar3 = *(ushort *)(pbVar7 + 0x12);
           *(ushort *)(pbVar7 + 0x12) = uVar3 & 0x3f;
           *(ushort *)(pbVar7 + 0x12) = uVar3 & 0x3f | (ushort)((uVar9 & 0xffff03ff) << 6);
@@ -11403,16 +11403,16 @@ void __cdecl Track_Follow(int *param_1)
   uVar14 = (uint)*pbVar17;
   uVar16 = (uint)pbVar17[1];
   iVar12 = uVar14 * 8;
-  iVar5 = (uint)*(ushort *)(pbVar17 + 0x10) + *(int *)(&DAT_00463dcc + iVar12);
-  iVar6 = (uint)*(ushort *)(pbVar17 + 0x10) + *(int *)(&DAT_00463dd0 + iVar12) + uVar16 + 1;
+  iVar5 = (uint)*(ushort *)(pbVar17 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar12);
+  iVar6 = (uint)*(ushort *)(pbVar17 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar12) + uVar16 + 1;
   iVar10 = *(int *)((int)param_1 + 0x27);
   iVar15 = iVar10 >> 0x18;
   bVar4 = 0xf;
   if (*(char *)((int)param_1 + 0x2a) == '\0') {
-    bVar4 = (byte)*(undefined4 *)(&DAT_00463e2c + iVar12) & 0xf;
+    bVar4 = (byte)*(undefined4 *)((int)&DAT_00463e2c + iVar12) & 0xf;
   }
   if (*(int *)((int)param_1 + 0x27) >> 0x18 == uVar16 - 1) {
-    bVar4 = bVar4 & (byte)*(undefined4 *)(&DAT_00463e30 + uVar14 * 8);
+    bVar4 = bVar4 & (byte)*(undefined4 *)((int)&DAT_00463e30 + uVar14 * 8);
   }
   iVar12 = (*(int *)((int)param_1 + 0x27) >> 0x18) * 0xc;
   piVar7 = (int *)(iVar6 * 0xc + _strip_vertex + iVar12);
@@ -11432,13 +11432,13 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5);
-    iVar12 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] +
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5);
+    iVar12 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] +
              1;
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 0) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11466,7 +11466,7 @@ void __cdecl Track_Follow(int *param_1)
   case 2:
     local_34 = 0xf;
     if (*(int *)((int)param_1 + 0x27) >> 0x18 == uVar16 - 2) {
-      local_34 = *(uint *)(&DAT_00463e30 + uVar14 * 8) & 0xf;
+      local_34 = *(uint *)((int)&DAT_00463e30 + uVar14 * 8) & 0xf;
     }
     if (((local_34 & 4) == 0) ||
        (iVar10 = iVar15 * 0xc + iVar11 + iVar6 * 0xc,
@@ -11518,12 +11518,12 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1
     ;
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 0xffffffff) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 + 1 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11539,7 +11539,7 @@ void __cdecl Track_Follow(int *param_1)
       goto switchD_00426fe6_caseD_5;
     }
     if (((uVar14 & 8) == 0) ||
-       (iVar5 = iVar11 + ((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5)) * 0xc
+       (iVar5 = iVar11 + ((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5)) * 0xc
                 + uVar16 * 0xc, iVar11 = iVar6 * 0xc + iVar11 + uVar16 * 0xc,
        (*param_1 - *(int *)(iVar11 + 0xc)) * (*(int *)(iVar5 + 0x14) - *(int *)(iVar11 + 0x14)) -
        (*(int *)(iVar5 + 0xc) - *(int *)(iVar11 + 0xc)) * (param_1[2] - *(int *)(iVar11 + 0x14)) < 1
@@ -11558,13 +11558,13 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5);
-    iVar12 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] +
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5);
+    iVar12 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] +
              1;
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 0) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11599,11 +11599,11 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5);
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5);
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 0xffffffff) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 + 1 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11619,7 +11619,7 @@ void __cdecl Track_Follow(int *param_1)
     }
     if (((uVar14 & 8) == 0) ||
        (iVar6 = iVar11 + iVar6 * 0xc + uVar16 * 0xc,
-       iVar11 = ((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dd0 + iVar5) +
+       iVar11 = ((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar5) +
                  (uint)pbVar9[1] + 1) * 0xc + iVar11 + uVar16 * 0xc,
        (*param_1 - *(int *)(iVar11 + 0xc)) * (*(int *)(iVar6 + 0x14) - *(int *)(iVar11 + 0x14)) -
        (*(int *)(iVar6 + 0xc) - *(int *)(iVar11 + 0xc)) * (param_1[2] - *(int *)(iVar11 + 0x14)) < 1
@@ -11631,7 +11631,7 @@ void __cdecl Track_Follow(int *param_1)
   case 8:
     uVar16 = 0xf;
     if (*(int *)((int)param_1 + 0x27) >> 0x18 == 1) {
-      uVar16 = *(uint *)(&DAT_00463e2c + uVar14 * 8) & 0xf;
+      uVar16 = *(uint *)((int)&DAT_00463e2c + uVar14 * 8) & 0xf;
     }
     if (((uVar16 & 4) == 0) ||
        (piVar7 = (int *)(iVar15 * 0xc + iVar11 + iVar6 * 0xc),
@@ -11681,12 +11681,12 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1
     ;
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 1) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 - 1 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11701,7 +11701,7 @@ void __cdecl Track_Follow(int *param_1)
     }
     if (((uVar14 & 2) == 0) ||
        (piVar13 = (int *)(iVar11 + iVar6 * 0xc + uVar16 * 0xc),
-       piVar7 = (int *)(((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5)) * 0xc +
+       piVar7 = (int *)(((uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5)) * 0xc +
                         iVar11 + uVar16 * 0xc),
        (piVar13[2] - piVar7[2]) * (*param_1 - *piVar7) -
        (param_1[2] - piVar7[2]) * (*piVar13 - *piVar7) < 1)) {
@@ -11719,11 +11719,11 @@ void __cdecl Track_Follow(int *param_1)
     }
     pbVar9 = (byte *)(_strip_data + 4 + iVar10);
     iVar5 = (uint)*pbVar9 * 8;
-    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)(&DAT_00463dcc + iVar5);
+    iVar6 = (uint)*(ushort *)(pbVar9 + 0x10) + *(int *)((int)&DAT_00463dcc + iVar5);
     uVar16 = iVar15 - ((uint)pbVar9[3] - (uint)pbVar17[3]);
     uVar14 = 0xf;
     if (uVar16 == 1) {
-      uVar14 = *(uint *)(&DAT_00463e2c + iVar5) & 0xf;
+      uVar14 = *(uint *)((int)&DAT_00463e2c + iVar5) & 0xf;
     }
     if (uVar16 - 1 == pbVar9[1] - 1) {
       uVar14 = uVar14 & *(uint *)(&DAT_00463e30 + (uint)*pbVar9 * 8);
@@ -11739,7 +11739,7 @@ void __cdecl Track_Follow(int *param_1)
     }
     if (((uVar14 & 2) == 0) ||
        (piVar13 = (int *)(iVar11 + ((uint)*(ushort *)(pbVar9 + 0x10) +
-                                    *(int *)(&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1) * 0xc +
+                                    *(int *)((int)&DAT_00463dd0 + iVar5) + (uint)pbVar9[1] + 1) * 0xc +
                          uVar16 * 0xc), piVar7 = (int *)(iVar6 * 0xc + iVar11 + uVar16 * 0xc),
        iVar11 = (piVar13[2] - piVar7[2]) * (*param_1 - *piVar7),
        iVar5 = (param_1[2] - piVar7[2]) * (*piVar13 - *piVar7),
@@ -11792,9 +11792,9 @@ void __cdecl Map_Height(int *param_1)
     uVar6 = (uint)*pbVar10;
     *(byte *)(param_1 + 10) = *pbVar10;
     uVar3 = *(ushort *)(pbVar10 + 0x10);
-    iVar9 = *(int *)(&DAT_00463dd0 + uVar6 * 8);
+    iVar9 = *(int *)((int)&DAT_00463dd0 + uVar6 * 8);
     iVar4 = *(int *)((int)param_1 + 0x27) >> 0x18;
-    iVar7 = *(int *)(&DAT_00463dcc + uVar6 * 8) + (uint)uVar3 + iVar4;
+    iVar7 = *(int *)((int)&DAT_00463dcc + uVar6 * 8) + (uint)uVar3 + iVar4;
     *(short *)(param_1 + 9) = (short)iVar7;
     iVar5 = (uint)uVar3 + iVar9 + (uint)bVar2 + 1 + iVar4;
     pbVar10 = pbVar10 + iVar4 * 0xe + 0x24;
@@ -12380,7 +12380,7 @@ LAB_0042958a:
     }
   }
   else if ((_current_level != 0xb) || (-0x65 < *(int *)((int)&DAT_00752348 + param_1 * 0x27c))) {
-    local_14 = *(int *)(&Forest_Track_Type + _current_level * 4);
+    local_14 = *(int *)((int)&Forest_Track_Type + _current_level * 4);
     iVar2 = param_1 * 0x27c;
     iVar3 = -DAT_00463ef8 >> 0x1f;
     _DAT_00744b00 = *(int *)((int)&DAT_00752344 + iVar2);
@@ -12688,7 +12688,7 @@ void __cdecl Pit_Camera_Control(int param_1)
   if (DAT_00467074 == 0) {
     if ((_DAT_0071c04a & 0x80) != 0) {
       SetHighLight(camera_section,0);
-      camera_offset = *(short *)(&DAT_00464a70 + camera_section * 4);
+      camera_offset = *(short *)((int)&DAT_00464a70 + camera_section * 4);
       camera_section = camera_section + 1;
       if (5 < camera_section) {
         _flag = _flag + 1;
@@ -12721,10 +12721,10 @@ void __cdecl Pit_Camera_Control(int param_1)
       camera_offset = camera_offset + -0x10;
     }
     iVar3 = camera_section * 4;
-    if ((DAT_00463f04 & 0xfff) != *(uint *)(&offset_table + iVar3)) {
+    if ((DAT_00463f04 & 0xfff) != *(uint *)((int)&offset_table + iVar3)) {
       iVar4 = (_flag & 0xffff) * 0x1000;
-      if ((int)DAT_00463f04 < (int)(*(uint *)(&offset_table + iVar3) + _flag * 0x1000)) {
-        sVar2 = (short)((uint)*(ushort *)(&offset_table + iVar3) + iVar4) - (short)DAT_00463f04;
+      if ((int)DAT_00463f04 < (int)(*(uint *)((int)&offset_table + iVar3) + _flag * 0x1000)) {
+        sVar2 = (short)((uint)*(ushort *)((int)&offset_table + iVar3) + iVar4) - (short)DAT_00463f04;
         if (sVar2 < 8) {
           DAT_00463f04 = DAT_00463f04 + 1;
         }
@@ -12735,7 +12735,7 @@ void __cdecl Pit_Camera_Control(int param_1)
         }
       }
       else {
-        sVar2 = (short)DAT_00463f04 - (*(short *)(&offset_table + iVar3) + (short)iVar4);
+        sVar2 = (short)DAT_00463f04 - (*(short *)((int)&offset_table + iVar3) + (short)iVar4);
         if (sVar2 < 8) {
           DAT_00463f04 = DAT_00463f04 - 1;
         }
@@ -12772,7 +12772,7 @@ void __cdecl Pit_Camera_Control(int param_1)
     Replay_Action_Repeat = Replay_Action_Repeat - 1;
     if ((uVar5 & 0x8000) != 0) {
       SetHighLight(camera_section,0);
-      camera_offset = *(short *)(&DAT_00464a70 + camera_section * 4);
+      camera_offset = *(short *)((int)&DAT_00464a70 + camera_section * 4);
       camera_section = camera_section + 1;
       if (5 < camera_section) {
         _flag = _flag + 1;
@@ -12802,10 +12802,10 @@ void __cdecl Pit_Camera_Control(int param_1)
       camera_offset = camera_offset + -0x10;
     }
     iVar3 = camera_section * 4;
-    if ((DAT_00463f04 & 0xfff) != *(uint *)(&offset_table + iVar3)) {
+    if ((DAT_00463f04 & 0xfff) != *(uint *)((int)&offset_table + iVar3)) {
       sVar2 = (short)_flag * 0x1000;
-      if ((int)DAT_00463f04 < (int)(_flag * 0x1000 + *(uint *)(&offset_table + iVar3))) {
-        sVar2 = (sVar2 + *(short *)(&offset_table + iVar3)) - (short)DAT_00463f04;
+      if ((int)DAT_00463f04 < (int)(_flag * 0x1000 + *(uint *)((int)&offset_table + iVar3))) {
+        sVar2 = (sVar2 + *(short *)((int)&offset_table + iVar3)) - (short)DAT_00463f04;
         if (sVar2 < 8) {
           DAT_00463f04 = DAT_00463f04 + 1;
         }
@@ -12816,7 +12816,7 @@ void __cdecl Pit_Camera_Control(int param_1)
         }
       }
       else {
-        sVar2 = (short)DAT_00463f04 - (sVar2 + *(short *)(&offset_table + iVar3));
+        sVar2 = (short)DAT_00463f04 - (sVar2 + *(short *)((int)&offset_table + iVar3));
         if (sVar2 < 8) {
           DAT_00463f04 = DAT_00463f04 - 1;
         }
@@ -12888,10 +12888,10 @@ int __cdecl Do_The_Floaty_Camera_Thing(int *param_1,int param_2)
   
   if (7 < _current_level) {
     iVar5 = DAT_00464bf0 * 0x10;
-    if ((((*(int *)(&DAT_00752344 + DAT_00464aa8 * 0x27c) < *(int *)(&DAT_00464bb0 + iVar5)) ||
-         (*(int *)(&DAT_0075234c + DAT_00464aa8 * 0x27c) < *(int *)(&DAT_00464bb4 + iVar5))) ||
-        (*(int *)(&DAT_00464bb8 + iVar5) < *(int *)(&DAT_00752344 + DAT_00464aa8 * 0x27c))) ||
-       (*(int *)(&DAT_00464bbc + iVar5) < *(int *)(&DAT_0075234c + DAT_00464aa8 * 0x27c))) {
+    if ((((*(int *)(&DAT_00752344 + DAT_00464aa8 * 0x27c) < *(int *)((int)&DAT_00464bb0 + iVar5)) ||
+         (*(int *)(&DAT_0075234c + DAT_00464aa8 * 0x27c) < *(int *)((int)&DAT_00464bb4 + iVar5))) ||
+        (*(int *)((int)&DAT_00464bb8 + iVar5) < *(int *)(&DAT_00752344 + DAT_00464aa8 * 0x27c))) ||
+       (*(int *)((int)&DAT_00464bbc + iVar5) < *(int *)(&DAT_0075234c + DAT_00464aa8 * 0x27c))) {
       iVar5 = DAT_00464aa8 * 0x27c;
       if (*(int *)((int)&DAT_00752344 + iVar5) < 0) {
         if (*(int *)((int)&DAT_0075234c + iVar5) < 0) {
@@ -13101,7 +13101,7 @@ void __cdecl FUN_0042a4d8(int param_1)
   uVar4 = 0;
   do {
     if (*(int *)((int)local_34 + iVar2) != 0) {
-      iVar1 = *(int *)(&DAT_00744de0 + iVar2);
+      iVar1 = *(int *)((int)&DAT_00744de0 + iVar2);
       if (iVar1 < 700) {
         uVar7 = *(undefined4 *)((int)&PTR_DAT_00464bf4 + iVar2);
         pbVar6 = &DAT_0046c9a4;
@@ -13198,7 +13198,7 @@ void __cdecl Bonnet_Smoke(int param_1)
       local_18 = local_30;
       do {
         if ((*(int *)(local_18 + 0x12e) == 1) &&
-           ((**(byte **)(*(int *)(&DAT_00464d2c + local_14 * 4) * 0x2c + local_20 + 0x75c7f8) & 6)
+           ((**(byte **)(*(int *)((int)&DAT_00464d2c + local_14 * 4) * 0x2c + local_20 + 0x75c7f8) & 6)
             == 0)) {
           gte_SetRotMatrix(local_24);
           __vr3 = __vr2;
@@ -13442,9 +13442,9 @@ void __cdecl FUN_0042b5f0(int param_1)
       *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x40;
       iVar6 = _current_level * 8;
       iVar2 = param_1 * 0x1e;
-      *(undefined2 *)((int)&car_colour_matrix + iVar2) = *(undefined2 *)(&scene_colour_vectors + iVar6);
-      *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)(&DAT_00465924 + iVar6);
-      *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)(&DAT_00465926 + iVar6);
+      *(undefined2 *)((int)&car_colour_matrix + iVar2) = *(undefined2 *)((int)&scene_colour_vectors + iVar6);
+      *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)((int)&DAT_00465924 + iVar6);
+      *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)((int)&DAT_00465926 + iVar6);
     }
     else {
       bVar13 = *(short *)(param_1 * 0x2c + 0x75a2b2) == 0x85;
@@ -13513,10 +13513,10 @@ void __cdecl FUN_0042b5f0(int param_1)
       if (local_34 < 0x100) {
         *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x18;
       }
-      else if (local_34 < *(int *)(&DAT_00465920 + _current_level * 8) >> 0x10) {
+      else if (local_34 < *(int *)((int)&DAT_00465920 + _current_level * 8) >> 0x10) {
         *(int *)(param_1 * 0x1b2 + 0x75a75e) =
              ((local_34 + -0x100) * 0x28) /
-             ((*(int *)(&DAT_00465920 + _current_level * 8) >> 0x10) + -0x100) + 0x18;
+             ((*(int *)((int)&DAT_00465920 + _current_level * 8) >> 0x10) + -0x100) + 0x18;
       }
     }
   }
@@ -13531,7 +13531,7 @@ void __cdecl FUN_0042b5f0(int param_1)
          (0xd0 < *(short *)(param_1 * 0x2c + 0x75a2b2))))) &&
        ((sVar1 = *(short *)(param_1 * 0x2c + 0x75a2b2), sVar1 < 0x1f7 || (0x221 < sVar1)))) {
       *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x40;
-      uVar3 = *(undefined2 *)(&scene_colour_vectors + _current_level * 8);
+      uVar3 = *(undefined2 *)((int)&scene_colour_vectors + _current_level * 8);
       *(undefined2 *)((int)&car_colour_matrix + param_1 * 0x1e) = uVar3;
       *(undefined2 *)(param_1 * 0x1e + 0x744e06) = uVar3;
       *(undefined2 *)(param_1 * 0x1e + 0x744e0c) = uVar3;
@@ -13636,10 +13636,10 @@ void __cdecl FUN_0042b5f0(int param_1)
       if (local_34 < 0x100) {
         *(undefined4 *)(param_1 * 0x1b2 + 0x75a75e) = 0x18;
       }
-      else if (local_34 < *(int *)(&DAT_00465920 + _current_level * 8) >> 0x10) {
+      else if (local_34 < *(int *)((int)&DAT_00465920 + _current_level * 8) >> 0x10) {
         *(int *)(param_1 * 0x1b2 + 0x75a75e) =
              ((local_34 + -0x100) * 0x28) /
-             ((*(int *)(&DAT_00465920 + _current_level * 8) >> 0x10) + -0x100) + 0x18;
+             ((*(int *)((int)&DAT_00465920 + _current_level * 8) >> 0x10) + -0x100) + 0x18;
         return;
       }
     }
@@ -13676,7 +13676,7 @@ void __cdecl Draw_Car(int param_1)
   __lmptr = (int *)lmout;
   FUN_004202ac(psVar1,(int *)((int)&DAT_00752344 + param_1 * 0x27c));
   bVar2 = _DAT_0071be56 < 4000;
-  *(undefined1 **)(*(int *)((char *)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
+  *(undefined1 **)(*(int *)((char *)_level_data + 0x40) + 0x20) = (int)&car_vertices + param_1 * 0x330;
   iVar3 = VVDraw_Object((undefined4 *)((int)&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
   *(int *)(param_1 * 0x27c + 0x752398) = iVar3;
   if ((iVar3 != 0) && (bVar2 == 1)) {
@@ -13754,9 +13754,9 @@ void Init_Car_Graphics(void)
     do {
       iVar1 = _current_level;
       *(undefined2 *)((int)&car_colour_matrix + iVar2) =
-           *(undefined2 *)(&DAT_0046591a + _current_level * 8);
-      *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)(&DAT_0046591c + iVar1 * 8);
-      *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)(&DAT_0046591e + iVar1 * 8);
+           *(undefined2 *)((int)&DAT_0046591a + _current_level * 8);
+      *(undefined2 *)(iVar2 + 0x744e06) = *(undefined2 *)((int)&DAT_0046591c + iVar1 * 8);
+      *(undefined2 *)(iVar2 + 0x744e0c) = *(undefined2 *)((int)&DAT_0046591e + iVar1 * 8);
       *(undefined2 *)(iVar2 + 0x744e02) = 0;
       *(undefined2 *)(iVar2 + 0x744e08) = 0;
       *(undefined2 *)(iVar2 + 0x744e0e) = 0;
@@ -13810,9 +13810,9 @@ void Init_Car_Graphics(void)
   }
   FUN_004351d0();
   FUN_00443f90();
-  car_light_matrix = (car_light_matrix & ~(0xffffu<<0)) | (((*(undefined2 *)(&DAT_004658c2 + _current_level * 8)) & 0xffffu)<<0);
-  car_light_matrix = (car_light_matrix & ~(0xffffu<<16)) | (((*(undefined2 *)(&DAT_004658c4 + _current_level * 8)) & 0xffffu)<<16);
-  DAT_00464cb8 = *(undefined2 *)(&DAT_004658c6 + _current_level * 8);
+  car_light_matrix = (car_light_matrix & ~(0xffffu<<0)) | (((*(undefined2 *)((int)&DAT_004658c2 + _current_level * 8)) & 0xffffu)<<0);
+  car_light_matrix = (car_light_matrix & ~(0xffffu<<16)) | (((*(undefined2 *)((int)&DAT_004658c4 + _current_level * 8)) & 0xffffu)<<16);
+  DAT_00464cb8 = *(undefined2 *)((int)&DAT_004658c6 + _current_level * 8);
   return;
 }
 
@@ -13852,7 +13852,7 @@ void Init_Rollercoaster(void)
     *(undefined4 *)(iVar1 + 0x749578) = 0;
     *(undefined4 *)(iVar1 + 0x74957c) = 0;
     *(undefined4 *)(iVar1 + 0x749580) = 0;
-    *(undefined4 *)(&roller + iVar1) = 0;
+    *(undefined4 *)((int)&roller + iVar1) = 0;
     *(undefined4 *)(iVar1 + 0x749550) = track_position;
     *(undefined4 *)(iVar1 + 0x749554) = DAT_00464e80;
     *(undefined4 *)(iVar1 + 0x749558) = DAT_00464e84;
@@ -13908,7 +13908,7 @@ void Init_CLUT_Animation_(void)
     do {
       iVar2 = iVar3 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&CLUT_Anim_Safe + iVar3));
-      *(int *)(&safe_anim + iVar3) = iVar1;
+      *(int *)((int)&safe_anim + iVar3) = iVar1;
       iVar3 = iVar2;
     } while (iVar2 != 0x10);
     _DAT_00749a60 = 0;
@@ -13924,7 +13924,7 @@ void Init_CLUT_Animation_(void)
     do {
       iVar2 = iVar3 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&PTR_DAT_004651bc + iVar3));
-      *(int *)(&j_anim + iVar3) = iVar1;
+      *(int *)((int)&j_anim + iVar3) = iVar1;
       iVar3 = iVar2;
     } while (iVar2 != 0xc);
     _DAT_0074949c = 0;
@@ -13976,9 +13976,9 @@ void Init_Texture_Animation(void)
     do {
       iVar1 = Search_For_Sprite(*(char **)((int)&flag1_textures + iVar2));
       iVar3 = iVar2 + 4;
-      *(int *)(&flag1_wave_frames + iVar2) = iVar1;
+      *(int *)((int)&flag1_wave_frames + iVar2) = iVar1;
       iVar1 = Search_For_Sprite(*(char **)((int)&flag2_textures + iVar2));
-      *(int *)(&flag2_wave_frames + iVar2) = iVar1;
+      *(int *)((int)&flag2_wave_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x14);
     _DAT_0074952c = 0;
@@ -13989,7 +13989,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&drive_textures + iVar2));
-      *(int *)(&drive_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&drive_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0xc);
     _DAT_0074953c = 0;
@@ -13997,7 +13997,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&goose_textures + iVar2));
-      *(int *)(&goose_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&goose_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x24);
     _DAT_007494fc = 0;
@@ -14005,7 +14005,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&PTR_s_DUMB1_004650dc + iVar2));
-      *(int *)(&flash1_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&flash1_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x20);
     _DAT_00749ad4 = 0;
@@ -14013,7 +14013,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&PTR_s_DUMB2_00465100 + iVar2));
-      *(int *)(&flash2_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&flash2_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x20);
     _DAT_00749ab0 = 0;
@@ -14021,7 +14021,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&PTR_s_DUMB3_00465124 + iVar2));
-      *(int *)(&flash3_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&flash3_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x20);
     _DAT_00749af8 = 0;
@@ -14031,7 +14031,7 @@ void Init_Texture_Animation(void)
     do {
       iVar3 = iVar2 + 4;
       iVar1 = Search_For_Sprite(*(char **)((int)&flame_textures + iVar2));
-      *(int *)(&flame_anim_frames + iVar2) = iVar1;
+      *(int *)((int)&flame_anim_frames + iVar2) = iVar1;
       iVar2 = iVar3;
     } while (iVar3 != 0x14);
     _DAT_007494d4 = 0;
@@ -14128,13 +14128,13 @@ int Update_Other_Objects(void)
   case 5:
     if ((_DAT_0073c2c0 % 6 == 0) &&
        (flag1_wave_count = flag1_wave_count + 1,
-       *(int *)(&flag1_wave_frames + flag1_wave_count * 4) == 0)) {
+       *(int *)((int)&flag1_wave_frames + flag1_wave_count * 4) == 0)) {
       flag1_wave_count = 1;
     }
     in_EAX = _DAT_0073c2c0 / 10;
     if ((_DAT_0073c2c0 % 10 == 0) &&
        (flag2_wave_count = flag2_wave_count + 1,
-       *(int *)(&flag2_wave_frames + flag2_wave_count * 4) == 0)) {
+       *(int *)((int)&flag2_wave_frames + flag2_wave_count * 4) == 0)) {
       flag2_wave_count = 1;
       return in_EAX;
     }
@@ -14146,7 +14146,7 @@ int Update_Other_Objects(void)
       dollar_frame_count = 1;
     }
     if ((_DAT_0073c2c0 % 0x18 == 0) &&
-       (safe_frame_count = safe_frame_count + 1, *(int *)(&safe_anim + safe_frame_count * 4) == 0))
+       (safe_frame_count = safe_frame_count + 1, *(int *)((int)&safe_anim + safe_frame_count * 4) == 0))
     {
       safe_frame_count = 1;
     }
@@ -14157,11 +14157,11 @@ int Update_Other_Objects(void)
     }
     if ((_DAT_0073c2c0 % 0x40 == 0) &&
        (drive_frame_count = drive_frame_count + 1,
-       *(int *)(&drive_anim_frames + drive_frame_count * 4) == 0)) {
+       *(int *)((int)&drive_anim_frames + drive_frame_count * 4) == 0)) {
       drive_frame_count = 1;
     }
     if ((_DAT_0073c2c0 % 0x30 == 0) &&
-       (j_frame_count = j_frame_count + 1, *(int *)(&j_anim + j_frame_count * 4) == 0)) {
+       (j_frame_count = j_frame_count + 1, *(int *)((int)&j_anim + j_frame_count * 4) == 0)) {
       j_frame_count = 1;
     }
     if ((_DAT_0073c2c0 % 0x40 == 0) &&
@@ -14176,23 +14176,23 @@ int Update_Other_Objects(void)
     }
     if ((_DAT_0073c2c0 % 4 == 0) &&
        (goose_frame_count = goose_frame_count + 1,
-       *(int *)(&goose_anim_frames + goose_frame_count * 4) == 0)) {
+       *(int *)((int)&goose_anim_frames + goose_frame_count * 4) == 0)) {
       goose_frame_count = 1;
     }
     if ((_DAT_0073c2c0 % 4 == 0) &&
        (_flash1_frame_count = _flash1_frame_count + 1,
-       *(int *)(&flash1_anim_frames + _flash1_frame_count * 4) == 0)) {
+       *(int *)((int)&flash1_anim_frames + _flash1_frame_count * 4) == 0)) {
       _flash1_frame_count = 1;
     }
     if ((_DAT_0073c2c0 % 4 == 0) &&
        (_flash2_frame_count = _flash2_frame_count + 1,
-       *(int *)(&flash2_anim_frames + _flash2_frame_count * 4) == 0)) {
+       *(int *)((int)&flash2_anim_frames + _flash2_frame_count * 4) == 0)) {
       _flash2_frame_count = 1;
     }
     in_EAX = _DAT_0073c2c0 / 4;
     if ((_DAT_0073c2c0 % 4 == 0) &&
        (_flash3_frame_count = _flash3_frame_count + 1,
-       *(int *)(&flash3_anim_frames + _flash3_frame_count * 4) == 0)) {
+       *(int *)((int)&flash3_anim_frames + _flash3_frame_count * 4) == 0)) {
       _flash3_frame_count = 1;
       return in_EAX;
     }
@@ -14201,7 +14201,7 @@ int Update_Other_Objects(void)
     in_EAX = _DAT_0073c2c0 / 6;
     if ((_DAT_0073c2c0 % 6 == 0) &&
        (_flame_frame_count = _flame_frame_count + 1,
-       *(int *)(&flame_anim_frames + _flame_frame_count * 4) == 0)) {
+       *(int *)((int)&flame_anim_frames + _flame_frame_count * 4) == 0)) {
       _flame_frame_count = 1;
     }
   }
@@ -14286,7 +14286,7 @@ void Draw_Other_Objects(void)
         }
         else {
           iVar2 = *(int *)(iVar6 + 0x749578);
-          local_18 = (int *)(&roller + iVar6);
+          local_18 = (int *)((int)&roller + iVar6);
           local_1c = (int *)(iVar6 + 0x749570);
           *(undefined4 *)(iVar6 + 0x749560) = (&DAT_00464e8c)[iVar2 * 4];
           *(undefined4 *)(iVar6 + 0x749564) = (&DAT_00464e90)[iVar2 * 4];
@@ -14319,7 +14319,7 @@ void Draw_Other_Objects(void)
             iVar3 = iVar5 >> 0x1f;
             iVar2 = *(int *)(iVar6 + 0x749554);
             iVar4 = (*(int *)(iVar6 + 0x749564) - iVar2) * *(int *)(iVar6 + 0x749580);
-            *(int *)(&roller + iVar6) =
+            *(int *)((int)&roller + iVar6) =
                  ((int)((iVar5 + iVar3 * -0x1000) - (uint)(iVar3 << 0xb < 0)) >> 0xc) +
                  *(int *)(iVar6 + 0x749550);
             iVar5 = iVar4 >> 0x1f;
@@ -14351,7 +14351,7 @@ void Draw_Other_Objects(void)
             iVar5 = (*(int *)(iVar6 + 0x749560) - *(int *)(iVar6 + 0x749550)) * iVar2;
             *(int *)(iVar6 + 0x749580) = iVar2;
             iVar2 = iVar5 >> 0x1f;
-            *(int *)(&roller + iVar6) =
+            *(int *)((int)&roller + iVar6) =
                  ((int)((iVar5 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc) +
                  *(int *)(iVar6 + 0x749550);
             iVar2 = (*(int *)(iVar6 + 0x749564) - *(int *)(iVar6 + 0x749554)) *
@@ -14618,7 +14618,7 @@ void DrawFlagObject(void)
     piVar13 = (int *)(local_44 + local_28);
     piVar10 = (int *)(local_48 + local_28);
     local_18 = (int *)(local_28 + 0x74a740);
-    puVar7 = &FlagPolys + local_3c;
+    puVar7 = (int)&FlagPolys + local_3c;
     do {
       RotTransPers(local_18,(int *)(puVar7 + buffer_num * 0x18 + 8),&local_58,&local_5c);
       RotTransPers(piVar10,(int *)(puVar7 + buffer_num * 0x18 + 0xc),&local_58,&local_5c);
@@ -14638,13 +14638,13 @@ void DrawFlagObject(void)
   } while (local_34 < 6);
   iVar12 = buffer_num * 0x28;
   uVar1 = **(undefined4 **)(_cdb_ + 0x8a);
-  **(undefined4 **)(_cdb_ + 0x8a) = &RacePoly + iVar12;
-  *(undefined4 *)(&RacePoly + iVar12) = uVar1;
+  **(undefined4 **)(_cdb_ + 0x8a) = (int)&RacePoly + iVar12;
+  *(undefined4 *)((int)&RacePoly + iVar12) = uVar1;
   iVar12 = buffer_num * 0x28;
   puVar7 = &FlagPolys;
   uVar1 = **(undefined4 **)(_cdb_ + 0x8a);
-  **(undefined4 **)(_cdb_ + 0x8a) = &OverPoly + iVar12;
-  *(undefined4 *)(&OverPoly + iVar12) = uVar1;
+  **(undefined4 **)(_cdb_ + 0x8a) = (int)&OverPoly + iVar12;
+  *(undefined4 *)((int)&OverPoly + iVar12) = uVar1;
   do {
     puVar8 = (undefined4 *)(puVar7 + buffer_num * 0x18);
     puVar7 = puVar7 + 0x30;
@@ -14845,8 +14845,8 @@ void DrawLensFlare(void)
           *(char *)(iVar12 + 0x74aa65 + iVar11) = cVar9;
           *(char *)(iVar12 + 0x74aa66 + iVar11) = cVar9;
           uVar2 = **(undefined4 **)(_cdb_ + 0x8a);
-          **(undefined4 **)(_cdb_ + 0x8a) = &flare_images + iVar11 + iVar12;
-          *(undefined4 *)(&flare_images + iVar11 + iVar12) = uVar2;
+          **(undefined4 **)(_cdb_ + 0x8a) = (int)&flare_images + iVar11 + iVar12;
+          *(undefined4 *)((int)&flare_images + iVar11 + iVar12) = uVar2;
         }
         local_18 = local_18 + 1;
       } while (local_18 < 8);
@@ -14871,8 +14871,8 @@ void DrawLensFlare(void)
       *(short *)(iVar15 + 0x74ad02) = sVar8;
       puVar6 = (undefined4 *)(*(int *)(_cdb_ + 0x8a) + iVar5 * 4 + -0xc);
       uVar2 = *puVar6;
-      *puVar6 = &sun_images + iVar15;
-      *(undefined4 *)(&sun_images + iVar15) = uVar2;
+      *puVar6 = (int)&sun_images + iVar15;
+      *(undefined4 *)((int)&sun_images + iVar15) = uVar2;
     }
   }
   return;
@@ -14998,12 +14998,12 @@ void Init_Overlays(void)
     Modify_Sprite(iVar1 + 0x74b1e0,0x4655c0,'n','\0',0xb,10);
     FUN_004166c4(iVar1 + 0x74b230,s_SMALLNUM_0046cd14,(ushort *)&DAT_004655d8);
     Modify_Sprite(iVar1 + 0x74b230,0x4655d8,
-                  (char)((*(int *)(&DAT_00466df2 + _current_level * 6) >> 0x10) / 10) * '\v','\0',
+                  (char)((*(int *)((int)&DAT_00466df2 + _current_level * 6) >> 0x10) / 10) * '\v','\0',
                   0xb,10);
     FUN_004166c4(iVar1 + 0x74b280,s_SMALLNUM_0046cd14,(ushort *)&DAT_004655f0);
     iVar2 = iVar1 + 0x74b7e8;
     Modify_Sprite(iVar1 + 0x74b280,0x4655f0,
-                  (char)((*(int *)(&DAT_00466df2 + _current_level * 6) >> 0x10) % 10) * '\v','\0',
+                  (char)((*(int *)((int)&DAT_00466df2 + _current_level * 6) >> 0x10) % 10) * '\v','\0',
                   0xb,10);
     puVar4 = (ushort *)&DAT_00465608;
     do {
@@ -15113,8 +15113,8 @@ void __cdecl Draw_Overlays(int param_1)
       *puVar5 = uVar1;
       iVar3 = buffer_num * 0x28;
       uVar1 = **(undefined4 **)(_cdb_ + 0x8a);
-      **(undefined4 **)(_cdb_ + 0x8a) = &damage_car + iVar3;
-      *(undefined4 *)(&damage_car + iVar3) = uVar1;
+      **(undefined4 **)(_cdb_ + 0x8a) = (int)&damage_car + iVar3;
+      *(undefined4 *)((int)&damage_car + iVar3) = uVar1;
       if (PIT_STOP == 1) {
         Modify_Sprite(buffer_num * 0x28 + 0x74b478,0x4653c8,(char)((DAT_00467060 << 5) % 0xa0),
                       (char)((DAT_00467060 << 5) / 0xa0) * '\x1d',0x1f,0x1d);
@@ -15125,7 +15125,7 @@ void __cdecl Draw_Overlays(int param_1)
       }
       if (((race_mode == 0) && (race_type != 1)) || (race_mode == 2)) {
         if (race_mode != 2) {
-          iVar3 = *(int *)(&car_info + param_1 * 0x14);
+          iVar3 = *(int *)((int)&car_info + param_1 * 0x14);
           iVar6 = (iVar3 >> 0x10) / 10 << 5;
           Modify_Sprite(buffer_num * 0x28 + 0x74b3d8,0x465458,(char)(iVar6 % 0xa0),
                         (char)(iVar6 / 0xa0) * '\x1d',0x1f,0x1d);
@@ -15190,7 +15190,7 @@ void __cdecl Draw_Overlays(int param_1)
         *puVar5 = uVar1;
       }
       if ((race_mode == 1) && (race_type != 1)) {
-        iVar3 = *(int *)(&car_info + param_1 * 0x14);
+        iVar3 = *(int *)((int)&car_info + param_1 * 0x14);
         iVar6 = (iVar3 >> 0x10) / 10 << 5;
         Modify_Sprite(buffer_num * 0x28 + 0x74b3d8,0x465488,(char)(iVar6 % 0xa0),
                       (char)(iVar6 / 0xa0) * '\x1d',0x1f,0x1d);
@@ -15243,8 +15243,8 @@ void __cdecl Draw_Overlays(int param_1)
         if (iVar3 == 0) {
           iVar3 = 1;
         }
-        if (*(int *)(&DAT_00466df2 + _current_level * 6) >> 0x10 < iVar3) {
-          iVar3 = *(int *)(&DAT_00466df2 + _current_level * 6) >> 0x10;
+        if (*(int *)((int)&DAT_00466df2 + _current_level * 6) >> 0x10 < iVar3) {
+          iVar3 = *(int *)((int)&DAT_00466df2 + _current_level * 6) >> 0x10;
         }
         Modify_Sprite(buffer_num * 0x28 + 0x74b140,0x465590,(char)(iVar3 / 10) * '\v','\0',0xb,10);
         Modify_Sprite(buffer_num * 0x28 + 0x74b190,0x4655a8,(char)(iVar3 % 10) * '\v','\0',0xb,10);
@@ -15654,7 +15654,7 @@ void Display_Position_Pointers(void)
   uStack_30 = (undefined2)DAT_0042e010;
   local_2e = (undefined2)((uint)DAT_0042e010 >> 0x10);
   if ((((_DAT_0074be98 < 1) && (num_cars != 1)) && (_current_level < 8)) &&
-     (*(int *)(&DAT_00465804 + _current_level * 4) != 1)) {
+     (*(int *)((int)&DAT_00465804 + _current_level * 4) != 1)) {
     local_14 = 0;
     local_18 = 0;
     local_24 = 0;
@@ -15664,7 +15664,7 @@ void Display_Position_Pointers(void)
       uVar1 = DAT_0042e014;
       if (((0 < *(short *)(local_14 + 0x75d842)) && (*(short *)(local_14 + 0x75d842) < 4)) &&
          (local_24 != camera_car)) {
-        iVar4 = (*(int *)(&car_info + local_14) >> 0x10) + -1;
+        iVar4 = (*(int *)((int)&car_info + local_14) >> 0x10) + -1;
         (&iStack_34)[iVar4] = local_24;
         if (*(int *)(local_18 + 0x752398) == 1) {
           sStack_2c = *(short *)((int)&DAT_00752344 + local_18) - (short)DAT_00462fb6;
@@ -15779,14 +15779,14 @@ switchD_00430279_caseD_2:
   _DAT_0046585e = 0;
   _DAT_00465860 = 0;
   _DAT_00465862 = 0;
-  _scene_colour_matrix_ = *(undefined2 *)(&DAT_0046591a + _current_level * 8);
+  _scene_colour_matrix_ = *(undefined2 *)((int)&DAT_0046591a + _current_level * 8);
   _DAT_00465864 = 0;
-  _DAT_0046583a = *(undefined2 *)(&DAT_0046591c + _current_level * 8);
-  _DAT_00465840 = *(undefined2 *)(&DAT_0046591e + _current_level * 8);
+  _DAT_0046583a = *(undefined2 *)((int)&DAT_0046591c + _current_level * 8);
+  _DAT_00465840 = *(undefined2 *)((int)&DAT_0046591e + _current_level * 8);
   _decrunch_flag = 0;
-  scene_light_matrix = (scene_light_matrix & ~(0xffffu<<0)) | (((*(undefined2 *)(&DAT_004658c2 + _current_level * 8)) & 0xffffu)<<0);
-  scene_light_matrix = (scene_light_matrix & ~(0xffffu<<16)) | (((*(undefined2 *)(&DAT_004658c4 + _current_level * 8)) & 0xffffu)<<16);
-  DAT_00465858 = *(undefined2 *)(&DAT_004658c6 + _current_level * 8);
+  scene_light_matrix = (scene_light_matrix & ~(0xffffu<<0)) | (((*(undefined2 *)((int)&DAT_004658c2 + _current_level * 8)) & 0xffffu)<<0);
+  scene_light_matrix = (scene_light_matrix & ~(0xffffu<<16)) | (((*(undefined2 *)((int)&DAT_004658c4 + _current_level * 8)) & 0xffffu)<<16);
+  DAT_00465858 = *(undefined2 *)((int)&DAT_004658c6 + _current_level * 8);
   return;
 }
 
@@ -16078,7 +16078,7 @@ void __cdecl FUN_00430a30(int param_1)
   
   iVar2 = 0;
   iVar3 = param_1 * 4;
-  puVar1 = &scene_objects + param_1 * 0x380;
+  puVar1 = (int)&scene_objects + param_1 * 0x380;
   if (0 < *(int *)((int)&num_scene_objects + iVar3)) {
     do {
       Remove_Object((int)puVar1,1);
@@ -16133,7 +16133,7 @@ void Update_Scene_Objects(void)
         while (iVar5 >> 0x18 != iVar3) {
           iVar2 = iVar2 + 1;
           if (0x37 < iVar4 + 4) break;
-          iVar3 = *(int *)(&DAT_00750ea4 + iVar4);
+          iVar3 = *(int *)((int)&DAT_00750ea4 + iVar4);
           iVar4 = iVar4 + 4;
         }
         if (iVar2 != 0xe) {
@@ -16154,7 +16154,7 @@ void Update_Scene_Objects(void)
         while (iVar6 != iVar1) {
           iVar3 = iVar3 + 1;
           if (0x37 < iVar5 + 4) break;
-          iVar1 = *(int *)(&DAT_00750ea4 + iVar5);
+          iVar1 = *(int *)((int)&DAT_00750ea4 + iVar5);
           iVar5 = iVar5 + 4;
         }
         if (iVar3 == 0xe) {
@@ -16165,7 +16165,7 @@ void Update_Scene_Objects(void)
             iVar4 = iVar5 + 1;
             iVar5 = 0xe;
             if (0x37 < iVar3 + 4) break;
-            iVar1 = *(int *)(&DAT_00750ea4 + iVar3);
+            iVar1 = *(int *)((int)&DAT_00750ea4 + iVar3);
             iVar3 = iVar3 + 4;
             iVar5 = iVar4;
           }
@@ -16242,7 +16242,7 @@ void __fastcall FUN_00430bde(int param_1)
             *(undefined4 *)(unaff_EBP + -0x48 + iVar2 * 4) = 0xffffffff;
           }
         }
-        iVar4 = _strip_data + 4 + *(int *)(&DAT_0074be98 + iVar4);
+        iVar4 = _strip_data + 4 + *(int *)((int)&DAT_0074be98 + iVar4);
         unaff_EBX = *(int *)(iVar4 + 0x1d) >> 0x18;
         *(int *)(unaff_EBP + -0x10) = iVar4;
         iVar4 = param_1;
@@ -16311,7 +16311,7 @@ void Init_Scene_Objects(void)
   iVar2 = 0;
   do {
     iVar6 = _strip_data;
-    *(int *)(&recorded_strips_ + iVar2) = iVar3;
+    *(int *)((int)&recorded_strips_ + iVar2) = iVar3;
     iVar2 = iVar2 + 4;
     iVar3 = *(int *)(iVar6 + 0x1c + iVar3);
   } while (iVar2 != 0x300);
@@ -16474,7 +16474,7 @@ void __cdecl FUN_00430efc(int param_1,short param_2,short param_3,short param_4,
        ((int)_DAT_0071bdf2 * -_DAT_00714104 + _DAT_00714108 * _DAT_0071bdf4 >> 0xc < param_5)) {
       iVar7 = *(int *)(iVar4 + 0x20);
       local_18 = *(short **)(iVar4 + 0x28) + 2;
-      local_14 = (undefined4 *)(*(int *)(param_1 + 8) + *(int *)(&prim_buf + buffer_num * 4));
+      local_14 = (undefined4 *)(*(int *)(param_1 + 8) + *(int *)((int)&prim_buf + buffer_num * 4));
       uVar1 = *(ushort *)(iVar4 + 8);
       iVar2 = *(int *)(_cdb_ + 0x8a);
       iVar4 = (int)**(short **)(iVar4 + 0x28);
@@ -17714,33 +17714,33 @@ void __cdecl InitialiseAI(byte param_1)
   
   iVar3 = (uint)param_1 * 4;
   iVar4 = (_current_season + 1) *
-          (*(int *)(&TopHandicaps + iVar3) - *(int *)(&BaseHandicaps + iVar3));
+          (*(int *)((int)&TopHandicaps + iVar3) - *(int *)((int)&BaseHandicaps + iVar3));
   iVar5 = iVar4 >> 0x1f;
   iVar1 = (uint)param_1 * 0x1b2;
   *(int *)(iVar1 + 0x75a79a) =
-       *(int *)(&BaseHandicaps + iVar3) +
+       *(int *)((int)&BaseHandicaps + iVar3) +
        ((int)((iVar4 + iVar5 * -4) - (uint)(iVar5 << 1 < 0)) >> 2);
   switch(_current_season) {
   case 0:
     if (race_mode == 0) {
-      uVar6 = *(undefined4 *)(&Level1_Personality + iVar3);
+      uVar6 = *(undefined4 *)((int)&Level1_Personality + iVar3);
     }
     else {
 LAB_00433253:
-      uVar6 = *(undefined4 *)(&Race_Personality + iVar3);
+      uVar6 = *(undefined4 *)((int)&Race_Personality + iVar3);
     }
     break;
   case 1:
     if (race_mode != 0) goto LAB_00433253;
-    uVar6 = *(undefined4 *)(&Level2_Personality + iVar3);
+    uVar6 = *(undefined4 *)((int)&Level2_Personality + iVar3);
     break;
   case 2:
     if (race_mode != 0) goto LAB_00433253;
-    uVar6 = *(undefined4 *)(&Level3_Personality + iVar3);
+    uVar6 = *(undefined4 *)((int)&Level3_Personality + iVar3);
     break;
   case 3:
     if (race_mode != 0) goto LAB_00433253;
-    uVar6 = *(undefined4 *)(&Level4_Personality + iVar3);
+    uVar6 = *(undefined4 *)((int)&Level4_Personality + iVar3);
     break;
   default:
     goto switchD_00433208_default;
@@ -17749,7 +17749,7 @@ LAB_00433253:
 switchD_00433208_default:
   uVar2 = (uint)param_1;
   iVar3 = uVar2 * 0x1b2;
-  *(undefined4 *)(iVar3 + 0x75a68e) = *(undefined4 *)(&Car_Friction + uVar2 * 4);
+  *(undefined4 *)(iVar3 + 0x75a68e) = *(undefined4 *)((int)&Car_Friction + uVar2 * 4);
   _car0_being_obstructed = 0;
   *(undefined1 *)(iVar3 + 0x75a7b0) = 0;
   iVar1 = _current_level;
@@ -17781,7 +17781,7 @@ switchD_00433208_default:
   *(undefined4 *)(iVar3 + 0x75a7a6) = 0;
   *(undefined1 *)(uVar2 * 0xc + 0x751e7b) = 0;
   *(undefined1 *)(uVar2 * 0xc + 0x751e7a) = 0;
-  *(undefined2 *)(&DAT_0075d846 + uVar2 * 0x14) = 0;
+  *(undefined2 *)((int)&DAT_0075d846 + uVar2 * 0x14) = 0;
   iVar3 = 0;
   do {
     iVar3 = iVar3 + 4;
@@ -18110,9 +18110,9 @@ void CheckPointScoring(void)
   do {
     if (*(char *)(iVar7 + 0x751e7a) == '\0') {
 LAB_00433dd9:
-      if (999 < *(short *)(&DAT_0075d846 + iVar8)) {
+      if (999 < *(short *)((int)&DAT_0075d846 + iVar8)) {
 LAB_00433de4:
-        *(undefined2 *)(&DAT_0075d846 + iVar8) = 999;
+        *(undefined2 *)((int)&DAT_0075d846 + iVar8) = 999;
       }
     }
     else {
@@ -18129,7 +18129,7 @@ LAB_00433de4:
         else {
           uVar4 = 0x1000 - uVar4;
         }
-        uVar4 = (uVar4 & 0xfff) - *(int *)(&PointyBits + iVar7);
+        uVar4 = (uVar4 & 0xfff) - *(int *)((int)&PointyBits + iVar7);
         uVar5 = (int)uVar4 >> 0x1f;
         iVar6 = 0x1000 - ((uVar4 ^ uVar5) - uVar5);
         if ((int)uVar4 < 0) {
@@ -18143,7 +18143,7 @@ LAB_00433de4:
           *(int *)(iVar7 + 0x751e74) = *(int *)(iVar7 + 0x751e74) - iVar6;
         }
         uVar4 = Get_Car_Angle(*(int *)((int)&DAT_00752390 + iVar9) >> 0x10);
-        *(uint *)(&PointyBits + iVar7) = uVar4 & 0xfff;
+        *(uint *)((int)&PointyBits + iVar7) = uVar4 & 0xfff;
       }
       if (*(int *)(&DAT_0075a6c6 + (uint)bVar1 * 0x1b2) == 0) {
         if (*(int *)((int)&DAT_0075a6c6 + local_18) == 0) {
@@ -18179,10 +18179,10 @@ LAB_00433de4:
         }
         iVar6 = (uint)bVar1 * 0x14;
         *(undefined1 *)(iVar7 + 0x751e7a) = 0;
-        sVar3 = *(short *)(&DAT_0075d846 + iVar6);
+        sVar3 = *(short *)((int)&DAT_0075d846 + iVar6);
         *(short *)(iVar6 + 0x75d850) = *(short *)(iVar6 + 0x75d850) + 1;
-        *(short *)(&DAT_0075d846 + iVar6) = sVar3 + 0x19;
-        if (*(short *)(&DAT_0075d846 + iVar8) < 1000) goto LAB_00433ded;
+        *(short *)((int)&DAT_0075d846 + iVar6) = sVar3 + 0x19;
+        if (*(short *)((int)&DAT_0075d846 + iVar8) < 1000) goto LAB_00433ded;
         goto LAB_00433de4;
       }
     }
@@ -18259,7 +18259,7 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
   piVar10 = (int *)((int)&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
   local_14 = (int)&car_handling + param_2 * 0x1b2;
   uVar9 = 0;
-  local_2c = *(int *)(&Forest_Track_Type + _current_level * 4);
+  local_2c = *(int *)((int)&Forest_Track_Type + _current_level * 4);
   local_48 = piVar10;
   if (_current_level < 8) {
     local_54 = piVar10[5] + _strip_data + 4;
@@ -18268,8 +18268,8 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
     if (local_44 == 0) {
       local_68 = *(int *)((int)piVar10 + 0x22) >> 0x10;
       local_6c = piVar10[9] >> 0x10;
-      local_18 = (int *)(_strip_vertex + (local_68 + *(int *)(&DAT_00465dd0 + local_38 * 8)) * 0xc);
-      local_58 = (int *)(_strip_vertex + (local_6c + *(int *)(&DAT_00465dd4 + local_38 * 8)) * 0xc);
+      local_18 = (int *)(_strip_vertex + (local_68 + *(int *)((int)&DAT_00465dd0 + local_38 * 8)) * 0xc);
+      local_58 = (int *)(_strip_vertex + (local_6c + *(int *)((int)&DAT_00465dd4 + local_38 * 8)) * 0xc);
       local_60 = (*piVar10 - *local_18) * (local_58[2] - local_18[2]);
       local_5c = piVar10[2] - local_18[2];
       local_64 = local_5c * (*local_58 - *local_18);
@@ -18281,9 +18281,9 @@ int __cdecl Barrier_Collision(int param_1,int param_2)
     if ((local_1c == 0) && (*(byte *)(local_54 + 1) - 1 == local_44)) {
       local_68 = *(int *)((int)piVar10 + 0x22) >> 0x10;
       local_18 = (int *)(_strip_vertex +
-                        (*(int *)(&DAT_00465e34 + local_38 * 8) + (piVar10[9] >> 0x10) + 1) * 0xc);
+                        (*(int *)((int)&DAT_00465e34 + local_38 * 8) + (piVar10[9] >> 0x10) + 1) * 0xc);
       local_58 = (int *)(_strip_vertex +
-                        (local_68 + 1 + *(int *)(&left_collision_offsets + local_38 * 8)) * 0xc);
+                        (local_68 + 1 + *(int *)((int)&left_collision_offsets + local_38 * 8)) * 0xc);
       local_60 = (*local_48 - *local_18) * (local_58[2] - local_18[2]);
       local_64 = (local_48[2] - local_18[2]) * (*local_58 - *local_18);
       if (local_60 - local_64 < 0) {
@@ -18677,7 +18677,7 @@ int __cdecl Barrier_Corner_Collision(int param_1,int param_2)
   piVar9 = (int *)0x0;
   local_1c = 0;
   local_18 = 0;
-  local_20 = *(int *)(&Forest_Track_Type + _current_level * 4);
+  local_20 = *(int *)((int)&Forest_Track_Type + _current_level * 4);
   local_38 = piVar8;
   if (_current_level < 8) {
     local_50 = *(int *)((int)&DAT_0075a0f4 + iVar2) + _strip_data + 4;
@@ -18686,9 +18686,9 @@ int __cdecl Barrier_Corner_Collision(int param_1,int param_2)
     if (local_40 == 0) {
       local_70 = *(int *)(iVar2 + 0x75a102) >> 0x10;
       local_6c = *(int *)(iVar2 + 0x75a104) >> 0x10;
-      piVar9 = (int *)(*(int *)(&DAT_00465dd0 + local_48 * 8) * 0xc + local_70 * 0xc + _strip_vertex
+      piVar9 = (int *)(*(int *)((int)&DAT_00465dd0 + local_48 * 8) * 0xc + local_70 * 0xc + _strip_vertex
                       );
-      piVar5 = (int *)(_strip_vertex + local_6c * 0xc + *(int *)(&DAT_00465dd4 + local_48 * 8) * 0xc
+      piVar5 = (int *)(_strip_vertex + local_6c * 0xc + *(int *)((int)&DAT_00465dd4 + local_48 * 8) * 0xc
                       );
       iVar3 = piVar5[2] - piVar9[2];
       local_60 = (*piVar8 - *piVar9) * iVar3;
@@ -18704,9 +18704,9 @@ int __cdecl Barrier_Corner_Collision(int param_1,int param_2)
       local_70 = *(int *)(iVar2 + 0x75a102) >> 0x10;
       local_6c = *(int *)(iVar2 + 0x75a104) >> 0x10;
       piVar9 = (int *)(local_6c * 0xc + _strip_vertex + 0xc +
-                      *(int *)(&DAT_00465e34 + local_48 * 8) * 0xc);
+                      *(int *)((int)&DAT_00465e34 + local_48 * 8) * 0xc);
       piVar5 = (int *)(_strip_vertex + local_70 * 0xc + 0xc +
-                      *(int *)(&left_collision_offsets + local_48 * 8) * 0xc);
+                      *(int *)((int)&left_collision_offsets + local_48 * 8) * 0xc);
       iVar3 = piVar5[2] - piVar9[2];
       local_60 = (*local_38 - *piVar9) * iVar3;
       iVar6 = *piVar5 - *piVar9;
@@ -18979,7 +18979,7 @@ void __cdecl TransformWheels_(int param_1,int param_2,int param_3)
     local_20 = _DAT_00714104 + *(int *)((int)&DAT_00752348 + iVar1);
     local_1c = _DAT_00714108 + *(int *)((int)&DAT_0075234c + iVar1);
     FUN_004202ac(local_44,&local_24);
-    Update_Object((undefined4 *)(&wheel_object + param_2 * 0x1c));
+    Update_Object((undefined4 *)((int)&wheel_object + param_2 * 0x1c));
     _DAT_00714302 = _DAT_0071be4e;
     _DAT_00714306 = _DAT_0071be52;
     _DAT_0071430a = _DAT_0071be56;
@@ -19008,7 +19008,7 @@ void __cdecl TransformWheels_(int param_1,int param_2,int param_3)
     local_20 = _DAT_00714104 + *(int *)((int)&DAT_00752348 + iVar1);
     local_1c = _DAT_00714108 + *(int *)((int)&DAT_0075234c + iVar1);
     FUN_004202ac(local_44,&local_24);
-    Update_Object((undefined4 *)(&wheel_object + param_3 * 0x1c));
+    Update_Object((undefined4 *)((int)&wheel_object + param_3 * 0x1c));
     _DAT_00714302 = _DAT_0071be4e;
     _DAT_00714306 = _DAT_0071be52;
     _DAT_0071430a = _DAT_0071be56;
@@ -19262,9 +19262,9 @@ void __cdecl ApplyWheelOverlay(int param_1,uint param_2)
       _DAT_00714114 = _DAT_00714104;
       _DAT_00714118 = _DAT_00714108;
       _DAT_0071411c = _DAT_0071410c;
-      _DAT_00714104 = *(int *)(&DAT_00466344 + param_2 * 8) >> 0x10;
-      _DAT_00714108 = *(int *)(&DAT_00466346 + param_2 * 8) >> 0x10;
-      __vr0 = *(int *)(&DAT_00466342 + param_2 * 8) >> 0x10;
+      _DAT_00714104 = *(int *)((int)&DAT_00466344 + param_2 * 8) >> 0x10;
+      _DAT_00714108 = *(int *)((int)&DAT_00466346 + param_2 * 8) >> 0x10;
+      __vr0 = *(int *)((int)&DAT_00466342 + param_2 * 8) >> 0x10;
       gte_ncds();
       *(undefined1 *)(iVar3 + buffer_num * 0x28 + 0x752134) = _rgb0;
       return;
@@ -19313,8 +19313,8 @@ void InitialiseParticleSystem(void)
   iVar1 = 0;
   do {
     *(undefined1 *)(iVar1 + 0x75536f) = 0x2c;
-    *(short *)(&ParticleAvailabilityList + iVar3) = (short)iVar2;
-    *(short *)(&ParticlePositionList + iVar3) = (short)iVar2;
+    *(short *)((int)&ParticleAvailabilityList + iVar3) = (short)iVar2;
+    *(short *)((int)&ParticlePositionList + iVar3) = (short)iVar2;
     iVar3 = iVar3 + 2;
     *(undefined1 *)(iVar1 + 0x755347) = 0x2c;
     iVar2 = iVar2 + 1;
@@ -19534,10 +19534,10 @@ void __cdecl FreeParticle(int param_1)
   iVar2 = *(int *)(param_1 * 2 + 0x751f8e);
   *DAT_00466290 = (short)param_1;
                     /* END-> C:\PcMpe\system\mem.C: ? */
-  *(short *)(&ParticlePositionList + param_1 * 2) = (short)((int)(DAT_00466290 + -0x3a902c) >> 1);
+  *(short *)((int)&ParticlePositionList + param_1 * 2) = (short)((int)(DAT_00466290 + -0x3a902c) >> 1);
   iVar2 = (iVar2 >> 0x10) * 2;
-  *(short *)(&ParticleAvailabilityList + iVar2) = sVar1;
-  *(short *)(&ParticlePositionList + sVar1 * 2) = (short)(iVar2 >> 1);
+  *(short *)((int)&ParticleAvailabilityList + iVar2) = sVar1;
+  *(short *)((int)&ParticlePositionList + sVar1 * 2) = (short)(iVar2 >> 1);
   return;
 }
 
@@ -19907,11 +19907,11 @@ LAB_00437405:
   iVar11 = param_7 * 0x10;
   iVar1 = (param_7 ^ 1) * 0x10;
   if (local_18 < 2) {
-    iVar8 = local_1c * (*(int *)(&DAT_007597f0 + iVar11) - *(int *)(&DAT_007597f0 + iVar1)) -
-            local_20 * (*(int *)(&DAT_007597f8 + iVar11) - *(int *)(&DAT_007597f8 + iVar1));
+    iVar8 = local_1c * (*(int *)((int)&DAT_007597f0 + iVar11) - *(int *)((int)&DAT_007597f0 + iVar1)) -
+            local_20 * (*(int *)((int)&DAT_007597f8 + iVar11) - *(int *)((int)&DAT_007597f8 + iVar1));
     iVar9 = iVar8 >> 0x1f;
-    iVar1 = local_20 * (*(int *)(&DAT_007597f0 + iVar11) - *(int *)(&DAT_007597f0 + iVar1)) +
-            (*(int *)(&DAT_007597f8 + iVar11) - *(int *)(&DAT_007597f8 + iVar1)) * local_1c;
+    iVar1 = local_20 * (*(int *)((int)&DAT_007597f0 + iVar11) - *(int *)((int)&DAT_007597f0 + iVar1)) +
+            (*(int *)((int)&DAT_007597f8 + iVar11) - *(int *)((int)&DAT_007597f8 + iVar1)) * local_1c;
     iVar11 = iVar1 >> 0x1f;
     local_48 = param_6 - ((int)((iVar1 + iVar11 * -0x1000) - (uint)(iVar11 << 0xb < 0)) >> 0xc);
     uVar3 = (local_2c - local_24) + (local_48 * local_40 - param_6 * local_28) / 0x28c;
@@ -19931,13 +19931,13 @@ LAB_00437405:
     local_5c = (local_2c + local_84 + (local_2c - local_24) / 3 + local_24) / 2;
   }
   else {
-    iVar8 = local_1c * (*(int *)(&DAT_007597f0 + iVar11) - *(int *)(&DAT_007597f0 + iVar1)) -
-            local_20 * (*(int *)(&DAT_007597f8 + iVar11) - *(int *)(&DAT_007597f8 + iVar1));
+    iVar8 = local_1c * (*(int *)((int)&DAT_007597f0 + iVar11) - *(int *)((int)&DAT_007597f0 + iVar1)) -
+            local_20 * (*(int *)((int)&DAT_007597f8 + iVar11) - *(int *)((int)&DAT_007597f8 + iVar1));
     iVar9 = iVar8 >> 0x1f;
     local_44 = (int)param_5;
     local_58 = local_44 - ((int)((iVar8 + iVar9 * -0x1000) - (uint)(iVar9 << 0xb < 0)) >> 0xc);
-    iVar1 = local_20 * (*(int *)(&DAT_007597f0 + iVar11) - *(int *)(&DAT_007597f0 + iVar1)) +
-            (*(int *)(&DAT_007597f8 + iVar11) - *(int *)(&DAT_007597f8 + iVar1)) * local_1c;
+    iVar1 = local_20 * (*(int *)((int)&DAT_007597f0 + iVar11) - *(int *)((int)&DAT_007597f0 + iVar1)) +
+            (*(int *)((int)&DAT_007597f8 + iVar11) - *(int *)((int)&DAT_007597f8 + iVar1)) * local_1c;
     iVar11 = iVar1 >> 0x1f;
     local_70 = param_6 - ((int)((iVar1 + iVar11 * -0x1000) - (uint)(iVar11 << 0xb < 0)) >> 0xc);
     local_68 = -local_58;
@@ -20473,11 +20473,11 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
     iVar1 = ((int)(((iVar1 >> 0xc) + iVar3 * -0x400) - (uint)(iVar3 << 9 < 0)) >> 10 & 3U) * 4;
     if ((int)uVar8 < 1) {
       local_20 = 0x1c2;
-      local_5c = *(undefined4 *)(&DAT_00466704 + iVar1);
+      local_5c = *(undefined4 *)((int)&DAT_00466704 + iVar1);
       local_68 = 2;
     }
     else {
-      local_5c = *(undefined4 *)(&DAT_004666f4 + iVar1);
+      local_5c = *(undefined4 *)((int)&DAT_004666f4 + iVar1);
       local_68 = 3;
       local_20 = -0x1c2;
     }
@@ -20532,10 +20532,10 @@ void __cdecl Calc_Head_On_Clsn_Dynamics(int param_1,int param_2,int param_3)
     iVar1 = ((int)(((iVar1 >> 0xc) + iVar3 * -0x400) - (uint)(iVar3 << 9 < 0)) >> 10 & 3U) * 4;
     if ((int)local_18 < 1) {
       local_1c = 0xba;
-      local_5c = *(undefined4 *)(&DAT_00466724 + iVar1);
+      local_5c = *(undefined4 *)((int)&DAT_00466724 + iVar1);
     }
     else {
-      local_5c = *(undefined4 *)(&DAT_00466714 + iVar1);
+      local_5c = *(undefined4 *)((int)&DAT_00466714 + iVar1);
       local_1c = -0xba;
     }
     local_68 = (uint)((int)local_18 < 1);
@@ -20981,15 +20981,15 @@ uint __cdecl Check_2D_Car_Collision(undefined4 param_1,undefined4 param_2,int *p
   
   iVar7 = param_4 * 0x10;
   iVar2 = (param_4 ^ 1) * 0x10;
-  iVar5 = *(int *)(&DAT_007597f0 + iVar7);
-  iVar6 = *(int *)(&DAT_007597f0 + iVar2);
-  iVar8 = *(int *)(&DAT_007597f8 + iVar2);
-  iVar1 = *(int *)(&DAT_007597f8 + iVar7);
-  iVar4 = *(int *)(&DAT_00759794 + iVar7);
-  iVar2 = *(int *)(&DAT_00759794 + iVar2);
+  iVar5 = *(int *)((int)&DAT_007597f0 + iVar7);
+  iVar6 = *(int *)((int)&DAT_007597f0 + iVar2);
+  iVar8 = *(int *)((int)&DAT_007597f8 + iVar2);
+  iVar1 = *(int *)((int)&DAT_007597f8 + iVar7);
+  iVar4 = *(int *)((int)&DAT_00759794 + iVar7);
+  iVar2 = *(int *)((int)&DAT_00759794 + iVar2);
   iVar3 = rcos(iVar4 - iVar2);
   iVar4 = rsin(iVar4 - iVar2);
-  uVar9 = *(uint *)(&DAT_00759794 + iVar7);
+  uVar9 = *(uint *)((int)&DAT_00759794 + iVar7);
   iVar2 = rcos(uVar9);
   iVar7 = rsin(uVar9);
   iVar10 = (iVar5 - iVar6) * iVar2 - (iVar1 - iVar8) * iVar7;
@@ -21219,7 +21219,7 @@ LAB_00439f66:
     if ((*(char *)(iVar7 + 0x751e7a) == '\0') && (*(int *)((int)&DAT_0075a6c6 + param_1 * 0x1b2) == 0)) {
       uVar6 = Get_Car_Angle((int)(short)((uint)*(undefined4 *)((int)&DAT_00752390 + param_1 * 0x27c) >>
                                         0x10));
-      *(uint *)(&PointyBits + iVar7) = uVar6 & 0xfff;
+      *(uint *)((int)&PointyBits + iVar7) = uVar6 & 0xfff;
       *(undefined1 *)(iVar7 + 0x751e7a) = 0x4b;
       *(undefined1 *)(iVar7 + 0x751e7b) = (undefined1)param_2;
       *(undefined2 *)(iVar7 + 0x751e78) = 0;
@@ -21230,7 +21230,7 @@ LAB_00439f66:
       uVar6 = Get_Car_Angle((int)(short)((uint)*(undefined4 *)((int)&DAT_00752390 + param_2 * 0x27c) >>
                                         0x10));
       *(undefined4 *)(iVar7 + 0x751e74) = 0;
-      *(uint *)(&PointyBits + iVar7) = uVar6 & 0xfff;
+      *(uint *)((int)&PointyBits + iVar7) = uVar6 & 0xfff;
       *(undefined1 *)(iVar7 + 0x751e7a) = 0x4b;
       *(undefined1 *)(iVar7 + 0x751e7b) = (undefined1)param_1;
       *(undefined2 *)(iVar7 + 0x751e78) = 0;
@@ -21301,7 +21301,7 @@ void __cdecl Check_Space_Car_Collision(int param_1,int param_2)
         if ((*(char *)(iVar6 + 0x751e7a) == '\0') &&
            (*(int *)((int)&DAT_0075a6c6 + param_1 * 0x1b2) == 0)) {
           uVar2 = Get_Car_Angle(*(int *)((int)&DAT_00752390 + param_1 * 0x27c) >> 0x10);
-          *(uint *)(&PointyBits + iVar6) = uVar2 & 0xfff;
+          *(uint *)((int)&PointyBits + iVar6) = uVar2 & 0xfff;
           *(undefined1 *)(iVar6 + 0x751e7a) = 0x4b;
           *(undefined1 *)(iVar6 + 0x751e7b) = (undefined1)param_2;
           *(undefined4 *)(iVar6 + 0x751e74) = 0;
@@ -21312,7 +21312,7 @@ void __cdecl Check_Space_Car_Collision(int param_1,int param_2)
           if (*(int *)((int)&DAT_0075a6c6 + param_2 * 0x1b2) == 0) {
             uVar2 = Get_Car_Angle(*(int *)((int)&DAT_00752390 + param_2 * 0x27c) >> 0x10);
             *(undefined4 *)(iVar6 + 0x751e74) = 0;
-            *(uint *)(&PointyBits + iVar6) = uVar2 & 0xfff;
+            *(uint *)((int)&PointyBits + iVar6) = uVar2 & 0xfff;
             *(undefined1 *)(iVar6 + 0x751e7a) = 0x4b;
             *(undefined1 *)(iVar6 + 0x751e7b) = (undefined1)param_1;
             *(undefined2 *)(iVar6 + 0x751e78) = 0;
@@ -23290,10 +23290,10 @@ void __cdecl Car_Grounded_Motion_3D(int param_1)
   
   iVar1 = *(int *)(param_1 * 0x1b2 + 0x75a6be);
   iVar6 = iVar1 * 0x10;
-  iVar3 = *(int *)(&DAT_00466ad8 + iVar6);
-  iVar4 = *(int *)(&DAT_00466adc + iVar6);
-  iVar5 = *(int *)(&DAT_00466ae0 + iVar6);
-  iVar6 = *(int *)(&DAT_00466ae4 + iVar6);
+  iVar3 = *(int *)((int)&DAT_00466ad8 + iVar6);
+  iVar4 = *(int *)((int)&DAT_00466adc + iVar6);
+  iVar5 = *(int *)((int)&DAT_00466ae0 + iVar6);
+  iVar6 = *(int *)((int)&DAT_00466ae4 + iVar6);
   iVar2 = param_1 * 0x2c;
   iVar11 = param_1 * 0x27c;
   *(undefined4 *)((int)(int)&car_fd + iVar2) = *(undefined4 *)((int)&DAT_00752344 + iVar11);
@@ -23324,8 +23324,8 @@ void __cdecl Car_Grounded_Motion_3D(int param_1)
   Calc_Car_Angles_Square
             (param_1,(int *)((int)&corner_fd + iVar3),(int *)((int)&corner_fd + iVar4),
              (int *)((int)&corner_fd + iVar5),(int *)((int)&corner_fd + iVar6),
-             (short)*(undefined4 *)(&DAT_00466b28 + iVar1 * 8),
-             (short)*(undefined4 *)(&DAT_00466b2c + iVar1 * 8));
+             (short)*(undefined4 *)((int)&DAT_00466b28 + iVar1 * 8),
+             (short)*(undefined4 *)((int)&DAT_00466b2c + iVar1 * 8));
   return;
 }
 
@@ -24300,8 +24300,8 @@ void __cdecl Car_1pt_Motion_3D(int param_1)
       *(int *)(iVar8 + 0x75a624) = (iVar7 >> 0x10) << 0xc;
       *(int *)(iVar8 + 0x75a608) = (int)local_4c << 0xc;
       iVar7 = local_2c * 8 + local_30;
-      uVar1 = *(undefined4 *)(&DAT_00466b54 + iVar7 * 8);
-      *(undefined4 *)((int)&DAT_0075a692 + iVar8) = *(undefined4 *)(&landing_data + iVar7 * 8);
+      uVar1 = *(undefined4 *)((int)&DAT_00466b54 + iVar7 * 8);
+      *(undefined4 *)((int)&DAT_0075a692 + iVar8) = *(undefined4 *)((int)&landing_data + iVar7 * 8);
       *(undefined4 *)(iVar8 + 0x75a6ba) = uVar1;
       break;
     case 0xffffffff:
@@ -24462,12 +24462,12 @@ void FUN_00440980(void)
     local_14 = 0x27c;
     do {
       if (*(int *)((int)&DAT_0075a692 + iVar6) == 5) {
-        *(int *)(&grounded_count + iVar5) = *(int *)(&grounded_count + iVar5) + 1;
+        *(int *)((int)&grounded_count + iVar5) = *(int *)((int)&grounded_count + iVar5) + 1;
       }
       else {
-        *(undefined4 *)(&grounded_count + iVar5) = 0;
+        *(undefined4 *)((int)&grounded_count + iVar5) = 0;
       }
-      if ((*(int *)(&grounded_count + iVar5) == 100) && (*(int *)((int)&DAT_0075a6c6 + iVar6) == 0)) {
+      if ((*(int *)((int)&grounded_count + iVar5) == 100) && (*(int *)((int)&DAT_0075a6c6 + iVar6) == 0)) {
         iVar1 = *(int *)((int)&DAT_00752344 + local_14) - _DAT_00752344;
         iVar1 = ((int)((iVar1 + (iVar1 >> 0x1f) * -0x40) - (uint)((iVar1 >> 0x1f) << 5 < 0)) >> 6) *
                 iVar1;
@@ -24979,11 +24979,11 @@ void __cdecl Car_Drive_Motion(int param_1)
   local_44 = (int)((*(int *)(iVar1 + 0x75a604) + iVar6 * -0x10) - (uint)(iVar6 << 3 < 0)) >> 4;
   local_3c = *(int *)(iVar1 + 0x75a682) + *(int *)(iVar1 + 0x75a722);
   uVar3 = (uint)((*local_20 & 7) >> 1);
-  iVar7 = iVar7 * *(int *)(&surface_friction_coeff + uVar3 * 4);
+  iVar7 = iVar7 * *(int *)((int)&surface_friction_coeff + uVar3 * 4);
   iVar6 = iVar7 >> 0x1f;
   local_18 = (int)((iVar7 + iVar6 * -0x1000) - (uint)(iVar6 << 0xb < 0)) >> 0xc;
-  iVar7 = *(int *)(&surface_traction_coeff + uVar3 * 4) * iVar4 >> 0x1f;
-  iVar7 = (int)((*(int *)(&surface_traction_coeff + uVar3 * 4) * iVar4 + iVar7 * -0x1000) -
+  iVar7 = *(int *)((int)&surface_traction_coeff + uVar3 * 4) * iVar4 >> 0x1f;
+  iVar7 = (int)((*(int *)((int)&surface_traction_coeff + uVar3 * 4) * iVar4 + iVar7 * -0x1000) -
                (uint)(iVar7 << 0xb < 0)) >> 0xc;
   iVar4 = (*(int *)(iVar1 + 0x75a726) + 2) * local_18;
   iVar6 = iVar4 >> 0x1f;
@@ -26118,16 +26118,16 @@ LAB_004434bc:
       *(undefined4 *)(uVar9 + 0x75a71e) = 0;
       iVar7 = iVar7 + 0x27c;
       uVar6 = (undefined2)
-              (((*(int *)(local_28 + 0x75a2ac) + (*(int *)(&track_info + iVar2 * 6) >> 0x10)) -
-               (*(int *)(&DAT_00466dee + iVar2 * 6) >> 0x10)) %
-              (*(int *)(&track_info + iVar2 * 6) >> 0x10));
+              (((*(int *)(local_28 + 0x75a2ac) + (*(int *)((int)&track_info + iVar2 * 6) >> 0x10)) -
+               (*(int *)((int)&DAT_00466dee + iVar2 * 6) >> 0x10)) %
+              (*(int *)((int)&track_info + iVar2 * 6) >> 0x10));
       *(undefined2 *)(local_40 + 0x75d84a) = uVar6;
       *(undefined2 *)(local_40 + 0x75d84e) = uVar6;
       *(undefined2 *)(local_40 + 0x75d848) = 0;
       *(undefined2 *)(local_40 + 0x75d84c) = 0;
       *(undefined4 *)(uVar9 + 0x75a762) = 0x10;
       local_48 = local_48 + 0xb0;
-      *(undefined4 *)(&grounded_count + local_24) = 0;
+      *(undefined4 *)((int)&grounded_count + local_24) = 0;
       local_2c = local_2c + 0x1b2;
       local_20 = local_20 + 0x1b2;
       local_24 = local_24 + 4;
@@ -26184,7 +26184,7 @@ void Init_End_Race(void)
   iVar2 = 0;
   do {
     iVar1 = iVar2 + 0x14;
-    *(undefined2 *)(&DAT_0075d852 + iVar2) = 0;
+    *(undefined2 *)((int)&DAT_0075d852 + iVar2) = 0;
     iVar2 = iVar1;
   } while (iVar1 != 400);
   _race_finished = 0;
@@ -26239,8 +26239,8 @@ void Calc_Track_Positions(void)
   }
   iVar8 = 0;
   local_14 = 0;
-  iVar1 = *(int *)(&DAT_00466dee + _current_level * 6);
-  iVar3 = *(int *)(&track_info + _current_level * 6) >> 0x10;
+  iVar1 = *(int *)((int)&DAT_00466dee + _current_level * 6);
+  iVar3 = *(int *)((int)&track_info + _current_level * 6) >> 0x10;
   iVar5 = iVar3 + -1;
   iVar7 = 0;
   do {
@@ -26311,15 +26311,15 @@ void FUN_00443b10(void)
     do {
       iVar1 = iVar2 + 0x14;
       *(undefined2 *)(iVar2 + 0x75d844) = 0x15;
-      *(undefined2 *)(&car_info + iVar2) = 0;
+      *(undefined2 *)((int)&car_info + iVar2) = 0;
       *(undefined2 *)(iVar2 + 0x75d842) = 0;
-      *(undefined2 *)(&DAT_0075d846 + iVar2) = 0;
+      *(undefined2 *)((int)&DAT_0075d846 + iVar2) = 0;
       *(undefined2 *)(iVar2 + 0x75d848) = 0;
       *(undefined2 *)(iVar2 + 0x75d84a) = 0;
       *(undefined2 *)(iVar2 + 0x75d84c) = 0;
       *(undefined2 *)(iVar2 + 0x75d84e) = 0;
       *(undefined2 *)(iVar2 + 0x75d850) = 0;
-      *(undefined2 *)(&DAT_0075d852 + iVar2) = 0;
+      *(undefined2 *)((int)&DAT_0075d852 + iVar2) = 0;
       iVar2 = iVar1;
     } while (iVar1 < iVar3);
   }
@@ -26351,16 +26351,16 @@ void Get_Race_Positions(void)
   int local_14;
   
   if (DAT_00466e90 == 0) {
-    iVar6 = *(int *)(&DAT_00466df2 + _current_level * 6);
+    iVar6 = *(int *)((int)&DAT_00466df2 + _current_level * 6);
     DAT_00466e90 = 0x19;
     if (0 < (int)num_cars) {
       iVar5 = 0;
       iVar8 = num_cars * 0x14;
       do {
         if ((*(int *)(iVar5 + 0x75d84a) >> 0x10 == (iVar6 >> 0x10) + 1) &&
-           (*(short *)(&DAT_0075d852 + iVar5) == 0)) {
+           (*(short *)((int)&DAT_0075d852 + iVar5) == 0)) {
           uVar2 = *(undefined2 *)(iVar5 + 0x75d842);
-          *(undefined2 *)(&DAT_0075d852 + iVar5) = 1;
+          *(undefined2 *)((int)&DAT_0075d852 + iVar5) = 1;
           *(undefined2 *)(iVar5 + 0x75d844) = uVar2;
         }
         iVar5 = iVar5 + 0x14;
@@ -26534,7 +26534,7 @@ void Init_Track_Strip_Numbers(void)
         }
       }
     } while (*(ushort *)(iVar8 + _strip_data + 0x16) >> 6 != 0);
-    *(short *)(&DAT_00466df2 + _current_level * 6) = sVar7;
+    *(short *)((int)&DAT_00466df2 + _current_level * 6) = sVar7;
   }
   return;
 }
@@ -26793,8 +26793,8 @@ void __cdecl FUN_00444048(int param_1)
               (((int)((__otz + iVar11 * -4) - (uint)(iVar11 << 1 < 0)) >> 2) * 4 +
                *(int *)(_cdb_ + 0x8a) + 0x100);
     uVar2 = *puVar10;
-    *puVar10 = &shadow + local_44 + iVar9;
-    *(undefined4 *)(&shadow + local_44 + iVar9) = uVar2;
+    *puVar10 = (int)&shadow + local_44 + iVar9;
+    *(undefined4 *)((int)&shadow + local_44 + iVar9) = uVar2;
   }
   __vr0 = local_3e >> 0x10;
   _DAT_00714104 = local_16 >> 0x10;
@@ -27160,16 +27160,16 @@ void __cdecl Boot_Lost_Geometry(int param_1)
     do {
       iVar2 = iVar1 + 8;
       *(undefined2 *)(iVar1 + 0x74505a) = 0x1b;
-      *(undefined2 *)(&DAT_0074505c + iVar1) = 0xfe69;
-      *(undefined2 *)(&car_vertices + iVar1) = 0xff7e;
+      *(undefined2 *)((int)&DAT_0074505c + iVar1) = 0xfe69;
+      *(undefined2 *)((int)&car_vertices + iVar1) = 0xff7e;
       iVar1 = iVar2;
     } while (iVar2 != param_1 * 0x330 + 0x1a0);
     iVar1 = param_1 * 0x330 + 0x160;
     do {
       iVar2 = iVar1 + 0x28;
       *(undefined2 *)(iVar1 + 0x74505a) = 0x1b;
-      *(undefined2 *)(&DAT_0074505c + iVar1) = 0xfe62;
-      *(undefined2 *)(&car_vertices + iVar1) = 0x98;
+      *(undefined2 *)((int)&DAT_0074505c + iVar1) = 0xfe62;
+      *(undefined2 *)((int)&car_vertices + iVar1) = 0x98;
       iVar1 = iVar2;
     } while (iVar2 != param_1 * 0x330 + 0x1b0);
   }
@@ -27263,8 +27263,8 @@ void __cdecl FUN_004450dc(int param_1,uint param_2)
   int iVar6;
   
   iVar2 = param_1 * 0x1b2;
-  uVar1 = *(uint *)(&DAT_00466eac + param_2 * 4);
-  iVar6 = *(int *)(&DAT_00466ebc + param_2 * 4);
+  uVar1 = *(uint *)((int)&DAT_00466eac + param_2 * 4);
+  iVar6 = *(int *)((int)&DAT_00466ebc + param_2 * 4);
   iVar5 = iVar2 + iVar6 * 4;
   if (*(int *)(iVar5 + 0x75a6ee) < 0xf32) {
     return;
@@ -27877,15 +27877,15 @@ void Initialise_Pause_Mode(void)
     Setup_Sprite(local_2c,s_NOTCHES_0046d01c,(ushort *)&sd_notches_sfx);
     FUN_004166c4((int)local_34,s_RSURE_0046d024,(ushort *)&DAT_00466f8c);
     Setup_Sprite(local_28,&DAT_0046d02c,(ushort *)&DAT_00466fa4);
-    Setup_Sprite((int)(&no_txt + iVar2),&DAT_0046d030,(ushort *)&sd_no_txt);
+    Setup_Sprite((int)((int)&no_txt + iVar2),&DAT_0046d030,(ushort *)&sd_no_txt);
     Setup_Sprite(iVar2 + 0x8fec00,&DAT_0046d034,(ushort *)&sd_totitle_txt);
-    Setup_Sprite((int)(&sure2_txt + iVar2),&DAT_0046d03c,(ushort *)&sd_sure2_txt);
-    Setup_Sprite((int)(&x_key + iVar2),&DAT_0046d044,(ushort *)&sd_x_key);
+    Setup_Sprite((int)((int)&sure2_txt + iVar2),&DAT_0046d03c,(ushort *)&sd_sure2_txt);
+    Setup_Sprite((int)((int)&x_key + iVar2),&DAT_0046d044,(ushort *)&sd_x_key);
     Setup_Sprite(iVar2 + 0x8fecf0,s_NEG_I_0046d048,(ushort *)&sd_x_key);
     Setup_Sprite(iVar2 + 0x8fee80,s_MAD_I_0046d050,(ushort *)&sd_x_key);
     Setup_Sprite(iVar2 + 0x8fed40,s_TSELECT_0046d058,(ushort *)&sd_select_txt);
-    Setup_Sprite((int)(&move_key + iVar2),&DAT_0046d060,(ushort *)&DAT_00466fec);
-    Setup_Sprite((int)(&move_txt + iVar2),s_TMOVE_0046d068,(ushort *)&DAT_00467004);
+    Setup_Sprite((int)((int)&move_key + iVar2),&DAT_0046d060,(ushort *)&DAT_00466fec);
+    Setup_Sprite((int)((int)&move_txt + iVar2),s_TMOVE_0046d068,(ushort *)&DAT_00467004);
     iVar4 = iVar4 + 1;
     *(undefined1 *)(iVar2 + 0x8ff257) = 0x2c;
     *(undefined1 *)(iVar2 + 0x8fef77) = 0x2c;
@@ -27986,7 +27986,7 @@ undefined4 Pause_Mode(void)
   do {
     FUN_00420b1c();
     FUN_00422c74();
-    DrawPrim((int)(&pause_tile + buffer_num * 0x18));
+    DrawPrim((int)((int)&pause_tile + buffer_num * 0x18));
     if (DAT_0071c051 != _recorded_pad_type) {
       _DAT_0071c048 = 0;
     }
@@ -28073,17 +28073,17 @@ LAB_00446b91:
     switch(local_1c) {
     case 0:
       if (uVar9 < 4) {
-        DrawPrim((int)(&cont_game + buffer_num * 0x28));
+        DrawPrim((int)((int)&cont_game + buffer_num * 0x28));
       }
-      DrawPrim((int)(&music_vol + buffer_num * 0x28));
+      DrawPrim((int)((int)&music_vol + buffer_num * 0x28));
       DrawPrim(buffer_num * 0x28 + 0x8fef20);
-      DrawPrim((int)(&exit_game + buffer_num * 0x28));
+      DrawPrim((int)((int)&exit_game + buffer_num * 0x28));
       DrawPrim(buffer_num * 0x28 + 0x8fec00);
       _yes_retire = 0;
       goto switchD_0044657d_default;
     case 1:
       if (uVar9 < 4) {
-        DrawPrim((int)(&music_vol + buffer_num * 0x28));
+        DrawPrim((int)((int)&music_vol + buffer_num * 0x28));
       }
       if (((_DAT_0071c048 & 0x800000) != 0) && (2 < _adjusted_music)) {
         _adjusted_music = _adjusted_music + -7;
@@ -28094,8 +28094,8 @@ LAB_00446b91:
         Play_Sound(-1,0x901010,0x29,0xfff,0x800,0);
       }
       DrawPrim(buffer_num * 0x28 + 0x8fef20);
-      DrawPrim((int)(&cont_game + buffer_num * 0x28));
-      DrawPrim((int)(&exit_game + buffer_num * 0x28));
+      DrawPrim((int)((int)&cont_game + buffer_num * 0x28));
+      DrawPrim((int)((int)&exit_game + buffer_num * 0x28));
       puVar5 = (undefined1 *)(buffer_num * 0x28 + 0x8fec00);
       break;
     case 2:
@@ -28110,9 +28110,9 @@ LAB_00446b91:
         _adjusted_sfx = _adjusted_sfx + 7;
         Play_Sound(-1,0x901010,0x29,0xfff,0x800,0);
       }
-      DrawPrim((int)(&music_vol + buffer_num * 0x28));
-      DrawPrim((int)(&cont_game + buffer_num * 0x28));
-      DrawPrim((int)(&exit_game + buffer_num * 0x28));
+      DrawPrim((int)((int)&music_vol + buffer_num * 0x28));
+      DrawPrim((int)((int)&cont_game + buffer_num * 0x28));
+      DrawPrim((int)((int)&exit_game + buffer_num * 0x28));
       puVar5 = (undefined1 *)(buffer_num * 0x28 + 0x8fec00);
       break;
     case 3:
@@ -28120,9 +28120,9 @@ LAB_00446b91:
       if (_yes_retire == 1) {
         if (local_18 == 0) {
           if (uVar9 < 4) {
-            DrawPrim((int)(&no_txt + iVar6));
+            DrawPrim((int)((int)&no_txt + iVar6));
           }
-          DrawPrim((int)(&sure_txt + buffer_num * 0x28));
+          DrawPrim((int)((int)&sure_txt + buffer_num * 0x28));
           puVar5 = (undefined1 *)(buffer_num * 0x28 + 0x8fede0);
         }
         else {
@@ -28130,17 +28130,17 @@ LAB_00446b91:
           if (uVar9 < 4) {
             DrawPrim(iVar6 + 0x8fede0);
           }
-          DrawPrim((int)(&sure_txt + buffer_num * 0x28));
-          puVar5 = &no_txt + buffer_num * 0x28;
+          DrawPrim((int)((int)&sure_txt + buffer_num * 0x28));
+          puVar5 = (int)&no_txt + buffer_num * 0x28;
         }
       }
       else {
         if (uVar9 < 4) {
-          DrawPrim((int)(&exit_game + iVar6));
+          DrawPrim((int)((int)&exit_game + iVar6));
         }
-        DrawPrim((int)(&music_vol + buffer_num * 0x28));
+        DrawPrim((int)((int)&music_vol + buffer_num * 0x28));
         DrawPrim(buffer_num * 0x28 + 0x8fef20);
-        DrawPrim((int)(&cont_game + buffer_num * 0x28));
+        DrawPrim((int)((int)&cont_game + buffer_num * 0x28));
         puVar5 = (undefined1 *)(buffer_num * 0x28 + 0x8fec00);
       }
       break;
@@ -28149,9 +28149,9 @@ LAB_00446b91:
       if (_yes_quit == 1) {
         if (local_14 == 0) {
           if (uVar9 < 4) {
-            DrawPrim((int)(&no_txt + iVar6));
+            DrawPrim((int)((int)&no_txt + iVar6));
           }
-          DrawPrim((int)(&sure2_txt + buffer_num * 0x28));
+          DrawPrim((int)((int)&sure2_txt + buffer_num * 0x28));
           puVar5 = (undefined1 *)(buffer_num * 0x28 + 0x8fede0);
         }
         else {
@@ -28159,18 +28159,18 @@ LAB_00446b91:
           if (uVar9 < 4) {
             DrawPrim(iVar6 + 0x8fede0);
           }
-          DrawPrim((int)(&sure2_txt + buffer_num * 0x28));
-          puVar5 = &no_txt + buffer_num * 0x28;
+          DrawPrim((int)((int)&sure2_txt + buffer_num * 0x28));
+          puVar5 = (int)&no_txt + buffer_num * 0x28;
         }
       }
       else {
         if (uVar9 < 4) {
           DrawPrim(iVar6 + 0x8fec00);
         }
-        DrawPrim((int)(&music_vol + buffer_num * 0x28));
+        DrawPrim((int)((int)&music_vol + buffer_num * 0x28));
         DrawPrim(buffer_num * 0x28 + 0x8fef20);
-        DrawPrim((int)(&cont_game + buffer_num * 0x28));
-        puVar5 = &exit_game + buffer_num * 0x28;
+        DrawPrim((int)((int)&cont_game + buffer_num * 0x28));
+        puVar5 = (int)&exit_game + buffer_num * 0x28;
       }
       break;
     default:
@@ -28202,7 +28202,7 @@ switchD_0044657d_default:
       *(char *)(iVar6 + 0x8ff16d) = cVar7 + '\a';
       *(char *)(iVar6 + 0x8ff174) = cVar4 + cVar8;
       *(char *)(iVar6 + 0x8ff175) = cVar7 + '\a';
-      DrawPrim((int)(&notches_music + iVar6));
+      DrawPrim((int)((int)&notches_music + iVar6));
       iVar6 = buffer_num * 0x28;
       *(undefined2 *)(iVar6 + 0x8ff10a) = 0xb7;
       sVar3 = _adjusted_sfx;
@@ -28227,7 +28227,7 @@ switchD_0044657d_default:
       *(char *)(iVar6 + 0x8ff124) = cVar8;
       *(char *)(iVar6 + 0x8ff125) = cVar7;
       DrawPrim(iVar6 + 0x8ff100);
-      DrawPrim((int)(&pause_txt + buffer_num * 0x28));
+      DrawPrim((int)((int)&pause_txt + buffer_num * 0x28));
     }
     Draw_All(0);
   } while( true );
@@ -28942,7 +28942,7 @@ void FUN_00447960(void)
   do {
     *(int *)(iVar2 + 0x900eec) = iVar3;
     iVar3 = iVar3 + 1;
-    *(undefined4 *)(&FXPage + iVar2) = 0;
+    *(undefined4 *)((int)&FXPage + iVar2) = 0;
     iVar2 = iVar2 + 0x28;
   } while (iVar3 < 4);
   iVar3 = 0;
@@ -28954,9 +28954,9 @@ void FUN_00447960(void)
       iVar1 = 1;
     }
     if (iVar1 <= iVar3) break;
-    *(undefined1 **)(&FXPage + iVar2) = &DAT_00901010;
-    iVar1 = *(int *)(&FXPage + iVar2);
-    *(int *)(&DAT_00900ee4 + iVar2) = iVar3;
+    *(undefined1 **)((int)&FXPage + iVar2) = &DAT_00901010;
+    iVar1 = *(int *)((int)&FXPage + iVar2);
+    *(int *)((int)&DAT_00900ee4 + iVar2) = iVar3;
     *(undefined4 *)(iVar2 + 0x900ef4) = 0x640;
     Play_Sound(iVar3,iVar1,0,0,0xc18,0);
     iVar3 = iVar3 + 1;
@@ -29014,10 +29014,10 @@ void FUN_00447a9c(void)
       uVar9 = DAT_00462fbe - *(int *)((int)&DAT_0075234c + iVar8) >> 0x1f;
       iVar7 = (DAT_00462fbe - *(int *)((int)&DAT_0075234c + iVar8) ^ uVar9) - uVar9;
       if ((iVar6 < 0x7531) && (iVar7 < 0x7531)) {
-        *(int *)(&audible_distance + iVar10) = iVar7 * iVar7 + iVar6 * iVar6;
+        *(int *)((int)&audible_distance + iVar10) = iVar7 * iVar7 + iVar6 * iVar6;
       }
       else {
-        *(undefined4 *)(&audible_distance + iVar10) = 0xffffffff;
+        *(undefined4 *)((int)&audible_distance + iVar10) = 0xffffffff;
       }
       iVar6 = num_cars;
       iVar8 = iVar8 + 0x27c;
@@ -29034,11 +29034,11 @@ void FUN_00447a9c(void)
       iVar10 = 4;
       if (4 < local_1c) {
         do {
-          if (*(uint *)(&audible_distance + *(int *)(&DAT_00900f74 + iVar10) * 4) <
+          if (*(uint *)(&audible_distance + *(int *)((int)&DAT_00900f74 + iVar10) * 4) <
               *(uint *)(&audible_distance + *(int *)(iVar10 + 0x900f70) * 4)) {
             uVar4 = *(undefined4 *)(iVar10 + 0x900f70);
-            *(int *)(iVar10 + 0x900f70) = *(int *)(&DAT_00900f74 + iVar10);
-            *(undefined4 *)(&DAT_00900f74 + iVar10) = uVar4;
+            *(int *)(iVar10 + 0x900f70) = *(int *)((int)&DAT_00900f74 + iVar10);
+            *(undefined4 *)((int)&DAT_00900f74 + iVar10) = uVar4;
           }
           iVar10 = iVar10 + 4;
         } while (iVar10 < local_1c);
@@ -29052,16 +29052,16 @@ void FUN_00447a9c(void)
   do {
     puVar1 = (undefined4 *)(iVar10 + 0x900f70);
     iVar10 = iVar10 + 4;
-    *(undefined4 *)(&DAT_00900ee4 + iVar8) = *puVar1;
+    *(undefined4 *)((int)&DAT_00900ee4 + iVar8) = *puVar1;
     iVar8 = iVar8 + 0x28;
   } while (iVar10 != 0x20);
   _u = (uint)*(byte *)(_strip_data + _DAT_0075a2a4 + 6);
   iVar8 = 0;
   local_14 = &FXPage;
   do {
-    if (*(int *)(&FXPage + iVar8) != 0) {
-      if (*(int *)(&DAT_00900ee4 + iVar8) != -1) {
-        iVar10 = FUN_004480bc((int)(&FXPage + iVar8));
+    if (*(int *)((int)&FXPage + iVar8) != 0) {
+      if (*(int *)((int)&DAT_00900ee4 + iVar8) != -1) {
+        iVar10 = FUN_004480bc((int)((int)&FXPage + iVar8));
         *(int *)(iVar8 + 0x900ef0) = iVar10;
       }
       local_18 = Amplitude((int)local_14);
@@ -29073,13 +29073,13 @@ LAB_00447dcb:
       }
       else {
         if (*(int *)(iVar8 + 0x900ee8) << 0x1e < 0) {
-          if (*(int *)(&DAT_00900ee4 + iVar8) == -1) {
+          if (*(int *)((int)&DAT_00900ee4 + iVar8) == -1) {
             sVar2 = *(short *)(iVar8 + 0x900ed8);
             sVar5 = *(short *)(iVar8 + 0x900ed4) - (short)DAT_00462fb6;
             sVar3 = *(short *)(iVar8 + 0x900edc);
           }
           else {
-            iVar11 = *(int *)(&DAT_00900ee4 + iVar8) * 0x27c;
+            iVar11 = *(int *)((int)&DAT_00900ee4 + iVar8) * 0x27c;
             sVar5 = *(short *)((int)&DAT_00752344 + iVar11) - (short)DAT_00462fb6;
             sVar2 = *(short *)((int)&DAT_00752348 + iVar11);
             sVar3 = *(short *)((int)&DAT_0075234c + iVar11);
@@ -29114,13 +29114,13 @@ LAB_00447dcb:
               iVar11 = iVar11 + -0x1000;
             }
           }
-          if (*(int *)(&DAT_00900ee4 + iVar8) == 0) {
+          if (*(int *)((int)&DAT_00900ee4 + iVar8) == 0) {
             iVar11 = 0;
           }
         }
         iVar6 = iVar11;
         if (*(int *)(iVar8 + 0x900ee8) << 0x1f < 0) {
-          iVar10 = DopplerFrequency((int)(&FXPage + iVar8),&local_34);
+          iVar10 = DopplerFrequency((int)((int)&FXPage + iVar8),&local_34);
           goto LAB_00447dcb;
         }
         iVar10 = *(int *)(iVar8 + 0x900ef0);
@@ -29237,10 +29237,10 @@ void __cdecl Allocate_Sound_Effect(int param_1,undefined4 param_2,undefined4 *pa
   iVar1 = Play_Sound(-1,0x901010,param_1,0,0x2000,0);
   if (iVar1 != -1) {
     bVar2 = *(byte *)(iVar1 * 0x28 + 0x900ee8);
-    *(undefined1 **)(&FXPage + iVar1 * 0x28) = &DAT_00901010;
+    *(undefined1 **)((int)&FXPage + iVar1 * 0x28) = &DAT_00901010;
     bVar2 = bVar2 & 0xfc;
     *(byte *)(iVar1 * 0x28 + 0x900ee8) = bVar2;
-    *(undefined4 *)(&DAT_00900ee4 + iVar1 * 0x28) = 0xffffffff;
+    *(undefined4 *)((int)&DAT_00900ee4 + iVar1 * 0x28) = 0xffffffff;
     *(byte *)(iVar1 * 0x28 + 0x900ee8) = bVar2 | 2;
     *(undefined4 *)(iVar1 * 0x28 + 0x900ed4) = *param_3;
     *(undefined4 *)(iVar1 * 0x28 + 0x900ed8) = param_3[1];
@@ -29354,12 +29354,12 @@ void FUN_00448228(void)
     }
     iVar4 = *(int *)(_current_player_car * 0x14 + 0x75d84a) >> 0x10;
     if (_DAT_00901768 < iVar4) {
-      if (iVar4 == (*(int *)(&DAT_00466df2 + _current_level * 6) >> 0x10) + 1) {
+      if (iVar4 == (*(int *)((int)&DAT_00466df2 + _current_level * 6) >> 0x10) + 1) {
         _euphoria = 1;
       }
       _DAT_00901768 = iVar4;
       if (((*(short *)(_current_player_car * 0x14 + 0x75d84c) ==
-            *(short *)(&DAT_00466df4 + _current_level * 6)) && (_commentating == 0)) &&
+            *(short *)((int)&DAT_00466df4 + _current_level * 6)) && (_commentating == 0)) &&
          (1 < num_cars)) {
         Play_Sound(1,0x901010,0x1f,0xfff,0xfff,0);
         _commentating = 0x37;
@@ -29619,7 +29619,7 @@ void __cdecl Sparking(uint param_1,int param_2)
     if (param_1 == 0) {
       iVar3 = 0;
       do {
-        iVar1 = *(int *)(&point + iVar3) * 0x2c;
+        iVar1 = *(int *)((int)&point + iVar3) * 0x2c;
         local_20 = *(int *)((int)&corner_fd + iVar1);
         local_1c = *(int *)((int)&DAT_0075a0e4 + iVar1) + -100;
         local_18 = *(int *)((int)&DAT_0075a0e8 + iVar1);
@@ -29837,9 +29837,9 @@ undefined4 __cdecl LoadSave(uint param_1,undefined4 *param_2)
         else {
           iVar2 = FUN_00449728(2);
           if (((iVar2 != -1) &&
-              (iVar2 = _DAT_0073c280 * 0x24, *(short *)(&DAT_0073c084 + iVar2) != 0)) &&
+              (iVar2 = _DAT_0073c280 * 0x24, *(short *)((int)&DAT_0073c084 + iVar2) != 0)) &&
              (iVar3 = FUN_00449ee0(0), iVar3 != 0)) {
-            iVar2 = DeleteFileMC(&card_data + iVar2);
+            iVar2 = DeleteFileMC((int)&card_data + iVar2);
             if (iVar2 == 0) {
               FUN_00449c54(1);
             }
@@ -29932,7 +29932,7 @@ undefined4 __cdecl FUN_00449728(uint param_1)
             }
             if ((_DAT_0071c04a & 0x4000) != 0) {
               FUN_00451ae0();
-              _DAT_0073c280 = *(int *)(&DAT_0073c084 + _DAT_0073c280 * 0x24) >> 0x10;
+              _DAT_0073c280 = *(int *)((int)&DAT_0073c084 + _DAT_0073c280 * 0x24) >> 0x10;
               return 0;
             }
           }
@@ -30038,7 +30038,7 @@ void FUN_00449958(void)
   DAT_00467390 = DAT_00467390 + 0x14;
   iVar7 = _DAT_0073c280;
   if (_DAT_0073c280 != -1) {
-    iVar7 = *(int *)(&DAT_0073c084 + _DAT_0073c280 * 0x24) >> 0x10;
+    iVar7 = *(int *)((int)&DAT_0073c084 + _DAT_0073c280 * 0x24) >> 0x10;
   }
   sVar5 = (short)pal_flag * 8 + 0x4e;
   local_1c = 0;
@@ -30065,12 +30065,12 @@ void FUN_00449958(void)
       *(short *)(iVar10 + 0x90179e) = sVar5;
       *(short *)(iVar13 + 0x901a60) = sVar16;
       *(short *)(iVar13 + 0x901a70) = sVar16;
-      iVar11 = *(int *)(&DAT_0073c084 + iVar15 * 0x24);
+      iVar11 = *(int *)((int)&DAT_0073c084 + iVar15 * 0x24);
       *(short *)(iVar10 + 0x901790) = sVar16;
       *(short *)(iVar10 + 0x901798) = sVar16;
       if (iVar11 >> 0x10 == iVar7) {
         *(undefined1 *)(iVar10 + 0x90178c) = DAT_00713850;
-        if (*(short *)(&DAT_0073c084 + iVar15 * 0x24) != 0) {
+        if (*(short *)((int)&DAT_0073c084 + iVar15 * 0x24) != 0) {
           local_18 = (undefined1)(lVar2 % 0xff);
           sVar6 = 0;
           do {
@@ -30084,7 +30084,7 @@ void FUN_00449958(void)
         *(undefined1 *)(iVar10 + 0x90178c) = DAT_0071331d;
         *(undefined1 *)(iVar13 + 0x901a5c) = 0x80;
       }
-      if (*(short *)(&DAT_0073c084 + iVar15 * 0x24) != 0) {
+      if (*(short *)((int)&DAT_0073c084 + iVar15 * 0x24) != 0) {
         iVar11 = iVar15 * 0x28;
         iVar10 = buffer_num * 600;
         *(char *)(iVar11 + 0x901a64 + iVar10) = DAT_00901f10;
@@ -30430,14 +30430,14 @@ void __cdecl FUN_0044a2b0(undefined4 param_1,int param_2)
   ushort uVar1;
   char *pcVar2;
   
-  uVar1 = *(ushort *)(&DAT_0073c084 + param_2 * 0x24);
+  uVar1 = *(ushort *)((int)&DAT_0073c084 + param_2 * 0x24);
   if (uVar1 == 0) {
     pcVar2 = s___R__JL__T_File__EMPTY_0046d408;
   }
   else {
     if (uVar1 < 2) {
       FUN_0045672e(0x901f1c,(byte *)s___R__JL__T_File__DD2____s_0046d3d4,
-                   &DAT_0073c07a + param_2 * 0x24);
+                   (int)&DAT_0073c07a + param_2 * 0x24);
       PTR_DAT_00467284 = (undefined *)0x901f1c;
       PTR_DAT_00467298 = (undefined *)0x901f1c;
       return;
@@ -30462,12 +30462,12 @@ undefined4 __cdecl FUN_0044a32c(undefined4 param_1,int param_2,undefined4 *param
 {
   int iVar1;
   
-  if (*(short *)(&DAT_0073c084 + param_2 * 0x24) != 1) {
+  if (*(short *)((int)&DAT_0073c084 + param_2 * 0x24) != 1) {
     FUN_00449c54(7);
     return 0;
   }
   FUN_00449dd8(2);
-  iVar1 = LoadCardFile(&DAT_0073c07a + param_2 * 0x24,param_1,param_3);
+  iVar1 = LoadCardFile((int)&DAT_0073c07a + param_2 * 0x24,param_1,param_3);
   if (iVar1 == 0) {
     FUN_00449c54(2);
     return 0;
@@ -30491,7 +30491,7 @@ undefined4 __cdecl FUN_0044a3a0(undefined4 param_1,int param_2,undefined4 *param
   local_20[0] = '\0';
   iVar3 = param_2 * 0x24;
   local_14 = 0;
-  if (*(short *)(&DAT_0073c084 + iVar3) == 0) {
+  if (*(short *)((int)&DAT_0073c084 + iVar3) == 0) {
     while( true ) {
       iVar3 = FUN_0044a4e4(local_20);
       uVar2 = 0;
@@ -30506,8 +30506,8 @@ undefined4 __cdecl FUN_0044a3a0(undefined4 param_1,int param_2,undefined4 *param
     uVar2 = 0;
     if (iVar1 != 0) {
       while( true ) {
-        if (*(short *)(&DAT_0073c084 + iVar3) == 1) {
-          FUN_0045672e((int)local_20,&DAT_0073c07a + iVar3);
+        if (*(short *)((int)&DAT_0073c084 + iVar3) == 1) {
+          FUN_0045672e((int)local_20,(int)&DAT_0073c07a + iVar3);
         }
         iVar1 = FUN_0044a4e4(local_20);
         if (iVar1 == 0) {
@@ -30517,7 +30517,7 @@ undefined4 __cdecl FUN_0044a3a0(undefined4 param_1,int param_2,undefined4 *param
         if (iVar1 == 0) break;
         FUN_00449c54(6);
       }
-      iVar3 = DeleteFileMC(&card_data + param_2 * 0x24);
+      iVar3 = DeleteFileMC((int)&card_data + param_2 * 0x24);
       if (iVar3 == 0) {
         FUN_00449c54(3);
         uVar2 = 0;
@@ -31340,7 +31340,7 @@ void __cdecl Loading_Screen_From_Slab(int param_1)
   }
   else {
     Setup_Pad(1);
-    pcVar1 = *(char **)(&DAT_00467534 + _current_level * 4);
+    pcVar1 = *(char **)((int)&DAT_00467534 + _current_level * 4);
   }
   FUN_0045672e(0x905a20,(byte *)pcVar1);
   FUN_00450e20(0x4674bc);
@@ -31630,7 +31630,7 @@ void Championship(void)
     iVar2 = _current_race;
     if (_current_race < _num_races) {
       do {
-        _current_level = *(int *)(&DAT_0046758c + _current_race * 4 + _current_season * 0x14);
+        _current_level = *(int *)((int)&DAT_0046758c + _current_race * 4 + _current_season * 0x14);
         Loading_Screen_From_Slab(0);
         Order_Cars();
         iVar1 = Play_Game();
@@ -31689,8 +31689,8 @@ void MultiChamp(void)
       if (0 < DAT_00467658) {
         do {
           _current_level =
-               *(undefined4 *)(&DAT_0046758c + _current_race * 4 + _current_season * 0x14);
-          Loading_Screen_From_Slab((int)(&champ_info + _current_player * 0x36));
+               *(undefined4 *)((int)&DAT_0046758c + _current_race * 4 + _current_season * 0x14);
+          Loading_Screen_From_Slab((int)((int)&champ_info + _current_player * 0x36));
           Order_Cars();
           iVar1 = Play_Game();
           if (iVar1 != 0) {
@@ -31755,7 +31755,7 @@ void __cdecl Calculate_Finish(int param_1)
   if (0 < num_cars) {
     iVar4 = 0;
     do {
-      if (*(short *)(&DAT_0075d852 + iVar4) != 0) {
+      if (*(short *)((int)&DAT_0075d852 + iVar4) != 0) {
         if (num_cars < 1) {
           return;
         }
@@ -31763,15 +31763,15 @@ void __cdecl Calculate_Finish(int param_1)
         iVar6 = num_cars * 0x14;
         do {
           if (*(short *)(iVar4 + 0x75d844) == 0x15) {
-            iVar7 = *(int *)(&car_info + iVar4);
+            iVar7 = *(int *)((int)&car_info + iVar4);
           }
           else {
             iVar7 = *(int *)(iVar4 + 0x75d842);
           }
-          *(short *)(&DAT_0075d846 + iVar4) =
-               *(short *)(&DAT_0075d846 + iVar4) + *(short *)((iVar7 >> 0x10) * 2 + param_1 + -2);
-          if (999 < *(short *)(&DAT_0075d846 + iVar4)) {
-            *(undefined2 *)(&DAT_0075d846 + iVar4) = 999;
+          *(short *)((int)&DAT_0075d846 + iVar4) =
+               *(short *)((int)&DAT_0075d846 + iVar4) + *(short *)((iVar7 >> 0x10) * 2 + param_1 + -2);
+          if (999 < *(short *)((int)&DAT_0075d846 + iVar4)) {
+            *(undefined2 *)((int)&DAT_0075d846 + iVar4) = 999;
           }
           iVar4 = iVar4 + 0x14;
         } while (iVar4 < iVar6);
@@ -31788,13 +31788,13 @@ void __cdecl Calculate_Finish(int param_1)
     iVar6 = 0;
     do {
       iVar7 = (*(int *)(iVar6 + 0x75d84a) >> 0x10) *
-              (*(int *)(&track_info + _current_level * 6) >> 0x10) +
+              (*(int *)((int)&track_info + _current_level * 6) >> 0x10) +
               (*(int *)(iVar6 + 0x75d84c) >> 0x10);
       if (*(int *)((int)&DAT_0075a6c6 + local_20) == 0) {
         aiStack_7c[1] = 0x44bf5d;
         uVar5 = rand();
         iVar7 = iVar7 + (uVar5 & 0x7f) +
-                ((4 - (*(int *)(&DAT_00905af2 + iVar4) >> 0x10)) +
+                ((4 - (*(int *)((int)&DAT_00905af2 + iVar4) >> 0x10)) +
                 (3 - (*(int *)(iVar4 + 0x905af0) >> 0x10)) * 5) * 10;
       }
       iVar6 = iVar6 + 0x14;
@@ -31833,12 +31833,12 @@ void __cdecl Calculate_Finish(int param_1)
     iVar6 = 0;
     do {
       iVar7 = (*(uint *)((int)aiStack_7c + iVar6 + 0xc) & 0x1f) * 0x14;
-      *(short *)(&DAT_0075d846 + iVar7) = *(short *)(&DAT_0075d846 + iVar7) + *psVar9;
+      *(short *)((int)&DAT_0075d846 + iVar7) = *(short *)((int)&DAT_0075d846 + iVar7) + *psVar9;
       sVar10 = ((short)local_1c - (short)iVar4) + 1;
       *(short *)(iVar7 + 0x75d842) = sVar10;
       *(short *)(iVar7 + 0x75d844) = sVar10;
-      if (999 < *(short *)(&DAT_0075d846 + iVar7)) {
-        *(undefined2 *)(&DAT_0075d846 + iVar7) = 999;
+      if (999 < *(short *)((int)&DAT_0075d846 + iVar7)) {
+        *(undefined2 *)((int)&DAT_0075d846 + iVar7) = 999;
       }
       psVar9 = psVar9 + -1;
       iVar4 = iVar4 + 1;
@@ -31874,12 +31874,12 @@ void Calculate_Results(void)
         sVar2 = (3 - (short)((uint)*(undefined4 *)(iVar5 + 0x905af0) >> 0x10)) * 0x19 +
                 (short)(iVar3 % ((3 - (iVar1 >> 0x10)) * 3 + 0x11)) * 5 +
                 (short)((*(int *)(iVar6 + 0x4675da) >> 0x10) / 2);
-        *(short *)(&DAT_0075d846 + iVar4) = sVar2;
+        *(short *)((int)&DAT_0075d846 + iVar4) = sVar2;
         if (sVar2 < 0) {
-          *(undefined2 *)(&DAT_0075d846 + iVar4) = 0;
+          *(undefined2 *)((int)&DAT_0075d846 + iVar4) = 0;
         }
-        if (999 < *(short *)(&DAT_0075d846 + iVar4)) {
-          *(undefined2 *)(&DAT_0075d846 + iVar4) = 999;
+        if (999 < *(short *)((int)&DAT_0075d846 + iVar4)) {
+          *(undefined2 *)((int)&DAT_0075d846 + iVar4) = 999;
         }
         iVar6 = iVar6 + 2;
         iVar5 = iVar5 + 0x36;
@@ -31895,7 +31895,7 @@ void Calculate_Results(void)
     iVar4 = 0;
     do {
       iVar6 = iVar4 + 0x14;
-      *(undefined2 *)(&DAT_0075d846 + iVar4) = 0;
+      *(undefined2 *)((int)&DAT_0075d846 + iVar4) = 0;
       iVar4 = iVar6;
     } while (iVar6 < iVar5);
   }
@@ -31958,8 +31958,8 @@ void Init_League_Info(void)
   memset(&champ_info,0,0x438);
   do {
     iVar1 = (uint)(byte)(&DAT_00467794)[iVar2] * 0x36;
-    *(short *)(&DAT_00905af2 + iVar1) = 3 - (short)((longlong)iVar2 / 5);
-    *(short *)(&DAT_00905af4 + iVar1) = 4 - (short)((longlong)iVar2 % 5);
+    *(short *)((int)&DAT_00905af2 + iVar1) = 3 - (short)((longlong)iVar2 / 5);
+    *(short *)((int)&DAT_00905af4 + iVar1) = 4 - (short)((longlong)iVar2 % 5);
     iVar2 = iVar2 + 1;
     *(undefined2 *)(iVar1 + 0x905af0) = 0;
   } while (iVar2 < 0x14);
@@ -31987,7 +31987,7 @@ void Reset_League_Info(void)
   iVar1 = 0;
   iVar2 = 0;
   do {
-    aiStack_5c[(*(int *)(&DAT_00905af2 + iVar1) >> 0x10) + (*(int *)(iVar1 + 0x905af0) >> 0x10) * 5]
+    aiStack_5c[(*(int *)((int)&DAT_00905af2 + iVar1) >> 0x10) + (*(int *)(iVar1 + 0x905af0) >> 0x10) * 5]
          = iVar2;
     iVar2 = iVar2 + 1;
     iVar1 = iVar1 + 0x36;
@@ -32015,7 +32015,7 @@ void Sort_Leagues(void)
   iVar2 = 0;
   iVar1 = 0;
   do {
-    local_5c[(*(int *)(&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5] =
+    local_5c[(*(int *)((int)&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5] =
          iVar1;
     iVar1 = iVar1 + 1;
     iVar2 = iVar2 + 0x36;
@@ -32043,8 +32043,8 @@ void Init_MultiLeague_Info(void)
   sVar3 = 0x13;
   do {
     iVar2 = (uint)(byte)(&DAT_00467794)[iVar1] * 0x36;
-    *(undefined2 *)(&DAT_00905af2 + iVar2) = 0;
-    *(short *)(&DAT_00905af4 + iVar2) = sVar3;
+    *(undefined2 *)((int)&DAT_00905af2 + iVar2) = 0;
+    *(short *)((int)&DAT_00905af4 + iVar2) = sVar3;
     iVar1 = iVar1 + 1;
     *(undefined2 *)(iVar2 + 0x905af0) = 0;
     sVar3 = sVar3 + -1;
@@ -32101,10 +32101,10 @@ void __cdecl FUN_0044c418(int param_1,int param_2)
     iVar2 = 0;
     iVar3 = param_1 * 0x36;
     do {
-      *(undefined2 *)(iVar3 + 0x905afc) = *(undefined2 *)(&DAT_0075d846 + iVar2);
+      *(undefined2 *)(iVar3 + 0x905afc) = *(undefined2 *)((int)&DAT_0075d846 + iVar2);
       *(undefined2 *)(iVar3 + 0x905afa) = *(undefined2 *)(iVar2 + 0x75d842);
       *(undefined2 *)(iVar3 + 0x905af8) = *(undefined2 *)(iVar2 + 0x75d844);
-      puVar1 = (undefined2 *)(&DAT_0075d846 + iVar2);
+      puVar1 = (undefined2 *)((int)&DAT_0075d846 + iVar2);
       iVar2 = iVar2 + 0x14;
       *(undefined2 *)(iVar3 + 0x905af6) = *puVar1;
       iVar3 = iVar3 + 0x36;
@@ -32127,10 +32127,10 @@ void __cdecl Add_Computer_Info(int param_1)
     iVar3 = param_1 * 0x14;
     iVar2 = param_1 * 0x36;
     do {
-      *(undefined2 *)(iVar2 + 0x905afc) = *(undefined2 *)(&DAT_0075d846 + iVar3);
+      *(undefined2 *)(iVar2 + 0x905afc) = *(undefined2 *)((int)&DAT_0075d846 + iVar3);
       *(undefined2 *)(iVar2 + 0x905afa) = *(undefined2 *)(iVar3 + 0x75d842);
       *(undefined2 *)(iVar2 + 0x905af8) = *(undefined2 *)(iVar3 + 0x75d844);
-      psVar1 = (short *)(&DAT_0075d846 + iVar3);
+      psVar1 = (short *)((int)&DAT_0075d846 + iVar3);
       iVar3 = iVar3 + 0x14;
       *(short *)(iVar2 + 0x905af6) = *(short *)(iVar2 + 0x905af6) + *psVar1;
       iVar2 = iVar2 + 0x36;
@@ -32174,10 +32174,10 @@ void __cdecl FUN_0044c538(int param_1,int param_2)
   iVar1 = 0;
   do {
     if (iVar3 < param_1) {
-      sVar2 = (short)((uint)*(undefined4 *)(&DAT_00905af4 + iVar1) >> 0x10);
+      sVar2 = (short)((uint)*(undefined4 *)((int)&DAT_00905af4 + iVar1) >> 0x10);
     }
     else {
-      sVar2 = (short)(((*(int *)(&DAT_00905af4 + iVar1) >> 0x10) / param_2 + 3) / 5) * 5;
+      sVar2 = (short)(((*(int *)((int)&DAT_00905af4 + iVar1) >> 0x10) / param_2 + 3) / 5) * 5;
       *(short *)(iVar1 + 0x905afc) = sVar2;
     }
     *(short *)(iVar1 + 0x905af0) = *(short *)(iVar1 + 0x905af0) + sVar2;
@@ -32201,7 +32201,7 @@ void Sort_MultiLeague(void)
   iVar2 = 0;
   iVar1 = 0;
   do {
-    local_58[*(int *)(&DAT_00905af2 + iVar2) >> 0x10] = iVar1;
+    local_58[*(int *)((int)&DAT_00905af2 + iVar2) >> 0x10] = iVar1;
     iVar1 = iVar1 + 1;
     iVar2 = iVar2 + 0x36;
   } while (iVar1 < 0x14);
@@ -32288,7 +32288,7 @@ void Promote_And_Relegate(void)
   iVar2 = 0;
   local_28[0] = 0;
   do {
-    iVar1 = (*(int *)(&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5;
+    iVar1 = (*(int *)((int)&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5;
     if (iVar1 == 4) {
     }
     if (iVar1 == 9) {
@@ -32313,14 +32313,14 @@ void Promote_And_Relegate(void)
   iVar2 = 0;
   do {
     iVar3 = *(int *)((int)local_28 + iVar1 + 0xc) * 0x36;
-    *(short *)(&DAT_00905af2 + iVar3) = (short)iVar2;
+    *(short *)((int)&DAT_00905af2 + iVar3) = (short)iVar2;
     iVar4 = *(int *)((int)local_28 + iVar1);
-    *(undefined2 *)(&DAT_00905af4 + iVar3) = 4;
+    *(undefined2 *)((int)&DAT_00905af4 + iVar3) = 4;
     iVar4 = iVar4 * 0x36;
     iVar1 = iVar1 + 4;
-    *(short *)(&DAT_00905af2 + iVar4) = (short)iVar2 + 1;
+    *(short *)((int)&DAT_00905af2 + iVar4) = (short)iVar2 + 1;
     iVar2 = iVar2 + 1;
-    *(undefined2 *)(&DAT_00905af4 + iVar4) = 0;
+    *(undefined2 *)((int)&DAT_00905af4 + iVar4) = 0;
   } while (iVar2 < 3);
   return;
 }
@@ -32362,7 +32362,7 @@ void Order_Cars(void)
     iVar1 = 0;
     do {
       *(char *)(0x75d83b -
-               ((*(int *)(&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5
+               ((*(int *)((int)&DAT_00905af2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x905af0) >> 0x10) * 5
                )) = (char)iVar1;
       iVar1 = iVar1 + 1;
       iVar2 = iVar2 + 0x36;
@@ -32698,7 +32698,7 @@ void FUN_0044d3d4(void)
       puVar3 = puVar3 + 0xeb;
     } while (local_14 < _DAT_004682f0);
   }
-  memset(&season_statistics + _DAT_004682f0 * 0x3ac,0,0x3ac);
+  memset((int)&season_statistics + _DAT_004682f0 * 0x3ac,0,0x3ac);
   return;
 }
 
@@ -32719,13 +32719,13 @@ void __cdecl Update_Track_Stats(int param_1)
   iVar3 = 0;
   iVar2 = 0;
   local_14 = &champ_info;
-  iVar4 = *(int *)(&DAT_00468094 + param_1 * 4) * 0x14;
+  iVar4 = *(int *)((int)&DAT_00468094 + param_1 * 4) * 0x14;
   do {
     if (*(short *)(iVar2 + 0x75d842) == 1) {
-      FUN_0045672e((int)(&season_statistics + iVar4 + _DAT_004682f0 * 0x3ac),local_14);
+      FUN_0045672e((int)((int)&season_statistics + iVar4 + _DAT_004682f0 * 0x3ac),local_14);
     }
     if (((*(int *)((int)&DAT_0075a6c6 + iVar3) == 1) || (*(int *)((int)&DAT_0075a692 + iVar3) == 5)) &&
-       (*(short *)(&DAT_0075d852 + iVar2) == 0)) {
+       (*(short *)((int)&DAT_0075d852 + iVar2) == 0)) {
       psVar1 = (short *)(iVar4 + 0x9063d2 + _DAT_004682f0 * 0x3ac);
       *psVar1 = *psVar1 + 1;
     }
@@ -32757,7 +32757,7 @@ void FUN_0044d538(void)
   pbVar6 = &champ_info;
   do {
     if (((*(int *)((int)&DAT_0075a6c6 + iVar5) == 1) || (*(int *)((int)&DAT_0075a692 + iVar5) == 5)) &&
-       (*(short *)(&DAT_0075d852 + iVar4) == 0)) {
+       (*(short *)((int)&DAT_0075d852 + iVar4) == 0)) {
       psVar1 = (short *)(iVar4 + 0x9064ae + _DAT_004682f0 * 0x3ac);
       *psVar1 = *psVar1 + 1;
     }
@@ -32793,7 +32793,7 @@ void Update_Championship_Stats(void)
     iVar1 = iVar2 * 0x36;
     iVar2 = iVar2 + 1;
     FUN_0045672e(_DAT_004682f0 * 0x3ac + 0x90662c +
-                 ((*(int *)(&DAT_00905af2 + iVar1) >> 0x10) +
+                 ((*(int *)((int)&DAT_00905af2 + iVar1) >> 0x10) +
                  (*(int *)(iVar1 + 0x905af0) >> 0x10) * 5) * 0x10,pbVar3);
     pbVar3 = pbVar3 + 0x36;
   } while (iVar2 < 0x14);
@@ -32867,9 +32867,9 @@ void __cdecl Update_Jimmy_Spunk_Times(int param_1,int param_2)
         (uint)(ushort)(&DAT_004680cc)[param_1 * 0x28] << 0x10 |
        (uint)(ushort)(&DAT_004680ce)[param_1 * 0x28])) &&
      (iVar2 = Enter_Driver_Names(0,1), iVar2 != 0)) {
-    pcVar6 = (char *)(&fastest_laps + param_1 * 0x14);
-    pcVar4 = &DAT_004680f0 + iVar3;
-    pcVar5 = &DAT_00468100 + iVar3;
+    pcVar6 = (char *)((int)&fastest_laps + param_1 * 0x14);
+    pcVar4 = (int)&DAT_004680f0 + iVar3;
+    pcVar5 = (int)&DAT_00468100 + iVar3;
     for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {
       *(undefined4 *)pcVar5 = *(undefined4 *)pcVar4;
       pcVar4 = pcVar4 + 4;
@@ -32880,8 +32880,8 @@ void __cdecl Update_Jimmy_Spunk_Times(int param_1,int param_2)
       pcVar4 = pcVar4 + 1;
       pcVar5 = pcVar5 + 1;
     }
-    pcVar4 = &DAT_004680e0 + iVar3;
-    pcVar5 = &DAT_004680f0 + iVar3;
+    pcVar4 = (int)&DAT_004680e0 + iVar3;
+    pcVar5 = (int)&DAT_004680f0 + iVar3;
     for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {
       *(undefined4 *)pcVar5 = *(undefined4 *)pcVar4;
       pcVar4 = pcVar4 + 4;
@@ -32892,8 +32892,8 @@ void __cdecl Update_Jimmy_Spunk_Times(int param_1,int param_2)
       pcVar4 = pcVar4 + 1;
       pcVar5 = pcVar5 + 1;
     }
-    pcVar4 = &DAT_004680d0 + iVar3;
-    pcVar5 = &DAT_004680e0 + iVar3;
+    pcVar4 = (int)&DAT_004680d0 + iVar3;
+    pcVar5 = (int)&DAT_004680e0 + iVar3;
     for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {
       *(undefined4 *)pcVar5 = *(undefined4 *)pcVar4;
       pcVar4 = pcVar4 + 4;
@@ -32905,7 +32905,7 @@ void __cdecl Update_Jimmy_Spunk_Times(int param_1,int param_2)
       pcVar5 = pcVar5 + 1;
     }
     pcVar4 = pcVar6;
-    pcVar5 = &DAT_004680d0 + iVar3;
+    pcVar5 = (int)&DAT_004680d0 + iVar3;
     for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {
       *(undefined4 *)pcVar5 = *(undefined4 *)pcVar4;
       pcVar4 = pcVar4 + 4;
@@ -32916,10 +32916,10 @@ void __cdecl Update_Jimmy_Spunk_Times(int param_1,int param_2)
       pcVar4 = pcVar4 + 1;
       pcVar5 = pcVar5 + 1;
     }
-    (&DAT_004680ca)[param_1 * 0x28] = *(undefined2 *)(&Track_Records + param_2 * 3);
-    (&DAT_004680cc)[param_1 * 0x28] = *(undefined2 *)(&DAT_00466e40 + param_2 * 3);
+    (&DAT_004680ca)[param_1 * 0x28] = *(undefined2 *)((int)&Track_Records + param_2 * 3);
+    (&DAT_004680cc)[param_1 * 0x28] = *(undefined2 *)((int)&DAT_00466e40 + param_2 * 3);
     pcVar4 = &lap_name_entry;
-    (&DAT_004680ce)[param_1 * 0x28] = *(undefined2 *)(&DAT_00466e44 + param_2 * 3);
+    (&DAT_004680ce)[param_1 * 0x28] = *(undefined2 *)((int)&DAT_00466e44 + param_2 * 3);
     do {
       cVar1 = *pcVar4;
       *pcVar6 = cVar1;
@@ -33109,8 +33109,8 @@ void Secret(void)
     iVar3 = buffer_num * 0x28;
     puVar4 = (undefined4 *)(*(int *)(_cdb_ + 0x8a) + 8);
     uVar1 = *puVar4;
-    *puVar4 = &BackPoly + iVar3;
-    *(undefined4 *)(&BackPoly + iVar3) = uVar1;
+    *puVar4 = (int)&BackPoly + iVar3;
+    *(undefined4 *)((int)&BackPoly + iVar3) = uVar1;
     puVar6 = (undefined4 *)(buffer_num * 0x28 + 0x907830);
     puVar4 = (undefined4 *)(*(int *)(_cdb_ + 0x8a) + 8);
     uVar1 = *puVar4;
@@ -33119,13 +33119,13 @@ void Secret(void)
     iVar3 = buffer_num * 0x28;
     puVar4 = (undefined4 *)(*(int *)(_cdb_ + 0x8a) + 4);
     uVar1 = *puVar4;
-    *puVar4 = &FacePolys + iVar3;
-    *(undefined4 *)(&FacePolys + iVar3) = uVar1;
+    *puVar4 = (int)&FacePolys + iVar3;
+    *(undefined4 *)((int)&FacePolys + iVar3) = uVar1;
     iVar3 = buffer_num * 0x28;
     puVar4 = (undefined4 *)(*(int *)(_cdb_ + 0x8a) + 4);
     uVar1 = *puVar4;
-    *puVar4 = &NamePolys + iVar3;
-    *(undefined4 *)(&NamePolys + iVar3) = uVar1;
+    *puVar4 = (int)&NamePolys + iVar3;
+    *(undefined4 *)((int)&NamePolys + iVar3) = uVar1;
     Draw_All(1);
   }
   FUN_00422c74();
@@ -33286,7 +33286,7 @@ void __cdecl FUN_0044e440(int *param_1)
     puVar5 = (undefined4 *)&DAT_00907930;
   }
   else {
-    puVar5 = *(undefined4 **)(&DAT_00907940 + race_car * 4);
+    puVar5 = *(undefined4 **)((int)&DAT_00907940 + race_car * 4);
   }
   puVar6 = _DAT_00907940;
   for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {
@@ -33999,7 +33999,7 @@ LAB_00450433:
         Button_Pressed(7,(short *)0x0);
         *(undefined **)((int)&PTR_s_RACETYPE_004696b2 + uVar4 * 0xb) =
              (&PTR_s_RACETYPE_00469864)[uVar4];
-        (**(code **)(&DAT_004697d4 + uVar4 * 0x14))(local_1c);
+        (**(code **)((int)&DAT_004697d4 + uVar4 * 0x14))(local_1c);
         (*(code *)(&PTR_FUN_004697cc)[uVar4 * 5])();
         bVar1 = true;
       }
@@ -34503,7 +34503,7 @@ void Draw_Screen_Polys(void)
     local_1c = 0;
     do {
       psVar3 = *(short **)((int)local_18 + 7);
-      puVar14 = (undefined4 *)(*(int *)(&DAT_00907c00 + buffer_num * 4) + local_1c);
+      puVar14 = (undefined4 *)(*(int *)((int)&DAT_00907c00 + buffer_num * 4) + local_1c);
       sVar5 = (short)((uint)*(undefined4 *)psVar3 >> 0x10) + -0x80;
       if (*(byte *)(psVar3 + 8) == 0) {
         sVar7 = 0x100;
@@ -34707,8 +34707,8 @@ void Draw_Screen_Lines(void)
     local_3c = 0xa00;
     local_30 = 0xa28;
     do {
-      puVar11 = (undefined4 *)(local_3c + *(int *)(&DAT_00907c00 + buffer_num * 4));
-      puVar10 = (undefined4 *)(local_30 + *(int *)(&DAT_00907c00 + buffer_num * 4));
+      puVar11 = (undefined4 *)(local_3c + *(int *)((int)&DAT_00907c00 + buffer_num * 4));
+      puVar10 = (undefined4 *)(local_30 + *(int *)((int)&DAT_00907c00 + buffer_num * 4));
       *(undefined1 *)((int)puVar11 + 7) = 0x40;
       *(undefined1 *)((int)puVar10 + 7) = 0x40;
       *(undefined1 *)(puVar11 + 1) =
@@ -34908,7 +34908,7 @@ void __cdecl Draw_Semi_Trans_Poly(short param_1,short param_2,short param_3,shor
   undefined4 *puVar6;
   
   uVar3 = rgb_lookup;
-  iVar1 = *(int *)(&DAT_00907c00 + buffer_num * 4);
+  iVar1 = *(int *)((int)&DAT_00907c00 + buffer_num * 4);
   *(undefined1 *)(iVar1 + 0xc87) = 0x28;
   *(undefined1 *)(iVar1 + 0xc84) = uVar3;
   *(byte *)(iVar1 + 0xc87) = *(byte *)(iVar1 + 0xc87) | 2;
@@ -36113,10 +36113,10 @@ void FUN_00453b98(void)
   if (0 < num_cars) {
     iVar2 = 0;
     do {
-      iVar1 = *(int *)(&DAT_00905af2 + iVar2);
+      iVar1 = *(int *)((int)&DAT_00905af2 + iVar2);
       if (*(int *)(iVar2 + 0x905af0) >> 0x10 == DAT_0046ad00) {
         FUN_0045672e((iVar1 >> 0x10) * 0x1a + 0x907e90,&DAT_0046f2ac,s__R_JL_T__0046ad0c,
-                     &champ_info + iVar2);
+                     (int)&champ_info + iVar2);
         FUN_0045672e((iVar1 >> 0x10) * 0x10 + 0x907e40,&DAT_0046f2b4,s__R_JL_T__0046ad0c,
                      *(int *)(iVar2 + 0x905aee) >> 0x10);
       }
@@ -36636,7 +36636,7 @@ void FUN_00454a70(void)
   iVar3 = 0;
   do {
     iVar2 = iVar3 * 0x36;
-    iVar1 = *(int *)(&DAT_00905af2 + iVar2);
+    iVar1 = *(int *)((int)&DAT_00905af2 + iVar2);
     FUN_0045672e((iVar1 >> 0x10) * 0x1a + 0x908060,&DAT_0046f658,s__R_JL_T__0046b620,puVar4);
     puVar4 = puVar4 + 0x36;
     iVar3 = iVar3 + 1;
@@ -41293,7 +41293,7 @@ LAB_004598d5:
   if (((pFVar2->_flag & 0x4000) == 0) && ((pFVar2->_flag & 0x800) == 0)) goto code_r0x004598bb;
   goto LAB_004598c8;
 code_r0x004598bb:
-  if ((FILE *)(&__iob + param_1 * 0x1a) <= pFVar2) {
+  if ((FILE *)((int)&__iob + param_1 * 0x1a) <= pFVar2) {
     if (pFVar2 < (FILE *)&DAT_0046c162) {
       iVar4 = 0;
     }
@@ -43967,7 +43967,7 @@ void __cdecl __rterrmsg(int param_1,char *param_2)
   FILE *_File;
   
   _File = (FILE *)__get_std_stream(2);
-  fputs(*(char **)(&DAT_0046ff2c + param_1 * 4),_File);
+  fputs(*(char **)((int)&DAT_0046ff2c + param_1 * 4),_File);
   fputs(&DAT_0046fda9,_File);
   fputs(param_2,_File);
   fputc(10,_File);
@@ -44013,7 +44013,7 @@ undefined * __cdecl __get_std_stream(uint param_1)
   if (3 < param_1) {
     return (undefined *)0x0;
   }
-  return &__iob + param_1 * 0x1a;
+  return (int)&__iob + param_1 * 0x1a;
 }
 
 
@@ -45294,25 +45294,25 @@ void draw_face_3pt_flat(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -45358,25 +45358,25 @@ void draw_face_3pt_flat_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar5 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar3) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -45422,25 +45422,25 @@ void draw_face_3pt_flat_dpq_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar5 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar3) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -45487,40 +45487,40 @@ void draw_face_4pt_flat(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[3] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[4] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar7 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) {
         puStack_14[5] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar5 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -45564,41 +45564,41 @@ void draw_face_4pt_flat_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar8 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar5;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[3] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[4] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       iVar6 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar6 * 0x10;
       _DAT_00714138 = _DAT_00714148;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar5 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar5 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar5 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar5;
-      if ((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) {
         puStack_14[5] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar7 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -45642,40 +45642,40 @@ void draw_face_4pt_flat_dpq(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[3] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[4] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar7 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) {
         puStack_14[5] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar5 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -45719,41 +45719,41 @@ void draw_face_4pt_flat_dpq_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar8 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar5;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[3] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[4] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       iVar6 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar6 * 0x10;
       _DAT_00714138 = _DAT_00714148;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar5 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar5 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar5 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar5;
-      if ((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) {
         puStack_14[5] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
                     /* END-> C:\PcMpe\libs\libgte.c: ? */
         puVar7 = (undefined4 *)
@@ -45797,25 +45797,25 @@ void draw_face_3pt_text(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 0xe) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -45864,25 +45864,25 @@ void draw_face_3pt_text_lit(int param_1)
   piStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar8 = (*(int *)((int)piStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = (piStack_18[3] >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071415c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = *(int *)((int)piStack_18 + 0xe) >> 0x10;
     iVar9 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar8 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar8 * 4) & uVar3) == 0) &&
        (iVar8 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar9 = iVar8 >> 0x1f,
        __otz = (int)((iVar8 + iVar9 * -0x40) - (uint)(iVar9 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -45974,25 +45974,25 @@ void draw_face_3pt_text_dpq_lit(int param_1)
   piStack_14 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar8 = (*(int *)((int)piStack_14 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = (piStack_14[3] >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071415c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = *(int *)((int)piStack_14 + 0xe) >> 0x10;
     iVar9 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar8 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar8 * 4)) == 0) &&
        (iVar8 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar9 = iVar8 >> 0x1f,
        __otz = (int)((iVar8 + iVar9 * -0x40) - (uint)(iVar9 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_18[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -46059,21 +46059,21 @@ void draw_face_4pt_text(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 0xc) >> 0x10) * 0x10;
                     /* END-> C:\PcMpe\system\file.C: ? */
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar8 = *(int *)(iStack_18 + 0xe) >> 0x10;
     iVar6 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar6);
+    uVar1 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071412c = *(undefined4 *)(iVar6 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
@@ -46081,20 +46081,20 @@ void draw_face_4pt_text(int param_1)
     iVar6 = _DAT_00714148;
     _DAT_00714154 = iVar5;
     iVar9 = __opz;
-    if ((uVar3 & *(uint *)(&rot_flags + iVar8 * 4)) == 0) {
+    if ((uVar3 & *(uint *)((int)&rot_flags + iVar8 * 4)) == 0) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar5 = *(int *)(iStack_18 + 0x10) >> 0x10;
       iVar9 = iVar5 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar9);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar9);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar9);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar9);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar9);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar9);
       _DAT_0071414c = *(undefined4 *)(iVar9 + 0x716dcc);
       iVar9 = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
               (_DAT_00714140 - _DAT_00714120) * (_DAT_00714144 - _DAT_00714154);
-      if ((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) {
+      if ((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) {
         _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
         iVar5 = _DAT_00714148 >> 0x1f;
         __otz = (int)((_DAT_00714148 + iVar5 * -4) - (uint)(iVar5 << 1 < 0)) >> 2;
@@ -46152,34 +46152,34 @@ void draw_face_4pt_text_lit(int param_1)
   piStack_14 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)((int)piStack_14 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar7 = (piStack_14[3] >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar7);
-    iVar6 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar7);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar7);
+    iVar6 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071415c = *(undefined4 *)(iVar7 + 0x716dcc);
     iVar7 = *(int *)((int)piStack_14 + 0xe) >> 0x10;
     iVar10 = iVar7 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar10);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar10);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar10);
+    uVar1 = *(uint *)((int)&rot_points + iVar10);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar10);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar10);
     _DAT_0071412c = *(undefined4 *)(iVar10 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - iVar6);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar6;
-    if (((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_18[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_18[4] = _DAT_00714150 & 0xffff | iVar6 << 0x10;
       puStack_18[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = (piStack_14[4] >> 0x10) * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar7);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar7);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar7);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar7);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar7);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar7);
       _DAT_0071414c = *(undefined4 *)(iVar7 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar7 = _DAT_00714148 >> 0x1f;
@@ -46272,39 +46272,39 @@ void draw_face_4pt_text_dpq(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar4 = (*(int *)(iStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071414c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar4 = (*(int *)(iStack_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071415c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 0xe) >> 0x10;
     iVar4 = iVar5 * 0x10;
-    _DAT_00714120 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714120 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071412c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar7 = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - _DAT_00714154) * (_DAT_00714140 - _DAT_00714120);
     iVar4 = _DAT_00714148;
     __opz = iVar7;
-    if ((*(uint *)(&rot_flags + iVar5 * 4) & uVar2) == 0) {
+    if ((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar2) == 0) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[6] = _DAT_00714120 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar5 = *(int *)(iStack_18 + 0x10) >> 0x10;
       iVar8 = iVar5 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar4 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar4 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
               (_DAT_00714144 - _DAT_00714154) * (_DAT_00714140 - _DAT_00714120);
-      if (((*(uint *)(&rot_flags + iVar5 * 4) & uVar2) == 0) &&
+      if (((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar2) == 0) &&
          ((_DAT_00714148 = iVar4 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148,
           iVar5 = _DAT_00714148 >> 0x1f,
           __otz = (int)((_DAT_00714148 + iVar5 * -4) - (uint)(iVar5 << 1 < 0)) >> 2, iVar7 < 1 ||
@@ -46360,33 +46360,33 @@ void draw_face_4pt_text_dpq_lit(int param_1)
   piStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)((int)piStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (piStack_18[3] >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)((int)piStack_18 + 0xe) >> 0x10;
     iVar9 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - _DAT_00714154) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar9 = (piStack_18[4] >> 0x10) * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar9);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar9);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar9);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar9);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar9);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar9);
       _DAT_0071414c = *(undefined4 *)(iVar9 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar9 = _DAT_00714148 >> 0x1f;
@@ -46454,25 +46454,25 @@ void draw_face_3pt_gour(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 0x10) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 0x12) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -46518,25 +46518,25 @@ void draw_face_3pt_gour_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar5 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar3) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -46582,25 +46582,25 @@ void draw_face_3pt_gour_dpq_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar5 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar5 * 4) & uVar3) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -46647,40 +46647,40 @@ void draw_face_4pt_gour(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)(iStack_18 + 0x12) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 0x14) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 0x16) >> 0x10;
     iVar7 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = *(int *)(iStack_18 + 0x18) >> 0x10;
       iVar8 = iVar7 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) {
         puStack_14[8] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar5 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -46724,41 +46724,41 @@ void draw_face_4pt_gour_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar8 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar5;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       iVar6 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar6 * 0x10;
       _DAT_00714138 = _DAT_00714148;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar5 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar5 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar5 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar5;
-      if ((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) {
         puStack_14[8] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar7 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -46802,41 +46802,41 @@ void draw_face_4pt_gour_dpq(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 0x12) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 0x14) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 0x16) >> 0x10;
     iVar8 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar5;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       iVar6 = *(int *)(iStack_18 + 0x18) >> 0x10;
       iVar8 = iVar6 * 0x10;
       _DAT_00714138 = _DAT_00714148;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar5 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar5 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar5 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar5;
-      if ((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) {
         puStack_14[8] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar7 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -46880,41 +46880,41 @@ void draw_face_4pt_gour_dpq_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 6) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 8) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    iVar5 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    iVar5 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 10) >> 0x10;
     iVar8 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar8);
+    uVar1 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071412c = *(undefined4 *)(iVar8 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714144 - iVar5) * (_DAT_00714140 - uVar1);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar5;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar6 * 4)) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[4] = _DAT_00714150 & 0xffff | iVar5 << 0x10;
       puStack_14[6] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       iVar6 = *(int *)(iStack_18 + 0xc) >> 0x10;
       iVar8 = iVar6 * 0x10;
       _DAT_00714138 = _DAT_00714148;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar5 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar5 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar5 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar5;
-      if ((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) {
         puStack_14[8] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar7 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -46957,25 +46957,25 @@ void draw_face_3pt_pict(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar5 = (*(int *)(iStack_18 + 0x12) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071414c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = (*(int *)(iStack_18 + 0x14) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar5);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar5);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar5);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar5);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar5);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar5);
     _DAT_0071415c = *(undefined4 *)(iVar5 + 0x716dcc);
     iVar5 = *(int *)(iStack_18 + 0x16) >> 0x10;
     iVar7 = iVar5 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((uVar3 & *(uint *)(&rot_flags + iVar5 * 4)) == 0) &&
+    if (((uVar3 & *(uint *)((int)&rot_flags + iVar5 * 4)) == 0) &&
        (iVar5 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar7 = iVar5 >> 0x1f,
        __otz = (int)((iVar5 + iVar7 * -0x40) - (uint)(iVar7 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -47025,25 +47025,25 @@ void draw_face_3pt_pict_lit(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar8 = (*(int *)(iStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = (*(int *)(iStack_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar8);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar8);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar8);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar8);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar8);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar8);
     _DAT_0071415c = *(undefined4 *)(iVar8 + 0x716dcc);
     iVar8 = *(int *)(iStack_18 + 0xe) >> 0x10;
     iVar9 = iVar8 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar9);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar9);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar9);
+    uVar1 = *(uint *)((int)&rot_points + iVar9);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar9);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar9);
     _DAT_0071412c = *(undefined4 *)(iVar9 + 0x716dcc);
     __opz = (_DAT_00714140 - _DAT_00714150) * (_DAT_00714144 - _DAT_00714124) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar8 * 4) & uVar3) == 0) &&
+    if (((*(uint *)((int)&rot_flags + iVar8 * 4) & uVar3) == 0) &&
        (iVar8 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15, iVar9 = iVar8 >> 0x1f,
        __otz = (int)((iVar8 + iVar9 * -0x40) - (uint)(iVar9 << 5 < 0)) >> 6, __opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
@@ -47133,40 +47133,40 @@ void draw_face_4pt_pict(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)(iStack_18 + 0x16) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = (*(int *)(iStack_18 + 0x18) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071415c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar6 = *(int *)(iStack_18 + 0x1a) >> 0x10;
     iVar7 = iVar6 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar7);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar7);
+    uVar1 = *(uint *)((int)&rot_points + iVar7);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071412c = *(undefined4 *)(iVar7 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - _DAT_00714154);
     _DAT_00714120 = uVar1;
-    if (((*(uint *)(&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar6 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_14[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_14[5] = _DAT_00714150 & 0xffff | _DAT_00714154 << 0x10;
       puStack_14[8] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = *(int *)(iStack_18 + 0x1c) >> 0x10;
       iVar8 = iVar7 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar8);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar8);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar8);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar8);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar8);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar8);
       _DAT_0071414c = *(undefined4 *)(iVar8 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar8 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar8 * -4) - (uint)(iVar8 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) {
         puStack_14[0xb] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar5 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -47213,41 +47213,41 @@ void draw_face_4pt_pict_lit(int param_1)
   iStack_14 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar6 = (*(int *)(iStack_14 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar6);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar6);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar6);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar6);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar6);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar6);
     _DAT_0071414c = *(undefined4 *)(iVar6 + 0x716dcc);
     iVar7 = (*(int *)(iStack_14 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar7);
-    iVar6 = *(int *)(&DAT_00716dc4 + iVar7);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar7);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar7);
+    iVar6 = *(int *)((int)&DAT_00716dc4 + iVar7);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar7);
     _DAT_0071415c = *(undefined4 *)(iVar7 + 0x716dcc);
     iVar7 = *(int *)(iStack_14 + 0xe) >> 0x10;
     iVar10 = iVar7 * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar10);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar10);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar10);
+    uVar1 = *(uint *)((int)&rot_points + iVar10);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar10);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar10);
     _DAT_0071412c = *(undefined4 *)(iVar10 + 0x716dcc);
     __opz = (_DAT_00714144 - _DAT_00714124) * (_DAT_00714140 - _DAT_00714150) -
             (_DAT_00714140 - uVar1) * (_DAT_00714144 - iVar6);
     _DAT_00714120 = uVar1;
     _DAT_00714154 = iVar6;
-    if (((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) && (__opz < 1)) {
+    if (((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) && (__opz < 1)) {
       puStack_18[2] = _DAT_00714140 & 0xffff | _DAT_00714144 << 0x10;
       puStack_18[5] = _DAT_00714150 & 0xffff | iVar6 << 0x10;
       puStack_18[8] = uVar1 & 0xffff | _DAT_00714124 << 0x10;
       _DAT_00714138 = _DAT_00714148;
       iVar7 = *(int *)(iStack_14 + 0x10) >> 0x10;
       iVar10 = iVar7 * 0x10;
-      _DAT_00714140 = *(uint *)(&rot_points + iVar10);
-      _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar10);
-      iVar6 = *(int *)(&DAT_00716dc8 + iVar10);
+      _DAT_00714140 = *(uint *)((int)&rot_points + iVar10);
+      _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar10);
+      iVar6 = *(int *)((int)&DAT_00716dc8 + iVar10);
       _DAT_0071414c = *(undefined4 *)(iVar10 + 0x716dcc);
       _DAT_00714148 = iVar6 + _DAT_00714158 + _DAT_00714128 + _DAT_00714148;
       iVar10 = _DAT_00714148 >> 0x1f;
       __otz = (int)((_DAT_00714148 + iVar10 * -4) - (uint)(iVar10 << 1 < 0)) >> 2;
       _DAT_00714148 = iVar6;
-      if ((*(uint *)(&rot_flags + iVar7 * 4) & uVar3) == 0) {
+      if ((*(uint *)((int)&rot_flags + iVar7 * 4) & uVar3) == 0) {
         puStack_18[0xb] = (_DAT_00714140 & 0xffff) + _DAT_00714144 * 0x10000;
         puVar8 = (undefined4 *)
                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
@@ -47338,19 +47338,19 @@ void draw_face_3pt_text_squash(int param_1)
   iStack_18 = _gpoly;
   for (iStack_1c = 0; iStack_1c < param_1; iStack_1c = iStack_1c + 1) {
     iVar3 = (*(int *)(iStack_18 + 10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071414c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (*(int *)(iStack_18 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071415c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (*(int *)(iStack_18 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714120 = *(uint *)(&rot_points + iVar3);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar3);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar3);
+    _DAT_00714120 = *(uint *)((int)&rot_points + iVar3);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar3);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar3);
     _DAT_0071412c = *(undefined4 *)(iVar3 + 0x716dcc);
     iVar3 = (_DAT_00714128 + _DAT_00714148 + _DAT_00714158) * 0x15;
     iVar6 = iVar3 >> 0x1f;
@@ -47473,18 +47473,18 @@ void draw_face_4pt_text_squash(int param_1)
   iStack_20 = _gpoly;
   for (iVar11 = 0; iVar11 < param_1; iVar11 = iVar11 + 1) {
     iVar4 = (*(int *)(iStack_20 + 10) >> 0x10) * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar4);
-    iVar10 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714138 = *(int *)(&DAT_00716dc8 + iVar4);
+    uVar1 = *(uint *)((int)&rot_points + iVar4);
+    iVar10 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714138 = *(int *)((int)&DAT_00716dc8 + iVar4);
     iVar4 = (*(int *)(iStack_20 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071415c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar4 = (*(int *)(iStack_20 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714120 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714120 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071412c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar6 = (uVar1 & 0xffff) + iVar10 * 0x10000;
     sStack_28 = (short)iVar6;
@@ -47493,9 +47493,9 @@ void draw_face_4pt_text_squash(int param_1)
     iVar8 = (_DAT_00714120 & 0xffff) + _DAT_00714124 * 0x10000;
     iVar4 = (*(int *)(iStack_20 + 0x10) >> 0x10) * 0x10;
     sStack_18 = (short)iVar8;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071414c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar4 = _DAT_00714148 + _DAT_00714158 + _DAT_00714128 + _DAT_00714138;
     iVar9 = iVar4 >> 0x1f;
@@ -47640,27 +47640,27 @@ void draw_face_4pt_text_dpq_squash(int param_1)
   puVar6 = _gprim1;
   for (iStack_24 = 0; iStack_24 < param_1; iStack_24 = iStack_24 + 1) {
     iVar4 = (*(int *)(iStack_20 + 10) >> 0x10) * 0x10;
-    uVar1 = *(uint *)(&rot_points + iVar4);
-    iVar11 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714138 = *(int *)(&DAT_00716dc8 + iVar4);
+    uVar1 = *(uint *)((int)&rot_points + iVar4);
+    iVar11 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714138 = *(int *)((int)&DAT_00716dc8 + iVar4);
     iVar4 = (*(int *)(iStack_20 + 0xc) >> 0x10) * 0x10;
-    _DAT_00714150 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714154 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714158 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714150 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714154 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714158 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071415c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar4 = (*(int *)(iStack_20 + 0xe) >> 0x10) * 0x10;
-    _DAT_00714120 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714124 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714128 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714120 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714124 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714128 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071412c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar7 = (uVar1 & 0xffff) + iVar11 * 0x10000;
     sStack_30 = (short)iVar7;
     iVar8 = (_DAT_00714150 & 0xffff) + _DAT_00714154 * 0x10000;
     sStack_2c = (short)iVar8;
     iVar4 = (*(int *)(iStack_20 + 0x10) >> 0x10) * 0x10;
-    _DAT_00714140 = *(uint *)(&rot_points + iVar4);
-    _DAT_00714144 = *(int *)(&DAT_00716dc4 + iVar4);
-    _DAT_00714148 = *(int *)(&DAT_00716dc8 + iVar4);
+    _DAT_00714140 = *(uint *)((int)&rot_points + iVar4);
+    _DAT_00714144 = *(int *)((int)&DAT_00716dc4 + iVar4);
+    _DAT_00714148 = *(int *)((int)&DAT_00716dc8 + iVar4);
     _DAT_0071414c = *(undefined4 *)(iVar4 + 0x716dcc);
     iVar9 = (_DAT_00714120 & 0xffff) + _DAT_00714124 * 0x10000;
     sStack_14 = (short)iVar9;
