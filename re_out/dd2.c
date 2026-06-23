@@ -11068,8 +11068,8 @@ void FUN_00426ab4(void)
     iVar6 = 0;
     uVar9 = 0;
     local_14 = 0x80;
-    _strip_data = *(int *)(_level_data + 4);
-    _strip_vertex = *(int *)(_level_data + 8);
+    _strip_data = *(int *)((char *)_level_data + 4);  /* WASM: x86 [eax+4] byte offset, not int*[4] */
+    _strip_vertex = *(int *)((char *)_level_data + 8);
     do {
       pbVar7 = (byte *)(iVar6 + _strip_data + 4);
       local_14 = local_14 + *(int *)(&DAT_00463e8c + (uint)*pbVar7 * 4);
@@ -11114,8 +11114,8 @@ void FUN_00426ab4(void)
     } while (iVar6 != 0);
   }
   else {
-    _strip_data = *(int *)(_level_data + 4);
-    _strip_vertex = *(int *)(_level_data + 8);
+    _strip_data = *(int *)((char *)_level_data + 4);  /* WASM: x86 [eax+4] byte offset, not int*[4] */
+    _strip_vertex = *(int *)((char *)_level_data + 8);
     local_30 = _strip_data + 0x3640;
     local_20 = 0;
     local_2c = _strip_vertex + 0xc;
