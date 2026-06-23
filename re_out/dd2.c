@@ -13095,7 +13095,7 @@ void __cdecl Bonnet_Smoke(int param_1)
           uVar7 = 0xff000;
           uVar6 = 0;
           iVar2 = FUN_00436c04();
-          Sparks(&local_50,local_28,(int)(&particle + iVar2 * 0xad),iVar5,iVar3,iVar1,uVar6,uVar7,
+          Sparks(&local_50,local_28,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar3,iVar1,uVar6,uVar7,
                  uVar8,uVar9,uVar10,uVar11,uVar12,uVar13,uVar14,uVar15);
         }
         iVar4 = iVar4 + 8;
@@ -13145,7 +13145,7 @@ void __cdecl Bonnet_Smoke(int param_1)
           uVar6 = 0;
           iVar2 = FUN_00436c04();
           iVar4 = iVar4 + 1;
-          Fire(&local_50,(int)(&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,uVar8,uVar9,
+          Fire(&local_50,(int)((int)&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,uVar8,uVar9,
                uVar10,uVar11,uVar12,uVar13,uVar14,uVar15);
         } while (iVar4 < 3);
       }
@@ -13189,7 +13189,7 @@ void __cdecl Bonnet_Smoke(int param_1)
         uVar7 = 0x40000;
         uVar6 = 0;
         iVar2 = FUN_00436c04();
-        Steam(&local_40,&DAT_00464d1c,(int)(&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,
+        Steam(&local_40,&DAT_00464d1c,(int)((int)&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,
               uVar8,uVar9,uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
         if (((*(int *)((int)&DAT_0075a676 + iVar4) < 0x28) && (0 < *(int *)((int)&DAT_0075a71a + iVar4))) &&
            (*(int *)(iVar4 + 0x75a742) == 1)) {
@@ -13208,7 +13208,7 @@ void __cdecl Bonnet_Smoke(int param_1)
           uVar7 = 0x100000;
           uVar6 = 0;
           iVar2 = FUN_00436c04();
-          Fire(&local_40,(int)(&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,uVar8,uVar9,
+          Fire(&local_40,(int)((int)&particle + iVar2 * 0xad),iVar3,iVar5,iVar1,uVar6,uVar7,uVar8,uVar9,
                uVar10,uVar11,uVar12,uVar13,uVar14,uVar15);
           *(int *)((int)&DAT_0075a71a + iVar4) = *(int *)((int)&DAT_0075a71a + iVar4) + -1;
           return;
@@ -13252,7 +13252,7 @@ void __cdecl Bonnet_Smoke(int param_1)
       uVar7 = 0x20000;
       uVar6 = 0;
       iVar1 = FUN_00436c04();
-      Steam(&local_40,&DAT_00464d1c,(int)(&particle + iVar1 * 0xad),iVar2,iVar3,iVar4,uVar6,uVar7,
+      Steam(&local_40,&DAT_00464d1c,(int)((int)&particle + iVar1 * 0xad),iVar2,iVar3,iVar4,uVar6,uVar7,
             uVar8,uVar9,uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
     }
   }
@@ -18401,7 +18401,7 @@ switchD_00434472_default:
     iVar4 = FUN_00436c04();
     piVar10 = (int *)(local_14 + 0x10);
     piVar11 = (int *)((int)&car_wheel_fd + param_1 * 0x2c + param_2 * 0xb0);
-    Sparks(piVar11,piVar10,(int)(&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
+    Sparks(piVar11,piVar10,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
            uVar15,uVar16,uVar17,uVar18,uVar19,uVar20,uVar21);
     if (0x32000 < local_40) {
       iVar5 = DAT_00462fcc * 0x19;
@@ -18420,7 +18420,7 @@ switchD_00434472_default:
       uVar12 = 0;
       local_58 = (int *)iVar5;
       iVar4 = FUN_00436c04();
-      Sparks(piVar11,piVar10,(int)(&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
+      Sparks(piVar11,piVar10,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
              uVar15,uVar16,uVar17,uVar18,uVar19,uVar20,uVar21);
       iVar5 = DAT_00462fcc * 0x19;
       iVar1 = DAT_00462fcc * 0x32;
@@ -18438,7 +18438,7 @@ switchD_00434472_default:
       uVar12 = 0;
       local_58 = (int *)iVar1;
       iVar4 = FUN_00436c04();
-      Sparks(piVar11,piVar10,(int)(&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
+      Sparks(piVar11,piVar10,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar1,iVar6,uVar12,uVar13,uVar14,
              uVar15,uVar16,uVar17,uVar18,uVar19,uVar20,uVar21);
       rand();
     }
@@ -18694,7 +18694,7 @@ int __cdecl Barrier_Corner_Collision(int param_1,int param_2)
       uVar11 = 0xff000;
       uVar10 = 0;
       iVar7 = FUN_00436c04();
-      Sparks(piVar8,(int *)((int)&DAT_0075a610 + iVar1),(int)(&particle + iVar7 * 0xad),iVar3,iVar2,iVar6
+      Sparks(piVar8,(int *)((int)&DAT_0075a610 + iVar1),(int)((int)&particle + iVar7 * 0xad),iVar3,iVar2,iVar6
              ,uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16,uVar17,uVar18,uVar19);
     }
     else {
@@ -19422,7 +19422,7 @@ void DrawParticles(void)
   _DAT_0071430a = DAT_0046662e;
   do {
     if (*(int *)(iVar1 + 0x7553a0) != 0) {
-      FUN_00436dd0((int)(&particle + iVar1));
+      FUN_00436dd0((int)((int)&particle + iVar1));
     }
     iVar1 = iVar1 + 0xad;
   } while (iVar1 != 0x4394);
@@ -19451,7 +19451,7 @@ LAB_00436dbb:
         return;
       }
     }
-    sVar1 = (**(code **)(iVar3 + 0x7553a4))(&particle + iVar3);
+    sVar1 = (**(code **)(iVar3 + 0x7553a4))((int)&particle + iVar3);
     if (sVar1 == 0) {
       FreeParticle(iVar4);
       goto LAB_00436dbb;
@@ -25043,7 +25043,7 @@ void __cdecl Car_Drive_Motion(int param_1)
         uVar14 = 0x18000;
         uVar13 = 0;
         iVar5 = FUN_00436c04();
-        Smoke(&local_9c,(int)(&particle + iVar5 * 0xad),iVar2,iVar7,iVar4,uVar13,uVar14,uVar15,
+        Smoke(&local_9c,(int)((int)&particle + iVar5 * 0xad),iVar2,iVar7,iVar4,uVar13,uVar14,uVar15,
               uVar16,uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
       }
     }
@@ -25075,7 +25075,7 @@ void __cdecl Car_Drive_Motion(int param_1)
       uVar14 = 0x18000;
       uVar13 = 0;
       iVar2 = FUN_00436c04();
-      Smoke(&local_9c,(int)(&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
+      Smoke(&local_9c,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
             uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
       goto LAB_0044213d;
     }
@@ -25092,7 +25092,7 @@ void __cdecl Car_Drive_Motion(int param_1)
       uVar14 = 0xc000;
       uVar13 = 0;
       iVar2 = FUN_00436c04();
-      Smoke(&local_9c,(int)(&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
+      Smoke(&local_9c,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
             uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
       goto LAB_0044213d;
     }
@@ -25123,7 +25123,7 @@ void __cdecl Car_Drive_Motion(int param_1)
         uVar14 = 0x18000;
         uVar13 = 0;
         iVar5 = FUN_00436c04();
-        Smoke(&local_9c,(int)(&particle + iVar5 * 0xad),iVar2,iVar7,iVar4,uVar13,uVar14,uVar15,
+        Smoke(&local_9c,(int)((int)&particle + iVar5 * 0xad),iVar2,iVar7,iVar4,uVar13,uVar14,uVar15,
               uVar16,uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
         if ((param_1 == _current_player_car) && (_fx_18 == 0)) {
           Allocate_Sound_Effect(7,0x9c4,&local_9c);
@@ -25159,7 +25159,7 @@ void __cdecl Car_Drive_Motion(int param_1)
       uVar14 = 0x18000;
       uVar13 = 0;
       iVar2 = FUN_00436c04();
-      Smoke(&local_9c,(int)(&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
+      Smoke(&local_9c,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
             uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
       goto LAB_0044213d;
     }
@@ -25176,7 +25176,7 @@ void __cdecl Car_Drive_Motion(int param_1)
       uVar14 = 0xc000;
       uVar13 = 0;
       iVar2 = FUN_00436c04();
-      Smoke(&local_9c,(int)(&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
+      Smoke(&local_9c,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
             uVar17,uVar18,uVar19,uVar20,uVar21,uVar22,uVar23);
       goto LAB_0044213d;
     }
@@ -25192,7 +25192,7 @@ void __cdecl Car_Drive_Motion(int param_1)
   uVar14 = 0x20000;
   uVar13 = 0;
   iVar2 = FUN_00436c04();
-  Fire(&local_9c,(int)(&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
+  Fire(&local_9c,(int)((int)&particle + iVar2 * 0xad),iVar5,iVar4,iVar7,uVar13,uVar14,uVar15,uVar16,
        uVar17,uVar18,uVar19,uVar20,uVar21,uVar22);
 LAB_0044213d:
   *(int *)(iVar1 + 0x75a640) = *(int *)((int)&DAT_0075a610 + iVar1) - local_8c;
@@ -29503,7 +29503,7 @@ void __cdecl Sparking(uint param_1,int param_2)
         uVar7 = 0;
         iVar4 = FUN_00436c04();
         iVar3 = iVar3 + 4;
-        Sparks(&local_20,piVar6,(int)(&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
+        Sparks(&local_20,piVar6,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
                uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
       } while (iVar3 != 8);
       iVar1 = DAT_004670ac * 0x2c;
@@ -29526,7 +29526,7 @@ void __cdecl Sparking(uint param_1,int param_2)
       uVar8 = 0xff000;
       uVar7 = 0;
       iVar2 = FUN_00436c04();
-      Sparks(&local_20,piVar6,(int)(&particle + iVar2 * 0xad),iVar1,iVar3,iVar4,uVar7,uVar8,uVar9,
+      Sparks(&local_20,piVar6,(int)((int)&particle + iVar2 * 0xad),iVar1,iVar3,iVar4,uVar7,uVar8,uVar9,
              uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
       return;
     }
@@ -29553,7 +29553,7 @@ void __cdecl Sparking(uint param_1,int param_2)
         uVar7 = 0;
         iVar4 = FUN_00436c04();
         iVar3 = iVar3 + 4;
-        Sparks(&local_20,piVar6,(int)(&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
+        Sparks(&local_20,piVar6,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
                uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
       } while (iVar3 != 8);
       iVar1 = DAT_004670bc * 0x2c;
@@ -29576,7 +29576,7 @@ void __cdecl Sparking(uint param_1,int param_2)
       uVar8 = 0xff000;
       uVar7 = 0;
       iVar2 = FUN_00436c04();
-      Sparks(&local_20,piVar6,(int)(&particle + iVar2 * 0xad),iVar1,iVar3,iVar4,uVar7,uVar8,uVar9,
+      Sparks(&local_20,piVar6,(int)((int)&particle + iVar2 * 0xad),iVar1,iVar3,iVar4,uVar7,uVar8,uVar9,
              uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
       return;
     }
@@ -29604,7 +29604,7 @@ void __cdecl Sparking(uint param_1,int param_2)
         uVar7 = 0;
         iVar4 = FUN_00436c04();
         iVar3 = iVar3 + 8;
-        Sparks(&local_20,piVar6,(int)(&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
+        Sparks(&local_20,piVar6,(int)((int)&particle + iVar4 * 0xad),iVar5,iVar2,iVar1,uVar7,uVar8,uVar9,
                uVar10,uVar11,uVar12,uVar13,uVar14,uVar15,uVar16);
       } while (iVar3 != 0x10);
     }
