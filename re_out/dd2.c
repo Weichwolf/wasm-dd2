@@ -16155,6 +16155,7 @@ void Init_Scene_Objects(void)
   int iVar6;
   int *piVar7;
   int local_4c [14];
+  { int _i; for(_i=0;_i<14;_i++){ local_4c[_i] = -1; *(int*)((int)&active_block_numbers + _i*4) = -1; } }  /* WASM: FUN_00456b67 register-ABI int-memset(local_4c/active_block_numbers,-1,0xe) - Ghidra lost eax dest */
   
   if (7 < _current_level) {
     FUN_00456b67(0xe,0xffffffff);
