@@ -1871,7 +1871,7 @@ extern void draw_text_half(void);
 #define recorded_pad_type (*(int*)GIMG(0x73c2a8))
 #define recorded_strips" (*(int*)GIMG(0x74bea0))
 #define restart_cd_audio (*(int*)GIMG(0x467420))
-#define rgb_lookup (*(int*)GIMG(0x713050))
+#define rgb_lookup (*(unsigned char*)GIMG(0x713050))
 #define roller (*(int*)GIMG(0x749540))
 #define rot_flags (*(int*)GIMG(0x71adc0))
 #define rot_points (*(int*)GIMG(0x716dc0))
