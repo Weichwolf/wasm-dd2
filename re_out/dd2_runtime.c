@@ -37,7 +37,7 @@ int main(){
     __InitRtns();
     dd2_com_init();
     Read_Directory("Dirinfo");
-    *(int*)0x462d68 = 1;          /* skip DirectSound COM init (needs WebAudio shim) - characterize next tier */
+    *(int*)0x462d68 = 1;  /* during init: make FUN_004159a8 skip DirectSound COM setup */
     Init_Application((void*)1);
     /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;
        the cold Play_Game bypass skips it -> Set_Draw_Mode(0) here so SetPalette's surface exists.
@@ -45,6 +45,7 @@ int main(){
     _current_level = 1;
     *(int*)0x463010 = -1;
     Set_Draw_Mode(0);
+    *(int*)0x462d68 = 0;  /* before the race loop: sound funcs (Modify_Sound etc.) skip uninit DirectSound COM (audio = deferred WebAudio tier) */
     Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
     return 0;
 }
