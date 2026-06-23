@@ -212,7 +212,7 @@ int _grounded_count;
 int _gtexture;
 int _gtexture_def;
 int _h_norm;
-int _highlight_colour;
+/* _highlight_colour wired to image slot 0x4699c8 (dual-symbol: C-global was 0, baked value lives in image) */
 int _hlf_transparency_table;
 int _last_time;
 int* _level_data;
@@ -221,14 +221,14 @@ int _local_1e;
 int _local_24;
 int _local_26;
 int _mem_size;
-int _num_races;
+/* _num_races wired to image slot 0x467654 (dual-symbol: C-global was 0, baked value lives in image) */
 int _num_spies;
 int _num_strips;
 int _old_flying_index;
 int _otsize;
 int _pad_option;
 int _permission;
-int _playable_bowls;
+/* _playable_bowls wired to image slot 0x467408 (dual-symbol: C-global was 0, baked value lives in image) */
 
 int _polygon_angles;
 int* _prim_buf;
@@ -247,7 +247,7 @@ int _sky_shape5;
 int _sky_shape6;
 int _sky_shape7;
 int _sky_shape8;
-int _sound_volume;
+/* _sound_volume wired to image slot 0x467410 (dual-symbol: C-global was 0, baked value lives in image) */
 int _sprite_matrix;
 int _stats_recorded;
 int _strip_data;

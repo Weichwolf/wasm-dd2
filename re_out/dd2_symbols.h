@@ -2520,7 +2520,7 @@ extern int _grounded_count;
 extern int _gtexture;
 extern int _gtexture_def;
 extern int _h_norm;
-extern int _highlight_colour;
+#define _highlight_colour (*(int*)GIMG(0x4699c8))
 extern int _hlf_transparency_table;
 extern int _last_time;
 extern int* _level_data;
@@ -2529,14 +2529,14 @@ extern int _local_1e;
 extern int _local_24;
 extern int _local_26;
 extern int _mem_size;
-extern int _num_races;
+#define _num_races (*(int*)GIMG(0x467654))
 extern int _num_spies;
 extern int _num_strips;
 extern int _old_flying_index;
 extern int _otsize;
 extern int _pad_option;
 extern int _permission;
-extern int _playable_bowls;
+#define _playable_bowls (*(int*)GIMG(0x467408))
 #define _playable_tracks_ (*(int*)GIMG(0x00467404))
 extern int _polygon_angles;
 extern int* _prim_buf;
@@ -2555,7 +2555,7 @@ extern int _sky_shape5;
 extern int _sky_shape6;
 extern int _sky_shape7;
 extern int _sky_shape8;
-extern int _sound_volume;
+#define _sound_volume (*(int*)GIMG(0x467410))
 extern int _sprite_matrix;
 extern int _stats_recorded;
 extern int _strip_data;
