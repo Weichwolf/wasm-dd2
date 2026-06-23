@@ -92,10 +92,10 @@ int PTR_DAT_0044e238;
 int PTR_LAB_00426740;
 int PTR_LAB_00426764;
 int PTR_LAB_0042a4c0;
-int SCA_Corner_Data_;
+
 int SmokeCtrl;
 int SparksCtrl;
-int Speedway_Track_Type_;
+
 int SteamCtrl;
 int UNK_00458895;
 int View_MultiLeague;
@@ -127,7 +127,7 @@ int __ReleaseFileH;
 int __ReleaseIOB;
 int __ReleaseNHeap;
 code* __WinMainProc;
-int ___ASTACKPTR_;
+
 int ___ExceptionFilter;
 int ___FirstThreadData;
 int ___Is_DLL;
@@ -156,7 +156,7 @@ int _add_transparency_table;
 int _adjusted_music;
 int _adjusted_sfx;
 int _applause;
-int _applause_up_;
+
 int _boot_objects_count;
 int _bootoff_index;
 int _camera_collision;
@@ -165,7 +165,7 @@ int _camera_fd_pt;
 int _car0_being_obstructed;
 int _car_info;
 int _cars_in_crash;
-int _cdb_;
+
 int _commentating;
 int _corner_fd;
 int _crowd_volume;
@@ -233,14 +233,14 @@ int _otsize;
 int _pad_option;
 int _permission;
 int _playable_bowls;
-int _playable_tracks_;
+
 int _polygon_angles;
 int* _prim_buf;
 int _quit_flag;
 int _race_finished;
 int _recorded_pad_type;
-int _scene_colour_matrix_;
-int _screen_centre_x_;
+
+
 int* _screen_line_list;
 int _screen_poly_list;
 int _sky_shape1;
@@ -270,12 +270,12 @@ int _wheeloff_index;
 int _whllck;
 int _yes_quit;
 int _yes_retire;
-int fog_col_;
+
 int iRam00749038;
 int pHVar1;
 int pHVar6;
-int playable_tracks_;
-int recorded_strips_;
+
+
 int sRam00465932;
 int sRam00465934;
 int sRam00465936;
@@ -292,9 +292,9 @@ int sRam007597d0;
 int sRam007597d8;
 int sRam007597e0;
 int sRam007597e8;
-int sca_frame_count_;
-int scene_colour_matrix_;
-int slab_background_;
+
+
+
 int stack0x00000008;
 int stack0x0000000c;
 int stack0xfffffbd4;
