@@ -12308,7 +12308,7 @@ void __cdecl FUN_0042895c(int param_1)
     _track_height = _DAT_00744b14;
     if (DAT_00744b3a < '\x01') {
       local_24 = CONCAT13(DAT_00744b37,CONCAT12(uRam00744b36,_DAT_00744b34)) >> 0x10;
-      piVar8 = (int *)(_strip_vertex + _DAT_00744b34 * 0xc +
+      piVar8 = (int *)(_strip_vertex + (_DAT_00744b34 >> 0x10) * 0xc +
                       *(int *)((int)&DAT_00465dd0 + (uint)DAT_00744b38 * 8) * 0xc);
       piVar10 = (int *)(*(int *)((int)&DAT_00465dd4 + (uint)DAT_00744b38 * 8) * 0xc +
                        _strip_vertex + local_24 * 0xc);
@@ -12352,7 +12352,7 @@ joined_r0x00429509:
     else if ((int)DAT_00744b3a == *(byte *)(_strip_data + _DAT_00744b24 + 5) - 1) {
       local_24 = CONCAT13(DAT_00744b37,CONCAT12(uRam00744b36,_DAT_00744b34)) >> 0x10;
       piVar8 = (int *)(*(int *)((int)&left_collision_offsets + (uint)DAT_00744b38 * 8) * 0xc +
-                      _DAT_00744b34 * 0xc + _strip_vertex + 0xc);
+                      (_DAT_00744b34 >> 0x10) * 0xc + _strip_vertex + 0xc);
       local_1c = *(int *)((int)&DAT_00465e34 + (uint)DAT_00744b38 * 8) * 0xc;
       piVar10 = (int *)(local_24 * 0xc + _strip_vertex + 0xc + local_1c);
       local_44 = piVar8[2] - piVar10[2];
