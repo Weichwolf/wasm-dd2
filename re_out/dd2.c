@@ -25787,7 +25787,7 @@ void FUN_004430b8(void)
         *(short *)(&DAT_00752392 + local_18) = (short)((local_14 * -0x800) / num_cars) + 0x400;
         iVar7 = iVar7 + 0x800;
         *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_18);
-        *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_18);
+        *(undefined4 *)((int)&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_18);
         *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + local_18);
         *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + local_18);
         Map_Height(local_44);
@@ -25819,7 +25819,7 @@ void FUN_004430b8(void)
         *(short *)(&DAT_00752392 + local_1c) = (short)((local_14 * -0x1000) / num_cars);
         iVar7 = iVar7 + 0x1000;
         *(undefined4 *)((int)&car_fd + iVar2) = *(undefined4 *)(&DAT_00752344 + local_1c);
-        *(undefined4 *)(&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_1c);
+        *(undefined4 *)((int)&DAT_0075a294 + iVar2) = *(undefined4 *)(&DAT_00752348 + local_1c);
         *(undefined4 *)(iVar2 + 0x75a298) = *(undefined4 *)(&DAT_0075234c + local_1c);
         *(undefined4 *)(iVar2 + 0x75a29c) = *(undefined4 *)(&DAT_00752350 + local_1c);
         Map_Height(local_30);
@@ -25915,19 +25915,19 @@ LAB_004434bc:
       *(int *)(uVar9 + 0x75a620) = (*(int *)(iVar7 + 0x75238e) >> 0x10) << 0xc;
       *(int *)(uVar9 + 0x75a624) = (*(int *)(&DAT_00752390 + iVar7) >> 0x10) << 0xc;
       iVar2 = *(int *)(&DAT_00752392 + iVar7);
-      *(undefined4 *)(&DAT_0075a692 + uVar9) = 0;
-      *(undefined4 *)(&DAT_0075a610 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a692 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a610 + uVar9) = 0;
       *(int *)(uVar9 + 0x75a628) = (iVar2 >> 0x10) << 0xc;
       iVar2 = *(int *)(&DAT_00752344 + iVar7);
-      *(undefined4 *)(&DAT_0075a614 + uVar9) = 0;
-      *(int *)(&DAT_0075a630 + uVar9) = iVar2 << 0xc;
+      *(undefined4 *)((int)&DAT_0075a614 + uVar9) = 0;
+      *(int *)((int)&DAT_0075a630 + uVar9) = iVar2 << 0xc;
       iVar2 = *(int *)(&DAT_00752348 + iVar7);
-      *(undefined4 *)(&DAT_0075a618 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a618 + uVar9) = 0;
       *(int *)(uVar9 + 0x75a634) = iVar2 << 0xc;
-      *(int *)(&DAT_0075a638 + uVar9) = *(int *)(&DAT_0075234c + iVar7) << 0xc;
+      *(int *)((int)&DAT_0075a638 + uVar9) = *(int *)(&DAT_0075234c + iVar7) << 0xc;
       FUN_00440ac4(local_14);
       *(undefined4 *)(uVar9 + 0x75a6b6) = 0;
-      *(undefined4 *)(&DAT_0075a610 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a610 + uVar9) = 0;
       *(undefined4 *)(uVar9 + 0x75a644) = 0;
       *(undefined4 *)(uVar9 + 0x75a682) = 0;
       *(undefined4 *)(uVar9 + 0x75a6ba) = 0;
@@ -25935,14 +25935,14 @@ LAB_004434bc:
       *(undefined4 *)(&car_handling + uVar9) = 0;
       *(undefined4 *)(uVar9 + 0x75a604) = 0;
       *(undefined4 *)(uVar9 + 0x75a608) = 0;
-      *(undefined4 *)(&DAT_0075a614 + uVar9) = 0;
-      *(undefined4 *)(&DAT_0075a618 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a614 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a618 + uVar9) = 0;
       *(undefined4 *)(uVar9 + 0x75a640) = 0;
       *(undefined4 *)(uVar9 + 0x75a648) = 0;
-      *(undefined4 *)(&DAT_0075a676 + uVar9) = 0;
-      *(undefined4 *)(&DAT_0075a67a + uVar9) = 0;
-      *(undefined4 *)(&DAT_0075a686 + uVar9) = 0;
-      *(undefined4 *)(&DAT_0075a692 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a676 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a67a + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a686 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a692 + uVar9) = 0;
       uVar4 = uVar9;
       iVar2 = local_48;
       do {
@@ -25956,7 +25956,7 @@ LAB_004434bc:
         uVar4 = uVar3;
       } while (uVar3 != local_20);
       *(undefined4 *)(uVar9 + 0x75a6ca) = 0;
-      *(undefined4 *)(&DAT_0075a6c6 + uVar9) = 0;
+      *(undefined4 *)((int)&DAT_0075a6c6 + uVar9) = 0;
       uVar4 = uVar9;
       do {
         uVar3 = uVar4 + 4;
@@ -25974,10 +25974,10 @@ LAB_004434bc:
       local_34 = uVar9;
       uVar4 = rand();
       if ((uVar4 & 1) == 0) {
-        *(undefined4 *)(&DAT_0075a71a + uVar9) = 0;
+        *(undefined4 *)((int)&DAT_0075a71a + uVar9) = 0;
       }
       else {
-        *(undefined4 *)(&DAT_0075a71a + uVar9) = 300;
+        *(undefined4 *)((int)&DAT_0075a71a + uVar9) = 300;
       }
       iVar2 = _current_level;
       *(undefined4 *)(uVar9 + 0x75a71e) = 0;
