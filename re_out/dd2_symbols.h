@@ -2604,7 +2604,7 @@ extern int uRam007598a6;
 extern int uRam007598a8;
 extern int uRam007598ae;
 extern int uVar1;
-extern int wheeloff_object_;
+#define wheeloff_object_ (*(int*)GIMG(0x73c400))
 void FUN_0041033a(void);
 void draw_half(void);
 void FUN_0041080d(void);

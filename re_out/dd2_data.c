@@ -316,7 +316,6 @@ int uRam007598a6;
 int uRam007598a8;
 int uRam007598ae;
 int uVar1;
-int wheeloff_object_;
 int extraout_DL;
 int extraout_DL_00;
 int extraout_EAX;
