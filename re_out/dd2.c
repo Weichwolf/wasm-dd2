@@ -21554,8 +21554,8 @@ void Init_Car_Doors(void)
           FUN_0043c738(local_20,local_1c,local_14,0x759ee0,local_54);
           FUN_0043c738(local_20,local_1c,local_14,0x759ee0,local_54);
         }
-        local_20 = local_20 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
-        local_1c = local_1c + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+        local_20 = local_20 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+        local_1c = local_1c + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
         psVar6 = (short *)((int)psVar5 + uVar8 * iVar7);
       }
       local_44 = local_44 + 0x38;
@@ -21599,8 +21599,8 @@ void Init_Car_Doors(void)
           FUN_0043c738(local_24,local_18,&DAT_00466814,0x759ee0,local_58);
           FUN_0043c738(local_24,local_18,&DAT_00466817,0x759ee0,local_58);
         }
-        local_24 = local_24 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
-        local_18 = local_18 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+        local_24 = local_24 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+        local_18 = local_18 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
         psVar6 = (short *)((int)psVar5 + uVar8 * iVar7);
       }
       local_48 = local_48 + 0x38;
@@ -21670,7 +21670,7 @@ void __cdecl FUN_0043b26c(int param_1,int param_2,int param_3)
         }
       }
       psVar6 = (short *)((int)psVar6 + (int)sVar3 * (uint)bVar1 + 4);
-      iVar5 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+      iVar5 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;   /* WASM: byte offset (int* scaled) */
     }
   }
   return;
@@ -21723,7 +21723,7 @@ void __cdecl Change_Bonnet_Clut(int param_1,int param_2)
         }
       }
     }
-    iVar5 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+    iVar5 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
     iVar9 = iVar9 + iVar5;
     iVar6 = iVar6 + iVar5;
   }
@@ -21765,7 +21765,7 @@ void __cdecl Change_Boot_Clut(int param_1,int param_2)
       }
     }
     local_14 = (short *)((int)local_14 + (int)sVar3 * (uint)bVar1 + 4);
-    iVar4 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+    iVar4 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
     iVar6 = iVar6 + iVar4;
     iVar7 = iVar7 + iVar4;
   }
@@ -21937,7 +21937,7 @@ void __cdecl FUN_0043b7bc(int param_1,int param_2,int param_3,int param_4,int pa
       }
     }
     psVar7 = (short *)((int)psVar7 + (int)sVar4 * (uint)bVar2 + 4);
-    iVar6 = *(int *)(&DAT_00466734 + ((int)(uint)bVar3 >> 2) * 4) * (int)sVar4;
+    iVar6 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar3 >> 2) * 4) * (int)sVar4;
     iVar8 = iVar8 + iVar6;
   }
   return;
@@ -22145,7 +22145,7 @@ joined_r0x0043bd36:
       }
     }
     psVar5 = (short *)((int)psVar5 + local_28 * local_24 + 4);
-    local_28 = *(int *)(&DAT_00466734 + ((int)local_2c >> 2) * 4) * local_28;
+    local_28 = *(int *)((int)&DAT_00466734 + ((int)local_2c >> 2) * 4) * local_28;
     iVar4 = iVar4 + local_28;
   }
   return;
@@ -22353,7 +22353,7 @@ joined_r0x0043c320:
       }
     }
     psVar5 = (short *)((int)psVar5 + local_2c * local_28 + 4);
-    local_2c = *(int *)(&DAT_00466734 + ((int)local_24 >> 2) * 4) * local_2c;
+    local_2c = *(int *)((int)&DAT_00466734 + ((int)local_24 >> 2) * 4) * local_2c;
     iVar3 = iVar3 + local_2c;
   }
   return;
