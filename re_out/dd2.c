@@ -2508,33 +2508,33 @@ void FUN_00413fd2(void)
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (uint)((longlong)(int)__globmat * (longlong)iVar1) >> 0xc |
                (int)((ulonglong)((longlong)(int)__globmat * (longlong)iVar1) >> 0x20) << 0x14;
-  unaff_EDI[1] = (uint)((longlong)(int)_DAT_007142f6 * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_007142f6 * (longlong)iVar1) >> 0x20) << 0x14;
-  unaff_EDI[2] = (uint)((longlong)(int)_DAT_007142fc * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_007142fc * (longlong)iVar1) >> 0x20) << 0x14;
+  unaff_EDI[1] = (uint)((longlong)(int)(short)_DAT_007142f6 * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_007142f6 * (longlong)iVar1) >> 0x20) << 0x14;
+  unaff_EDI[2] = (uint)((longlong)(int)(short)_DAT_007142fc * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_007142fc * (longlong)iVar1) >> 0x20) << 0x14;
   iVar1 = (int)unaff_ESI[2];
   *unaff_EDI = *unaff_EDI +
-               ((uint)((longlong)(int)_DAT_007142f2 * (longlong)iVar1) >> 0xc |
-               (int)((ulonglong)((longlong)(int)_DAT_007142f2 * (longlong)iVar1) >> 0x20) << 0x14);
+               ((uint)((longlong)(int)(short)_DAT_007142f2 * (longlong)iVar1) >> 0xc |
+               (int)((ulonglong)((longlong)(int)(short)_DAT_007142f2 * (longlong)iVar1) >> 0x20) << 0x14);
   unaff_EDI[1] = unaff_EDI[1] +
-                 ((uint)((longlong)(int)_DAT_007142f8 * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_007142f8 * (longlong)iVar1) >> 0x20) << 0x14)
+                 ((uint)((longlong)(int)(short)_DAT_007142f8 * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_007142f8 * (longlong)iVar1) >> 0x20) << 0x14)
   ;
   unaff_EDI[2] = unaff_EDI[2] +
-                 ((uint)((longlong)(int)_DAT_007142fe * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_007142fe * (longlong)iVar1) >> 0x20) << 0x14)
+                 ((uint)((longlong)(int)(short)_DAT_007142fe * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_007142fe * (longlong)iVar1) >> 0x20) << 0x14)
   ;
   iVar1 = (int)unaff_ESI[4];
   *unaff_EDI = *unaff_EDI +
-               ((uint)((longlong)(int)_DAT_007142f4 * (longlong)iVar1) >> 0xc |
-               (int)((ulonglong)((longlong)(int)_DAT_007142f4 * (longlong)iVar1) >> 0x20) << 0x14);
+               ((uint)((longlong)(int)(short)_DAT_007142f4 * (longlong)iVar1) >> 0xc |
+               (int)((ulonglong)((longlong)(int)(short)_DAT_007142f4 * (longlong)iVar1) >> 0x20) << 0x14);
   unaff_EDI[1] = unaff_EDI[1] +
-                 ((uint)((longlong)(int)_DAT_007142fa * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_007142fa * (longlong)iVar1) >> 0x20) << 0x14)
+                 ((uint)((longlong)(int)(short)_DAT_007142fa * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_007142fa * (longlong)iVar1) >> 0x20) << 0x14)
   ;
   unaff_EDI[2] = unaff_EDI[2] +
-                 ((uint)((longlong)(int)_DAT_00714300 * (longlong)iVar1) >> 0xc |
-                 (int)((ulonglong)((longlong)(int)_DAT_00714300 * (longlong)iVar1) >> 0x20) << 0x14)
+                 ((uint)((longlong)(int)(short)_DAT_00714300 * (longlong)iVar1) >> 0xc |
+                 (int)((ulonglong)((longlong)(int)(short)_DAT_00714300 * (longlong)iVar1) >> 0x20) << 0x14)
   ;
   return;
 }
@@ -6634,6 +6634,7 @@ void __cdecl Pre_Rotate(int param_1)
     _DAT_00714118 = _DAT_00714108;
     _DAT_0071411c = _DAT_0071410c;
     __vr0 = (int)(short)*piVar1;
+    _DAT_00714100 = __vr0;  /* FIX: __vr0 is split from image 0x714100 (the GTE input X the rotate reads as *unaff_ESI); Y/Z go direct but X did not -> stale garbage X -> garbage rotated-Z -> OOB. Sync. */
     _DAT_00714104 = *piVar1 >> 0x10;
     _DAT_00714108 = *(int *)((int)piVar1 + 2) >> 0x10;
     GTERPS();
