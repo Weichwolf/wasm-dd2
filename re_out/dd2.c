@@ -5604,7 +5604,7 @@ void __cdecl FUN_0041a2f4(int param_1)
       puVar3 = (undefined4 *)((int)puVar3 + 1);
     }
     local_14 = local_14 + 10;
-    _gpoly = _gpoly + 0x14;
+    _gpoly = (short *)((int)_gpoly + 0x14);  /* FIX(L15): byte-advance; _gpoly is short* so bare +0x14 was +0x28 bytes. x86 0x41a3d2 add ebx,0x14 = 0x14 BYTES. */
     _gprim1 = _gprim1 + 10;
   }
   _gprim2 = local_14;
