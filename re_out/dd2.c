@@ -2282,7 +2282,7 @@ void GTERPS(void)
 {
   __flg = 0;
   _g_esi=0x714100; _g_edi=0x4604b6; FUN_00413fd2();
-  _g_esi=0x4604b6; _g_edi=0x714100; FUN_00414055();
+  _g_esi=0x4604b6; _g_edi=0x714100; _g_ebp = 0x7142f0; FUN_00414055();
   _g_ebx=0x714100; _g_ebp=0x714140; FUN_00413f45();
   return;
 }
