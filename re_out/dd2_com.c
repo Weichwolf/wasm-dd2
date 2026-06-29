@@ -43,11 +43,14 @@ static int g_frameno = 0;
 static int ids_flip(int t,int a,int b){
     const char* dir = getenv("DD2_FRAMEDIR");
     if(dir){
+        /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 320x240 8-bit framebuffer
+           (where ALL decompiled rasterizers draw; this is the faithful bit-exact comparison
+           surface — identical buffer in reference dd2h.exe). */
         char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
-        FILE* f=fopen(nm,"wb"); if(f){ fwrite(g_pixels,1,640*512,f); fclose(f); }
-        /* DEBUG: also dump _screenbuffer @0x700450 (the 320-wide internal 3D render target) */
-        if(getenv("DD2_SBDUMP")){ sprintf(nm,"%s/sb%05d.bin", dir, g_frameno);
-            FILE* g=fopen(nm,"wb"); if(g){ fwrite((void*)(unsigned long)0x700450u,1,320*256,g); fclose(g); } }
+        FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,320*240,f); fclose(f); }
+        /* secondary: the DDraw primary (HUD-only until the _screenbuffer->primary Blt is wired) */
+        if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);
+            FILE* g=fopen(nm,"wb"); if(g){ fwrite(g_pixels,1,640*512,g); fclose(g); } }
     }
     g_frameno++;
     return 0;
