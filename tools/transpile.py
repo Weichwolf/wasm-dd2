@@ -56,6 +56,35 @@ def fix_dd2(s):
     s = sub(s, "/* ===== Init_End_Race @ 00443840 ===== */",
                "#undef local_52\n#undef local_4a\n/* ===== Init_End_Race @ 00443840 ===== */", name="SFS:undef")
 
+    # FIX DEBRIS (scattered-locals): Init_Debris_'s sprite locals local_70[6]/auStack_64[2]/acStack_60[8]/
+    # local_58[12]/local_40[12]/local_28[16] are ONE contiguous x86 stack frame (ebp-0x70..ebp-0x18). Setup_Sprite/
+    # FUN_00416714 write a ~20-byte sprite struct starting at local_70 (spills into auStack_64/acStack_60), and the
+    # code indexes auStack_64 with stride 0xc as a 2D frame table reaching into local_58/local_40. The decompiler
+    # split them -> writes past local_70[6] (native ASan store1 redzone @FUN_00416714:4549). Restore contiguity.
+    s = sub(s, "  ushort local_70 [6];\n  undefined2 auStack_64 [2];\n  char acStack_60 [8];\n  ushort local_58 [12];\n  ushort local_40 [12];\n  char local_28 [16];",
+               "  unsigned char _idb[0x58];  /* FIX DEBRIS: contiguous sprite frame ebp-0x70..ebp-0x18 */\n"
+               "#define local_70 ((ushort*)(_idb+0x00))\n"
+               "#define auStack_64 ((undefined2*)(_idb+0x0c))\n"
+               "#define acStack_60 ((char*)(_idb+0x10))\n"
+               "#define local_58 ((ushort*)(_idb+0x18))\n"
+               "#define local_40 ((ushort*)(_idb+0x30))\n"
+               "#define local_28 ((char*)(_idb+0x48))", name="DEBRIS:decl")
+    s = sub(s, "/* ===== Setup_Debris @ 0042440c ===== */",
+               "#undef local_70\n#undef auStack_64\n#undef acStack_60\n#undef local_58\n#undef local_40\n#undef local_28\n/* ===== Setup_Debris @ 0042440c ===== */", name="DEBRIS:undef")
+
+    # FIX LENSFLARE (scattered-locals): Init_LensFlare's 9 ushort[12] lens-entry arrays (local_104..local_44)
+    # are ONE contiguous 216-byte block; a copy loop fills 192 bytes from &DAT_0042da30 starting at local_104.
+    # Decompiler split them -> store past local_104[12] (native ASan redzone @15245). Restore contiguity.
+    s = sub(s, "  ushort local_104 [12];\n  ushort local_ec [12];\n  ushort local_d4 [12];\n  ushort local_bc [12];\n  ushort local_a4 [12];\n  ushort local_8c [12];\n  ushort local_74 [12];\n  ushort local_5c [12];\n  ushort local_44 [12];",
+               "  unsigned char _ilf[0xd8];  /* FIX LENSFLARE: contiguous 9x ushort[12] lens-entry frame */\n"
+               "#define local_104 ((ushort*)(_ilf+0x00))\n#define local_ec ((ushort*)(_ilf+0x18))\n"
+               "#define local_d4 ((ushort*)(_ilf+0x30))\n#define local_bc ((ushort*)(_ilf+0x48))\n"
+               "#define local_a4 ((ushort*)(_ilf+0x60))\n#define local_8c ((ushort*)(_ilf+0x78))\n"
+               "#define local_74 ((ushort*)(_ilf+0x90))\n#define local_5c ((ushort*)(_ilf+0xa8))\n"
+               "#define local_44 ((ushort*)(_ilf+0xc0))", name="LENSFLARE:decl")
+    s = sub(s, "/* ===== DrawLensFlare @ 0042dca8 ===== */",
+               "#undef local_104\n#undef local_ec\n#undef local_d4\n#undef local_bc\n#undef local_a4\n#undef local_8c\n#undef local_74\n#undef local_5c\n#undef local_44\n/* ===== DrawLensFlare @ 0042dca8 ===== */", name="LENSFLARE:undef")
+
     # GTE + Track_Follow are kept as direct x86-semantics-in-C (the reconstructed bodies in re_out/),
     # transcribed via tools/x86_intrin.h — NO P-code lift/interpreter (per project direction: a clean
     # C+SDL3 program, native-primary, wasm just a build target). The reconstructions compile both targets.

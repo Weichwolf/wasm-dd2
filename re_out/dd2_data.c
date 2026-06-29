@@ -8,8 +8,7 @@ int DAT_00415650;
 int DAT_00415654;
 int DAT_0042a380;
 int DAT_0042a7e0;
-int DAT_0042da30;
-int DAT_0042daf0;
+/* DAT_0042da30 / DAT_0042daf0 -> image-slot macros in dd2_symbols.h (lens-flare templates) */
 int DAT_0042e004;
 int DAT_0042e00c;
 int DAT_0042e010;

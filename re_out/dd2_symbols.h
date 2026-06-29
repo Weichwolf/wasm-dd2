@@ -2308,8 +2308,8 @@ extern int DAT_00415650;
 extern int DAT_00415654;
 extern int DAT_0042a380;
 extern int DAT_0042a7e0;
-extern int DAT_0042da30;
-extern int DAT_0042daf0;
+#define DAT_0042da30 (*(int*)GIMG(0x42da30))  /* dual-symbol: lens-flare init template in image (read by Init_LensFlare copy loop), not an empty C-global */
+#define DAT_0042daf0 (*(int*)GIMG(0x42daf0))
 extern int DAT_0042e004;
 extern int DAT_0042e00c;
 extern int DAT_0042e010;
