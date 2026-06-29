@@ -13,17 +13,18 @@ python3 "$ROOT/tools/transpile.py"
 # 1b) lift: P-code -> bit-faithful C (whole-program global-CPU model) into build/
 python3 "$ROOT/tools/pcode_lift.py" --global \
   "$ROOT"/re_out/pcode/41397e.txt "$ROOT"/re_out/pcode/413fd2.txt "$ROOT"/re_out/pcode/414055.txt \
-  > "$ROOT/build/lifted_gte.c"
-cat "$ROOT/tools/lifted_glue.c" >> "$ROOT/build/lifted_gte.c"
+  "$ROOT"/re_out/pcode/426ec4.txt "$ROOT"/re_out/pcode/426964.txt \
+  > "$ROOT/build/lifted.c"
+cat "$ROOT/tools/lifted_glue.c" >> "$ROOT/build/lifted.c"
 
 # 2) compile the linked units (re_out/ also holds unlinked Ghidra copies — sprite_handlers.c etc. — skip them)
 F="-std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
-UNITS="dd2 lifted_gte dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio"
+UNITS="dd2 lifted dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio"
 OBJS=""
 err=0
 for u in $UNITS; do
-  c="$ROOT/build/$u.c"; o="/tmp/$u.o"
-  emcc -c $F "$c" -o "$o" 2>/tmp/cc_err.txt || true
+  c="$ROOT/build/$u.c"; o="/tmp/$u.o"; [ "$u" = lifted ] &&
+  emcc -c $F $xf "$c" -o "$o" 2>/tmp/cc_err.txt || true
   if grep -q 'error:' /tmp/cc_err.txt; then echo "ERROR compiling $u.c:"; grep 'error:' /tmp/cc_err.txt | head -5; err=1; fi
   OBJS="$OBJS $o"
 done

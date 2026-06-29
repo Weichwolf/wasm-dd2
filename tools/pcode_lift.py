@@ -120,7 +120,7 @@ def emit_function(path):
     FUNC_LABELS=[int(a,16) for a,_,_ in insns]   # for BRANCHIND computed-goto within this fn
     body=[]
     for addr,asm,ops in insns:
-        body.append(f'  L_{int(addr,16):x}:; /* {asm} */')
+        body.append(f'  L_{int(addr,16):x}:; LIFT_TRACE(0x{int(addr,16):x}); /* {asm} */')
         for out,op,ins in ops:
             emit_op(out,op,ins,body)
     body.append('    return;')
@@ -138,7 +138,13 @@ print('#include <stdint.h>')
 # overflow predicates via clang/gcc-portable statement-expression builtins (emscripten has no _p form)
 print('#define OFL_ADD(T,a,b) ({ T _r; __builtin_add_overflow((T)(a),(T)(b),&_r); })')
 print('#define OFL_SUB(T,a,b) ({ T _r; __builtin_sub_overflow((T)(a),(T)(b),&_r); })')
-print('typedef struct { uint8_t r[512]; } cpu_t;  /* flat x86 register space (offset-addressed; sub-regs alias) */')
+print('#ifdef LIFT_TRACE_ON')
+print('extern void lift_trace(unsigned);')
+print('#define LIFT_TRACE(a) lift_trace(a)')
+print('#else')
+print('#define LIFT_TRACE(a)')
+print('#endif')
+print('typedef struct { uint8_t r[4096]; } cpu_t;  /* flat x86 register space (offset-addressed; sub-regs alias). MUST cover high offsets: GP 0x0-0x1c, flags 0x200-0x20b, etc. — 512 was too small and flag writes corrupted adjacent globals. */')
 if GLOBAL:
     print('cpu_t CPU; uint8_t* MEM;')
 fns=[emit_function(p) for p in sys.argv[1:]]

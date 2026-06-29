@@ -49,6 +49,10 @@ def fix_dd2(s):
                "void GTERT(void)\n{\n  { extern void GTERT_lifted(void); GTERT_lifted(); return; }\n  /* WASM: reconstructed from dd2.exe disasm",
                name="LIFT:GTERT->lifted")
 
+    s = sub(s, "void __cdecl Track_Follow(int *param_1)\n\n{\n  byte bVar1;",
+               "void __cdecl Track_Follow(int *param_1)\n\n{\n  { extern void Track_Follow_lifted(int*); Track_Follow_lifted(param_1); return; }\n  byte bVar1;",
+               name="LIFT:Track_Follow->lifted")
+
     # FIX A/B (scattered-locals): camera args must be contiguous arrays for Set_World_Position/Point_Camera
     s = sub(s, "    piVar8 = (int *)&DAT_00752344;\n    Set_World_Position(&local_54);",
                "    piVar8 = (int *)&DAT_00752344;\n    { int _cp[3]; _cp[0]=local_54; _cp[1]=local_50; _cp[2]=local_4c; Set_World_Position((undefined4 *)_cp); }", name="A:Set_World_Position")
