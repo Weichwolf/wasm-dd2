@@ -99,25 +99,19 @@ void FUN_0041033a(void)
           iVar7 = DAT_00480018;
           iVar5 = (dth_x2 >> 8) - (dth_x1 >> 8);
           if (0 < iVar5) {
-            uVar4 = dth_v1 & 0xffff | (iVar5 + -1) * 0x10000;
-            pbVar3 = (byte *)((uint)DAT_0046000c & 0xffff0000);
-            puVar6 = DAT_00460004;
-            iVar5 = dth_u1;
-            puVar10 = (int)&_screenbuffer + dth_y1 * 0x140 + (dth_x1 >> 8);
-            do {
-              uVar1 = (uint)iVar5 >> 8;
-              iVar5 = iVar5 + iVar7;
-              pbVar3 = (byte *)CONCAT22((short)((uint)pbVar3 >> 0x10),
-                                        CONCAT11((char)(uVar4 >> 8),(char)uVar1));
-              puVar6 = (undefined1 *)CONCAT31((int3)((uint)puVar6 >> 8),*pbVar3);
-              if ((*pbVar3 & 0xf) != 0) {
-                pbVar3 = (byte *)CONCAT31((int3)((uint)pbVar3 >> 8),*puVar6);
-                *puVar10 = *puVar6;
-              }
-              bVar11 = SCARRY4(uVar4,iVar2);
-              uVar4 = uVar4 + iVar2;
-              puVar10 = puVar10 + 1;
-            } while (uVar4 != 0 && bVar11 == (int)uVar4 < 0);
+            /* RECONSTRUCTED from x86 @0x41050c (Ghidra mangled the affine CLUT texture walk to
+               CONCAT soup + bogus *4 _screenbuffer index). Per-pixel: texel = tex[(V>>8&0xff)*256
+               + (U>>8&0xff)]; if(texel&0xf) screen[x]=clut[texel]; U+=du; V+=dv. (Clean count loop
+               in place of the packed V|count register trick; texcoords wrap via &0xff.) */
+            { unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);
+              unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);
+              unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + (dth_x1>>8);
+              int _tu=dth_u1, _tv=dth_v1, _du=iVar7, _dv=(short)iVar2, _i;
+              for(_i=0;_i<iVar5;_i++){
+                unsigned char _t=_tex[((((unsigned)_tv>>8)&0xff)<<8)|(((unsigned)_tu>>8)&0xff)];
+                if(_t&0xf) _sb[_i]=_clut[_t];
+                _tu+=_du; _tv+=_dv;
+              } }
           }
           dth_y1 = dth_y1 + 1;
           dth_u1 = dth_u1 + DAT_0048001c;
