@@ -42,16 +42,23 @@ def sub(text, old, new, n=1, name=''):
 RASTER_GUARD = True
 
 def fix_dd2(s):
-    # LIFT-GTERT: redirect the hand-reconstructed GTERT to the bit-faithful P-code lift in
-    # build/lifted_gte.c (whole-program global-CPU model, MEM=0 so it shares the C address space).
-    # First step of replacing ALL hand-constructed code with mechanical lifts. Body below is dead.
-    s = sub(s, "void GTERT(void)\n{\n  /* WASM: reconstructed from dd2.exe disasm",
-               "void GTERT(void)\n{\n  { extern void GTERT_lifted(void); GTERT_lifted(); return; }\n  /* WASM: reconstructed from dd2.exe disasm",
-               name="LIFT:GTERT->lifted")
+    # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
+    # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
+    # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548
+    # / FUN_004287c0 receive (int)local_74 and read the tag at param+0x22 (=local_52) + write the found
+    # strip at param+0x14. The decompiler split local_52/local_4a into SEPARATE locals -> param+0x22 reads
+    # 2 bytes PAST the 32-byte array (native ASan: load2 redzone trap; WASM: silent wrong tag -> wrong
+    # starting strip -> car walks off-track -> Track_Follow overrun @~call 1253). Restore x86 contiguity.
+    s = sub(s, "  undefined4 local_74 [8];\n  undefined2 local_52;\n  char local_4a;",
+               "  undefined4 local_74 [0xb];  /* FIX SFS: covers ebp-0x74..ebp-0x48; local_52@+0x22, local_4a@+0x2a below */\n"
+               "#define local_52 (*(undefined2*)((char*)local_74+0x22))\n"
+               "#define local_4a (*(char*)((char*)local_74+0x2a))", name="SFS:decl")
+    s = sub(s, "/* ===== Init_End_Race @ 00443840 ===== */",
+               "#undef local_52\n#undef local_4a\n/* ===== Init_End_Race @ 00443840 ===== */", name="SFS:undef")
 
-    s = sub(s, "void __cdecl Track_Follow(int *param_1)\n\n{\n  byte bVar1;",
-               "void __cdecl Track_Follow(int *param_1)\n\n{\n  { extern void Track_Follow_lifted(int*); Track_Follow_lifted(param_1); return; }\n  byte bVar1;",
-               name="LIFT:Track_Follow->lifted")
+    # GTE + Track_Follow are kept as direct x86-semantics-in-C (the reconstructed bodies in re_out/),
+    # transcribed via tools/x86_intrin.h — NO P-code lift/interpreter (per project direction: a clean
+    # C+SDL3 program, native-primary, wasm just a build target). The reconstructions compile both targets.
 
     # FIX A/B (scattered-locals): camera args must be contiguous arrays for Set_World_Position/Point_Camera
     s = sub(s, "    piVar8 = (int *)&DAT_00752344;\n    Set_World_Position(&local_54);",
