@@ -3,6 +3,8 @@
    matching-signature stubs (DD_OK=0); creation methods emit sub-interfaces; Lock yields a pixel buffer.
    (Real WebGL present is layered on later — this gets Init_Application past DDraw -> Play_Game's loop.) */
 
+#include <stdio.h>
+#include <stdlib.h>
 static unsigned char g_pixels[640*512];   /* 8-bit indexed surface store (PSX-style) */
 
 /* interface objects: a single word holding the vtable pointer (the decompile derefs *iface = vtable) */
@@ -23,7 +25,14 @@ static int ok4(int a,int b,int c,int d){return 0;}
 static int ok5(int a,int b,int c,int d,int e){return 0;}
 
 /* IDirectDraw::CreatePalette(this,caps,colortable,ppPalette) @0x14 — decompile calls with 4 args (no outer) */
-static int idd_createpal(int t,int caps,int ct,void** pp){ if(pp)*pp=&g_pal_obj; return 0; }
+extern unsigned char g_palette[256*4];
+static int idd_createpal(int t,int caps,int ct,void** pp){
+    if(ct){ int i; const unsigned char* e=(const unsigned char*)(unsigned long)ct;
+        for(i=0;i<256*4;i++) g_palette[i]=e[i];
+        const char* dir=getenv("DD2_FRAMEDIR");
+        if(dir){ char nm[256]; sprintf(nm,"%s/palette.bin",dir);
+            FILE* f=fopen(nm,"wb"); if(f){ fwrite(g_palette,1,256*4,f); fclose(f); } } }
+    if(pp)*pp=&g_pal_obj; return 0; }
 /* IDirectDraw::CreateSurface(this,desc,ppSurface,outer) @0x18 */
 static int idd_createsurf(int t,int desc,void** pp,int o){ if(pp)*pp=&g_surf_obj; return 0; }
 /* IDirectDrawSurface::GetAttachedSurface(this,caps,ppSurface) @0x30 */
@@ -57,6 +66,17 @@ static int ids_flip(int t,int a,int b){
 }
 int dd2_frame_count(void){ return g_frameno; }
 
+/* IDirectDrawPalette::SetEntries(this,flags,start,count,lpEntries) — capture the active 256-color
+   palette so frames can be rendered/compared in true color. lpEntries = PALETTEENTRY[count] (RGBA bytes). */
+unsigned char g_palette[256*4];
+static int ids_setentries(int t,int flags,int start,int count,const unsigned char* ent){
+    int i; if(ent && start>=0 && start+count<=256)
+        for(i=0;i<count*4;i++) g_palette[start*4+i]=ent[i];
+    if(getenv("DD2_FRAMEDIR")){ char nm[256]; sprintf(nm,"%s/palette.bin",getenv("DD2_FRAMEDIR"));
+        FILE* f=fopen(nm,"wb"); if(f){ fwrite(g_palette,1,256*4,f); fclose(f); } }
+    return 0;
+}
+
 void dd2_com_init(void){
     int i;
     for(i=0;i<48;i++){ g_ddraw_vtbl[i]=(void*)&ok1; g_surf_vtbl[i]=(void*)&ok1; g_back_vtbl[i]=(void*)&ok1; g_pal_vtbl[i]=(void*)&ok1; }
@@ -68,7 +88,7 @@ void dd2_com_init(void){
     g_surf_vtbl[0x6c/4]=(void*)&ok1; g_surf_vtbl[0x7c/4]=(void*)&ok2;
     g_back_vtbl[0x58/4]=(void*)&ids_getdesc; g_back_vtbl[0x64/4]=(void*)&ids_lock; g_back_vtbl[0x6c/4]=(void*)&ok1; g_back_vtbl[0x80/4]=(void*)&ok2;
     g_surf_vtbl[0x58/4]=(void*)&ids_getdesc; g_surf_vtbl[0x64/4]=(void*)&ids_lock;
-    g_pal_vtbl[0x08/4]=(void*)&ok1;  g_pal_vtbl[0x18/4]=(void*)&ok4;   /* SetEntries(this,flags,start,count) */
+    g_pal_vtbl[0x08/4]=(void*)&ok1;  g_pal_vtbl[0x18/4]=(void*)&ids_setentries;   /* SetEntries(this,flags,start,count,entries) */
 }
 
 /* DirectDrawCreate(guid, ppDD, outer) -> emit our IDirectDraw */
