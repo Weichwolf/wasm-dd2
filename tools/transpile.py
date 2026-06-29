@@ -42,6 +42,13 @@ def sub(text, old, new, n=1, name=''):
 RASTER_GUARD = True
 
 def fix_dd2(s):
+    # LIFT-GTERT: redirect the hand-reconstructed GTERT to the bit-faithful P-code lift in
+    # build/lifted_gte.c (whole-program global-CPU model, MEM=0 so it shares the C address space).
+    # First step of replacing ALL hand-constructed code with mechanical lifts. Body below is dead.
+    s = sub(s, "void GTERT(void)\n{\n  /* WASM: reconstructed from dd2.exe disasm",
+               "void GTERT(void)\n{\n  { extern void GTERT_lifted(void); GTERT_lifted(); return; }\n  /* WASM: reconstructed from dd2.exe disasm",
+               name="LIFT:GTERT->lifted")
+
     # FIX A/B (scattered-locals): camera args must be contiguous arrays for Set_World_Position/Point_Camera
     s = sub(s, "    piVar8 = (int *)&DAT_00752344;\n    Set_World_Position(&local_54);",
                "    piVar8 = (int *)&DAT_00752344;\n    { int _cp[3]; _cp[0]=local_54; _cp[1]=local_50; _cp[2]=local_4c; Set_World_Position((undefined4 *)_cp); }", name="A:Set_World_Position")

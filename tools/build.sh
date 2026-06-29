@@ -10,9 +10,15 @@ source "$HOME/Git/emsdk/emsdk_env.sh" >/dev/null 2>&1
 # 1) transpile: Ghidra decompile -> WASM source
 python3 "$ROOT/tools/transpile.py"
 
+# 1b) lift: P-code -> bit-faithful C (whole-program global-CPU model) into build/
+python3 "$ROOT/tools/pcode_lift.py" --global \
+  "$ROOT"/re_out/pcode/41397e.txt "$ROOT"/re_out/pcode/413fd2.txt "$ROOT"/re_out/pcode/414055.txt \
+  > "$ROOT/build/lifted_gte.c"
+cat "$ROOT/tools/lifted_glue.c" >> "$ROOT/build/lifted_gte.c"
+
 # 2) compile the linked units (re_out/ also holds unlinked Ghidra copies — sprite_handlers.c etc. — skip them)
 F="-std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
-UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio"
+UNITS="dd2 lifted_gte dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio"
 OBJS=""
 err=0
 for u in $UNITS; do

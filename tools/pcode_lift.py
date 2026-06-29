@@ -73,12 +73,12 @@ def emit_op(out,op,ins,lines):
     elif op=='SUBPIECE':
         shift=int(b.split(':')[1],16)*8
         w(f'({CT[osz]})({vn_read(a)} >> {shift})')
-    elif op=='INT_CARRY':   # unsigned overflow (carry) of a+b — compiler intrinsic
-        sz=sz_of(a); w(f'__builtin_add_overflow_p(({CT[sz]}){vn_read(a)}, ({CT[sz]}){vn_read(b)}, ({CT[sz]})0)')
-    elif op=='INT_SCARRY':  # signed overflow of a+b — compiler intrinsic
-        w(f'__builtin_add_overflow_p({s(a)}, {s(b)}, ({ST[sz_of(a)]})0)')
-    elif op=='INT_SBORROW': # signed overflow of a-b — compiler intrinsic
-        w(f'__builtin_sub_overflow_p({s(a)}, {s(b)}, ({ST[sz_of(a)]})0)')
+    elif op=='INT_CARRY':   # unsigned overflow (carry) of a+b — clang-compatible builtin
+        sz=sz_of(a); w(f'OFL_ADD({CT[sz]}, {vn_read(a)}, {vn_read(b)})')
+    elif op=='INT_SCARRY':  # signed overflow of a+b
+        w(f'OFL_ADD({ST[sz_of(a)]}, {s(a)}, {s(b)})')
+    elif op=='INT_SBORROW': # signed overflow of a-b
+        w(f'OFL_SUB({ST[sz_of(a)]}, {s(a)}, {s(b)})')
     elif op=='LOAD':  # out = *(ptr) ; ins=[space, ptr]
         w(f'(*({CT[osz]}*)(MEM + {vn_read(ins[1])}))')
     elif op=='STORE': # *(ptr)=val ; ins=[space, ptr, val]
@@ -125,6 +125,9 @@ def emit_function(path):
 
 # header (once)
 print('#include <stdint.h>')
+# overflow predicates via clang/gcc-portable statement-expression builtins (emscripten has no _p form)
+print('#define OFL_ADD(T,a,b) ({ T _r; __builtin_add_overflow((T)(a),(T)(b),&_r); })')
+print('#define OFL_SUB(T,a,b) ({ T _r; __builtin_sub_overflow((T)(a),(T)(b),&_r); })')
 print('typedef struct { uint32_t EAX,EBX,ECX,EDX,ESI,EDI,EBP,ESP,EIP;')
 print('  uint8_t CF,OF,SF,ZF,PF,AF; } cpu_t;')
 if GLOBAL:
