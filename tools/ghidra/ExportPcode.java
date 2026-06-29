@@ -26,8 +26,9 @@ public class ExportPcode extends GhidraScript {
         if (v == null) return "-";
         if (v.isConstant()) return "C:" + Long.toHexString(v.getOffset()) + ":" + v.getSize();
         if (v.isRegister()) {
-            Register r = currentProgram.getRegister(v.getAddress(), v.getSize());
-            return "R:" + (r != null ? r.getName() : ("r"+Long.toHexString(v.getOffset()))) + ":" + v.getSize();
+            // emit the register-SPACE OFFSET (not name): EAX/AX/AL share offset 0 at sizes 4/2/1,
+            // so a flat byte-array register file gives x86 sub-register aliasing for free.
+            return "R:" + Long.toHexString(v.getAddress().getOffset()) + ":" + v.getSize();
         }
         if (v.isUnique()) return "U:" + Long.toHexString(v.getOffset()) + ":" + v.getSize();
         return "M:" + Long.toHexString(v.getOffset()) + ":" + v.getSize();

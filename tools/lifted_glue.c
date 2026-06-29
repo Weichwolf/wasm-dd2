@@ -5,6 +5,6 @@
    functions share the C address space directly. ESP points at a private scratch stack. */
 void GTERT_lifted(void){
     static unsigned char stk[65536];
-    CPU.ESP = (unsigned int)(unsigned long)(stk + 65000);
+    *(unsigned int*)(CPU.r+0x10) = (unsigned int)(unsigned long)(stk + 65000); /* ESP @ regspace 0x10 */
     lifted_41397e();   /* GTERT: rotate (M*v) -> translate (+T) -> out @ 0x714100 */
 }

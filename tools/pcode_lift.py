@@ -33,7 +33,7 @@ regs=set()
 def vn_read(v):
     t,val,sz = v.split(':'); sz=int(sz)
     if t=='C': return f'(({CT[sz]})0x{val})'
-    if t=='R': regs.add((val,sz)); return f'{REGPFX}{val}'
+    if t=='R': regs.add((val,sz)); return f'(*({CT[sz]}*)({REGPFX}r+0x{val}))'
     if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz}'
     if t=='M': return f'(*({CT[sz]}*)(MEM+0x{val}))'
     raise ValueError(v)
@@ -91,6 +91,14 @@ def emit_op(out,op,ins,lines):
     elif op=='CALL' and GLOBAL:
         tgt=int(ins[0].split(':')[1],16)
         lines.append(f'    lifted_{tgt:x}(); /* CALL */')
+    elif op=='CALLIND' and GLOBAL:   # indirect call (vtables, fn-ptr tables) -> global addr dispatch
+        lines.append(f'    lifted_dispatch({vn_read(ins[0])}); /* CALLIND */')
+    elif op=='BRANCHIND' and GLOBAL: # jump table (the 2nd un-decompilable class) -> computed goto over THIS fn's labels
+        lines.append(f'    switch ({vn_read(ins[0])}) {{')
+        for lab in FUNC_LABELS:
+            lines.append(f'      case 0x{lab:x}: goto L_{lab:x};')
+        lines.append('      default: return; /* unknown indirect target */')
+        lines.append('    }')
     elif op in ('RETURN','CALLIND','CALL','BRANCHIND'):
         lines.append(f'    return; /* {op} (TODO indirect) */')
     else:
@@ -99,15 +107,17 @@ def emit_op(out,op,ins,lines):
 def assign(out):
     if out=='-': return ''
     t,val,sz=out.split(':'); sz=int(sz)
-    if t=='R': regs.add((val,sz)); return f'{REGPFX}{val} = '
+    if t=='R': regs.add((val,sz)); return f'*({CT[sz]}*)({REGPFX}r+0x{val}) = '
     if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz} = '
     if t=='M': return f'*({CT[sz]}*)(MEM+0x{val}) = '
     raise ValueError(out)
 
+FUNC_LABELS=[]
 def emit_function(path):
-    global uniques
+    global uniques, FUNC_LABELS
     uniques={}
     fname, entry, insns = parse(path)
+    FUNC_LABELS=[int(a,16) for a,_,_ in insns]   # for BRANCHIND computed-goto within this fn
     body=[]
     for addr,asm,ops in insns:
         body.append(f'  L_{int(addr,16):x}:; /* {asm} */')
@@ -128,13 +138,18 @@ print('#include <stdint.h>')
 # overflow predicates via clang/gcc-portable statement-expression builtins (emscripten has no _p form)
 print('#define OFL_ADD(T,a,b) ({ T _r; __builtin_add_overflow((T)(a),(T)(b),&_r); })')
 print('#define OFL_SUB(T,a,b) ({ T _r; __builtin_sub_overflow((T)(a),(T)(b),&_r); })')
-print('typedef struct { uint32_t EAX,EBX,ECX,EDX,ESI,EDI,EBP,ESP,EIP;')
-print('  uint8_t CF,OF,SF,ZF,PF,AF; } cpu_t;')
+print('typedef struct { uint8_t r[512]; } cpu_t;  /* flat x86 register space (offset-addressed; sub-regs alias) */')
 if GLOBAL:
     print('cpu_t CPU; uint8_t* MEM;')
 fns=[emit_function(p) for p in sys.argv[1:]]
 # forward decls so inter-function CALLs resolve
 for e,_ in fns:
     print(f'void lifted_{e:x}(void);' if GLOBAL else f'void lifted_{e:x}(cpu_t*,uint8_t*);')
+if GLOBAL:
+    # indirect-call dispatch: runtime address -> lifted fn (vtables, OT dispatch, fn-ptr tables)
+    print('void lifted_dispatch(uint32_t a){ switch(a){')
+    for e,_ in fns:
+        print(f'  case 0x{e:x}: lifted_{e:x}(); return;')
+    print('  default: return; /* external/compat target — wire to shim */ } }')
 for _,code in fns:
     print(code)
