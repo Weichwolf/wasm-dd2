@@ -279,6 +279,17 @@ def fix_runtime(s):
     # indirect-call work). Lets build/ run any of the 16 levels for headless verification.
     s = sub(s, "int main(){", "int main(int argc, char** argv){", name="TEST:argv main")
     s = sub(s, "    _current_level = 1;", "    _current_level = (argc>1)?atoi(argv[1]):1;", name="TEST:argv level")
+    # TEST harness: front-end mode. `dd2run.js fe` runs Init_Front_End + Front_End (title/menu/track-
+    # select) instead of the race, for headless front-end verification. The faithful boot is main->
+    # Front_End->Play_Game; this lets the front-end be exercised in isolation while the menu indirect-
+    # call + input-sim work proceeds. [[dd2-frontend-nav-input]]
+    s = sub(s, "    Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */",
+               "    if (argc>1 && argv[1][0]=='f' && argv[1][1]=='e') {\n"
+               "      extern void Init_Front_End(void); extern void Front_End(void);\n"
+               "      Init_Front_End(); Front_End(); return 0;\n"
+               "    }\n"
+               "    Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */",
+               name="TEST:fe-mode front-end harness")
     return s
 
 def main():
