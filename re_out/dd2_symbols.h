@@ -1186,8 +1186,8 @@ extern void draw_text_half(void);
 #define _DAT_0071bde6 (*(int*)GIMG(0x71bde6))
 #define _DAT_0071bdea (*(int*)GIMG(0x71bdea))
 #define _DAT_0071bdec (*(int*)GIMG(0x71bdec))
-#define _DAT_0071bdf2 (*(int*)GIMG(0x71bdf2))
-#define _DAT_0071bdf4 (*(int*)GIMG(0x71bdf4))
+#define _DAT_0071bdf2 (*(short*)GIMG(0x71bdf2))  /* int-vs-short: written as (short), 2-byte spacing w/ 0x71bdf4 -> int read overlapped */
+#define _DAT_0071bdf4 (*(short*)GIMG(0x71bdf4))  /* int-vs-short: 16-bit Y-frustum coef */
 #define _DAT_0071bdfe (*(int*)GIMG(0x71bdfe))
 #define _DAT_0071be00 (*(int*)GIMG(0x71be00))
 #define _DAT_0071be02 (*(int*)GIMG(0x71be02))
