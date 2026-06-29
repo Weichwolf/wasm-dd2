@@ -1627,7 +1627,7 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define _rgb0 (*(int*)GIMG(0x7142e0))
 #define _rgb1 (*(int*)GIMG(0x7142e4))
 #define _rgb2 (*(int*)GIMG(0x7142e8))
-#define _screenbuffer (*(int*)GIMG(0x700450))
+#define _screenbuffer (*(unsigned char*)GIMG(0x700450))  /* BYTE framebuffer (320x240 @0x700450). Was *(int*)* -> `(&_screenbuffer)[byteoff]` array-index users (draw_half, FUN_00411 fillers) scaled the offset by 4 -> wrote 4x past the buffer into the MPE free-list head @0x73c290 (frame-408 crash) + scattered corruption. `(int)&_screenbuffer + off` users are unaffected (cast = address). */
 #define _scrx (*(int*)GIMG(0x7142d0))
 #define _scry (*(int*)GIMG(0x7142cc))
 #define _start_TI (*(int*)GIMG(0x46ff6c))
