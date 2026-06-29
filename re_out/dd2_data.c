@@ -22,18 +22,18 @@ int DAT_00444860;
 int DAT_004448a0;
 int DAT_00449370;
 int DAT_00449388;
-int DAT_0044b130;
-int DAT_0044b134;
-int DAT_0044b138;
-int DAT_0044b13c;
-int DAT_0044b140;
-int DAT_0044b144;
+/* DAT_0044b130 wired to image slot 0x44b130 (camera dual-symbol) */
+/* DAT_0044b134 wired to image slot 0x44b134 (camera dual-symbol) */
+/* DAT_0044b138 wired to image slot 0x44b138 (camera dual-symbol) */
+/* DAT_0044b13c wired to image slot 0x44b13c (camera dual-symbol) */
+/* DAT_0044b140 wired to image slot 0x44b140 (camera dual-symbol) */
+/* DAT_0044b144 wired to image slot 0x44b144 (camera dual-symbol) */
 int DAT_0044c8d0;
 int DAT_0044c8d4;
-int DAT_0044c8d8;
-int DAT_0044c8dc;
-int DAT_0044c8e0;
-int DAT_0044c8e4;
+/* DAT_0044c8d8 wired to image (Order_Cars camera dual-symbol) */
+/* DAT_0044c8dc wired to image (Order_Cars camera dual-symbol) */
+/* DAT_0044c8e0 wired to image (Order_Cars camera dual-symbol) */
+/* DAT_0044c8e4 wired to image (Order_Cars camera dual-symbol) */
 int DAT_00450070;
 int DAT_00450088;
 int DAT_004500a0;
