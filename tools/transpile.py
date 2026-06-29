@@ -229,6 +229,13 @@ def fix_dd2(s):
     # part (so the near track renders) instead of skipping it. On-screen prims keep the FAST path unchanged.
     s = sub(s, "void draw_text_half_trans(void)\n\n{\n  undefined1 *puVar1;",
                "void draw_text_half_trans(void)\n\n{\n  int _xsafe;\n  undefined1 *puVar1;", name="Y:xsafe-decl")
+    # TEMP stub: Ghidra mangles this half-transparent HUD-text blit into CONCAT11/CONCAT31 partial-register
+    # soup -> garbage blend pointers -> render-path crash (native DrawOTag, fault 0x6d) the Y clip-guard
+    # doesn't cover. Stub to let the 3D scene render + produce a g_pixels frame; TODO reconstruct via x86_intrin.h.
+    if RASTER_GUARD:
+        s = sub(s, "void draw_text_half_trans(void)\n\n{\n  int _xsafe;\n  undefined1 *puVar1;",
+                   "void draw_text_half_trans(void)\n\n{\n  int _xsafe;\n  return; /* TEMP: mangled CONCAT blit stubbed (x86_intrin.h reconstruction pending) */\n  undefined1 *puVar1;",
+                   name="GUARD:draw_text_half_trans")
     s = sub(s, "      if (dth_clip == 0) {\n        do {\n          iVar6 = DAT_00480038;",
                "      { int _hh=dth_y2-dth_y1, _a=dth_x1>>8, _b=dth_x2>>8, _c=(dth_x1+dth_delta1*_hh)>>8, _d=(dth_x2+dth_delta2*_hh)>>8;\n        _xsafe = (_a>=0 && _a<=poly_clipx && _b>=0 && _b<=poly_clipx && _c>=0 && _c<=poly_clipx && _d>=0 && _d<=poly_clipx); }\n      if (dth_clip == 0 && _xsafe) {\n        do {\n          iVar6 = DAT_00480038;", name="Y:fast-route-to-clip")
 

@@ -35,6 +35,22 @@ static int ids_getdesc(int t,int* desc){
 static int ids_lock(int t,int rect,int* desc,int flags,int ev){
     if(desc){ desc[9]=(int)(long)g_pixels; desc[4]=640; } return 0; }
 
+/* IDirectDrawSurface::Flip (@0x2c) = present. Hook it to capture the 8-bit indexed g_pixels frame
+   (the bit-exactness comparison surface). Shared by native + WASM (NODERAWFS). */
+#include <stdio.h>
+#include <stdlib.h>
+static int g_frameno = 0;
+static int ids_flip(int t,int a,int b){
+    const char* dir = getenv("DD2_FRAMEDIR");
+    if(dir){
+        char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
+        FILE* f=fopen(nm,"wb"); if(f){ fwrite(g_pixels,1,640*512,f); fclose(f); }
+    }
+    g_frameno++;
+    return 0;
+}
+int dd2_frame_count(void){ return g_frameno; }
+
 void dd2_com_init(void){
     int i;
     for(i=0;i<48;i++){ g_ddraw_vtbl[i]=(void*)&ok1; g_surf_vtbl[i]=(void*)&ok1; g_back_vtbl[i]=(void*)&ok1; g_pal_vtbl[i]=(void*)&ok1; }
@@ -42,7 +58,7 @@ void dd2_com_init(void){
     g_ddraw_vtbl[0x18/4]=(void*)&idd_createsurf;
     g_ddraw_vtbl[0x50/4]=(void*)&ok3;            /* SetCooperativeLevel(this,hwnd,flags) */
     g_ddraw_vtbl[0x54/4]=(void*)&ok4;            /* SetDisplayMode(this,w,h,bpp) */
-    g_surf_vtbl[0x2c/4]=(void*)&ok3; g_surf_vtbl[0x30/4]=(void*)&ids_getattached;
+    g_surf_vtbl[0x2c/4]=(void*)&ids_flip; g_surf_vtbl[0x30/4]=(void*)&ids_getattached;
     g_surf_vtbl[0x6c/4]=(void*)&ok1; g_surf_vtbl[0x7c/4]=(void*)&ok2;
     g_back_vtbl[0x58/4]=(void*)&ids_getdesc; g_back_vtbl[0x64/4]=(void*)&ids_lock; g_back_vtbl[0x6c/4]=(void*)&ok1; g_back_vtbl[0x80/4]=(void*)&ok2;
     g_surf_vtbl[0x58/4]=(void*)&ids_getdesc; g_surf_vtbl[0x64/4]=(void*)&ids_lock;
