@@ -285,18 +285,12 @@ void FUN_0041080d(void)
           iVar5 = iVar3 + -1;
           if (0 < iVar3) {
             iVar3 = dth_y1 * 0x140 + (dth_x1 >> 8);
-            puVar2 = (undefined1 *)
-                     CONCAT22((short)((uint)DAT_00460010 >> 0x10),
-                              CONCAT11((&_screenbuffer)[iVar5 + iVar3],dth_shade));
-            do {
-              iVar4 = iVar5 + -1;
-              (&_screenbuffer)[iVar4 + iVar3 + 1] = *puVar2;
-              puVar2 = (undefined1 *)
-                       CONCAT22((short)((uint)puVar2 >> 0x10),
-                                CONCAT11((&_screenbuffer)[iVar4 + iVar3],(char)puVar2));
-              bVar1 = 0 < iVar5;
-              iVar5 = iVar4;
-            } while (bVar1);
+            /* RECONSTRUCTED from x86 @0x410913 (Ghidra mangled the eax[ah=pixel] LUT walk into
+               CONCAT soup; _screenbuffer was int-typed -> bogus *4 index). Per-pixel shade/blend:
+               screen[x] = blend_table[(screen[x]<<8)|shade], byte-addressed @0x700450. */
+            { unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + iVar3;
+              unsigned char* _bt=(unsigned char*)(uintptr_t)((unsigned)DAT_00460010 & 0xffff0000u);
+              int _e; for(_e=iVar5; _e>=0; _e--) _sb[_e]=_bt[((_sb[_e])<<8)|((unsigned)dth_shade&0xff)]; }
           }
           dth_y1 = dth_y1 + 1;
           dth_x1 = dth_x1 + dth_delta1;
@@ -317,18 +311,10 @@ void FUN_0041080d(void)
             iVar4 = (iVar3 - iVar5) + -1;
             if (0 < iVar3 - iVar5) {
               iVar5 = dth_y1 * 0x140 + iVar5;
-              puVar2 = (undefined1 *)
-                       CONCAT22((short)((uint)DAT_00460010 >> 0x10),
-                                CONCAT11((&_screenbuffer)[iVar4 + iVar5],dth_shade));
-              do {
-                iVar3 = iVar4 + -1;
-                (&_screenbuffer)[iVar3 + iVar5 + 1] = *puVar2;
-                puVar2 = (undefined1 *)
-                         CONCAT22((short)((uint)puVar2 >> 0x10),
-                                  CONCAT11((&_screenbuffer)[iVar3 + iVar5],(char)puVar2));
-                bVar1 = 0 < iVar4;
-                iVar4 = iVar3;
-              } while (bVar1);
+              /* RECONSTRUCTED (clip path) — same per-pixel shade/blend as the fast path. */
+              { unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + iVar5;
+                unsigned char* _bt=(unsigned char*)(uintptr_t)((unsigned)DAT_00460010 & 0xffff0000u);
+                int _e; for(_e=iVar4; _e>=0; _e--) _sb[_e]=_bt[((_sb[_e])<<8)|((unsigned)dth_shade&0xff)]; }
             }
           }
           dth_y1 = dth_y1 + 1;
@@ -1348,6 +1334,12 @@ extern void FUN_00411654(int param_1);
 extern void FUN_004117e8(int param_1);
 extern void FUN_004118d4(int param_1);
 static void _ot_dispatch(int *piVar1,int *piVar2,int *param_1){
+  /* dd2_relocate() rewrites _primfuncs entries that are in its fnmap to NATIVE fn-pointers
+     (>=0x1000000), which the image-address switch below can't match -> textured rasterizers
+     (codes 44/52/60) silently fell to default. Do the real indirect call for relocated ptrs
+     (= the engine's DrawPrim behavior); keep the switch for non-relocated image addresses. */
+  { unsigned _v=(unsigned)(&_primfuncs)[*(byte *)((int)piVar1 + 7)];
+    if(_v>=0x1000000u){ (*(void(*)(int*))(uintptr_t)_v)(piVar1); return; } }
   switch((&_primfuncs)[*(byte *)((int)piVar1 + 7)]) {
     case 0x410d50: FUN_00410d50(); break;
     case 0x410d58: FUN_00410d58(piVar1); break;

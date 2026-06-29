@@ -147,7 +147,7 @@ int __vr2;
 int __vr3;
 int _active_block_numbers;
 int _actual_season_number;
-int _add_transparency_table;
+/* _add_transparency_table -> image slot 0x7140c8 (dual-symbol) */
 int _adjusted_music;
 int _adjusted_sfx;
 int _applause;
@@ -212,7 +212,7 @@ int _gtexture;
 int _gtexture_def;
 /* _h_norm wired to image slot 0x71bde8 (overlapping-read dual-symbol fix) */
 /* _highlight_colour wired to image slot 0x4699c8 (dual-symbol: C-global was 0, baked value lives in image) */
-int _hlf_transparency_table;
+/* _hlf_transparency_table -> image slot 0x714050 (dual-symbol) */
 int _last_time;
 int* _level_data;
 int _light_matrix;
@@ -251,7 +251,7 @@ int _sprite_matrix;
 int _stats_recorded;
 int _strip_data;
 int _strip_vertex;
-int _sub_transparency_table;
+/* _sub_transparency_table -> image slot 0x7140d0 (dual-symbol) */
 int _surfai;
 int _tilt_sprite_matrix;
 int _tot_time;

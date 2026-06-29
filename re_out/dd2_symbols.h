@@ -2456,7 +2456,7 @@ extern int __vr2;
 extern int __vr3;
 extern int _active_block_numbers;
 extern int _actual_season_number;
-extern int _add_transparency_table;
+#define _add_transparency_table (*(int*)GIMG(0x7140c8))  /* dual-symbol: setter wrote C-global, draw_text_half reads image slot (=add_transparency_table) */
 extern int _adjusted_music;
 extern int _adjusted_sfx;
 extern int _applause;
@@ -2522,7 +2522,7 @@ extern int _gtexture;
 extern int _gtexture_def;
 #define _h_norm (*(short*)GIMG(0x71bde8))
 #define _highlight_colour (*(int*)GIMG(0x4699c8))
-extern int _hlf_transparency_table;
+#define _hlf_transparency_table (*(int*)GIMG(0x714050))  /* dual-symbol: =hlf_transparency_table; was 0 -> draw_text_half DAT_00460010=0 -> crash */
 extern int _last_time;
 extern int* _level_data;
 extern int _light_matrix;
@@ -2561,7 +2561,7 @@ extern int _sprite_matrix;
 extern int _stats_recorded;
 extern int _strip_data;
 extern int _strip_vertex;
-extern int _sub_transparency_table;
+#define _sub_transparency_table (*(int*)GIMG(0x7140d0))  /* dual-symbol: =sub_transparency_table */
 extern int _surfai;
 extern int _tilt_sprite_matrix;
 extern int _tot_time;
