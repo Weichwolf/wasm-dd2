@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+# DD2 pipeline: P-code -> C lifter (prototype).
+# Reads the machine-parseable P-code (tools/ghidra/ExportPcode.java output) and emits a C
+# function that models x86 registers+flags as a cpu_t struct and memory as a flat byte array.
+# This is BIT-FAITHFUL: it emulates the exact x86 semantics, so the `unaff_EBX` register-ABI
+# problem (and jump tables) vanish — registers are explicit state set by the caller.
+# Usage: pcode_lift.py /tmp/pcode_fn.txt > lifted.c
+import sys, re
+
+CT = {1:'uint8_t', 2:'uint16_t', 4:'uint32_t', 8:'uint64_t'}
+ST = {1:'int8_t', 2:'int16_t', 4:'int32_t', 8:'int64_t'}
+
+def parse(path):
+    insns=[]; fname='lifted'
+    for line in open(path):
+        line=line.rstrip('\n')
+        if line.startswith('# FUNC'):
+            m=re.search(r'# FUNC (\S+) @ ([0-9a-f]+)', line)
+            if m: fname=m.group(1); entry=m.group(2)
+        elif line.startswith('I\t'):
+            _,addr,asm=line.split('\t',2); insns.append((addr,asm,[]))
+        elif line.startswith('P\t'):
+            f=line.split('\t')
+            _,addr,seq,out,op,ins = f[0],f[1],f[2],f[3],f[4],(f[5] if len(f)>5 else '')
+            insns[-1][2].append((out,op,[x for x in ins.split(',') if x]))
+    return fname, entry, insns
+
+uniques={}  # (off,size)->name
+regs=set()
+def vn_read(v):
+    t,val,sz = v.split(':'); sz=int(sz)
+    if t=='C': return f'(({CT[sz]})0x{val})'
+    if t=='R': regs.add((val,sz)); return f'C->{val}'
+    if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz}'
+    if t=='M': return f'(*({CT[sz]}*)(MEM+0x{val}))'
+    raise ValueError(v)
+def sz_of(v): return int(v.split(':')[2])
+def s(v):  # signed read
+    sz=sz_of(v); return f'(({ST[sz]}){vn_read(v)})'
+
+def emit_op(out,op,ins,lines):
+    def w(expr): lines.append(f'    {assign(out)}{expr};')
+    a = ins[0] if ins else None
+    b = ins[1] if len(ins)>1 else None
+    osz = sz_of(out) if out!='-' else (sz_of(a) if a else 4)
+    if op=='COPY': w(vn_read(a))
+    elif op=='INT_ADD': w(f'{vn_read(a)} + {vn_read(b)}')
+    elif op=='INT_SUB': w(f'{vn_read(a)} - {vn_read(b)}')
+    elif op=='INT_MULT': w(f'{vn_read(a)} * {vn_read(b)}')
+    elif op=='INT_AND': w(f'{vn_read(a)} & {vn_read(b)}')
+    elif op=='INT_OR':  w(f'{vn_read(a)} | {vn_read(b)}')
+    elif op=='INT_XOR': w(f'{vn_read(a)} ^ {vn_read(b)}')
+    elif op=='INT_LEFT': w(f'{vn_read(a)} << {vn_read(b)}')
+    elif op=='INT_RIGHT': w(f'{vn_read(a)} >> {vn_read(b)}')   # logical (unsigned types)
+    elif op=='INT_SRIGHT': w(f'{s(a)} >> {vn_read(b)}')
+    elif op=='INT_SLESS': w(f'{s(a)} < {s(b)}')
+    elif op=='INT_LESS':  w(f'{vn_read(a)} < {vn_read(b)}')
+    elif op=='INT_EQUAL': w(f'{vn_read(a)} == {vn_read(b)}')
+    elif op=='INT_NOTEQUAL': w(f'{vn_read(a)} != {vn_read(b)}')
+    elif op=='INT_SEXT': w(f'({CT[osz]})({ST[osz]}){s(a)}')
+    elif op=='INT_ZEXT': w(f'({CT[osz]}){vn_read(a)}')
+    elif op=='INT_SDIV': w(f'{s(a)} / {s(b)}')
+    elif op=='INT_SREM': w(f'{s(a)} % {s(b)}')
+    elif op=='INT_DIV':  w(f'{vn_read(a)} / {vn_read(b)}')
+    elif op=='INT_REM':  w(f'{vn_read(a)} % {vn_read(b)}')
+    elif op=='POPCOUNT': w(f'__builtin_popcount({vn_read(a)})')
+    elif op=='BOOL_AND': w(f'{vn_read(a)} & {vn_read(b)}')
+    elif op=='BOOL_OR':  w(f'{vn_read(a)} | {vn_read(b)}')
+    elif op=='BOOL_NEGATE': w(f'!{vn_read(a)}')
+    elif op=='SUBPIECE':
+        shift=int(b.split(':')[1],16)*8
+        w(f'({CT[osz]})({vn_read(a)} >> {shift})')
+    elif op=='INT_CARRY':   # unsigned overflow (carry) of a+b — compiler intrinsic
+        sz=sz_of(a); w(f'__builtin_add_overflow_p(({CT[sz]}){vn_read(a)}, ({CT[sz]}){vn_read(b)}, ({CT[sz]})0)')
+    elif op=='INT_SCARRY':  # signed overflow of a+b — compiler intrinsic
+        w(f'__builtin_add_overflow_p({s(a)}, {s(b)}, ({ST[sz_of(a)]})0)')
+    elif op=='INT_SBORROW': # signed overflow of a-b — compiler intrinsic
+        w(f'__builtin_sub_overflow_p({s(a)}, {s(b)}, ({ST[sz_of(a)]})0)')
+    elif op=='LOAD':  # out = *(ptr) ; ins=[space, ptr]
+        w(f'(*({CT[osz]}*)(MEM + {vn_read(ins[1])}))')
+    elif op=='STORE': # *(ptr)=val ; ins=[space, ptr, val]
+        lines.append(f'    *({CT[sz_of(ins[2])]}*)(MEM + {vn_read(ins[1])}) = {vn_read(ins[2])};')
+    elif op=='CBRANCH':
+        tgt=int(ins[0].split(':')[1],16)
+        lines.append(f'    if ({vn_read(ins[1])}) goto L_{tgt:x};')
+    elif op=='BRANCH':
+        lines.append(f'    goto L_{int(ins[0].split(":")[1],16):x};')
+    elif op in ('RETURN','CALLIND','CALL'):
+        lines.append(f'    return; /* {op} */')
+    else:
+        lines.append(f'    /* UNHANDLED {op} {ins} */')
+
+def assign(out):
+    if out=='-': return ''
+    t,val,sz=out.split(':'); sz=int(sz)
+    if t=='R': regs.add((val,sz)); return f'C->{val} = '
+    if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz} = '
+    if t=='M': return f'*({CT[sz]}*)(MEM+0x{val}) = '
+    raise ValueError(out)
+
+fname, entry, insns = parse(sys.argv[1])
+body=[]
+for addr,asm,ops in insns:
+    body.append(f'  L_{int(addr,16):x}:; /* {asm} */')
+    for out,op,ins in ops:
+        emit_op(out,op,ins,body)
+body.append('    return;')
+
+# header
+print('#include <stdint.h>')
+print('typedef struct { uint32_t EAX,EBX,ECX,EDX,ESI,EDI,EBP,ESP,EIP;')
+print('  uint8_t CF,OF,SF,ZF,PF,AF; } cpu_t;')
+print(f'/* lifted from x86 @ {entry} ({fname}) — bit-faithful P-code emulation */')
+print(f'void lifted_{entry}(cpu_t* C, uint8_t* MEM) {{')
+decls=sorted(set(uniques.values()))
+# declare uniques grouped by inferred type
+seen={}
+for (off,sz),name in uniques.items(): seen[name]=CT[sz]
+for name in sorted(seen): print(f'  {seen[name]} {name} = 0;')
+print('\n'.join(body))
+print('}')
