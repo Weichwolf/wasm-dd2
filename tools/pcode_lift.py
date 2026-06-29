@@ -25,12 +25,15 @@ def parse(path):
             insns[-1][2].append((out,op,[x for x in ins.split(',') if x]))
     return fname, entry, insns
 
+GLOBAL = '--global' in sys.argv
+if GLOBAL: sys.argv.remove('--global')
+REGPFX = 'CPU.' if GLOBAL else 'C->'
 uniques={}  # (off,size)->name
 regs=set()
 def vn_read(v):
     t,val,sz = v.split(':'); sz=int(sz)
     if t=='C': return f'(({CT[sz]})0x{val})'
-    if t=='R': regs.add((val,sz)); return f'C->{val}'
+    if t=='R': regs.add((val,sz)); return f'{REGPFX}{val}'
     if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz}'
     if t=='M': return f'(*({CT[sz]}*)(MEM+0x{val}))'
     raise ValueError(v)
@@ -85,37 +88,50 @@ def emit_op(out,op,ins,lines):
         lines.append(f'    if ({vn_read(ins[1])}) goto L_{tgt:x};')
     elif op=='BRANCH':
         lines.append(f'    goto L_{int(ins[0].split(":")[1],16):x};')
-    elif op in ('RETURN','CALLIND','CALL'):
-        lines.append(f'    return; /* {op} */')
+    elif op=='CALL' and GLOBAL:
+        tgt=int(ins[0].split(':')[1],16)
+        lines.append(f'    lifted_{tgt:x}(); /* CALL */')
+    elif op in ('RETURN','CALLIND','CALL','BRANCHIND'):
+        lines.append(f'    return; /* {op} (TODO indirect) */')
     else:
         lines.append(f'    /* UNHANDLED {op} {ins} */')
 
 def assign(out):
     if out=='-': return ''
     t,val,sz=out.split(':'); sz=int(sz)
-    if t=='R': regs.add((val,sz)); return f'C->{val} = '
+    if t=='R': regs.add((val,sz)); return f'{REGPFX}{val} = '
     if t=='U': uniques[(val,sz)]=f'u{val}_{sz}'; return f'u{val}_{sz} = '
     if t=='M': return f'*({CT[sz]}*)(MEM+0x{val}) = '
     raise ValueError(out)
 
-fname, entry, insns = parse(sys.argv[1])
-body=[]
-for addr,asm,ops in insns:
-    body.append(f'  L_{int(addr,16):x}:; /* {asm} */')
-    for out,op,ins in ops:
-        emit_op(out,op,ins,body)
-body.append('    return;')
+def emit_function(path):
+    global uniques
+    uniques={}
+    fname, entry, insns = parse(path)
+    body=[]
+    for addr,asm,ops in insns:
+        body.append(f'  L_{int(addr,16):x}:; /* {asm} */')
+        for out,op,ins in ops:
+            emit_op(out,op,ins,body)
+    body.append('    return;')
+    nm=f'lifted_{int(entry,16):x}'
+    sig = f'void {nm}(void)' if GLOBAL else f'void {nm}(cpu_t* C, uint8_t* MEM)'
+    out=[f'/* lifted from x86 @ {entry} ({fname}) — bit-faithful P-code emulation */', sig+' {']
+    seen={}
+    for (off,sz),name in uniques.items(): seen[name]=CT[sz]
+    for name in sorted(seen): out.append(f'  {seen[name]} {name} = 0;')
+    out += body + ['}']
+    return int(entry,16), '\n'.join(out)
 
-# header
+# header (once)
 print('#include <stdint.h>')
 print('typedef struct { uint32_t EAX,EBX,ECX,EDX,ESI,EDI,EBP,ESP,EIP;')
 print('  uint8_t CF,OF,SF,ZF,PF,AF; } cpu_t;')
-print(f'/* lifted from x86 @ {entry} ({fname}) — bit-faithful P-code emulation */')
-print(f'void lifted_{entry}(cpu_t* C, uint8_t* MEM) {{')
-decls=sorted(set(uniques.values()))
-# declare uniques grouped by inferred type
-seen={}
-for (off,sz),name in uniques.items(): seen[name]=CT[sz]
-for name in sorted(seen): print(f'  {seen[name]} {name} = 0;')
-print('\n'.join(body))
-print('}')
+if GLOBAL:
+    print('cpu_t CPU; uint8_t* MEM;')
+fns=[emit_function(p) for p in sys.argv[1:]]
+# forward decls so inter-function CALLs resolve
+for e,_ in fns:
+    print(f'void lifted_{e:x}(void);' if GLOBAL else f'void lifted_{e:x}(cpu_t*,uint8_t*);')
+for _,code in fns:
+    print(code)

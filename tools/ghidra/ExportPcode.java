@@ -33,11 +33,17 @@ public class ExportPcode extends GhidraScript {
         return "M:" + Long.toHexString(v.getOffset()) + ":" + v.getSize();
     }
     public void run() throws Exception {
-        long addr = Long.decode(System.getProperty("GHIDRA_PCODE_ADDR", "0x413f45"));
+        String[] args = getScriptArgs();
+        if (args.length == 0) args = new String[]{ "0x413f45" };
+        for (String arg : args) one(arg);
+        println("PCODE_DONE_ALL");
+    }
+    void one(String arg) throws Exception {
+        long addr = Long.decode(arg);
         Address a = toAddr(addr);
         Function f = getFunctionContaining(a);
         java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(
-            System.getProperty("GHIDRA_PCODE_OUT", "/tmp/pcode_fn.txt")));
+            "/tmp/pcode_" + Long.toHexString(addr) + ".txt"));
         pw.println("# FUNC " + (f!=null?f.getName():"?") + " @ " + a);
         for (Instruction insn : currentProgram.getListing().getInstructions(f.getBody(), true)) {
             pw.println("I\t" + insn.getAddress() + "\t" + insn.toString());
@@ -51,27 +57,8 @@ public class ExportPcode extends GhidraScript {
             }
         }
         pw.close();
-        println("FUNC " + (f != null ? f.getName() : "?") + " @ " + a + "  body=" +
-                (f != null ? f.getBody().getNumAddresses() : 0) + " bytes");
-        Listing lst = currentProgram.getListing();
-        AddressSetView body = (f != null) ? f.getBody() : null;
-        InstructionIterator it = lst.getInstructions(body, true);
-        int ni = 0, nop = 0;
-        while (it.hasNext()) {
-            Instruction insn = it.next();
-            println(insn.getAddress() + ":  " + insn.toString());
-            for (PcodeOp op : insn.getPcode()) {
-                nop++;
-                Varnode out = op.getOutput();
-                StringBuilder sb = new StringBuilder("      ");
-                if (out != null) sb.append(vn(out)).append(" = ");
-                sb.append(op.getMnemonic());
-                Varnode[] in = op.getInputs();
-                for (int i = 0; i < in.length; i++) sb.append(i == 0 ? " " : ", ").append(vn(in[i]));
-                println(sb.toString());
-            }
-            ni++;
-        }
-        println("PCODE_DONE instructions=" + ni + " pcode_ops=" + nop);
+        println("WROTE /tmp/pcode_" + Long.toHexString(addr) + ".txt  (" +
+                (f != null ? f.getName() : "?") + " @ " + a + ", " +
+                (f != null ? f.getBody().getNumAddresses() : 0) + " bytes)");
     }
 }
