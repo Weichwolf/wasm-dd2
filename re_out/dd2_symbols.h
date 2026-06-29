@@ -29,7 +29,7 @@ extern int dd2_asset_size;
 #define DAT_00467eec (*(int*)GIMG(0x467eec))
 #define PTR_DAT_00464bf4 (*(int*)GIMG(0x464bf4))
 extern void FUN_0041080d(void);
-#define draw_text_half FUN_0041080d  /* draw_text_half@0x41080d IS FUN_0041080d (opaque textured-span blitter); empty stub removed from dd2_buffers.c */
+void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured ground rasterizer (real body in dd2.c, re-decompiled 2026-06-29). The old `#define draw_text_half FUN_0041080d` was WRONG — 0x41080d is the pure-shade blitter — and made the textured ground render flat idx-68. */
 #define AI_CommandListDEAD (*(int*)GIMG(0x46597c))
 #define AI_CommandListGeneral_Steer_Left (*(int*)GIMG(0x4659b0))
 #define AI_CommandListGeneral_Steer_Right (*(int*)GIMG(0x465998))

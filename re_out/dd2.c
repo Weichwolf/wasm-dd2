@@ -45,6 +45,83 @@ extern void draw_face_4pt_text_squash(int);
 
 
 
+/* ===== draw_text_half @ 00410010 (Ghidra label, re-decompiled 2026-06-29) =====
+   The OPAQUE gouraud-textured polygon rasterizer = the arena GROUND blitter. It was a label-only
+   function Ghidra never created, so it was wrongly #define'd to FUN_0041080d (the pure-SHADE blitter)
+   -> the textured ground rendered as flat idx-68. It is the opaque twin of FUN_0041033a (same affine
+   CLUT texture walk, but writes screen[x]=clut[texel] UNCONDITIONALLY — no low-nibble transparency
+   skip). Inner texel loops reconstructed from x86 (Ghidra mangled them to CONCAT soup). */
+void draw_text_half(void)
+{
+  int iVar7 = dth_y1;
+  DAT_0046000c = (dth_tpage & 0x1f) * 0x10000 + (int)__texturespace;
+  DAT_00460004 = (int)__clutspace + (dth_clut * 0x10 + _dth_shade) * 0x100;
+  if ((short)DAT_00480038 < 0) DAT_00480038 = CONCAT22(0xfffe,(short)DAT_00480038);
+  else                         DAT_00480038 = CONCAT22(0xffff,(short)DAT_00480038);
+  if (dth_y2 < 1) {
+    iVar7 = dth_y2 - dth_y1;
+    dth_x1 = iVar7 * dth_delta1 + dth_x1;
+    dth_x2 = iVar7 * dth_delta2 + dth_x2;
+    dth_u1 = iVar7 * DAT_0048001c + dth_u1;
+    dth_v1 = iVar7 * DAT_00480034 + dth_v1;
+  }
+  else {
+    if (poly_clipy <= dth_y2) dth_y2 = poly_clipy;
+    if (dth_y1 < poly_clipy) {
+      if (dth_y1 < 0) {
+        dth_y1 = 0; iVar7 = -iVar7;
+        dth_x1 = dth_delta1 * iVar7 + dth_x1;
+        dth_x2 = dth_delta2 * iVar7 + dth_x2;
+        dth_u1 = DAT_0048001c * iVar7 + dth_u1;
+        dth_v1 = DAT_00480034 * iVar7 + dth_v1;
+      }
+      if (dth_clip == 0) {
+        do {  /* fast path: whole span on-screen */
+          int _du=DAT_00480018, _dv=(short)DAT_00480038, _span=(dth_x2>>8)-(dth_x1>>8);
+          if (0 < _span) {
+            unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);
+            unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);
+            unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + (dth_x1>>8);
+            int _tu=dth_u1, _tv=dth_v1, _i;
+            for(_i=0;_i<_span;_i++){
+              unsigned char _t=_tex[((((unsigned)_tv>>8)&0xff)<<8)|(((unsigned)_tu>>8)&0xff)];
+              _sb[_i]=_clut[_t];                 /* OPAQUE */
+              _tu+=_du; _tv+=_dv;
+            }
+          }
+          dth_y1++; dth_u1+=DAT_0048001c; dth_v1+=DAT_00480034;
+          dth_x1+=dth_delta1; dth_x2+=dth_delta2;
+        } while (dth_y1 != dth_y2);
+      }
+      else {
+        do {  /* clip path: X-clamp the span */
+          int _du=DAT_00480018, _dv=(short)DAT_00480038;
+          int x1=dth_x1>>8, x2=dth_x2>>8;
+          if ((-1 < x2) && (x1 <= poly_clipx)) {
+            int _tu=dth_u1, _tv=dth_v1;
+            if (poly_clipx < x2) x2 = poly_clipx;
+            if (x1 < 0) { _tu = dth_u1 + _du*-x1; _tv = dth_v1 + -x1*_dv; x1 = 0; }
+            if (0 < x2 - x1) {
+              unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);
+              unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);
+              unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + x1;
+              int _i, _span=x2-x1;
+              for(_i=0;_i<_span;_i++){
+                unsigned char _t=_tex[((((unsigned)_tv>>8)&0xff)<<8)|(((unsigned)_tu>>8)&0xff)];
+                _sb[_i]=_clut[_t];               /* OPAQUE */
+                _tu+=_du; _tv+=_dv;
+              }
+            }
+          }
+          dth_y1++; dth_u1+=DAT_0048001c; dth_v1+=DAT_00480034;
+          dth_x1+=dth_delta1; dth_x2+=dth_delta2;
+        } while (dth_y1 != dth_y2);
+      }
+    }
+  }
+  return;
+}
+
 /* ===== FUN_0041033a @ 0041033a ===== */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */

@@ -19,6 +19,19 @@ public class ExportDecomp extends GhidraScript {
         new File(OUT).mkdirs();
         FunctionManager fm = currentProgram.getFunctionManager();
 
+        // Span blitters reached ONLY via the _primfuncs indirect table / label refs (draw_text_half
+        // @0x410010 = the gouraud-textured ground blitter) were never auto-detected as functions, so
+        // they were missing from the decompile and the ground lost its texture. Create them so they
+        // export as real FUN_ bodies. (Idempotent: skip if already a function.)
+        long[] mkfns = { 0x410010L, 0x41066aL };
+        for (long a : mkfns) {
+            ghidra.program.model.address.Address ad = toAddr(a);
+            if (fm.getFunctionAt(ad) == null) {
+                try { disassemble(ad); createFunction(ad, "FUN_00" + Long.toHexString(a)); println("mkfn FUN_00" + Long.toHexString(a)); }
+                catch (Exception e) { println("mkfn FAIL " + Long.toHexString(a) + ": " + e.getMessage()); }
+            }
+        }
+
         PrintWriter idx = new PrintWriter(new FileWriter(OUT + "/functions.txt"));
         for (Function f : fm.getFunctions(true))
             idx.println(f.getEntryPoint() + "\t" + f.getBody().getNumAddresses() + "\t" + f.getName());
