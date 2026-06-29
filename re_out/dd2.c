@@ -1380,12 +1380,21 @@ void __cdecl FUN_00412694(int param_1)
 
 /* ===== ClearOTagR @ 0041281c ===== */
 
+/* FIX (OT guard band): faithful negative/overflow OTZ (a partly-behind face passes the per-vertex
+   clip yet sums a negative Z -> negative __otz -> bucket index objBucketIdx+__otz/4 lands OUTSIDE
+   [0,otsize)). The x86 doesn't clamp the index; the original tolerates the OOB access because the
+   memory around the OT alloc is harmless. We make it explicitly safe: Allocate_OT_ pads each OT
+   buffer with _OTGUARD zeroed buckets front+back, and ClearOTagR re-zeros the guard band every
+   frame -> OOB bucket READS return 0 (safe end-of-chain), OOB WRITES hit dead, non-walked slack
+   (behind-camera faces dropped = the original's visible effect). Covers ALL ~40 link sites at once. */
+#define _OTGUARD 0x1000
 void __cdecl ClearOTagR(undefined4 *param_1,int param_2)
 
 {
   int iVar1;
-  
+
                     /* START-> libgpua.asm: ? */
+  { int _g; for(_g=-_OTGUARD;_g<0;_g++) param_1[_g]=0; for(_g=param_2;_g<param_2+_OTGUARD;_g++) param_1[_g]=0; }
   iVar1 = param_2 + -1;
   do {
     param_1[iVar1] = 0;
@@ -7934,8 +7943,8 @@ void __cdecl Allocate_OT_(int param_1)
 
 {
   _otsize = param_1;
-  _DAT_0071beee = MPE_malloc(param_1 << 2);
-  _DAT_0071bf7c = MPE_malloc(param_1 << 2);
+  { char* _a=(char*)MPE_malloc((param_1 + 2*_OTGUARD) << 2); int _i; if(_a){ for(_i=0;_i<((param_1+2*_OTGUARD)<<2);_i++) _a[_i]=0; } _DAT_0071beee = (int)(_a + (_OTGUARD<<2)); }
+  { char* _a=(char*)MPE_malloc((param_1 + 2*_OTGUARD) << 2); int _i; if(_a){ for(_i=0;_i<((param_1+2*_OTGUARD)<<2);_i++) _a[_i]=0; } _DAT_0071bf7c = (int)(_a + (_OTGUARD<<2)); }
   return;
 }
 
