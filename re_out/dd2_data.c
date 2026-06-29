@@ -266,7 +266,7 @@ int _whllck;
 int _yes_quit;
 int _yes_retire;
 
-int iRam00749038;
+/* iRam00749038 -> #define 0x749038 in dd2_symbols.h (image address, not a C-global) */
 int pHVar1;
 int pHVar6;
 

@@ -2575,7 +2575,7 @@ extern int _whllck;
 extern int _yes_quit;
 extern int _yes_retire;
 #define fog_col_ (*(int*)GIMG(0x0046589e))
-extern int iRam00749038;
+#define iRam00749038 0x749038  /* Ghidra named car-0's per-car-array entry (param*0x38+0x749038, stride 0x38) as a C-global; it's the image ADDRESS 0x749038 (all uses are iRam+0x20 then deref). */
 extern int pHVar1;
 extern int pHVar6;
 #define playable_tracks_ (*(int*)GIMG(0x00467404))
