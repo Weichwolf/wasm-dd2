@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""
+DD2 transpile pipeline:  Ghidra decompile (re_out/)  ->  systematic fixes  ->  WASM source (build/)
+
+The Ghidra decompile in re_out/ is kept PRISTINE. This script applies the known
+decompile-artifact fixes and writes the WASM-compilable source to build/.
+Re-run after re-decompiling: each fix asserts its anchor still exists, so any
+decompile drift is caught loudly instead of silently no-op'ing.
+
+Artifact classes fixed (all mechanical Ghidra recompilation artifacts, not logic):
+  - scattered-locals      : Ghidra split a contiguous struct/array into separate locals
+  - dual-symbol           : one address split into a C-global + an image-slot; writes/reads diverge
+  - int-vs-short          : a 16-bit field given a *(int*) macro -> 32-bit writes clobber neighbors
+  - byte-offset           : an int* used with raw byte offsets -> x4 scaling
+  - dropped-register      : a register side-effect (ebp/esi) Ghidra dropped (unaff_*)
+  - dispatch-relocation   : a fn-ptr table relocated to WASM ptrs, but a Ghidra switch compares x86 addrs
+
+Usage: python3 tools/transpile.py        (writes build/)
+       python3 tools/transpile.py --check (verify all anchors match, no write)
+"""
+import os, re, sys, shutil
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC  = os.path.join(ROOT, 're_out')
+OUT  = os.path.join(ROOT, 'build')
+CHECK = '--check' in sys.argv
+
+_applied = []
+def sub(text, old, new, n=1, name=''):
+    """Replace occurrences; assert the anchor count is EXACTLY n (n=-1 = replace-all, requires >=1).
+    Exact-count guards against an ambiguous anchor silently hitting the wrong function."""
+    cnt = text.count(old)
+    if n == -1:
+        assert cnt >= 1, "TRANSPILE ANCHOR MISSING [%s]: %r" % (name, old[:70])
+        _applied.append((name, cnt))
+        return text.replace(old, new)
+    assert cnt == n, "TRANSPILE ANCHOR COUNT [%s]: expected %d, found %d for %r" % (name, n, cnt, old[:70])
+    _applied.append((name, n))
+    return text.replace(old, new, n)
+
+# ----- guard band-aid toggle (the faithful draw_text_half_trans clip is still pending) -----
+RASTER_GUARD = True
+
+def fix_dd2(s):
+    # FIX A/B (scattered-locals): camera args must be contiguous arrays for Set_World_Position/Point_Camera
+    s = sub(s, "    piVar8 = (int *)&DAT_00752344;\n    Set_World_Position(&local_54);",
+               "    piVar8 = (int *)&DAT_00752344;\n    { int _cp[3]; _cp[0]=local_54; _cp[1]=local_50; _cp[2]=local_4c; Set_World_Position((undefined4 *)_cp); }", name="A:Set_World_Position")
+    s = sub(s, "  local_30 = piVar8[1] + DAT_00463f08;\n  Point_Camera(&local_34,0x800);",
+               "  local_30 = piVar8[1] + DAT_00463f08;\n  { int _tgt[4]; _tgt[0]=local_34; _tgt[1]=local_30; _tgt[2]=iStack_2c; _tgt[3]=iStack_28; Point_Camera((int *)_tgt,0x800); }", name="B:Point_Camera")
+
+    # FIX U (scattered-locals): FUN_004202ac (per-block transform) computes the X/Y/Z translation delta as
+    # 3 separately-declared locals; ApplyMatrixLV reads them as a contiguous int[3] (*p, p[1], p[2]). emscripten
+    # scatters them -> garbage Y/Z delta -> track transformed off-screen with garbage coords. Pack contiguous.
+    s = sub(s, "void __cdecl FUN_004202ac(short *param_1,int *param_2)\n\n{\n  int local_20;\n  int local_1c;\n  int local_18;",
+               "void __cdecl FUN_004202ac(short *param_1,int *param_2)\n\n{\n  int _d[3];  /* FIX U: per-block delta must be contiguous for ApplyMatrixLV param_2[1]/[2] */", name="U:decl")
+    s = sub(s, "    local_20 = *param_2 - DAT_00462fb6;\n    local_1c = param_2[1] - DAT_00462fba;\n    local_18 = param_2[2] - DAT_00462fbe;\n    ApplyMatrixLV(&world_matrix,&local_20,(uint *)&DAT_0071be4e);",
+               "    _d[0] = *param_2 - DAT_00462fb6;\n    _d[1] = param_2[1] - DAT_00462fba;\n    _d[2] = param_2[2] - DAT_00462fbe;\n    ApplyMatrixLV(&world_matrix,_d,(uint *)&DAT_0071be4e);",
+               n=2, name="U:both-branches")
+
+    # FIX W (scattered-locals): Generate_Surface_Normals (0x426788) builds each strip-plane NORMAL via a cross
+    # product over two edge vectors; OuterProduct12 reads them as contiguous int[3] (param[0..2]), but the decompile
+    # declares edge1 (local_70/6c/68), edge2 (local_60/5c/58), normal (local_50/4c/48) as SEPARATE ints -> emscripten
+    # scatters them -> garbage normal -> garbage Map_Height divisor -> the car-Y physics chases a garbage floor and
+    # diverges/oscillates -> camera follows -> track off-screen. THE car-Y root. Same class as FIX A/B/E/U.
+    s = sub(s, "  int local_70;\n  int local_6c;\n  int local_68;\n  int local_60;\n  int local_5c;\n  int local_58;\n  int local_50;\n  int local_4c;\n  int local_48;\n  int local_40;\n  uint local_3c;\n  byte *local_38;\n  int local_34;\n  int local_30;\n  uint local_2c;\n  int local_28;\n  int local_24;\n  byte *local_20;\n  int local_1c;\n  int local_18;\n  int local_14;",
+               "  int _e1[3], _e2[3], _n[3];\n  int local_70;\n  int local_6c;\n  int local_68;\n  int local_60;\n  int local_5c;\n  int local_58;\n  int local_50;\n  int local_4c;\n  int local_48;\n  int local_40;\n  uint local_3c;\n  byte *local_38;\n  int local_34;\n  int local_30;\n  uint local_2c;\n  int local_28;\n  int local_24;\n  byte *local_20;\n  int local_1c;\n  int local_18;\n  int local_14;", name="W:normals-decl")
+    s = sub(s, "        local_70 = *piVar4 - *piVar3;\n        local_6c = piVar4[1] - piVar3[1];\n        local_68 = piVar4[2] - piVar3[2];",
+               "        _e1[0] = *piVar4 - *piVar3;\n        _e1[1] = piVar4[1] - piVar3[1];\n        _e1[2] = piVar4[2] - piVar3[2];", name="W:edge1")
+    s = sub(s, "        local_60 = *piVar4 - *piVar3;\n        local_5c = piVar4[1] - piVar3[1];\n        local_58 = piVar4[2] - piVar3[2];",
+               "        _e2[0] = *piVar4 - *piVar3;\n        _e2[1] = piVar4[1] - piVar3[1];\n        _e2[2] = piVar4[2] - piVar3[2];", name="W:edge2")
+    s = sub(s, "        local_40 = local_6c;\n        OuterProduct12(&local_60,&local_70,&local_50);\n        FUN_00414360(&local_50,&local_50);\n        if (local_4c == 0) {\n          local_48 = local_4c;\n          local_50 = local_4c;\n          local_4c = 0x1000;\n        }\n        *(short *)(local_20 + 0x26) = (short)local_50;\n        *(short *)(local_20 + 0x28) = (short)local_4c;\n        *(short *)(local_20 + 0x2a) = (short)local_48;",
+               "        local_40 = _e1[1];\n        OuterProduct12(_e2,_e1,_n);\n        FUN_00414360(_n,_n);\n        if (_n[1] == 0) {\n          _n[2] = 0;\n          _n[0] = 0;\n          _n[1] = 0x1000;\n        }\n        *(short *)(local_20 + 0x26) = (short)_n[0];\n        *(short *)(local_20 + 0x28) = (short)_n[1];\n        *(short *)(local_20 + 0x2a) = (short)_n[2];", name="W:outerproduct")
+
+    # FIX X (byte-offset): FUN_0041a2f4 (sprite handler, facetype 12-15 = bulk of track scene-objects) reads its
+    # source via bare `_gpoly + 4/6/10` — _gpoly is short* so that's byte +8/+12/+20 (x2), but x86 (0x41a31f/325/342)
+    # reads byte +4/+6/+0xa. The x2-wrong texture index (*(int*)(_gpoly+6=byte+12)>>0x10) -> garbage idx ->
+    # _gtexture+idx*0xc OOB. Only crashed once FIX W+C put the track on-screen so the sprites are reached. Byte-cast.
+    s = sub(s, "    _gprim1[1] = *(undefined4 *)(_gpoly + 4);", "    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);", name="X:sprite+4")
+    s = sub(s, "    iVar1 = *(int *)(_gpoly + 6) >> 0x10;", "    iVar1 = *(int *)((int)_gpoly + 6) >> 0x10;", name="X:sprite+6")
+    s = sub(s, "    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);", "    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);", name="X:sprite+0xa")
+
+    # FIX C (scattered-locals): Point_Camera builds the camera ROLL matrix from separate locals (local_3c/38/36/
+    # 34/32/30/2e/2c = 9 shorts [rcos,-rsin,0; rsin,rcos,0; 0,0,0x1000]) then MulMatrix2(&local_3c,&world_matrix)
+    # reads them as a CONTIGUOUS 3x3 -> emscripten scatters -> garbage roll -> world_matrix rows 1/2 non-orthonormal
+    # -> GTE rotation corrupt -> track projects off-screen (X clamps right). Pack contiguous. Same class as A/B/U/W.
+    s = sub(s, "  undefined4 local_3c;\n  undefined2 local_38;",
+               "  short _rm[16];\n  undefined4 local_3c;\n  undefined2 local_38;", name="C:roll-decl")
+    s = sub(s, "  local_3c = (local_3c & ~(0xffffu<<0)) | ((((undefined2)local_18) & 0xffffu)<<0);\n  local_32 = 0;\n  local_38 = 0;\n  local_30 = 0;\n  local_36 = (short)local_1c;\n  local_2e = 0;\n  local_3c = (local_3c & ~(0xffffu<<16)) | (((-local_36) & 0xffffu)<<16);\n  local_2c = 0x1000;\n  local_34 = (undefined2)local_3c;\n  MulMatrix2(&local_3c,&world_matrix);\n  MulMatrix2(&local_3c,(short *)&tilt_sprite_matrix);\n  puVar6 = &local_3c;\n  puVar8 = (undefined4 *)&sprite_matrix;\n  for (iVar2 = 7; iVar2 != 0; iVar2 = iVar2 + -1) {\n    *puVar8 = *puVar6;\n    puVar6 = puVar6 + 1;\n    puVar8 = puVar8 + 1;\n  }\n  *(undefined2 *)puVar8 = *(undefined2 *)puVar6;",
+               "  { int _rmi; for(_rmi=0;_rmi<16;_rmi++){_rm[_rmi]=0;}\n    _rm[0] = (short)local_18; _rm[4] = (short)local_18;   /* rcos */\n    _rm[3] = (short)local_1c; _rm[1] = -(short)local_1c;  /* rsin / -rsin */\n    _rm[8] = 0x1000;\n    MulMatrix2((undefined4 *)_rm,&world_matrix);\n    MulMatrix2((undefined4 *)_rm,(short *)&tilt_sprite_matrix);\n    { short *_rs=_rm; short *_rd=(short *)&sprite_matrix; for(_rmi=0;_rmi<15;_rmi++){_rd[_rmi]=_rs[_rmi];} } }", name="C:roll-build")
+
+    # FIX P (int-vs-short): the 9 world_matrix elements (0x462fa4..0x462fb4) are 2-byte shorts but the
+    # macros are *(int*); 32-bit writes clobber neighbors (and camOrg.X @0x462fb6). Write 16-bit.
+    for a, b, nm in [
+      ("      world_matrix = (undefined2)((iVar3 << 0xc) / (int)uVar4);","      *(short *)(uintptr_t)0x462fa4 = (short)((iVar3 << 0xc) / (int)uVar4);","P:wm[0]"),
+      ("      _DAT_00462fa8 = (undefined2)((local_14 * -0x1000) / (int)uVar4);","      *(short *)(uintptr_t)0x462fa8 = (short)((local_14 * -0x1000) / (int)uVar4);","P:wm a8"),
+      ("      DAT_00462faa = (undefined2)(-(local_14 * iVar2) / (int)uVar4);","      *(short *)(uintptr_t)0x462faa = (short)(-(local_14 * iVar2) / (int)uVar4);","P:wm aa"),
+      ("      _DAT_00462fac = (undefined2)uVar4;","      *(short *)(uintptr_t)0x462fac = (short)uVar4;","P:wm ac"),
+      ("      _DAT_00462fb2 = (short)iVar2;","      *(short *)(uintptr_t)0x462fb2 = (short)iVar2;","P:wm b2"),
+      ("      _DAT_00462fb4 = (undefined2)iVar3;","      *(short *)(uintptr_t)0x462fb4 = (short)iVar3;","P:wm b4"),
+      ("      _DAT_00462fae = (undefined2)(-(iVar2 * iVar3) / (int)uVar4);","      *(short *)(uintptr_t)0x462fae = (short)(-(iVar2 * iVar3) / (int)uVar4);","P:wm ae"),
+      ("      _DAT_00462fb0 = (undefined2)local_14;","      *(short *)(uintptr_t)0x462fb0 = (short)local_14;","P:wm b0")]:
+        s = sub(s, a, b, name=nm)
+    # element[1]=0 appears in BOTH Set_World_View and Point_Camera (both write world_matrix as int-macros over
+    # 16-bit elements); the 32-bit write zeros element[2]. Fix both (replace-all).
+    s = sub(s, "  DAT_00462fa6 = 0;", "  *(short *)(uintptr_t)0x462fa6 = 0;", n=-1, name="P:wm a6=0 (both)")
+
+    # FIX Q (dropped-register): x86 rotate FUN_00413fd2 does `mov ebp,0x7142f0` which persists for the
+    # following translate's T read; Ghidra dropped it. GTERPS was hand-patched, GTERPT/GTERPT4_ were not.
+    s = sub(s, "  int iVar1;\n  short *unaff_ESI=(short*)(uintptr_t)_g_esi;\n  uint *unaff_EDI=(uint*)(uintptr_t)_g_edi;\n  \n  iVar1 = (int)*unaff_ESI;",
+               "  int iVar1;\n  short *unaff_ESI=(short*)(uintptr_t)_g_esi;\n  uint *unaff_EDI=(uint*)(uintptr_t)_g_edi;\n  _g_ebp = 0x7142f0;\n  iVar1 = (int)*unaff_ESI;", name="Q:rotate _g_ebp")
+
+    # FIX N + GTERPT4_ (dual-symbol): GTERPT/GTERPT4_ read vertex-X from image slots 0x714100/_vr1/_vr2/0x7140f0,
+    # but callers set the __vr C-globals. Sync at the function entry.
+    s = sub(s, "void GTERPT(void)\n\n{\n  __flg = 0;\n  _g_esi=0x714100;",
+               "void GTERPT(void)\n\n{\n  __flg = 0;\n  _DAT_00714100 = __vr0; _vr1 = __vr1; _vr2 = __vr2;\n  _g_esi=0x714100;", name="N:GTERPT __vr")
+    s = sub(s, "void GTERPT4_(void)\n\n{\n  __flg = 0;\n  _g_esi=0x714100;",
+               "void GTERPT4_(void)\n\n{\n  __flg = 0;\n  _DAT_00714100 = __vr0; _vr1 = __vr1; _vr2 = __vr2; *(int*)(uintptr_t)0x7140f0 = __vr3;\n  _g_esi=0x714100;", name="N:GTERPT4_ __vr")
+
+    # FIX E (scattered-locals): FUN_00411654's poly setup is a contiguous 12-int struct, not scattered locals.
+    pack = ("{ int _q[12]; _q[0]=iStack_40;_q[1]=iStack_3c;_q[2]=iStack_38;_q[3]=iStack_34;_q[4]=iStack_30;"
+            "_q[5]=iStack_2c;_q[6]=uStack_28;_q[7]=uStack_24;_q[8]=uStack_20;_q[9]=uStack_1c;_q[10]=uStack_18;"
+            "_q[11]=uStack_14; FUN_00411ebc((int *)_q,FUN_0041033a); }")
+    s = sub(s, "  _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;\n    FUN_00411ebc(&iStack_40,FUN_0041033a);",
+               "  _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;\n    " + pack, name="E:pack1")
+    s = sub(s, "  uStack_24 = (uint)*(byte *)(param_1 + 0x25);\n    FUN_00411ebc(&iStack_40,FUN_0041033a);",
+               "  uStack_24 = (uint)*(byte *)(param_1 + 0x25);\n    " + pack, name="E:pack2")
+
+    # FIX I (byte-offset): 6 face handlers use _gprim1 (int*) with raw byte offsets -> x4 scaling. Byte-cast.
+    lines = s.split('\n')
+    for nm in ['FUN_00417ea0','FUN_0041861c','FUN_0041bc0c','FUN_0041bc68','FUN_0041c3e4','FUN_0041c440']:
+        st = next((i for i,l in enumerate(lines) if l.strip() == 'void '+nm+'(int param_1)'), None)
+        assert st is not None, "TRANSPILE: handler %s missing" % nm
+        en = next((j for j in range(st, st+45) if lines[j].strip()=='}' and lines[j-1].strip()=='return;'), None)
+        assert en is not None, "TRANSPILE: handler %s end missing" % nm
+        b = '\n'.join(lines[st:en+1])
+        nb = b.replace('(_gprim1 + 7)','((char *)_gprim1 + 7)').replace('(_gprim1 + 4)','((char *)_gprim1 + 4)')
+        nb = re.sub(r'_gprim1 = _gprim1 \+ (0x[0-9a-f]+);', r'_gprim1 = (int *)((char *)_gprim1 + \1);', nb)
+        assert nb != b, "TRANSPILE: FIX I no-op for %s" % nm
+        lines[st:en+1] = nb.split('\n')
+        _applied.append(("I:"+nm, 1))
+    s = '\n'.join(lines)
+
+    # FIX L (byte-offset): Init_Front_End Create_Object #5 used `_level_data + 100` (int* -> +400 bytes).
+    s = sub(s, "*(int *)(_level_data + 100)", "*(int *)((char *)_level_data + 100)", name="L:_level_data+100")
+
+    # FIX R (dual-symbol): Decrunch_Object_Block writes the decompress src to the dead C-global _dec_info
+    # instead of the image slot dec_info (0x750f48) that Decompress reads.
+    s = sub(s, "  _dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);",
+               "  dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);", name="R:dec_info src")
+
+    # FIX S (int-vs-short): dec_info control fields 0x750f54 (size) / 0x750f56 (flag) are 16-bit, but the
+    # macros are *(int*); 32-bit writes zero the flag -> Decompress re-inits every call -> desync.
+    s = sub(s, "_DAT_00750f54 = 0x4000;", "*(short *)(uintptr_t)0x750f54 = 0x4000;", n=-1, name="S:size=0x4000")
+    s = sub(s, "_DAT_00750f54 = 0x400;",  "*(short *)(uintptr_t)0x750f54 = 0x400;",  name="S:size=0x400")
+    s = sub(s, "_DAT_00750f56 = 0;",      "*(short *)(uintptr_t)0x750f56 = 0;",      name="S:flag=0")
+
+    # FIX V (int*/byte-width): the prim_buf free-list node stride is 8 BYTES, but _prim_buf is int* so the
+    # decompile's `_prim_buf + N*8` node accesses scale x4 (=N*32). iVar3=(int)_prim_buf is already computed
+    # (byte arithmetic, used by the correct lines); the decompile inconsistently leaves some bare _prim_buf.
+    # Harmless at head=0 (cars/menu); corrupts once the free-list splits past index 0 (the dense track). Scope
+    # to the two allocator fns and switch every node access to iVar3. The `iVar3 = _prim_buf;` line is untouched.
+    _lines = s.split('\n')
+    _vn = 0
+    for _sig in ['int __cdecl FUN_00420e6c(int param_1)', 'void __cdecl FUN_00420ee8(uint param_1)']:
+        _st = next(i for i, l in enumerate(_lines) if l == _sig)
+        _en = next(j for j in range(_st + 1, _st + 90) if _lines[j] == '}')
+        _body = '\n'.join(_lines[_st:_en + 1])
+        _nb = _body.replace('_prim_buf + ', 'iVar3 + ').replace('+ _prim_buf)', '+ iVar3)')
+        assert _nb != _body, "TRANSPILE: FIX V no-op for %s" % _sig
+        assert '_prim_buf + ' not in _nb and '+ _prim_buf)' not in _nb, "FIX V incomplete for %s" % _sig
+        _lines[_st:_en + 1] = _nb.split('\n')
+        _vn += 1
+    s = '\n'.join(_lines)
+    _applied.append(("V:prim_buf node stride (byte)", _vn))
+
+    # FIX Y (WASM-safety, faithful-direction): draw_text_half_trans's FAST path (dth_clip==0) writes spans with NO
+    # X-clamp. The x86 tolerates the benign negative-X / >clipx overrun (harmless writes outside _screenbuffer), but
+    # WASM bounds-checks and traps. The clip-flag (FUN_00411654) only flags Y<0 / X>poly_clipx, NOT X<0 (left) — so
+    # off-LEFT track prims (199/765 verts off-left, 166 at the GTE -1024 clamp) fall into the FAST path. Route any prim
+    # whose X-span leaves [0,poly_clipx] (at the top OR bottom scanline) to the existing faithful CLIP path (else branch),
+    # which clamps X AND advances the U/V accordingly. Replaces the prior skip-band-aid: the clip path DRAWS the on-screen
+    # part (so the near track renders) instead of skipping it. On-screen prims keep the FAST path unchanged.
+    s = sub(s, "void draw_text_half_trans(void)\n\n{\n  undefined1 *puVar1;",
+               "void draw_text_half_trans(void)\n\n{\n  int _xsafe;\n  undefined1 *puVar1;", name="Y:xsafe-decl")
+    s = sub(s, "      if (dth_clip == 0) {\n        do {\n          iVar6 = DAT_00480038;",
+               "      { int _hh=dth_y2-dth_y1, _a=dth_x1>>8, _b=dth_x2>>8, _c=(dth_x1+dth_delta1*_hh)>>8, _d=(dth_x2+dth_delta2*_hh)>>8;\n        _xsafe = (_a>=0 && _a<=poly_clipx && _b>=0 && _b<=poly_clipx && _c>=0 && _c<=poly_clipx && _d>=0 && _d<=poly_clipx); }\n      if (dth_clip == 0 && _xsafe) {\n        do {\n          iVar6 = DAT_00480038;", name="Y:fast-route-to-clip")
+
+    # FIX AF (same bug as FIX Y, on the SECOND non-trans textured filler FUN_0041080d=draw_text_half @0x41080d, which
+    # FIX Y missed). Its dth_clip==0 FAST path advances the X-span with NO per-pixel X-bound (the dth_clip!=0 path DOES
+    # clamp X to [0,poly_clipx]). An off-right/off-left prim (e.g. L7's impact prim {X=449,Y=-1}: Y clamps to 0 but
+    # X=449>320) routes through the FAST path -> writes _screenbuffer[Y*0x140 + 449...] OOB -> WASM traps (x86 tolerates
+    # the benign overrun = faithful-direction). Route off-X spans to the faithful CLIP path, exactly like FIX Y.
+    s = sub(s, "void FUN_0041080d(void)\n\n{\n  bool bVar1;",
+               "void FUN_0041080d(void)\n\n{\n  int _xsafe;\n  bool bVar1;", name="AF:xsafe-decl")
+    s = sub(s, "      if (dth_clip == 0) {\n        do {\n          iVar3 = (dth_x2 >> 8) - (dth_x1 >> 8);",
+               "      { int _hh=dth_y2-dth_y1, _a=dth_x1>>8, _b=dth_x2>>8, _c=(dth_x1+dth_delta1*_hh)>>8, _d=(dth_x2+dth_delta2*_hh)>>8;\n        _xsafe = (_a>=0 && _a<=poly_clipx && _b>=0 && _b<=poly_clipx && _c>=0 && _c<=poly_clipx && _d>=0 && _d<=poly_clipx); }\n      if (dth_clip == 0 && _xsafe) {\n        do {\n          iVar3 = (dth_x2 >> 8) - (dth_x1 >> 8);", name="AF:fast-route-to-clip")
+
+    # FIX AG (REVERTED cont249): padding the prim-buffer mallocs by 0x40 made it WORSE (8/11: L4 returned, L5 broke).
+    # The pad is NOT layout-independent — enlarging MPE_malloc's request shifts every downstream allocation, so the
+    # heap-adjacency victim moves to a different level's live data. Same failure as the +0x8000 shim. The +8 overrun is
+    # genuinely faithful and the dead-slack must be reproduced WITHOUT moving the heap (TBD: match x86's exact MPE base/
+    # carve order, or guard the consumer). GUARD AE (free-walk backstop) stays; it's the best current resolution (10/11).
+
+    # FIX AH (REVERTED cont251): the low-end dead-guard (free-list starts at node 8) ALSO failed -> 9/11 (L4 regressed,
+    # L7 still crashes). Same root cause as the pad: starting the free-list +0x40 up shifts EVERY prim's offset within the
+    # buffer (_gprim1/_gprim2 = buf + iVar4, iVar4 now >=8), which relocates the +8-overrun victim -> L4's corruption moves
+    # OFF the free-list (so GUARD AE no longer catches it -> L4 crashes). PROVEN: the L4/L7 heap-adjacency is fixed by NO
+    # layout change at all (malloc size = pad/AG, free-list start = dead-guard/AH, inter-buffer gap = +0x8000) — every one
+    # just relocates which level's prim overrun lands on live data. The artifact is the literal byte-adjacency of the two
+    # prim buffers + every downstream alloc; only matching x86's EXACT heap (unverifiable here) or a consumer-side write-
+    # bound (option B, loses the prim tail) remains. GUARD AE (10/11, L7 documented residual) is the standing resolution.
+
+    # FIX AB (front-end menu dispatch, WASM signature): the menu state-machine handlers (FUN_0045xxxx, void(void))
+    # are invoked via (*(code*)PTR_FUN_004697cc)() where `code` = int() -> call_indirect type-checks an i32 return
+    # -> "null function or function signature mismatch" trap. Cast to the real void(*)(void) handler type so the
+    # WASM type-check passes. Front-end-only (the race harness never reaches these); restores the menu dispatch.
+    s = s.replace("(*(code *)PTR_FUN_004697cc)()", "(*(void(*)(void))(uintptr_t)PTR_FUN_004697cc)()")
+    s = s.replace("(*(code *)(&PTR_FUN_004697cc)[uVar4 * 5])()", "(*(void(*)(void))(uintptr_t)(&PTR_FUN_004697cc)[uVar4 * 5])()")
+
+    # FIX AC/AD (front-end camera scattered-locals + dual-symbol): Init_Front_End/Order_Cars build a camera
+    # direction vector in 4 separate locals (local_38/uStack_34/uStack_30/uStack_2c) read as &local_38, but the
+    # compiler does NOT lay them contiguously -> &local_38[1..3] reads stray stack (often 0) -> FUN_004205d8
+    # divides by SquareRoot0_(0)=0 -> /0 (intermittent; the DemoMode 2nd call hit it). Pack the vector contiguously
+    # from the (now GIMG-wired) source globals. AC=Init_Front_End (0x44b138), AD=Order_Cars (0x44c8d8).
+    s = s.replace("  Create_Object((undefined4 *)&track_object,*(int *)((char *)_level_data + 0x70));\n  FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);\n  FUN_004205d8(local_58,&local_38,0xc);",
+                  "  Create_Object((undefined4 *)&track_object,*(int *)((char *)_level_data + 0x70));\n  FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);\n  { int _fec[4]; _fec[0]=DAT_0044b138; _fec[1]=DAT_0044b13c; _fec[2]=DAT_0044b140; _fec[3]=DAT_0044b144; FUN_004205d8(local_58,_fec,0xc); }")
+    s = s.replace("  Create_Object((undefined4 *)0x907d30,*(int *)((char *)_level_data + 0x54));\n  FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);\n  FUN_004205d8(local_58,&local_38,0xc);",
+                  "  Create_Object((undefined4 *)0x907d30,*(int *)((char *)_level_data + 0x54));\n  FUN_004203a0((short *)0x907ddc,(int *)&DAT_0046996c);\n  { int _foc[4]; _foc[0]=DAT_0044c8d8; _foc[1]=DAT_0044c8dc; _foc[2]=DAT_0044c8e0; _foc[3]=DAT_0044c8e4; FUN_004205d8(local_58,_foc,0xc); }")
+
+    # GUARD AE (free-list OOB walk protection): an upstream stray GTE-projected-vertex write ({coord,-1}=0xffffXXXX)
+    # corrupts a FREE node's link in _prim_buf on L4 (and similar on L7). The faithful fix (the vertex-pool overrun)
+    # is still pending, but the free/alloc list WALKS then dereference the OOB link and trap. These guards only fire
+    # when a link is already OOB (never on the 9 clean tracks -> zero behaviour change there); they prevent the crash.
+    s = sub(s,
+      "  for (; (((int)uVar7 <= (int)_DAT_0071bf98 || (*(uint *)(iVar3 + _DAT_0071bf98 * 8) <= uVar7))\n"
+      "         && ((uVar2 = *(uint *)(_DAT_0071bf98 * 8 + iVar3), _DAT_0071bf98 < uVar2 ||\n"
+      "             (((int)uVar7 <= (int)_DAT_0071bf98 && (uVar2 <= uVar7))))));\n"
+      "      _DAT_0071bf98 = *(uint *)(iVar3 + _DAT_0071bf98 * 8)) {\n"
+      "  }",
+      "  if ((unsigned)_DAT_0071bf98 >= (unsigned)(prim_buf_size >> 3)) _DAT_0071bf98 = 0;\n"
+      "  while ((((int)uVar7 <= (int)_DAT_0071bf98 || (*(uint *)(iVar3 + _DAT_0071bf98 * 8) <= uVar7))\n"
+      "         && ((uVar2 = *(uint *)(_DAT_0071bf98 * 8 + iVar3), _DAT_0071bf98 < uVar2 ||\n"
+      "             (((int)uVar7 <= (int)_DAT_0071bf98 && (uVar2 <= uVar7))))))) {\n"
+      "    { unsigned _nl = *(uint *)(iVar3 + _DAT_0071bf98 * 8);\n"
+      "      if (_nl >= (unsigned)(prim_buf_size >> 3)) break;\n"
+      "      _DAT_0071bf98 = _nl; }\n"
+      "  }", 1, 'GUARD AE free-walk OOB')
+    s = sub(s, "    iVar5 = iVar4;\n    piVar6 = (int *)(iVar5 * 8 + iVar3);",
+      "    iVar5 = iVar4;\n    if ((unsigned)iVar5 >= (unsigned)(prim_buf_size >> 3)) return -1;\n    piVar6 = (int *)(iVar5 * 8 + iVar3);", 1, 'GUARD AE alloc-walk OOB')
+    s = sub(s, "  uVar7 = (param_1 >> 3) - 1;\n  _free_mem = _free_mem + *(int *)(iVar3 + -4 + (param_1 >> 3) * 8);",
+      "  uVar7 = (param_1 >> 3) - 1;\n  if ((unsigned)uVar7 >= (unsigned)(prim_buf_size >> 3)) return;\n  _free_mem = _free_mem + *(int *)(iVar3 + -4 + (param_1 >> 3) * 8);", 1, 'GUARD AE free uVar7 OOB')
+
+    # FIX AJ (Map_Height edge-divisor WASM-safety): the scanline edge interpolation in Map_Height
+    # (dd2.c:12289..) divides by an edge X/Y screen-delta: (*(int*)(pbVar10+2)>>0x10) and
+    # (*(int*)(pbVar10+8)>>0x10). For a degenerate (zero-extent) projected edge the delta is 0;
+    # x86 silently never lands the front-end's edge delta exactly on 0, but WASM TRAPS on integer
+    # divide-by-zero. Faithful guard: den==0 -> 1 (only changes behaviour when the divisor is already
+    # 0, i.e. unreachable on real geometry; no effect on the verified race tracks). The '+ piVarX[1]'
+    # adds to the QUOTIENT (C: '/' binds before '+'), so wrapping the divisor preserves precedence.
+    # All 9 patterns are divisors, all inside Map_Height. This unblocks the front-end /0; race sweep
+    # with the guard = 10/11 (only the L7 documented residual), no regression. [[dd2-frontend-nav-input]]
+    s = sub(s, "void __cdecl Map_Height(int *param_1)",
+               "#define _DZ(x) ((x)?(x):1)\nvoid __cdecl Map_Height(int *param_1)", 1, 'AJ:_DZ macro')
+    s = sub(s, "(*(int *)(pbVar10 + 2) >> 0x10)", "_DZ(*(int *)(pbVar10 + 2) >> 0x10)", 4, 'AJ:Map_Height edge-X divisor')
+    s = sub(s, "(*(int *)(pbVar10 + 8) >> 0x10)", "_DZ(*(int *)(pbVar10 + 8) >> 0x10)", 5, 'AJ:Map_Height edge-Y divisor')
+    return s
+
+def fix_dispatch(s):
+    # FIX T (dispatch-relocation): the face-handler table 0x462ef4..0x462fa4 holds x86 handler addrs that
+    # dd2_relocate would rewrite to WASM fn-ptrs; but FUN_0041fb7c reads it via a Ghidra switch comparing
+    # x86 addresses. Exclude the table from relocation so the switch matches + calls the named handlers.
+    s = sub(s, "    unsigned w=*(unsigned*)(g_image+off);\n    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void**)(g_image+off)=fn;}",
+               "    if(off>=0x62ef4u && off<0x62fa4u){ continue; }  /* FIX T: face-dispatch table read by a switch as x86 addrs, not called */\n    { unsigned w=*(unsigned*)(g_image+off);\n    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void**)(g_image+off)=fn;} }",
+               name="T:dispatch-table reloc exclude")
+    return s
+
+def fix_runtime(s):
+    # TEST harness: allow level select via argv (faithful boot is the menu->race flow, pending the menu
+    # indirect-call work). Lets build/ run any of the 16 levels for headless verification.
+    s = sub(s, "int main(){", "int main(int argc, char** argv){", name="TEST:argv main")
+    s = sub(s, "    _current_level = 1;", "    _current_level = (argc>1)?atoi(argv[1]):1;", name="TEST:argv level")
+    return s
+
+def main():
+    transforms = {'dd2.c': fix_dd2, 'dd2_dispatch.c': fix_dispatch, 'dd2_runtime.c': fix_runtime}
+    if not CHECK:
+        if os.path.isdir(OUT): shutil.rmtree(OUT)
+        os.makedirs(OUT)
+    for fn in sorted(os.listdir(SRC)):
+        sp = os.path.join(SRC, fn)
+        if not os.path.isfile(sp): continue
+        data = open(sp, 'r', encoding='utf-8', errors='surrogateescape').read()
+        if fn in transforms:
+            data = transforms[fn](data)
+        if not CHECK:
+            open(os.path.join(OUT, fn), 'w', encoding='utf-8', errors='surrogateescape').write(data)
+    print("transpile: %d fixes applied across %d source files%s" %
+          (len(_applied), len(transforms), " (check-only)" if CHECK else " -> build/"))
+    for nm, c in _applied:
+        print("  [%s] x%d" % (nm, c))
+
+if __name__ == '__main__':
+    main()
