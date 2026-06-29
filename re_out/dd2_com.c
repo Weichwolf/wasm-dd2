@@ -45,6 +45,9 @@ static int ids_flip(int t,int a,int b){
     if(dir){
         char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
         FILE* f=fopen(nm,"wb"); if(f){ fwrite(g_pixels,1,640*512,f); fclose(f); }
+        /* DEBUG: also dump _screenbuffer @0x700450 (the 320-wide internal 3D render target) */
+        if(getenv("DD2_SBDUMP")){ sprintf(nm,"%s/sb%05d.bin", dir, g_frameno);
+            FILE* g=fopen(nm,"wb"); if(g){ fwrite((void*)(unsigned long)0x700450u,1,320*256,g); fclose(g); } }
     }
     g_frameno++;
     return 0;

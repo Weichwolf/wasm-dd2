@@ -28,7 +28,8 @@ extern int dd2_asset_size;
 #define DAT_00467bf4 (*(int*)GIMG(0x467bf4))
 #define DAT_00467eec (*(int*)GIMG(0x467eec))
 #define PTR_DAT_00464bf4 (*(int*)GIMG(0x464bf4))
-extern void draw_text_half(void);
+extern void FUN_0041080d(void);
+#define draw_text_half FUN_0041080d  /* draw_text_half@0x41080d IS FUN_0041080d (opaque textured-span blitter); empty stub removed from dd2_buffers.c */
 #define AI_CommandListDEAD (*(int*)GIMG(0x46597c))
 #define AI_CommandListGeneral_Steer_Left (*(int*)GIMG(0x4659b0))
 #define AI_CommandListGeneral_Steer_Right (*(int*)GIMG(0x465998))
