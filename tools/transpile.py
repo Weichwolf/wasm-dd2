@@ -94,6 +94,16 @@ def fix_dd2(s):
     s = sub(s, "    if (iVar22 == -1) {\n      free(puVar20);\n      return 0xffffffff;\n    }",
                "    if (iVar22 == -1) {\n      MPE_free((int)puVar20);  /* FIX MFREE: MPE_malloc<->MPE_free */\n"
                "      return 0xffffffff;\n    }", name='MFREE:MPE_malloc/free pairing')
+    # DEBUG PLOG (temporary): record (type,_gpoly) into the BSS ring buffer before each dispatch in
+    # FUN_0041fb7c's walk loop, to catch the _gpoly command-stream desync (heisenbug). REMOVE after.
+    if os.environ.get('DD2_PLOG_PATCH'):
+        s = sub(s, "      pbVar1 = (byte *)(_gpoly + 1);\n      _gpoly = _gpoly + 2;\n"
+                   "      switch((&PTR_LAB_00462ef4)[*pbVar1]) {",
+                   "      pbVar1 = (byte *)(_gpoly + 1);\n      _gpoly = _gpoly + 2;\n"
+                   "      { extern int g_plog[]; extern volatile int g_pidx;"
+                   " g_plog[(g_pidx&511)*4]=*pbVar1; g_plog[(g_pidx&511)*4+1]=(int)sVar2;"
+                   " g_plog[(g_pidx&511)*4+2]=(int)_gpoly; g_pidx++; }\n"
+                   "      switch((&PTR_LAB_00462ef4)[*pbVar1]) {", name='DEBUG PLOG ring-buffer')
     # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
     # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
     # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548

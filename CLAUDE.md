@@ -34,12 +34,17 @@ Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/We
   Our build dumps the same surface via the `ids_flip` hook (`DD2_FRAMEDIR=…`). Compare byte-for-byte.
 
 ## Current state (verify, don't trust)
-- Demo **7/10** crash-free (no-ASan); L2/L3/L6 crash. L3 ROOT-CAUSED (via `tools/eipcatch.c`, a ptrace
-  SIGSEGV→EIP catcher, since no gdb): faulting insn is the walk-loop `while(*(char*)(_gpoly+3))` with
-  `_gpoly=0x666666ff` — `0x66`=`'f'`, so **`_gpoly` walked off the poly stream into ASCII string data**.
-  = the `_gpoly` command-stream **desync**: a draw handler in `FUN_0041fb7c`'s dispatch advances `_gpoly`
-  by the wrong stride for some command type (FIX(L15) already fixed `FUN_0041a2f4`'s stride). Layout-
-  sensitive (probes shift it → heisenbug). FIX = audit each handler's `_gpoly` advance/branch vs x86.
+- Demo **7/10** crash-free (no-ASan); L2/L3/L6 crash. L3 ROOT-CAUSED (tools: `eipcatch.c` ptrace
+  SIGSEGV→EIP catcher + `DD2_PLOG_PATCH`/`DD2_PLOG` BSS ring buffer of poly commands, both env-gated):
+  faulting insn = walk-loop `while(*(char*)(_gpoly+3))` at dd2.c:6600 with `_gpoly=0x666666ff`. The ring
+  buffer proved the poly stream up to the crash is VALID (small counts) — so it is NOT a per-handler
+  stride bug. The crashing object's `FUN_0041fb7c` loads `_gpoly = *(iVar3+0x28)` already = `0x666666ff`
+  and crashes on the FIRST while-check (before any command records). => a SCENE OBJECT reaches the draw
+  path with a corrupt data pointer. Ties to the object LEAK/over-walk: in L3 `_free_mem` drops
+  monotonically (objects created, never freed via `Remove_Object`; obj+0x19 lifetime countdown gated by
+  obj+0x1a/obj+6 doesn't fire) → `num_scene_objects`/array over-walk → garbage object. TRUE heisenbug
+  (shifts under any in-loop probe; ring buffer in BSS still perturbs code layout). FIX = the object
+  lifecycle leak (why L3 objects never hit the removal countdown), OR a HW watchpoint on the +0x28 write.
 - Renders the 3D demo scene AND the front-end **title screen** ("DESTRUCTION DERBY 2" logo) — both verified
   by capturing `0x700450`. The menu uses the SAME 3D engine as the race but is static/deterministic + far
   fewer objects (no desync) → the cleanest bit-exact target. Title compare still low (palette/align), WIP.

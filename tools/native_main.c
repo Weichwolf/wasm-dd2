@@ -11,10 +11,18 @@
 #include <signal.h>
 #include <execinfo.h>
 
+/* DEBUG: poly-command ring buffer (BSS -> no heap shift -> doesn't move the _gpoly-desync heisenbug).
+   Recorded by a transpile debug-patch in FUN_0041fb7c's walk loop; dumped here on crash. */
+int g_plog[2048]; volatile int g_pidx = 0;
 static void segv(int sig, siginfo_t* si, void* uc){
     (void)uc;
     const char* nm = sig==SIGFPE?"SIGFPE":sig==SIGSEGV?"SIGSEGV":sig==SIGBUS?"SIGBUS":"SIG?";
     fprintf(stderr, "\n*** %s at addr %p (code %d) ***\n", nm, si->si_addr, si->si_code);
+    if (getenv("DD2_PLOG")){
+        int i, k=g_pidx; fprintf(stderr,"--- last poly commands (type,count,gpoly) ---\n");
+        for (i = k>16?k-16:0; i < k; i++)
+            fprintf(stderr,"  [%d] type=%d count=%d gpoly=0x%x\n", i, g_plog[(i&511)*4], g_plog[(i&511)*4+1], (unsigned)g_plog[(i&511)*4+2]);
+    }
     void* bt[24]; int n = backtrace(bt, 24);
     backtrace_symbols_fd(bt, n, 2);
     _exit(139);
