@@ -67,6 +67,16 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Decompress window = layout-dependent (the precise mechanism, gdb-confirmed)
+Blocks decompress CONTIGUOUSLY into a slot (gdb @Decompress L3: out=0x801ba0, 0x801faa, 0x8023b5…).
+Block N's LZSS back-refs read up to 0x1000 BEFORE its output, i.e. into the previous blocks AND, for
+the first block in a slot, into the **heap memory preceding the slot base** — the "window". That window
+in our build is uninitialized/stale (zeros or 0x66), not the valid bytes the reference's heap layout puts
+there → garbage decompressed pointer fields (+0x28=0x666666ff). The source at param_1[0] is the
+faithfully-loaded compressed level file (not the bug). So there is NO decompressor-logic or source bug —
+the fix is purely the HEAP LAYOUT (Stage 2): the memory around each decompress slot must byte-match the
+reference. => Stage 1 ⊆ Stage 2; chase the layout via the harness, not the decompressor.
+
 ## Stage 1 ↔ Stage 2 entanglement (verified)
 Crash-free (Stage 1) is NOT independent of bit-identity (Stage 2): the L2/L3/L6 crash IS the
 corrupt-decompressed-geometry symptom of the heap-LAYOUT divergence. A `_gpoly` bounds guard
