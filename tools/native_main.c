@@ -25,10 +25,15 @@ static void segv(int sig, siginfo_t* si, void* uc){
         for (i = k>16?k-16:0; i < k; i++)
             fprintf(stderr,"  [%d] type=%d count=%d gpoly=0x%x\n", i, g_plog[(i&511)*4], g_plog[(i&511)*4+1], (unsigned)g_plog[(i&511)*4+2]);
     }
-    if (getenv("DD2_OBJLOG"))
+    if (getenv("DD2_OBJLOG")){
         fprintf(stderr,"--- last Draw_Scene_Object: block=%d objidx=%d num=%d param_1=0x%x p1[1]=0x%x %s ---\n",
             g_lastobj[0], g_lastobj[1], g_lastobj[2], (unsigned)g_lastobj[3], (unsigned)g_lastobj[4],
             g_lastobj[1] >= g_lastobj[2] ? "OVER-WALK" : "in-bounds");
+        unsigned g = (unsigned)g_lastobj[4]; int j;   /* geometry struct hexdump */
+        if (g >= 0x400000u && g < 0x900000u){ fprintf(stderr,"  geom@0x%x:", g);
+            for (j=0;j<0x30;j+=4) fprintf(stderr," %08x", *(unsigned*)(unsigned long)(g+j));
+            fprintf(stderr,"\n  (+0x28 poly-ptr = %08x)\n", *(unsigned*)(unsigned long)(g+0x28)); }
+    }
     void* bt[24]; int n = backtrace(bt, 24);
     backtrace_symbols_fd(bt, n, 2);
     _exit(139);
