@@ -23,6 +23,14 @@ Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/We
 - NOTE: `re_out/dd2.c` currently still holds legacy hand-edits (pre-rule). Those should be migrated into
   transpile patches over time so `re_out/` is fully regenerable.
 
+## One-command pipeline
+`make pipeline` = `dd2.exe → Ghidra decompile → check anchors → native build+verify →
+WASM build (emcc→dd2run.js)+verify` — runs the attract demo on all 10 levels for BOTH
+targets and prints N/10. (`make verify` = native only; `make verify-wasm` = WASM only.)
+Both targets are **7/10** crash-free (L2/L3/L6 = the Decompress-layout bug). Caveat: the
+~186 GTE/jumptable fns are the committed `re_out` overlay (P-code lift = criterion 1,
+abandoned), so the chain reproduces from that overlay, not fully mechanically.
+
 ## Build & run (native debug)
 - `ASAN=' ' bash tools/build_native.sh /tmp/dd2_native_na`  — **use no-ASan for real crashes**: ASan
   false-positives on the engine's hand-computed global-pointer arithmetic (faults at low addrs like 0x20).
