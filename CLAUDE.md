@@ -67,6 +67,17 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Stage-2 layout bisect — baseline + method
+Compare the MPE_malloc SIZE sequence after the level-9 `MPE_InitHeap` (alignment-insensitive code
+point; the first differing size = the first divergent allocation). OUR build's level-9 sequence:
+`0x60000 0x60000 0x14800 0x14800 0x10 0x10 0x10 0x10 0x4000×14 0x81c 0xfec 0xc0c 0x81c 0x81c 0x81c 0x8a4 …`
+(0x60000×2 = prim buffers; 0x14800×2; 0x10×4; 0x4000×14 = the 14 active_object_blocks decompress slots;
+then 0x81c/0x8a4 object descriptors). Get the reference's via gdb: `break *0x4235c0 if *(int*)($esp+4)==0x7debf0`
+(MPE_InitHeap, level heap) then `break *0x4235e4` (MPE_malloc), log `*(unsigned*)($esp+4)`. CAVEAT: gdb
+on the Wine process is SLOW (init under gdb can take minutes) and the agent's shell timeout (120s default)
+cuts it off — run the reference logging with a long timeout / patiently. Tools: `tools/lockstep.sh` (heap
+dump at a frame, fast via watchpoint), `tools/refcap.c`/`wpcatch.c`/`eipcatch.c`.
+
 ## Decompress window = layout-dependent (the precise mechanism, gdb-confirmed)
 Blocks decompress CONTIGUOUSLY into a slot (gdb @Decompress L3: out=0x801ba0, 0x801faa, 0x8023b5…).
 Block N's LZSS back-refs read up to 0x1000 BEFORE its output, i.e. into the previous blocks AND, for
