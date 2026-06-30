@@ -102,6 +102,16 @@ def fix_dd2(s):
                    " if(getenv(\"DD2_ZEROBUF\")) memset((void*)param_1[1],0,0x4000); }\n"
                    "  pbVar5 = (byte *)*param_1;\n  if (*(short *)((int)param_1 + 0xe) == 0) {",
                    name='DEBUG ZEROBUF')
+    # DEBUG CONTIG (test, env-gated): allocate the 14 active_object_blocks slots as ONE contiguous
+    # buffer (no MPE_malloc header gaps) — tests whether Decompress's back-refs that read up to 0x1000
+    # before a slot expect the previous slot's data (cross-block window).
+    if os.environ.get('DD2_CONTIG_PATCH'):
+        s = sub(s, "  iVar2 = 0;\n  do {\n    iVar3 = iVar2 + 4;\n    puVar1 = MPE_malloc(0x4000);\n"
+                   "    *(undefined4 **)((int)&active_object_blocks + iVar2) = puVar1;\n"
+                   "    iVar2 = iVar3;\n  } while (iVar3 != 0x38);",
+                   "  { char* _big=(char*)MPE_malloc(14*0x4000); int _s;"
+                   " for(_s=0;_s<14;_s++) *(undefined4**)((int)&active_object_blocks + _s*4)="
+                   "(undefined4*)(_big+_s*0x4000); }", name='DEBUG CONTIG slots')
     # DEBUG PLOG (temporary): record (type,_gpoly) into the BSS ring buffer before each dispatch in
     # FUN_0041fb7c's walk loop, to catch the _gpoly command-stream desync (heisenbug). REMOVE after.
     if os.environ.get('DD2_PLOG_PATCH'):
