@@ -1454,7 +1454,8 @@ void __cdecl DrawOTag(int *param_1)
   piVar2 = param_1;
   while (piVar1 = (int *)*param_1, piVar1 != (int *)0xffffffff) {
     if ((piVar1 == (int *)0x0) ||
-       (_ot_dispatch(piVar1,piVar2,param_1),
+       ((unsigned)(uintptr_t)piVar1 < 0x400000u || (unsigned)(uintptr_t)piVar1 >= 0x900000u) ||
+       (_ot_dispatch(piVar1,piVar2,param_1),  /* GUARD: skip OT link ptr outside image/pool (overrun garbage) */
        param_1 = piVar1, param_1 == (int *)0x0)) {
       param_1 = piVar2 + -1;
       piVar2 = param_1;
@@ -2484,7 +2485,7 @@ void FUN_00413dc8(short *param_1,short *unaff_ESI,short *unaff_EDI)
 
 {
   int iVar1;
-  
+
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (short)(*param_1 * iVar1 >> 0xc);
   unaff_EDI[1] = (short)(param_1[1] * iVar1 >> 0xc);
@@ -6752,6 +6753,13 @@ void __cdecl Draw_Subdiv_Object(undefined4 *param_1)
     pbVar1 = (byte *)(_gpoly + 1);
     _gpoly = _gpoly + 2;
     switch((&PTR_draw_face_3pt_flat_00462d94)[*pbVar1]) {
+      /* FIX DISPATCH-GAP2: these two face fns are in the PTR table (0x462d94) and dispatched by the
+       * sibling Draw_*_Object switches, but Ghidra dropped them from THIS switch. Without the case
+       * the default:break runs -> the face fn never advances _gpoly by count*stride -> the poly
+       * stream DESYNCS -> reads adjacent buffer data as polys -> garbage vertex -> OT-index OOB
+       * crash (was the ~f77 demo crash). dd2h calls *0x462d94(,type,4) directly, never skipping. */
+      case 0x417ea0: FUN_00417ea0((int)sVar2); break;
+      case 0x41861c: FUN_0041861c((int)sVar2); break;
       case 0x417efc: draw_face_3pt_flat((int)sVar2); break;
       case 0x4180c8: draw_face_3pt_flat_lit((int)sVar2); break;
       case 0x41828c: draw_face_3pt_flat_dpq((int)sVar2); break;
@@ -6794,7 +6802,18 @@ void __cdecl Draw_Subdiv_Object(undefined4 *param_1)
       case 0x4199b0: draw_face_3pt_text_dpq((int)sVar2); break;
       case 0x41a40c: draw_face_4pt_text((int)sVar2); break;
       case 0x41b054: draw_face_4pt_text_dpq((int)sVar2); break;
-      default: break;
+      default:  /* FIX (race-track _gpoly desync): the 0x462d94 dispatch table is RELOCATED to native
+                   fn addresses by dd2_relocate, so the image-VA switch cases never match and the
+                   handler is skipped -> _gpoly only advances past the 4-byte header -> stream desync
+                   -> garbage poly count -> crash. dd2h does an indirect call *table[type](sVar2,4);
+                   reproduce it faithfully so the handler runs and advances _gpoly by count*stride. */
+        { int _h = (*(unsigned char*)pbVar1 < 132) ? (&PTR_draw_face_3pt_flat_00462d94)[*pbVar1] : 0;
+          /* call only RELOCATED handlers, type within the 132-entry table; skip null / un-relocated
+             image-VA (0x401000..0x460000) so WASM call_indirect (strict) doesn't trap on a
+             desync-garbage type byte (type>=132 indexes past the table into wrong-sig fns; native lax). */
+          if (_h != 0 && ((unsigned)_h < 0x401000u || (unsigned)_h >= 0x460000u))
+            (*(void(*)(int))_h)((int)sVar2);
+        } break;
     }
   }
   return;
@@ -8187,7 +8206,7 @@ void __cdecl Setup_Font(char *param_1,int param_2,undefined2 param_3)
   undefined2 uStack_e;
   undefined1 local_a;
   undefined1 local_9;
-  
+
   Setup_Sprite(0,param_1,local_1c);
   puVar1 = (undefined1 *)(param_2 * 8 + _DAT_0071c00c);
   *(undefined2 *)(puVar1 + 2) = local_10;
@@ -8213,7 +8232,7 @@ void __cdecl Duplicate_Font(int param_1,int param_2,char *param_3)
   undefined2 uStack_22;
   undefined1 local_1e;
   undefined1 local_1d;
-  
+
   Setup_Sprite(0,param_3,local_30);
   iVar1 = _DAT_0071c00c;
   *(undefined2 *)(_DAT_0071c00c + 2 + param_2 * 8) = local_24;
@@ -9111,7 +9130,7 @@ void __cdecl FUN_0042293c(int param_1,int param_2,int param_3)
   short local_30;
   short local_28;
   short local_14;
-  
+
   if (param_2 != 0) {
     iVar4 = param_1 * 0x60 + _DAT_0071c008;
     iVar8 = *(int *)(iVar4 + 0x4d) >> 0x18;
@@ -29795,7 +29814,7 @@ int __cdecl DopplerFrequency(int param_1,int *param_2)
   int iVar3;
   int iVar4;
   int iVar5;
-  
+
   if (*(int *)(param_1 + 0x14) == -1) {
     iVar1 = DAT_00462fb6 - *(int *)(param_1 + 4);
     iVar4 = DAT_00462fbe - *(int *)(param_1 + 0xc);
@@ -49312,5 +49331,3 @@ void FUN_0042a79e(void)
   (**(code **)((int)&PTR_FUN_0042a4c4 + iVar2))();
   return;
 }
-
-

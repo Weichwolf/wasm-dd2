@@ -12,8 +12,9 @@
 #include <execinfo.h>
 
 static void segv(int sig, siginfo_t* si, void* uc){
-    (void)sig;(void)uc;
-    fprintf(stderr, "\n*** SIGSEGV at fault addr %p ***\n", si->si_addr);
+    (void)uc;
+    const char* nm = sig==SIGFPE?"SIGFPE":sig==SIGSEGV?"SIGSEGV":sig==SIGBUS?"SIGBUS":"SIG?";
+    fprintf(stderr, "\n*** %s at addr %p (code %d) ***\n", nm, si->si_addr, si->si_code);
     void* bt[24]; int n = backtrace(bt, 24);
     backtrace_symbols_fd(bt, n, 2);
     _exit(139);
@@ -21,7 +22,7 @@ static void segv(int sig, siginfo_t* si, void* uc){
 static void install_segv(void){
     struct sigaction sa; memset(&sa,0,sizeof sa);
     sa.sa_sigaction = segv; sa.sa_flags = SA_SIGINFO;
-    sigaction(SIGSEGV, &sa, 0); sigaction(SIGBUS, &sa, 0);
+    sigaction(SIGSEGV, &sa, 0); sigaction(SIGBUS, &sa, 0); sigaction(SIGFPE, &sa, 0);
 }
 #define CK(s) do{ fprintf(stderr,"[native] " s "\n"); fflush(stderr); }while(0)
 
@@ -38,8 +39,35 @@ extern void Read_Directory(const char*);
 extern void __InitRtns(void);
 extern int  Init_Application(void* hInst);
 extern int  Play_Game(void);
+extern int  DemoMode(void);
 extern void Set_Draw_Mode(int);
 extern int  _current_level;
+extern void Setup_Pad(int);
+extern void Order_Cars(void);
+extern void Init_Front_End(void);
+extern int  rand(void);
+
+/* Fixed-level demo entry: faithful copy of DemoMode@0x44b4e0 but with _current_level forced
+ * from DD2_LEVEL (for matched ref-vs-WASM byte comparison — DemoMode's rand()%10+1 picks a level
+ * that differs from dd2h's front-end-driven demo, so we pin both to the same level). Not game code. */
+#define W32(va,val) (*(int*)(uintptr_t)(va) = (int)(val))
+#define R32(va)     (*(int*)(uintptr_t)(va))
+static int DemoModeLevel(int lvl){
+    Setup_Pad(1);
+    W32(0x905a1c, R32(0x4673f4));            /* save race_type */
+    W32(0x905a18, R32(0x4673f8));            /* save race_mode */
+    W32(0x46385c, 1);                        /* demo_mode = 1 */
+    W32(0x905a14, R32(0x467400));            /* save race_car */
+    W32(0x467400, 2);                        /* race_car = 2 */
+    W32(0x905a10, R32(0x46765c));            /* save num_cars */
+    W32(0x46765c, 0x14);                     /* num_cars = 0x14 */
+    W32(0x4673f8, 0);                        /* race_mode = 0 */
+    W32(0x4673f4, 0);                        /* race_type = 0 */
+    { int iVar1 = rand(); _current_level = lvl ? lvl : (iVar1 % 10 + 1); }
+    fprintf(stderr, "[native] DemoModeLevel: _current_level=%d\n", _current_level);
+    Order_Cars();
+    return Play_Game();
+}
 
 /* CRT helpers (mirror dd2_runtime.c — that file is excluded from the native link to avoid a 2nd main) */
 static int g_thread[256];
@@ -72,7 +100,11 @@ static void load_image(const char* path){
 }
 
 int main(void){
-    install_segv();
+    if(!getenv("DD2_NOSEGV")) install_segv();
+    /* FP-PRECISION TEST: force x87 to 53-bit (double) precision to match WASM's 64-bit IEEE
+     * (and likely dd2h's MSVC CRT default). Linux default is 0x037f = 64-bit extended (80-bit
+     * intermediates) which would diverge from WASM on any float op. */
+    { unsigned short cw = 0x027f; __asm__ __volatile__("fldcw %0" :: "m"(cw)); }
     map_image_region();
     load_image("dd2_image.bin");
     CK("dd2_relocate()");           dd2_relocate();
@@ -89,12 +121,26 @@ int main(void){
     CK("Read_Directory(Dirinfo)");  Read_Directory("Dirinfo");
     *(int*)(uintptr_t)0x462d68 = 1;          /* skip DirectSound COM during init */
     CK("Init_Application()");       Init_Application((void*)1);
-    _current_level = 1;
     *(int*)(uintptr_t)0x463010 = -1;
     CK("Set_Draw_Mode(0)");         Set_Draw_Mode(0);
     *(int*)(uintptr_t)0x462d68 = 0;
-    CK("Play_Game()");
-    Play_Game();                             /* Init_Game -> the Track_Follow OOB */
-    fprintf(stderr, "[native] Play_Game returned (no crash!)\n");
+    /* Run the REAL attract demo (dd2h's path): DemoMode sets demo_mode=1, num_cars=0x14,
+     * race_car=2, _current_level=rand()%10+1, Order_Cars(), then Play_Game() as a deterministic
+     * replay. Calling Play_Game() directly (demo_mode=0, level=1) ran a live race expecting input
+     * -> uninitialized demo state -> drift -> f1179 clut=0x6c6c crash AND no dd2h alignment. */
+    if (getenv("DD2_FE")) {
+        extern void Init_Front_End(void); extern void Front_End(void);
+        W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */
+        W32(0x4673f8, 0);   /* race_mode = 0 */
+        CK("Init_Front_End()"); Init_Front_End();
+        CK("Front_End()");      Front_End();
+    } else if (getenv("DD2_LEVEL")) {
+        CK("DemoModeLevel()");
+        DemoModeLevel(atoi(getenv("DD2_LEVEL")));
+    } else {
+        CK("DemoMode()");
+        DemoMode();
+    }
+    fprintf(stderr, "[native] demo returned (no crash!)\n");
     return 0;
 }

@@ -61,6 +61,39 @@ def fix_dd2(s):
     s = sub(s, "FUN_0041243c(&local_40,",
             "FUN_0041243c((int*)(int[6]){local_40,local_3c,local_38,local_34,local_30,local_2c},",
             4, 'EBC2 FUN_0041243c scattered-locals -> contiguous array')
+    # FIX FONT (scattered-locals): Setup_Font [ebp-0x1c..]/Duplicate_Font [ebp-0x30..] is ONE contiguous
+    # 0x18-byte sprite descriptor that Setup_Sprite/FUN_00416714 fills through offset 0x17. Ghidra split it
+    # into local_1c[6]+local_10+uStack_e+local_a+local_9 (resp. local_30[6]+local_24+uStack_22+local_1e+
+    # local_1d), so the 12-byte array under-sizes the buffer -> the descriptor write runs off the end ->
+    # OOB store -> front-end SIGSEGV. Restore a contiguous 0x18B buffer; read the upper fields at their
+    # real frame offsets (local_10=+0xc, uStack_e=+0xe, local_a=+0x12, local_9=+0x13).
+    s = sub(s, "  ushort local_1c [6];\n  undefined2 local_10;\n  undefined2 uStack_e;\n"
+               "  undefined1 local_a;\n  undefined1 local_9;\n\n  Setup_Sprite(0,param_1,local_1c);",
+               "  unsigned char local_1c [0x18];  /* FIX FONT: contiguous sprite descriptor */\n"
+               "  Setup_Sprite(0,param_1,(ushort *)local_1c);", name='FONT:Setup_Font decl')
+    s = sub(s, "  *(undefined2 *)(puVar1 + 2) = local_10;\n  *(undefined2 *)(puVar1 + 4) = uStack_e;\n"
+               "  *puVar1 = local_a;\n  puVar1[1] = local_9;",
+               "  *(undefined2 *)(puVar1 + 2) = *(undefined2 *)(local_1c + 0xc);\n"
+               "  *(undefined2 *)(puVar1 + 4) = *(undefined2 *)(local_1c + 0xe);\n"
+               "  *puVar1 = local_1c[0x12];\n  puVar1[1] = local_1c[0x13];", name='FONT:Setup_Font reads')
+    s = sub(s, "  ushort local_30 [6];\n  undefined2 local_24;\n  undefined2 uStack_22;\n"
+               "  undefined1 local_1e;\n  undefined1 local_1d;\n\n  Setup_Sprite(0,param_3,local_30);",
+               "  unsigned char local_30 [0x18];  /* FIX FONT: contiguous sprite descriptor */\n"
+               "  Setup_Sprite(0,param_3,(ushort *)local_30);", name='FONT:Duplicate_Font decl')
+    s = sub(s, "  *(undefined2 *)(_DAT_0071c00c + 2 + param_2 * 8) = local_24;\n"
+               "  *(undefined2 *)(iVar1 + 4 + param_2 * 8) = uStack_22;\n"
+               "  *(undefined1 *)(iVar1 + param_2 * 8) = local_1e;\n"
+               "  *(undefined1 *)(iVar1 + 1 + param_2 * 8) = local_1d;",
+               "  *(undefined2 *)(_DAT_0071c00c + 2 + param_2 * 8) = *(undefined2 *)(local_30 + 0xc);\n"
+               "  *(undefined2 *)(iVar1 + 4 + param_2 * 8) = *(undefined2 *)(local_30 + 0xe);\n"
+               "  *(undefined1 *)(iVar1 + param_2 * 8) = local_30[0x12];\n"
+               "  *(undefined1 *)(iVar1 + 1 + param_2 * 8) = local_30[0x13];", name='FONT:Duplicate_Font reads')
+    # FIX MFREE (allocator-pairing): puVar20 is from MPE_malloc (the 0x7debf0 pool, free-list @_DAT_0073c290);
+    # the decompile frees it with CRT free() on the prim-arena-full (-1) path -> "free(): invalid pointer"
+    # (L3). Pair the allocator: MPE_malloc <-> MPE_free. Only runs on the -1 path (face faithfully dropped).
+    s = sub(s, "    if (iVar22 == -1) {\n      free(puVar20);\n      return 0xffffffff;\n    }",
+               "    if (iVar22 == -1) {\n      MPE_free((int)puVar20);  /* FIX MFREE: MPE_malloc<->MPE_free */\n"
+               "      return 0xffffffff;\n    }", name='MFREE:MPE_malloc/free pairing')
     # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
     # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
     # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548
@@ -344,6 +377,47 @@ def fix_dd2(s):
                "#define _DZ(x) ((x)?(x):1)\nvoid __cdecl Map_Height(int *param_1)", 1, 'AJ:_DZ macro')
     s = sub(s, "(*(int *)(pbVar10 + 2) >> 0x10)", "_DZ(*(int *)(pbVar10 + 2) >> 0x10)", 4, 'AJ:Map_Height edge-X divisor')
     s = sub(s, "(*(int *)(pbVar10 + 8) >> 0x10)", "_DZ(*(int *)(pbVar10 + 8) >> 0x10)", 5, 'AJ:Map_Height edge-Y divisor')
+
+    # FIX BB (Play_Race_Start_Sounds camera-interp /0): the track-strip edge interpolation in
+    # Play_Race_Start_Sounds@0x42895c (build:12917) divides by local_20 = a screen-space edge
+    # cross-product. On x86 integer /0 ALSO faults, so dd2h never reaches local_20==0 here (the
+    # 0x42895c branch gate keeps the edge non-degenerate); we hit it on L1 f454 from a degenerate
+    # track strip. _DZ(den)->1 only when the divisor is already 0 (unreachable on dd2h's path ->
+    # bit-identical where it matters; only diverges on the already-divergent degenerate frame).
+    s = sub(s, " * 0x100) /\n                local_20;",
+               " * 0x100) /\n                _DZ(local_20);", 1, 'BB:camera-interp /0')
+
+    # FIX BC (Decompress runaway, SIGNED loop-terminate): in Decompress@0x415550 the chunk loop
+    # terminates with `if (uVar8 <= uVar9) return;`. x86 @0x415581 is `cmp esi,ecx; jl` = a SIGNED
+    # compare, but Ghidra typed uVar8/uVar9 as uint -> UNSIGNED. When a back-ref run near the chunk
+    # boundary makes uVar9 overshoot, param_1[2] (= remaining count) goes slightly negative (e.g.
+    # 0xffffffd7); the next call's uVar8 = that negative count, and the UNSIGNED `uVar8 <= uVar9` is
+    # never true (huge) -> the decompressor writes ~100MB to the mmap region end -> SIGSEGV (L2 f229).
+    # Signed (matching x86) terminates immediately on a negative count. Identity for all positive
+    # counts (zero change on clean blocks); only differs on the already-divergent overshoot. [[dd2-demo-harness-state]]
+    s = sub(s, "    if (uVar8 <= uVar9) {\n        *param_1 = pbVar5;",
+               "    if ((int)uVar8 <= (int)uVar9) {\n        *param_1 = pbVar5;", 1, 'BC:Decompress signed terminate')
+
+    # FIX BF (byte-offset): Print's font-table lookups read DAT_0071bfd0 (an `int` macro) as
+    # `&DAT_0071bfd0 + idx*4` -> int*-scaled = byte idx*16 (x4 too big) -> font idx>=2 reads past the
+    # 6-entry table -> null font -> crash. Other sites use the (int) cast; these 3 (Print) lack it.
+    # HUD uses font 0 (0*16==0*4) so the demo was unaffected; the front-end uses fonts 1-5.
+    s = sub(s, "*(int *)(&DAT_0071bfd0 +", "*(int *)((int)&DAT_0071bfd0 +", 3, 'BF:font-table byte-offset')
+
+    # FIX BG (dropped-arg): SetPalette's IDirectDrawPalette::SetEntries call was decompiled with 4 args
+    # but the x86 (0x412e2f `push 0x700050`) passes a 5th, lpEntries=&DAT_00700050. Missing -> the
+    # DirectSound/DDraw shim reads stack garbage. Demo only hits CreatePalette; the front-end hits SetEntries.
+    s = sub(s, "(**(code **)(*DAT_00460444 + 0x18))(DAT_00460444,0,0,0x100);",
+               "(**(code **)(*DAT_00460444 + 0x18))(DAT_00460444,0,0,0x100,&DAT_00700050);", 1, 'BG:SetEntries dropped lpEntries')
+
+    # FIX BI (dropped-assignment): Draw_Object_Polys sets _gpoly+_gprim1 but the decompile DROPPED the
+    # _gprim2 setup the x86 has (0x41fee2 `mov [0x71bdd0],edx` = prim_buf[DAT_00462fec]+obj_off). So
+    # FUN_0041bc0c (dispatched here) wrote a STALE _gprim2 (left by the last Draw_Scene_Object) into
+    # ANOTHER object's prim block -> corrupted its clut -> draw_text_half crash (L3/L4/L7). 6/10->9/10.
+    s = sub(s, "  _gprim1 = *(int *)((int)&prim_buf + buffer_num * 4) + param_1[(param_2 + -1) * 3 + 2];\n  Pre_Rotate",
+               "  _gprim1 = *(int *)((int)&prim_buf + buffer_num * 4) + param_1[(param_2 + -1) * 3 + 2];\n"
+               "  _gprim2 = *(int *)((int)&prim_buf + (*(int*)GIMG(0x462fec)) * 4) + param_1[(param_2 + -1) * 3 + 2];\n  Pre_Rotate",
+               1, 'BI:Draw_Object_Polys dropped _gprim2')
     return s
 
 def fix_dispatch(s):
@@ -360,6 +434,24 @@ def fix_runtime(s):
     # indirect-call work). Lets build/ run any of the 16 levels for headless verification.
     s = sub(s, "int main(){", "int main(int argc, char** argv){", name="TEST:argv main")
     s = sub(s, "    _current_level = 1;", "    _current_level = (argc>1)?atoi(argv[1]):1;", name="TEST:argv level")
+    # Inject DemoModeLevel: faithful copy of DemoMode@0x44b4e0 with _current_level forced (DD2_LEVEL/argv).
+    # The WASM runtime must run the SAME crash-free attract path as native_main.c (direct Play_Game = the
+    # old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks level, Order_Cars, Play_Game.
+    demolevel = (
+      "extern int DemoMode(void); extern void Setup_Pad(int); extern void Order_Cars(void); extern int rand(void);\n"
+      "static int DemoModeLevel(int lvl){\n"
+      "  Setup_Pad(1);\n"
+      "  *(int*)0x905a1c=*(int*)0x4673f4; *(int*)0x905a18=*(int*)0x4673f8;\n"
+      "  *(int*)0x46385c=1;\n"
+      "  *(int*)0x905a14=*(int*)0x467400; *(int*)0x467400=2;\n"
+      "  *(int*)0x905a10=*(int*)0x46765c; *(int*)0x46765c=0x14;\n"
+      "  *(int*)0x4673f8=0; *(int*)0x4673f4=0;\n"
+      "  { int iVar1=rand(); _current_level = lvl ? lvl : (iVar1%10+1); }\n"
+      "  Order_Cars();\n"
+      "  return Play_Game();\n"
+      "}\n")
+    s = sub(s, "int main(int argc, char** argv){", demolevel + "int main(int argc, char** argv){",
+            name="TEST:demomodelevel-inject")
     # TEST harness: front-end mode. `dd2run.js fe` runs Init_Front_End + Front_End (title/menu/track-
     # select) instead of the race, for headless front-end verification. The faithful boot is main->
     # Front_End->Play_Game; this lets the front-end be exercised in isolation while the menu indirect-
@@ -369,7 +461,7 @@ def fix_runtime(s):
                "      extern void Init_Front_End(void); extern void Front_End(void);\n"
                "      Init_Front_End(); Front_End(); return 0;\n"
                "    }\n"
-               "    Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */",
+               "    DemoModeLevel((argc>1)?atoi(argv[1]):0);  /* attract demo path (was: direct Play_Game) */",
                name="TEST:fe-mode front-end harness")
     return s
 

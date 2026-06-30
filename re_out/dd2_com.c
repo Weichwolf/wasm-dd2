@@ -57,9 +57,42 @@ static int ids_flip(int t,int a,int b){
            surface — identical buffer in reference dd2h.exe). */
         char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
         FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,320*240,f); fclose(f); }
+        /* current_frame-keyed dump for ref alignment: name by engine frame counter @0x462ff0
+           (same counter tools/refcap.c polls in the reference) so frames line up across builds. */
+        if(getenv("DD2_CFDUMP")){ int cf=*(int*)(unsigned long)0x462ff0u;
+            char nm2[256]; sprintf(nm2,"%s/cf%05d.bin", dir, cf);
+            FILE* g2=fopen(nm2,"wb"); if(g2){ fwrite((void*)(unsigned long)0x700450u,1,320*240,g2); fclose(g2); } }
         /* secondary: the DDraw primary (HUD-only until the _screenbuffer->primary Blt is wired) */
         if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);
             FILE* g=fopen(nm,"wb"); if(g){ fwrite(g_pixels,1,640*512,g); fclose(g); } }
+    }
+    if(getenv("DD2_INPROBE") && g_frameno<14){
+        unsigned short c04a=*(unsigned short*)(unsigned long)0x71c04au;
+        unsigned short c048=*(unsigned short*)(unsigned long)0x71c048u;
+        unsigned short prev=*(unsigned short*)(unsigned long)0x463050u;
+        unsigned char mode=*(unsigned char*)(unsigned long)0x46303eu;
+        int dmode=*(int*)(unsigned long)0x46385cu;
+        int ncars=*(int*)(unsigned long)0x46765cu;
+        int curfr=*(int*)(unsigned long)0x462ff0u;
+        extern int _quit_flag, _race_finished;
+        extern void* _Replay_Script_Ptr;
+        unsigned rsp=(unsigned)(unsigned long)_Replay_Script_Ptr;
+        unsigned rs=0x8ff2b0u, ft=0x900eb0u;
+        unsigned ec4=*(unsigned*)(unsigned long)0x900ec4u;
+        int r74=*(int*)(unsigned long)0x467074u;
+        unsigned char* pf=(unsigned char*)(unsigned long)0x46304bu; /* rup,rdown,rleft,DAT4e */
+        fprintf(stderr,"[inprobe f%d] demo=%d quit=%d mode_303e=%u padflags[4b..4e]=%02x %02x %02x %02x c048=0x%04x\n",
+                g_frameno,dmode,_quit_flag,mode,pf[0],pf[1],pf[2],pf[3],c048);
+    }
+    if(getenv("DD2_RANDTRACE") && g_frameno<20){
+        extern unsigned g_rand_calls;
+        fprintf(stderr,"[frame %d] rand_calls=%u\n", g_frameno, g_rand_calls);
+    }
+    if(getenv("DD2_STATEDUMP")){
+        int want = atoi(getenv("DD2_STATEDUMP"));
+        if(g_frameno==want){ const char* dir=getenv("DD2_FRAMEDIR");
+            if(dir){ char nm[256]; sprintf(nm,"%s/state%05d.bin",dir,g_frameno);
+                FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x400000u,1,0x500000,f); fclose(f); } } }
     }
     g_frameno++;
     return 0;
