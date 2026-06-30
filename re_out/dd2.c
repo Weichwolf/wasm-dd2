@@ -27741,18 +27741,18 @@ void __cdecl Boot_Lost_Geometry(int param_1)
   if (param_1 == 0) {
     iVar1 = 0x18;
     do {
-      *(undefined2 *)(iVar1 + *(int *)(iRam00749038 + 0x20)) = 0x8d;
-      *(undefined2 *)(iVar1 + 2 + *(int *)(iRam00749038 + 0x20)) = 0x1a;
+      *(undefined2 *)(iVar1 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0x8d;
+      *(undefined2 *)(iVar1 + 2 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0x1a;
       iVar2 = iVar1 + 8;
-      *(undefined2 *)(iVar1 + 4 + *(int *)(iRam00749038 + 0x20)) = 0xfe62;
+      *(undefined2 *)(iVar1 + 4 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0xfe62;
       iVar1 = iVar2;
     } while (iVar2 != 0x28);
     iVar1 = 0x10;
     do {
-      *(undefined2 *)(iVar1 + *(int *)(iRam00749038 + 0x20)) = 0xff73;
-      *(undefined2 *)(iVar1 + 2 + *(int *)(iRam00749038 + 0x20)) = 0x1a;
+      *(undefined2 *)(iVar1 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0xff73;
+      *(undefined2 *)(iVar1 + 2 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0x1a;
       iVar2 = iVar1 + 0x18;
-      *(undefined2 *)(iVar1 + 4 + *(int *)(iRam00749038 + 0x20)) = 0xfe62;
+      *(undefined2 *)(iVar1 + 4 + *(int *)(*(int *)iRam00749038 + 0x20)) = 0xfe62;
       iVar1 = iVar2;
     } while (iVar2 != 0x40);
   }
