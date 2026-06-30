@@ -18,12 +18,12 @@ LEVEL   ?= 9
 
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all build wasm native decompile pipeline run check verify clean help
+.PHONY: all build wasm native decompile pipeline run check verify verify-wasm clean help
 
 all: build            ## default: transpile + WASM build from committed re_out
 
-pipeline: decompile check native verify ## FULL from-binary chain: dd2.exe -> Ghidra -> transpile -> build -> 10-level crash test
-	@echo "pipeline OK: dd2.exe -> decompile -> patch -> compile -> run  (~186 GTE/jumptable fns = committed re_out overlay)"
+pipeline: decompile check native verify build verify-wasm ## FULL from-binary chain: dd2.exe -> Ghidra -> transpile -> native+WASM build -> 10-level crash test (both targets)
+	@echo "pipeline OK: dd2.exe -> decompile -> patch -> compile (native + WASM) -> run  (~186 GTE/jumptable fns = committed re_out overlay)"
 
 help:                 ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-18s %s\n",$$1,$$2}'
@@ -40,6 +40,15 @@ native: ## transpile + native 32-bit build, NO-ASan (real crash semantics) -> $(
 decompile: ## re-run Ghidra headless: dd2.exe -> re_out/dd2_decomp.c (reproducible reference layer, 906 fns)
 	bash $(ROOT)/tools/decompile.sh
 	@echo "decompile: $$(grep -cE '/\* ===== .* @ ' $(ROOT)/re_out/dd2_decomp.c) functions exported"
+
+verify-wasm: build ## crash-free check: run the WASM demo (node) on all 10 levels, print N/10
+	@echo "== WASM demo crash-check (node) =="; ok=0; \
+	for L in 1 2 3 4 5 6 7 8 9 10; do \
+	  rm -rf /tmp/wfv; mkdir -p /tmp/wfv; \
+	  o=$$(cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wfv timeout 120 $(NODE) $(OUTJS) $$L 2>&1); \
+	  if echo "$$o" | grep -qiE 'abort|RuntimeError|exception thrown|SIGSEGV'; then echo "  L$$L CRASH"; else echo "  L$$L ok"; ok=$$((ok+1)); fi; \
+	done; \
+	echo "== WASM crash-free: $$ok/10 =="
 
 run: build ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
