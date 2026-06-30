@@ -303,6 +303,14 @@ def fix_dd2(s):
       "    iVar5 = iVar4;\n    if ((unsigned)iVar5 >= (unsigned)(prim_buf_size >> 3)) return -1;\n    piVar6 = (int *)(iVar5 * 8 + iVar3);", 1, 'GUARD AE alloc-walk OOB')
     s = sub(s, "  uVar7 = (param_1 >> 3) - 1;\n  _free_mem = _free_mem + *(int *)(iVar3 + -4 + (param_1 >> 3) * 8);",
       "  uVar7 = (param_1 >> 3) - 1;\n  if ((unsigned)uVar7 >= (unsigned)(prim_buf_size >> 3)) return;\n  _free_mem = _free_mem + *(int *)(iVar3 + -4 + (param_1 >> 3) * 8);", 1, 'GUARD AE free uVar7 OOB')
+    # GUARD AF (alloc split SIZE OOB): distinct from the 0xffffXXXX GTE-vertex link corruption GUARD AE handles,
+    # a stray FLOAT write (~0.44 => 0x3ee1xxxx) lands in _prim_buf and is read as a free node's SIZE field (uVar2).
+    # GUARD AE checks the link index iVar5 but NOT uVar2, so the split does iVar5 += (uVar2-uVar1) with a huge uVar2
+    # -> iVar5 overflows -> OOB store at _prim_buf+4+iVar5*8 -> SIGSEGV (frame ~966, native). Don't allocate from a
+    # block whose size is OOB-huge: fail the size test so the walk skips it and follows the link (GUARD AE catches a
+    # bad link next). Fires only on an already-corrupt node -> zero behaviour change on clean state.
+    s = sub(s, "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2) {",
+      "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2 && (unsigned)uVar2 <= (unsigned)(prim_buf_size >> 3)) {", 1, 'GUARD AF alloc split SIZE OOB')
 
     # FIX AJ (Map_Height edge-divisor WASM-safety): the scanline edge interpolation in Map_Height
     # (dd2.c:12289..) divides by an edge X/Y screen-delta: (*(int*)(pbVar10+2)>>0x10) and
