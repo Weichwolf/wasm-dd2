@@ -28,6 +28,7 @@ for _ in range(20000):
     if v>=$F:
         gdb.execute("dump binary memory /tmp/ref_heap.mem 0x7debf0 0x8febf0")
         gdb.execute("dump binary memory /tmp/ref_fb.mem 0x700450 0x712450")
+        gdb.execute("dump binary memory /tmp/ref_gdb.mem 0x75ebf0 0x7debf0")
         gdb.write("REFFRAME=%d\n"%v); break
 gdb.execute("detach"); gdb.execute("quit")
 PY
@@ -47,6 +48,7 @@ break ids_flip if *(int*)0x462ff0 >= $F
 run
 dump binary memory /tmp/our_heap.mem 0x7debf0 0x8febf0
 dump binary memory /tmp/our_fb.mem 0x700450 0x712450
+dump binary memory /tmp/our_gdb.mem 0x75ebf0 0x7debf0
 printf "our current_frame=%d\n", *(int*)0x462ff0
 kill
 quit
@@ -71,4 +73,17 @@ try:
     print(f"[lockstep] framebuffer(0x700450) match: {fs}/{m} = {100*fs/m:.2f}%  "
           f"(ref distinct={len(set(fa[:m]))} our distinct={len(set(fb[:m]))})")
 except Exception as e: print("[lockstep] fb compare skipped:",e)
+# game-data buffer region (level data @0x75ebf0..heap) — STATIC, alignment-insensitive
+try:
+    ga=open('/tmp/ref_gdb.mem','rb').read(); gb=open('/tmp/our_gdb.mem','rb').read()
+    m=min(len(ga),len(gb)); gs=sum(1 for i in range(m) if ga[i]==gb[i]); base=0x75ebf0
+    print(f"[lockstep] game-data(0x75ebf0..0x7debf0) match: {gs}/{m} = {100*gs/m:.2f}%")
+    print("  per-64KB region (diverging only):")
+    for off in range(0,m,0x10000):
+        sa=ga[off:off+0x10000]; sb=gb[off:off+0x10000]; mm=min(len(sa),len(sb))
+        if mm==0: continue
+        sm=sum(1 for i in range(mm) if sa[i]==sb[i])
+        tag = "MATCH" if sm/mm>0.99 else ("%.0f%%"%(100*sm/mm))
+        print(f"    0x{base+off:x}: {tag}")
+except Exception as e: print("[lockstep] game-data compare skipped:",e)
 PY
