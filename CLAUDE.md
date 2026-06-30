@@ -67,6 +67,22 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Memory transaction log (how to journal heap changes for the bisect)
+A "transaction log" of memory changes is the right tool to find the first divergence. Granularities:
+- ALLOCATION journal (best for layout): log every MPE_malloc(size)→addr / MPE_free(addr); the heap
+  layout is fully determined by this sequence. `tools/refmalloc.c` does this for the REFERENCE via raw
+  ptrace `PTRACE_POKETEXT` software breakpoints (attach to dd2h.exe, INT3 @MPE_malloc 0x4235e4, read
+  size at [esp+4]). KEY: gdb's `break` CANNOT write INT3 to Wine's read-only code pages (silently never
+  hits) — only POKETEXT works; gdb is fine for DATA watchpoints (hardware) like lockstep's 0x462ff0.
+  Our build: just `gdb break MPE_malloc` (symbol) — works (captured baseline below). CAVEATS: (1) the
+  wine launch in this env is flaky (pid timing, prefix ownership) — use `WINEPREFIX=<scratchpad>/wineprefix`
+  and a wait-for-pid loop; (2) NEVER `pkill -f dd2h.exe` — it matches and kills the agent's OWN shell
+  (the cmdline contains "dd2h.exe") → "exit 144, no output"; use `pkill -x dd2h.exe`; (3) the agent shell's
+  120s default timeout cuts off long wine+gdb runs — pass a longer tool timeout.
+- WRITE journal (every byte change): mprotect the heap region read-only, SIGSEGV handler logs {PC,addr,
+  old→new}, single-step, re-protect. No VA needed. Easy in our native build; scope it to Init_Game/stream
+  so it isn't unusably slow. Reference: same via ptrace single-step (slow) or 4 HW watchpoints (targeted).
+
 ## Stage-2 layout bisect — baseline + method
 Compare the MPE_malloc SIZE sequence after the level-9 `MPE_InitHeap` (alignment-insensitive code
 point; the first differing size = the first divergent allocation). OUR build's level-9 sequence:
