@@ -67,6 +67,16 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Stage 1 ↔ Stage 2 entanglement (verified)
+Crash-free (Stage 1) is NOT independent of bit-identity (Stage 2): the L2/L3/L6 crash IS the
+corrupt-decompressed-geometry symptom of the heap-LAYOUT divergence. A `_gpoly` bounds guard
+only moved the fault (FUN_0041fb7c → Draw_Object_Polys → Set_Object/Setup_Object_Block), since
+the garbage block is consumed in object SETUP and DRAW alike. Zeroing the decompress window
+flips the garbage to `0x0` (NULL deref), so `Decompress` produces wrong POINTER fields regardless
+of window value → its back-ref reads the wrong position. DECISIVE next test: harness-compare our
+decompressed block bytes vs the reference's — same source+offsets ⇒ window/buffer-position bug;
+different ⇒ source/relocation (load-base) bug. Either way the fix is the layout/load, not a guard.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
