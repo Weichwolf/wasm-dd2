@@ -104,6 +104,15 @@ def fix_dd2(s):
                    " g_plog[(g_pidx&511)*4]=*pbVar1; g_plog[(g_pidx&511)*4+1]=(int)sVar2;"
                    " g_plog[(g_pidx&511)*4+2]=(int)_gpoly; g_pidx++; }\n"
                    "      switch((&PTR_LAB_00462ef4)[*pbVar1]) {", name='DEBUG PLOG ring-buffer')
+    # DEBUG OBJLOG (temporary, env-gated): record the last Draw_Scene_Object dispatch to tell over-walk
+    # (objidx vs num_scene_objects) from a corrupt-but-in-bounds object.
+    if os.environ.get('DD2_OBJLOG_PATCH'):
+        s = sub(s, "          iVar2 = iVar2 + 1;\n          Draw_Scene_Object(puVar3,piVar1);",
+                   "          iVar2 = iVar2 + 1;\n"
+                   "          { extern volatile int g_lastobj[]; g_lastobj[0]=local_1c/4; g_lastobj[1]=iVar2;"
+                   " g_lastobj[2]=*(int*)((int)&num_scene_objects+local_1c); g_lastobj[3]=(int)puVar3;"
+                   " g_lastobj[4]=puVar3[1]; }\n"
+                   "          Draw_Scene_Object(puVar3,piVar1);", name='DEBUG OBJLOG')
     # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
     # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
     # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548

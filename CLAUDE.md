@@ -43,8 +43,15 @@ Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/We
   path with a corrupt data pointer. Ties to the object LEAK/over-walk: in L3 `_free_mem` drops
   monotonically (objects created, never freed via `Remove_Object`; obj+0x19 lifetime countdown gated by
   obj+0x1a/obj+6 doesn't fire) → `num_scene_objects`/array over-walk → garbage object. TRUE heisenbug
-  (shifts under any in-loop probe; ring buffer in BSS still perturbs code layout). FIX = the object
-  lifecycle leak (why L3 objects never hit the removal countdown), OR a HW watchpoint on the +0x28 write.
+  (shifts under any in-loop probe). FULLY TRACED via `tools/wpcatch.c` (ptrace HW watchpoint = debug
+  registers, NO memory perturbation → doesn't move the heisenbug): the crashing object is VALID +
+  in-bounds (block6/idx3, num=22, geom ptr p1[1]=0x8020c8 valid heap); a HW watchpoint on 0x8020c8+0x28
+  caught the WRITER = **`Decompress`** (build/dd2.c:3543, the LZ geometry decompressor) writing decompressed
+  `0x66`('f') bytes into that buffer. So the on-demand geometry streamer (`Decompress(&dec_info)` from the
+  scene-object paths re_out:16660/16677/16801/16842/16992) DECOMPRESSES INTO A BUFFER A LIVE SCENE OBJECT
+  STILL REFERENCES → corrupt +0x28 → wild `_gpoly` → crash. FIX = the streaming buffer lifecycle (dec_info
+  dest must not collide with a referenced object; or the object must be removed before its buffer is reused).
+  Tools (all env-gated/standalone): `eipcatch.c` (fault EIP), `wpcatch.c` (HW watchpoint), `DD2_PLOG`/`DD2_OBJLOG`.
 - Renders the 3D demo scene AND the front-end **title screen** ("DESTRUCTION DERBY 2" logo) — both verified
   by capturing `0x700450`. The menu uses the SAME 3D engine as the race but is static/deterministic + far
   fewer objects (no desync) → the cleanest bit-exact target. Title compare still low (palette/align), WIP.
