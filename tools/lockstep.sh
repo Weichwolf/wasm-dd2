@@ -27,6 +27,7 @@ for _ in range(20000):
     except: v=-1
     if v>=$F:
         gdb.execute("dump binary memory /tmp/ref_heap.mem 0x7debf0 0x8febf0")
+        gdb.execute("dump binary memory /tmp/ref_fb.mem 0x700450 0x712450")
         gdb.write("REFFRAME=%d\n"%v); break
 gdb.execute("detach"); gdb.execute("quit")
 PY
@@ -45,6 +46,7 @@ set pagination off
 break ids_flip if *(int*)0x462ff0 >= $F
 run
 dump binary memory /tmp/our_heap.mem 0x7debf0 0x8febf0
+dump binary memory /tmp/our_fb.mem 0x700450 0x712450
 printf "our current_frame=%d\n", *(int*)0x462ff0
 kill
 quit
@@ -63,4 +65,10 @@ if first>=0:
     print(f"           our[{first}:{first+16}]= "+' '.join('%02x'%x for x in b[first:first+16]))
 else:
     print("[lockstep] heaps IDENTICAL")
+try:
+    fa=open('/tmp/ref_fb.mem','rb').read(); fb=open('/tmp/our_fb.mem','rb').read()
+    m=min(len(fa),len(fb)); fs=sum(1 for i in range(m) if fa[i]==fb[i])
+    print(f"[lockstep] framebuffer(0x700450) match: {fs}/{m} = {100*fs/m:.2f}%  "
+          f"(ref distinct={len(set(fa[:m]))} our distinct={len(set(fb[:m]))})")
+except Exception as e: print("[lockstep] fb compare skipped:",e)
 PY
