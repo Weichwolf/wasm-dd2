@@ -55,6 +55,12 @@ def fix_dd2(s):
             "FUN_00411ebc((int*)(int[12]){local_40,local_3c,local_38,local_34,local_30,local_2c,"
             "local_28,local_24,local_20,local_1c,local_18,local_14},",
             7, 'EBC scattered-locals -> contiguous array')
+    # FIX EBC2 (scattered-locals): sibling rasterizer FUN_0041243c (3-vertex / 6-int, read-only param_1[0..5],
+    # texel callback FUN_0041080d) is fed &local_40 by FUN_00410f74/FUN_00411a04 — same reversed-stack-local
+    # corruption as FIX EBC. Pass an explicit contiguous 6-int compound-literal array.
+    s = sub(s, "FUN_0041243c(&local_40,",
+            "FUN_0041243c((int*)(int[6]){local_40,local_3c,local_38,local_34,local_30,local_2c},",
+            4, 'EBC2 FUN_0041243c scattered-locals -> contiguous array')
     # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
     # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
     # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548
