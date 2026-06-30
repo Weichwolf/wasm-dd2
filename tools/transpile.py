@@ -94,6 +94,14 @@ def fix_dd2(s):
     s = sub(s, "    if (iVar22 == -1) {\n      free(puVar20);\n      return 0xffffffff;\n    }",
                "    if (iVar22 == -1) {\n      MPE_free((int)puVar20);  /* FIX MFREE: MPE_malloc<->MPE_free */\n"
                "      return 0xffffffff;\n    }", name='MFREE:MPE_malloc/free pairing')
+    # DEBUG ZEROBUF (temporary, env-gated): zero the Decompress dest buffer at entry to test whether
+    # the LZ back-references read UNINITIALIZED buffer (stale MPE_malloc 0x66 bytes) vs correct data.
+    if os.environ.get('DD2_ZEROBUF_PATCH'):
+        s = sub(s, "  pbVar5 = (byte *)*param_1;\n  if (*(short *)((int)param_1 + 0xe) == 0) {",
+                   "  { extern char *getenv(const char*); extern void *memset(void*,int,unsigned);"
+                   " if(getenv(\"DD2_ZEROBUF\")) memset((void*)param_1[1],0,0x4000); }\n"
+                   "  pbVar5 = (byte *)*param_1;\n  if (*(short *)((int)param_1 + 0xe) == 0) {",
+                   name='DEBUG ZEROBUF')
     # DEBUG PLOG (temporary): record (type,_gpoly) into the BSS ring buffer before each dispatch in
     # FUN_0041fb7c's walk loop, to catch the _gpoly command-stream desync (heisenbug). REMOVE after.
     if os.environ.get('DD2_PLOG_PATCH'):
