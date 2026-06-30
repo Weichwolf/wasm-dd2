@@ -42,6 +42,19 @@ def sub(text, old, new, n=1, name=''):
 RASTER_GUARD = True
 
 def fix_dd2(s):
+    # FIX EBC (scattered-locals): the 5 textured-polygon rasterizer setups (FUN_004110a4/111e8/1132c/
+    # 11b34/11c78) pass &local_40 to FUN_00411ebc, which reads it as the 12-int vertex array param_1[0..11].
+    # Ghidra split that x86 stack array into named offset-locals (local_40,local_3c,...,local_14); clang/WASM
+    # lays them out REVERSED (local_40 at the HIGHEST addr, confirmed: &local_40=...900 &local_3c=...896 ...),
+    # so &local_40[2] reads ABOVE the block = a stale prim pointer (e.g. 0x879F68) instead of local_38. Native
+    # gcc happens to order local_40 lowest so it works. Result under WASM: garbage vertex X -> ~256x edge slope
+    # -> exploding horizontal span -> OOB raster write -> stack-cookie crash (the whole textured 3D world).
+    # FUN_00411ebc only READS param_1, so pass an explicit contiguous compound-literal array (layout-independent;
+    # native unchanged — same values). Same class as FIX E (which did the sibling FUN_00411654).
+    s = sub(s, "FUN_00411ebc(&local_40,",
+            "FUN_00411ebc((int*)(int[12]){local_40,local_3c,local_38,local_34,local_30,local_2c,"
+            "local_28,local_24,local_20,local_1c,local_18,local_14},",
+            7, 'EBC scattered-locals -> contiguous array')
     # FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
     # FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
     # local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548

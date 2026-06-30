@@ -1414,12 +1414,16 @@ extern void FUN_00411654(int param_1);
 extern void FUN_004117e8(int param_1);
 extern void FUN_004118d4(int param_1);
 static void _ot_dispatch(int *piVar1,int *piVar2,int *param_1){
-  /* dd2_relocate() rewrites _primfuncs entries that are in its fnmap to NATIVE fn-pointers
-     (>=0x1000000), which the image-address switch below can't match -> textured rasterizers
-     (codes 44/52/60) silently fell to default. Do the real indirect call for relocated ptrs
-     (= the engine's DrawPrim behavior); keep the switch for non-relocated image addresses. */
+  /* dd2_relocate() rewrites _primfuncs entries that are in its fnmap to the real fn-pointer,
+     which the image-address switch below can't match -> textured rasterizers (codes 44/52/60)
+     silently fell to default. Do the real indirect call for relocated ptrs (= the engine's
+     DrawPrim behavior); keep the switch for non-relocated image addresses.
+     A relocated entry is any NON-NULL value OUTSIDE the image rasterizer range [0x410000,0x460000):
+     native fn-pointers are high (>=0x460000); WASM fn-pointers are small table indices (<0x410000)
+     -- the old `>=0x1000000` test only caught the native case, so under WASM every relocated
+     rasterizer fell through to the switch -> default -> the whole 3D world never rasterized. */
   { unsigned _v=(unsigned)(&_primfuncs)[*(byte *)((int)piVar1 + 7)];
-    if(_v>=0x1000000u){ (*(void(*)(int*))(uintptr_t)_v)(piVar1); return; } }
+    if(_v!=0 && (_v<0x410000u || _v>=0x460000u)){ (*(void(*)(int*))(uintptr_t)_v)(piVar1); return; } }
   switch((&_primfuncs)[*(byte *)((int)piVar1 + 7)]) {
     case 0x410d50: FUN_00410d50(); break;
     case 0x410d58: FUN_00410d58(piVar1); break;
