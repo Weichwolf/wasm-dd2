@@ -311,6 +311,39 @@ fixes (new SIGSEGV address, not yet decoded) — likely a downstream consequence
 changing execution timing/flow. Both are fresh leads for a future session; WASM doesn't hit either
 (10/10), so they may be native-harness-specific (e.g. FP/timing differences) rather than the core
 engine bug — worth checking that angle first before assuming they're WASM-relevant too.
+UPDATE: L2 is now FIXED (FIX BK, commit fd9e135). L6's writer is fully identified: `Draw_Object_Polys`
+(dd2.c:7320) dispatches `case 0x41bc0c: FUN_0041bc0c((int)sVar2); break;` with `sVar2` read from the
+SAME corrupted `_gpoly` stream this whole session has chased — confirmed via gdb, `FUN_0041bc0c`
+gets called with `param_1=15934`, wildly implausible for what should be a small poly/vertex repeat
+count. `FUN_0041bc0c`'s loop (dd2.c:45500-45511) runs `param_1` times, advancing `_gprim2`/`_gprim1`
+by 0x1c each iteration with NO bounds check — 15934 iterations walks `_gprim2` far outside any valid
+buffer, landing on the sound-channel struct (0x900f14) purely by arithmetic coincidence and scribbling
+it via `*(undefined1*)(_gprim2+7) = 0x30`.
+TRIED AND REVERTED (both real regressions, not just "didn't help"):
+  1. GUARD AI: fall back `_gprim2` to `_gprim1` in `Draw_Object_Polys` if the INITIAL value lands
+     outside the dynamic heap `[0x7debf0,0x8febf0)`. Didn't fire — the value is fine at assignment
+     time and only drifts bad after thousands of legitimate-looking `+0x1c` increments inside
+     `FUN_0041bc0c`'s own loop, so a one-time check at the top of `Draw_Object_Polys` can't catch it.
+  2. GUARD AJ2: clamp `param_1` to 0 (skip the loop) in `FUN_0041bc0c`/`FUN_0041bc68` when > 256.
+     This DID stop the corruption/crash, but turned it into a genuine HANG (confirmed: exit code 124,
+     full timeout) — skipping the loop entirely apparently leaves `_gpoly` un-advanced in a way the
+     CALLER's outer while-loop depends on, so the same corrupt command gets reprocessed forever.
+  3. GUARD AJ3: clamp `param_1` to 1 instead of 0 (loop still runs once, advancing `_gpoly` the way
+     the caller's outer walk needs, per the GUARD AJ2 postmortem). This DID fix native (10/10!) --
+     but broke WASM: L6 went from working to `RuntimeError: memory access out of bounds` (9/10).
+     REVERTED (WASM is the primary target; a native-only win isn't worth a WASM regression).
+     Root cause of the platform split: native's `_gprim2` ends up at a real-but-wrong address
+     (0x900f0d, a valid mmap'd page just holding the wrong struct) that native's flat address space
+     tolerates as "readable/writable garbage elsewhere", whereas WASM's linear memory is smaller/
+     stricter and traps on the SAME first-iteration write that native shrugs off -- so even ONE
+     iteration with a bad starting `_gprim2` is unsafe under WASM, while native only breaks once
+     the iteration count runs long enough to reach 0x900f0d specifically (many iterations in).
+STOPPED HERE (both native fix attempts either hung or broke WASM): the safe fix needs to guard the
+INDIVIDUAL byte-writes inside the loop body (dd2.c:45500-45511, `*(undefined1*)(_gprim1+7)=0x30` etc.)
+against the valid heap range, leaving the loop's iteration count and `_gpoly`/`_gprim*` advancement
+completely untouched (so neither the hang nor the WASM out-of-bounds trap can recur) -- not yet
+attempted, given the two prior misfires; do this carefully with the harness (test native AND
+`make verify-wasm` together after every attempt) before trusting any fix here.
 
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
