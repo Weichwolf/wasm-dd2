@@ -42,7 +42,15 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface via the `ids_flip` hook (`DD2_FRAMEDIR=…`). Compare byte-for-byte.
 
 ## Current state (verify, don't trust)
-- Demo **7/10** crash-free (no-ASan); L2/L3/L6 crash. L3 ROOT-CAUSED (tools: `eipcatch.c` ptrace
+- Demo **7/10** crash-free (no-ASan); L2/L3/L6 crash. Confirmed this session: **L2 crashes in the
+  SAME function as L3** (`FUN_0041fb7c`, called via `Draw_Scene_Object_Blocks -> Draw_Scene_Object`)
+  — identical mechanism. **L6 crashes in a DIFFERENT function** (`FUN_0041132c`, a quad/poly draw fn,
+  called via `Draw_All -> DrawOTag -> _ot_dispatch`) but the same STRUCTURAL pattern: a poly-command
+  struct pointer (`param_1`) read wild (crash addr `0xd2341c3` — clearly garbage, same signature as
+  L3's `0x666666ff`). So all three share the same root (corrupt geometry from the Decompress-layout
+  divergence), just surfacing through different rendering consumer functions (the poly walk in
+  FUN_0041fb7c vs. the ordering-table/OT draw path in FUN_0041132c) — confirms a single fix (the
+  heap-layout match) should clear all three, not three separate bugs. L3 ROOT-CAUSED (tools: `eipcatch.c` ptrace
   SIGSEGV→EIP catcher + `DD2_PLOG_PATCH`/`DD2_PLOG` BSS ring buffer of poly commands, both env-gated):
   faulting insn = walk-loop `while(*(char*)(_gpoly+3))` at dd2.c:6600 with `_gpoly=0x666666ff`. The ring
   buffer proved the poly stream up to the crash is VALID (small counts) — so it is NOT a per-handler
