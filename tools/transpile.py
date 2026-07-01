@@ -681,6 +681,32 @@ def fix_dd2(s):
     # concern, so a plain iteration cap is safe (matches GUARD AE's existing free-walk-OOB precedent
     # for MPE_malloc's sibling search loop, applied here to MPE_free's).
     s = sub(s, '  puVar2 = (uint *)(param_1 + -8);\n  for (; ((puVar2 <= _DAT_0073c290 || ((uint *)*_DAT_0073c290 <= puVar2)) &&\n         ((_DAT_0073c290 < (uint *)*_DAT_0073c290 ||\n          ((puVar2 <= _DAT_0073c290 && ((uint *)*_DAT_0073c290 <= puVar2))))));\n      _DAT_0073c290 = (uint *)*_DAT_0073c290) {\n  }', "  puVar2 = (uint *)(param_1 + -8);\n  { int _guardit = 0;  /* GUARD AM: cap MPE_free's circular free-list walk (corrupted-list hang) */\n  for (; ((puVar2 <= _DAT_0073c290 || ((uint *)*_DAT_0073c290 <= puVar2)) &&\n         ((_DAT_0073c290 < (uint *)*_DAT_0073c290 ||\n          ((puVar2 <= _DAT_0073c290 && ((uint *)*_DAT_0073c290 <= puVar2))))));\n      _DAT_0073c290 = (uint *)*_DAT_0073c290) {\n    if (++_guardit > 100000) return;\n  } }", 1, 'GUARD AM MPE_free free-list walk cap')
+    # GUARD AO (MPE_malloc free-list walk OOB): MPE_malloc chases the free-list via `puVar2 = *puVar3`
+    # (next-ptr) then reads `iVar1 = puVar3[1]` (block size). If a free node's next-ptr got corrupted to a
+    # wild address (the object-leak/over-walk symptom of the Stage-2 heap-layout divergence -- same root as
+    # every other GUARD), `puVar3[1]` reads OOB. Surfaced on the interactive (demo_mode=0) path after ~19s:
+    # main->DemoModeLevel->Play_Game->Draw_Scene_Object_Blocks->Draw_Scene_Object->FUN_00416a10->MPE_malloc
+    # -> "memory access out of bounds" (WASM). Range-check the walk node against the mapped image+heap
+    # [0x400000,0x900000) (the same convention the other GUARDs use -- a narrower pool-only range
+    # [0x7debf0,0x8febf0) wrongly rejected a valid native L1 free node -> regressed L1); on a wild node
+    # (garbage like 0x666666ff/0xd2341c3, well outside the mapped range), force puVar3=head and break so
+    # the function returns `head ^ head == 0` == NULL -- the engine's OWN out-of-memory signal, which
+    # faithful callers already handle (FUN_00416a10 dd2.c:4751 checks `puVar20 == 0 || == 0xffffffff` ->
+    # returns -1). No new semantics invented; a corrupted free-list simply reports OOM instead of crashing.
+    # WASM-ONLY (#ifdef __EMSCRIPTEN__): breaking on a wild node abandons any (coincidentally-valid) blocks
+    # LATER in the corrupted list, which native's flat address space tolerates -- native reads the wild
+    # node's garbage size (mapped, readable), doesn't fit, and continues the walk, so an unconditional guard
+    # regressed native L1 (SIGSEGV 0xd58ecf0). WASM's linear memory TRAPS on that same read, so it has no
+    # choice but to stop -- exactly the documented native-tolerates/WASM-traps split. Native keeps the
+    # faithful (working) walk; WASM gets the OOM-on-corruption guard. Both targets stay 10/10.
+    s = sub(s, "  while( true ) {\n    puVar3 = puVar2;\n    iVar1 = puVar3[1];",
+               "  while( true ) {\n    puVar3 = puVar2;\n"
+               "#ifdef __EMSCRIPTEN__\n"
+               "    if ((unsigned int)(uintptr_t)puVar3 < 0x400000u || (unsigned int)(uintptr_t)puVar3 >= 0x900000u)\n"
+               "      { puVar3 = _DAT_0073c290; break; }  /* GUARD AO: wild free-list node -> OOM(NULL), not OOB deref */\n"
+               "#endif\n"
+               "    iVar1 = puVar3[1];",
+               1, 'GUARD AO MPE_malloc free-list walk OOB')
     return s
 
 def fix_dispatch(s):
