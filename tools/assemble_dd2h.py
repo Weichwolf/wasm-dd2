@@ -20,8 +20,17 @@ WIN32 = {'DirectDrawCreate','DirectSoundCreate','timeBeginPeriod','timeEndPeriod
         'getch','putch','_control87','Init_DirectSound'}
 CRT = {'atoi','fopen','fputs','fwrite','printf','remove','strcmp','strdup','strtod','sprintf','vsprintf',
        'fclose','fread','fseek','malloc','free','memcpy','memset','strcpy','strlen','strcat','strncmp',
-       'qsort','fprintf','exit','ftell','abort','realloc','calloc','strncpy','atol','rand','srand'}
+       'qsort','fprintf','exit','ftell','abort','realloc','calloc','strncpy','atol','rand','srand','fgetc','fputc','fgets','getc','putc','ungetc','fflush','feof','ferror','clearerr','setvbuf','rewind','fgetpos','fsetpos','tmpfile','_flsbuf','_filbuf','__filbuf','__flsbuf'}
 compat = set(re.findall(r'\b(\w+)\s*\(', open("re_out/ghidra_compat.h").read()))
+# also every function DEFINED in the hand-written compat/runtime units (they provide the real impls;
+# dd2.c must not redefine them -> multiple-definition link errors otherwise).
+for _cf in ('dd2_com','dd2_win32','dd2_filio','dd2_stubs','dd2_data','dd2_runtime','dd2_buffers','dd2_input','../tools/native_main'):
+    try:
+        _ct = open("re_out/%s.c" % _cf, encoding='utf-8', errors='surrogateescape').read()
+        for _m in re.finditer(r'\n(?:[A-Za-z_][\w\* ]*?\s)(\w+)\s*\([^;{]*\)\s*\n?\{', _ct):
+            compat.add(_m.group(1))
+
+    except FileNotFoundError: pass
 exclude = compat | CRT | WIN32
 # never exclude functions referenced by the dispatch table (they're real indirect-call targets)
 _disp = open("re_out/dd2_dispatch.c", encoding='utf-8', errors='surrogateescape').read()
@@ -35,14 +44,32 @@ while i < len(parts):
     marker, body = parts[i], parts[i+1] if i+1 < len(parts) else ''
     m = re.match(r'/\* ===== (\S+) @ ([0-9a-fA-F]+) ===== \*/', marker)
     name, addr = m.group(1).strip('"'), int(m.group(2), 16)
-    _is_crt = name in ({'FUN_0045a334','log2','log10','FUN_0045b06a','FUN_004165f4'}) or any(x in body for x in  # CONSOLE_EXTRA
-         ('__fdiv','__fmul','sti_st','__fld','__fst','->_flag','->_ptr','->_cnt','->_base','->_bufsiz','->_file','->_charbuf')) or name in CRT
-    if name in WIN32:
+    # CRT: the statically-linked MSVC runtime (startup/console/math/heap). It lives at >=0x459000 and/or uses
+    # x87 intrinsics / MSVC FILE internals. Our native_main.c has its own main + libc, so the CRT is never
+    # actually run -- but the game IMAGE contains function pointers into it (dispatch) and a few game functions
+    # take its address. So we STUB these (keep the symbol so refs resolve; replace the broken body with a
+    # trivial `{ return 0; }`) rather than drop them (which caused undefined refs).
+    _is_crt = (addr >= 0x459000) or any(x in body for x in
+        ('__fdiv','__fmul','sti_st','__fld','__fst','->_flag','->_ptr','->_cnt','->_base','->_bufsiz',
+         '->_file','->_charbuf','_INPUT_RECORD','.Event','log2(','log10('))
+    _is_x87 = any(x in body for x in ('__fdiv','__fmul','sti_st','__fld','__fst'))
+    if name in WIN32 or name in CRT or name in compat or _is_x87:   # libc/compat/x87 -> drop entirely
         i += 2; continue
-    if not _is_crt:
+    if _is_crt:
+        # STUB: int-return, no-arg -> callable in any context (-w allows arg/return mismatch), body removed
+        kept += [marker, '\nint ' + name + '(){ return 0; }\n']
+    else:
         kept += [marker, body]
     i += 2
 gamecode = "".join(kept)
+# Sanitize Ghidra name artifacts: identifiers like SquareRoot0" / GTERPT4" / IF@DLOG2 / Read_CD_Toc& contain
+# ", &, @ which aren't valid C. The original build renamed these (SquareRoot0" -> SquareRoot0_). Apply the
+# same globally (defs + calls) so they compile. Only touches identifier-adjacent specials, not string literals
+# (a `"` immediately following an alnum with an alnum/paren after is a name artifact, not a string).
+gamecode = re.sub(r'([A-Za-z0-9_])["@&`]([A-Za-z0-9_(])', r'\1_\2', gamecode)
+gamecode = re.sub(r'([A-Za-z0-9_])["@&`](\s*\()', r'\1_\2', gamecode)   # name"( -> name_(
+gamecode = re.sub(r'([A-Za-z0-9_])\*(\s*\()', r'\1_\2', gamecode)   # name*( -> name_(
+
 # Retype void-returning functions that callers use as returning a value (Ghidra mis-detected void return
 # for register-return functions). Faithful: they return via register; declaring undefined4 matches callers.
 _VOID_RET = ['FirstSavedGame','__set_errno_nt','__ExpandDGROUP','FUN_00456d27','FUN_0045825c',
@@ -61,7 +88,10 @@ for i, l in enumerate(lines):
     sig, j = [], i+1
     while j < len(lines) and j < i+12:
         s = lines[j].strip()
-        if s == '{': break
+        if '{' in s:                       # stop at the body '{' (bare or inline stub '{ return 0; }')
+            s = s[:s.find('{')].strip()
+            if s and not s.startswith(('/*','*')): sig.append(s)
+            break
         if s and not s.startswith(('/*','*')): sig.append(s)
         j += 1
     if not sig or '(' not in ' '.join(sig): continue

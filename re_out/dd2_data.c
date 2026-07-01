@@ -93,7 +93,6 @@ int PTR_LAB_0042a4c0;
 
 
 int UNK_00458895;
-int View_MultiLeague;
 /* _DummyPoly removed: now #define'd to DummyPoly (GIMG 0x74a6d0) — see FIX DUMMYPOLY-ALIAS */
 int _FirstTime;
 int _Lap_Timer;
