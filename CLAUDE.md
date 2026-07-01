@@ -28,9 +28,10 @@ Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/We
 WASM build (emcc→dd2run.js)+verify` — runs the attract demo on all 10 levels for BOTH
 targets and prints N/10. (`make verify` = native only; `make verify-wasm` = WASM only.)
 **WASM is 10/10 crash-free** (`make verify-wasm`, all 10 demo levels reach completion with no
-abort/RuntimeError/exception). Native is **8/10** (L2/L6 remain — different, since-exposed bugs;
-see "Current state" below). GEOM-GUARD/GEOM-GUARD2/GUARD AG (transpile.py) defensively guard the
-symptoms of the Decompress heap-layout divergence at their points of use/creation — the underlying
+abort/RuntimeError/exception). Native is **9/10** (only L6 remains — a sound-channel-slot
+corruption, see "Current state" below). GEOM-GUARD/GEOM-GUARD2/GUARD AG/GUARD AH/GUARD AH2/FIX BK
+(transpile.py) defensively guard the symptoms of the Decompress heap-layout divergence at their
+points of use/creation — the underlying
 layout divergence itself (Stage 2) is still open, but no longer crashes the demo. Caveat: the
 ~186 GTE/jumptable fns are the committed `re_out` overlay (P-code lift = criterion 1,
 abandoned), so the chain reproduces from that overlay, not fully mechanically.
