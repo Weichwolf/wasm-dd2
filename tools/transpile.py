@@ -168,6 +168,14 @@ def fix_dd2(s):
     _ps_before = s.count("&DAT_00466734 + ")
     s = s.replace("&DAT_00466734 + ", "(int)&DAT_00466734 + ")
     _applied.append(('POLYSIZE-BYTEOFF DAT_00466734 stride-4 table byte offsets', _ps_before))
+    # FIX CAROBJ-BYTEOFF (int* byte-stride array): `car_object` is an array of 0x38-byte car records but is
+    # typed int*, so writers `&car_object + idx*0x38` scale to idx*0xe0 -> store the car's shapes at the
+    # WRONG slot. Readers use `idx*0x38 + 0x781418` (byte-correct, raw base addr), so reads see null ->
+    # crash in FUN_0043b39c (Init_Car_Graphics) deref of a null shape. Byte-address all &car_object writers
+    # to match the readers. Same scaling class.
+    _co_before = s.count("&car_object + ")
+    s = s.replace("&car_object + ", "(int)&car_object + ")
+    _applied.append(('CAROBJ-BYTEOFF car_object 0x38-stride byte offsets', _co_before))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
