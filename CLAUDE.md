@@ -263,6 +263,37 @@ calc. Either way the payoff is large: correct layout -> decompress LZ window rea
 bytes -> geometry decompresses correctly -> the L2/L3/L6 crashes AND the memory divergence resolve
 together. This is the single highest-value fix in the project; do it carefully (keep both targets 10/10).
 
+## Stage 2 SOLVED (root proven) + FIX IS AT THE DECOMPILE LEVEL (not transpile): the 0x38400 BSS gap
+DEFINITIVE PROOF the whole Stage-2 divergence is ONE reconstruction-layout error: our runtime `rgb_lookup`
+data @0x713050 == the reference's @0x74b450 **BYTE-EXACT (100%)** (both `44 41 41 41 62 64 4f 4f...`).
+Our reconstruction packs everything from `rgb_lookup` (0x713050 = 0x700450 + 0x12c00, immediately after the
+_screenbuffer framebuffer) **0x38400 too low**; the real dd2h.exe reserves 0x38400 (= 3 x 0x12c00, 3-4
+screen-sized back/work buffers) there before rgb_lookup. Everything >= 0x713050 is shifted: rgb_lookup,
+car_vertices (97.6% @+0x38400), the fi_* level descriptor fields (_fi_levdat/fi_texture -- ref's are at
++0x38400, ours' addr reads 0), level_data_buffer texdir (byte-exact +0x38400), the decompress slots
+(active_object_blocks). Because the decompress slots sit 0x38400 low, the LZ back-reference window reads the
+wrong preceding bytes -> garbage car geometry -> the BLACK-BLOB cars the user sees + the L2/L3/L6 crashes.
+ALL ONE ROOT. (Frames verified aligned: Play_Game resets current_frame=0 at race start.)
+WHY IT'S NOT A TRANSPILE FIX: the build maps the image at its real VA and `GIMG(va)=va` is IDENTITY -- every
+address is a direct pointer. The decompiled code has **812 distinct raw address literals >= 0x713050** PLUS
+range-check constants (0x800000/0x900000 in the GUARDs). A blind literal-shift can't tell a pointer from a
+bound and would corrupt the guards; a non-identity GIMG can't catch the raw literals. So the fix must give
+BOTH the symbols AND the code literals the correct (+0x38400) addresses at their SOURCE.
+THE FIX (decompile-level): correct the Ghidra memory map so the BSS after _screenbuffer reserves the missing
+0x38400 (the 3-4 screen buffers), so Ghidra re-assigns rgb_lookup->0x74b450, car_vertices->0x77d458,
+level_data_buffer->0x796ff0, MPE heap 0x7debf0->0x816ff0, etc., and re-decompile -> dd2_symbols.h + every
+code literal get the real-binary addresses in one shot. Then dd2_image.bin (the snapshot) already has the
+correct layout, the decompress window reads correct bytes, cars render, and the memory goes bit-identical.
+Steps: (1) find the exact real VA of _screenbuffer's end + the next symbol in the REAL binary (the reference
+runtime shows rgb_lookup content at 0x74b450, so _screenbuffer really spans [0x700450, 0x74b450) = 0x4b000 =
+FOUR screen buffers, not one 0x12c00); i.e. our _screenbuffer symbol is really a 4-buffer (0x4b000) region,
+not 0x12c00. (2) Fix the size/layout in the Ghidra project / tools/decompile.sh memory map (reserve 0x4b000
+at 0x700450, or add the 0x38400 gap after the 0x12c00 framebuffer). (3) Re-decompile, rebuild, re-run
+refcapture.sh + DD2_STATEDUMP -> expect the loaded-geometry match to jump to ~100% and the black-blob/crash
+symptoms to clear. VERIFY both targets stay >=10/10 (the guards may become unnecessary once geometry is
+correct, but keep them until proven). This is the single highest-value fix; it is decompile-layout work,
+NOT a transpile.py sub().
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
