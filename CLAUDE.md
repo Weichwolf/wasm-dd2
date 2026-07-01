@@ -208,6 +208,38 @@ build's level_data_buffer writers with DD2_ASSETLOG-style logging on File_Load t
 writer the reference runs that we don't. Do NOT commit a param_1+=0x38400 hack -- that's a band-aid
 (project rule: no approximations); find the real missing load. refcapture.sh makes this measurable.
 
+## Stage 2 ROOT FOUND (the real one): loaded-geometry BSS region is 0x38400 too LOW in our reconstruction
+Extending the differential comparison to the full [0x740000, 0x93ebf0) region (refcapture wide dump vs our
+DD2_STATEDUMP) with an EXPLICIT +0x38400 shift test per buffer nails it:
+- **The +0x38400 is NOT just level_data_buffer — it's the whole LOADED-GEOMETRY BSS region.** Our data
+  matches the reference at EXACTLY +0x38400 for: car_vertices@0x745058 (0.7% same -> **97.6%** at +0x38400),
+  track-strip/camera region@0x744b00 (3.5% -> 71%), and everything scanned from <=0x740000 up through
+  ~0x752000 (scene_objects@0x74c1a0, car_object@0x749018, active_object_blocks@0x750f10 = the DECOMPRESS
+  SLOTS, scene_position@0x74f2a0) -- a large contiguous region, ~80-100% at +0x38400 vs ~0-5% same.
+  level_data_buffer@0x75ebf0 (+0x38400, byte-exact, established earlier) is the TOP of this same region.
+- **NON-UNIFORM**: the RUNTIME-COMPUTED car state (car_fd@0x75a290, car_info@0x75d840, car_handling@
+  0x75a600, ~0x754000-0x75ebf0) is at FIXED addresses in BOTH builds (~67% both at same and +0x38400 --
+  frame-misalignment noise, not a shift). So loaded buffers are displaced but computed-in-place buffers
+  are not -> the RELATIVE layout between them differs between builds.
+- **This is almost certainly the Decompress-window root** (ties the whole project together): the decompress
+  slots (active_object_blocks) sit 0x38400 lower in our build, but the fixed runtime buffers do NOT move, so
+  the memory PRECEDING each slot (the LZ back-reference "window", up to 0x1000 before the slot) contains
+  different bytes than the reference's -> garbage decompressed geometry -> the L2/L3/L6 crashes + the
+  divergence. Same root, finally located: a RECONSTRUCTION LAYOUT error, not a logic bug.
+MECHANISM HYPOTHESIS (verify before fixing): the real dd2h.exe reserves a ~0x38400 BSS region that our
+Ghidra-derived layout OMITS or under-sizes, so every subsequent loaded-geometry symbol (car_vertices,
+scene_objects, active_object_blocks, level_data_buffer, ...) is 0x38400 too low in our g_image. Since our
+build addresses everything through one contiguous g_image at the Ghidra VAs (GIMG = g_image + (VA-0x400000)),
+the fix is to correct these symbols' VAs by +0x38400 (find the missing/short BSS buffer just below
+car_vertices/the geometry region and grow it by 0x38400) so our layout matches the real binary. CAUTION:
+this shifts a large set of symbols -- a delicate, high-risk change that must keep BOTH targets 10/10 and be
+validated by re-running refcapture.sh + DD2_STATEDUMP (expect the loaded-geometry match to jump toward 100%
+and the decompress corruption/crashes to clear). Do NOT hack a single param_1 offset; the region is broad.
+FIRST verify the boundary: find the exact lowest VA where the +0x38400 shift begins (scan below 0x740000 --
+the wide capture started at 0x740000 so it's at/below there) and what symbol/gap sits there in the real
+binary vs ours. That boundary IS the missing-buffer location. Tools: refcapture.sh (wide dump), the
+per-buffer +0x38400 test in this session's transcript.
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
