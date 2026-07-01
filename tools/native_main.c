@@ -194,6 +194,11 @@ int main(void){
         W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */
         W32(0x4673f8, 0);   /* race_mode = 0 */
         CK("Init_Front_End()"); Init_Front_End();
+        Setup_Pad(1);
+        { const char* h = getenv("DD2_HOLD");
+          if (h) { extern void dd2_key_event(unsigned int, int);
+                   dd2_key_event((unsigned int)strtol(h,0,0), 1);
+                   fprintf(stderr, "[native] menu: injected key 0x%lx\n", strtol(h,0,0)); } }
         CK("Front_End()");      Front_End();
     } else if (getenv("DD2_LEVEL")) {
         CK("DemoModeLevel()");

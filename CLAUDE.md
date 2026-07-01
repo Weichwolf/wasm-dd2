@@ -559,3 +559,26 @@ testing -- note NOCOUNTDOWN itself is an unstable debug skip that segfaults afte
 normal live race runs the intro+countdown and is crash-free). REMAINING Stage 3: (1) menu navigation
 (Front_End reads the same control word -- should now work), (2) browser: wire canvas keydown/keyup ->
 dd2_browser_key_event + a render loop, (3) end-to-end playable verification.
+
+## Stage 3: front-end RENDERS menus; menu-nav proof + browser build are the remaining work
+DD2_FE=1 (native_main Front_End path) RENDERS the menu (11419 frames dumped in a short run) -- the
+menu screens display via the same engine. Two open items:
+1. Menu-nav proof: injecting a held key from frame 0 (DD2_HOLD in the DD2_FE path) does NOT navigate
+   -- the menu uses EDGE-triggered nav (_DAT_0071c04a = newly-pressed), and a key held from frame 0
+   fires one edge event DURING the intro animation (Rotate_Slab_On, before the menu accepts input),
+   which is wasted; edge nav needs a PULSED key (down then up) at the right time. A blocking headless
+   loop can't inject timed pulses -- this needs either a gdb-injected pulse mid-loop or the browser
+   (real key up/down). The control-word plumbing itself is proven working (car responds), and
+   Front_End reads the same _DAT_0071c04a, so nav SHOULD work with proper pulse timing.
+2. Front-end idle-demo CRASHES: after ~1800 idle menu frames Front_End launches its own DemoMode
+   (attract), which segfaults (~frame 11419). This is the FRONT-END-initiated demo path, distinct from
+   the DD2_LEVEL=N demos that are verified 10/10 -- a separate crash to run down for full front-end
+   robustness.
+Browser build: a full harness EXISTS (tools/browser/navshot.js presses keys via Playwright +
+screenshots; shot.js/multishot.js render web/build under headless Chromium/SwiftShader). BUT web/build
+is STALE (Jun 22, pre-all-fixes) and the emcc-browser build command that produced it (SDL2 + canvas +
+ASYNCIFY + --shell-file web/shell.html + --preload DestructionDerby2) is NOT committed in tools/ -- it
+must be reconstructed. That build (with dd2_browser_key_event wired to canvas keydown/keyup, running
+Front_End->race) is the real "wasm port completely playable" deliverable and the main remaining Stage-3
+task. NEXT: reconstruct the browser build script, wire canvas input -> dd2_browser_key_event, rebuild
+web/build from current code, then use navshot.js to verify menu nav + race control end-to-end.
