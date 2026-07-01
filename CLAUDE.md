@@ -104,31 +104,26 @@ and OVERWRITTEN the base header (a later allocation's carve exactly consumed the
 triggering MPE_malloc's `*puVar5 = *puVar3` merge-forward), while ours hasn't — a concrete, actionable
 allocation-order difference to chase next. (MODE=frame preserved in lockstep.sh for comparison.)
 
-## BREAKTHROUGH LEAD: clean +0x20000 (128KB) positional offset in the game-data region (gdb-confirmed)
-Cross-correlated our build's game-data dump against the reference's (both at the `_current_level==9`
-checkpoint, DD2_LEVEL=9 baseline — see below for why that's the right one to use). Found: for our
-build's game-data region starting at VA 0x77ebf0 (0x20000 bytes into the [0x75ebf0,0x7debf0) window),
-comparing against the REFERENCE's data 0x20000 bytes EARLIER (ref_va = our_va - 0x20000) gives a
-**perfect ~100% match for a ~0x35000-byte stretch** (was 54% unshifted). This is the strongest,
-cleanest evidence in the whole project so far: **the level-file content itself is byte-IDENTICAL
-between builds — this is purely a PLACEMENT/offset bug, not a data or decompression bug.** Our build
-has an extra (or misplaced) ~128KB somewhere before this point that the reference doesn't have, so
-everything from there on is shifted +0x20000 in our layout relative to reference's. (Match degrades
-again past our VA ~0x7b6bf0 — a SECOND, separate divergence further out, not yet characterized.)
-NEXT STEP: find what occupies our build's [0x75ebf0, 0x75ebf0+0x20000) that the reference either
-doesn't have or sizes differently. RE-CONFIRMED this session: `_fi_levdat` (the level-data pointer,
-stored AT VA 0x75eb60 per dd2_symbols.h) holds VALUE `0x760564` in our build once set (breakpoint
-`FUN_00445b78`, the fn containing dd2.c:28343-28345's `_level_data=_fi_levdat; *_fi_levdat =
-*_fi_levdat + (int)_fi_levdat` self-relative fixup — gdb-verified this session). Reference's
-corresponding value not yet captured (watchpoint on 0x75eb60 didn't fire within budget — may be set
-much later than our build's equivalent point, or need more patience/a background run). Likely still
-ties to an in-place relocation/offset-table bug in the level-data loader
-(re_out/dd2.c:28343-28345: `*_fi_levdat = *_fi_levdat + (int)_fi_levdat` — a self-relative offset
-table fixup whose result depends on the LOAD ADDRESS, which is exactly the kind of thing that would
-produce a clean, constant, size-independent-of-content shift like this). To reproduce: dump
-[0x75ebf0,0x7debf0) from both builds at DD2_LEVEL=9's Order_Cars breakpoint (see git history /
-tools/lockstep.sh for the exact commands), then cross-correlate with a sliding-window byte search
-(see the analysis in the commit adding this section) rather than a fixed-offset diff.
+## RETRACTED: the "+0x20000 shift" was a false positive (zero-region trivial match) — real finding below
+Previously claimed a "clean +0x20000 (128KB) positional offset" with "~100% match" between builds'
+game-data. RE-VERIFIED and this does NOT hold: the claimed-match region (our VA 0x77ebf0-0x7b2bf0) is
+**0.000% nonzero in our build** (completely unwritten/zero) and the reference's SHIFTED counterpart is
+also ~0.01% nonzero (also essentially all-zero) — i.e. the "100% match" was zero matching zero, which
+is trivially true at ANY shift and proves nothing about real alignment. The REFERENCE's UNSHIFTED data
+at that same absolute range is actually 29% nonzero (real content) — our build simply never wrote
+anything there. LESSON: always check the nonzero fraction of a "matching" region before trusting a
+correlation result; large zero-filled regions (common in this heap: unused reserved buffers, BSS,
+freshly-mmap'd pages) will falsely "match" at almost any offset.
+REAL TAKEAWAY: our build's `Order_Cars` breakpoint (used as the DD2_LEVEL=9 checkpoint) fires BEFORE
+the level file's real content is loaded into [0x75ebf0,0x7debf0) — `_fi_levdat` is confirmed set by
+then (value `0x760564`, via breakpoint on `FUN_00445b78`), but the bulk of the buffer past a small
+header is still genuinely unwritten at this point in OUR build, while the reference (reaching its
+`_current_level==9` moment via a much longer, more elaborate real front-end+DemoMode path) has already
+written real content into the corresponding absolute range. This means `Order_Cars` is NOT a
+sufficiently-late checkpoint for comparing loaded level content — need a LATER breakpoint (e.g. after
+Init_Game/Init_Scene actually populates this buffer) for a meaningful content comparison. NEXT STEP:
+find that later sync point in our build (a real function that runs after the level directory is fully
+read) and re-verify any future "match" finding's nonzero fraction before trusting it.
 
 ## Front-end-history hypothesis: tested, did NOT improve alignment (negative result, keep DD2_LEVEL shortcut)
 Hypothesis: the reference runs ~1800 front-end idle-loop iterations (`re_out/dd2.c:34635-34661`,
