@@ -149,6 +149,17 @@ def fix_dd2(s):
         return "(int)_gpoly + " + m.group(1)
     s = re.sub(r"_gpoly \+ (0x[0-9a-fA-F]+|\d+)", _gpbyte, s)
     _applied.append(('GPOLY-BYTEOFF poly-handler _gpoly+N (N>=4) byte offsets', _gp_n[0]))
+    # FIX TRACKINFO-BYTEOFF (same scaling class): the per-level track dimensions table at 0x466dee is
+    # 6 BYTES/level (three shorts: min/size fields, read as int and `>>0x10`), indexed by _current_level.
+    # Its field symbols (track_info@0x466df0, DAT_00466dee/df2/df4) are typed int*, so `&SYM + level*6`
+    # scales to level*24 -> reads the wrong level's row -> garbage divisor / OOB in Init_Scene
+    # (FUN_004431e8). Byte-address the stride-6 table lookups.
+    _tr_n = [0]
+    def _trbyte(m):
+        _tr_n[0] += 1
+        return "(int)&" + m.group(1) + " + " + m.group(2) + " * 6"
+    s = re.sub(r"&(track_info|DAT_00466dee|DAT_00466df2|DAT_00466df4) \+ (\w+) \* 6", _trbyte, s)
+    _applied.append(('TRACKINFO-BYTEOFF stride-6 track table byte offsets', _tr_n[0]))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
