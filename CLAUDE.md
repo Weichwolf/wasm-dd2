@@ -212,6 +212,33 @@ of window value → its back-ref reads the wrong position. DECISIVE next test: h
 decompressed block bytes vs the reference's — same source+offsets ⇒ window/buffer-position bug;
 different ⇒ source/relocation (load-base) bug. Either way the fix is the layout/load, not a guard.
 
+## Game-data divergence is STATIC from the earliest frames, and is NOT a positional shift (validated)
+Using the new `levelframe` checkpoint (gdb-confirmed non-hanging), compared game-data at F=5 and
+F=100 (both within the same level-9 demo race): **nearly identical match profile at both**
+(58.28%/9.33% at F=5 vs 52.29%/8.80% at F=100, same per-64KB decay curve: ~38%→27%→8%→0%→0%→~1%→0%→0%).
+This rules out "divergence accumulates during gameplay" — whatever differs is already fully present
+by frame 5 and simply persists unchanged. Also re-ran the sliding-window cross-correlation (this time
+against REAL, substantial content: both sides 50-70% nonzero, not the earlier zero-region false
+positive) at both F=5 and F=100 — **no clean positional shift found** (best alignment only ~31%
+against a 69.5%-nonzero needle, identical result at both F values). CONCLUSION: the earlier "+0x20000
+shift, content is identical just displaced" idea is fully dead — the content is genuinely DIFFERENT
+between builds, not just relocated, and this difference is baked in at LOAD TIME (not runtime drift).
+TESTED AND REJECTED the "relocated pointer fields differ" hypothesis: checked the 0%-match region
+(0x78ebf0-0x790bf0) dword-by-dword — ZERO of the ~2048 diverging dwords look like plausible code/image
+pointers (0x400000-0x990000 range) in EITHER build. Instead: reference is **exactly 0x00000000
+throughout this entire region**, while our build has repeating-byte patterns (`0x81818181`,
+`0x88888888`, `0x87878d8c`, etc.) — classic indexed-bitmap/texture data (a run of similar palette
+indices), not pointers. So: our build has real (texture-like) content sitting at a position where the
+reference has nothing (all-zero) — i.e. AGAIN an our-build-has-extra-content-here pattern (like the
+retracted +0x20000 case), just this time the "extra content" is non-trivial (not just reserved zero
+padding) and doesn't match anywhere else in reference within a +-0x20000 search window, so it's not
+a simple shift either. Best read: this specific piece of our build's data (likely a texture/geometry
+sub-block) is placed at a heap offset the reference doesn't use for equivalent content at all — points
+back to an allocation-order/count difference (we allocate something, in a position, that the reference
+either doesn't allocate at all here or allocates with different size/placement) rather than a load-base
+relocation-value bug. NEXT: identify what OBJECT/ASSET this specific our-build byte range corresponds
+to (which MPE_malloc call populated it) to pin down the specific extra/misplaced allocation.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
