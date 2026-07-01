@@ -82,6 +82,38 @@ def fix_dd2(s):
             "FUN_00411ebc((int*)(int[12]){local_40,local_3c,local_38,local_34,local_30,local_2c,"
             "local_28,local_24,local_20,local_1c,local_18,local_14},",
             7, 'EBC scattered-locals -> contiguous array')
+    # FIX FILELOAD (scattered-locals, same class as EBC): File_Load passes &local_20 to FUN_00415498, which
+    # writes the directory entry's two fields via the pointer: param_2[0]=offset(sector), param_2[1]=size.
+    # Ghidra split those adjacent original stack slots into named locals `local_20`(offset) and `local_1c`(size);
+    # the write to param_2[1] therefore lands on `&local_20 + 4`, which is `local_1c` ONLY if the compiler places
+    # them contiguously in that order. clang/gcc do NOT guarantee that -> `local_1c` (the file SIZE) reads
+    # uninitialised garbage. Observed: LEV9\LEVEL.ECL size 0x15000 -> garbage 0x74ced8 -> File_Load freads
+    # 0xe9a sectors (~7.6MB) into __clutspace, blowing through dirbuf AND level_data_buffer -> _level_data[0xc]
+    # becomes ASCII -> Load_Sprite_Info crash. Fix faithfully: give FUN_00415498 a contiguous 2-int buffer
+    # (local_20[0]=offset, local_20[1]=size) so the callee's param_2[0]/param_2[1] writes are layout-independent.
+    s = sub(s,
+            "  uint local_20;\n"
+            "  int local_1c;\n"
+            "  \n"
+            "  FUN_00415498(param_1,&local_20);\n"
+            "  iVar1 = local_1c + 0x7ff;\n"
+            "  iVar2 = iVar1 >> 0x1f;\n"
+            "  _File = fopen(&DAT_0074ef18,&DAT_0046c7c4);\n"
+            "  FUN_0045623b((int *)_File,local_20 << 0xb,0);\n"
+            "  fread(param_2,0x800,(int)((iVar1 + iVar2 * -0x800) - (uint)(iVar2 << 10 < 0)) >> 0xb,_File);\n"
+            "  fclose(_File);\n"
+            "  return local_1c;",
+            "  uint local_20[2];\n"
+            "  \n"
+            "  FUN_00415498(param_1,local_20);\n"
+            "  iVar1 = local_20[1] + 0x7ff;\n"
+            "  iVar2 = iVar1 >> 0x1f;\n"
+            "  _File = fopen(&DAT_0074ef18,&DAT_0046c7c4);\n"
+            "  FUN_0045623b((int *)_File,local_20[0] << 0xb,0);\n"
+            "  fread(param_2,0x800,(int)((iVar1 + iVar2 * -0x800) - (uint)(iVar2 << 10 < 0)) >> 0xb,_File);\n"
+            "  fclose(_File);\n"
+            "  return local_20[1];",
+            1, 'FILELOAD scattered-locals -> contiguous 2-int buffer')
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
