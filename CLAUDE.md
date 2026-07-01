@@ -148,6 +148,23 @@ allocation sequence the reference has done by L9 and reproduce it. NEXT: capture
 heap (DD2_FE path reaching L9 naturally) with the SAME refcapture checkpoint and diff vs reference —
 now that the reference ground truth is capturable on demand, this is a normal measure-fix-remeasure loop.
 
+## Stage 2: SAME TRACK confirmed + the +0x38400 is BYTE-EXACT real (corrects the ASSETLOG "red herring" note)
+Sanity-checked the L9 comparison is valid (not a demo desync to a different track): OUR level-9 texture-
+directory header (16 bytes `97 01 00 00 04 00 80 00 c4 00 00 00 00 00 a0 00`, num_textures=0x197=407) at
+level_data_buffer rel 0 (0x75ebf0) matches the reference **byte-exact** at VA **0x796ff0 = rel +0x38400**
+(the ONLY 16B match, and the only place num_textures=0x197 appears in ref). => SAME track, same texdir
+content, placed 0x38400 apart. So the earlier ASSETLOG-section guess that "+0x38400 is a transient
+scratch-buffer red herring" is WRONG — it is a genuine, byte-exact, stable placement difference (the
+same 0x38400 that appears at the HEAP base too). The reference's level_data_buffer[0 .. 0x38400) is NOT
+our texdir: it's zeros [0,0x15c00) then a POINTER TABLE at rel 0x15c00 (0x7747f0) holding
+level_data_buffer-range pointers (e.g. 0x7b6e90, 0x7bc53c) — i.e. front-end/prior-session state that
+persists (level_data_buffer @0x75ebf0 is a FIXED BSS buffer, NOT reset by Init_Game's
+MPE_InitHeap(0x7debf0,...) which only resets the separate MPE heap). Our cold DD2_LEVEL=9 path never
+writes that region, so our level assets land 0x38400 earlier. CONCRETE NEXT: identify what writes the
+reference's [0x75ebf0,0x796ff0) (the zeros+pointer-table 0x38400 prefix) — a front-end/menu load into
+level_data_buffer that our shortcut skips — and either replicate it or run the faithful boot; that same
+history difference is what leaves our MPE heap base free (the decompress slots carve to a different spot).
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
