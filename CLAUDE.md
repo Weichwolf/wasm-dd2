@@ -294,6 +294,23 @@ currently mapped (Set_Object/Create_Object/FUN_0041fb7c is not the whole picture
 class of fix again, first find EVERY reader of the +0x20/+0x24/+0x28 fields and the +0x1e flag,
 not just the ones seen in stack traces so far.
 
+## Native L6 lead: sound-channel slot (0x900eec+N*0x28) gets scribbled AFTER correct init (new thread)
+Native L6 (post GEOM-GUARD/GUARD AG) no longer segfaults; instead exits cleanly via the ORIGINAL
+game's OWN error path: `Update_Engine_Sound` (dd2.c:29754) calls `Modify_Sound(iVar7,...)` with
+`iVar7=32576` (garbage) read from a per-car sound-channel slot at `0x900eec + iVar8*0x28`.
+`Modify_Sound`'s `if (param_1<0 || 3<param_1) System_Error(...)` (dd2.c:4034) is FAITHFUL ORIGINAL
+GAME BEHAVIOR (a real bounds check the original devs wrote) — not a decompile bug, so don't guard/
+silence it; the real bug is upstream, whatever corrupts the slot. Traced the ONLY writer of this
+field: `FUN_00447960` (called from `Init_Game`, dd2.c:29566-29571) correctly sets all 4 slots to
+0,1,2,3 — VERIFIED via gdb (`break FUN_00447960; finish` shows `0x900eec..+0x78 = 0,1,2,3` right
+after). So the corruption happens LATER, from some OTHER out-of-bounds write scribbling over this
+STATIC (not heap) memory region — a NEW, separate lead of similar depth to the Decompress/geometry
+chase, not yet root-caused. Native L2 also changed crash location after the GEOM-GUARD/GUARD AG
+fixes (new SIGSEGV address, not yet decoded) — likely a downstream consequence of the same guards
+changing execution timing/flow. Both are fresh leads for a future session; WASM doesn't hit either
+(10/10), so they may be native-harness-specific (e.g. FP/timing differences) rather than the core
+engine bug — worth checking that angle first before assuming they're WASM-relevant too.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
