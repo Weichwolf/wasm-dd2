@@ -104,6 +104,22 @@ and OVERWRITTEN the base header (a later allocation's carve exactly consumed the
 triggering MPE_malloc's `*puVar5 = *puVar3` merge-forward), while ours hasn't — a concrete, actionable
 allocation-order difference to chase next. (MODE=frame preserved in lockstep.sh for comparison.)
 
+## Front-end-history hypothesis: tested, did NOT improve alignment (negative result, keep DD2_LEVEL shortcut)
+Hypothesis: the reference runs ~1800 front-end idle-loop iterations (`re_out/dd2.c:34635-34661`,
+`local_18 = 0x708` countdown in the menu loop) before its OWN `DemoMode()` call — menu/title screen
+allocations before level 9's race heap gets built — while our `DD2_LEVEL=9` harness path
+(`DemoModeLevel` in `tools/native_main.c`) skips straight to the demo, with ZERO prior heap history.
+Tested by running our build the FAITHFUL way (`DD2_FE=1`, which confirmed it DOES naturally reach
+`Order_Cars`/`_current_level=9` after the same idle loop) and comparing its heap/game-data against
+the same reference dump. Result: heap match got slightly WORSE (74.44%->72.83%) and game-data match
+got MUCH worse (54.02%->10.33%). So "did the front-end run or not" is NOT the (or not the whole)
+explanation — likely our front-end's OWN behavior (timing, which menu screens/assets get touched,
+maybe non-deterministic real-time-based counters rather than pure loop-count) diverges from the
+reference's specific front-end path in ways that hurt more than the skip helps. CONCLUSION: keep
+using the `DD2_LEVEL=9` shortcut (DemoModeLevel) as the baseline for lockstep comparisons — it's
+measurably better-aligned than the "faithful" front-end path. The heap-layout divergence root is
+elsewhere (allocation/carve order within Init_Game itself, not pre-existing front-end history).
+
 ## Memory transaction log (how to journal heap changes for the bisect)
 A "transaction log" of memory changes is the right tool to find the first divergence. Granularities:
 - ALLOCATION journal (best for layout): log every MPE_malloc(size)→addr / MPE_free(addr); the heap
