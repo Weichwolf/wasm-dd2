@@ -90,6 +90,18 @@ def fix_dd2(s):
                "      if (((unsigned)((int)param_1+iVar2) < 0x400000u || (unsigned)((int)param_1+iVar2) >= 0x900000u) ||"
                " (*(byte *)((int)param_1 + iVar2 + 4) & 0x80) == 0) {",
                1, 'GEOM-GUARD2 Setup_Object_Block wild object-offset guard (safe fallback, not skip)')
+    # FIX DRAWPRIM-GUARD: DrawPrim (@0x412885) does a RAW indirect call `_primfuncs[type](prim)` with NO
+    # relocation-awareness, unlike the OT loop's _ot_dispatch (which already routes through the same guard).
+    # dd2_relocate() only rewrites _primfuncs entries whose value is in its fnmap; an entry it doesn't rewrite
+    # (e.g. the pause-overlay tile's type 0x28, only reached on the interactive demo_mode=0 path via
+    # Pause_Mode -> DrawPrim) keeps a raw image VA, which under WASM is a wild function-table index -> "table
+    # index is out of bounds" trap. Route DrawPrim through _ot_dispatch (defined just above it) so the single-
+    # prim path gets the identical relocated-call / image-address-switch / default handling as DrawOTag.
+    # Native is unaffected (relocated ptrs are >=0x460000 so _ot_dispatch's first branch calls them directly,
+    # exactly as the raw call did); WASM's non-relocated entries now fall to the switch/default instead of trapping.
+    s = sub(s, "  (*(code *)(&_primfuncs)[*(byte *)(param_1 + 7)])(param_1);\n  return;",
+            "  _ot_dispatch((int *)(uintptr_t)param_1,(int *)(uintptr_t)param_1,(int *)(uintptr_t)param_1);  /* DRAWPRIM-GUARD */\n  return;",
+            1, 'DRAWPRIM-GUARD route DrawPrim through _ot_dispatch')
     # FIX EBC2 (scattered-locals): sibling rasterizer FUN_0041243c (3-vertex / 6-int, read-only param_1[0..5],
     # texel callback FUN_0041080d) is fed &local_40 by FUN_00410f74/FUN_00411a04 — same reversed-stack-local
     # corruption as FIX EBC. Pass an explicit contiguous 6-int compound-literal array.
@@ -690,10 +702,14 @@ def fix_runtime(s):
     # old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks level, Order_Cars, Play_Game.
     demolevel = (
       "extern int DemoMode(void); extern void Setup_Pad(int); extern void Order_Cars(void); extern int rand(void);\n"
+      "extern char* getenv(const char*);\n"
       "static int DemoModeLevel(int lvl){\n"
       "  Setup_Pad(1);\n"
       "  *(int*)0x905a1c=*(int*)0x4673f4; *(int*)0x905a18=*(int*)0x4673f8;\n"
-      "  *(int*)0x46385c=1;\n"
+      "  /* demo_mode=1 (recorded-pad attract) by default; DD2_LIVE -> 0 = live keyboard input.\n"
+      "     Live mode currently trips a WASM 'table index out of bounds' (wild fn-ptr indirect call\n"
+      "     in the demo_mode=0 path; native tolerates it) -- under investigation for browser interactive. */\n"
+      "  *(int*)0x46385c = getenv(\"DD2_LIVE\") ? 0 : 1;\n"
       "  *(int*)0x905a14=*(int*)0x467400; *(int*)0x467400=2;\n"
       "  *(int*)0x905a10=*(int*)0x46765c; *(int*)0x46765c=0x14;\n"
       "  *(int*)0x4673f8=0; *(int*)0x4673f4=0;\n"
