@@ -107,6 +107,47 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Stage 2 UNBLOCKED: reference capture now WORKS (tools/refcapture.sh) — /proc/mem, no gdb breakpoints
+The long-standing "flaky wine / unreliable reference breakpoints" blocker is RESOLVED. Reference
+dd2h.exe now runs to the demo reliably and its live memory is read via **/proc/PID/mem** (ptrace_scope=0)
+— NO gdb code breakpoints (which were the unreliable part; DATA reads always worked). TWO things were
+required (both, together — this is why prior attempts failed):
+  1. **WINEARCH=win32 prefix in a dir you OWN** (scratchpad or $HOME, NOT /tmp itself — wine refuses
+     "/tmp is not owned by you"; a default win64 prefix fails "could not load kernel32.dll").
+  2. **Xvfb with an EXPLICIT screen**: `xvfb-run -s "-screen 0 640x480x16"`. Without it the game's
+     DirectDraw SetDisplayMode gets `NtUserChangeDisplaySettings -2` and NEVER reaches the demo
+     (_current_level/current_frame stay 0 forever — the symptom that looked like "wine hangs").
+     WITH it, the reference reaches **_current_level==9 in ~25s** (frame 288->675, then cycles to L6...).
+`tools/refcapture.sh` (WINEPREFIX=<owned>/wp32 tools/refcapture.sh) polls _current_level@0x936ff4 +
+current_frame@0x462ff0 and at the L9 checkpoint dumps heap [0x7debf0,0x8febf0) + game-data
+[0x75ebf0,0x7debf0) to /tmp/ref. Our side: `DD2_LEVEL=9 DD2_STATEDUMP=151 DD2_FRAMEDIR=/tmp/our
+/tmp/dd2_native_na` dumps [0x400000,0x900000) at frame 151; slice the same two ranges and diff.
+
+## Stage 2 FIRST DIRECT DIFF (ref vs ours, L9 frame 151): heap 50.6%, game-data 8.6%, root characterized
+With the pipeline working, captured BOTH builds at the identical L9/frame-151 checkpoint and diffed:
+- **Heap match 50.6%**, first byte divergence at the very base **0x7debf0**: ours = `f0 eb 7d 00 ec ..`
+  (the MPE_InitHeap self-pointer + free size 0xec -> base free block NEVER consumed), reference =
+  `52 53 52 53 53 53 52 52 ..` (real texture/geometry-like data -> base IS consumed/filled). Confirms
+  the long-standing "reference fills the heap base, ours leaves it free" finding, now byte-exact.
+- Chunk profile (32KB): the reference has a **~0x38000-byte fully-populated block at the LOW end
+  [0x7debf0,0x816bf0) (~99% nonzero) that OUR heap completely lacks there (~0% nonzero)**. 0x38000 =
+  **14 x 0x4000 = the active-object decompress slots** (our documented malloc sequence's `0x4000×14`).
+  So: the reference places the 14 decompress slots at the heap BASE (filled with decompressed geometry);
+  OUR build places them higher up (high-end carve) where they hold DIFFERENT bytes.
+- **NOT a positional shift**: a strong nonzero needle from our heap matches the reference's best
+  location only 33%, and the reference's base block is ABSENT from our heap (0.3% anywhere). So the
+  content genuinely DIFFERS, not just relocated -- because the slots sit at different heap positions,
+  their Decompress LZ back-reference "window" reads different preceding bytes -> different decompressed
+  geometry (exactly the "Decompress window = layout-dependent" chain) -> the crashes AND the divergence.
+ROOT (now concrete): our cold `DD2_LEVEL=9` launcher starts from a PRISTINE MPE_InitHeap and carves the
+level-9 allocations cleanly from the high end, whereas the reference reaches L9 through its title/
+front-end path with a DIFFERENT prior allocation history, so its free-list is in a different state and
+the same allocations land at different addresses (base-filled). The fix direction is to make our build's
+pre-L9 allocation history match the reference's (faithful boot path), OR to determine the exact
+allocation sequence the reference has done by L9 and reproduce it. NEXT: capture our own FAITHFUL-boot
+heap (DD2_FE path reaching L9 naturally) with the SAME refcapture checkpoint and diff vs reference —
+now that the reference ground truth is capturable on demand, this is a normal measure-fix-remeasure loop.
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
