@@ -946,3 +946,22 @@ layout correction will. NOTE __clutspace(0x6c0100)/__texturespace(0x490000) are 
 (unshifted) while geometry is shifted -> the geometry<->texture/CLUT cross-references span the shift
 boundary, a plausible specific mechanism for the black (index-0) car pixels to chase if a pre-layout-fix
 partial win is wanted.
+
+## Stage 2 ACTUAL ROOT CAUSE: we decompiled the WRONG BINARY (dd2.exe, not dd2h.exe) — .bss differs by EXACTLY 0x38400
+The +0x38400 layout shift is NOT a Ghidra error — it's a BINARY MISMATCH. PE section headers:
+  dd2.exe : .bss rawsize 0x488800, .idata @0x910000
+  dd2h.exe: .bss rawsize 0x4c0c00, .idata @0x950000     -> 0x4c0c00 - 0x488800 = **0x38400** exactly.
+`tools/decompile.sh` analyzes **dd2.exe** (PROGRAM=dd2.exe, Ghidra proj /home/cosmo/tools/dd2_ghidra_proj),
+but the reference/goal (CLAUDE.md line 1, refcapture.sh) is **dd2h.exe**. dd2h.exe reserves 0x38400 MORE
+.bss right after the framebuffer (0x713050) -- the 3-4 extra screen buffers for its rendering mode -- so
+EVERY symbol >= 0x713050 is 0x38400 higher in dd2h.exe than in dd2.exe. Our reconstruction (from dd2.exe)
+is therefore 0x38400 too low, which is the entire Stage-2 divergence + the decompress-window corruption
+(black-blob cars) + the residual crashes. THE FIX IS CLEAN AND TRACTABLE (Ghidra IS installed here:
+/home/cosmo/tools/ghidra_12.1.2_PUBLIC + jdk-21): **re-decompile from dd2h.exe** so all addresses get the
+correct dd2h layout. The two binaries are 99.9% identical (601072 vs 601592 bytes; code nearly the same,
+which is why the dd2.exe reconstruction RUNS) -- the difference is essentially the .bss size. Approach:
+import dd2h.exe into Ghidra, port/re-apply the dd2.exe symbol names + types (they're the same functions),
+export decomp+symbols, then re-anchor the transpile patches (their code-pattern anchors mostly survive;
+address-based ones shift +0x38400) and re-verify 10/10 + refcapture bit-match. This supersedes the
+"decompile-level memory-map fix" framing above: it's not a manual map edit, it's decompiling the correct
+target binary. This is THE fix that resolves Stage 2.
