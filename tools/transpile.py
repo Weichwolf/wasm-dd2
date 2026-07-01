@@ -436,6 +436,26 @@ def fix_dd2(s):
     s = sub(s, "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2) {",
       "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2 && (unsigned)uVar2 <= (unsigned)(prim_buf_size >> 3)) {", 1, 'GUARD AF alloc split SIZE OOB')
 
+    # GUARD AH (OT-insert wild puVar7, same class as GUARD AE/AF/AG): 5 sibling rasterizer functions
+    # (draw_face_3pt/4pt/4pt_text and co.) compute an ordering-table slot pointer `puVar7` from `__otz`,
+    # itself derived from vertex data reachable via the same corrupted-geometry chain as the other
+    # GUARD fixes (confirmed: native L2 crashes here, `draw_face_4pt_text` @ build/dd2.c:46751,
+    # dereferencing a wild puVar7). Guard the OT linked-list splice (read old head, write new head,
+    # link old head to new node) at its point of use: skip it (don't insert this primitive into the
+    # OT) if puVar7 falls outside the valid image+heap range. Only fires on already-corrupt state.
+    s = sub(s, "        uVar2 = *puVar7;\n        *puVar7 = puStack_14;\n        *puStack_14 = uVar2;",
+               "        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {\n"
+               "        uVar2 = *puVar7;\n        *puVar7 = puStack_14;\n        *puStack_14 = uVar2;\n        }",
+               6, 'GUARD AH OT-insert wild puVar7 (puStack_14, 8sp x6)')
+    s = sub(s, "        uVar2 = *puVar7;\n        *puVar7 = local_14;\n        *local_14 = uVar2;",
+               "        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {\n"
+               "        uVar2 = *puVar7;\n        *puVar7 = local_14;\n        *local_14 = uVar2;\n        }",
+               1, 'GUARD AH OT-insert wild puVar7 (local_14)')
+    s = sub(s, "          uVar2 = *puVar7;\n          *puVar7 = puStack_14;\n          *puStack_14 = uVar2;",
+               "          if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {\n"
+               "          uVar2 = *puVar7;\n          *puVar7 = puStack_14;\n          *puStack_14 = uVar2;\n          }",
+               1, 'GUARD AH OT-insert wild puVar7 (puStack_14, 10sp)')
+
     # GUARD AG (draw_text_half wild _clut/_tex, same class as GUARD AE/AF): DAT_00460004/DAT_0046000c
     # (the current CLUT/texture-page globals) can be set from a corrupted per-object dth_clut/dth_tpage
     # value (heap-layout divergence, same root as the GEOM-GUARD fixes) -> a wild address (e.g.
@@ -494,6 +514,16 @@ def fix_dd2(s):
     # bit-identical where it matters; only diverges on the already-divergent degenerate frame).
     s = sub(s, " * 0x100) /\n                local_20;",
                " * 0x100) /\n                _DZ(local_20);", 1, 'BB:camera-interp /0')
+
+    # TRIED (REVERTED): a FIX BJ guarding the SIBLING divisor a few lines earlier in this same
+    # interpolation (dd2.c:12948-12951, also a screen-space edge cross-product) with the same
+    # _DZ(den)->1 pattern as FIX BB. Unlike FIX BB, this one turned native L2's clean SIGFPE crash
+    # into a genuine INFINITE LOOP (confirmed: ran the full 90s timeout at ~100% CPU, exit code 124,
+    # not a fast crash) -- worse than the crash it replaced. Reverted. This divisor's degenerate case
+    # apparently feeds an iterative/convergence process elsewhere that needs den==0 to actually mean
+    # something (e.g. terminate a loop), not just "avoid division by zero" -- _DZ->1 papers over the
+    # SIGFPE but breaks that logic. Needs a different fix (skip the whole calc when den==0, not just
+    # substitute the divisor) -- open lead, not attempted further this session.
 
     # FIX BC (Decompress runaway, SIGNED loop-terminate): in Decompress@0x415550 the chunk loop
     # terminates with `if (uVar8 <= uVar9) return;`. x86 @0x415581 is `cmp esi,ecx; jl` = a SIGNED
