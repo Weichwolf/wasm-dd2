@@ -189,6 +189,18 @@ def fix_dd2(s):
         return "(int)&" + m.group(1) + " + " + m.group(2)
     s = re.sub(r"&(DAT_00792[0-9a-f]+|car_handling|grounded_count) \+ (uVar9|local_24)\b", _csbyte, s)
     _applied.append(('CARSTATE-BYTEOFF car-state init loop byte offsets', _cs_n[0]))
+    # FIX EAXARG-456d27 (dropped EAX register arg): FUN_00456d27 is a __fastcall dword-memset that takes
+    # its DEST in EAX (bound to _g_eax in assemble_dd2h.py). Recovered from dd2h.exe disasm: every
+    # `FUN_00456d27(0xe,0xffffffff)` call sets `mov eax,0x7892a0` (fill 14 dwords of the scene object
+    # header @0x7892a0 with -1); the `FUN_00456d27(2,0)` call sets `mov eax,0x939b80`. Set _g_eax before
+    # each via the comma operator (faithful: same dest the original loads into EAX). Without it in_EAX is
+    # an uninitialised wild ptr -> crash in Init_Scene.
+    _e1 = s.count("FUN_00456d27(0xe,0xffffffff)")
+    s = s.replace("FUN_00456d27(0xe,0xffffffff)", "(_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff))")
+    _applied.append(('EAXARG-456d27 scene-header fill dest=0x7892a0', _e1))
+    _e2 = s.count("FUN_00456d27(2,0)")
+    s = s.replace("FUN_00456d27(2,0)", "(_g_eax=0x939b80, FUN_00456d27(2,0))")
+    _applied.append(('EAXARG-456d27 fill dest=0x939b80', _e2))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --

@@ -99,7 +99,7 @@ for i, l in enumerate(lines):
     if not sig or '(' not in ' '.join(sig): continue
     seen.add(name); sigs.append(' '.join(sig) + ';')
 prologue = ('#include "ghidra_compat.h"\n#include "dd2_symbols.h"\n#include <stdio.h>\n'
-            'int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540;\n'
+            'int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540,_g_eax=0;\n'
             'int DirectDrawCreate(int,void**,int); int DirectSoundCreate(int,void**,int);\n'
             '/* forward declarations (decomp markers, excl. compat/libc) */\n' + "\n".join(sigs) + "\n\n")
 
@@ -114,6 +114,15 @@ def _conv_unaff(m):
     cast = typ.replace(' ', '')            # "short *" -> "short*"
     return "%s%sunaff_%s=(%s)(uintptr_t)%s;" % (ind, typ, reg, cast, g)
 gamecode = re.sub(r'(?m)^(\s*)([\w ]+\*? *)unaff_(ESI|EDI|EBX|EBP);$', _conv_unaff, gamecode)
+# in_EAX: the dropped EAX input register (e.g. FUN_00456d27 dword-memset takes its dest in EAX). Bind
+# to the emulated-register global _g_eax; callers set _g_eax before the call (transpile.py wires them).
+def _conv_ineax(m):
+    ind, typ = m.group(1), m.group(2)
+    if typ.split() and typ.split()[0] in ('return',):   # `return in_EAX;` is a statement, not a decl
+        return m.group(0)
+    cast = typ.replace(' ', '')
+    return "%s%sin_EAX=(%s)(uintptr_t)_g_eax;" % (ind, typ, cast)
+gamecode = re.sub(r'(?m)^(\s*)([A-Za-z_][\w ]*\*? *)in_EAX;$', _conv_ineax, gamecode)
 
 # OT-buffer fix (= dd2.exe Allocate_OT_ FIX): pad the OT malloc with guard slots + zero it, so overruns
 # don't corrupt adjacent heap (ClearOTagR/DrawOTag walk it). dd2h addrs: _DAT_007542ee/_DAT_0075437c.

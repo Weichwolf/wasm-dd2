@@ -1,7 +1,7 @@
 #include "ghidra_compat.h"
 #include "dd2_symbols.h"
 #include <stdio.h>
-int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540;
+int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540,_g_eax=0;
 int DirectDrawCreate(int,void**,int); int DirectSoundCreate(int,void**,int);
 /* forward declarations (decomp markers, excl. compat/libc) */
 void draw_text_half(void);
@@ -18900,7 +18900,7 @@ void __cdecl CLUT_Animation(undefined4 param_1,int *param_2,int *param_3)
 int Update_Other_Objects(void)
 
 {
-  int in_EAX;
+  int in_EAX=(int)(uintptr_t)_g_eax;
   
   switch(_current_level) {
   case 1:
@@ -43857,7 +43857,7 @@ int FUN_00456cb2(void)
 void __fastcall FUN_00456cf0(uint param_1,uint param_2)
 
 {
-  undefined1 *in_EAX;
+  undefined1 *in_EAX=(undefined1*)(uintptr_t)_g_eax;
   undefined1 *puVar1;
   uint uVar2;
   undefined1 uVar3;
@@ -43891,7 +43891,7 @@ void __fastcall FUN_00456cf0(uint param_1,uint param_2)
 undefined4 __fastcall FUN_00456d27(uint param_1,undefined4 param_2)
 
 {
-  undefined4 *in_EAX;
+  undefined4 *in_EAX=(undefined4*)(uintptr_t)_g_eax;
   undefined4 *puVar1;
   int iVar2;
   uint uVar3;
@@ -44788,7 +44788,7 @@ uint * __MemAllocator(void)
 
 {
   uint uVar1;
-  uint in_EAX;
+  uint in_EAX=(uint)(uintptr_t)_g_eax;
   uint uVar2;
   int unaff_EBX=(int)(uintptr_t)_g_ebx;
   uint *puVar3;
@@ -44845,7 +44845,7 @@ uint * __MemAllocator(void)
 void __MemFree(void)
 
 {
-  undefined4 *in_EAX;
+  undefined4 *in_EAX=(undefined4*)(uintptr_t)_g_eax;
   uint uVar1;
   int iVar2;
   uint uVar3;
