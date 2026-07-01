@@ -256,6 +256,26 @@ window bug (`## Decompress window = layout-dependent`, above) — stale heap byt
 DIFFERENT subsystem (the asset loader, not the LZSS decompressor) — reinforcing (not superseding) the
 core conclusion: ONE heap-layout fix should clear this AND the Decompress/crash symptoms together.
 
+## TRIED a source-level fix (Set_Object/Create_Object sanitize + FUN_0041fb7c guard) — REVERTED, made it worse
+Traced the crash mechanism one level deeper: `Set_Object`/`Create_Object` (dd2.c:6625-6629, 6656-6660)
+both contain the ONE-TIME self-relative fixup `*(param_2+0x28) = *(param_2+0x28) + param_2` (also
++0x20/+0x24) that converts a decompressed geometry block's stream-relative offset into an absolute
+poly-command pointer — guarded by a "already relocated" flag at +0x1e. `Create_Object` already has a
+`FUN_0041fb7c(param_1); if (iVar2 != -1) {...}` pattern, confirming the "-1 = invalid, don't use"
+convention is real and intentional here, not something to invent.
+Tried: sanitize the post-fixup +0x20/+0x24/+0x28 values in BOTH functions (null out if outside the
+valid image+heap range 0x400000-0x900000), plus a matching `if (_gpoly==0) return -1;` guard in
+`FUN_0041fb7c`. Result: **made things WORSE** (6/10, was 7/10) — L3 STILL crashed with the same
+0x666666xx garbage signature (meaning the corruption reaches the crash site through a path this
+patch didn't cover), AND L10 (previously fine) started HANGING instead of crashing — likely because
+nulling the pointer while still setting the +0x1e "already done" flag leaves some OTHER downstream
+consumer permanently waiting/looping on a geometry pointer it assumes must eventually be valid.
+REVERTED cleanly (confirmed back to 7/10 baseline). LESSON: this crash has MORE consumers/paths than
+currently mapped (Set_Object/Create_Object/FUN_0041fb7c is not the whole picture), and the +0x1e
+"done" flag has other semantic dependents that a purely-local null-check breaks. Before trying this
+class of fix again, first find EVERY reader of the +0x20/+0x24/+0x28 fields and the +0x1e flag,
+not just the ones seen in stack traces so far.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
