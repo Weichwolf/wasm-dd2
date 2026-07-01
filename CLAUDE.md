@@ -133,16 +133,21 @@ Init_Game/Init_Scene actually populates this buffer) for a meaningful content co
 find that later sync point in our build (a real function that runs after the level directory is fully
 read) and re-verify any future "match" finding's nonzero fraction before trusting it.
 
-CAVEAT (tried, didn't work): letting the REFERENCE's front-end run naturally to reach this later point
-(watching `_fi_levdat`/0x75eb60 for its first nonzero write, patiently, in the background) does NOT
-reliably converge in this environment — after **10 real minutes at ~100% CPU**, dd2h.exe under Wine +
-Xvfb never wrote that address again (beyond one early, irrelevant zero-write). Likely stuck busy-waiting
-on some resource that never becomes ready headless (display flip / audio device / similar), not
-genuinely progressing through the ~1800-iteration front-end idle loop. Don't repeat this exact
-"attach and patiently watch the real front-end" approach expecting it to finish on its own — kill it
-and find a different way to reach a late, content-populated reference checkpoint (e.g. a shorter/
-different code path, or accept Order_Cars-level alignment and focus comparisons on what IS populated
-by then).
+CORRECTION (gdb-confirmed, supersedes the "stuck/hung" theory below): it's NOT a hang. Diagnostic:
+after `_current_level==9` fires, `current_frame` (@0x462ff0) increments fine and FAST (~0.06s/step
+under gdb) for 700+ frames (a full demo race), then RESETS to a low value as the reference cycles to
+the NEXT demo level, and again after another ~700 frames — i.e. the reference happily runs multiple
+full attract-demo races. But `_fi_levdat`/0x75eb60 stayed **exactly 0x0 for the ENTIRE first ~700-frame
+level-9 race** (sampled every step up to step 750) — so `_fi_levdat` is almost certainly NOT the
+address/mechanism the ATTRACT DEMO's level loading actually uses (maybe it's for a different, e.g.
+menu-driven, load path; the "10 minutes at 100% CPU, no write" from the earlier attempt was simply
+the SAME true story at coarser sampling, not a hang). RETRACT the `_fi_levdat`-based reference sync
+plan. NEW APPROACH (validated as non-hanging): gate on `_current_level==9` first (alignment to the
+right level), THEN watch `current_frame` and dump at a threshold comfortably inside the SAME cycle
+(e.g. F=100, well before the ~700-frame reset) — this revives the original frame-count sync but scoped
+to the correct level via the level-gate, avoiding both the "title inflates the counter" problem (gate
+ensures we're already past title) and the "which demo cycle am I in" ambiguity (gate ensures level 9
+specifically, not whatever the Nth cycle happens to be).
 
 ## Front-end-history hypothesis: tested, did NOT improve alignment (negative result, keep DD2_LEVEL shortcut)
 Hypothesis: the reference runs ~1800 front-end idle-loop iterations (`re_out/dd2.c:34635-34661`,
