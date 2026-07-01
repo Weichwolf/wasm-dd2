@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DD2 pipeline STAGE 1 (M1): reproduce the named decompile from the binary.
-#   dd2.exe (analyzed Ghidra project) --headless--> re_out/dd2_decomp.c + functions.txt
+#   dd2h.exe (analyzed Ghidra project) --headless--> re_out/dd2_decomp.c + functions.txt
 # Names/types come from the Ghidra project DB; this stage never hand-edits C.
 # Idempotent: re-running regenerates the same output from the saved analysis.
 set -e

@@ -1,6 +1,6 @@
 # DD2 → WASM reproducible pipeline (single entry point).
 #
-# Stages:  dd2.exe --[Ghidra headless]--> re_out/dd2_decomp.c   (decompile; reproducible reference)
+# Stages:  dd2h.exe --[Ghidra headless]--> re_out/dd2_decomp.c   (decompile; reproducible reference)
 #          re_out/  --[transpile.py]-->   build/                (apply pipeline patches)
 #          build/   --[emcc / gcc-m32]-->  dd2run.js / dd2_native
 #
@@ -22,8 +22,8 @@ NATIVE  ?= /tmp/dd2_native
 
 all: build            ## default: transpile + WASM build from committed re_out
 
-pipeline: decompile check native verify build verify-wasm ## FULL from-binary chain: dd2.exe -> Ghidra -> transpile -> native+WASM build -> 10-level crash test (both targets)
-	@echo "pipeline OK: dd2.exe -> decompile -> patch -> compile (native + WASM) -> run  (~186 GTE/jumptable fns = committed re_out overlay)"
+pipeline: decompile check native verify build verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> transpile -> native+WASM build -> 10-level crash test (both targets)
+	@echo "pipeline OK: dd2h.exe -> decompile -> patch -> compile (native + WASM) -> run  (~186 GTE/jumptable fns = committed re_out overlay)"
 
 help:                 ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-18s %s\n",$$1,$$2}'
@@ -37,7 +37,7 @@ check: ## verify all transpile patch anchors still match the pristine decompile
 native: ## transpile + native 32-bit build, NO-ASan (real crash semantics) -> $(NATIVE)
 	ASAN=' ' bash $(ROOT)/tools/build_native.sh $(NATIVE)
 
-decompile: ## re-run Ghidra headless: dd2.exe -> re_out/dd2_decomp.c (reproducible reference layer, 906 fns)
+decompile: ## re-run Ghidra headless: dd2h.exe -> re_out/dd2_decomp.c (reproducible reference layer, 906 fns)
 	bash $(ROOT)/tools/decompile.sh
 	@echo "decompile: $$(grep -cE '/\* ===== .* @ ' $(ROOT)/re_out/dd2_decomp.c) functions exported"
 

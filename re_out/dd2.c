@@ -2332,7 +2332,7 @@ uint __cdecl SquareRoot0_(uint param_1)
 
 void GTERT(void)
 {
-  /* WASM: reconstructed from dd2.exe disasm (esi/edi register-ABI Ghidra dropped as unaff_).
+  /* WASM: reconstructed from dd2h.exe disasm (esi/edi register-ABI Ghidra dropped as unaff_).
      GTE Rotate+Translate: rot[4604b6] = M[7142f0] * in[714100] (Q12); out[714100] = T[714302] + rot. */
   short *M  = (short *)(uintptr_t)0x7142f0;          /* 3x3 rotation matrix (9 shorts) */
   short *iv = (short *)(uintptr_t)0x714100;          /* input vector: shorts @ +0,+4,+8 */
@@ -11714,7 +11714,7 @@ void __cdecl Generate_Surface_Normals(byte *param_1)
       local_30 = local_2c << 2;
       local_1c = 0;
       do {
-        /* WASM: reconstructed jumptables @0x426813 (table1) + @0x42683f (table2) from dd2.exe disasm.
+        /* WASM: reconstructed jumptables @0x426813 (table1) + @0x42683f (table2) from dd2h.exe disasm.
            Both select 3 vertex indices (iVar2=va, iVar5=vb, iVar6=vc) for the surface-normal cross product. */
         if ((local_28 == 0) && (local_2c < 9)) {
           if ((local_2c == 1) || (local_2c == 3)) { iVar2 = local_14; iVar5 = iVar8; iVar6 = iVar7; }       /* 0x426877 */

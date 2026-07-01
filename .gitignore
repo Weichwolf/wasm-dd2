@@ -2,15 +2,13 @@
 __pycache__/
 *.pyc
 build/
-build-native/
-assets/raw/
-out/
 *.o
 *.wasm
 node_modules/
-re_out/dd2_decomp.c
-re_out/*.log
 tools/browser/node_modules/
-tools/browser/package*.json
-web/build/
+tools/browser/package-lock.json
+re_out/dd2_decomp.c
 re_out/dd2h_staging/
+re_out/*.log
+# large binary memory snapshot (regenerated from dd2h.exe by the decompile step)
+dd2_image.bin
