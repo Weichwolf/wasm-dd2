@@ -103,6 +103,18 @@ prologue = ('#include "ghidra_compat.h"\n#include "dd2_symbols.h"\n#include <std
             'int DirectDrawCreate(int,void**,int); int DirectSoundCreate(int,void**,int);\n'
             '/* forward declarations (decomp markers, excl. compat/libc) */\n' + "\n".join(sigs) + "\n\n")
 
+# GTE REGISTER-ARG conversion (= dd2.exe GTE overlay): the GTE matrix/vector fragments (GTERT,
+# FUN_00414016/99, RotTrans...) pass their in/out vectors in esi/edi/ebx/ebp. Ghidra models only stack
+# args, so it emits bare `short *unaff_ESI;` (uninitialised local -> null deref). Bind each dropped
+# register to the emulated-register global (_g_esi/_g_edi/_g_ebx/_g_ebp) the caller-chain sets, exactly
+# as the dd2.exe overlay did. transpile.py's GTE wiring (FIX Q/N, GTERPT...) then anchors on this form.
+def _conv_unaff(m):
+    ind, typ, reg = m.group(1), m.group(2), m.group(3)
+    g = {'ESI':'_g_esi','EDI':'_g_edi','EBX':'_g_ebx','EBP':'_g_ebp'}[reg]
+    cast = typ.replace(' ', '')            # "short *" -> "short*"
+    return "%s%sunaff_%s=(%s)(uintptr_t)%s;" % (ind, typ, reg, cast, g)
+gamecode = re.sub(r'(?m)^(\s*)([\w ]+\*? *)unaff_(ESI|EDI|EBX|EBP);$', _conv_unaff, gamecode)
+
 # OT-buffer fix (= dd2.exe Allocate_OT_ FIX): pad the OT malloc with guard slots + zero it, so overruns
 # don't corrupt adjacent heap (ClearOTagR/DrawOTag walk it). dd2h addrs: _DAT_007542ee/_DAT_0075437c.
 gamecode = gamecode.replace("  _DAT_007542ee = MPE_malloc(param_1 << 2);",
