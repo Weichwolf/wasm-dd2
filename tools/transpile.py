@@ -222,6 +222,14 @@ def fix_dd2(s):
             _parts[_i+1] = _fix_rotz(_parts[_i+1]); _mx_n[0] += 1
     s = "".join(_parts)
     _applied.append(('MATRIXLOCALS RotMatrixZ contiguous stack matrix', _mx_n[0]))
+    # FIX LENSFLARE-LOCALS (scattered-locals overflow): Init_LensFlare copies 0x30 u32 (192 bytes) of
+    # lens-flare template data from &DAT_0042db60 into a contiguous stack buffer via a pointer walk, but
+    # Ghidra sized the destination as `short local_104 [12]` (24 bytes). The copy overruns 168 bytes,
+    # clobbering the spilled loop pointer psVar5 -> next store writes to 0x4 -> crash. Enlarge to [96]
+    # (exactly 192 bytes; ends at ebp-0x44, just before the separate iStack_40 so no overlap).
+    _lf = s.count("short local_104 [12];")
+    s = s.replace("short local_104 [12];", "short local_104 [96];")
+    _applied.append(('LENSFLARE-LOCALS local_104 copy-buffer size', _lf))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
