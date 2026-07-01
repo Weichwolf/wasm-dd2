@@ -176,6 +176,19 @@ def fix_dd2(s):
     _co_before = s.count("&car_object + ")
     s = s.replace("&car_object + ", "(int)&car_object + ")
     _applied.append(('CAROBJ-BYTEOFF car_object 0x38-stride byte offsets', _co_before))
+    # FIX CARSTATE-BYTEOFF (int* byte-stride, mixed loop): the per-car state-init loop in FUN_004431e8
+    # (Init_Scene) walks the car_handling array (0x792a04, stride 0x1b2) with a pre-scaled byte offset
+    # `uVar9 = car*0x1b2`. Most writes use the byte-correct `uVar9 + 0x792xxx` form, but a subset uses
+    # `&DAT_00792xx + uVar9` / `&car_handling + uVar9` / `&grounded_count + local_24` where the int*-typed
+    # symbol scales the already-byte offset by 4 -> writes 4x too far, overrunning into level_data_buffer
+    # (0x798964) and zeroing the low half of a shape pointer -> null _gpoly crash in Init_Car_Graphics.
+    # Byte-address these (uVar9/local_24 are byte offsets in this loop). Same scaling class.
+    _cs_n = [0]
+    def _csbyte(m):
+        _cs_n[0] += 1
+        return "(int)&" + m.group(1) + " + " + m.group(2)
+    s = re.sub(r"&(DAT_00792[0-9a-f]+|car_handling|grounded_count) \+ (uVar9|local_24)\b", _csbyte, s)
+    _applied.append(('CARSTATE-BYTEOFF car-state init loop byte offsets', _cs_n[0]))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
