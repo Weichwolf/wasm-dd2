@@ -456,6 +456,26 @@ def fix_dd2(s):
                "          uVar2 = *puVar7;\n          *puVar7 = puStack_14;\n          *puStack_14 = uVar2;\n          }",
                1, 'GUARD AH OT-insert wild puVar7 (puStack_14, 10sp)')
 
+    # GUARD AH2: same OT-insert bug, sibling rasterizers using `puVar5` as the slot pointer instead
+    # of `puVar7` (confirmed: native L9 crashed in draw_face_4pt_text_squash, build/dd2.c:48261,
+    # via this exact variant). Same guard, same reasoning.
+    s = sub(s, "      uVar2 = *puVar5;\n      *puVar5 = local_14;\n      *local_14 = uVar2;",
+               "      if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {\n"
+               "      uVar2 = *puVar5;\n      *puVar5 = local_14;\n      *local_14 = uVar2;\n      }",
+               1, 'GUARD AH2 OT-insert wild puVar5 (local_14, 6sp)')
+    s = sub(s, "        uVar2 = *puVar5;\n        *puVar5 = puStack_14;\n        *puStack_14 = uVar2;",
+               "        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {\n"
+               "        uVar2 = *puVar5;\n        *puVar5 = puStack_14;\n        *puStack_14 = uVar2;\n        }",
+               4, 'GUARD AH2 OT-insert wild puVar5 (puStack_14, 8sp x4)')
+    s = sub(s, "        uVar2 = *puVar5;\n        *puVar5 = _gprim1;\n        *_gprim1 = uVar2;",
+               "        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {\n"
+               "        uVar2 = *puVar5;\n        *puVar5 = _gprim1;\n        *_gprim1 = uVar2;\n        }",
+               1, 'GUARD AH2 OT-insert wild puVar5 (_gprim1)')
+    s = sub(s, "        uVar2 = *puVar5;\n        *puVar5 = puVar6;\n        *puVar6 = uVar2;",
+               "        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {\n"
+               "        uVar2 = *puVar5;\n        *puVar5 = puVar6;\n        *puVar6 = uVar2;\n        }",
+               1, 'GUARD AH2 OT-insert wild puVar5 (puVar6)')
+
     # GUARD AG (draw_text_half wild _clut/_tex, same class as GUARD AE/AF): DAT_00460004/DAT_0046000c
     # (the current CLUT/texture-page globals) can be set from a corrupted per-object dth_clut/dth_tpage
     # value (heap-layout divergence, same root as the GEOM-GUARD fixes) -> a wild address (e.g.
@@ -522,8 +542,15 @@ def fix_dd2(s):
     # not a fast crash) -- worse than the crash it replaced. Reverted. This divisor's degenerate case
     # apparently feeds an iterative/convergence process elsewhere that needs den==0 to actually mean
     # something (e.g. terminate a loop), not just "avoid division by zero" -- _DZ->1 papers over the
-    # SIGFPE but breaks that logic. Needs a different fix (skip the whole calc when den==0, not just
-    # substitute the divisor) -- open lead, not attempted further this session.
+    # SIGFPE but breaks that logic.
+    # FIX BK: the different-approach fix that DID work -- instead of substituting the divisor (which
+    # corrupts the iterative state, see above), SKIP the whole dependent calculation (the division
+    # AND everything that consumes its result: iVar2/iVar3/_camera_fd/_DAT_00744b18/DAT_00463ef0
+    # updates, dd2.c:12948-12968) when the divisor would be 0 -- i.e. just don't update the camera
+    # interpolation this frame for a degenerate track-strip edge, leaving state at its prior (valid)
+    # values, rather than injecting either a fake divisor or a fake quotient. Only fires when the
+    # divisor is already 0 (unreachable on real geometry).
+    s = sub(s, '        local_1c = (*(int *)((int)&DAT_00752344 + iVar4) - _camera_fd) * (piVar10[2] - piVar8[2]);\n        iVar2 = (((*piVar10 - *piVar8) * (*(int *)((int)&DAT_0075234c + iVar4) - piVar8[2]) -\n                 (piVar10[2] - piVar8[2]) * (*(int *)((int)&DAT_00752344 + iVar4) - *piVar8)) * 0x100) /\n                ((*(int *)((int)&DAT_0075234c + iVar4) - _DAT_00744b18) * (*piVar10 - *piVar8) - local_1c\n                );\n        iVar3 = iVar2 * (_camera_fd - *(int *)((int)&DAT_00752344 + iVar4)) +\n                *(int *)((int)&DAT_00752344 + iVar4) * 0x100;\n        iVar5 = iVar3 >> 0x1f;\n        _camera_fd = (int)((iVar3 + iVar5 * -0x100) - (uint)(iVar5 << 7 < 0)) >> 8;\n        iVar2 = *(int *)((int)&DAT_0075234c + iVar4) * 0x100 +\n                (_DAT_00744b18 - *(int *)((int)&DAT_0075234c + iVar4)) * iVar2;\n        iVar3 = iVar2 >> 0x1f;\n        _DAT_00744b18 = (int)((iVar2 + iVar3 * -0x100) - (uint)(iVar3 << 7 < 0)) >> 8;\n        if ((int)DAT_00463ef0 < 0x400) {\n          iVar2 = 0x20;\n        }\n        else {\n          iVar2 = DAT_00463ef0 - 0x400;\n        }\n        DAT_00463ef0 = DAT_00463ef0 + iVar2;\n        if (0x3ff < (int)DAT_00463ef0) goto joined_r0x00429509;\n        DAT_00463ef0 = DAT_00463ef0 + 0x20;\n      }\n    }', '        local_1c = (*(int *)((int)&DAT_00752344 + iVar4) - _camera_fd) * (piVar10[2] - piVar8[2]);\n        if (((*(int *)((int)&DAT_0075234c + iVar4) - _DAT_00744b18) * (*piVar10 - *piVar8) - local_1c) != 0) {\n        iVar2 = (((*piVar10 - *piVar8) * (*(int *)((int)&DAT_0075234c + iVar4) - piVar8[2]) -\n                 (piVar10[2] - piVar8[2]) * (*(int *)((int)&DAT_00752344 + iVar4) - *piVar8)) * 0x100) /\n                ((*(int *)((int)&DAT_0075234c + iVar4) - _DAT_00744b18) * (*piVar10 - *piVar8) - local_1c\n                );\n        iVar3 = iVar2 * (_camera_fd - *(int *)((int)&DAT_00752344 + iVar4)) +\n                *(int *)((int)&DAT_00752344 + iVar4) * 0x100;\n        iVar5 = iVar3 >> 0x1f;\n        _camera_fd = (int)((iVar3 + iVar5 * -0x100) - (uint)(iVar5 << 7 < 0)) >> 8;\n        iVar2 = *(int *)((int)&DAT_0075234c + iVar4) * 0x100 +\n                (_DAT_00744b18 - *(int *)((int)&DAT_0075234c + iVar4)) * iVar2;\n        iVar3 = iVar2 >> 0x1f;\n        _DAT_00744b18 = (int)((iVar2 + iVar3 * -0x100) - (uint)(iVar3 << 7 < 0)) >> 8;\n        if ((int)DAT_00463ef0 < 0x400) {\n          iVar2 = 0x20;\n        }\n        else {\n          iVar2 = DAT_00463ef0 - 0x400;\n        }\n        DAT_00463ef0 = DAT_00463ef0 + iVar2;\n        if (0x3ff < (int)DAT_00463ef0) goto joined_r0x00429509;\n        DAT_00463ef0 = DAT_00463ef0 + 0x20;\n        }\n      }\n    }', 1, 'BK:skip whole camera-interp calc on degenerate divisor')
 
     # FIX BC (Decompress runaway, SIGNED loop-terminate): in Decompress@0x415550 the chunk loop
     # terminates with `if (uVar8 <= uVar9) return;`. x86 @0x415581 is `cmp esi,ecx; jl` = a SIGNED
