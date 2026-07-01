@@ -1,3 +1,4 @@
+#include <stdio.h>
 /* indirect-call dispatch: VA->C-function map + startup relocation of fn-pointers in the image */
 #include "ghidra_compat.h"
 extern unsigned char* g_image;
@@ -854,6 +855,17 @@ extern int __matherr();
 extern int __get_std_stream();
 extern int FUN_0045c46b();
 typedef struct{unsigned va;void*fn;}dd2_fnent;
+extern int FUN_00417f00();
+extern int FUN_0041867c();
+extern int FUN_00418f30();
+extern int FUN_0041bd3c();
+extern int FUN_0041bd98();
+extern int FUN_0041c514();
+extern int FUN_0041c570();
+extern int FUN_0041ce28();
+extern int FUN_0041cf00();
+extern int FUN_0041d964();
+extern int FUN_0041da48();
 dd2_fnent dd2_fnmap[]={
 {0x00410010,(void*)&draw_text_half},
 {0x0041033a,(void*)&FUN_0041033a},
@@ -1707,6 +1719,17 @@ dd2_fnent dd2_fnmap[]={
 {0x0045c39c,(void*)&__matherr},
 {0x0045c3a1,(void*)&__get_std_stream},
 {0x0045c46b,(void*)&FUN_0045c46b},
+{0x00417f00,(void*)&FUN_00417f00},
+{0x0041867c,(void*)&FUN_0041867c},
+{0x00418f30,(void*)&FUN_00418f30},
+{0x0041bd3c,(void*)&FUN_0041bd3c},
+{0x0041bd98,(void*)&FUN_0041bd98},
+{0x0041c514,(void*)&FUN_0041c514},
+{0x0041c570,(void*)&FUN_0041c570},
+{0x0041ce28,(void*)&FUN_0041ce28},
+{0x0041cf00,(void*)&FUN_0041cf00},
+{0x0041d964,(void*)&FUN_0041d964},
+{0x0041da48,(void*)&FUN_0041da48},
 };
 int dd2_fnmap_n=sizeof(dd2_fnmap)/sizeof(dd2_fnmap[0]);
 static void* g_lut[0x50000];
@@ -1714,7 +1737,8 @@ void dd2_relocate(void){
   int i; unsigned off;
   for(i=0;i<dd2_fnmap_n;i++){unsigned v=dd2_fnmap[i].va; if(v>=0x410000&&v<0x460000) g_lut[v-0x410000]=dd2_fnmap[i].fn;}
   for(off=0x60000; off+4<=0x578800; off+=4){
-    unsigned w=*(unsigned*)(g_image+off);
-    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void**)(g_image+off)=fn;}
+    volatile unsigned* p = (volatile unsigned*)(g_image+off);
+    unsigned w=*p;
+    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void* volatile*)p=fn;}
   }
 }

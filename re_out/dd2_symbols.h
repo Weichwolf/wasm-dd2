@@ -926,6 +926,7 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define PTR_FUN_0046c524 (*(int*)GIMG(0x0046c524))
 #define PTR_FUN_0046c528 (*(int*)GIMG(0x0046c528))
 #define PTR_LAB_00462ef4 (*(int*)GIMG(0x00462ef4))
+#define PTR_FUN_00462ef4 (*(int*)GIMG(0x00462ef4))  /* re-export relabeled PTR_LAB->PTR_FUN after poly-handler recovery */
 #define PTR_LAB_00467084 (*(int*)GIMG(0x00467084))
 #define PTR_LAB_0046af90 (*(int*)GIMG(0x0046af90))
 #define PTR_LAB_0046c07c (*(int*)GIMG(0x0046c07c))
