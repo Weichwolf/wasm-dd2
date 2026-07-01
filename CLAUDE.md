@@ -349,11 +349,26 @@ likely present across several/all of the ~12 poly-command handler functions in t
 (FUN_0041a2f4, FUN_00417ea0, FUN_0041861c, FUN_00418ed0, FUN_0041bc0c✓, FUN_0041bc68✓, FUN_0041c3e4,
 FUN_0041c440, FUN_0041ccf8, FUN_0041cdd0, FUN_0041d834, FUN_0041d918, setup_face_sprite — ✓ = guarded),
 each walking `_gprim1`/`_gprim2`/`_gpoly` with counts/offsets sourced from the same corrupted stream.
-NEXT: apply the SAME per-write-guard pattern (not iteration-count clamping — that's what broke things
-twice) to the remaining ~10 handlers, one at a time, verifying native AND `make verify-wasm` together
-after each. This is real but bounded work (a known, repeatable pattern per function) — the risk
-already identified is getting the POST-FIX-I anchor text right (FIX I rewrites `_gprim1 + N` into
-`(char*)_gprim1 + N` form earlier in the pipeline; anchor against THAT text, not the pristine source).
+TRIED GUARD AK2 (FUN_0041a2f4, dd2.c:5644) — REVERTED, another regression trade-off. Guarded the
+WHOLE per-iteration body (all writes to `_gprim1` AND the inner copy loop writing through
+`local_14`/`_gprim2`) with one condition, leaving only the advancement (`local_14+=10`,
+`_gpoly+=0x14`, `_gprim1+=10`) outside it — same recipe that worked for GUARD AK. Result:
+**this DID fix L6** (native reached "demo returned" for level 6!) but **L2 regressed into a hang**
+(confirmed: exit code 124). So `FUN_0041a2f4`'s skipped body apparently computes/uses something
+(maybe the CLUT-index `iVar1`, or the copy loop itself) that something DOWNSTREAM depends on for L2's
+specific flow — unlike `FUN_0041bc0c`/68 where skipping the writes was fully safe. Reverted; confirmed
+clean 9/10 (L6 only, no hangs) and WASM still 10/10.
+LESSON: this handler-by-handler guarding is NOT a mechanically-safe repeatable pattern — each function
+needs to be judged individually for what's safe to skip vs. what must still execute (e.g. maybe only
+skip the WRITES but still run the CLUT-lookup/index computation, rather than skipping the whole body).
+Two native-only levels (L2, L6) have now each been fixed AND regressed by DIFFERENT guard attempts at
+DIFFERENT times this session — treat any single "fixed!" result on one level as provisional until the
+FULL 10-level sweep confirms no other level moved backward, every time.
+NEXT: for `FUN_0041a2f4` specifically, try guarding ONLY the actual writes (the `_gprim1[1]=`,
+`*(undefined2*)(_gprim1+...)=`, and the copy-loop's `*puVar3=*puVar2` assignment) while still computing
+`iVar1`/reading `_gpoly` and still running the CLUT-lookup `if` unconditionally, matching the
+"un-write, not un-compute" principle GUARD AK used successfully. For the remaining ~9 other handlers,
+apply the SAME careful, per-function judgment — not a blind copy-paste of the GUARD AK/AK2 template.
 
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
