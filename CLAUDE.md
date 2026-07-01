@@ -240,6 +240,29 @@ the wide capture started at 0x740000 so it's at/below there) and what symbol/gap
 binary vs ours. That boundary IS the missing-buffer location. Tools: refcapture.sh (wide dump), the
 per-buffer +0x38400 test in this session's transcript.
 
+## Stage 2 BOUNDARY PINNED: the +0x38400 begins at 0x713050 = _screenbuffer END (= 3 screen buffers gap)
+Boundary scan (ref low dump [0x6c0000,0x750000) vs our state, same-addr vs +0x38400 per 0x1000):
+- [0x6c0000, 0x701000): MATCH AT SAME ADDRESS (100% at 0x6c0000) -- __clutspace(0x6c0100) etc., fixed, OK.
+- [0x701000, 0x713000): ambiguous/near-empty -- the primary framebuffer _screenbuffer @0x700450 (size
+  0x12c00, ends EXACTLY at 0x713050).
+- **0x713000+: SHIFT +0x38400 begins** (same=0.4%, +0x38400=92%+). In OUR symbol layout the first symbol
+  after _screenbuffer is `rgb_lookup` @ **0x713050 = 0x700450 + 0x12c00** -- i.e. we pack rgb_lookup (and
+  everything after) IMMEDIATELY after the framebuffer with NO gap, while the real binary has **0x38400 =
+  3 x 0x12c00 = THREE more screen-sized buffers** in [0x713050, 0x74b450) before rgb_lookup. That missing
+  0x38400 is exactly the shift. (The "3 screen buffers" numerology was RIGHT -- just located right after
+  the primary framebuffer, i.e. a QUAD-buffer/extra render-target set, NOT in level_data_buffer.)
+OPEN QUESTION to resolve before fixing (static vs runtime): is this a STATIC BSS-layout error (Ghidra/our
+dd2_symbols.h packed rgb_lookup..end 0x38400 too low; fix = insert a 0x38400 gap so all VAs >= 0x713050
+shift up to match the real binary) OR a RUNTIME buffer-base computed 0x38400 differently (the loaded
+geometry is written to a runtime base, and rgb_lookup's static match at +0x38400 was coincidental for a
+color table)? DECIDE by: check whether rgb_lookup (a static color LUT) actually differs same-addr vs
++0x38400 with SPECIFIC (non-coincidental) content, and whether the 3 buffers are static BSS or a
+MPE/runtime allocation. If static: the fix is a symbol-layout correction (big but mechanical -- add the
+0x38400 reserve after _screenbuffer, re-point every VA >= 0x713050). If runtime: find the buffer-base
+calc. Either way the payoff is large: correct layout -> decompress LZ window reads the right preceding
+bytes -> geometry decompresses correctly -> the L2/L3/L6 crashes AND the memory divergence resolve
+together. This is the single highest-value fix in the project; do it carefully (keep both targets 10/10).
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
