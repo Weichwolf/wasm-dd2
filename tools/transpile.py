@@ -702,7 +702,7 @@ def fix_runtime(s):
     # old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks level, Order_Cars, Play_Game.
     demolevel = (
       "extern int DemoMode(void); extern void Setup_Pad(int); extern void Order_Cars(void); extern int rand(void);\n"
-      "extern char* getenv(const char*);\n"
+      "extern char* getenv(const char*); extern int atoi(const char*);\n"
       "static int DemoModeLevel(int lvl){\n"
       "  /* Seed the keyboard pad type (0x71c051=1) BEFORE Setup_Pad records _recorded_pad_type: the\n"
       "     cold level-launcher skips the front-end that would establish it, so it defaults to 0 (BSS)\n"
@@ -719,7 +719,8 @@ def fix_runtime(s):
       "  *(int*)0x905a14=*(int*)0x467400; *(int*)0x467400=2;\n"
       "  *(int*)0x905a10=*(int*)0x46765c; *(int*)0x46765c=0x14;\n"
       "  *(int*)0x4673f8=0; *(int*)0x4673f4=0;\n"
-      "  { int iVar1=rand(); _current_level = lvl ? lvl : (iVar1%10+1); }\n"
+      "  { char* le=getenv(\"DD2_LEVEL\"); int el=le?atoi(le):0; int iVar1=rand();\n"
+      "    _current_level = el ? el : (lvl ? lvl : (iVar1%10+1)); }\n"
       "  Order_Cars();\n"
       "  return Play_Game();\n"
       "}\n")
