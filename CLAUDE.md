@@ -490,3 +490,19 @@ buffer pointer by each asset's size — a different asset sequence/sizes before 
 produce exactly this constant offset. NEXT: inventory the asset load list (DAT_00462cd8 head /
 DAT_00462cdc count, filled before FUN_00415160 runs) and compare total bytes loaded before the level
 directory, native vs reference — the 0x38400 gap should be one identifiable missing/mis-sized asset.
+
+## Stage 3 (playability): input path WORKS (verified), commit 05cf05e
+The engine's live-input model: Win32 msg loop -> `Translate_Keypress(vkey, lparam)` (bit31 of lparam
+= key-up) sets `_pad_*` boolean globals by matching vkey against the keymap `Setup_Pad` loads; the
+per-frame read packs those into the control word @0x71c048. Wiring = platform key event -> Windows VK
+-> Translate_Keypress. DONE: `re_out/dd2_input.c` (hand-written compat shim) provides `dd2_key_event`,
+`dd2_browser_key_to_vk` (browser KeyboardEvent.code -> VK), `dd2_browser_key_event`, `dd2_input_selftest`.
+Wired into both build UNITS. `DD2_INPUTTEST=1 /tmp/dd2_native_na` -> PASS (ArrowUp/Down/Left flip
+_pad_lup/ldown/lleft). Required FIX KEYMAP (transpile.py): Translate_Keypress compared the VK against
+keymap globals Ghidra mis-typed as `*(int*)` (4-byte reads) so NO key ever matched -- live input was
+100% dead; the x86 compares bytes. Cast each RHS to (unsigned char). Both targets still 10/10.
+Active keymap (Setup_Pad(1), map @0x46757a): ENTER=accept, ESC=back, arrows=steer/accel/brake, F1/F2,
+SPACE, W/S/A/Z. NEXT Stage-3 steps: (1) run in PLAY mode (demo_mode=0 race, or Front_End menu) instead
+of the recorded-pad attract demo; (2) browser: hook canvas keydown/keyup -> dd2_browser_key_event and
+drive a continuous render loop (web/shell.html canvas + putImageData of g_pixels@0x700450 already
+exist in a stale web/build); (3) verify menu navigation + a controllable race end-to-end.
