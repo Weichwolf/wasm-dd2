@@ -27,15 +27,19 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   (GEOM-GUARD, GUARD AE/AG/AH/AK/AM/AO, DRAWPRIM-GUARD, FIX BK/PADTYPE…) that convert corruption symptoms into
   safe skips. Interactive (demo_mode=0, `DD2_LIVE=1`) renders the live race; keyboard input wired
   (`re_out/dd2_input.c`, FIX KEYMAP/PADTYPE).
-- **Stage 2 — bit-identical: ACTIVE, re-base underway.** ROOT CAUSE FOUND: the reconstruction was built from the
-  WRONG binary — **dd2.exe (320x240)** instead of **dd2h.exe (640x480)**. Framebuffer `@0x700450`: 640x480 8bpp =
-  0x4b000 vs 320x240 = 0x12c00 → diff **0x38400** = exactly the .bss/layout shift that made every geometry buffer
-  ≥0x713050 land 0x38400 too low → decompress-window corruption (black-blob cars) + the residual crashes.
-  **Fix = re-base on dd2h.exe** (dd2.exe deleted; decompile.sh → dd2h.exe; dd2h analyzed in Ghidra, 838 fns / 518
-  named at correct shifted addrs). REMAINING: regen `dd2_symbols.h` for dd2h BSS, swap `re_out/dd2.c` to dd2h,
-  redo GTE overlay, re-anchor transpile patches, regen `dd2_image.bin` (dd2h snapshot), rebuild, then bit-verify
-  vs dd2h via `refcapture.sh` (expect +0x38400 to vanish, cars to render). dd2h decomp staged in
-  `re_out/dd2h_staging/` (gitignored).
+- **Stage 2 — bit-identical: ACTIVE, re-base VALIDATED.** ROOT CAUSE: built from the WRONG binary — **dd2.exe
+  (320x240)** not **dd2h.exe (640x480)**. Framebuffer `@0x700450`: 640x480 8bpp = 0x4b000 vs 320x240 = 0x12c00 →
+  diff **0x38400** = the .bss shift making every DATA addr ≥0x713050 land 0x38400 too low → decompress-window
+  corruption (black-blob cars) + crashes. FIX (works, env `DD2_DD2H`): transpile post-pass shifts every literal
+  in [0x713050,0x940000) by +0x38400 (data shift measured clean; code shifts non-uniformly but C calls by name)
+  + `tools/make_dd2h_image.py` inserts a 0x38400 gap in `dd2_image.bin`. RESULT vs dd2h ref (refcapture.sh,
+  L9/frame151): **level_data_buffer 8.6%→95.7%, car_vertices 97.3%, rgb_lookup 100%, full 50.6%→75.4%.** Working
+  dd2.exe build still 10/10 (env-gated). REMAINING: dd2h build 3/10 crash-free (guards tuned for old layout +
+  residual divergence); MPE heap BASE still not consumed (0x816ff0 = InitHeap self-ptr vs ref real data) —
+  likely the RESOLUTION-dependent sizes (Init_Primitive_Buffer 0x60000, OT, framebuffer pitch 0x140→0x280,
+  0x12c00→0x4b000; all <0x713050 so NOT shifted, still dd2.exe values) → dd2h's bigger 640x480 buffers consume
+  more heap to reach the base. NEXT: fix resolution constants (ties heap-base divergence AND rendering), recheck
+  guards (many likely unneeded once geometry is correct), then flip DD2_DD2H default + bit-verify.
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Input path proven
   (steering responds); browser renders. Blocked on Stage-2 correctness (corrupt geometry).
 
