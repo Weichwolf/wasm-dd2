@@ -491,6 +491,30 @@ produce exactly this constant offset. NEXT: inventory the asset load list (DAT_0
 DAT_00462cdc count, filled before FUN_00415160 runs) and compare total bytes loaded before the level
 directory, native vs reference — the 0x38400 gap should be one identifiable missing/mis-sized asset.
 
+## Stage 2: OUR level-9 asset-load inventory (tool DD2_ASSETLOG) — handlers are FAITHFUL, gap is order/count
+Added `DEBUG ASSETLOG` (transpile, runtime-gated `DD2_ASSETLOG`, always-present no-op otherwise): logs
+each asset FUN_00415160 loads as `[asset] bufpos rel foff size type ret` (buffer position,
+level_data_buffer-relative, file offset, byte size, handler-type index, handler return = buffer
+advance). OUR level-9 sequence (native, `DD2_LEVEL=9 DD2_ASSETLOG=1`), exactly 4 assets:
+  1. rel=0x0     size=392324 type=3 ret=0x1974   (FUN_00414fb0: texture DIRECTORY -> level_data_buffer,
+                                                  advance=num_textures*0x10+4=0x197*0x10+4; textures
+                                                  themselves -> _DAT_00716c18, a SEPARATE buffer)
+  2. rel=0x1974  size=397700 type=4 ret=0x0       (Load_Texture2 @0x414ff4: more textures ->_DAT_00716c18,
+                                                  returns 0 BY DESIGN -- does NOT advance level_data_buffer)
+  3. rel=0x1974  size=389624 type=4 ret=0x0       (Load_Texture2 again, ret 0)
+  4. rel=0x1974  size=148184 type=0 ret=0x242d8   (Load_Null @0x414f30: raw copy, advance=full size)
+Total level_data_buffer usage = 0x1974 + 0x242d8 = 0x25C4C. KEY RESULT: every handler's return is
+FAITHFUL (Load_Texture2 returning 0 is correct -- textures live in _DAT_00716c18, not level_data_buffer;
+so the 0-advance is NOT the bug). => the +0x38400 shift is NOT a mis-sized handler return; it must be
+asset ORDER/COUNT or the param_1 START pointer FUN_00415160 is called with (Init_Game passes
+&level_data_buffer=0x75ebf0; if the reference reaches level 9 via its front-end/DemoMode path and has
+already written 0x38400 into [0x75ebf0,0x796ff0) -- or calls the loader with a +0x38400 base -- the same
+4 assets land 0x38400 later). NEXT: capture the REFERENCE's asset sequence (same 4? same order? same
+param_1 base?) -- but note our DD2_LEVEL=9 launcher skips the front-end, so first rule out whether the
+0x38400 is front-end residue by checking whether the reference's [0x75ebf0,0x796ff0) is
+menu/common-asset data written BEFORE Init_Game's FUN_00415160 call (a pre-level allocation the cold
+launcher never makes), vs a genuinely different level-load. Tool: `DD2_ASSETLOG=1` on either target.
+
 ## Stage 3 (playability): input path WORKS (verified), commit 05cf05e
 The engine's live-input model: Win32 msg loop -> `Translate_Keypress(vkey, lparam)` (bit31 of lparam
 = key-up) sets `_pad_*` boolean globals by matching vkey against the keymap `Setup_Pad` loads; the

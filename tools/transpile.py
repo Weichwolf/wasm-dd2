@@ -142,6 +142,20 @@ def fix_dd2(s):
                "    if (iVar22 == -1) {\n      MPE_free((int)puVar20);  /* FIX MFREE: MPE_malloc<->MPE_free */\n"
                "      return 0xffffffff;\n    }", name='MFREE:MPE_malloc/free pairing')
     # DEBUG ZEROBUF (temporary, env-gated): zero the Decompress dest buffer at entry to test whether
+    # DEBUG ASSETLOG (Stage 2, runtime-gated DD2_ASSETLOG): inventory the level asset-loader sequence in
+    # FUN_00415160 -- the writer of level_data_buffer (0x75ebf0), where the validated +0x38400 shift lives.
+    # Each asset is fread then the per-type handler returns its decompressed size, advancing the buffer
+    # pointer; the layout is fully determined by the sum of those returns. Log {bufpos, file-offset, byte
+    # size, handler-type, handler-return} per asset so OUR sequence can be diffed vs the reference's to pin
+    # the specific missing/mis-sized/mis-ordered asset producing the 0x38400 (=3x320x240) gap. Always in the
+    # source; only prints when DD2_ASSETLOG is set. printf (stdout) to avoid an stderr fwd-decl mismatch.
+    s = sub(s, "    param_1 = (void *)((int)param_1 + iVar5);\n    iVar5 = iVar1;\n  } while (iVar1 != 0);",
+               "    { extern char *getenv(const char*); extern int printf(const char*,...);\n"
+               "      if(getenv(\"DD2_ASSETLOG\")) printf(\"[asset] bufpos=0x%x rel=0x%x foff=%d size=%d type=%d ret=0x%x\\n\",\n"
+               "        (unsigned)(uintptr_t)param_1, (unsigned)((uintptr_t)param_1 - 0x75ebf0u), dd2_asset_off,\n"
+               "        dd2_asset_size, (int)((puVar2[1] & 0xff) >> 3), (unsigned)iVar5); }\n"
+               "    param_1 = (void *)((int)param_1 + iVar5);\n    iVar5 = iVar1;\n  } while (iVar1 != 0);",
+               1, 'DEBUG ASSETLOG asset-loader inventory')
     # the LZ back-references read UNINITIALIZED buffer (stale MPE_malloc 0x66 bytes) vs correct data.
     if os.environ.get('DD2_ZEROBUF_PATCH'):
         s = sub(s, "  pbVar5 = (byte *)*param_1;\n  if (*(short *)((int)param_1 + 0xe) == 0) {",
