@@ -5,6 +5,15 @@
 #   usage: tools/gen_symbols.py <data_symbols.txt> <old dd2_symbols.h> <out dd2_symbols.h>
 import sys, re
 syms_f, old_f, out_f = sys.argv[1], sys.argv[2], sys.argv[3]
+# exclude function names (they are real C functions in the decompile, not GIMG data)
+func_names = set()
+_dc = sys.argv[4] if len(sys.argv) > 4 else None
+if _dc:
+    import re as _re
+    _t = open(_dc, encoding='utf-8', errors='surrogateescape').read()
+    func_names = set(_re.findall(r'/\* ===== (\S+) @ ', _t))
+    for _m in _re.finditer(r'\n[A-Za-z_][\w \*]*?\b(\w+)\s*\(', _t):
+        func_names.add(_m.group(1))
 # 1) manual type refinements + passthrough lines from the old header
 type_by_name = {}
 passthrough = []   # non-#define lines (externs, function decls, the header guard, includes)
@@ -31,7 +40,7 @@ for line in open(syms_f, encoding='utf-8', errors='surrogateescape'):
     if len(p) < 2: continue
     name, addr = p[0], int(p[1], 16)
     size = int(p[2]) if len(p) > 2 and p[2] else 0
-    if name in seen or not re.match(r'^[A-Za-z_]\w*$', name): continue
+    if name in seen or name in func_names or not re.match(r'^[A-Za-z_]\w*$', name): continue
     seen.add(name)
     t = type_by_name.get(name, deftype(size))
     out.append(f"#define {name} (*({t}*)GIMG(0x{addr:08x}))")
