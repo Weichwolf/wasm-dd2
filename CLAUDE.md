@@ -432,6 +432,24 @@ technique; if pursuing the allocation-sequence angle again, first confirm a cand
 is stable/sane in the reference (e.g. read it multiple times across frames, expect small integer or
 plausible-pointer values) before trusting a watchpoint result from it.
 
+## Stage 2: heap-base transition is a clean, stable, comparable divergence (validated data point)
+Watched the heap base (`0x7debf0`, NOT the free-list-head variable — that gave garbage, see above)
+directly, on both builds:
+- **Reference**: already `0x1d1d1d1d` (a real, non-self-pointer value) by the moment
+  `_current_level==9` fires (frame 0!) — and STABLE (no further watchpoint hits) for the ~200s of
+  gameplay observed after. So the reference exhausts/overwrites the base free-list slot very early
+  (likely during front-end/menu processing before the race even starts) and the value never changes
+  again during the race.
+- **Our build**: still the `MPE_InitHeap` self-pointer (`0x7debf0` itself) at `Init_Scene`'s entry
+  AND exit (i.e. after the 14 decompress-slot allocations run) — confirmed via gdb, `DD2_LEVEL=9`.
+  Never observed to transition in the checkpoints tried.
+This is a clean, STABLE (not timing-sensitive) divergence, good for future bisection: our build's
+total allocation footprint apparently never exhausts the base slot exactly (MPE_malloc's carve only
+overwrites the base header when a later allocation's size exactly matches the remaining free space —
+the `*puVar5 = *puVar3` merge case), while the reference's does. This points at an allocation SIZE or
+COUNT mismatch somewhere in the sequence (not just alignment/timing) — a genuine lead for the next
+session's bisection, distinct from (and more stable than) the earlier frame-based checkpoint noise.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
