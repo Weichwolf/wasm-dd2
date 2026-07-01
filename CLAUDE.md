@@ -683,3 +683,26 @@ only gaps are (a) a real-GPU browser run to visually confirm driving end-to-end,
 (divergent car-state makes level>7 races end early, and the node headless demo_mode=0 stalls before
 the first flip -- a native-vs-WASM computation divergence in the demo_mode=0-only flyby/control path,
 same Stage-2 root). tools: tools/browser/drivetest.js `<buildDir> <outDir> <holdKey> [shots][stepMs][preMs]`.
+
+## Stage 3: interactive (demo_mode=0) WASM path is now CRASH-FREE (GUARD AO, commit)
+After DRAWPRIM-GUARD + the spurious-pause fix, the WASM interactive path still crashed after ~19s
+with "memory access out of bounds" in MPE_malloc's free-list walk. Symbolicated the stack
+(--emit-symbol-map): main->DemoModeLevel->Play_Game->Draw_Scene_Object_Blocks->Draw_Scene_Object->
+FUN_00416a10->MPE_malloc. MPE_malloc chases the free-list `puVar2=*puVar3` then reads `iVar1=puVar3[1]`;
+a free node's next-ptr had been corrupted to a wild address (object-leak/over-walk symptom of the
+Stage-2 heap divergence) -> OOB read. GUARD AO (transpile, **WASM-only #ifdef __EMSCRIPTEN__**):
+range-check the walk node against [0x400000,0x900000); on a wild node force puVar3=head and break so
+MPE_malloc returns head^head==0==NULL -- the engine's OWN OOM signal, which faithful callers already
+handle (FUN_00416a10 dd2.c:4751 checks ==0/==0xffffffff -> returns -1). MUST be WASM-only: an
+unconditional guard regressed native L1 (SIGSEGV 0xd58ecf0) because native's flat address space reads
+the wild node's garbage as mapped memory and CONTINUES the walk (finding later valid blocks), whereas
+WASM's linear memory traps -- the documented native-tolerates/WASM-traps split. Both targets 10/10;
+WASM interactive L1 now survives >150s (was 19s). NOTE on perf: node WASM interactive is ~0.3fps but
+this is NODERAWFS blocking DISK I/O (profiled: process is I/O-blocked, not CPU-bound -- per-frame
+geometry streaming via fread), NOT a compute megaloop; the browser preloads files into MEMORY so this
+particular slowness does not apply there (the browser's separate slowness is SwiftShader software
+raster). REMAINING interactive gaps: (a) real-GPU browser run to visually confirm end-to-end driving
+(headless SwiftShader too slow to clear the flyby+countdown in a test window), (b) whether the race
+runs to completion under WASM with input (native does: 1501 frames "demo returned"); both are
+functional/perf confirmations, not known crashes. The demo_mode=0 crash class is now closed for the
+levels tested (L1/L9); a full 10-level interactive sweep is the natural next verification.
