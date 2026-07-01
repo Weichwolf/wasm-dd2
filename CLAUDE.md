@@ -53,5 +53,4 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
 - `dd2_image.bin` (memory snapshot, loaded at 0x400000) must be present in `DestructionDerby2/` at run time.
 - Wine gotchas: NEVER `pkill -f dd2h.exe` (kills own shell) → use `pkill -x`; win32 prefix must be in an owned dir.
-- Full pre-2026-07-01 session history (Stage-2 investigation, per-guard postmortems) is in git history
-  (commit before this rewrite) and `/tmp/CLAUDE_full_backup.md` if needed.
+- Full pre-2026-07-01 investigation history is in git history + `/tmp/CLAUDE_full_backup.md`.
