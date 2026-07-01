@@ -26,15 +26,26 @@ OUT  = os.path.join(ROOT, 'build')
 CHECK = '--check' in sys.argv
 
 _applied = []
+import os as _os
+# DD2H_REBASE best-effort mode: while migrating the build source to the pristine dd2h decompile, patches
+# anchored to the old dd2.exe code won't all match. Setting DD2H_BESTEFFORT downgrades a missing/miscount
+# anchor from a fatal assert to a warning + skip, so the build proceeds with whatever patches DO apply --
+# letting us iteratively re-anchor. NOT for normal builds (anchor exactness is the safety net).
+_BESTEFFORT = bool(_os.environ.get('DD2H_BESTEFFORT'))
+_skipped = []
 def sub(text, old, new, n=1, name=''):
     """Replace occurrences; assert the anchor count is EXACTLY n (n=-1 = replace-all, requires >=1).
     Exact-count guards against an ambiguous anchor silently hitting the wrong function."""
     cnt = text.count(old)
     if n == -1:
-        assert cnt >= 1, "TRANSPILE ANCHOR MISSING [%s]: %r" % (name, old[:70])
+        if cnt < 1:
+            if _BESTEFFORT: _skipped.append(name); return text
+            assert cnt >= 1, "TRANSPILE ANCHOR MISSING [%s]: %r" % (name, old[:70])
         _applied.append((name, cnt))
         return text.replace(old, new)
-    assert cnt == n, "TRANSPILE ANCHOR COUNT [%s]: expected %d, found %d for %r" % (name, n, cnt, old[:70])
+    if cnt != n:
+        if _BESTEFFORT: _skipped.append(name); return text
+        assert cnt == n, "TRANSPILE ANCHOR COUNT [%s]: expected %d, found %d for %r" % (name, n, cnt, old[:70])
     _applied.append((name, n))
     return text.replace(old, new, n)
 
@@ -821,6 +832,8 @@ def main():
           (len(_applied), len(transforms), " (check-only)" if CHECK else " -> build/"))
     for nm, c in _applied:
         print("  [%s] x%d" % (nm, c))
+    if _skipped:
+        print("  SKIPPED %d patches (best-effort): %s" % (len(_skipped), ", ".join(_skipped[:40])))
 
 if __name__ == '__main__':
     main()
