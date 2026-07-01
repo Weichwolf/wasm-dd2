@@ -165,6 +165,33 @@ reference's [0x75ebf0,0x796ff0) (the zeros+pointer-table 0x38400 prefix) — a f
 level_data_buffer that our shortcut skips — and either replicate it or run the faithful boot; that same
 history difference is what leaves our MPE heap base free (the decompress slots carve to a different spot).
 
+## Stage 2 SHARPENED: it's ONE root — the +0x38400 level_data_buffer load shift, at INIT time (frame 5)
+Deeper analysis with the working reference capture collapses the two apparent divergences (heap-base +
+game-data) into ONE:
+- **INIT-time, not race drift**: our heap at frame 5 vs frame 151 matches 90.1% (only ~10% race drift),
+  and our heap base is ALREADY the MPE_InitHeap self-pointer (`f0 eb 7d 00` = 0x7debf0, base free block
+  intact) at frame 5. `base[0:0x38000]` is 1.6% nonzero (ours) vs 99.1% (ref) at frame 5. So the
+  divergence is fully present right after Init, NOT accumulated during the race. Compare at the EARLIEST
+  L9 frame, not mid-race.
+- **The heap-base "block" is the level_data_buffer +0x38400 shift SPILLING across the 0x7debf0 boundary**:
+  level_data_buffer (0x75ebf0, 0x80000 bytes) is IMMEDIATELY adjacent to the MPE heap (0x7debf0). The
+  reference's heap-base data (0x7debf0) matches OUR level_data_buffer+0x47c00 **100%** — i.e. the same
+  content, shifted +0x38400 (0x7debf0 - 0x7a67f0 = 0x38400), so ref's shifted buffer content crosses into
+  the heap address range where ours is still in level_data_buffer. It is NOT an independent heap allocation
+  divergence — it's the SAME +0x38400, byte-exact (the texdir num_textures=0x197 also matches at +0x38400).
+- **__texturespace/__clutspace are NOT the cause**: both are HARDCODED constants (Init_Application
+  dd2.c:1541-1542: `__texturespace = 0x490000; __clutspace = 0x6c0100;`) -- fixed reserved regions,
+  identical in both builds. LoadImage copies textures from level_data_buffer -> 0x490000 in both; ruled out.
+So Stage 2 reduces to: **why is the reference's level_data_buffer content placed +0x38400 later than ours**
+(zeros [0,0x15800) + an object/car-descriptor table [0x15800,0x38400) that our cold DD2_LEVEL=9 launcher
+never writes, then the shared texdir/geometry at +0x38400). This is a LOAD-ORDER/prefix difference present
+at Init. NEXT (concrete): capture the reference at the EARLIEST L9 frame (poll fast at the level transition;
+current_frame is already ~200+ by the time _current_level==9 is observable, so instrument Init_Game's exit
+instead, or accept the earliest catchable frame), and identify what writes ref's level_data_buffer[0,0x38400)
+prefix -- a front-end/common-asset load into the buffer that the shortcut skips. Reproduce that one load
+(or run the faithful boot) -> the +0x38400 collapses -> geometry decompresses from the same window ->
+crashes + divergence resolve together. This is now a measure-fix-remeasure loop (refcapture.sh works).
+
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
 Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
