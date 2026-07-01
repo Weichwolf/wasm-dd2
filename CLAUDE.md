@@ -472,3 +472,21 @@ differently-sized, or differently-ordered in our build.
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
+
+## Stage 2: VALIDATED +0x38400 placement shift in level_data_buffer (concrete, actionable)
+Cross-correlated the game-data dumps (0x75ebf0-0x7debf0) from a lockstep run, WITH nonzero validation
+(the key discipline after the earlier zero-region false positive): our build's level content at
+`level_data_buffer` (0x75ebf0, confirmed exact symbol) appears in the REFERENCE at a CONSISTENT
++0x38400 shift — verified by 512-byte EXACT matches of 43-68%-nonzero content at 3 independent offsets
+(our 0x75ebf0->ref 0x796ff0, our 0x75fbf0->ref 0x797ff0, our 0x762bf0->ref 0x79aff0). So the reference
+places the same level data 0x38400 (230400) bytes LATER than we do; equivalently ours is 0x38400 too
+early. NOTE 0x38400 = 3 x (320x240) = 3 screen-sized 8bpp buffers — suggestive of a triple-buffer or
+3-surface allocation the reference does BEFORE the level directory that ours doesn't (or does smaller).
+Our 0x75ebf0 holds a live level-directory/offset table (0x197, 0x00800004, ... small offset/size
+pairs); the reference has ZEROS there until 0x774460 (so the ref either loads the directory 0x38400
+later, or frees+zeros this early-load region by the checkpoint while ours leaves it resident).
+Writer is `FUN_00415160` (the sector-by-sector asset file loader, Init_Game path) which advances the
+buffer pointer by each asset's size — a different asset sequence/sizes before the shared content would
+produce exactly this constant offset. NEXT: inventory the asset load list (DAT_00462cd8 head /
+DAT_00462cdc count, filled before FUN_00415160 runs) and compare total bytes loaded before the level
+directory, native vs reference — the 0x38400 gap should be one identifiable missing/mis-sized asset.
