@@ -193,18 +193,20 @@ prefix -- a front-end/common-asset load into the buffer that the shortcut skips.
 crashes + divergence resolve together. This is now a measure-fix-remeasure loop (refcapture.sh works).
 CONFIRMED UNIFORM + BYTE-EXACT: needle cross-correlation across the whole buffer = **16 of 17 distinct
 nonzero 256B needles match the reference at EXACTLY +0x38400 with ~100%** (the 17th at +0x33180/82% is a
-boundary artifact). So the loaded level content is IDENTICAL, purely displaced +0x38400. And **0x38400 =
-3 x 0x12c00 = THREE 320x240 screen buffers** (screen size 0x12c00 confirmed: `memset(&_screenbuffer,0,
-0x12c00)` dd2.c:1806). STRONG HYPOTHESIS: the reference reserves 3 screen/render buffers at
-level_data_buffer[0,0x38400) (double/triple-buffered software-render targets) and loads the level after
-them; our build -- whose DirectDraw shim (dd2_com.c) serves frames from the static g_pixels/@0x700450
-instead -- skips that reservation, so the level loads at rel 0. level_data_buffer (0x75ebf0) has MULTIPLE
-writers (FUN_00415160 @dd2.c:28403/31854/33112/33644, File_Load @29928/32101). FIX TO TRY: find where the
-game carves the 3 render buffers out of the front/base of level_data_buffer (search the render-target /
-double-buffer setup: buffer_num, DAT_0071bfa0 buffer-base list, FUN_00420b1c) and reproduce that 0x38400
-reservation in our path (or point the loader's param_1 at level_data_buffer+0x38400) so the level data
-lands at +0x38400 like the reference. Then re-run refcapture.sh + DD2_STATEDUMP diff to confirm the shift
-collapsed. (Verify it's truly the render buffers, not front-end residue, before committing a fix.)
+boundary artifact). So the loaded level content is IDENTICAL, purely displaced +0x38400. 0x38400 numerically = 3 x 0x12c00 (screen size 0x12c00 confirmed: `memset(&_screenbuffer,0,0x12c00)`
+dd2.c:1806) BUT that "3 screen buffers" idea is UNCONFIRMED NUMEROLOGY and probably WRONG: (a) the
+reference's prefix content is ZEROS [0,0x15800) + a pointer/descriptor TABLE [0x15800,0x38400), not pixel
+data; (b) the render prim buffers are MPE-HEAP allocations, not in level_data_buffer (Init_Primitive_Buffer
+dd2.c:8041-8042 does `_prim_buf=MPE_malloc(0x60000); _DAT_0071bf94=MPE_malloc(0x60000)` -- heap, size
+0x60000 not 0x12c00). So the +0x38400 prefix is game DATA (a descriptor table + zero padding), most likely
+front-end/prior-load residue in the SHARED level_data_buffer (it has MANY writers: FUN_00415160 @dd2.c:
+28403/31854/33112/33644, File_Load @29928/32101 incl. the VAGS_BANK1 SOUND bank), NOT a render-buffer
+reservation. HONEST STATE: the shift is proven clean/uniform/byte-exact and Init-time, but WHAT writes the
+0x38400 prefix is not yet identified. NEXT: capture the reference's level_data_buffer[0,0x38400) meaning by
+(a) reading it at an EARLIER point / across the boot to see when it's written, or (b) enumerating our
+build's level_data_buffer writers with DD2_ASSETLOG-style logging on File_Load too, and diffing which
+writer the reference runs that we don't. Do NOT commit a param_1+=0x38400 hack -- that's a band-aid
+(project rule: no approximations); find the real missing load. refcapture.sh makes this measurable.
 
 ## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
 Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
