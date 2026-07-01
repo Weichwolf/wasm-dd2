@@ -436,6 +436,42 @@ def fix_dd2(s):
     s = sub(s, "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2) {",
       "    uVar2 = piVar6[1];\n    if (uVar1 <= uVar2 && (unsigned)uVar2 <= (unsigned)(prim_buf_size >> 3)) {", 1, 'GUARD AF alloc split SIZE OOB')
 
+    # GUARD AG (draw_text_half wild _clut/_tex, same class as GUARD AE/AF): DAT_00460004/DAT_0046000c
+    # (the current CLUT/texture-page globals) can be set from a corrupted per-object dth_clut/dth_tpage
+    # value (heap-layout divergence, same root as the GEOM-GUARD fixes) -> a wild address (e.g.
+    # 0xd234100, L6) -> OOB read in the per-pixel `_sb[_i]=_clut[_t]` loop. Guard both draw_text_half
+    # spans (fast + clip path) at their point of use: skip the span (draw nothing) if _clut/_tex fall
+    # outside the valid image+heap range. Only fires on already-corrupt state -> zero behaviour change
+    # on the clean tracks (matches the GUARD AE/AF convention above).
+    s = sub(s,
+      "            unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);\n"
+      "            unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);\n"
+      "            unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + (dth_x1>>8);\n"
+      "            int _tu=dth_u1, _tv=dth_v1, _i;\n"
+      "            for(_i=0;_i<_span;_i++){",
+      "            unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);\n"
+      "            unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);\n"
+      "            unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + (dth_x1>>8);\n"
+      "            int _tu=dth_u1, _tv=dth_v1, _i;\n"
+      "            if ((uintptr_t)_tex < 0x400000u || (uintptr_t)_tex >= 0x900000u ||"
+      " (uintptr_t)_clut < 0x400000u || (uintptr_t)_clut >= 0x900000u) _span = 0;  /* GUARD AG */\n"
+      "            for(_i=0;_i<_span;_i++){",
+      1, 'GUARD AG draw_text_half fast-path wild clut/tex')
+    s = sub(s,
+      "              unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);\n"
+      "              unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);\n"
+      "              unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + x1;\n"
+      "              int _i, _span=x2-x1;\n"
+      "              for(_i=0;_i<_span;_i++){",
+      "              unsigned char* _tex=(unsigned char*)(uintptr_t)((unsigned)DAT_0046000c & 0xffff0000u);\n"
+      "              unsigned char* _clut=(unsigned char*)(uintptr_t)((unsigned)DAT_00460004 & 0xffffff00u);\n"
+      "              unsigned char* _sb=(unsigned char*)(uintptr_t)0x700450u + dth_y1*0x140 + x1;\n"
+      "              int _i, _span=x2-x1;\n"
+      "              if ((uintptr_t)_tex < 0x400000u || (uintptr_t)_tex >= 0x900000u ||"
+      " (uintptr_t)_clut < 0x400000u || (uintptr_t)_clut >= 0x900000u) _span = 0;  /* GUARD AG */\n"
+      "              for(_i=0;_i<_span;_i++){",
+      1, 'GUARD AG draw_text_half clip-path wild clut/tex')
+
     # FIX AJ (Map_Height edge-divisor WASM-safety): the scanline edge interpolation in Map_Height
     # (dd2.c:12289..) divides by an edge X/Y screen-delta: (*(int*)(pbVar10+2)>>0x10) and
     # (*(int*)(pbVar10+8)>>0x10). For a degenerate (zero-extent) projected edge the delta is 0;
