@@ -53,6 +53,8 @@ while i < len(parts):
         ('__fdiv','__fmul','sti_st','__fld','__fst','->_flag','->_ptr','->_cnt','->_base','->_bufsiz',
          '->_file','->_charbuf','_INPUT_RECORD','.Event','log2(','log10('))
     _is_x87 = any(x in body for x in ('__fdiv','__fmul','sti_st','__fld','__fst'))
+    if name in {'FUN_004568ee','FUN_004568d7','__prtf'}:  # SPRINTF_EXCL: dd2h sprintf reimpl in dd2h_stubs.c
+        i += 2; continue
     if name in WIN32 or name in CRT or name in compat or _is_x87:   # libc/compat/x87 -> drop entirely
         i += 2; continue
     if _is_crt:

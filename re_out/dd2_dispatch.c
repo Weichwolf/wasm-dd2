@@ -676,8 +676,6 @@ extern int FUN_0045660e();
 extern int FUN_0045661e();
 extern int __CHP();
 extern int nfree();
-extern int FUN_004568d7();
-extern int FUN_004568ee();
 extern int __null_int23_exit();
 extern int _exit();
 extern int wstart2_();
@@ -720,7 +718,6 @@ extern int _fpreset();
 extern int nmalloc();
 extern int __MemAllocator();
 extern int __MemFree();
-extern int __prtf();
 extern int FUN_00457ef9();
 extern int FUN_00458044();
 extern int FUN_004580a9();
@@ -1526,8 +1523,6 @@ dd2_fnent dd2_fnmap[]={
 {0x0045661e,(void*)&FUN_0045661e},
 {0x0045681c,(void*)&__CHP},
 {0x00456848,(void*)&nfree},
-{0x004568d7,(void*)&FUN_004568d7},
-{0x004568ee,(void*)&FUN_004568ee},
 {0x00456bf2,(void*)&__null_int23_exit},
 {0x00456c0d,(void*)&_exit},
 {0x00456c34,(void*)&wstart2_},
@@ -1570,7 +1565,6 @@ dd2_fnent dd2_fnmap[]={
 {0x0045793d,(void*)&nmalloc},
 {0x00457a3e,(void*)&__MemAllocator},
 {0x00457ae6,(void*)&__MemFree},
-{0x00457bf1,(void*)&__prtf},
 {0x00457ef9,(void*)&FUN_00457ef9},
 {0x00458044,(void*)&FUN_00458044},
 {0x004580a9,(void*)&FUN_004580a9},
