@@ -541,3 +541,21 @@ if nonzero, that's the block-skip -- find what sets it and whether the cold Play
 it wrong) and confirm Control_Car_Replay's param_1 is really 0. Also: holding UP/accel (0x26) also
 produced identical frames -- so throttle isn't applying either; same gate likely. tools: DD2_PLAY=<lvl>
 (live race), DD2_HOLD=<vk> (hold a key), DD2_NOCOUNTDOWN (skip intro/countdown), all native-only.
+
+## Stage 3 MILESTONE: the human car now RESPONDS to keyboard input (FIX PADTYPE/PADTYPE2)
+Cracked the "car doesn't respond" blocker. Root cause: two int-vs-byte Ghidra typing artifacts in
+FUN_00422c74 clobbered the pad-type byte at 0x71c051. The control structure at 0x71c048 packs:
+0x71c04e-4f = a 16-bit field (_DAT_0071c04e), 0x71c050 = a flag (DAT_0071c050), 0x71c051 = pad-type
+(DAT_0071c051, set to 1 for keyboard). Control_Car_Replay INTENTIONALLY reads 0x71c04e as an int and
+`>>0x18` to extract the pad-type byte, then requires it ==1 to apply steering/throttle. But
+`_DAT_0071c04e = val` (Ghidra `*(int*)`) wrote 4 bytes, zeroing 0x71c050 AND 0x71c051; and
+`DAT_0071c050 = 0` (also `*(int*)`) zeroed 0x71c051 too. Net: pad-type always read 0 -> steering block
+skipped -> car frozen. FIX PADTYPE (byte-write DAT_0071c050) + FIX PADTYPE2 (2-byte-write the 3
+_DAT_0071c04e sites), keeping the int-typed READS unchanged. VERIFIED: with input held, car 0's
+steering angle (0x75a682) goes 0 -> -64, and rendered frames now DIFFER between held-left and no-input
+(4.5% pixels) -- the car visibly responds. Both targets STILL 10/10 crash-free + input selftest PASS,
+no demo regression. Test path: DD2_PLAY=9 DD2_HOLD=0x25 (+ DD2_NOCOUNTDOWN to skip the intro for quick
+testing -- note NOCOUNTDOWN itself is an unstable debug skip that segfaults after a few frames; a
+normal live race runs the intro+countdown and is crash-free). REMAINING Stage 3: (1) menu navigation
+(Front_End reads the same control word -- should now work), (2) browser: wire canvas keydown/keyup ->
+dd2_browser_key_event + a render loop, (3) end-to-end playable verification.

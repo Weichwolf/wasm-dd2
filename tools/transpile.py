@@ -298,6 +298,23 @@ def fix_dd2(s):
     s = sub(s, "void GTERPT4_(void)\n\n{\n  __flg = 0;\n  _g_esi=0x714100;",
                "void GTERPT4_(void)\n\n{\n  __flg = 0;\n  _DAT_00714100 = __vr0; _vr1 = __vr1; _vr2 = __vr2; *(int*)(uintptr_t)0x7140f0 = __vr3;\n  _g_esi=0x714100;", name="N:GTERPT4_ __vr")
 
+    # FIX PADTYPE (int-vs-byte overlap, Stage 3 input): in FUN_00422c74, `DAT_0071c050 = 0` is Ghidra-typed
+    # as *(int*) so it writes 4 bytes 0x71c050..0x71c053, CLOBBERING the pad-type byte at 0x71c051 (set to 1
+    # a few lines earlier via `DAT_0071c051 = 1`) back to 0. Control_Car_Replay then reads that pad-type
+    # (byte@0x71c051, via `*(int*)(param_2+6)>>0x18`) and requires it ==1 to apply steering/throttle -- with
+    # it clobbered to 0, the human car NEVER responds to input (the exact Stage-3 blocker: control word
+    # correct but car doesn't move). The x86 does a BYTE write here (0x71c050 is a 1-byte flag). Fix: write
+    # only the byte. Both occurrences are in FUN_00422c74 (keyboard + none branches).
+    s = sub(s, "    DAT_0071c050 = 0;",
+               "    *GIMG(0x71c050) = 0;  /* FIX PADTYPE: byte write; int write clobbered pad-type @0x71c051 */",
+               2, 'PADTYPE:byte-write DAT_0071c050')
+    # FIX PADTYPE2 (int-vs-short, the primary clobber): `_DAT_0071c04e` is a 16-bit control field at
+    # 0x71c04e but Ghidra typed it *(int*), so writing it zeros 0x71c050 (flag) AND 0x71c051 (pad-type,
+    # just set to 1). The engine INTENTIONALLY reads 0x71c04e as an int elsewhere (Control_Car_Replay
+    # `*(int*)(param_2+6)>>0x18`) to extract the pad-type byte at 0x71c051 -- so the storage layout is
+    # 0x71c04e-4f=value, 0x71c051=pad-type; the WRITE must be 2-byte to not stomp the pad-type. Make all
+    # 3 write sites (keyboard/none/other-read branches) 2-byte; keep the int-typed reads unchanged.
+    s = sub(s, "_DAT_0071c04e = ", "*(unsigned short*)GIMG(0x71c04e) = ", 3, 'PADTYPE2:short-write _DAT_0071c04e')
     # FIX E (scattered-locals): FUN_00411654's poly setup is a contiguous 12-int struct, not scattered locals.
     pack = ("{ int _q[12]; _q[0]=iStack_40;_q[1]=iStack_3c;_q[2]=iStack_38;_q[3]=iStack_34;_q[4]=iStack_30;"
             "_q[5]=iStack_2c;_q[6]=uStack_28;_q[7]=uStack_24;_q[8]=uStack_20;_q[9]=uStack_1c;_q[10]=uStack_18;"
