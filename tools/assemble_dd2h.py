@@ -118,5 +118,18 @@ gamecode = gamecode.replace("&DAT_007542ee + buffer_num * 0x8e", "(int*)((char*)
 gamecode = gamecode.replace("&db + buffer_num * 0x8e", "(int)((char*)&db + buffer_num * 0x8e)")
 gamecode = gamecode.replace("&DAT_007542ee + buffer_num * 0x8e", "(char*)&DAT_007542ee + buffer_num * 0x8e")
 
+
+# Load_Textures rect fix (= dd2.exe scattered-locals FIX): LoadImage reads its rect as a contiguous
+# 8-byte struct, but Ghidra split it into local_18/16/14/12 (may not be laid out contiguously) -> garbage.
+# Replace with a contiguous undefined2[4] array.
+gamecode = gamecode.replace(
+  "  undefined2 local_18;\n  undefined2 local_16;\n  undefined2 local_14;\n  undefined2 local_12;",
+  "  undefined2 dd2_rect[4];  /* contiguous rect (was scattered local_18/16/14/12) */")
+gamecode = gamecode.replace("    local_18 = *(undefined2 *)((int)param_2 + 6);","    dd2_rect[0] = *(undefined2 *)((int)param_2 + 6);")
+gamecode = gamecode.replace("    local_16 = (undefined2)param_2[2];","    dd2_rect[1] = (undefined2)param_2[2];")
+gamecode = gamecode.replace("    local_14 = (undefined2)((*param_2 >> 0x10) / 2);","    dd2_rect[2] = (undefined2)((*param_2 >> 0x10) / 2);")
+gamecode = gamecode.replace("    local_12 = (undefined2)param_2[1];","    dd2_rect[3] = (undefined2)param_2[1];")
+gamecode = gamecode.replace("    LoadImage((int *)&local_18,puVar3 + 1);","    LoadImage((int *)dd2_rect,puVar3 + 1);")
+
 open(OUT, 'w', encoding='utf-8', errors='surrogateescape').write(prologue + gamecode)
 print("assemble_dd2h: %d functions kept, %d forward decls -> %s" % (gamecode.count('/* ===== '), len(sigs), OUT))
