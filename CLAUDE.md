@@ -239,6 +239,23 @@ either doesn't allocate at all here or allocates with different size/placement) 
 relocation-value bug. NEXT: identify what OBJECT/ASSET this specific our-build byte range corresponds
 to (which MPE_malloc call populated it) to pin down the specific extra/misplaced allocation.
 
+## FOUND the writer of the divergent "texture-like" bytes: FUN_00415160 (the level-asset file loader)
+Bisected (via repeated breakpoint+read, since a hardware watchpoint mysteriously would NOT fire on
+this address across 3 separate attempts/scopes — a real gdb/environment limitation worth knowing about,
+NOT a "no write happens" signal) exactly where our build's `0x78ebf0` (inside `level_data_buffer`,
+which starts at 0x75ebf0 per `Init_Game`'s `FUN_00415160(&level_data_buffer, Load_Completion_Status)`
+call, dd2.c ~28405) goes from `0x0` to `0x81818181`: between entry and exit of `FUN_00415160`
+(dd2.c:3274). That function `fread()`s level assets sector-by-sector (0x800-byte sectors) directly
+from a file into the buffer, advancing by each asset's exact decompressed size afterward (a
+per-asset-type handler in `File_Func_List` returns the real size). Verified dd2_image.bin (the static
+image) is genuinely zero at this file offset and `.bss` overall is 99.28% zero — so this is NOT a
+bad build artifact; the pattern is written at runtime, and it's simply STALE/UNINITIALIZED HEAP
+CONTENT exposed because the read/handler doesn't fully overwrite this specific buffer position for
+OUR build's allocation layout. This is the SAME symptom class as the already-established Decompress-
+window bug (`## Decompress window = layout-dependent`, above) — stale heap bytes surfacing through a
+DIFFERENT subsystem (the asset loader, not the LZSS decompressor) — reinforcing (not superseding) the
+core conclusion: ONE heap-layout fix should clear this AND the Decompress/crash symptoms together.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
