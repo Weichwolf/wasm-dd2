@@ -27,12 +27,13 @@ Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/We
 `make pipeline` = `dd2.exe → Ghidra decompile → check anchors → native build+verify →
 WASM build (emcc→dd2run.js)+verify` — runs the attract demo on all 10 levels for BOTH
 targets and prints N/10. (`make verify` = native only; `make verify-wasm` = WASM only.)
-**WASM is 10/10 crash-free** (`make verify-wasm`, all 10 demo levels reach completion with no
-abort/RuntimeError/exception). Native is **9/10** (only L6 remains — a sound-channel-slot
-corruption, see "Current state" below). GEOM-GUARD/GEOM-GUARD2/GUARD AG/GUARD AH/GUARD AH2/FIX BK
-(transpile.py) defensively guard the symptoms of the Decompress heap-layout divergence at their
-points of use/creation — the underlying
-layout divergence itself (Stage 2) is still open, but no longer crashes the demo. Caveat: the
+**STAGE 1 COMPLETE: BOTH targets are 10/10 crash-free** (`make verify` / `make verify-wasm`, all 10
+demo levels reach completion on native AND WASM). A whole family of transpile.py guards (GEOM-GUARD/
+GEOM-GUARD2/GUARD AG/AH/AH2/AK/AL/AM, FIX BK) defensively convert the symptoms of the Decompress
+heap-layout divergence — wild pointers, runaway repeat-counts, unbounded corrupted-list walks — into
+"skip this operation" at their point of use/creation, instead of crashing or hanging. The underlying
+layout divergence itself (Stage 2) is still open — these guards make the demo run to completion
+despite it, they don't fix the divergence, so Stage 2/3 work remains. Caveat: the
 ~186 GTE/jumptable fns are the committed `re_out` overlay (P-code lift = criterion 1,
 abandoned), so the chain reproduces from that overlay, not fully mechanically.
 
@@ -47,7 +48,19 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface via the `ids_flip` hook (`DD2_FRAMEDIR=…`). Compare byte-for-byte.
 
 ## Current state (verify, don't trust)
-- **FIXED the geometry-corruption crash class** (transpile.py GEOM-GUARD + GEOM-GUARD2, commit
+- **STAGE 1 (crash-free) IS COMPLETE as of commit `3d87a20`: both native and WASM are 10/10.**
+  The last two fixes: `GUARD AL` converts `Modify_Sound`'s faithful-but-now-corruption-triggered
+  bounds-check crash into a silent skip (fixed native L6); `GUARD AM` caps `MPE_free`'s own
+  free-list search loop (an unbounded circular-linked-list walk) which hung forever once a
+  corrupted free-list formed a cycle — a plain iteration count is safe here (unlike the `_gpoly`-
+  stream handler guards below, this is a simple linked-list walk with no byte-alignment concern
+  to break) — fixed native L2 (reached only after `GUARD AL` fixed the earlier crash masking it).
+  Both verified together (`make verify` + `make verify-wasm`) after every change this whole
+  session, per the hard lesson learned: several earlier attempts fixed one target/level while
+  silently breaking another (see history below) — always check BOTH before trusting a "fixed!".
+  Stage 2 (bit-identical memory / the heap-layout divergence itself) is still fully open: these
+  guards make the demo reach completion DESPITE the divergence, they don't resolve it.
+- (History below, kept for context.) **FIXED the geometry-corruption crash class** (transpile.py GEOM-GUARD + GEOM-GUARD2, commit
   `974e84e`): native demo now **8/10** crash-free (was 7/10), WASM demo **9/10** (was 7/10; L2's
   SIGFPE apparently doesn't manifest under WASM's int/float semantics). The two guards catch a wild
   pointer (`_gpoly`/`param_2`, e.g. `0x666666ff`) sourced from the Decompress heap-layout divergence
