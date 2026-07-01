@@ -29,3 +29,6 @@ int timeSetEvent(){ return 0; }
 int FUN_004568ee(char* buf, const char* fmt, ...){ va_list ap; va_start(ap,fmt); int n=vsprintf(buf,fmt,ap); va_end(ap); return n; }
 
 int __prtf(){ return 0; }
+
+/* dd2h MSVC CRT fseek shim (= dd2.exe FUN_0045607b) */
+int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,offset,whence); }

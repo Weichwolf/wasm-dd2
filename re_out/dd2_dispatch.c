@@ -670,7 +670,6 @@ extern int FUN_0045609b();
 extern int FUN_004560fb();
 extern int FUN_00456170();
 extern int FUN_004561f4();
-extern int FUN_0045623b();
 extern int __shutdown_stream();
 extern int FUN_0045660e();
 extern int FUN_0045661e();
@@ -1517,7 +1516,6 @@ dd2_fnent dd2_fnmap[]={
 {0x004560fb,(void*)&FUN_004560fb},
 {0x00456170,(void*)&FUN_00456170},
 {0x004561f4,(void*)&FUN_004561f4},
-{0x0045623b,(void*)&FUN_0045623b},
 {0x004565e8,(void*)&__shutdown_stream},
 {0x0045660e,(void*)&FUN_0045660e},
 {0x0045661e,(void*)&FUN_0045661e},

@@ -672,7 +672,6 @@ int * __cdecl FUN_0045609b(char *param_1,byte *param_2,int param_3);
 int FUN_004560fb();
 int FUN_00456170();
 undefined4 __cdecl FUN_004561f4(int param_1,int *param_2);
-undefined4 __cdecl FUN_0045623b(int *param_1,LONG param_2,uint param_3);
 uint __cdecl __shutdown_stream(FILE *param_1,int param_2);
 int __cdecl FUN_0045660e(int param_1);
 void __cdecl FUN_0045661e(undefined1 *param_1,uint param_2);
@@ -42931,83 +42930,6 @@ undefined4 __cdecl FUN_004561f4(int param_1,int *param_2)
   param_2[1] = 0;
   *param_2 = param_2[2];
   return 1;
-}
-
-
-/* ===== FUN_0045623b @ 0045623b ===== */
-
-/* WARNING: Removing unreachable block (ram,0x004562f3) */
-
-undefined4 __cdecl FUN_0045623b(int *param_1,LONG param_2,uint param_3)
-
-{
-  int iVar1;
-  DWORD DVar2;
-  int iVar3;
-  long lVar4;
-  
-  (*(code *)_AccessFileH)(param_1[4]);
-  if ((*(byte *)(param_1 + 3) & 6) == 0) {
-    if (param_3 == 0) {
-      lVar4 = tell(param_1[4]);
-      iVar1 = FUN_004561f4(param_2 - (lVar4 - param_1[1]),param_1);
-      if ((iVar1 != 0) && (DVar2 = FUN_004574b8(param_1[4],param_2,0), DVar2 == 0xffffffff)) {
-        iVar1 = param_1[4];
-        goto LAB_0045628d;
-      }
-      goto LAB_004563ad;
-    }
-    if (param_3 < 2) {
-      iVar1 = param_1[1];
-      iVar3 = FUN_004561f4(param_2,param_1);
-      if ((iVar3 == 0) ||
-         (DVar2 = FUN_004574b8(param_1[4],param_2 - iVar1,param_3), DVar2 != 0xffffffff))
-      goto LAB_004563ad;
-      iVar1 = param_1[4];
-      goto LAB_0045628d;
-    }
-    if (param_3 != 2) {
-      FUN_00456e9f(9);
-      iVar1 = param_1[4];
-      goto LAB_0045628d;
-    }
-    param_1[1] = 0;
-    *(byte *)(param_1 + 3) = *(byte *)(param_1 + 3) & 0xef;
-    *param_1 = param_1[2];
-    DVar2 = FUN_004574b8(param_1[4],param_2,2);
-    if (DVar2 != 0xffffffff) goto LAB_004563ad;
-LAB_00456289:
-    iVar1 = param_1[4];
-  }
-  else {
-    if ((*(byte *)((int)param_1 + 0xd) & 0x10) == 0) {
-      if (param_3 == 1) {
-        param_2 = param_2 - param_1[1];
-      }
-      param_1[1] = 0;
-      *param_1 = param_1[2];
-    }
-    else {
-      iVar1 = FUN_004573a4(param_1);
-      if (iVar1 != 0) {
-        if ((param_3 == 0) && (param_2 < 0)) {
-          FUN_00456e9f(9);
-        }
-        goto LAB_00456289;
-      }
-    }
-    *(byte *)(param_1 + 3) = *(byte *)(param_1 + 3) & 0xeb;
-    DVar2 = FUN_004574b8(param_1[4],param_2,param_3);
-    if (DVar2 != 0xffffffff) {
-LAB_004563ad:
-      (*(code *)_ReleaseFileH)(param_1[4]);
-      return 0;
-    }
-    iVar1 = param_1[4];
-  }
-LAB_0045628d:
-  (*(code *)_ReleaseFileH)(iVar1);
-  return 0xffffffff;
 }
 
 
