@@ -582,3 +582,19 @@ must be reconstructed. That build (with dd2_browser_key_event wired to canvas ke
 Front_End->race) is the real "wasm port completely playable" deliverable and the main remaining Stage-3
 task. NEXT: reconstruct the browser build script, wire canvas input -> dd2_browser_key_event, rebuild
 web/build from current code, then use navshot.js to verify menu nav + race control end-to-end.
+
+## Stage 3: front-end idle-demo crash root = Track_Follow wild pointer (Stage-2-class, delicate)
+Characterized the front-end crash (DD2_FE=1, ~frame 11419): SIGSEGV in Track_Follow (dd2.c:12329,
+`iVar5 = (uint)*pbVar9 * 8`) where `pbVar9 = _strip_data + 4 + iVar10` and iVar10 (from the track-strip
+struct pbVar17+0x1c/+0x14) is garbage -> wild pbVar9. Backtrace: DemoMode -> Play_Game -> Init_Game ->
+FUN_004430b8 -> FUN_00440ac4 -> Track_Follow. This is the front-end's OWN idle-triggered DemoMode
+(after ~1800 idle menu frames), and it crashes where the DD2_LEVEL=N demos (verified 10/10) do NOT --
+because the front-end runs its menu first, leaving different heap/rand state (same Stage-2 heap-layout-
+divergence root: corrupt track-strip data -> garbage iVar10). This is the original "Track_Follow OOB"
+the harness was built for. NOT guarded yet: Track_Follow is delicate core track-following logic (a
+rushed bounds-guard on pbVar9 could break the 10/10 demos); it needs careful study of the switch/case
+control flow to find a safe skip that's a no-op on valid data. IMPORTANT for playability scope: the
+menu itself is USABLE before the ~1800-frame idle timeout -- this crash is the attract-demo the menu
+falls into when idle, not the menu navigation itself. Menu-nav proof via gdb-injected key pulse was
+inconclusive (the front-end crashes easily when poked mid-loop); the definitive menu-nav test is the
+browser (navshot.js, real key up/down timing) once web/build is rebuilt from current code.
