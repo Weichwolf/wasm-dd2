@@ -389,6 +389,21 @@ build+test cycles, further L6 work is better scoped as its own session with a pl
 `_gprim1`/`_gprim2` writer reachable from a poly-command stream (not just the ones a specific crash
 happens to surface), rather than continuing to discover them one crash at a time.
 
+## TRIED a systemic fix (zero the Decompress dest buffer) instead of per-consumer guards — much WORSE
+Reasoned that if corrupt counts/offsets consistently became 0 (instead of random wild values), `for`
+loops with a 0 count would naturally execute zero iterations, sidestepping the WHOLE family of
+"handler walks _gprim1/_gprim2 too far" bugs without needing per-function guards. Tested the existing
+env-gated `DEBUG ZEROBUF` patch (`tools/transpile.py`, zeros the Decompress destination's own 0x4000
+bytes at entry) with `DD2_ZEROBUF_PATCH=1` + runtime `DD2_ZEROBUF=1`: **3/10** (much worse than the
+9/10 baseline). Root cause of the regression: blocks decompress CONTIGUOUSLY into a slot (established
+earlier this session) — zeroing the FULL destination before each Decompress call wipes out valid
+geometry from adjacent/earlier blocks already decompressed into the SAME buffer, corrupting far more
+than it fixes. CONFIRMS: zeroing is not a free win at this granularity; any zero-based fix would need
+to target ONLY the actual missing "window" bytes (the ~0x1000 before each block's own output, per the
+established Decompress-window finding), not the whole destination — a much more surgical, harder
+change, not attempted here. Native remains 9/10 (L6 only), no change from this test (the debug patch
+is env-gated and off by default; nothing was committed from this experiment).
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
