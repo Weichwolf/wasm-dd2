@@ -450,6 +450,25 @@ the `*puVar5 = *puVar3` merge case), while the reference's does. This points at 
 COUNT mismatch somewhere in the sequence (not just alignment/timing) — a genuine lead for the next
 session's bisection, distinct from (and more stable than) the earlier frame-based checkpoint noise.
 
+## CORRECTION: 0x1d1d1d1d is STABLE for the whole level-9 race, not front-end residue (gdb-confirmed)
+Extended the heap-base watch (0x7debf0) on the reference across the FULL level-9 race this time
+(not just a snapshot): the value stays `0x1d1d1d1d` from `_current_level==9` all the way to frame
+~701 (the end of the race, where the reference cycles to the next demo level and the value finally
+changes to `0x80000501`). No intermediate write was ever caught — meaning `_current_level==9`
+genuinely fires AFTER level 9's own `Init_Game`/`MPE_InitHeap` has already fully run (contradicting
+my earlier guess that it precedes `Play_Game`; likely `_current_level` gets written again somewhere
+inside `Order_Cars`/`Init_Game` too, and gdb's watchpoint caught THAT later write). So `0x1d1d1d1d`
+IS the real, stable, post-Init post-Init_Scene heap-base content for level 9's race — not leftover
+front-end data. Byte-interpreted, `0x1d1d1d1d` is FOUR REPEATED BYTES (0x1d,0x1d,0x1d,0x1d) — the
+same texture/geometry-fill signature as the earlier `0x81818181` finding (`FUN_00415160` section),
+not free-list pointer metadata (which would look like a large heap address, not a repeated byte).
+CONCLUSION: the reference allocates real texture/geometry content AT this exact heap position
+(0x7debf0, the very base of the heap) at some point during level 9's setup, while our build's
+allocation sequence apparently never reaches/exhausts the base slot at all (still the raw
+`MPE_InitHeap` self-pointer through `Init_Scene`). This is a clean, validated, STABLE Stage-2 target:
+whatever allocation the reference makes that lands exactly at the heap base is either missing,
+differently-sized, or differently-ordered in our build.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
