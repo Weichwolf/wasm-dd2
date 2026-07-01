@@ -114,6 +114,23 @@ def fix_dd2(s):
             "  fclose(_File);\n"
             "  return local_20[1];",
             1, 'FILELOAD scattered-locals -> contiguous 2-int buffer')
+    # FIX LEVDATA-BYTEOFF (Ghidra pointer-scaling): the dd2h decompile types `_level_data` as `int*`, so every
+    # reader `*(T*)(_level_data + N)` scales N by 4 (byte N*4) -- but the original x86 uses N as a BYTE
+    # displacement (`[reg + N]`). The relocation FUN_00445ca8 uses `_level_data[k]` = dword element k = byte k*4,
+    # relocating elements [0..0x1c] (bytes 0..0x70). The header is a dword pointer table; readers index it with
+    # BYTE offsets: e.g. Init_Sky reads `_level_data + 0x1c..0x38` = elements 7..0xe = the 8 skybox shapes
+    # (verified: elements 7-0xa tex=0x190, 0xb-0xe tex=0x230, all flag=0 valid shape headers). Under the wrong
+    # int*-scaled reading, `+0x1c` lands on element 0x1c = padding 0x242d8 (flag=0x45, not a shape) whose +0x28
+    # poly-ptr 0x2d0020 is a wild address -> Create_Object/FUN_0041fcac crash. Every reader byte-offset (0x4..
+    # 0x70) falls inside the relocated element range [0..0x1c], confirming byte semantics. Fix faithfully: make
+    # the arithmetic byte-based `((int)_level_data + N)` (matches the x86). NOT touched: `_level_data[k]`
+    # (element relocation) and `X + (int)_level_data` (base add).
+    _ld_n = [0]
+    def _lvbyte(m):
+        _ld_n[0] += 1
+        return "((int)_level_data + " + m.group(1) + ")"
+    s = re.sub(r"\(_level_data \+ (0x[0-9a-fA-F]+|\d+)\)", _lvbyte, s)
+    _applied.append(('LEVDATA-BYTEOFF _level_data+N byte-offset readers', _ld_n[0]))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
