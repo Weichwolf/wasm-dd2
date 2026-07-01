@@ -160,6 +160,14 @@ def fix_dd2(s):
         return "(int)&" + m.group(1) + " + " + m.group(2) + " * 6"
     s = re.sub(r"&(track_info|DAT_00466dee|DAT_00466df2|DAT_00466df4) \+ (\w+) \* 6", _trbyte, s)
     _applied.append(('TRACKINFO-BYTEOFF stride-6 track table byte offsets', _tr_n[0]))
+    # FIX POLYSIZE-BYTEOFF (int* stride-4 table): the poly record-size table @0x466734 (int entries
+    # 20/24/32/40.. = bytes-per-poly-type, indexed by (cmd>>2)) is read as `&DAT_00466734 + (cmd>>2)*4`.
+    # The explicit `*4` is a BYTE stride (4 bytes/int entry), but the int* base scales it x4 -> reads the
+    # wrong size -> iVar5 = size*count explodes -> car-graphics prim pointer (_prim_buf+iVar5) goes wild
+    # -> OOB write crash in FUN_0043c618 (Init_Car_Graphics). Byte-address it. Same class as the others.
+    _ps_before = s.count("&DAT_00466734 + ")
+    s = s.replace("&DAT_00466734 + ", "(int)&DAT_00466734 + ")
+    _applied.append(('POLYSIZE-BYTEOFF DAT_00466734 stride-4 table byte offsets', _ps_before))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
