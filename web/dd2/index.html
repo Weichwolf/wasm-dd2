@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Destruction Derby 2 — dd2h.exe → WASM (decompiled engine)</title>
+  <style>
+    html,body{margin:0;height:100%;background:#0c0d10;color:#cfd3dc;font-family:system-ui,sans-serif;}
+    body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+    h1{font-size:14px;font-weight:500;opacity:.7;margin:8px 0 0;}
+    .hint{font-size:12px;opacity:.5;margin:0;}
+    .hint b{color:#e3b778;}
+    canvas{background:#000;image-rendering:pixelated;width:640px;height:480px;border-radius:4px;
+      outline:none;box-shadow:0 8px 30px rgba(0,0,0,.6);}
+  </style>
+</head>
+<body>
+  <h1>Destruction Derby 2 — dd2h.exe decompiled → WASM (interactive)</h1>
+  <canvas id="canvas" width="320" height="240" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <p class="hint"><b>Arrows</b> steer/accel/brake &nbsp;·&nbsp; <b>Enter</b> accept &nbsp;·&nbsp; <b>Esc</b> back &nbsp;·&nbsp; click canvas to focus</p>
+  <script>
+    var canvas = document.getElementById('canvas');
+    var Module = {
+      canvas: canvas,
+      print: (...a)=>console.log(...a),
+      printErr: (...a)=>console.error(...a),
+      onRuntimeInitialized: function(){
+        // Route real keyboard events to the engine: keydown/keyup -> dd2_browser_key_event(code, down).
+        var send = function(code, down){
+          try { Module.ccall('dd2_browser_key_event', 'number', ['string','number'], [code, down]); }
+          catch(e){ /* not ready yet */ }
+        };
+        var handled = {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Enter:1,Escape:1,Space:1,
+                       KeyA:1,KeyS:1,KeyW:1,KeyZ:1,F1:1,F2:1};
+        window.addEventListener('keydown', function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 1); } });
+        window.addEventListener('keyup',   function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 0); } });
+        canvas.focus();
+      }
+    };
+    canvas.addEventListener('click', ()=>canvas.focus());
+  </script>
+  <script async type="text/javascript" src="index.js"></script>
+</body>
+</html>

@@ -31,6 +31,12 @@ extern int _current_level;
 int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();
+    /* INIT-ALIGN with native_main.c: zero ctor slots holding raw code VAs so __InitRtns skips the
+     * FPU/CRT ctors identically on both targets (native zeroes these; WASM previously ran them ->
+     * native↔WASM init-state divergence). Keeps the deterministic demo identical across builds. */
+    { unsigned va; for(va=0x46ff48; va<0x46ff60; va+=6){
+        unsigned* slot=(unsigned*)(uintptr_t)(va+2);
+        if(*slot>=0x410000 && *slot<0x460000) *slot=0; } }
     *(int*)0x46c32c = (int)(long)&dd2_getthread;  /* __GetThreadPtr */
     /* CRT multithread file/heap-access locks (Access/Release @0x46c330-0x46c364) -> single-threaded no-ops */
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }

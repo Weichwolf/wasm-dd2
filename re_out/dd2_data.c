@@ -94,7 +94,7 @@ int PTR_LAB_0042a4c0;
 
 int UNK_00458895;
 int View_MultiLeague;
-int _DummyPoly;
+/* _DummyPoly removed: now #define'd to DummyPoly (GIMG 0x74a6d0) — see FIX DUMMYPOLY-ALIAS */
 int _FirstTime;
 int _Lap_Timer;
 int _Last_Lap_Timer;
@@ -145,7 +145,7 @@ int __vr0;
 int __vr1;
 int __vr2;
 int __vr3;
-int _active_block_numbers;
+/* _active_block_numbers alias */
 int _actual_season_number;
 /* _add_transparency_table -> image slot 0x7140c8 (dual-symbol) */
 int _adjusted_music;
@@ -155,14 +155,14 @@ int _applause;
 int _boot_objects_count;
 int _bootoff_index;
 int _camera_collision;
-int _camera_fd;
+/* _camera_fd alias */
 int _camera_fd_pt;
 int _car0_being_obstructed;
 int _car_info;
 int _cars_in_crash;
 
 int _commentating;
-int _corner_fd;
+/* _corner_fd alias */
 int _crowd_volume;
 int _current_level;
 int _current_player;

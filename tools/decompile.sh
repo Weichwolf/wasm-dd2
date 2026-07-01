@@ -11,7 +11,7 @@ GHIDRA="${GHIDRA_HOME:-/home/cosmo/tools/ghidra_12.1.2_PUBLIC}"
 export JAVA_HOME="${JAVA_HOME:-/home/cosmo/tools/jdk-21.0.11+10}"
 PROJ_DIR="${DD2_GHIDRA_PROJ_DIR:-/home/cosmo/tools/dd2_ghidra_proj}"
 PROJ_NAME="${DD2_GHIDRA_PROJ_NAME:-dd2}"
-PROGRAM="${DD2_GHIDRA_PROGRAM:-dd2.exe}"
+PROGRAM="${DD2_GHIDRA_PROGRAM:-dd2h.exe}"
 OUT="${1:-$ROOT/re_out}"
 
 echo "[decompile] ghidra=$GHIDRA jdk=$JAVA_HOME proj=$PROJ_DIR/$PROJ_NAME prog=$PROGRAM -> $OUT"

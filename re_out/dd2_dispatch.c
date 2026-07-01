@@ -777,6 +777,34 @@ extern int wstart2_();
 extern int Load_Null();
 extern int FUN_00414fb0();
 extern int Load_Texture2();
+extern void draw_face_3pt_flat(int);
+extern void draw_face_3pt_flat_dpq_lit(int);
+extern void draw_face_3pt_flat_lit(int);
+extern void draw_face_3pt_gour(int);
+extern void draw_face_3pt_gour_dpq_lit(int);
+extern void draw_face_3pt_gour_lit(int);
+extern void draw_face_3pt_pict(int);
+extern void draw_face_3pt_pict_lit(int);
+extern void draw_face_3pt_text_dpq_lit(int);
+extern void draw_face_3pt_text_lit(int);
+extern void draw_face_3pt_text_squash(int);
+extern void draw_face_3pt_tilt_sprite_dpq(int);
+extern void draw_face_4pt_flat(int);
+extern void draw_face_4pt_flat_dpq(int);
+extern void draw_face_4pt_flat_dpq_lit(int);
+extern void draw_face_4pt_flat_lit(int);
+extern void draw_face_4pt_gour(int);
+extern void draw_face_4pt_gour_dpq(int);
+extern void draw_face_4pt_gour_dpq_lit(int);
+extern void draw_face_4pt_gour_lit(int);
+extern void draw_face_4pt_pict(int);
+extern void draw_face_4pt_pict_lit(int);
+extern void draw_face_4pt_text_dpq_lit(int);
+extern void draw_face_4pt_text_dpq_squash(int);
+extern void draw_face_4pt_text_lit(int);
+extern void draw_face_4pt_text_squash(int);
+extern void draw_face_4pt_tilt_sprite(int);
+extern void draw_face_tilt_sprite_dpq(int);
 typedef struct{unsigned va;void*fn;}dd2_fnent;
 dd2_fnent dd2_fnmap[]={
 {0x00414f30,(void*)&Load_Null},
@@ -1555,6 +1583,34 @@ dd2_fnent dd2_fnmap[]={
 {0x459953,(void*)&unlink},
 {0x459cd7,(void*)&utoa},
 {0x456a74,(void*)&wstart2_},
+{0x417efc,(void*)&draw_face_3pt_flat},
+{0x4180c8,(void*)&draw_face_3pt_flat_lit},
+{0x418458,(void*)&draw_face_3pt_flat_dpq_lit},
+{0x418678,(void*)&draw_face_4pt_flat},
+{0x41888c,(void*)&draw_face_4pt_flat_lit},
+{0x418aa4,(void*)&draw_face_4pt_flat_dpq},
+{0x418cb8,(void*)&draw_face_4pt_flat_dpq_lit},
+{0x4191ac,(void*)&draw_face_3pt_text_squash},
+{0x4196a8,(void*)&draw_face_3pt_text_lit},
+{0x41a0ac,(void*)&draw_face_3pt_text_dpq_lit},
+{0x41a66c,(void*)&draw_face_4pt_text_squash},
+{0x41acf4,(void*)&draw_face_4pt_text_lit},
+{0x41b2d8,(void*)&draw_face_4pt_text_dpq_squash},
+{0x41b97c,(void*)&draw_face_4pt_text_dpq_lit},
+{0x41bcc4,(void*)&draw_face_3pt_gour},
+{0x41be90,(void*)&draw_face_3pt_gour_lit},
+{0x41c220,(void*)&draw_face_3pt_gour_dpq_lit},
+{0x41c49c,(void*)&draw_face_4pt_gour},
+{0x41c6b0,(void*)&draw_face_4pt_gour_lit},
+{0x41c8c8,(void*)&draw_face_4pt_gour_dpq},
+{0x41cae0,(void*)&draw_face_4pt_gour_dpq_lit},
+{0x41ce8c,(void*)&draw_face_3pt_pict},
+{0x41d058,(void*)&draw_face_3pt_pict_lit},
+{0x41d9e0,(void*)&draw_face_4pt_pict},
+{0x41dbf4,(void*)&draw_face_4pt_pict_lit},
+{0x41edbc,(void*)&draw_face_4pt_tilt_sprite},
+{0x41f220,(void*)&draw_face_tilt_sprite_dpq},
+{0x41f900,(void*)&draw_face_3pt_tilt_sprite_dpq},
 };
 int dd2_fnmap_n=sizeof(dd2_fnmap)/sizeof(dd2_fnmap[0]);
 static void* g_lut[0x50000];

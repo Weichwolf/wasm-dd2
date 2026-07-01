@@ -5,9 +5,35 @@ Port `dd2h.exe` (1996 PC game) to a reproducible C build (native-primary, WASM a
 
 ## Goal / acceptance
 The deterministic attract-demo must be **crash-free on all 10 levels** and **bit-identical** to reference
-`dd2h.exe` (compare the 8-bit indexed framebuffer `@0x700450`, 320x240) plus audio sample-for-sample.
-Then: fully playable (menus, track-select, race; keyboard + pad). Engine C is mechanically derived from
-Ghidra; only the platform/runtime shim is hand-written (DirectDraw→g_pixels/WebGL, DirectSound→WebAudio, Win32/CRT).
+`dd2h.exe` (compare the 8-bit indexed framebuffer `@0x700450`, **640x480** = 0x4b000) plus audio
+sample-for-sample. Then: fully playable (menus, track-select, race; keyboard + pad). Engine C is
+mechanically derived from Ghidra; only the platform/runtime shim is hand-written
+(DirectDraw→g_pixels/WebGL, DirectSound→WebAudio, Win32/CRT).
+
+## CRITICAL (2026-07-01): the reconstruction was built from the WRONG binary — dd2.exe (320x240), not dd2h.exe (640x480)
+**dd2h.exe is the HIGH-RES (640x480) build; dd2.exe was the low-res (320x240) build.** Proven by PE headers
+(dd2h.exe .bss 0x4c0c00 vs dd2.exe 0x488800) and the exact math: 640x480 8bpp = 0x4b000, 320x240 = 0x12c00,
+diff = **0x38400** = the framebuffer-size difference, which is why EVERY BSS symbol >= 0x713050 (right after
+_screenbuffer) is 0x38400 too low in our reconstruction -> the entire Stage-2 divergence, the decompress-
+window corruption (black-blob cars), and the residual crashes. tools/decompile.sh was analyzing dd2.exe.
+Per the user's directive (2026-07-01), the project is being RE-BASED entirely on dd2h.exe: dd2.exe DELETED,
+decompile.sh PROGRAM -> dd2h.exe, dd2h.exe imported+analyzed in Ghidra. NOTE the framebuffer @0x700450 is
+640x480 (0x4b000), NOT 320x240 -- update refcapture/compare sizes accordingly. RE-BASE PLAN:
+  1. [done] delete dd2.exe; point decompile.sh at dd2h.exe.
+  2. [running] Ghidra import+analysis of dd2h.exe (/tmp/dd2h_analyze.log).
+  3. Port the ~1000+ symbol NAMES/types from the existing dd2.exe Ghidra program to dd2h.exe by CODE-pattern
+     match (functions are the same game, shifted ~0x130 in code / +0x38400 in bss; dd2.exe's Play_Game
+     prologue bytes were found in dd2h.exe at +0x130). The dd2.exe Ghidra PROGRAM is kept (in-project) as the
+     name source until dd2h is fully symbolized. CAVEAT: resolution-dependent code (rasterizers, framebuffer
+     loops: 0x140 pitch->0x280, 0x12c00->0x4b000) is genuinely DIFFERENT, not just shifted -- those functions
+     need real re-decompilation, not just renaming.
+  4. Re-recover the GTE/jumptable register-arg fns (tools/recover_regargs.py) for dd2h addresses.
+  5. Export dd2h decomp+symbols -> re_out/. Re-anchor transpile.py patches (code-text anchors mostly survive;
+     address-literal ones shift +0x38400/+0x130). Rebuild native+WASM, re-verify 10/10, then refcapture.sh
+     bit-match against dd2h.exe (expect the +0x38400 to vanish and geometry/cars to render correctly).
+This is a large re-decompilation effort (effectively redoing the reconstruction from the correct binary),
+but it is THE fix -- it makes bit-identity achievable at all (the dd2.exe-based build never could match
+dd2h.exe). Everything below predates this pivot and refers to the dd2.exe-based reconstruction.
 
 ## Pipeline (RULE: never edit decompiled code)
 `dd2h.exe → decompile → patch → compile → run` — and it must run identically, in Wine too.

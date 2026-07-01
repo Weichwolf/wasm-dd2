@@ -16,5 +16,6 @@ void* LockResource(void* h){ return (void*)1; }
    diverges (native vs WASM bit-diff starts exactly at frame 3, the first demo race frame).
    Matches the decompiled body: seed = seed*0x41c64e6d + 0x3039; return (seed>>16)&0x7fff. */
 static unsigned _dd2_rand_seed = 1;
-int rand(void){ _dd2_rand_seed = _dd2_rand_seed * 0x41c64e6dU + 0x3039U; return (int)((_dd2_rand_seed >> 0x10) & 0x7fff); }
+unsigned g_rand_calls = 0;   /* divergence locator: native-vs-WASM rand() call-count per frame */
+int rand(void){ g_rand_calls++; _dd2_rand_seed = _dd2_rand_seed * 0x41c64e6dU + 0x3039U; return (int)((_dd2_rand_seed >> 0x10) & 0x7fff); }
 void srand(unsigned _Seed){ _dd2_rand_seed = _Seed; }

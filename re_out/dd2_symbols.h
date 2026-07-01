@@ -121,14 +121,14 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_00463039 (*(int*)GIMG(0x463039))
 #define DAT_0046303e (*(int*)GIMG(0x46303e))
 #define DAT_0046303f (*(int*)GIMG(0x46303f))
-#define DAT_00463046 (*(int*)GIMG(0x463046))
-#define DAT_00463047 (*(int*)GIMG(0x463047))
-#define DAT_00463048 (*(int*)GIMG(0x463048))
-#define DAT_00463049 (*(int*)GIMG(0x463049))
-#define DAT_0046304a (*(int*)GIMG(0x46304a))
-#define DAT_0046304e (*(int*)GIMG(0x46304e))
-#define DAT_0046304f (*(int*)GIMG(0x46304f))
-#define DAT_00463050 (*(int*)GIMG(0x463050))
+#define DAT_00463046 (*(unsigned char*)GIMG(0x463046))
+#define DAT_00463047 (*(unsigned char*)GIMG(0x463047))
+#define DAT_00463048 (*(unsigned char*)GIMG(0x463048))
+#define DAT_00463049 (*(unsigned char*)GIMG(0x463049))
+#define DAT_0046304a (*(unsigned char*)GIMG(0x46304a))
+#define DAT_0046304e (*(unsigned char*)GIMG(0x46304e))
+#define DAT_0046304f (*(unsigned char*)GIMG(0x46304f))
+#define DAT_00463050 (*(unsigned short*)GIMG(0x463050))
 #define DAT_00463052 (*(int*)GIMG(0x463052))
 #define DAT_00463860 (*(int*)GIMG(0x463860))
 #define DAT_00463864 (*(int*)GIMG(0x463864))
@@ -1613,15 +1613,15 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define _osmajor (*(int*)GIMG(0x46c3f7))
 #define _osminor (*(int*)GIMG(0x46c3f8))
 #define _otz (*(int*)GIMG(0x7142bc))
-#define _pad_i (*(int*)GIMG(0x463041))
-#define _pad_j (*(int*)GIMG(0x463042))
-#define _pad_ldown (*(int*)GIMG(0x463044))
-#define _pad_lleft (*(int*)GIMG(0x463045))
-#define _pad_lup (*(int*)GIMG(0x463043))
-#define _pad_rdown (*(int*)GIMG(0x46304c))
-#define _pad_rleft (*(int*)GIMG(0x46304d))
-#define _pad_rup (*(int*)GIMG(0x46304b))
-#define _pad_start (*(int*)GIMG(0x463040))
+#define _pad_i (*(unsigned char*)GIMG(0x463041))
+#define _pad_j (*(unsigned char*)GIMG(0x463042))
+#define _pad_ldown (*(unsigned char*)GIMG(0x463044))
+#define _pad_lleft (*(unsigned char*)GIMG(0x463045))
+#define _pad_lup (*(unsigned char*)GIMG(0x463043))
+#define _pad_rdown (*(unsigned char*)GIMG(0x46304c))
+#define _pad_rleft (*(unsigned char*)GIMG(0x46304d))
+#define _pad_rup (*(unsigned char*)GIMG(0x46304b))
+#define _pad_start (*(unsigned char*)GIMG(0x463040))
 #define _primfuncs (*(int*)GIMG(0x46002c))
 #define _psp (*(int*)GIMG(0x46c3cc))
 #define _rgb0 (*(int*)GIMG(0x7142e0))
@@ -2400,7 +2400,12 @@ extern undefined4 SparksCtrl(int);
 extern undefined4 SteamCtrl(int);
 extern int UNK_00458895;
 extern int View_MultiLeague;
-extern int _DummyPoly;
+/* FIX DUMMYPOLY-ALIAS: the decompiler split DummyPoly into the GIMG cell `DummyPoly`@0x74a6d0
+ * AND a bare `extern int _DummyPoly` (allocated in dead BSS by dd2_data.c). DrawFlagObject does
+ * `_DummyPoly = old_OT_head; OT_head = &DummyPoly` to chain DummyPoly into the OT — but writing
+ * _DummyPoly into BSS left the REAL link at 0x74a6d0 = 0, so DrawOTag walked off the bottom of
+ * the OT bucket array into the malloc heap (the f145 underflow crash). Alias them to one cell. */
+#define _DummyPoly DummyPoly
 extern int _FirstTime;
 extern int _Lap_Timer;
 extern int _Last_Lap_Timer;
@@ -2454,7 +2459,7 @@ extern int __vr0;
 extern int __vr1;
 extern int __vr2;
 extern int __vr3;
-extern int _active_block_numbers;
+#define _active_block_numbers (*(int*)GIMG(0x750ea0))
 extern int _actual_season_number;
 #define _add_transparency_table (*(int*)GIMG(0x7140c8))  /* dual-symbol: setter wrote C-global, draw_text_half reads image slot (=add_transparency_table) */
 extern int _adjusted_music;
@@ -2464,14 +2469,14 @@ extern int _applause;
 extern int _boot_objects_count;
 extern int _bootoff_index;
 extern int _camera_collision;
-extern int _camera_fd;
+#define _camera_fd (*(int*)GIMG(0x744b10))
 extern int _camera_fd_pt;
 extern int _car0_being_obstructed;
 extern int _car_info;
 extern int _cars_in_crash;
 #define _cdb_ (*(int*)GIMG(0x0071bf80))
 extern int _commentating;
-extern int _corner_fd;
+#define _corner_fd (*(int*)GIMG(0x75a0e0))
 extern int _crowd_volume;
 extern int _current_level;
 extern int _current_player;

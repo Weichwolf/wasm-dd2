@@ -31,7 +31,7 @@ emcc $OBJS -o "$OUTDIR/index.html" \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=0 -sERROR_ON_UNDEFINED_SYMBOLS=0 \
   -sASYNCIFY -sASYNCIFY_STACK_SIZE=131072 \
   -sEXPORTED_FUNCTIONS='["_main","_dd2_browser_key_event","_malloc","_free"]' \
-  -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","stringToUTF8","lengthBytesUTF8"]' \
+  -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","stringToUTF8","lengthBytesUTF8","ENV"]' \
   --shell-file "$ROOT/web/shell_port.html" \
   --preload-file "$GAME/Dirinfo@Dirinfo" \
   --preload-file "$GAME/dd2_image.bin@dd2_image.bin" \
