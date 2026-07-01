@@ -704,5 +704,18 @@ particular slowness does not apply there (the browser's separate slowness is Swi
 raster). REMAINING interactive gaps: (a) real-GPU browser run to visually confirm end-to-end driving
 (headless SwiftShader too slow to clear the flyby+countdown in a test window), (b) whether the race
 runs to completion under WASM with input (native does: 1501 frames "demo returned"); both are
-functional/perf confirmations, not known crashes. The demo_mode=0 crash class is now closed for the
-levels tested (L1/L9); a full 10-level interactive sweep is the natural next verification.
+functional/perf confirmations, not known crashes. A full 10-level interactive WASM crash-free sweep (25s/level, demo_mode=0) after GUARD AO = **9/10**:
+only L3 still crashes ("memory access out of bounds"), and its stack is the KNOWN poly-handler OOB
+class, NOT the MPE_malloc site: main->DemoModeLevel->Play_Game->Draw_Scene_Object_Blocks->
+Draw_Scene_Object->Draw_Object_Polys->**FUN_0041a2f4**. FUN_0041a2f4's loop (count param_1 from the
+corrupt _gpoly stream) walks _gprim1/_gprim2 AND reads several derived wild addresses (the _gpoly
+fields, the _gtexture[iVar1] read, and the __clutspace CLUT read at dd2.c:5661 computed from
+freshly-written garbage). TRIED GUARD AP (WASM-only, guard the body behind an _gprim1/local_14/_gpoly/
+texture range check, advancement left unconditional) -- REVERTED: it just moved the fault to the NEXT
+unguarded access within the SAME function (write-target -> _gpoly read -> texture read -> CLUT read),
+exactly the poly-handler whack-a-mole CLAUDE.md warns against (12+ handlers x multiple wild accesses
+each, all Stage-2-rooted). Each added guard revealed another access; closing it that way is not
+tractable and is really Stage-2 work. So the interactive demo_mode=0 crash-free status is: 9/10 WASM
+(L3 = poly-handler class), the SAME fundamental blocker as bit-identity. The clean, kept win is
+GUARD AO (the MPE_malloc OOB, which was the FIRST/most-common interactive crash). The proper fix for
+L3 (and full interactive crash-freeness) is Stage 2: match the heap layout so _gpoly isn't corrupt.
