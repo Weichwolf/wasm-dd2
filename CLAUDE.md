@@ -417,6 +417,21 @@ established Decompress-window finding), not the whole destination — a much mor
 change, not attempted here. Native remains 9/10 (L6 only), no change from this test (the debug patch
 is env-gated and off by default; nothing was committed from this experiment).
 
+## Stage 2 attempt: watching the free-list head (0x73c290) on the reference gives garbage, not pointers
+Tried reconstructing the reference's MPE_malloc carve sequence via a DATA watchpoint on
+`_DAT_0073c290` (the free-list head, per dd2_symbols.h) after `_current_level==9` — sidesteps the
+established CODE-VA mislabeling problem since this is a data watchpoint (which have worked reliably
+elsewhere: `current_frame`@0x462ff0, `_current_level`@0x936ff4). Result: NOT usable. The watched
+value cycles through a repeating byte-fill pattern (`0x76767676`, `0xaaaa8484`, ... shifting one byte
+at a time across ~40 hits) — clearly a bulk texture/geometry fill happening at or through this
+address, not a real pointer. This means `_DAT_0073c290` is NOT functioning as "the live free-list
+head" at this point in the reference's execution/memory layout — either the free-list has already
+been fully consumed and this region reused for something else, or (less likely given other DATA
+addresses work) this specific address is also mismapped. NEXT: don't reuse this exact address/
+technique; if pursuing the allocation-sequence angle again, first confirm a candidate data address
+is stable/sane in the reference (e.g. read it multiple times across frames, expect small integer or
+plausible-pointer values) before trusting a watchpoint result from it.
+
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
 - Commit/push only when asked. Faithful reconstruction from the binary — no approximations/band-aids.
