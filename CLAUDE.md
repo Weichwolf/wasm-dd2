@@ -338,12 +338,22 @@ TRIED AND REVERTED (both real regressions, not just "didn't help"):
      stricter and traps on the SAME first-iteration write that native shrugs off -- so even ONE
      iteration with a bad starting `_gprim2` is unsafe under WASM, while native only breaks once
      the iteration count runs long enough to reach 0x900f0d specifically (many iterations in).
-STOPPED HERE (both native fix attempts either hung or broke WASM): the safe fix needs to guard the
-INDIVIDUAL byte-writes inside the loop body (dd2.c:45500-45511, `*(undefined1*)(_gprim1+7)=0x30` etc.)
-against the valid heap range, leaving the loop's iteration count and `_gpoly`/`_gprim*` advancement
-completely untouched (so neither the hang nor the WASM out-of-bounds trap can recur) -- not yet
-attempted, given the two prior misfires; do this carefully with the harness (test native AND
-`make verify-wasm` together after every attempt) before trusting any fix here.
+GUARD AK (commit 719d9e4, KEPT — safe, no regression): guards the individual byte-writes inside
+`FUN_0041bc0c`/`FUN_0041bc68`'s loop body against the valid heap+image range, leaving the loop's
+iteration count and `_gpoly`/`_gprim*` advancement completely untouched (avoids both the hang and the
+WASM trap from the two reverted attempts). Verified via gdb: this DOES stop the corruption through
+these two functions specifically — but the SAME sound-channel slot still gets corrupted via a
+DIFFERENT handler, `FUN_0041a2f4` (dd2.c:5683, `*(undefined2*)(_gprim1+9)=...`), dispatched from the
+SAME switch in `FUN_0041fb7c`/`Draw_Object_Polys`. **The vulnerability class is broader than scoped**:
+likely present across several/all of the ~12 poly-command handler functions in that dispatch switch
+(FUN_0041a2f4, FUN_00417ea0, FUN_0041861c, FUN_00418ed0, FUN_0041bc0c✓, FUN_0041bc68✓, FUN_0041c3e4,
+FUN_0041c440, FUN_0041ccf8, FUN_0041cdd0, FUN_0041d834, FUN_0041d918, setup_face_sprite — ✓ = guarded),
+each walking `_gprim1`/`_gprim2`/`_gpoly` with counts/offsets sourced from the same corrupted stream.
+NEXT: apply the SAME per-write-guard pattern (not iteration-count clamping — that's what broke things
+twice) to the remaining ~10 handlers, one at a time, verifying native AND `make verify-wasm` together
+after each. This is real but bounded work (a known, repeatable pattern per function) — the risk
+already identified is getting the POST-FIX-I anchor text right (FIX I rewrites `_gprim1 + N` into
+`(char*)_gprim1 + N` form earlier in the pipeline; anchor against THAT text, not the pristine source).
 
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
