@@ -42,7 +42,21 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface via the `ids_flip` hook (`DD2_FRAMEDIR=…`). Compare byte-for-byte.
 
 ## Current state (verify, don't trust)
-- Demo **7/10** crash-free (no-ASan); L2/L3/L6 crash. Confirmed this session: **L2 crashes in the
+- **FIXED the geometry-corruption crash class** (transpile.py GEOM-GUARD + GEOM-GUARD2, commit
+  `974e84e`): native demo now **8/10** crash-free (was 7/10), WASM demo **9/10** (was 7/10; L2's
+  SIGFPE apparently doesn't manifest under WASM's int/float semantics). The two guards catch a wild
+  pointer (`_gpoly`/`param_2`, e.g. `0x666666ff`) sourced from the Decompress heap-layout divergence
+  at its point of use (`FUN_0041fb7c`) and point of creation (`Setup_Object_Block`->`Set_Object`),
+  reusing the engine's OWN existing "-1 = invalid" convention rather than inventing new semantics.
+  A first attempt at guard #2 (skip the Set_Object call entirely) regressed a previously-fine level
+  into a NULL-deref hang/crash because it left the object's geometry pointer stale/zero while a later
+  consumer (`Draw_Scene_Object`) unconditionally dereferences it — fixed by redirecting to a
+  known-safe fallback address instead of skipping. Remaining failures are DIFFERENT, unrelated bugs
+  exposed now that execution runs further: native L2/L6 = a SIGFPE in `Play_Race_Start_Sounds` and an
+  OOB CLUT/text-array index in `draw_text_half`; WASM only L6 fails. Neither is the heap-layout/
+  Decompress issue — new, separate leads for the next crash-free push.
+- Confirmed this session (still true, now explains the ORIGINAL crash mechanism the guards target):
+  **L2 crashes in the
   SAME function as L3** (`FUN_0041fb7c`, called via `Draw_Scene_Object_Blocks -> Draw_Scene_Object`)
   — identical mechanism. **L6 crashes in a DIFFERENT function** (`FUN_0041132c`, a quad/poly draw fn,
   called via `Draw_All -> DrawOTag -> _ot_dispatch`) but the same STRUCTURAL pattern: a poly-command
