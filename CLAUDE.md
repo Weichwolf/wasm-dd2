@@ -647,3 +647,39 @@ Build: `bash tools/build_web.sh web/dd2`; test: `node tools/browser/shot.js web/
 navshot.js for keyed nav. NEXT: the browser build currently runs the recorded-pad DEMO (demo_mode=1,
 so keys don't steer yet); switch it to interactive (Front_End menu or a live PlayMode race with
 demo_mode=0) so the wired keyboard input actually drives menus/car -> end-to-end playable.
+
+## Stage 3: browser INTERACTIVE (demo_mode=0) now RENDERS THE LIVE RACE (3 fixes this session)
+The interactive path (demo_mode=0, live keyboard) previously crashed in WASM with "table index is out
+of bounds"; now it renders a full live race in the browser. Three fixes:
+- **DRAWPRIM-GUARD** (transpile.py, commit): DrawPrim@0x412885 did a RAW indirect call
+  `_primfuncs[type](prim)` with no relocation-awareness, unlike the OT loop's `_ot_dispatch` (which
+  already routes through a relocated-call/image-switch/default guard). dd2_relocate() only rewrites
+  `_primfuncs` entries whose value is in its fnmap; an un-rewritten entry (the pause-overlay tile's
+  type 0x28, reached ONLY on demo_mode=0 via Pause_Mode->DrawPrim) keeps a raw image VA -> under WASM
+  a wild function-table index -> trap. Routed DrawPrim through `_ot_dispatch` (defined just above it).
+  Native unaffected (relocated ptrs >=0x460000 -> called directly, as before); both targets 10/10.
+- **Spurious-pause fix** (DemoModeLevel injection): the cold level-launcher skips the front-end that
+  establishes the pad type, so Setup_Pad recorded `_recorded_pad_type=0` (BSS) while the race's
+  FUN_00422c74 sets `DAT_0071c051=1` (keyboard) every frame -> `DAT_0071c051 != _recorded_pad_type`
+  (Play_Game dd2.c:10166) -> demo_mode=0 immediately entered Pause_Mode (showed the PAUSE menu, not
+  the race). Seed `*(unsigned char*)0x71c051 = 1` BEFORE Setup_Pad so the recorded type matches.
+  Harmless for demo_mode=1 (pause gated on demo_mode==0).
+- **DD2_LEVEL env** in DemoModeLevel: browser has no argv (DemoModeLevel(0) -> random level); DD2_LEVEL
+  lets the browser/harness force a level (low levels <8 use the simpler `_DAT_0075a6c6==1` race-end,
+  vs level>7's `active-cars<2` which ends fast from divergent car-state -- a Stage-2 symptom).
+VERIFIED (tools/browser/drivetest.js -- holds a key in headless Chromium): level-1 interactive renders
+a GORGEOUS correct race START scene -- start-line light gantry, full grandstands, track markings, HUD
+"Speed 000 KPH / Race Points / Lap 01/10 / Still Running / pos 06". The game LOGIC advances (position
+06->07, scene evolves, 7 unique frames captured) -- it is NOT frozen. To force interactive in the
+browser: build with a shell that sets `Module.preRun=[function(){ ENV.DD2_LIVE='1'; ENV.DD2_LEVEL='1'; }]`
+(needs `-sEXPORTED_RUNTIME_METHODS` to include `ENV`, added to build_web.sh).
+CAVEAT (headless perf, NOT a bug): SwiftShader software raster + ASYNCIFY runs the headless browser at
+~0.1 fps, so the ~215-frame camera flyby + 100-frame countdown before player control takes minutes of
+wall-clock -- too slow to reach Speed>0 within a practical test window here. On a real-GPU browser
+(30-60fps) the countdown is ~7s. Input->car itself is already PROVEN natively (FIX PADTYPE/PADTYPE2:
+steering 0->-64, 4.5% pixel diff held-left vs none) and native demo_mode=0 runs the full race
+crash-free (DD2_LIVE=1 -> 1501 frames, "demo returned"). So interactive is functionally working; the
+only gaps are (a) a real-GPU browser run to visually confirm driving end-to-end, and (b) Stage-2
+(divergent car-state makes level>7 races end early, and the node headless demo_mode=0 stalls before
+the first flip -- a native-vs-WASM computation divergence in the demo_mode=0-only flyby/control path,
+same Stage-2 root). tools: tools/browser/drivetest.js `<buildDir> <outDir> <holdKey> [shots][stepMs][preMs]`.
