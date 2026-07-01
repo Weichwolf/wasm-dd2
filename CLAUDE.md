@@ -133,6 +133,17 @@ Init_Game/Init_Scene actually populates this buffer) for a meaningful content co
 find that later sync point in our build (a real function that runs after the level directory is fully
 read) and re-verify any future "match" finding's nonzero fraction before trusting it.
 
+CAVEAT (tried, didn't work): letting the REFERENCE's front-end run naturally to reach this later point
+(watching `_fi_levdat`/0x75eb60 for its first nonzero write, patiently, in the background) does NOT
+reliably converge in this environment — after **10 real minutes at ~100% CPU**, dd2h.exe under Wine +
+Xvfb never wrote that address again (beyond one early, irrelevant zero-write). Likely stuck busy-waiting
+on some resource that never becomes ready headless (display flip / audio device / similar), not
+genuinely progressing through the ~1800-iteration front-end idle loop. Don't repeat this exact
+"attach and patiently watch the real front-end" approach expecting it to finish on its own — kill it
+and find a different way to reach a late, content-populated reference checkpoint (e.g. a shorter/
+different code path, or accept Order_Cars-level alignment and focus comparisons on what IS populated
+by then).
+
 ## Front-end-history hypothesis: tested, did NOT improve alignment (negative result, keep DD2_LEVEL shortcut)
 Hypothesis: the reference runs ~1800 front-end idle-loop iterations (`re_out/dd2.c:34635-34661`,
 `local_18 = 0x708` countdown in the menu loop) before its OWN `DemoMode()` call — menu/title screen
