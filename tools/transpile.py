@@ -55,6 +55,41 @@ def fix_dd2(s):
             "FUN_00411ebc((int*)(int[12]){local_40,local_3c,local_38,local_34,local_30,local_2c,"
             "local_28,local_24,local_20,local_1c,local_18,local_14},",
             7, 'EBC scattered-locals -> contiguous array')
+    # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
+    # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
+    # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
+    # a symptom of the Decompress heap-layout divergence (see CLAUDE.md). PRIOR ATTEMPT sanitized this same
+    # field at its creation site (Set_Object/Create_Object) instead of here and made things WORSE (broke L10
+    # into a hang) -- reverted. This time: guard ONLY this one read site, ONLY the pointer-validity check
+    # (not touching Set_Object/Create_Object/the +0x1e flag/lifecycle at all), isolating whether the earlier
+    # regression came from the Set_Object-side change specifically.
+    s = sub(s, "    _gpoly = *(short **)(iVar3 + 0x28);\n"
+               "    _gprim1 = (undefined4 *)((int)_prim_buf + iVar4);   /* WASM: byte (int* scaled iVar4) */",
+               "    _gpoly = *(short **)(iVar3 + 0x28);\n"
+               "    if ((unsigned int)(uintptr_t)_gpoly < 0x400000u || (unsigned int)(uintptr_t)_gpoly >= 0x900000u) return -1;  /* GEOM-GUARD: wild _gpoly (heap-layout divergence symptom) -> skip like the existing iVar4==-1 convention */\n"
+               "    _gprim1 = (undefined4 *)((int)_prim_buf + iVar4);   /* WASM: byte (int* scaled iVar4) */",
+               1, 'GEOM-GUARD FUN_0041fb7c isolated pointer-validity guard')
+    # FIX GEOM-GUARD2: Setup_Object_Block's per-object loop computes Set_Object's 2nd arg as
+    # (int)param_1 + iVar2, where iVar2 = *piVar3 comes straight from the decompressed block (same
+    # divergence-corrupted source as GEOM-GUARD above). When iVar2 is garbage, the computed address
+    # is wild and Set_Object segfaults on its FIRST read (*(short*)(param_2+0x1e)) -- one level upstream
+    # of the GEOM-GUARD case. FIRST ATTEMPT (skip the Set_Object call entirely) regressed: it left
+    # param_1[1] (this object's geometry-block pointer, normally set by Set_Object's `param_1[1] =
+    # param_2`) at its stale/zero value, and Draw_Scene_Object unconditionally dereferences param_1[1]
+    # later (dd2.c:16487 `*(ushort*)param_1[1]`) for every object in this block's count regardless --
+    # NULL/stale deref. FIX: redirect the wild param_2 to param_1 itself (the block header -- always a
+    # valid, already-mapped address) instead of skipping the call, so param_1[1] always ends up
+    # pointing somewhere safe to dereference (a real but semantically-empty/default object), matching
+    # the existing "safe fallback" pattern rather than leaving state half-initialized.
+    s = sub(s, "      iVar2 = *piVar3;\n"
+               "      Set_Object(local_20,(int)param_1 + iVar2);\n"
+               "      if ((*(byte *)((int)param_1 + iVar2 + 4) & 0x80) == 0) {",
+               "      iVar2 = *piVar3;\n"
+               "      { unsigned _op = (unsigned)((int)param_1 + iVar2);\n"
+               "        Set_Object(local_20, (_op >= 0x400000u && _op < 0x900000u) ? (int)param_1 + iVar2 : (int)param_1); }\n"
+               "      if (((unsigned)((int)param_1+iVar2) < 0x400000u || (unsigned)((int)param_1+iVar2) >= 0x900000u) ||"
+               " (*(byte *)((int)param_1 + iVar2 + 4) & 0x80) == 0) {",
+               1, 'GEOM-GUARD2 Setup_Object_Block wild object-offset guard (safe fallback, not skip)')
     # FIX EBC2 (scattered-locals): sibling rasterizer FUN_0041243c (3-vertex / 6-int, read-only param_1[0..5],
     # texel callback FUN_0041080d) is fed &local_40 by FUN_00410f74/FUN_00411a04 — same reversed-stack-local
     # corruption as FIX EBC. Pass an explicit contiguous 6-int compound-literal array.
