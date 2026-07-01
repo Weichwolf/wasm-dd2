@@ -3810,8 +3810,8 @@ void __fastcall FUN_00413e08(short *param_1)
 
 {
   int iVar1;
-  short *unaff_ESI;
-  short *unaff_EDI;
+  short *unaff_ESI=(short*)(uintptr_t)_g_esi;
+  short *unaff_EDI=(short*)(uintptr_t)_g_edi;
   
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (short)(*param_1 * iVar1 >> 0xc);
@@ -3863,8 +3863,8 @@ void FUN_00413f85(void)
 {
   int iVar1;
   int iVar2;
-  int *unaff_EBX;
-  int *unaff_EBP;
+  int *unaff_EBX=(int*)(uintptr_t)_g_ebx;
+  int *unaff_EBP=(int*)(uintptr_t)_g_ebp;
   uint uVar3;
   
   uVar3 = unaff_EBX[2];
@@ -3905,8 +3905,8 @@ void FUN_00414016(void)
 
 {
   int iVar1;
-  short *unaff_ESI;
-  uint *unaff_EDI;
+  short *unaff_ESI=(short*)(uintptr_t)_g_esi;
+  uint *unaff_EDI=(uint*)(uintptr_t)_g_edi;
   
   iVar1 = (int)*unaff_ESI;
   *unaff_EDI = (uint)((longlong)(int)__globmat * (longlong)iVar1) >> 0xc |
@@ -3948,9 +3948,9 @@ void FUN_00414016(void)
 void FUN_00414099(void)
 
 {
-  int unaff_EBP;
-  int *unaff_ESI;
-  int *unaff_EDI;
+  int unaff_EBP=(int)(uintptr_t)_g_ebp;
+  int *unaff_ESI=(int*)(uintptr_t)_g_esi;
+  int *unaff_EDI=(int*)(uintptr_t)_g_edi;
   
   *unaff_EDI = *(int *)(unaff_EBP + 0x12) + *unaff_ESI;
   unaff_EDI[1] = *(int *)(unaff_EBP + 0x16) + unaff_ESI[1];
@@ -13000,8 +13000,8 @@ void __cdecl FUN_00422488(int param_1,int param_2,int param_3)
   int iVar5;
   int iVar6;
   int iVar7;
-  uint unaff_ESI;
-  uint unaff_EDI;
+  uint unaff_ESI=(uint)(uintptr_t)_g_esi;
+  uint unaff_EDI=(uint)(uintptr_t)_g_edi;
   uint local_18;
   
   if (param_2 != 0) {
@@ -21015,10 +21015,10 @@ void __fastcall FUN_00430d0e(int param_1)
   int iVar1;
   int iVar2;
   int iVar3;
-  int unaff_EBX;
+  int unaff_EBX=(int)(uintptr_t)_g_ebx;
   int iVar4;
-  int unaff_EBP;
-  int unaff_ESI;
+  int unaff_EBP=(int)(uintptr_t)_g_ebp;
+  int unaff_ESI=(int)(uintptr_t)_g_esi;
   int iVar5;
   
   do {
@@ -44070,7 +44070,7 @@ int __cdecl sopen(char *_Filename,int _OpenFlag,int _ShareFlag,...)
   DWORD dwCreationDisposition;
   HANDLE pvVar2;
   int iVar3;
-  DWORD unaff_EBX;
+  DWORD unaff_EBX=(DWORD)(uintptr_t)_g_ebx;
   uint uVar4;
   uint uVar5;
   DWORD dwFlagsAndAttributes;
@@ -44790,7 +44790,7 @@ uint * __MemAllocator(void)
   uint uVar1;
   uint in_EAX;
   uint uVar2;
-  int unaff_EBX;
+  int unaff_EBX=(int)(uintptr_t)_g_ebx;
   uint *puVar3;
   uint uVar4;
   uint *puVar5;
@@ -44849,7 +44849,7 @@ void __MemFree(void)
   uint uVar1;
   int iVar2;
   uint uVar3;
-  int unaff_EBX;
+  int unaff_EBX=(int)(uintptr_t)_g_ebx;
   uint *puVar4;
   uint *puVar5;
   uint *puVar6;
