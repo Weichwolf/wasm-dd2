@@ -53,6 +53,13 @@ def sub(text, old, new, n=1, name=''):
 RASTER_GUARD = True
 
 def fix_dd2(s):
+    # DD2H COM-PTR: a handful of DirectDraw/DirectSound/system interface globals hold a pointer VALUE that the
+    # decomp derefs as `*_DAT_x` / `_DAT_x[i]`. Their GIMG value-macro is a uint lvalue, so bare `*`/`[]` fails.
+    # Cast the value to int* at the deref (faithful: same pointer). Only the interface globals (found by usage).
+    for _com in ['_DAT_00774690','_DAT_0074f19c','_DAT_00940974','_DAT_00940990','_DAT_009392c4',
+                 '_DAT_0078a378','_DAT_0093e7b4','_DAT_0093e7b8']:
+        s = re.sub(r'\*(' + _com + r')\b', r'*(int*)\1', s)
+        s = re.sub(r'\b(' + _com + r')\[', r'((int*)\1)[', s)
     # DD2H SUBPIECE: the fresh dd2h Ghidra analysis (less type-refined than the old dd2.exe program) emits
     # raw subpiece notation `IDENT._N_M_` = access the M-byte field at byte-offset N of IDENT. Convert to a
     # byte-addressed cast: `(*(T*)((char*)&IDENT + N))` with T by width (1->uchar,2->ushort,4->uint). Mechanical

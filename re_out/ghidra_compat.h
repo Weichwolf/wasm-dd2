@@ -45,7 +45,7 @@ typedef unsigned __int128 unkuint10;
 #else
 typedef unsigned long long unkuint10;   /* 32-bit native gcc has no __int128; x87 10-byte gap-tier, dead on demo path */
 #endif
-struct joyinfo_tag { uint32_t a,b,c,d; }; struct tagMSG { void* hwnd; uint32_t message; uint32_t wParam,lParam,time; int ptx,pty; };
+struct joyinfo_tag { uint32_t wXpos,wYpos,wZpos; uint32_t wButtons; }; struct tagMSG { void* hwnd; uint32_t message; uint32_t wParam,lParam,time; int ptx,pty; };
 typedef struct joyinfo_tag JOYINFO, joyinfo_tag; typedef struct tagMSG MSG, tagMSG;
 typedef void *HGLOBAL,*HMENU,*HBRUSH,*HICON,*HCURSOR,*HPALETTE,*HGDIOBJ,*HFONT,*HBITMAP,*HRGN,*HRSRC,*HGLRC,*HACCEL,*HMETAFILE,*HWAVEIN,*HMIDIOUT,*LPMSG,*LPPAINTSTRUCT,*FARPROC,*WNDPROC,*LPCRITICAL_SECTION;
 typedef uint32_t WPARAM,LPARAM,COLORREF,ATOM,HFILE,HRESULT,WAVEHDR;

@@ -28,6 +28,13 @@ while i < len(parts):
         kept += [marker, body]
     i += 2
 gamecode = "".join(kept)
+# Retype void-returning functions that callers use as returning a value (Ghidra mis-detected void return
+# for register-return functions). Faithful: they return via register; declaring undefined4 matches callers.
+_VOID_RET = ['FirstSavedGame','__set_errno_nt','__ExpandDGROUP','FUN_00456d27','FUN_0045825c',
+             'FUN_004580a9','FUN_004580cf']
+for _fn in _VOID_RET:
+    gamecode = re.sub(r'\bvoid(\s+(?:__cdecl\s+|__fastcall\s+)?' + re.escape(_fn) + r'\s*\()', r'undefined4\1', gamecode)
+
 # 2. forward decls from markers
 sigs, seen = [], set()
 lines = gamecode.split("\n")
