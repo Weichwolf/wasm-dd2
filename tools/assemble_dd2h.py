@@ -110,5 +110,13 @@ gamecode = gamecode.replace("  _DAT_007542ee = MPE_malloc(param_1 << 2);",
 gamecode = gamecode.replace("  _DAT_0075437c = MPE_malloc(param_1 << 2);",
   "  { char* _a=(char*)MPE_malloc((param_1+64)<<2); int _i; if(_a){for(_i=0;_i<((param_1+64)<<2);_i++)_a[_i]=0;} *(int*)GIMG(0x75437c)=(int)(_a+(32<<2)); }")
 
+
+# OT byte-stride fix: the two OT buffers are 0x8e BYTES apart (_DAT_007542ee/_DAT_0075437c); after the
+# pointer-type transfer, &DAT_007542ee is int* so `+ buffer_num*0x8e` scaled by 4 -> wrong. Byte-cast it.
+gamecode = gamecode.replace("(&DAT_007542ee + buffer_num * 0x8e)", "((char*)&DAT_007542ee + buffer_num * 0x8e)")
+gamecode = gamecode.replace("&DAT_007542ee + buffer_num * 0x8e", "(int*)((char*)&DAT_007542ee + buffer_num * 0x8e)")
+gamecode = gamecode.replace("&db + buffer_num * 0x8e", "(int)((char*)&db + buffer_num * 0x8e)")
+gamecode = gamecode.replace("&DAT_007542ee + buffer_num * 0x8e", "(char*)&DAT_007542ee + buffer_num * 0x8e")
+
 open(OUT, 'w', encoding='utf-8', errors='surrogateescape').write(prologue + gamecode)
 print("assemble_dd2h: %d functions kept, %d forward decls -> %s" % (gamecode.count('/* ===== '), len(sigs), OUT))

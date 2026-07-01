@@ -11188,8 +11188,8 @@ void FUN_00420c4c(void)
 
 {
   buffer_num = buffer_num ^ 1;
-  _cdb_ = &db + buffer_num * 0x8e;
-  ClearOTagR(*(undefined4 **)(&DAT_007542ee + buffer_num * 0x8e),_otsize);
+  _cdb_ = (int)((char*)&db + buffer_num * 0x8e);
+  ClearOTagR(*(undefined4 **)((char*)(int*)((char*)(char*)&DAT_007542ee + buffer_num * 0x8e)),_otsize);
   return;
 }
 
