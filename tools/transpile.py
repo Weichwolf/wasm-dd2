@@ -792,6 +792,31 @@ def main():
             data = transforms[fn](data)
         if not CHECK:
             open(os.path.join(OUT, fn), 'w', encoding='utf-8', errors='surrogateescape').write(data)
+    # DD2H RE-BASE (env DD2_DD2H): the reconstruction's engine C came from dd2.exe (320x240); the target is
+    # dd2h.exe (640x480), whose .bss is exactly 0x38400 larger (640x480 8bpp 0x4b000 - 320x240 0x12c00). Every
+    # DATA address >= 0x713050 (right after _screenbuffer@0x700450) is 0x38400 higher in dd2h. Measured clean:
+    # matched symbols shift +0x38400 for bss>=0x713050, +0 for data<0x713050; code shifts non-uniformly but the
+    # decompiled C calls functions by NAME not address so that's irrelevant. So a mechanical +0x38400 shift of
+    # every 0x-literal in [0x713050,0x940000) across build/*.c + build/*.h re-bases the DATA LAYOUT to dd2h
+    # (heap/geometry/level buffers land at dd2h addresses; guard bounds 0x800000/0x900000 correctly move with
+    # the heap). Address-encoded names (DAT_00744de4) keep their label; only their mapped GIMG(...) address
+    # shifts -> stays consistent. Pair with the dd2h dd2_image.bin (tools/make_dd2h_image.py). Env-gated so the
+    # working dd2.exe build is untouched until this is verified bit-identical vs dd2h via refcapture.sh.
+    if not CHECK and os.environ.get('DD2_DD2H'):
+        import re as _re
+        _SH, _LO, _HI = 0x38400, 0x713050, 0x940000
+        _hx = _re.compile(r'0x([0-9a-fA-F]{6,8})')
+        def _rb(m):
+            v = int(m.group(1), 16)
+            return ("0x%x" % (v + _SH)) if _LO <= v < _HI else m.group(0)
+        _n = 0
+        for fn in os.listdir(OUT):
+            if fn.endswith(('.c', '.h')):
+                p = os.path.join(OUT, fn)
+                t = open(p, encoding='utf-8', errors='surrogateescape').read()
+                t2, c = _hx.subn(_rb, t); _n += c
+                open(p, 'w', encoding='utf-8', errors='surrogateescape').write(t2)
+        print("  [DD2H RE-BASE] shifted %d literals >=0x713050 by +0x38400 (dd2.exe->dd2h data layout)" % _n)
     print("transpile: %d fixes applied across %d source files%s" %
           (len(_applied), len(transforms), " (check-only)" if CHECK else " -> build/"))
     for nm, c in _applied:
