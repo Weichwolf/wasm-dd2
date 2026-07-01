@@ -506,3 +506,20 @@ SPACE, W/S/A/Z. NEXT Stage-3 steps: (1) run in PLAY mode (demo_mode=0 race, or F
 of the recorded-pad attract demo; (2) browser: hook canvas keydown/keyup -> dd2_browser_key_event and
 drive a continuous render loop (web/shell.html canvas + putImageData of g_pixels@0x700450 already
 exist in a stale web/build); (3) verify menu navigation + a controllable race end-to-end.
+
+## Stage 3: LIVE gameplay (demo_mode=0) runs crash-free; input reaches control word (verified)
+`DD2_PLAY=<lvl>` (native_main.c PlayModeLevel) runs a real race with demo_mode=0 (live input, not the
+recorded-pad attract replay). MAJOR: it runs CRASH-FREE and returns (419 frames on L9) — real gameplay
+works now, not just the demo (this path crashed pre-Stage-1-fixes, per the old dd2_runtime.c comment).
+Input pipeline VERIFIED end-to-end during the race (gdb): keyboard -> Translate_Keypress -> _pad_*
+(persist, confirmed _pad_lleft=1 held) -> FUN_00422c74 (keyboard branch active, DAT_0046303e==0) ->
+control word `_DAT_0071c048=0x80` (left-steer bit) / edge word c04a. `DD2_HOLD=0x25` holds LEFT for the
+whole race. REMAINING GAP: frames were IDENTICAL between no-input and held-left — the control word is
+correct but the player CAR doesn't visibly respond. State during race: _current_player_car=1,
+camera_car=1, race_car=2, num_cars=20. The two 0x80-readers found (Camera_Pad_Control@0x429738,
+Enter_Driver_Names) are camera/menu, NOT car steering — so the car-steering path reads the pad control
+differently (likely a per-car control byte set from _DAT_0071c048/c04c for the human car, gated by a
+"which car is human" binding the front-end normally sets; camera_car=1 vs race_car=2 mismatch is a
+clue). NEXT: find where a car's steering/throttle is fed from the pad control (search the car-update/
+physics path for the human-car control assignment) and ensure PlayModeLevel designates the human car
+correctly (front-end sets this; the cold PlayModeLevel path may need to replicate that one binding).

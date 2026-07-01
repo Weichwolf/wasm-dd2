@@ -89,6 +89,33 @@ static int DemoModeLevel(int lvl){
     return Play_Game();
 }
 
+/* Stage 3: a LIVE race (demo_mode=0) — same setup as DemoModeLevel but reads live input instead of
+ * the recorded-pad replay. The player car responds to _pad_* (set via Translate_Keypress); AI drives
+ * the rest. Tests whether the Stage-1 crash fixes made real gameplay (not just the attract demo) run. */
+static int PlayModeLevel(int lvl){
+    Setup_Pad(1);
+    W32(0x905a1c, R32(0x4673f4));
+    W32(0x905a18, R32(0x4673f8));
+    W32(0x46385c, 0);                        /* demo_mode = 0 -> LIVE input */
+    W32(0x905a14, R32(0x467400));
+    W32(0x467400, 2);
+    W32(0x905a10, R32(0x46765c));
+    W32(0x46765c, 0x14);
+    W32(0x4673f8, 0);
+    W32(0x4673f4, 0);
+    { int iVar1 = rand(); _current_level = lvl ? lvl : (iVar1 % 10 + 1); }
+    fprintf(stderr, "[native] PlayModeLevel (LIVE, demo_mode=0): _current_level=%d\n", _current_level);
+    Order_Cars();
+    /* DD2_HOLD=<vk>: hold a key down for the whole race (no key-up) to prove input controls the car.
+     * e.g. DD2_HOLD=0x25 (LEFT) makes the player car steer left every frame it's read. */
+    { const char* h = getenv("DD2_HOLD");
+      if (h) { extern void dd2_key_event(unsigned int, int);
+               unsigned int vk = (unsigned int)strtol(h,0,0);
+               dd2_key_event(vk, 1);
+               fprintf(stderr, "[native] holding VK 0x%x for the whole race\n", vk); } }
+    return Play_Game();
+}
+
 /* CRT helpers (mirror dd2_runtime.c — that file is excluded from the native link to avoid a 2nd main) */
 static int g_thread[256];
 int dd2_getthread(void){ return (int)(uintptr_t)g_thread; }
@@ -155,6 +182,12 @@ int main(void){
         int rc = dd2_input_selftest();
         fprintf(stderr, "[native] input selftest: %s (%d failures)\n", rc==0?"PASS":"FAIL", rc);
         return rc;
+    }
+    if (getenv("DD2_PLAY")) {
+        CK("PlayModeLevel() [LIVE demo_mode=0]");
+        PlayModeLevel(atoi(getenv("DD2_PLAY")));
+        fprintf(stderr, "[native] live race returned (no crash!)\n");
+        return 0;
     }
     if (getenv("DD2_FE")) {
         extern void Init_Front_End(void); extern void Front_End(void);
