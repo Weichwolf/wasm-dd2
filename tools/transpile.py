@@ -595,6 +595,33 @@ def fix_dd2(s):
     # (FIX I earlier in this function rewrites _gprim1's raw +N into (char*)-cast form first).
     s = sub(s, '  for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {\n    *(undefined1 *)((char *)_gprim1 + 7) = 0x30;\n    *(undefined1 *)(_gprim2 + 7) = 0x30;\n    uVar1 = *(undefined4 *)((int)_gpoly + 4);\n    *(undefined4 *)(_gprim2 + 4) = uVar1;\n    *(undefined4 *)((char *)_gprim1 + 4) = uVar1;\n    *(undefined1 *)(_gprim2 + 4) = 0;\n    _gpoly = (int)_gpoly + 0x18;\n    *(undefined1 *)((char *)_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);\n    _gprim2 = _gprim2 + 0x1c;\n    _gprim1 = (int *)((char *)_gprim1 + 0x1c);\n  }', '  for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {\n    if ((unsigned)(uintptr_t)_gprim1 >= 0x400000u && (unsigned)(uintptr_t)_gprim1 < 0x900000u && (unsigned)_gprim2 >= 0x400000u && (unsigned)_gprim2 < 0x900000u) {  /* GUARD AK: per-iteration validity check, does NOT alter iteration count/_gpoly advance */\n    *(undefined1 *)((char *)_gprim1 + 7) = 0x30;\n    *(undefined1 *)(_gprim2 + 7) = 0x30;\n    uVar1 = *(undefined4 *)((int)_gpoly + 4);\n    *(undefined4 *)(_gprim2 + 4) = uVar1;\n    *(undefined4 *)((char *)_gprim1 + 4) = uVar1;\n    *(undefined1 *)(_gprim2 + 4) = 0;\n    *(undefined1 *)((char *)_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);\n    }\n    _gpoly = (int)_gpoly + 0x18;\n    _gprim2 = _gprim2 + 0x1c;\n    _gprim1 = (int *)((char *)_gprim1 + 0x1c);\n  }', 1, 'GUARD AK FUN_0041bc0c per-write guard')
     s = sub(s, '  for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {\n    *(undefined1 *)((char *)_gprim1 + 7) = 0x30;\n    *(undefined1 *)(_gprim2 + 7) = 0x30;\n    uVar1 = *(undefined4 *)((int)_gpoly + 4);\n    *(undefined4 *)(_gprim2 + 4) = uVar1;\n                    /* END-> C:\\PCMPE\\sound\\sound.C: ? */\n    *(undefined4 *)((char *)_gprim1 + 4) = uVar1;\n    *(undefined1 *)(_gprim2 + 4) = 0;\n    _gpoly = (int)_gpoly + 0x14;\n    *(undefined1 *)((char *)_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);\n    _gprim2 = _gprim2 + 0x1c;\n    _gprim1 = (int *)((char *)_gprim1 + 0x1c);\n  }', '  for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {\n    if ((unsigned)(uintptr_t)_gprim1 >= 0x400000u && (unsigned)(uintptr_t)_gprim1 < 0x900000u && (unsigned)_gprim2 >= 0x400000u && (unsigned)_gprim2 < 0x900000u) {  /* GUARD AK */\n    *(undefined1 *)((char *)_gprim1 + 7) = 0x30;\n    *(undefined1 *)(_gprim2 + 7) = 0x30;\n    uVar1 = *(undefined4 *)((int)_gpoly + 4);\n    *(undefined4 *)(_gprim2 + 4) = uVar1;\n                    /* END-> C:\\PCMPE\\sound\\sound.C: ? */\n    *(undefined4 *)((char *)_gprim1 + 4) = uVar1;\n    *(undefined1 *)(_gprim2 + 4) = 0;\n    *(undefined1 *)((char *)_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);\n    }\n    _gpoly = (int)_gpoly + 0x14;\n    _gprim2 = _gprim2 + 0x1c;\n    _gprim1 = (int *)((char *)_gprim1 + 0x1c);\n  }', 1, 'GUARD AK FUN_0041bc68 per-write guard')
+
+    # GUARD AL (native L6, Stage-1 pragmatic consumer-side fix): Modify_Sound's own bounds check
+    # (`if (param_1<0 || 3<param_1) System_Error(...)`) is FAITHFUL original game behavior -- but in
+    # OUR build, memory corruption elsewhere (the same heap-layout-divergence root as every other
+    # GUARD fix this session -- confirmed this session to come from at least 3 different, unrelated
+    # geometry-handler functions writing through wild _gprim1/_gprim2, still not fully enumerated)
+    # actually reaches this assert, where the reference never does. Rather than keep chasing every
+    # possible writer (whack-a-mole across dozens of handler functions, several already tried and
+    # reverted this session), guard the CONSUMER: skip this sound update (return without calling
+    # System_Error/exiting) when the channel is out of range, same 'convert corruption-triggered
+    # crash into silently-skip-this-operation' principle as every other GUARD fix. The subsequent
+    # `if (DAT_00462d68 != 0) { ...param_1*0x14 array index... }` would ALSO be unsafe with an
+    # out-of-range param_1, so this must return early, not just skip the System_Error call.
+    s = sub(s, "  if ((param_1 < 0) || (3 < param_1)) {\n    System_Error(s_Modify_Sound_0046c810,s_Invalid_Channel_0046c7e8);\n  }",
+               "  if ((param_1 < 0) || (3 < param_1)) {\n    return;  /* GUARD AL: skip, don't crash */\n  }",
+               1, 'GUARD AL Modify_Sound invalid-channel skip')
+
+    # GUARD AM (native L2, MPE_free infinite free-list walk): MPE_free's own free-list search loop
+    # (dd2.c:9873-9877, an empty-body `for` that just chases `_DAT_0073c290 = *_DAT_0073c290` until
+    # a position test passes) is an UNBOUNDED circular-linked-list walk -- if the free-list is
+    # corrupted into a cycle (heap-layout divergence, same root as every other GUARD fix), it spins
+    # forever. Confirmed via gdb: native L2 hung stuck in exactly this loop (called via
+    # Remove_Object <- Draw_Scene_Object, reached only after GUARD AL fixed an earlier crash).
+    # Unlike the _gpoly-stream guards, this is a simple linked-list walk with no byte-alignment
+    # concern, so a plain iteration cap is safe (matches GUARD AE's existing free-walk-OOB precedent
+    # for MPE_malloc's sibling search loop, applied here to MPE_free's).
+    s = sub(s, '  puVar2 = (uint *)(param_1 + -8);\n  for (; ((puVar2 <= _DAT_0073c290 || ((uint *)*_DAT_0073c290 <= puVar2)) &&\n         ((_DAT_0073c290 < (uint *)*_DAT_0073c290 ||\n          ((puVar2 <= _DAT_0073c290 && ((uint *)*_DAT_0073c290 <= puVar2))))));\n      _DAT_0073c290 = (uint *)*_DAT_0073c290) {\n  }', "  puVar2 = (uint *)(param_1 + -8);\n  { int _guardit = 0;  /* GUARD AM: cap MPE_free's circular free-list walk (corrupted-list hang) */\n  for (; ((puVar2 <= _DAT_0073c290 || ((uint *)*_DAT_0073c290 <= puVar2)) &&\n         ((_DAT_0073c290 < (uint *)*_DAT_0073c290 ||\n          ((puVar2 <= _DAT_0073c290 && ((uint *)*_DAT_0073c290 <= puVar2))))));\n      _DAT_0073c290 = (uint *)*_DAT_0073c290) {\n    if (++_guardit > 100000) return;\n  } }", 1, 'GUARD AM MPE_free free-list walk cap')
     return s
 
 def fix_dispatch(s):
