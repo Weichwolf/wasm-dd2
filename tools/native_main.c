@@ -65,6 +65,7 @@ extern void Setup_Pad(int);
 extern void Order_Cars(void);
 extern void Init_Front_End(void);
 extern int  rand(void);
+extern int  dd2_input_selftest(void);   /* dd2_input.c: verify key->Translate_Keypress->pad-state path */
 
 /* Fixed-level demo entry: faithful copy of DemoMode@0x44b4e0 but with _current_level forced
  * from DD2_LEVEL (for matched ref-vs-WASM byte comparison — DemoMode's rand()%10+1 picks a level
@@ -147,6 +148,14 @@ int main(void){
      * race_car=2, _current_level=rand()%10+1, Order_Cars(), then Play_Game() as a deterministic
      * replay. Calling Play_Game() directly (demo_mode=0, level=1) ran a live race expecting input
      * -> uninitialized demo state -> drift -> f1179 clut=0x6c6c crash AND no dd2h alignment. */
+    if (getenv("DD2_INPUTTEST")) {
+        /* Stage 3: verify the live-input path (browser/native key -> Translate_Keypress -> pad state).
+         * Setup_Pad(1) loads the active keymap; then dd2_input_selftest injects synthetic key events. */
+        CK("Setup_Pad(1)"); Setup_Pad(1);
+        int rc = dd2_input_selftest();
+        fprintf(stderr, "[native] input selftest: %s (%d failures)\n", rc==0?"PASS":"FAIL", rc);
+        return rc;
+    }
     if (getenv("DD2_FE")) {
         extern void Init_Front_End(void); extern void Front_End(void);
         W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */

@@ -296,6 +296,25 @@ def fix_dd2(s):
     s = sub(s, "  uStack_24 = (uint)*(byte *)(param_1 + 0x25);\n    FUN_00411ebc(&iStack_40,FUN_0041033a);",
                "  uStack_24 = (uint)*(byte *)(param_1 + 0x25);\n    " + pack, name="E:pack2")
 
+    # FIX KEYMAP (int-vs-byte, Stage 3 input): Translate_Keypress compares the incoming Windows VK code
+    # (param_1, always < 256) against the keymap globals padmap/DAT_0046302c..39. Ghidra typed those
+    # globals as `*(int*)` (dd2_symbols.h), so `param_1 == DAT_0046302e` reads 4 bytes (e.g. 0x25282726)
+    # and NEVER matches the single-byte VK. The x86 compares BYTES (the keymap is a 14-byte table). Fix:
+    # cast each comparison's RHS to (unsigned char) so it matches the low byte -- makes live keyboard
+    # input actually set the _pad_* state globals. Scoped to Translate_Keypress only. Verified via
+    # dd2_input_selftest (re_out/dd2_input.c): synthetic ArrowUp/Down/Left flip _pad_lup/ldown/lleft.
+    tk_lines = s.split('\n')
+    tk_st = next((i for i,l in enumerate(tk_lines) if l.strip()=='void __cdecl Translate_Keypress(uint param_1,uint param_2)'), None)
+    assert tk_st is not None, "TRANSPILE: Translate_Keypress missing"
+    tk_en = next((j for j in range(tk_st+2, tk_st+80) if tk_lines[j]=='}'), None)  # top-level (col-0) closing brace
+    assert tk_en is not None, "TRANSPILE: Translate_Keypress end missing"
+    tb = '\n'.join(tk_lines[tk_st:tk_en+1])
+    ntb = re.sub(r'if \(param_1 == (padmap|DAT_00463[0-9a-f]{3})\)',
+                 r'if (param_1 == (unsigned char)(\1))', tb)
+    assert ntb != tb and ntb.count('(unsigned char)') >= 12, "TRANSPILE: FIX KEYMAP matched too few comparisons"
+    tk_lines[tk_st:tk_en+1] = ntb.split('\n')
+    s = '\n'.join(tk_lines)
+    _applied.append(("KEYMAP:Translate_Keypress byte-compare", 1))
     # FIX I (byte-offset): 6 face handlers use _gprim1 (int*) with raw byte offsets -> x4 scaling. Byte-cast.
     lines = s.split('\n')
     for nm in ['FUN_00417ea0','FUN_0041861c','FUN_0041bc0c','FUN_0041bc68','FUN_0041c3e4','FUN_0041c440']:
