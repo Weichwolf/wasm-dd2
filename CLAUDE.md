@@ -523,3 +523,21 @@ differently (likely a per-car control byte set from _DAT_0071c048/c04c for the h
 clue). NEXT: find where a car's steering/throttle is fed from the pad control (search the car-update/
 physics path for the human-car control assignment) and ensure PlayModeLevel designates the human car
 correctly (front-end sets this; the cold PlayModeLevel path may need to replicate that one binding).
+
+## Stage 3: car-control chain fully traced; steering not yet applied (precise open question)
+Traced the human-car control path end to end. Play_Game race loop (dd2.c:10086-10101): car control is
+gated behind `_DAT_0074be98 < 1` -- i.e. the pre-race INTRO camera-flyby (`_DAT_00744b74`: 0xa000->0,
+demo_mode=0 only) THEN the 3-2-1 countdown (`_DAT_0074be98`: 100->0). Added env-gated DEBUG NOCOUNTDOWN
+(transpile.py, DD2_NOCOUNTDOWN_PATCH build + DD2_NOCOUNTDOWN runtime) to zero both at race start so
+`FUN_00441394(_current_player_car, 0x71c048)` -> `Control_Car_Replay(car, ctrl)` runs from frame 1.
+VERIFIED CORRECT bindings: all player-car indices are 0 (image current_player_car@0x905ad0=0, C-global
+_current_player_car=0, camera_car@0x463eec=0) -- so the human controls car 0 AND the camera follows
+car 0 (no dual-symbol divergence here, good). Control_Car_Replay IS reached, and the control word is
+correct (c048/c04c=0x80 for held LEFT, verified). BUT: car 0's steering angle (0x75a682, which
+Control_Car_Replay writes on ctrl&0x80) stays 0 -- so the steering block (dd2.c:29209-29250) is being
+SKIPPED. It's gated by `if (DAT_00467074 == 0)` then `if (iVar3 == 1)` where iVar3 = byte at
+0x71c051 (DAT_0071c051, the pad-type, =1 for keyboard). PRECISE NEXT: check DAT_00467074 (should be 0;
+if nonzero, that's the block-skip -- find what sets it and whether the cold PlayModeLevel path leaves
+it wrong) and confirm Control_Car_Replay's param_1 is really 0. Also: holding UP/accel (0x26) also
+produced identical frames -- so throttle isn't applying either; same gate likely. tools: DD2_PLAY=<lvl>
+(live race), DD2_HOLD=<vk> (hold a key), DD2_NOCOUNTDOWN (skip intro/countdown), all native-only.

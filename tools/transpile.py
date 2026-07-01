@@ -137,6 +137,17 @@ def fix_dd2(s):
                    " if(getenv(\"DD2_ZEROBUF\")) memset((void*)param_1[1],0,0x4000); }\n"
                    "  pbVar5 = (byte *)*param_1;\n  if (*(short *)((int)param_1 + 0xe) == 0) {",
                    name='DEBUG ZEROBUF')
+    # DEBUG NOCOUNTDOWN (Stage 3, env-gated): skip the pre-race intro camera-flyby (_DAT_00744b74:
+    # 0xa000->0) and 3-2-1 countdown (_DAT_0074be98: 100->0) so car control (Control_Car_Replay) is
+    # active from frame 1 -- lets a headless test PROVE live input steers the human car without
+    # waiting ~300 frames through the intro. Env-gated at transpile time; runtime DD2_NOCOUNTDOWN.
+    if os.environ.get('DD2_NOCOUNTDOWN_PATCH'):
+        s = sub(s, "  _DAT_0074be98 = 100;\n  if ((demo_mode == 0) && (DAT_00467074 == 0)) {\n"
+                   "    _DAT_00744b74 = 0xa000;\n  }\n  else {\n    _DAT_00744b74 = 0;\n  }",
+                   "  _DAT_0074be98 = 100;\n  if ((demo_mode == 0) && (DAT_00467074 == 0)) {\n"
+                   "    _DAT_00744b74 = 0xa000;\n  }\n  else {\n    _DAT_00744b74 = 0;\n  }\n"
+                   "  { extern char *getenv(const char*); if(getenv(\"DD2_NOCOUNTDOWN\")){ _DAT_0074be98 = 0; _DAT_00744b74 = 0; } }",
+                   name='DEBUG NOCOUNTDOWN')
     # DEBUG CONTIG (test, env-gated): allocate the 14 active_object_blocks slots as ONE contiguous
     # buffer (no MPE_malloc header gaps) — tests whether Decompress's back-refs that read up to 0x1000
     # before a slot expect the previous slot's data (cross-block window).
