@@ -53,6 +53,15 @@ def sub(text, old, new, n=1, name=''):
 RASTER_GUARD = True
 
 def fix_dd2(s):
+    # DD2H SUBPIECE: the fresh dd2h Ghidra analysis (less type-refined than the old dd2.exe program) emits
+    # raw subpiece notation `IDENT._N_M_` = access the M-byte field at byte-offset N of IDENT. Convert to a
+    # byte-addressed cast: `(*(T*)((char*)&IDENT + N))` with T by width (1->uchar,2->ushort,4->uint). Mechanical
+    # + faithful (same bytes). Handles the ~150 sites the dd2.exe decompile didn't have (it was type-refined).
+    def _subpiece(m):
+        ident, n, w = m.group(1), int(m.group(2)), int(m.group(3))
+        T = {1:'unsigned char',2:'unsigned short',4:'unsigned int',3:'unsigned int'}.get(w,'unsigned int')
+        return "(*(%s*)((char*)&%s + %d))" % (T, ident, n)
+    s = re.sub(r'\b([A-Za-z_]\w*)\._(\d+)_(\d+)_', _subpiece, s)
     # FIX EBC (scattered-locals): the 5 textured-polygon rasterizer setups (FUN_004110a4/111e8/1132c/
     # 11b34/11c78) pass &local_40 to FUN_00411ebc, which reads it as the 12-int vertex array param_1[0..11].
     # Ghidra split that x86 stack array into named offset-locals (local_40,local_3c,...,local_14); clang/WASM

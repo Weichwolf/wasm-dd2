@@ -24,7 +24,7 @@ while i < len(parts):
     marker, body = parts[i], parts[i+1] if i+1 < len(parts) else ''
     m = re.match(r'/\* ===== (\S+) @ ([0-9a-fA-F]+) ===== \*/', marker)
     name, addr = m.group(1).strip('"'), int(m.group(2), 16)
-    if not (addr >= 0x45a000 or name in CRT or any(x in body for x in ('__fdiv','__fmul','sti_st','__fld','__fst'))):
+    if not (addr >= 0x45a000 or name in CRT or any(x in body for x in ('__fdiv','__fmul','sti_st','__fld','__fst','->_flag','->_ptr','->_cnt','->_base','->_bufsiz','->_file','->_charbuf'))):
         kept += [marker, body]
     i += 2
 gamecode = "".join(kept)
