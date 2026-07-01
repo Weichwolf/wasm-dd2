@@ -104,6 +104,32 @@ and OVERWRITTEN the base header (a later allocation's carve exactly consumed the
 triggering MPE_malloc's `*puVar5 = *puVar3` merge-forward), while ours hasn't — a concrete, actionable
 allocation-order difference to chase next. (MODE=frame preserved in lockstep.sh for comparison.)
 
+## BREAKTHROUGH LEAD: clean +0x20000 (128KB) positional offset in the game-data region (gdb-confirmed)
+Cross-correlated our build's game-data dump against the reference's (both at the `_current_level==9`
+checkpoint, DD2_LEVEL=9 baseline — see below for why that's the right one to use). Found: for our
+build's game-data region starting at VA 0x77ebf0 (0x20000 bytes into the [0x75ebf0,0x7debf0) window),
+comparing against the REFERENCE's data 0x20000 bytes EARLIER (ref_va = our_va - 0x20000) gives a
+**perfect ~100% match for a ~0x35000-byte stretch** (was 54% unshifted). This is the strongest,
+cleanest evidence in the whole project so far: **the level-file content itself is byte-IDENTICAL
+between builds — this is purely a PLACEMENT/offset bug, not a data or decompression bug.** Our build
+has an extra (or misplaced) ~128KB somewhere before this point that the reference doesn't have, so
+everything from there on is shifted +0x20000 in our layout relative to reference's. (Match degrades
+again past our VA ~0x7b6bf0 — a SECOND, separate divergence further out, not yet characterized.)
+NEXT STEP: find what occupies our build's [0x75ebf0, 0x75ebf0+0x20000) that the reference either
+doesn't have or sizes differently. RE-CONFIRMED this session: `_fi_levdat` (the level-data pointer,
+stored AT VA 0x75eb60 per dd2_symbols.h) holds VALUE `0x760564` in our build once set (breakpoint
+`FUN_00445b78`, the fn containing dd2.c:28343-28345's `_level_data=_fi_levdat; *_fi_levdat =
+*_fi_levdat + (int)_fi_levdat` self-relative fixup — gdb-verified this session). Reference's
+corresponding value not yet captured (watchpoint on 0x75eb60 didn't fire within budget — may be set
+much later than our build's equivalent point, or need more patience/a background run). Likely still
+ties to an in-place relocation/offset-table bug in the level-data loader
+(re_out/dd2.c:28343-28345: `*_fi_levdat = *_fi_levdat + (int)_fi_levdat` — a self-relative offset
+table fixup whose result depends on the LOAD ADDRESS, which is exactly the kind of thing that would
+produce a clean, constant, size-independent-of-content shift like this). To reproduce: dump
+[0x75ebf0,0x7debf0) from both builds at DD2_LEVEL=9's Order_Cars breakpoint (see git history /
+tools/lockstep.sh for the exact commands), then cross-correlate with a sliding-window byte search
+(see the analysis in the commit adding this section) rather than a fixed-offset diff.
+
 ## Front-end-history hypothesis: tested, did NOT improve alignment (negative result, keep DD2_LEVEL shortcut)
 Hypothesis: the reference runs ~1800 front-end idle-loop iterations (`re_out/dd2.c:34635-34661`,
 `local_18 = 0x708` countdown in the menu loop) before its OWN `DemoMode()` call — menu/title screen
