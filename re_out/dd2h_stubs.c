@@ -15,7 +15,15 @@ int GetVersion(){ return 0; }
 int joyGetDevCapsA(){ return 0; }
 int joyGetPos(){ return 0; }
 int mciSendCommandA(){ return 0; }
-void _ot_dispatch(int* a,int* b,int* c){ extern void DrawPrim(int); (void)b;(void)c; DrawPrim((int)(long)a); }
+#include "dd2_symbols.h"
+/* Real _ot_dispatch (= dd2.exe): call the primitive handler from _primfuncs[type] (dd2_relocate has
+   rewritten in-fnmap entries to real fn-pointers). A relocated entry is non-null OUTSIDE the image
+   rasterizer range [0x410000,0x460000). No recursion into DrawPrim. */
+void _ot_dispatch(int* piVar1,int* b,int* c){
+  (void)b;(void)c;
+  unsigned _v=(unsigned)(&_primfuncs)[*(unsigned char*)((int)piVar1+7)];
+  if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int*))(unsigned long)_v)(piVar1);
+}
 int SetStdHandle(){ return 0; }
 int timeBeginPeriod(){ return 0; }
 int timeEndPeriod(){ return 0; }

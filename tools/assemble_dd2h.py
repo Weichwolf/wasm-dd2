@@ -102,5 +102,13 @@ prologue = ('#include "ghidra_compat.h"\n#include "dd2_symbols.h"\n#include <std
             'int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540;\n'
             'int DirectDrawCreate(int,void**,int); int DirectSoundCreate(int,void**,int);\n'
             '/* forward declarations (decomp markers, excl. compat/libc) */\n' + "\n".join(sigs) + "\n\n")
+
+# OT-buffer fix (= dd2.exe Allocate_OT_ FIX): pad the OT malloc with guard slots + zero it, so overruns
+# don't corrupt adjacent heap (ClearOTagR/DrawOTag walk it). dd2h addrs: _DAT_007542ee/_DAT_0075437c.
+gamecode = gamecode.replace("  _DAT_007542ee = MPE_malloc(param_1 << 2);",
+  "  { char* _a=(char*)MPE_malloc((param_1+64)<<2); int _i; if(_a){for(_i=0;_i<((param_1+64)<<2);_i++)_a[_i]=0;} *(int*)GIMG(0x7542ee)=(int)(_a+(32<<2)); }")
+gamecode = gamecode.replace("  _DAT_0075437c = MPE_malloc(param_1 << 2);",
+  "  { char* _a=(char*)MPE_malloc((param_1+64)<<2); int _i; if(_a){for(_i=0;_i<((param_1+64)<<2);_i++)_a[_i]=0;} *(int*)GIMG(0x75437c)=(int)(_a+(32<<2)); }")
+
 open(OUT, 'w', encoding='utf-8', errors='surrogateescape').write(prologue + gamecode)
 print("assemble_dd2h: %d functions kept, %d forward decls -> %s" % (gamecode.count('/* ===== '), len(sigs), OUT))

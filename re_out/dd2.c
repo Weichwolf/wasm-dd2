@@ -11272,8 +11272,8 @@ void __cdecl Allocate_OT_(int param_1)
 
 {
   _otsize = param_1;
-  _DAT_007542ee = MPE_malloc(param_1 << 2);
-  _DAT_0075437c = MPE_malloc(param_1 << 2);
+  { char* _a=(char*)MPE_malloc((param_1+64)<<2); int _i; if(_a){for(_i=0;_i<((param_1+64)<<2);_i++)_a[_i]=0;} *(int*)GIMG(0x7542ee)=(int)(_a+(32<<2)); }
+  { char* _a=(char*)MPE_malloc((param_1+64)<<2); int _i; if(_a){for(_i=0;_i<((param_1+64)<<2);_i++)_a[_i]=0;} *(int*)GIMG(0x75437c)=(int)(_a+(32<<2)); }
   return;
 }
 
