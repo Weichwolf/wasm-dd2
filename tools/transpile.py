@@ -201,6 +201,27 @@ def fix_dd2(s):
     _e2 = s.count("FUN_00456d27(2,0)")
     s = s.replace("FUN_00456d27(2,0)", "(_g_eax=0x939b80, FUN_00456d27(2,0))")
     _applied.append(('EAXARG-456d27 fill dest=0x939b80', _e2))
+    # FIX MATRIXLOCALS (scattered-locals class): the GTE matrix builders (RotMatrixX/Y/Z/YXZ,
+    # VectorNormalSS) copy the source 3x3 matrix into a CONTIGUOUS stack buffer via a pointer walk
+    # (`psVar6 = asStack_44; for(N){ *(u32*)psVar6 = ...; psVar6+=2 }`), then read it back by named
+    # element. Ghidra split that contiguous buffer into a small array + separate shorts (e.g. RotMatrixZ:
+    # `asStack_44[4]` + local_3c + sStack_3a). clang lays the separate locals anywhere, so the pointer
+    # copy OVERFLOWS the small array and clobbers adjacent frame slots (param_2 spill / return addr) ->
+    # `*param_2` writes to a wild addr (eax=0x4) -> crash in Init_Debris_->RotMatrixZ. Fix per-function:
+    # enlarge the array to hold the whole matrix and alias the split shorts to their true slots. (Only
+    # RotMatrixZ wired here; the sibling matrix builders have different splits and need the same.)
+    def _fix_rotz(block):
+        block = block.replace("  short asStack_44 [4];\n  short local_3c;\n  short sStack_3a;\n",
+                              "  short asStack_44 [16];\n")
+        block = block.replace("local_3c", "asStack_44[4]").replace("sStack_3a", "asStack_44[5]")
+        return block
+    _mx_n = [0]
+    _parts = re.split(r'(/\* ===== \S+ @ [0-9a-fA-F]+ ===== \*/)', s)
+    for _i in range(len(_parts)):
+        if _parts[_i].startswith("/* ===== RotMatrixZ @") and _i+1 < len(_parts):
+            _parts[_i+1] = _fix_rotz(_parts[_i+1]); _mx_n[0] += 1
+    s = "".join(_parts)
+    _applied.append(('MATRIXLOCALS RotMatrixZ contiguous stack matrix', _mx_n[0]))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
