@@ -930,3 +930,19 @@ tractable and is really Stage-2 work. So the interactive demo_mode=0 crash-free 
 (L3 = poly-handler class), the SAME fundamental blocker as bit-identity. The clean, kept win is
 GUARD AO (the MPE_malloc OOB, which was the FIRST/most-common interactive crash). The proper fix for
 L3 (and full interactive crash-freeness) is Stage 2: match the heap layout so _gpoly isn't corrupt.
+
+## Stage 2: framebuffer diff confirms severe output corruption (0.1% match, 23% black) — root = the 0x38400 layout
+Captured the REFERENCE 8-bit framebuffer @0x700450 (refcapture-style, L9 frame 152, 99% nonzero) and diffed
+vs OUR framebuffer at the same frame (Play_Game resets current_frame=0 so both are 152 into the L9 race):
+**0.1% pixel match**. Our frame is **23% black (index 0, 17417 px)** vs the reference's ~1% — the black-blob
+cars + black regions the user sees. By frame 152 the demo has also fully DIVERGED (corrupt geometry ->
+different physics/camera -> different scene), so a mid-race framebuffer diff can't localize -- need an
+EARLY-frame (0-5) reference capture (blocked: ref current_frame is already ~150 when _current_level==9 is
+first pollable; would need sub-0.3s polling at the Play_Game transition, or instrument Init exit). Net: the
+output corruption is real and severe, and it's the direct consequence of the proven +0x38400 BSS-layout
+error (geometry/decompress-slots at wrong addresses). The fix remains the decompile-level 0x38400 reserve;
+this diff just confirms the stakes and that partial/cosmetic fixes won't achieve bit-identity -- only the
+layout correction will. NOTE __clutspace(0x6c0100)/__texturespace(0x490000) are BELOW the shift boundary
+(unshifted) while geometry is shifted -> the geometry<->texture/CLUT cross-references span the shift
+boundary, a plausible specific mechanism for the black (index-0) car pixels to chase if a pre-layout-fix
+partial win is wanted.
