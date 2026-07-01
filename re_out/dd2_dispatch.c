@@ -6,10 +6,17 @@ extern int FUN_0041033a();
 extern int draw_half();
 extern int FUN_0041080d();
 extern int draw_text_half_trans();
+extern int sub_410d50();
+extern int sub_410d58();
+extern int sub_410e44();
 extern int FUN_00410f74();
 extern int FUN_004110a4();
 extern int FUN_004111e8();
 extern int FUN_0041132c();
+extern int sub_4114c0();
+extern int sub_411654();
+extern int sub_4117e8();
+extern int sub_4118d4();
 extern int FUN_00411a04();
 extern int FUN_00411b34();
 extern int FUN_00411c78();
@@ -83,6 +90,7 @@ extern int OuterProduct12();
 extern int Play_Movie();
 extern int Load_Null();
 extern int Load_Textures();
+extern int sub_415000();
 extern int Load_Texture2();
 extern int Load_Cluts();
 extern int Add_Buffer_Load_();
@@ -852,10 +860,17 @@ dd2_fnent dd2_fnmap[]={
 {0x0041066a,(void*)&draw_half},
 {0x0041080d,(void*)&FUN_0041080d},
 {0x004109e8,(void*)&draw_text_half_trans},
+{0x00410d50,(void*)&sub_410d50},
+{0x00410d58,(void*)&sub_410d58},
+{0x00410e44,(void*)&sub_410e44},
 {0x00410f74,(void*)&FUN_00410f74},
 {0x004110a4,(void*)&FUN_004110a4},
 {0x004111e8,(void*)&FUN_004111e8},
 {0x0041132c,(void*)&FUN_0041132c},
+{0x004114c0,(void*)&sub_4114c0},
+{0x00411654,(void*)&sub_411654},
+{0x004117e8,(void*)&sub_4117e8},
+{0x004118d4,(void*)&sub_4118d4},
 {0x00411a04,(void*)&FUN_00411a04},
 {0x00411b34,(void*)&FUN_00411b34},
 {0x00411c78,(void*)&FUN_00411c78},
@@ -929,6 +944,7 @@ dd2_fnent dd2_fnmap[]={
 {0x00414e80,(void*)&Play_Movie},
 {0x00414f80,(void*)&Load_Null},
 {0x00414f88,(void*)&Load_Textures},
+{0x00415000,(void*)&sub_415000},
 {0x00415044,(void*)&Load_Texture2},
 {0x0041506c,(void*)&Load_Cluts},
 {0x004150f8,(void*)&Add_Buffer_Load_},
