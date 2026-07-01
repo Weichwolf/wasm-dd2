@@ -36,10 +36,16 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   L9/frame151): **level_data_buffer 8.6%→95.7%, car_vertices 97.3%, rgb_lookup 100%, full 50.6%→75.4%.** Working
   dd2.exe build still 10/10 (env-gated). REMAINING: dd2h build 3/10 crash-free (guards tuned for old layout +
   residual divergence); MPE heap BASE still not consumed (0x816ff0 = InitHeap self-ptr vs ref real data) —
-  likely the RESOLUTION-dependent sizes (Init_Primitive_Buffer 0x60000, OT, framebuffer pitch 0x140→0x280,
-  0x12c00→0x4b000; all <0x713050 so NOT shifted, still dd2.exe values) → dd2h's bigger 640x480 buffers consume
-  more heap to reach the base. NEXT: fix resolution constants (ties heap-base divergence AND rendering), recheck
-  guards (many likely unneeded once geometry is correct), then flip DD2_DD2H default + bit-verify.
+  the original allocation-order residual (MPE allocs are IDENTICAL in dd2h: prim 0x60000, heap 0x120000).
+  The dd2h build's crashes are now the RESOLUTION mismatch: dd2.exe code has 320x240 rasterizers (pitch 0x140)
+  that write wild addrs on dd2h's 640x480 data (verified: crash in FUN_0041080d/Draw_All; dr_modes[0] is
+  640x480 in dd2h vs 320x240 in dd2.exe). Patching pitch constants is fragile (640x480 is different CODE, not a
+  const swap). CLEAN PATH (also removes most transpile guards — they were band-aids for the wrong-binary
+  corruption, unneeded with correct dd2h code): swap `re_out/dd2.c` to the **dd2h DECOMPILE** itself (correct
+  640x480 rasterizers + right code; makes the DD2_DD2H +0x38400 shift unnecessary since dd2h code already uses
+  dd2h addrs). Remaining for that: re-recover the GTE register-arg overlay for dd2h (tools/recover_regargs.py),
+  migrate the few legit hand-fixes, delete the now-obsolete guards, rebuild + bit-verify vs dd2h. Image:
+  `re_out/extract_image.py DestructionDerby2/dd2h.exe` gives the correct dd2h memory image (640x480 dr_modes).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Input path proven
   (steering responds); browser renders. Blocked on Stage-2 correctness (corrupt geometry).
 
