@@ -4766,6 +4766,7 @@ void __cdecl FUN_004151b0(void *param_1,undefined *param_2)
     _Count = (int)((iVar1 + iVar6 * -0x800) - (uint)(iVar6 << 10 < 0)) >> 0xb;
     iVar1 = *(int *)(iVar5 + 8);
     puVar2 = *(undefined4 **)(iVar5 + 0xc);
+    dd2_asset_off = *(int *)iVar5; dd2_asset_size = *(int *)(iVar5 + 4);
     MPE_free(iVar5);
     if (param_1 == (void *)0x0) {
       System_Error(s_Buffer_Load__0046c7b4,s_OUT_OF_MEMORY_0046c790);
@@ -4773,7 +4774,7 @@ void __cdecl FUN_004151b0(void *param_1,undefined *param_2)
     uVar3 = puVar2[1];
     *puVar2 = param_1;
     puVar2[1] = uVar3 & 0xff;
-    puVar7 = &DAT_0074ef18;
+    puVar7 = (undefined1 *)dd2_asset_off;
     puVar2[1] = uVar3 & 0xff | 0x46c7c400;
     _File = fopen(&DAT_0074ef18,&DAT_0046c7c4);
     FUN_0045623b((int *)_File,(int)puVar7 << 0xb,0);
@@ -4783,7 +4784,7 @@ void __cdecl FUN_004151b0(void *param_1,undefined *param_2)
       (*(code *)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);
     }
     local_14 = local_14 - _Count;
-    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,(uint)puVar2[1] >> 8);
+    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);
     param_1 = (void *)((int)param_1 + iVar5);
     iVar5 = iVar1;
   } while (iVar1 != 0);

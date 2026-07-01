@@ -131,5 +131,17 @@ gamecode = gamecode.replace("    local_14 = (undefined2)((*param_2 >> 0x10) / 2)
 gamecode = gamecode.replace("    local_12 = (undefined2)param_2[1];","    dd2_rect[3] = (undefined2)param_2[1];")
 gamecode = gamecode.replace("    LoadImage((int *)&local_18,puVar3 + 1);","    LoadImage((int *)dd2_rect,puVar3 + 1);")
 
+
+# asset-loader gap fix (= dd2.exe FUN_00415160): capture the real asset offset(entry[0])+size(entry[1])
+# before MPE_free; use dd2_asset_off for the sector seek (not &DAT_0074ef18=the path buffer) and pass the
+# EXACT dd2_asset_size to the handler (not puVar2[1]>>8 which is overwritten garbage).
+gamecode = gamecode.replace(
+  "    puVar2 = *(undefined4 **)(iVar5 + 0xc);\n    MPE_free(iVar5);",
+  "    puVar2 = *(undefined4 **)(iVar5 + 0xc);\n    dd2_asset_off = *(int *)iVar5; dd2_asset_size = *(int *)(iVar5 + 4);\n    MPE_free(iVar5);")
+gamecode = gamecode.replace("    puVar7 = &DAT_0074ef18;", "    puVar7 = (undefined1 *)dd2_asset_off;")
+gamecode = gamecode.replace(
+  "    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,(uint)puVar2[1] >> 8);",
+  "    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);")
+
 open(OUT, 'w', encoding='utf-8', errors='surrogateescape').write(prologue + gamecode)
 print("assemble_dd2h: %d functions kept, %d forward decls -> %s" % (gamecode.count('/* ===== '), len(sigs), OUT))
