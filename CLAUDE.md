@@ -369,6 +369,25 @@ NEXT: for `FUN_0041a2f4` specifically, try guarding ONLY the actual writes (the 
 `iVar1`/reading `_gpoly` and still running the CLUT-lookup `if` unconditionally, matching the
 "un-write, not un-compute" principle GUARD AK used successfully. For the remaining ~9 other handlers,
 apply the SAME careful, per-function judgment — not a blind copy-paste of the GUARD AK/AK2 template.
+TRIED GUARD AK3 (refined: guard ONLY the write STATEMENTS individually in `FUN_0041a2f4`, leaving
+every read/compute/the CLUT-lookup condition unconditional — exactly the "un-write, not un-compute"
+refinement above) — REVERTED, same net result as AK2. This DID stop the hang (clean exit(1) instead),
+so the refinement direction is right, but the crash-free count stayed 9/10: L2 now corrupts the SAME
+slot via a **THIRD, unrelated function** — `FUN_00416a10` (dd2.c:5115), called directly from
+`Draw_Scene_Object` (dd2.c:16517), NOT even part of the `FUN_0041fb7c`/`Draw_Object_Polys` dispatch
+switch this session has focused on. **The true scope is now confirmed larger than a dozen sibling
+handlers**: it spans at least two distinct call sites/families (the poly-command dispatch switch, and
+whatever direct-call path `FUN_00416a10` belongs to), each needing its own `_gprim1`/`_gprim2`-writer
+audit. Reverted GUARD AK3 (added complexity, zero net count improvement); confirmed clean 9/10
+(L6 only) + WASM 10/10 restored.
+ASSESSMENT: closing native to 10/10 via this whack-a-mole path is a substantially larger undertaking
+than originally scoped (likely 3+ more functions across at least 2 different call-path families, each
+needing the same careful "guard only writes, verify both native+WASM, watch for count regressions"
+treatment GUARD AK required). Kept only GUARD AK (the one fix proven both safe and effective). Given
+WASM (the primary target) has been 10/10 since earlier this session and stayed there through 6
+build+test cycles, further L6 work is better scoped as its own session with a plan to inventory EVERY
+`_gprim1`/`_gprim2` writer reachable from a poly-command stream (not just the ones a specific crash
+happens to surface), rather than continuing to discover them one crash at a time.
 
 ## Conventions
 - **Never edit decompiled code; fixes are transpile patches (see Pipeline).** Compat layer is editable.
