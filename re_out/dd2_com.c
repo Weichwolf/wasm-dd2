@@ -122,6 +122,13 @@ static int ids_flip(int t,int a,int b){
             if(dir){ char nm[256]; sprintf(nm,"%s/state%05d.bin",dir,g_frameno);
                 FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x400000u,1,0x500000,f); fclose(f); } } }
     }
+    if(getenv("DD2_RFLOG")){
+        int rf=*(int*)(unsigned long)0x75d9f4u;      /* race_finished */
+        int ac=*(int*)(unsigned long)0x466e38u;      /* DAT_00466e38 active-car count */
+        int qf=*(int*)(unsigned long)0x73c2acu;      /* quit_flag */
+        static int last_rf=-99;
+        if(rf!=last_rf){ fprintf(stderr,"[RFLOG] frame=%d race_finished=%d active_cars=%d quit=%d\n", g_frameno, rf, ac, qf); last_rf=rf; }
+    }
     g_frameno++;
     return 0;
 }
