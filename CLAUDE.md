@@ -611,3 +611,21 @@ whack-a-mole rooted in the Stage-2 heap-layout divergence, NOT safely guardable 
 render-path GUARDs were. Proper fix is Stage 2 (match the heap layout so the track-strip/geometry data
 isn't corrupt in the first place). The front-end MENU itself is usable before the ~1800-frame idle
 timeout; this crash is only the attract-demo it falls into when idle.
+
+## Stage 2: MPE_malloc carve is FAITHFUL (not the bug) — divergence is allocation total/order
+Verified our 1st MPE_malloc returns 0x89ebf0 (HIGH end of the 0x7debf0..0x8febf0 heap: a 0x60000 chunk
+at the top) -- so MPE_malloc carves from the HIGH end, and after Init_Scene the base (0x7debf0) is
+STILL the free-list head (self-pointer), i.e. the base block is never consumed in our build. The
+reference has real DATA at the base by the same checkpoint. KEY INSIGHT that rules out a whole class of
+fix: the decompiled MPE_malloc IS the reference's own code (same binary), so the reference carves
+high-end IDENTICALLY -- this is therefore NOT a carve-direction reconstruction bug. High-end carving
+means the base is the LAST region consumed (the free block shrinks from the top down), so the base is
+only allocated once the heap is (nearly) FULL. The reference fills the base => it allocates more/to a
+fuller heap than we do; our base staying free => we allocate LESS total (or free more). This matches
+the +0x38400 level_data_buffer finding (our loaded content is 0x38400 shorter). So the two Stage-2
+divergences (level_data_buffer +0x38400 in the asset loader FUN_00415160; MPE heap base-not-consumed)
+are both "our build allocates/loads less or differently", NOT a carve/relocation mechanic. Do NOT
+change MPE_malloc's carve. The real Stage-2 work is finding the specific missing/mis-sized/mis-ordered
+allocation(s) -- which still needs the reference's allocation sequence (blocked by the MPE_malloc code
+breakpoint being unreliable; data-watchpoint on the heap size field 0x7debf4 is the workaround to try,
+timed to attach before the level-9 Init_Game allocations run).
