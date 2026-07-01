@@ -131,6 +131,24 @@ def fix_dd2(s):
         return "((int)_level_data + " + m.group(1) + ")"
     s = re.sub(r"\(_level_data \+ (0x[0-9a-fA-F]+|\d+)\)", _lvbyte, s)
     _applied.append(('LEVDATA-BYTEOFF _level_data+N byte-offset readers', _ld_n[0]))
+    # FIX GPOLY-BYTEOFF (same Ghidra pointer-scaling class as LEVDATA): _gpoly is typed `short*`, so the
+    # poly-command RASTERIZER handlers' `_gpoly + N` scale N by 2. But the poly records are byte-addressed:
+    # each textured-quad record is 0x14 (20) bytes (GPU primitive `RR GG BB 2c` header repeats every 20
+    # bytes in the level data), and the handlers advance `_gpoly = _gpoly + 0x14` -- which as short* is 40
+    # bytes = DOUBLE the record -> after the first command the walk lands mid-record on garbage (count=787,
+    # cmd=153) -> FUN_0041fcac dispatches PTR_LAB[153] (OOB) = wild ptr -> crash in Init_Sky. The field
+    # reads (+4/+6/+0xc.. = the primitive color/uv/xy) are byte offsets too. The command-WALK in
+    # FUN_0041fcac uses `_gpoly + 1/2` (byte 2 = cmd, +2 short = 4-byte header) which ARE short-correct and
+    # must stay. So convert only `_gpoly + N` with N>=4 (the handler record-field/advance offsets) to byte
+    # arithmetic `(int)_gpoly + N`; leave the walk's N in {1,2,3}.
+    _gp_n = [0]
+    def _gpbyte(m):
+        n = int(m.group(1), 0)
+        if n < 4: return m.group(0)
+        _gp_n[0] += 1
+        return "(int)_gpoly + " + m.group(1)
+    s = re.sub(r"_gpoly \+ (0x[0-9a-fA-F]+|\d+)", _gpbyte, s)
+    _applied.append(('GPOLY-BYTEOFF poly-handler _gpoly+N (N>=4) byte offsets', _gp_n[0]))
     # FIX GEOM-GUARD (heap-layout divergence guard, LOCAL/isolated this time): FUN_0041fb7c's poly-command
     # walk crashes (L2/L3, and structurally the same signature as L6's FUN_0041132c) when _gpoly = *(iVar3+0x28)
     # is a wild address (e.g. 0x666666ff, WAY outside the mapped image+heap range 0x400000-0x900000) --
