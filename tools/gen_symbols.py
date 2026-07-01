@@ -45,5 +45,18 @@ for line in open(syms_f, encoding='utf-8', errors='surrogateescape'):
     t = type_by_name.get(name, deftype(size))
     out.append(f"#define {name} (*({t}*)GIMG(0x{addr:08x}))")
     n += 1
+# Emit address-encoded names (DAT_XXXXXXXX/PTR_DAT_.../LAB_.../UNK_...) referenced in the code but not
+# in the Ghidra symbol export (dd2.exe auto-created these; the fresh dd2h analysis named differently). The
+# name literally encodes the VA, so generate the GIMG define mechanically. Scan the decomp source for them.
+import re as _re2
+_src = open(_dc, encoding='utf-8', errors='surrogateescape').read() if _dc else ''
+_encoded = _re2.compile(r'\b((?:DAT|PTR_DAT|PTR_FUN|PTR_LAB|LAB|UNK|PTR)_([0-9a-fA-F]{8}))\b')
+for _m in _encoded.finditer(_src):
+    _nm, _hx = _m.group(1), _m.group(2)
+    if _nm in seen: continue
+    seen.add(_nm)
+    _t = type_by_name.get(_nm, 'undefined1' if _nm.startswith('DAT') or _nm.startswith('UNK') else 'undefined4')
+    out.append(f"#define {_nm} (*({_t}*)GIMG(0x{int(_hx,16):08x}))")
+    n += 1
 open(out_f, 'w', encoding='utf-8', errors='surrogateescape').write('\n'.join(out) + '\n')
 print(f"gen_symbols: {n} #defines from {syms_f}, {len(type_by_name)} type refinements preserved -> {out_f}")
