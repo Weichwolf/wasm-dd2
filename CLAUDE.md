@@ -629,3 +629,21 @@ change MPE_malloc's carve. The real Stage-2 work is finding the specific missing
 allocation(s) -- which still needs the reference's allocation sequence (blocked by the MPE_malloc code
 breakpoint being unreliable; data-watchpoint on the heap size field 0x7debf4 is the workaround to try,
 timed to attach before the level-9 Init_Game allocations run).
+
+## Stage 3 MAJOR MILESTONE: the decompiled engine RENDERS THE GAME IN A BROWSER (commit below)
+IMPORTANT clarification: web/build is a SEPARATE from-scratch WebGL reimplementation (console shows
+geo_load/assets/raw/*.DAT/WebGL) -- NOT the dd2h.exe port. Created the port's OWN browser build:
+- tools/build_web.sh: emcc with -DDD2_BROWSER -sASYNCIFY (+preload Dirinfo/dd2_image.bin/SaveGames,
+  --shell-file web/shell_port.html, export _dd2_browser_key_event). Same engine C as the node build.
+- dd2_com.c ids_flip: #ifdef DD2_BROWSER -> EM_JS dd2_present() blits g_pixels@0x700450 (320x240 8-bit)
+  -> <canvas> via g_palette, then emscripten_sleep(0) yields to the browser (ASYNCIFY) each frame.
+- web/shell_port.html: canvas + keydown/keyup -> Module.ccall('dd2_browser_key_event', code, down).
+VERIFIED via Playwright (tools/browser/shot.js on web/dd2): the port loads ("Created Primary Surface"
+/"Creating Palette" = the engine's own output) and RENDERS THE ACTUAL DD2 SCENE -- 3D banked track,
+cars, "Race Over"/"DEMO MODE" text, correct palette (see /tmp/port_render.png). The dd2h.exe decompiled
+engine runs and renders in a browser via WASM. Playwright/headless-Chromium works in this env.
+Both headless targets STILL 10/10 (the render hook is #ifdef-guarded; node/native builds unaffected).
+Build: `bash tools/build_web.sh web/dd2`; test: `node tools/browser/shot.js web/dd2 out.png` or
+navshot.js for keyed nav. NEXT: the browser build currently runs the recorded-pad DEMO (demo_mode=1,
+so keys don't steer yet); switch it to interactive (Front_End menu or a live PlayMode race with
+demo_mode=0) so the wired keyboard input actually drives menus/car -> end-to-end playable.

@@ -49,7 +49,35 @@ static int ids_lock(int t,int rect,int* desc,int flags,int ev){
 #include <stdio.h>
 #include <stdlib.h>
 static int g_frameno = 0;
+extern unsigned char g_palette[256*4];  /* defined below; captured DDraw palette (RGBA-ish per entry) */
+#ifdef DD2_BROWSER
+#include <emscripten.h>
+/* Blit the engine's 320x240 8-bit indexed framebuffer (@0x700450) to the page <canvas> via the
+   captured palette, then yield to the browser event loop (ASYNCIFY) so it can paint + deliver input.
+   Guarded by DD2_BROWSER so the headless node build (build.sh) is completely unaffected. */
+EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
+    var c = Module.canvas || document.getElementById('canvas');
+    if (!c) return;
+    if (c.width !== 320) { c.width = 320; c.height = 240; }
+    var ctx = c.getContext('2d');
+    if (!Module._dd2img) Module._dd2img = ctx.createImageData(320, 240);
+    var img = Module._dd2img.data;
+    for (var i = 0, p = 0; i < 320*240; i++, p += 4) {
+        var idx = HEAPU8[fb + i] * 4;
+        /* DDraw PALETTEENTRY is R,G,B,flags -> map to canvas RGBA */
+        img[p]   = HEAPU8[pal + idx];
+        img[p+1] = HEAPU8[pal + idx + 1];
+        img[p+2] = HEAPU8[pal + idx + 2];
+        img[p+3] = 255;
+    }
+    ctx.putImageData(Module._dd2img, 0, 0);
+});
+#endif
 static int ids_flip(int t,int a,int b){
+#ifdef DD2_BROWSER
+    dd2_present((const unsigned char*)(unsigned long)0x700450u, g_palette);
+    emscripten_sleep(0);   /* yield each presented frame so the browser paints + processes key events */
+#endif
     const char* dir = getenv("DD2_FRAMEDIR");
     if(dir){
         /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 320x240 8-bit framebuffer
