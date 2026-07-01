@@ -67,6 +67,43 @@ abandoned), so the chain reproduces from that overlay, not fully mechanically.
   Our build dumps the same surface (`DD2_FRAMEDIR=…`, `DD2_CFDUMP=1` keys on `current_frame`@0x462ff0).
   Bit-compare blocked by alignment: our `DemoModeLevel` skips the intro the reference shows; counters differ.
 
+## Dispatch-table VAs are WRONG for at least MPE_InitHeap/MPE_malloc/Decompress (gdb-confirmed)
+Tried for hours to breakpoint the reference at the dispatch-table VAs (0x4235c0/0x4235e4/0x415550).
+Every attempt (gdb `break`, raw ptrace POKETEXT, even a from-scratch hardware breakpoint via
+`gdb wine` before any code runs) either silently never fired or, when it did stop, disassembled to
+garbage — e.g. `x/10i 0x4235c0` in the LIVE reference process shows nonsense opcodes, not the simple
+`_mem_size=param_2; *param_1=param_1; ...` leaf function Ghidra decompiled. Traced it BYTE-EXACT:
+the real function boundary (clean `push ebp; mov ebp,esp` prologue) for the code Ghidra assigned to
+"MPE_InitHeap @ 0x4235c0" is actually at **0x423594** — i.e. 0x4235c0 falls INSIDE an unrelated
+function (a block-copy routine calling 0x456770). Sanity-checked the METHOD itself is sound by
+disassembling the PE's real AddressOfEntryPoint (0x456c34, independently computed from the PE header)
+in the live process — it decoded perfectly. So: the tooling is fine, but Ghidra's recorded VA for
+these specific functions (at least these 3; unclear how many others) does NOT match a real function
+start in the raw binary. This does NOT affect OUR build (dd2_dispatch.c's addresses are apparently
+vestigial/cosmetic for these entries — our build calls MPE_malloc etc. as normal compiled C functions,
+which is presumably why it still works). It DOES mean: raw-VA reference breakpoints on these specific
+functions are unreliable; use DATA watchpoints (current_frame @0x462ff0, _current_level @0x936ff4,
+which DO work and are gdb/gdb-gdbstub-confirmed) instead, or find the real VA independently before
+trying to breakpoint code. QEMU-user (qemu-i386) was tried as an alternative to ptrace/gdb but Wine
+hangs under qemu-user's linux-user-mode emulation (its threading model isn't fully supported) — not
+a viable path. WINEDEBUG=+virtual,+module IS useful (confirms load base 0x400000, section mapping,
+matches static PE headers exactly) but only shows top-level VirtualAlloc/module-map events, not
+in-game MPE_malloc calls (those are pure game-internal C logic, invisible to Wine's own tracing).
+
+## Lockstep alignment: sync on _current_level==9, NOT current_frame (measured, use this)
+Frame-count sync (current_frame >= F) is weak: the reference's title screen inflates current_frame
+before the demo/level even starts, so a raw threshold doesn't line up the same engine state in both
+builds. Switched `tools/lockstep.sh` (MODE=level, now the default) to sync on **_current_level
+transitioning to 9** (ref @0x936ff4; ours via breaking at `Order_Cars` with `DD2_LEVEL=9`) — a
+semantically meaningful checkpoint (start of Init_Game for the demo level) both builds reach
+regardless of front-end/title cycling length. Measured improvement in the SAME run: heap match
+58%->74.44%, game-data match 9%->54%. First divergence still at heap VA 0x7debf0 (base free-list
+header): reference already has real content there (`1d 1d 1d 1d 1d 1d 1f 1f 1f 1c 1a...`) while ours
+is still all-zero (`00 00 00...`) — i.e. by this checkpoint the reference has already carved through
+and OVERWRITTEN the base header (a later allocation's carve exactly consumed the remaining free block,
+triggering MPE_malloc's `*puVar5 = *puVar3` merge-forward), while ours hasn't — a concrete, actionable
+allocation-order difference to chase next. (MODE=frame preserved in lockstep.sh for comparison.)
+
 ## Memory transaction log (how to journal heap changes for the bisect)
 A "transaction log" of memory changes is the right tool to find the first divergence. Granularities:
 - ALLOCATION journal (best for layout): log every MPE_malloc(size)→addr / MPE_free(addr); the heap
