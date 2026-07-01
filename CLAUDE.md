@@ -598,3 +598,16 @@ menu itself is USABLE before the ~1800-frame idle timeout -- this crash is the a
 falls into when idle, not the menu navigation itself. Menu-nav proof via gdb-injected key pulse was
 inconclusive (the front-end crashes easily when poked mid-loop); the definitive menu-nav test is the
 browser (navshot.js, real key up/down timing) once web/build is rebuilt from current code.
+
+## GUARD AN (Track_Follow guard) — TRIED, REVERTED: regresses native L2 (do not retry naively)
+Attempted to guard Track_Follow's 6 wild-pbVar9 sites by `goto switchD_00426fe6_caseD_5` (the case-5
+finaliser that uses the car's previous strip param_1[5], not pbVar9 -- looked like a safe "stay on
+current strip" skip). Cleared the front-end Track_Follow crash BUT regressed native L2 (10/10->9/10):
+L2 legitimately computes a pbVar9 my range-check flagged, or the skip drifts L2's track-following into
+a downstream crash. Reverted (WASM stayed 10/10, but never keep a change that regresses a target).
+LESSON: Track_Follow is genuinely delicate -- the front-end idle-DemoMode crash chain (Track_Follow ->
+then Pre_Rotate@dd2.c:6729 with a garbage vertex count 49239, via Draw_Subdiv_Object -> more...) is a
+whack-a-mole rooted in the Stage-2 heap-layout divergence, NOT safely guardable per-site the way the
+render-path GUARDs were. Proper fix is Stage 2 (match the heap layout so the track-strip/geometry data
+isn't corrupt in the first place). The front-end MENU itself is usable before the ~1800-frame idle
+timeout; this crash is only the attract-demo it falls into when idle.
