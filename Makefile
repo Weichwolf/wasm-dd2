@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline decompile assemble patch check native wasm web verify verify-wasm run clean help
+.PHONY: all pipeline decompile assemble symbols image patch check native wasm web verify verify-wasm run shot refcapture clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -33,6 +33,13 @@ decompile: ## re-run Ghidra headless: dd2h.exe -> re_out/dd2_decomp.c
 
 assemble: ## mechanical: re_out/dd2_decomp.c -> re_out/dd2.c (game-code selection + fwd decls + register-file globals)
 	python3 $(ROOT)/tools/assemble_dd2h.py
+
+symbols: ## regenerate re_out/dd2_symbols.h from the Ghidra symbol export (tools/ghidra/ExportSymbols.java -> re_out/data_symbols.txt)
+	python3 $(ROOT)/tools/gen_symbols.py $(ROOT)/re_out/data_symbols.txt $(ROOT)/re_out/dd2_symbols.h $(ROOT)/re_out/dd2_symbols.h
+
+image: ## extract the dd2h memory image: dd2h.exe -> re_out/dd2_image.bin + runtime copy in DestructionDerby2/
+	python3 $(ROOT)/re_out/extract_image.py $(GAMEDIR)/dd2h.exe $(ROOT)/re_out/dd2_image.bin
+	cp $(ROOT)/re_out/dd2_image.bin $(GAMEDIR)/dd2_image.bin
 
 patch: ## apply patches/NNN-*.diff onto re_out/ -> build/ (exact match; drift fails loudly)
 	bash $(ROOT)/tools/patch.sh
@@ -70,6 +77,12 @@ verify-wasm: wasm ## crash-free check: run the WASM demo (node) on all 10 levels
 
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
+
+shot: web ## headless browser screenshot of the web build -> /tmp/dd2_shot.png
+	node $(ROOT)/tools/browser/shot.js $(ROOT)/web/dd2 /tmp/dd2_shot.png
+
+refcapture: ## Stage-2 reference capture: run original dd2h.exe under Wine, dump live memory (needs WINEPREFIX)
+	bash $(ROOT)/tools/refcapture.sh
 
 clean: ## remove generated build/ and outputs
 	rm -rf $(ROOT)/build $(OUTJS) $(OUTJS:.js=.wasm)

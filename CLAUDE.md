@@ -11,24 +11,24 @@ documented by the Make targets; every correction to the decompile is a commented
 No guards, no approximations, no band-aids — any observable deviation from the original is by
 definition a bug. **Code is the truth** — verify every claim against `DestructionDerby2/dd2h.exe` or a run.
 
-## Pipeline (fixed): `dd2h.exe → decompile → transpile/patch → compile (native/wasm)`
-- **Never hand-edit decompiled engine source** (`re_out/dd2.c`, `re_out/dd2_*.c` = pristine Ghidra output).
-  All engine fixes go in **`tools/transpile.py`** as anchor-asserted `sub()` patches (`re_out/*.c → build/*.c`);
-  each patch documents its own rationale inline (that's where detailed notes belong, NOT here).
+## Pipeline — everything starts with `make` (the target chain IS the documentation; see `make help`)
+`make decompile → assemble → patch → native/wasm → verify/verify-wasm` (+ `symbols`, `image`, `web`,
+`shot`, `refcapture`). `make pipeline` runs the full from-binary chain.
+- **Never hand-edit decompiled engine source** (`re_out/dd2_decomp.c` = pristine Ghidra output;
+  `re_out/dd2.c` = mechanical assembly of it). Every engine correction is an ordered, exact-context
+  **`patches/NNN-slug.diff`** with its rationale in the file header (that's where detailed notes belong,
+  NOT here). `make patch` applies the series with -F0 --fuzz=0 — decompile drift fails loudly.
 - Only hand-written code = the platform/runtime shim: `re_out/dd2_com.c` (DirectDraw→g_pixels), `dd2_win32.c`,
   `dd2_filio.c`, `dd2_stubs.c`, `dd2_input.c`, `dd2_runtime.c`, `tools/native_main.c`. Editing those is fine.
-- `tools/decompile.sh` runs Ghidra (`/home/cosmo/tools/ghidra_12.1.2_PUBLIC`, proj `dd2_ghidra_proj`,
-  PROGRAM=**dd2h.exe**) → `re_out/dd2_decomp.c` + `functions.txt`. GTE/jumptable register-arg fns are recovered
-  by `tools/recover_regargs.py` / hand overlay.
+- `make decompile` runs Ghidra (`/home/cosmo/tools/ghidra_12.1.2_PUBLIC`, proj `dd2_ghidra_proj`,
+  PROGRAM=**dd2h.exe**); the project-DB setup scripts live in `tools/ghidra/`. Register-arg call sites are
+  recovered by `tools/recover_regargs.py` (emits patch-stage material).
 
 ## Commands
-- `make pipeline` = decompile → check anchors → native build+verify → wasm build+verify (10 demo levels, both targets).
-- `make verify` (native) / `make verify-wasm` (node) — crash-free N/10. `python3 tools/transpile.py --check` = verify anchors.
-- Native debug: `ASAN=' ' bash tools/build_native.sh /tmp/dd2_native_na` (no-ASan for real crashes); run from
-  `DestructionDerby2/` as `DD2_LEVEL=N /tmp/dd2_native_na`. WASM: `bash tools/build.sh` → `/tmp/lvltest/dd2run.js`.
-- Browser build: `bash tools/build_web.sh web/dd2`; serve + open, or `node tools/browser/shot.js web/dd2 out.png`.
-- Reference capture: `WINEPREFIX=<owned-dir>/wp32 tools/refcapture.sh` (needs `xvfb-run -s "-screen 0 640x480x16"`
-  + WINEARCH=win32; reads state via /proc/PID/mem, NOT gdb breakpoints).
+- Native debug: `make native NATIVE=/tmp/dd2h_na`, run from `DestructionDerby2/` as
+  `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize with `addr2line -f -e`.
+- Reference capture (Stage-2 bit-verify): `WINEPREFIX=<owned-dir>/wp32 make refcapture` (needs
+  `xvfb-run -s "-screen 0 640x480x16"` + WINEARCH=win32; reads state via /proc/PID/mem, NOT gdb breakpoints).
 
 ## Status (3 sequential stages, each gates the next)
 - Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).
