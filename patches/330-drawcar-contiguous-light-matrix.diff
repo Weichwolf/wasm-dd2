@@ -1,0 +1,79 @@
+Draw_Car / FUN_0042c2d4: contiguous 9-short light matrix (scattered-locals)
+
+gte_MulMatrix0 writes a 9-short (0x12-byte) matrix through its out arg (asm: lea eax,[ebp-0x2c]
+in Draw_Car @0x42c15c, [ebp-0x30] in FUN_0042c2d4 @0x42c2d4). Ghidra declared only the first
+three shorts (sStack_30/local_2e/sStack_2c resp. sStack_34/local_32/sStack_30) -- the three the
+function then rescales -- and __lmptr = &first is handed to the rasterizer which reads all NINE.
+The compiler does not lay scattered locals contiguously, so 6 of 9 lanes were garbage/UB.
+Replace with a real short[9]; same class as MATRIXLOCALS/EBC (scattered-locals).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -18460,23 +18460,21 @@
+   bool bVar2;
+   int iVar3;
+   int iVar4;
+-  short sStack_30;
+-  short local_2e;
+-  short sStack_2c;
++  short _lm [9];
+   
+   FUN_0042b720(param_1);
+   psVar1 = (short *)(param_1 * 0x27c + 0x78a754);
+-  gte_MulMatrix0(&car_light_matrix,psVar1,(undefined4 *)&sStack_30);  /* asm 0x42c174: lea eax,[ebp-0x2c]; contiguous buffer in next patch */
++  gte_MulMatrix0(&car_light_matrix,psVar1,(undefined4 *)_lm);  /* asm 0x42c174: lea eax,[ebp-0x2c] = 9-short light matrix */
+   iVar3 = *(int *)(param_1 * 0x1e + 0x77d1fe) >> 0x10;
+-  iVar4 = sStack_30 * iVar3 >> 0x1f;
+-  sStack_30 = (short)((int)((sStack_30 * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
++  iVar4 = _lm[0] * iVar3 >> 0x1f;
++  _lm[0] = (short)((int)((_lm[0] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
+                      );
+-  iVar4 = local_2e * iVar3 >> 0x1f;
+-  local_2e = (short)((int)((local_2e * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar4 = sStack_2c * iVar3 >> 0x1f;
+-  sStack_2c = (short)((int)((sStack_2c * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
++  iVar4 = _lm[1] * iVar3 >> 0x1f;
++  _lm[1] = (short)((int)((_lm[1] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
++  iVar4 = _lm[2] * iVar3 >> 0x1f;
++  _lm[2] = (short)((int)((_lm[2] * iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc
+                      );
+-  __lmptr = &sStack_30;
++  __lmptr = _lm;
+   FUN_004203dc(psVar1,(int *)(&DAT_0078a744 + param_1 * 0x27c));
+   bVar2 = _DAT_00754256 < 4000;
+   *(undefined1 **)(*(int *)((int)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
+@@ -18501,25 +18499,23 @@
+   int iVar1;
+   int iVar2;
+   int iVar3;
+-  short sStack_34;
+-  short local_32;
+-  short sStack_30;
++  short _lm [9];
+   short *local_14;
+   
+   FUN_0042b720(param_1);
+   iVar3 = param_1 * 0x27c;
+   local_14 = (short *)(iVar3 + 0x78a754);
+-  gte_MulMatrix0(&car_light_matrix,local_14,(undefined4 *)&sStack_34);  /* asm 0x42c2ff: lea eax,[ebp-0x30]; contiguous buffer in next patch */
++  gte_MulMatrix0(&car_light_matrix,local_14,(undefined4 *)_lm);  /* asm 0x42c2ff: lea eax,[ebp-0x30] = 9-short light matrix */
+   iVar1 = *(int *)(param_1 * 0x1e + 0x77d1fe) >> 0x10;
+-  iVar2 = sStack_34 * iVar1 >> 0x1f;
+-  sStack_34 = (short)((int)((sStack_34 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
++  iVar2 = _lm[0] * iVar1 >> 0x1f;
++  _lm[0] = (short)((int)((_lm[0] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
+                      );
+-  iVar2 = local_32 * iVar1 >> 0x1f;
+-  local_32 = (short)((int)((local_32 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
+-  iVar2 = sStack_30 * iVar1 >> 0x1f;
+-  sStack_30 = (short)((int)((sStack_30 * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
++  iVar2 = _lm[1] * iVar1 >> 0x1f;
++  _lm[1] = (short)((int)((_lm[1] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
++  iVar2 = _lm[2] * iVar1 >> 0x1f;
++  _lm[2] = (short)((int)((_lm[2] * iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc
+                      );
+-  __lmptr = &sStack_34;
++  __lmptr = _lm;
+   FUN_004203dc(local_14,(int *)(&DAT_0078a744 + iVar3));
+   iVar1 = VVDraw_Object((undefined4 *)((int)&car_object + param_1 * 0x38));
+   *(int *)(iVar3 + 0x78a798) = iVar1;
