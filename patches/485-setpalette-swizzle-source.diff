@@ -1,0 +1,25 @@
+SetPalette: the BGR swizzle reads the copied palette, not raw frame offsets
+
+SetPalette copies the 0x400-byte source palette into a stack buffer (local_428), then
+builds the DDraw entries @0x700050 swizzling R<->B. Ghidra emitted the swizzle reads as
+raw frame-offset pseudo-locals (stack0xfffffbd4/5/6 = local_428 - 2/-3/-4 in the ORIGINAL
+frame) which are unrelated variables under our compilers -> the game palette @0x700050
+stayed zeros (native) / stack junk (wasm) while the REFERENCE holds real colors
+(f8 state-diff + Wine live read proven). Mapping is exact: dst entry (i-1) gets
+{r,g,b} = local_428[(i-1)*4 + {2,1,0}] (BGR swizzle), alpha-flag 4 unchanged.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -2991,9 +2991,9 @@
+   iVar1 = 0;
+   do {
+     iVar1 = iVar1 + 1;
+-    *(undefined1 *)(iVar1 * 4 + 0x70004c) = (&stack0xfffffbd6)[iVar1 * 4];
+-    *(undefined1 *)(iVar1 * 4 + 0x70004d) = (&stack0xfffffbd5)[iVar1 * 4];
+-    *(undefined1 *)(iVar1 * 4 + 0x70004e) = (&stack0xfffffbd4)[iVar1 * 4];
++    *(undefined1 *)(iVar1 * 4 + 0x70004c) = local_428[(iVar1 - 1) * 4 + 2];
++    *(undefined1 *)(iVar1 * 4 + 0x70004d) = local_428[(iVar1 - 1) * 4 + 1];
++    *(undefined1 *)(iVar1 * 4 + 0x70004e) = local_428[(iVar1 - 1) * 4 + 0];
+     *(undefined1 *)(iVar1 * 4 + 0x70004f) = 4;
+   } while (iVar1 < 0x100);
+   iVar1 = 0;
