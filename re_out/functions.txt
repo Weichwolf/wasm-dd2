@@ -196,8 +196,10 @@
 0041e548	219	setup_face_sprite
 0041e624	1108	draw_face_sprite
 0041ea78	1138	draw_face_sprite_dpq
+0041eeec	1121	FUN_0041eeec
 0041f350	1151	draw_face_tilt_sprite_dpq
 0041f7d0	605	FUN_0041f7d0
+0041fa30	634	FUN_0041fa30
 0041fcac	129	FUN_0041fcac
 0041fd30	91	Create_Object
 0041fd8c	77	Set_Object
