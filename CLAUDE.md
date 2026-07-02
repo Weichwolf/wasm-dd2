@@ -33,20 +33,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 ## Status (3 sequential stages, each gates the next)
 - Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).
   Memory image: `re_out/extract_image.py DestructionDerby2/dd2h.exe` → `dd2_image.bin` (0x580400 bytes).
-- **Stage 1 — crash-free: ACTIVE, currently 0/10.** Build:
-  `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from `DestructionDerby2/` as
-  `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize crashes with `addr2line -f -e`. (Gdb HW
-  watchpoints do NOT fire in the mmap'd image region — kernel/fread writes bypass them.) Dominant crash
-  class: Ghidra pointer-scaling (int*/short* globals indexed with byte offsets). Crash map: **L1-7**
-  `Generate_Surface_Normals` @0x4268b8 (unrecovered switch jumptable, calls raw code labels); **L8-10**
-  `MulMatrix2` (GTE `extraout_ECX` dropped output register). Big open items: in_EAX/register-arg recovery
-  (67 fns), full GTE per-call register wiring via `tools/recover_regargs.py` (static `_g_*` defaults run
-  but give WRONG vectors), the jumptable reconstruction, render loop. Always verify ALL 10 levels, both
-  targets — crashes are level-data-dependent.
-- **Stage 2 — bit-identical: after Stage 1.** Bit-verify vs dd2h reference (`refcapture.sh`, e.g.
-  L9/frame151 memcmp of level_data_buffer/car_vertices/rgb_lookup). Known residual: MPE heap BASE not
-  consumed (0x816ff0 = InitHeap self-ptr vs ref real data) — allocation-order divergence (MPE allocs:
-  prim 0x60000, heap 0x120000).
+- **Stage 1 — crash-free: DONE.** `make verify` and `make verify-wasm` = **10/10 on both targets**,
+  no guards — every fix is an asm-verified patch. Recurring Ghidra artifact classes (each patch header
+  documents its instance): pointer scaling (int-typed byte tables indexed with byte offsets, e.g.
+  DAT_00792bae), scattered locals (stack blocks split into separate C locals that gcc reorders —
+  vertex arrays for the edge sorter, Setup_Sprite info blocks, camera vectors), dropped registers,
+  paired 16-bit loads, unsigned/signed shifts+compares (dth_* span blitters need `sar` semantics),
+  mid-function entries, wasm call_indirect signature normalization.
+- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm race state (cars/physics/heap/debris) is
+  bit-identical through at least engine frame 150 after the PADTYPE-SEED + INITDEBRIS + CARCAMERA
+  fixes; residual native↔wasm diffs: host-pointer slots (0x74c47c, 0x74c6d8), cdb draw-env
+  0x75420e-0x754219, and an init-time delta (recorded_strips_ @0x7842a0 camera start strip +2 on
+  wasm; strip byte +0x29 = 6 vs 0; 0x77cf39) — re-measure post-792bae-fix before chasing. Compare
+  tools: `DD2_STATECF=<frame> DD2_FRAMEDIR=<dir>` (wasm one-shot full-image dump keyed by engine
+  frame 0x462ff0); native equivalent via gdb `break Draw_All if *(int*)0x462ff0 == N` + `dump binary
+  memory`. Next: bit-verify vs the dd2h reference (`make refcapture`; framebuffer @0x700450, palette
+  bit-exact already).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
