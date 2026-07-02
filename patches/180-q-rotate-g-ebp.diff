@@ -1,6 +1,6 @@
 Q:rotate _g_ebp
 
-FIX Q (dropped-register): x86 rotate FUN_00413fd2 does `mov ebp,0x7142f0` which persists for the
+FIX Q (dropped-register): x86 rotate FUN_00414016 (dd2h @0x414016; was FUN_00413fd2 in dd2.exe) does `mov ebp,0x74c6f0` which persists for the
 following translate's T read; Ghidra dropped it. GTERPS was hand-patched, GTERPT/GTERPT4_ were not.
 
 --- a/dd2.c
@@ -10,7 +10,7 @@ following translate's T read; Ghidra dropped it. GTERPS was hand-patched, GTERPT
    short *unaff_ESI=(short*)(uintptr_t)_g_esi;
    uint *unaff_EDI=(uint*)(uintptr_t)_g_edi;
 -  
-+  _g_ebp = 0x7142f0;
++  _g_ebp = 0x74c6f0;
    iVar1 = (int)*unaff_ESI;
    *unaff_EDI = (uint)((longlong)(int)__globmat * (longlong)iVar1) >> 0xc |
                 (int)((ulonglong)((longlong)(int)__globmat * (longlong)iVar1) >> 0x20) << 0x14;
