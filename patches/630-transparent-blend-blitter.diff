@@ -1,0 +1,220 @@
+draw_text_half_trans: faithful reconstruction of the semi-transparent blitter
+
+Replaces the LAST remaining TEMP stub (the function returned immediately --
+lens flares, start-light lamp glows and every ABE-blended span were simply
+never drawn; the reference shows them). Asm 0x4109e8-0x410d4f: prologue picks a
+64KB blend table by the tpage ABR bits (pointer table @0x460014, double-deref
+0x4109f7/0x4109fd) plus texture/clut bases; the walk is draw_text_half's
+packed-ecx structure (patch 580); the pixel stage is
+    dst = table[(dst<<8) | clut[texel]]
+(asm 0x410cba: dl=[eax] texel; al=[edx] src; ah=[edi] dst; si=ax; dl=[esi];
+[edi-1]=dl). No zero-nibble test in this variant -- the table encodes
+transparency. Both y-paths (unclipped/x-clipped) reconstructed.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1318,24 +1318,19 @@
+ void draw_text_half_trans(void)
+ 
+ {
+-  int _xsafe;
+-  return; /* TEMP: mangled CONCAT blit stubbed (x86_intrin.h reconstruction pending) */
+-  undefined1 *puVar1;
+-  uint uVar2;
+-  uint uVar3;
+-  int iVar4;
+-  undefined3 uVar5;
+-  int iVar6;
+-  int iVar7;
+-  int iVar8;
+-  undefined1 *puVar9;
+-  undefined1 *puVar10;
+-  bool bVar11;
+-  
+-  iVar6 = dth_y1;
+-  DAT_00460010 = (undefined1 *)
+-                 **(undefined4 **)
+-                   ((int)&PTR_hlf_transparency_table_00460014 + ((dth_tpage & 0x60) >> 3));
++  /* Faithful reconstruction of the SEMI-TRANSPARENT span blitter (asm 0x4109e8-0x410d4f);
++     replaces the old TEMP stub (Ghidra emitted unusable CONCAT/SCARRY pointer spaghetti).
++     Structure mirrors draw_text_half (patch 580): same y2<1 advance, y1<0 clamp-advance,
++     packed count-in-ecx-high walk, plus the BLEND stage: the prologue selects a 64KB
++     blend table by the tpage ABR bits (ptr table @0x460014, dereferenced twice:
++     0x4109f7 mov ebx,[eax+0x460014]; mov ecx,[ebx]) and each pixel becomes
++     table[(dst<<8) | clut[texel]] (asm 0x410cba-0x410cd5: dl=[eax]; al=[edx]; ah=[edi];
++     si=ax; dl=[esi]; [edi-1]=dl). NO zero-nibble transparency test in this variant --
++     the table encodes it. */
++  int iVar2, iVar8, iVar6, iVar9, iVar10;
++  unsigned uVar4;
++  iVar8 = dth_y1;
++  DAT_00460010 = **(int **)(uintptr_t)((int)&PTR_hlf_transparency_table_00460014 + ((dth_tpage & 0x60) >> 3));
+   DAT_0046000c = (dth_tpage & 0x1f) * 0x10000 + __texturespace;
+   DAT_00460004 = __clutspace + (dth_clut * 0x10 + _dth_shade) * 0x100;
+   if ((short)DAT_00480038 < 0) {
+@@ -1345,11 +1340,11 @@
+     DAT_00480038 = CONCAT22(0xffff,(short)DAT_00480038);
+   }
+   if (dth_y2 < 1) {
+-    iVar6 = dth_y2 - dth_y1;
+-    dth_x1 = iVar6 * dth_delta1 + dth_x1;
+-    dth_x2 = iVar6 * dth_delta2 + dth_x2;
+-    dth_u1 = iVar6 * DAT_0048001c + dth_u1;
+-    dth_v1 = iVar6 * DAT_00480034 + dth_v1;
++    iVar8 = dth_y2 - dth_y1;
++    dth_x1 = iVar8 * dth_delta1 + dth_x1;
++    dth_x2 = iVar8 * dth_delta2 + dth_x2;
++    dth_u1 = iVar8 * DAT_0048001c + dth_u1;
++    dth_v1 = iVar8 * DAT_00480034 + dth_v1;
+   }
+   else {
+     if (poly_clipy <= dth_y2) {
+@@ -1358,43 +1353,33 @@
+     if (dth_y1 < poly_clipy) {
+       if (dth_y1 < 0) {
+         dth_y1 = 0;
+-        iVar6 = -iVar6;
+-        dth_x1 = dth_delta1 * iVar6 + dth_x1;
+-        dth_x2 = dth_delta2 * iVar6 + dth_x2;
+-        dth_u1 = DAT_0048001c * iVar6 + dth_u1;
+-        dth_v1 = DAT_00480034 * iVar6 + dth_v1;
++        iVar8 = -iVar8;
++        dth_x1 = dth_delta1 * iVar8 + dth_x1;
++        dth_x2 = dth_delta2 * iVar8 + dth_x2;
++        dth_u1 = DAT_0048001c * iVar8 + dth_u1;
++        dth_v1 = DAT_00480034 * iVar8 + dth_v1;
+       }
+-      { int _hh=dth_y2-dth_y1, _a=dth_x1>>8, _b=dth_x2>>8, _c=(dth_x1+dth_delta1*_hh)>>8, _d=(dth_x2+dth_delta2*_hh)>>8;
+-        _xsafe = (_a>=0 && _a<=poly_clipx && _b>=0 && _b<=poly_clipx && _c>=0 && _c<=poly_clipx && _d>=0 && _d<=poly_clipx); }
+-      if (dth_clip == 0 && _xsafe) {
++      if (dth_clip == 0) {
+         do {
+-          iVar6 = DAT_00480038;
+-          iVar4 = (dth_x2 >> 8) - (dth_x1 >> 8);
+-          if (0 < iVar4) {
+-            uVar2 = dth_v1 & 0xffff | (iVar4 + -1) * 0x10000;
+-            puVar1 = (undefined1 *)
+-                     CONCAT31(CONCAT21((short)((uint)DAT_0046000c >> 0x10),
+-                                       (char)((dth_v1 & 0xffff) >> 8)),(char)((uint)dth_u1 >> 8));
+-            iVar4 = DAT_00460004;
+-            iVar7 = dth_u1;
+-            puVar9 = DAT_00460010;
+-            puVar10 = &_screenbuffer + dth_y1 * 0x280 + (dth_x1 >> 8);
+-            do {
+-              uVar5 = (undefined3)((uint)iVar4 >> 8);
+-              puVar9 = (undefined1 *)
+-                       CONCAT22((short)((uint)puVar9 >> 0x10),
+-                                CONCAT11(*puVar10,*(undefined1 *)CONCAT31(uVar5,*puVar1)));
+-              iVar4 = CONCAT31(uVar5,*puVar9);
+-              uVar3 = (uint)iVar7 >> 8;
+-              iVar7 = iVar7 + DAT_00480018;
+-              puVar1 = (undefined1 *)
+-                       CONCAT22((short)((uint)puVar1 >> 0x10),
+-                                CONCAT11((char)(uVar2 >> 8),(char)uVar3));
+-              bVar11 = SCARRY4(uVar2,iVar6);
+-              uVar2 = uVar2 + iVar6;
+-              *puVar10 = *puVar9;
+-              puVar10 = puVar10 + 1;
+-            } while (uVar2 != 0 && bVar11 == (int)uVar2 < 0);
++          iVar2 = DAT_00480038;
++          iVar8 = DAT_00480018;
++          iVar6 = (dth_x2 >> 8) - (dth_x1 >> 8);
++          if (0 < iVar6) {
++            unsigned _ecx = ((unsigned)dth_v1 & 0xffffu) | ((unsigned)(iVar6 - 1) << 16);
++            unsigned _uu = (unsigned)dth_u1;
++            unsigned char *_dst = (unsigned char *)(&_screenbuffer + dth_y1 * 0x280 + (dth_x1 >> 8));
++            for (;;) {
++              unsigned char _tx = *(unsigned char *)(uintptr_t)
++                  (((unsigned)(uintptr_t)DAT_0046000c & 0xffff0000u) | (_ecx & 0xff00u) | ((_uu >> 8) & 0xffu));
++              unsigned char _sc = *(unsigned char *)(uintptr_t)
++                  (((unsigned)(uintptr_t)DAT_00460004 & 0xffffff00u) | _tx);
++              *_dst = *(unsigned char *)(uintptr_t)
++                  (((unsigned)(uintptr_t)DAT_00460010 & 0xffff0000u) | ((unsigned)*_dst << 8) | _sc);
++              _dst++;
++              _uu += (unsigned)iVar8;
++              _ecx += (unsigned)iVar2;
++              if ((int)_ecx <= 0) break;
++            }
+           }
+           dth_y1 = dth_y1 + 1;
+           dth_u1 = dth_u1 + DAT_0048001c;
+@@ -1405,43 +1390,37 @@
+       }
+       else {
+         do {
+-          iVar6 = DAT_00480038;
+-          iVar7 = dth_x1 >> 8;
+-          iVar4 = dth_x2 >> 8;
+-          if ((-1 < iVar4) && (iVar7 <= poly_clipx)) {
+-            if (poly_clipx < iVar4) {
+-              iVar4 = poly_clipx;
++          iVar2 = DAT_00480038;
++          iVar8 = DAT_00480018;
++          iVar9 = dth_x1 >> 8;
++          iVar6 = dth_x2 >> 8;
++          if ((-1 < iVar6) && (iVar9 <= poly_clipx)) {
++            if (poly_clipx < iVar6) {
++              iVar6 = poly_clipx;
+             }
+-            uVar2 = dth_v1;
+-            iVar8 = dth_u1;
+-            if (iVar7 < 0) {
+-              iVar8 = dth_u1 + DAT_00480018 * -iVar7;
+-              uVar2 = dth_v1 + -iVar7 * DAT_00480038;
+-              iVar7 = 0;
++            uVar4 = (unsigned)dth_v1;
++            iVar10 = dth_u1;
++            if (iVar9 < 0) {
++              iVar10 = dth_u1 + DAT_00480018 * -iVar9;
++              uVar4 = dth_v1 + -iVar9 * DAT_00480038;
++              iVar9 = 0;
+             }
+-            if (0 < iVar4 - iVar7) {
+-              uVar3 = uVar2 & 0xffff | ((iVar4 - iVar7) + -1) * 0x10000;
+-              puVar1 = (undefined1 *)
+-                       CONCAT31(CONCAT21((short)((uint)DAT_0046000c >> 0x10),
+-                                         (char)((uVar2 & 0xffff) >> 8)),(char)((uint)iVar8 >> 8));
+-              iVar4 = DAT_00460004;
+-              puVar9 = DAT_00460010;
+-              puVar10 = &_screenbuffer + dth_y1 * 0x280 + iVar7;
+-              do {
+-                uVar5 = (undefined3)((uint)iVar4 >> 8);
+-                puVar9 = (undefined1 *)
+-                         CONCAT22((short)((uint)puVar9 >> 0x10),
+-                                  CONCAT11(*puVar10,*(undefined1 *)CONCAT31(uVar5,*puVar1)));
+-                iVar4 = CONCAT31(uVar5,*puVar9);
+-                iVar8 = iVar8 + DAT_00480018;
+-                bVar11 = SCARRY4(uVar3,iVar6);
+-                uVar3 = uVar3 + iVar6;
+-                puVar1 = (undefined1 *)
+-                         CONCAT22((short)((uint)puVar1 >> 0x10),
+-                                  CONCAT11((char)(uVar3 >> 8),(char)((uint)iVar8 >> 8)));
+-                *puVar10 = *puVar9;
+-                puVar10 = puVar10 + 1;
+-              } while (uVar3 != 0 && bVar11 == (int)uVar3 < 0);
++            if (0 < iVar6 - iVar9) {
++              unsigned _ecx = (uVar4 & 0xffffu) | ((unsigned)((iVar6 - iVar9) - 1) << 16);
++              unsigned _uu = (unsigned)iVar10;
++              unsigned char *_dst = (unsigned char *)(&_screenbuffer + dth_y1 * 0x280 + iVar9);
++              for (;;) {
++                unsigned char _tx = *(unsigned char *)(uintptr_t)
++                    (((unsigned)(uintptr_t)DAT_0046000c & 0xffff0000u) | (_ecx & 0xff00u) | ((_uu >> 8) & 0xffu));
++                unsigned char _sc = *(unsigned char *)(uintptr_t)
++                    (((unsigned)(uintptr_t)DAT_00460004 & 0xffffff00u) | _tx);
++                *_dst = *(unsigned char *)(uintptr_t)
++                    (((unsigned)(uintptr_t)DAT_00460010 & 0xffff0000u) | ((unsigned)*_dst << 8) | _sc);
++                _dst++;
++                _uu += (unsigned)iVar8;
++                _ecx += (unsigned)iVar2;
++                if ((int)_ecx <= 0) break;
++              }
+             }
+           }
+           dth_y1 = dth_y1 + 1;
+@@ -1456,7 +1435,6 @@
+   return;
+ }
+ 
+-
+ /* ===== sub_410d50 @ 00410d50 ===== */
+ 
+ void sub_410d50(int _p1,int _p2,int _p3)

@@ -26,15 +26,35 @@ int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; r
 void _ot_dispatch(int* piVar1,int* b,int* c){
   (void)b;(void)c;
   unsigned _v=((unsigned*)&_primfuncs)[*(unsigned char*)((int)piVar1+7)];  /* dword fn-ptr table (explicit: _primfuncs is byte-typed in dd2_symbols.h) */
+  /* DD2_PIXWIN=<cf>: winner-prim probe -- before each prim, sample probe pixels; when one changed,
+     the PREVIOUS prim painted it. Probes: (100,40),(500,60) cloud band; (320,150) box face; (320,430) ground. */
+  { static int _pw=-2; if(_pw==-2){ extern char* getenv(const char*); char* e=getenv("DD2_PIXWIN"); extern int atoi(const char*); _pw=e?atoi(e):-1; }
+    if(_pw>=0){
+      static const int PX[4][2]={{290,120},{320,105},{280,420},{320,430}};
+      static unsigned char _last[4]; static void* _prev; static int _init=0, _done=0;
+      int _cf=*(int*)(uintptr_t)0x462ff0;
+      if(_cf<=_pw && !_done){
+        extern int printf(const char*,...);
+        int _i;
+        if(!_init){ _init=1; _prev=0;
+          for(_i=0;_i<4;_i++) _last[_i]=*(unsigned char*)(uintptr_t)(0x700450+PX[_i][1]*640+PX[_i][0]); }
+        for(_i=0;_i<4;_i++){
+          unsigned char _c=*(unsigned char*)(uintptr_t)(0x700450+PX[_i][1]*640+PX[_i][0]);
+          if(_c!=_last[_i]){
+            printf("[PIXWIN] cf%d probe%d (%d,%d) %02x->%02x by prim=%p type=%02x\n",_cf,_i,PX[_i][0],PX[_i][1],
+              _last[_i],_c,_prev,_prev?*(unsigned char*)((int)(uintptr_t)_prev+7):0);
+            _last[_i]=_c; } }
+        _prev=(void*)piVar1;
+      } else if(_cf>_pw) _done=1; } }
   /* DD2_HIST=<cf>: per-frame prim-type histogram of the real OT walk (compare vs tools/refhist.sh). */
   { static int _want=-2; if(_want==-2){ extern char* getenv(const char*); char* e=getenv("DD2_HIST"); extern int atoi(const char*); _want=e?atoi(e):-1; }
     if(_want>=0){ static unsigned _h[256]; static int _n=0,_last=-1; int _cf=*(int*)(uintptr_t)0x462ff0;
       if(_cf==_want){ unsigned char _t=*(unsigned char*)((int)piVar1+7); _h[_t]++; _n++; _last=_cf;
         if(_t==0x2c){ static FILE* _f;
           if(!_f) _f=fopen("/tmp/our_ft4.txt","w");
-          if(_f) fprintf(_f,"%d %d %u %u %#x %#x\n",*(short*)((int)piVar1+8),*(short*)((int)piVar1+10),
+          if(_f) fprintf(_f,"%d %d %u %u %#x %#x %p\n",*(short*)((int)piVar1+8),*(short*)((int)piVar1+10),
             *(unsigned char*)((int)piVar1+12),*(unsigned char*)((int)piVar1+13),
-            (unsigned)*(unsigned short*)((int)piVar1+14),(unsigned)*(unsigned short*)((int)piVar1+22)); } }
+            (unsigned)*(unsigned short*)((int)piVar1+14),(unsigned)*(unsigned short*)((int)piVar1+22),(void*)piVar1); } }
       else if(_last==_want){ extern int printf(const char*,...); int _i; printf("[HIST] cf%d n=%d:",_want,_n);
         for(_i=0;_i<256;_i++) if(_h[_i]) printf(" %02x:%u",_i,_h[_i]); printf("\n"); _last=-1; } } }
   if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int,int,int))(unsigned long)_v)((int)(uintptr_t)piVar1,(int)(uintptr_t)b,(int)(uintptr_t)c);

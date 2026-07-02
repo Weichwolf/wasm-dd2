@@ -1,0 +1,102 @@
+draw_text_half_trans (FUN_0041033a): faithful transparent texel spans
+
+Completes patch 580 for the TRANSPARENT span blitter used by the SPRT/sprite
+handler sub_4114c0 (start-light lamps, LIGHTSUR glow, shadow sprites) and any
+draw_face path that blends. The original loop (asm 0x41050c-0x410521 and the
+clipped twin) is the same packed-ecx walk as draw_text_half PLUS the
+semi-transparency guard `test dl,0xf; je skip`: texels with a zero LOW NIBBLE
+leave the framebuffer untouched. Ghidra rendered it as CONCAT/SCARRY spaghetti
+whose running texture pointer got clobbered with the fetched CLUT byte after
+the first opaque pixel -> the whole sprite pass painted black/garbage (the
+start-light LED circles stayed black; reference shows the lit lamps).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1064,25 +1064,28 @@
+           iVar7 = DAT_00480018;
+           iVar5 = (dth_x2 >> 8) - (dth_x1 >> 8);
+           if (0 < iVar5) {
+-            uVar4 = dth_v1 & 0xffff | (iVar5 + -1) * 0x10000;
+-            pbVar3 = (byte *)((uint)DAT_0046000c & 0xffff0000);
+-            puVar6 = DAT_00460004;
+-            iVar5 = dth_u1;
+-            puVar10 = &_screenbuffer + dth_y1 * 0x280 + (dth_x1 >> 8);
+-            do {
+-              uVar1 = (uint)iVar5 >> 8;
+-              iVar5 = iVar5 + iVar7;
+-              pbVar3 = (byte *)CONCAT22((short)((uint)pbVar3 >> 0x10),
+-                                        CONCAT11((char)(uVar4 >> 8),(char)uVar1));
+-              puVar6 = (undefined1 *)CONCAT31((int3)((uint)puVar6 >> 8),*pbVar3);
+-              if ((*pbVar3 & 0xf) != 0) {
+-                pbVar3 = (byte *)CONCAT31((int3)((uint)pbVar3 >> 8),*puVar6);
+-                *puVar10 = *puVar6;
++            { /* faithful x86 TRANSPARENT texel span (asm 0x41050c-0x410521): same packed-ecx
++                 walk as draw_text_half (patch 580) plus the semi-transparency guard
++                 `test dl,0xf; je skip` -- a texel whose LOW NIBBLE is zero leaves the
++                 framebuffer untouched. Ghidra's CONCAT rendering clobbered the running
++                 texture pointer with the fetched CLUT byte after the first opaque pixel ->
++                 the whole sprite/glow pass (start-light lamps, LIGHTSUR, shadows) painted
++                 garbage/black. */
++              unsigned _ecx = ((unsigned)dth_v1 & 0xffffu) | ((unsigned)(iVar5 - 1) << 16);
++              unsigned _uu = (unsigned)dth_u1;
++              unsigned char *_dst = (unsigned char *)(&_screenbuffer + dth_y1 * 0x280 + (dth_x1 >> 8));
++              for (;;) {
++                unsigned char _tx = *(unsigned char *)(uintptr_t)
++                    (((unsigned)(uintptr_t)DAT_0046000c & 0xffff0000u) | (_ecx & 0xff00u) | ((_uu >> 8) & 0xffu));
++                if (_tx & 0xf)
++                  *_dst = *(unsigned char *)(uintptr_t)
++                      (((unsigned)(uintptr_t)DAT_00460004 & 0xffffff00u) | _tx);
++                _dst++;
++                _uu += (unsigned)iVar7;
++                _ecx += (unsigned)iVar2;
++                if ((int)_ecx <= 0) break;
+               }
+-              bVar11 = SCARRY4(uVar4,iVar2);
+-              uVar4 = uVar4 + iVar2;
+-              puVar10 = puVar10 + 1;
+-            } while (uVar4 != 0 && bVar11 == (int)uVar4 < 0);
++            }
+           }
+           dth_y1 = dth_y1 + 1;
+           dth_u1 = dth_u1 + DAT_0048001c;
+@@ -1109,24 +1112,22 @@
+               iVar8 = 0;
+             }
+             if (0 < iVar5 - iVar8) {
+-              uVar4 = uVar4 & 0xffff | ((iVar5 - iVar8) + -1) * 0x10000;
+-              pbVar3 = DAT_0046000c;
+-              puVar6 = DAT_00460004;
+-              puVar10 = &_screenbuffer + dth_y1 * 0x280 + iVar8;
+-              do {
+-                uVar1 = (uint)iVar9 >> 8;
+-                iVar9 = iVar9 + iVar7;
+-                pbVar3 = (byte *)CONCAT22((short)((uint)pbVar3 >> 0x10),
+-                                          CONCAT11((char)(uVar4 >> 8),(char)uVar1));
+-                puVar6 = (undefined1 *)CONCAT31((int3)((uint)puVar6 >> 8),*pbVar3);
+-                if ((*pbVar3 & 0xf) != 0) {
+-                  pbVar3 = (byte *)CONCAT31((int3)((uint)pbVar3 >> 8),*puVar6);
+-                  *puVar10 = *puVar6;
+-                }
+-                bVar11 = SCARRY4(uVar4,iVar2);
+-                uVar4 = uVar4 + iVar2;
+-                puVar10 = puVar10 + 1;
+-              } while (uVar4 != 0 && bVar11 == (int)uVar4 < 0);
++              { /* faithful x86 TRANSPARENT texel span, x-clipped path (see unclipped note) */
++              unsigned _ecx = ((unsigned)uVar4 & 0xffffu) | ((unsigned)((iVar5 - iVar8) - 1) << 16);
++              unsigned _uu = (unsigned)iVar9;
++              unsigned char *_dst = (unsigned char *)(&_screenbuffer + dth_y1 * 0x280 + iVar8);
++              for (;;) {
++                unsigned char _tx = *(unsigned char *)(uintptr_t)
++                    (((unsigned)(uintptr_t)DAT_0046000c & 0xffff0000u) | (_ecx & 0xff00u) | ((_uu >> 8) & 0xffu));
++                if (_tx & 0xf)
++                  *_dst = *(unsigned char *)(uintptr_t)
++                      (((unsigned)(uintptr_t)DAT_00460004 & 0xffffff00u) | _tx);
++                _dst++;
++                _uu += (unsigned)iVar7;
++                _ecx += (unsigned)iVar2;
++                if ((int)_ecx <= 0) break;
++              }
++            }
+             }
+           }
+           dth_y1 = dth_y1 + 1;
