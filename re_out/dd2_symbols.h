@@ -778,7 +778,7 @@ extern int unaff_retaddr;
 #define free_mem (*(int*)GIMG(0x0075439c))
 #define Stunt_Wheel_Locking_Speed (*(int*)GIMG(0x00465d50))
 #define sd_no_txt (*(int*)GIMG(0x00466fbc))
-#define old_index (*(int*)GIMG(0x0077c75c))
+#define old_index (*(unsigned char*)GIMG(0x0077c75c))  /* debris ring cursor: asm reads BYTE (mov al,[0x77c75c]); 128-slot ring (wrap 0x7f) */
 #define ParticleAvailabilityList (*(undefined1*)GIMG(0x0078a458))
 #define __fdiv_chk (*(undefined1*)GIMG(0x0045bfad))
 #define polygon_angles (*(undefined1*)GIMG(0x007746f8))
