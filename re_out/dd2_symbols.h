@@ -121,7 +121,7 @@ extern int ___FirstThreadData;
 extern int ___Is_DLL;
 extern int ___OpenStreams;
 extern int __bcrgb;
-extern unsigned char* __clutspace;
+#define __clutspace (*(unsigned char**)GIMG(0x0074c4d4))  /* dual-symbol fix */
 extern int __cmptr;
 extern int __fcrgb;
 extern int __flg;
@@ -135,7 +135,7 @@ extern int __rgb0;
 extern int __scrx;
 extern int __scry;
 extern int __sigabort;
-extern unsigned char* __texturespace;
+#define __texturespace (*(unsigned char**)GIMG(0x0074c4cc))  /* dual-symbol fix */
 extern int __vr0;
 extern int __vr1;
 extern int __vr2;
