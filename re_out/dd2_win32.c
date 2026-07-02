@@ -10,7 +10,7 @@ int DeleteObject(int a){ return 1; }
 int DestroyWindow(int a){ return 1; }
 int DispatchMessageA(int a){ return 0; }
 int GetMessageA(int a,int b,int c,int d){ return 0; }
-int MessageBoxA(int a,int b,int c,int d){ return 1; }
+int MessageBoxA(int a,const char* text,const char* caption,int d){ (void)a;(void)d; { extern int fprintf(); extern void* stderr; fprintf(stderr,"[MessageBox] %s: %s\n",caption?caption:"",text?text:""); } return 1; }
 int PeekMessageA(int a,int b,int c,int d,int e){ return 0; }
 void PostQuitMessage(int a){ }
 int ShowCursor(int a){ return 0; }
