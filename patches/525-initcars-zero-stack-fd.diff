@@ -1,0 +1,28 @@
+FUN_004431e8: zero-init the stack fd (uninitialized-read divergence)
+
+The car-grid init builds a 0x2c-byte fd in local_74[0xb] (contiguous since FIX SFS)
+but the per-level setters only write the strip hint (+0x22) and lane (+0x2a);
+Search_For_Strip/FUN_00428678/Track_Follow then consume further fields (height slot,
+the dword read at +0x27) that still hold stack garbage. gcc's native and wasm stacks
+hold different garbage -> the init Track_Follow settled the cars/camera on different
+strips (recorded_strips_ started +2 entries apart; car_fd byte +0x29 read 6 on wasm,
+0 on native; instrumented builds flipped the value, proving the uninit read). The
+dd2h reference capture (L2 frame 182) shows the consumed fields as 0 for every car
+(car_fd+0x29 == 0, 0x77cf39 == 0), so explicit zeros reproduce the observable
+original state and make the init deterministic across targets.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -31520,6 +31520,12 @@
+     }
+     goto LAB_004435ec;
+   }
++  { int _k; for(_k=0;_k<0xb;_k++) local_74[_k]=0; }  /* zero the stack fd: Search_For_Strip/
++     FUN_00428678/Track_Follow consume fields the per-level setters never write (e.g. the height
++     slot and the byte under the +0x27 dword read); the ORIGINAL leaves them as its own stack
++     garbage, which the reference capture shows as 0 (car_fd+0x29 == 0 for every car, 0x77cf39 == 0).
++     Explicit zeros reproduce the observable original state and remove the uninitialized reads that
++     made native and wasm place the demo grid on different strips (recorded_strips_ +2 shift). */
+   puVar8 = &SCA_Data;
+   local_38 = 0;
+   local_3c = 0;
