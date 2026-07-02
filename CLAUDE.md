@@ -40,17 +40,21 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   vertex arrays for the edge sorter, Setup_Sprite info blocks, camera vectors), dropped registers,
   paired 16-bit loads, unsigned/signed shifts+compares (dth_* span blitters need `sar` semantics),
   mid-function entries, wasm call_indirect signature normalization.
-- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm on the L2 demo is **fully bit-identical through
-  engine frame 182 INCLUDING the 640x480 framebuffer (100.00%)** after the scattered-locals sweep
-  (patches 495-565; 565 = the Calc_Object_Angles wrong-buffer fix, asm 0x4403d9). Only inherent
-  host-pointer slots differ (whitelist: 0x74c47c, 0x74c6d8, cdb 0x75420e-0x7543a0, GTE regfile
-  0x74c4e0-0x74c70c transients, rot_points/prim phase-noise 0x74f1c0-0x754220, unaligned particle
-  callback slots). Compare tools: `DD2_STATECF=<frame> DD2_FRAMEDIR=<dir>` (wasm full-image dump
-  keyed by engine frame 0x462ff0); native via gdb `break Draw_All if *(int*)0x462ff0 == N` + `dump
-  binary memory`. NEXT: ours-vs-REFERENCE (ref L2@182 capture: fb 3.5%, trackstate 69% — needs
-  tick-precise ref alignment + front-end-equivalent demo settings before byte-chasing; known
-  faithfulness suspects: unsigned `>>0x10` paired-load reads, e.g. Car_1pt local_22, asm likely sar).
-  Audio PCM staging [0x803160,0x816ff0) is zero in ours (DirectSound stubbed) — Stage 3.
+- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm bit-identical (L2 cf182 fb 100%; L9 cf3 full image
+  identical modulo relocated fn-ptr tables). vs the REFERENCE (cold-boot L9 attract, PROVEN 100%
+  bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin): **fb 33.6% → 67.7%**
+  via eight asm-verified roots: num_cars/screen_w/h/far_z_clip signed (idiv/jg vs unsigned C types),
+  _v_norm word-store, car_lookup byte table, FE-boot in both harnesses (LEV0 textures fill pages
+  20-25 → texturespace/CLUT/palette/car-CLUT-tables 100% byte-identical; patches 585/600),
+  Init_LensFlare contiguous info blocks (595), GTE 18-byte matrix uploads (605 — __globmat short
+  truncation left odd matrix elements stale), subdiv dispatch signature (610). Camera EXACT
+  (0x3060,-0x103,-0xfa9), frustum normals EXACT, dth span inputs match, sky cull byte-identical.
+  Remaining fb diff: cloud-panorama band (phase/coverage), start-light LEDs + speaker-box face,
+  left-edge backdrop segments, ground trapezoid before the car, sprite dots; state diffs: heap
+  +0x60 alloc shift (one early alloc differs), 0x7959a8 array, 0x93xxxx FE objects. Verification
+  loop: DD2_HIST=<cf> prim histogram + FT4 dump vs tools/refhist.sh; ref captures via 3-stage gdb
+  arming (hbreak 0x4431e8 → 0x420c9c cf-gate → target fn). Audio staging 0x7fa164-0x816ff0 zero in
+  ours (DirectSound stubbed) — Stage 3.
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
