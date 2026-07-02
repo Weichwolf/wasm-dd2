@@ -881,7 +881,7 @@ extern int unaff_retaddr;
 #define dent_area_lookup (*(undefined1*)GIMG(0x00463d94))
 #define Replay_Script (*(int*)GIMG(0x009376b0))
 #define Zoom (*(undefined4*)GIMG(0x0046524c))
-#define car_order (*(int*)GIMG(0x00795c28))
+#define car_order (*(unsigned char*)GIMG(0x00795c28))  /* 20-byte grid-order table: placement reads (&car_order)[i] as BYTES */
 #define poly_clipy (*(undefined4*)GIMG(0x00460028))
 #define poly_clipx (*(undefined4*)GIMG(0x00460024))
 #define flag1_textures (*(undefined1*)GIMG(0x004650a4))
