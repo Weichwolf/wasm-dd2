@@ -1,0 +1,139 @@
+FUN_00430d0e: split-off object-block loader shares its CALLERS' stack frame
+
+FUN_00430d0e @0x430d0e is not a real function: it is the tail fragment of
+Init_Scene_Objects/Init_Track_Objects (Ghidra split it because both jump into it).
+It addresses the CALLER's frame through the dropped EBP (unaff_EBP-0x48 = the
+14-entry active-block array local_4c/aiStack_4c, unaff_EBP-0x10 = the current
+strip-object pointer local iVar3/iStack_14) and receives ESI (search index) and
+EBX (block number) live from the caller. The _g_ebp static default made every
+frame access a wild pointer (L1-7 crash after the jumptable fix).
+Reconstruct with explicit parameters (blocks[], cur, esi, ebx): frame offsets
+-0x48/-0x44+i map to blocks[0]/byte-offset reads, -0x10 becomes the local _curv
+(the fragment itself rewrites it per iteration), the self-recursion (Ghidra's
+rendering of the jump back to the fragment head) passes the current state, and
+both call sites pass their locals (esi==0xe and ebx==-1 are compile-time facts
+at those sites: the calls sit inside `if (search==0xe)` / `if (block==-1)`).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -363,7 +363,7 @@
+ void Object_Decompression(void);
+ void __cdecl FUN_00430b60(int param_1);
+ void Update_Scene_Objects(void);
+-void __fastcall FUN_00430d0e(int param_1);
++void FUN_00430d0e(int param_1,int *_blocks,int _cur,int _esi,int _ebx);
+ void Init_Bowl_Objects(void);
+ void Init_Scene_Objects(void);
+ void Init_Track_Objects(void);
+@@ -21036,22 +21036,22 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __fastcall FUN_00430d0e(int param_1)
++void FUN_00430d0e(int param_1,int *_blocks,int _cur,int _esi,int _ebx)
+ 
+ {
+   int iVar1;
+   int iVar2;
+   int iVar3;
+-  int unaff_EBX=(int)(uintptr_t)_g_ebx;
++  int unaff_EBX=_ebx;
+   int iVar4;
+-  int unaff_EBP=(int)(uintptr_t)_g_ebp;
+-  int unaff_ESI=(int)(uintptr_t)_g_esi;
++  int unaff_ESI=_esi;
+   int iVar5;
++  int _curv=_cur;
+   
+   do {
+     iVar4 = param_1;
+     if (unaff_ESI != 0xe) {
+-      *(int *)(unaff_EBP + -0x48 + unaff_ESI * 4) = unaff_EBX;
++      _blocks[unaff_ESI] = unaff_EBX;
+     }
+     do {
+       do {
+@@ -21060,7 +21060,7 @@
+           iVar5 = 0;
+           iVar4 = 0;
+           do {
+-            iVar1 = *(int *)(iVar5 + -0x48 + unaff_EBP);
++            iVar1 = *(int *)(iVar5 + (int)_blocks);
+             if (iVar1 != -1) {
+               Decrunch_Object_Block(iVar1,iVar4);
+               _DAT_00789354 = 0x4000;
+@@ -21075,46 +21075,46 @@
+           } while (iVar4 < 0xe);
+           return;
+         }
+-        iVar5 = *(int *)(*(int *)(unaff_EBP + -0x10) + 0x1f) >> 0x18;
++        iVar5 = *(int *)(_curv + 0x1f) >> 0x18;
+         if (-1 < iVar5) {
+           iVar2 = 0;
+-          iVar1 = *(int *)(unaff_EBP + -0x48);
++          iVar1 = _blocks[0];
+           iVar3 = 0;
+           while (iVar5 != iVar1) {
+             iVar2 = iVar2 + 1;
+             if (0x37 < iVar3 + 4) break;
+-            iVar1 = *(int *)(iVar3 + -0x44 + unaff_EBP);
++            iVar1 = *(int *)(iVar3 + 4 + (int)_blocks);
+             iVar3 = iVar3 + 4;
+           }
+           if (iVar2 != 0xe) {
+-            *(undefined4 *)(unaff_EBP + -0x48 + iVar2 * 4) = 0xffffffff;
++            _blocks[iVar2] = 0xffffffff;
+           }
+         }
+         iVar4 = _strip_data + 4 + *(int *)(&DAT_00784298 + iVar4);
+         unaff_EBX = *(int *)(iVar4 + 0x1d) >> 0x18;
+-        *(int *)(unaff_EBP + -0x10) = iVar4;
++        _curv = iVar4;
+         iVar4 = param_1;
+       } while (unaff_EBX < 0);
+       iVar3 = 0;
+-      iVar5 = *(int *)(unaff_EBP + -0x48);
++      iVar5 = _blocks[0];
+       iVar1 = 0;
+       while (unaff_EBX != iVar5) {
+         iVar3 = iVar3 + 1;
+         if (0x37 < iVar1 + 4) break;
+-        iVar5 = *(int *)(iVar1 + -0x44 + unaff_EBP);
++        iVar5 = *(int *)(iVar1 + 4 + (int)_blocks);
+         iVar1 = iVar1 + 4;
+       }
+     } while (iVar3 != 0xe);
+-    iVar4 = *(int *)(unaff_EBP + -0x48);
++    iVar4 = _blocks[0];
+     iVar5 = 0;
+     while( true ) {
+       if (iVar4 == -1) {
+-        FUN_00430d0e(param_1);
++        FUN_00430d0e(param_1,_blocks,_curv,unaff_ESI,unaff_EBX);
+         return;
+       }
+       unaff_ESI = 0xe;
+       if (0x37 < iVar5 + 4) break;
+-      iVar4 = *(int *)(iVar5 + -0x44 + unaff_EBP);
++      iVar4 = *(int *)(iVar5 + 4 + (int)_blocks);
+       iVar5 = iVar5 + 4;
+     }
+   } while( true );
+@@ -21222,7 +21222,7 @@
+         iVar6 = local_4c[0];
+         while( true ) {
+           if (iVar6 == -1) {
+-            FUN_00430d0e(iVar2);
++            FUN_00430d0e(iVar2,local_4c,iVar3,0xe,-1);  /* esi=search idx==0xe, ebx=iVar6==-1, [ebp-0x10]=iVar3 */
+             return;
+           }
+           if (0x37 < iVar1 + 4) break;
+@@ -21315,7 +21315,7 @@
+         iVar3 = aiStack_4c[0];
+         while( true ) {
+           if (iVar3 == -1) {
+-            FUN_00430d0e(iVar4);
++            FUN_00430d0e(iVar4,aiStack_4c,iStack_14,0xe,-1);  /* esi=search idx==0xe, ebx=iVar3==-1, [ebp-0x10]=iStack_14 */
+             return;
+           }
+           if (0x37 < iVar1 + 4) break;

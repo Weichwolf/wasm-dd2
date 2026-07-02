@@ -2,7 +2,7 @@
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
 int DirectSoundCreate(){ return 0; }
-int _DZ(){ return 0; }
+int _DZ(int x){ return x; }  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)`; faithful = plain divisor */
 int ExitProcess(){ return 0; }
 int GetCommandLineA(){ return 0; }
 int GetCurrentProcessId(){ return 0; }
