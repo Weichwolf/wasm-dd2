@@ -111,8 +111,31 @@ static int ids_flip(int t,int a,int b){
         unsigned ec4=*(unsigned*)(unsigned long)0x900ec4u;
         int r74=*(int*)(unsigned long)0x467074u;
         unsigned char* pf=(unsigned char*)(unsigned long)0x46304bu; /* rup,rdown,rleft,DAT4e */
-        fprintf(stderr,"[inprobe f%d] demo=%d quit=%d yq=%d rf=%d curfr=%d ticks=%d pads=%02x%02x%02x%02x c048=0x%04x\n",
-                g_frameno,dmode,_quit_flag,*(int*)0x9376acu,_race_finished,curfr,*(int*)0x7746c0u,pf[0],pf[1],pf[2],pf[3],c048);
+        fprintf(stderr,"[inprobe f%d] demo=%d quit=%d yq=%d rf=%d curfr=%d ticks=%d c048=0x%04x pad444a=0x%04x mask3050=0x%04x\n",
+                g_frameno,dmode,_quit_flag,*(int*)0x9376acu,_race_finished,curfr,*(int*)0x7746c0u,c048,*(unsigned short*)0x75444au,prev);
+    }
+    if(getenv("DD2_OTCHECK")){
+        /* OT integrity scan: walk both OTs; any entry/link outside image = the wild-splice bug */
+        int _cdbs[2]={0x754264,0x7542f2}; int _b;
+        int otsz=*(int*)(unsigned long)0x754260u; int i;
+        for(_b=0;_b<2;_b++){
+        unsigned ot=*(unsigned*)(unsigned long)(_cdbs[_b]+0x8a);
+        if(ot<0x400000u||ot>=0x980400u) continue;
+        for(i=0;i<otsz;i++){
+            unsigned v=*(unsigned*)(unsigned long)(ot+i*4u);
+            if(v && v!=0xffffffffu && (v<0x400000u||v>=0x980400u)){
+                fprintf(stderr,"[otchk f%d] BAD slot %d @0x%x = 0x%x\n",g_frameno,i,ot+i*4u,v);
+                break;
+            }
+            { unsigned p=v; int d=0; unsigned prev=ot+i*4u;
+              while(p && p!=0xffffffffu && d<4096){
+                if(p<0x400000u||p>=0x980400u){
+                    fprintf(stderr,"[otchk f%d] BAD LINK depth %d slot %d: 0x%x -> 0x%x\n",g_frameno,d,i,prev,p);
+                    i=otsz; break; }
+                prev=p; p=*(unsigned*)(unsigned long)p; d++; }
+            }
+        }
+        }
     }
     if(getenv("DD2_RANDTRACE") && g_frameno<20){
         extern unsigned g_rand_calls;
