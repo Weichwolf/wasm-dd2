@@ -42,7 +42,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   mid-function entries, wasm call_indirect signature normalization.
 - **Stage 2 — bit-identical: ACTIVE.** Native↔wasm bit-identical (L2 cf182 fb 100%; L9 cf3 full image
   identical modulo relocated fn-ptr tables). vs the REFERENCE (cold-boot L9 attract, PROVEN 100%
-  bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin): **fb 33.6% → 90.4%**
+  bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin): **fb 33.6% → 97.8%**
   via eight asm-verified roots: num_cars/screen_w/h/far_z_clip signed (idiv/jg vs unsigned C types),
   _v_norm word-store, car_lookup byte table, FE-boot in both harnesses (LEV0 textures fill pages
   20-25 → texturespace/CLUT/palette/car-CLUT-tables 100% byte-identical; patches 585/600),
@@ -54,10 +54,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   shim, Read_CD_Toc_, Load_Game_Vags) → **audio sample staging 0x7fa164-0x816ff0 is 100%
   byte-identical** to the reference (mixer output = the remaining Stage-3 audio work). Total
   non-whitelisted full-image state diff: ~4.3KB (card region re-capture noise, debris 2-byte
-  fields, 0x7959a8 array, invisible sky-dome prim phase). Remaining fb diff (~9.6%): speaker-tower
-  face (LED block, x250-390 y95-235), ground trapezoid below camera, ~6 horizon bush billboards.
-  Sky band SOLVED (poly_clipx/y signed, ba6dfbd): dth sky spans start ABOVE the screen (y1<0) and
-  the unsigned compare no-op'd whole segments incl. their edge-state advance. Verification loop: DD2_HIST=<cf> prim histogram + FT4 dump (with prim addr) vs
+  fields, 0x7959a8 array, invisible sky-dome prim phase). Remaining fb diff (~2.2%): the four
+  start-light LED inner circles (checkerboard-dither pattern -> suspect the FLAT-blend blitters
+  draw_half @0x41066a / FUN_0041080d, whose blend[(dst<<8)|dth_shade] CONCAT rendering is still
+  unverified), horizon bush billboards, trapezoid edges. Transparent blitters SOLVED (63807ef):
+  FUN_0041033a spans got the faithful packed walk + `test dl,0xf` guard (patch 625) and
+  draw_text_half_trans @0x4109e8 -- previously a TEMP return-stub! -- was reconstructed from asm
+  (patch 630: blend table by tpage ABR bits via ptr table @0x460014 double-deref, pixel =
+  table[(dst<<8)|clut[texel]]); sky band SOLVED (poly_clipx/y signed, ba6dfbd). Verification loop: DD2_HIST=<cf> prim histogram + FT4 dump (with prim addr) vs
   tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 → 0x420c9c cf-gate →
   target fn). Pitfall proven twice: prim-level compares must be restricted to prims that WIN
   pixels (hidden sky-dome quads drift legitimately).
