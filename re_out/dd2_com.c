@@ -58,11 +58,11 @@ extern unsigned char g_palette[256*4];  /* defined below; captured DDraw palette
 EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
     var c = Module.canvas || document.getElementById('canvas');
     if (!c) return;
-    if (c.width !== 320) { c.width = 320; c.height = 240; }
+    if (c.width !== 640) { c.width = 640; c.height = 480; }  /* dd2h framebuffer is 640x480 */
     var ctx = c.getContext('2d');
-    if (!Module._dd2img) Module._dd2img = ctx.createImageData(320, 240);
+    if (!Module._dd2img) Module._dd2img = ctx.createImageData(640, 480);
     var img = Module._dd2img.data;
-    for (var i = 0, p = 0; i < 320*240; i++, p += 4) {
+    for (var i = 0, p = 0; i < 640*480; i++, p += 4) {
         var idx = HEAPU8[fb + i] * 4;
         /* DDraw PALETTEENTRY is R,G,B,flags -> map to canvas RGBA */
         img[p]   = HEAPU8[pal + idx];

@@ -49,6 +49,7 @@ def dump(a,n,fn):
     print(f"  {fn}: 0x{n:x} bytes, {100*sum(1 for b in d if b)/n:.1f}% nonzero")
 dump(0x816ff0,0x120000,"heap.bin")
 dump(0x796ff0,0x80000,"gamedata.bin")
+dump(0x774900,0x226f0,"trackstate.bin")  # debris/camera-strip records (0x77cf00), recorded_strips_ (0x7842a0), car_fd (0x792690)
 PY
     echo "level=$LV frame=$FR" > "$OUT/checkpoint.txt"; echo "captured -> $OUT"; break
   fi
