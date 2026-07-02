@@ -14,10 +14,11 @@
 # Data addresses (fixed load base 0x400000, confirmed): _current_level@0x936ff4, current_frame@0x462ff0.
 # NEVER `pkill -f dd2h.exe` (kills the agent shell); use `pkill -x dd2h.exe`.
 set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="${GAME:-/home/cosmo/Git/wasm-dd2/DestructionDerby2}"
 OUT="${OUT:-/tmp/ref}"
 LVL="${LVL:-9}"; FRMIN="${FRMIN:-150}"; FRMAX="${FRMAX:-600}"
-: "${WINEPREFIX:?set WINEPREFIX to a dir you own, e.g. \$SCRATCH/wp32}"
+export WINEPREFIX="${WINEPREFIX:-$ROOT/.wine-dd2}"   # repo-local prefix (gitignored)
 export WINEARCH=win32 WINEPREFIX
 mkdir -p "$OUT"
 [ -f "$WINEPREFIX/drive_c/windows/system32/kernel32.dll" ] || { echo "init win32 prefix..."; wineboot --init >/dev/null 2>&1; }

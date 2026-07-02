@@ -13,3 +13,5 @@ re_out/*.log
 # large binary memory snapshot (regenerated from dd2h.exe by the decompile step)
 dd2_image.bin
 web/dd2/
+third_party/
+.wine-dd2/

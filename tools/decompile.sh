@@ -7,9 +7,9 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # --- toolchain locations (override via env) ---
-GHIDRA="${GHIDRA_HOME:-/home/cosmo/tools/ghidra_12.1.2_PUBLIC}"
-export JAVA_HOME="${JAVA_HOME:-/home/cosmo/tools/jdk-21.0.11+10}"
-PROJ_DIR="${DD2_GHIDRA_PROJ_DIR:-/home/cosmo/tools/dd2_ghidra_proj}"
+GHIDRA="${GHIDRA_HOME:-$ROOT/third_party/ghidra_12.1.2_PUBLIC}"
+export JAVA_HOME="${JAVA_HOME:-$ROOT/third_party/jdk-21.0.11+10}"
+PROJ_DIR="${DD2_GHIDRA_PROJ_DIR:-$ROOT/third_party/dd2_ghidra_proj}"
 PROJ_NAME="${DD2_GHIDRA_PROJ_NAME:-dd2}"
 PROGRAM="${DD2_GHIDRA_PROGRAM:-dd2h.exe}"
 OUT="${1:-$ROOT/re_out}"
