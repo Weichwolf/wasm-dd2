@@ -1,0 +1,23 @@
+FUN_00413b8e: recover the dropped esi/edi register args for FUN_00414016
+
+asm 0x413b93/0x413b98: mov esi,0x74c500; mov edi,0x4604b6 before calling the
+matrix-rotate helper 0x414016 (which takes its source/dest in esi/edi). Ghidra
+dropped the register setup, so our build called it with whatever _g_esi/_g_edi
+the PREVIOUS caller left -> the rotate transformed a stale vector. Observable:
+the tyre-mark/shadow decal corner table @0x7959a8 (filled by FUN_00440bf4 via
+this helper) got x-values ~54px off vs the reference (decal prims 0x9126xx:
+ref x=0x17f/0x176 vs ours 0x149/0x140, y identical) -> a skid mark rendered
+340px left of its true spot; the bush at (60,205) lost its decal overpaint.
+Register-args recovery class (see tools/recover_regargs.py).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -3767,7 +3767,7 @@
+ void FUN_00413b8e(void)
+ 
+ {
+-  FUN_00414016();
++  _g_esi=0x74c500; _g_edi=0x4604b6; FUN_00414016();  /* asm 0x413b93/0x413b98: register args esi/edi (dropped by Ghidra) -- without them the rotate read a STALE input vector: skidmark-decal corner transforms landed ~54px off in x */
+   __vr0 = DAT_004604b6;
+   _DAT_0074c504 = DAT_004604ba;
+   _DAT_0074c508 = DAT_004604be;
