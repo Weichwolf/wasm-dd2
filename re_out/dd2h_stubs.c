@@ -4,7 +4,7 @@ int _control87(){ return 0; }
 int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c; if(b)*b=0; return 1; /* DSERR: no sound device */ }
 int _DZ(int x){ return x; }  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)` */
 int FUN_00448e50(){ return 0; }  /* @0x448e50: empty no-op race-event handler (Ghidra didn't export) */  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)`; faithful = plain divisor */
-void ExitProcess(int a){ extern void exit(int); exit(a); }
+void ExitProcess(int a){ extern int printf(const char*,...); extern void exit(int); printf("[ExitProcess] code=%d\n",a); exit(a); }
 int GetCommandLineA(){ return 0; }
 int GetCurrentProcessId(){ return 0; }
 int GetEnvironmentStrings(){ return 0; }
