@@ -1,0 +1,18 @@
+Loader completion callbacks: void(int) signature (wasm call_indirect type-check)
+
+Two remaining `(*(code*)param_2)(0x1000)` 100%-progress calls after the asset loop
+(same class as patch 455). 2 sites.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -4851,8 +4851,8 @@
+     iVar5 = iVar1;
+   } while (iVar1 != 0);
+   if (param_2 != (undefined *)0x0) {
+-    (*(code *)param_2)(0x1000);
+-    (*(code *)param_2)(0x1000);
++    (*(void (*)(int))(uintptr_t)param_2)(0x1000);  /* completion callback: void(int) (wasm) */
++    (*(void (*)(int))(uintptr_t)param_2)(0x1000);  /* completion callback: void(int) (wasm) */
+   }
+   return;
+ }

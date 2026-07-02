@@ -1,0 +1,25 @@
+Poly-walk dispatches: void(int) handler signature (wasm call_indirect type-check)
+
+FUN_0041fcac and FUN_0041ff98 dispatch the poly/rasterizer handlers through Ghidra's
+`code` (int-return); all handlers are void(int) (normalized in patch 460). 1+1 sites.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11543,7 +11543,7 @@
+       sVar2 = *_gpoly;
+       pbVar1 = (byte *)(_gpoly + 1);
+       _gpoly = _gpoly + 2;
+-      (*(code *)(&PTR_FUN_00462ef4)[*pbVar1])((int)sVar2);
++      (*(void (*)(int))(uintptr_t)(&PTR_FUN_00462ef4)[*pbVar1])((int)sVar2);  /* poly handlers: void(int) (wasm) */
+     }
+   }
+   return iVar4;
+@@ -11722,7 +11722,7 @@
+     sVar2 = *_gpoly;
+     pbVar1 = (byte *)(_gpoly + 1);
+     _gpoly = _gpoly + 2;
+-    (*(code *)(&PTR_draw_face_3pt_flat_00462e44)[*pbVar1])((int)sVar2);
++    (*(void (*)(int))(uintptr_t)(&PTR_draw_face_3pt_flat_00462e44)[*pbVar1])((int)sVar2);  /* draw_face handlers: void(int) (wasm) */
+   }
+   return;
+ }

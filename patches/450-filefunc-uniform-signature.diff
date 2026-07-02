@@ -43,8 +43,8 @@ past FUN_004151b0 (asset loading).
 -    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);
 +    iVar5 = (*(int (*)(int,int))(uintptr_t)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);  /* uniform 2-arg x86 signature (wasm call_indirect type-check) */
      { extern char *getenv(const char*); extern int printf(const char*,...);
-       if(getenv("DD2_ASSETLOG")) printf("[asset] bufpos=0x%x rel=0x%x foff=%d size=%d type=%d ret=0x%x\n",
-         (unsigned)(uintptr_t)param_1, (unsigned)((uintptr_t)param_1 - 0x75ebf0u), dd2_asset_off,
+       if(getenv("DD2_ASSETLOG")) printf("[asset] bufpos=0x%x foff=%d size=%d type=%d ret=0x%x node=0x%x next=0x%x rem=%d cnt=%d\n",
+         (unsigned)(uintptr_t)param_1, dd2_asset_off,
 @@ -4970,7 +4970,7 @@
  
  /* ===== FUN_00415508 @ 00415508 ===== */
