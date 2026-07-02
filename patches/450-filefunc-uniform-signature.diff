@@ -1,0 +1,56 @@
+File_Func_List: uniform (buf,size) handler signature (wasm call_indirect type-check)
+
+The asset dispatch `(*(code*)(&File_Func_List)[type>>3])(buf,size)` pushes TWO args for
+every handler (x86 truth); Ghidra declared Load_Cluts/FUN_00415508 with one parameter,
+which is harmless natively (cdecl caller cleanup) but a fatal signature mismatch under
+WASM's typed call_indirect. Give the 1-arg handlers an ignored size parameter and type
+the call through int(*)(int,int). No behavior change natively; unblocks the WASM target
+past FUN_004151b0 (asset loading).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -96,7 +96,7 @@
+ int * __cdecl Load_Textures(undefined4 *param_1,int *param_2,int param_3);
+ int sub_415000(int *param_1,int param_2);
+ undefined4 Load_Texture2(undefined4 *param_1,int param_2);
+-undefined4 __cdecl Load_Cluts(int *param_1);
++undefined4 __cdecl Load_Cluts(int *param_1,int _sz);
+ void __cdecl Add_Buffer_Load_(char *param_1,uint param_2,uint param_3);
+ void __cdecl FUN_004151b0(void *param_1,undefined *param_2);
+ void __cdecl Read_Directory(char *param_1);
+@@ -104,7 +104,7 @@
+ void __cdecl FUN_00415424(undefined4 *param_1);
+ undefined4 __cdecl FUN_00415454(char *param_1);
+ void __cdecl FUN_00415498(char *param_1,uint *param_2);
+-undefined4 __cdecl FUN_00415508(int param_1);
++undefined4 __cdecl FUN_00415508(int param_1,int _sz);
+ void __cdecl Decompress(undefined4 *param_1);
+ int * __cdecl DSLoadSoundBuffer(int *param_1,HGLOBAL param_2);
+ undefined4 __cdecl FUN_0041579c(int *param_1,HGLOBAL param_2);
+@@ -4718,7 +4718,7 @@
+ 
+ /* ===== Load_Cluts @ 0041506c ===== */
+ 
+-undefined4 __cdecl Load_Cluts(int *param_1)
++undefined4 __cdecl Load_Cluts(int *param_1,int _sz)
+ 
+ {
+   int *piVar1;
+@@ -4841,7 +4841,7 @@
+       (*(code *)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);
+     }
+     local_14 = local_14 - _Count;
+-    iVar5 = (*(code *)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);
++    iVar5 = (*(int (*)(int,int))(uintptr_t)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);  /* uniform 2-arg x86 signature (wasm call_indirect type-check) */
+     { extern char *getenv(const char*); extern int printf(const char*,...);
+       if(getenv("DD2_ASSETLOG")) printf("[asset] bufpos=0x%x rel=0x%x foff=%d size=%d type=%d ret=0x%x\n",
+         (unsigned)(uintptr_t)param_1, (unsigned)((uintptr_t)param_1 - 0x75ebf0u), dd2_asset_off,
+@@ -4970,7 +4970,7 @@
+ 
+ /* ===== FUN_00415508 @ 00415508 ===== */
+ 
+-undefined4 __cdecl FUN_00415508(int param_1)
++undefined4 __cdecl FUN_00415508(int param_1,int _sz)
+ 
+ {
+   int iVar1;

@@ -1,0 +1,16 @@
+Loader progress callback: void(int) signature (wasm call_indirect type-check)
+
+FUN_004151b0 invokes the progress callback through Ghidra's `code` type (int return);
+the target Load_Completion_Status is void(int). Native ABI doesn't care; WASM traps.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -4838,7 +4838,7 @@
+     fread(param_1,0x800,_Count,_File);
+     fclose(_File);
+     if (param_2 != (undefined *)0x0) {
+-      (*(code *)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);
++      (*(void (*)(int))(uintptr_t)param_2)(0x1000 - (int)((local_14 - _Count) * 0x1000) / iVar4);  /* Load_Completion_Status is void(int): wasm call_indirect type-check */
+     }
+     local_14 = local_14 - _Count;
+     iVar5 = (*(int (*)(int,int))(uintptr_t)(&File_Func_List)[(puVar2[1] & 0xff) >> 3])(*puVar2,dd2_asset_size);  /* uniform 2-arg x86 signature (wasm call_indirect type-check) */
