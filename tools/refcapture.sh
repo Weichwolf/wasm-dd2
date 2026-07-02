@@ -2,7 +2,7 @@
 # Stage-2 reference capture (WORKS in this env — the previously-flaky wine path, now reliable).
 # Runs the reference dd2h.exe under Wine+Xvfb, polls its state via /proc/PID/mem (ptrace_scope=0,
 # NO gdb breakpoints — those are unreliable per CLAUDE.md), and at the level-9 checkpoint dumps the
-# MPE heap [0x7debf0,0x8febf0) and the game-data/level_data_buffer region [0x75ebf0,0x7debf0) to
+# MPE heap [0x816ff0,0x936ff0) and the game-data/level_data_buffer region [0x796ff0,0x816ff0) to
 # $OUT (default /tmp/ref). Compare against our build's DD2_STATEDUMP dump at the same frame.
 #
 # THE TWO THINGS THAT MADE WINE WORK HERE (both required):
@@ -47,8 +47,8 @@ def dump(a,n,fn):
     with open(f"/proc/{pid}/mem","rb") as f: f.seek(a); d=f.read(n)
     open(f"{out}/{fn}","wb").write(d)
     print(f"  {fn}: 0x{n:x} bytes, {100*sum(1 for b in d if b)/n:.1f}% nonzero")
-dump(0x7debf0,0x120000,"heap.bin")
-dump(0x75ebf0,0x80000,"gamedata.bin")
+dump(0x816ff0,0x120000,"heap.bin")
+dump(0x796ff0,0x80000,"gamedata.bin")
 PY
     echo "level=$LV frame=$FR" > "$OUT/checkpoint.txt"; echo "captured -> $OUT"; break
   fi
