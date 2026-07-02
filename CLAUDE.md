@@ -23,13 +23,14 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   + WINEARCH=win32; reads state via /proc/PID/mem, NOT gdb breakpoints).
 
 ## Status (3 sequential stages, each gates the next)
-- **`master` is DISCARDED.** It was built from the WRONG binary — **dd2.exe (320x240)**, not **dd2h.exe
-  (640x480)** — so its 10/10 crash-free result does NOT count as Stage-1 progress and must never be reported
-  as such. Its `transpile.py` guards were band-aids for wrong-binary corruption. The only valid line of work
-  is branch **`dd2h-rebase`**: the pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, correct
-  640x480 rasterizers/addresses, no +0x38400 shift needed). Image: `re_out/extract_image.py
-  DestructionDerby2/dd2h.exe` gives the correct dd2h memory image (640x480 dr_modes).
-- **Stage 1 — crash-free: NOT reached. ACTIVE on `dd2h-rebase`, currently 0/10.** Build:
+- **The old dd2.exe-based build is DISCARDED.** It was built from the WRONG binary — **dd2.exe (320x240)**,
+  not **dd2h.exe (640x480)** — so its historical 10/10 crash-free result does NOT count as Stage-1 progress
+  and must never be reported as such. Its `transpile.py` guards were band-aids for wrong-binary corruption.
+  `master` now carries the only valid line (merged from `dd2h-rebase`, branch deleted 2026-07-02): the pure
+  dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, correct 640x480 rasterizers/addresses, no
+  +0x38400 shift needed). Image: `re_out/extract_image.py DestructionDerby2/dd2h.exe` gives the correct
+  dd2h memory image (640x480 dr_modes).
+- **Stage 1 — crash-free: NOT reached. ACTIVE, currently 0/10.** Build:
   `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from a dir with the correct
   (0x580400-byte) `dd2_image.bin`. ~14 committed fixes advanced L9 from an early Load_Sprite_Info crash
   through the whole init chain (dominant crash class: Ghidra pointer-scaling — int*/short* globals indexed
