@@ -23,28 +23,23 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   + WINEARCH=win32; reads state via /proc/PID/mem, NOT gdb breakpoints).
 
 ## Status (3 sequential stages, each gates the next)
-- **The old dd2.exe-based build is DISCARDED.** It was built from the WRONG binary — **dd2.exe (320x240)**,
-  not **dd2h.exe (640x480)** — so its historical 10/10 crash-free result does NOT count as Stage-1 progress
-  and must never be reported as such. Its `transpile.py` guards were band-aids for wrong-binary corruption.
-  `master` now carries the only valid line (merged from `dd2h-rebase`, branch deleted 2026-07-02): the pure
-  dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, correct 640x480 rasterizers/addresses, no
-  +0x38400 shift needed). Image: `re_out/extract_image.py DestructionDerby2/dd2h.exe` gives the correct
-  dd2h memory image (640x480 dr_modes).
-- **Stage 1 — crash-free: NOT reached. ACTIVE, currently 0/10.** Build:
-  `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from a dir with the correct
-  (0x580400-byte) `dd2_image.bin`. ~14 committed fixes advanced L9 from an early Load_Sprite_Info crash
-  through the whole init chain (dominant crash class: Ghidra pointer-scaling — int*/short* globals indexed
-  with byte offsets). Crash map: **L1-7** `Generate_Surface_Normals` @0x4268b8 (unrecovered switch jumptable,
-  calls raw code labels); **L8-10** `MulMatrix2` (GTE `extraout_ECX` dropped output register). Remaining big
-  items: in_EAX/register-arg recovery (67 fns), full GTE per-call register wiring via
-  `tools/recover_regargs.py` (static `_g_*` defaults run but give WRONG vectors), the jumptable
-  reconstruction, render loop. Always verify ALL 10 levels, both targets — crashes are level-data-dependent.
+- Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).
+  Memory image: `re_out/extract_image.py DestructionDerby2/dd2h.exe` → `dd2_image.bin` (0x580400 bytes).
+- **Stage 1 — crash-free: ACTIVE, currently 0/10.** Build:
+  `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from `DestructionDerby2/` as
+  `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize crashes with `addr2line -f -e`. Dominant crash
+  class: Ghidra pointer-scaling (int*/short* globals indexed with byte offsets). Crash map: **L1-7**
+  `Generate_Surface_Normals` @0x4268b8 (unrecovered switch jumptable, calls raw code labels); **L8-10**
+  `MulMatrix2` (GTE `extraout_ECX` dropped output register). Big open items: in_EAX/register-arg recovery
+  (67 fns), full GTE per-call register wiring via `tools/recover_regargs.py` (static `_g_*` defaults run
+  but give WRONG vectors), the jumptable reconstruction, render loop. Always verify ALL 10 levels, both
+  targets — crashes are level-data-dependent.
 - **Stage 2 — bit-identical: after Stage 1.** Bit-verify vs dd2h reference (`refcapture.sh`, e.g.
-  L9/frame151 memcmp of level_data_buffer/car_vertices/rgb_lookup). Known residual from earlier analysis:
-  MPE heap BASE not consumed (0x816ff0 = InitHeap self-ptr vs ref real data) — allocation-order divergence
-  (MPE allocs identical in dd2h: prim 0x60000, heap 0x120000).
-- **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Input path proven on the
-  old build (steering responds); browser renders.
+  L9/frame151 memcmp of level_data_buffer/car_vertices/rgb_lookup). Known residual: MPE heap BASE not
+  consumed (0x816ff0 = InitHeap self-ptr vs ref real data) — allocation-order divergence (MPE allocs:
+  prim 0x60000, heap 0x120000).
+- **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
+  (`re_out/dd2_input.c`); browser renders.
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
