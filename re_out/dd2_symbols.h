@@ -1049,7 +1049,7 @@ extern int unaff_retaddr;
 #define current_season (*(int*)GIMG(0x0093dec0))
 #define OverPoly (*(undefined1*)GIMG(0x00782af0))
 #define __umaskval (*(undefined1*)GIMG(0x0046c410))
-#define num_cars (*(undefined4*)GIMG(0x0046765c))
+#define num_cars (*(int*)GIMG(0x0046765c))  /* SIGNED: grid init divides negative headings by it (idiv w/ sar edx,0x1f @0x44334f/0x4433c4); undefined4 forced unsigned div -> bowl ring yaws off by 72 deg -> attract camera vantage diverged from ref */
 #define info_screen_text (*(int*)GIMG(0x00469b0c))
 #define _far_fog (*(int*)GIMG(0x00462cd0))
 #define __Is_DLL (*(int*)GIMG(0x00940978))
