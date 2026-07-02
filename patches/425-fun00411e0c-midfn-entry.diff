@@ -1,0 +1,25 @@
+Register the recovered mid-function span-setup entry FUN_00411e0c
+
+The prim-setup table @0x460060.. holds one entry (slot 0x4601ac) pointing INSIDE
+FUN_00411c78 (Watcom shared-tail entry @0x411e0c). Ghidra had no function there ->
+unrelocated raw address -> execute-fault 0x411e0c (L3/L5 post-420 frontier).
+Created via CreateMissingFns (951 fns exported), this patch maps it for relocation.
+
+--- a/dd2_dispatch.c
++++ b/dd2_dispatch.c
+@@ -490,6 +490,7 @@
+ extern int Load_Game_Vags();
+ extern int Clear_SoundFx();
+ extern int FUN_00448368();
++extern int FUN_00411e0c();
+ extern int FUN_0041eeec();
+ extern int FUN_0041fa30();
+ extern int FUN_00448e50();
+@@ -1358,6 +1359,7 @@
+ {0x00448310,(void*)&Load_Game_Vags},
+ {0x00448364,(void*)&Clear_SoundFx},
+ {0x00448368,(void*)&FUN_00448368},
++{0x00411e0c,(void*)&FUN_00411e0c},
+ {0x0041eeec,(void*)&FUN_0041eeec},
+ {0x0041fa30,(void*)&FUN_0041fa30},
+ {0x00448e50,(void*)&FUN_00448e50},

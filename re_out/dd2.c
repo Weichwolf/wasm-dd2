@@ -23,6 +23,7 @@ void sub_4118d4(int param_1);
 void __cdecl FUN_00411a04(int param_1);
 void __cdecl FUN_00411b34(int param_1);
 void __cdecl FUN_00411c78(int param_1);
+void FUN_00411e0c(int param_1);
 void __cdecl FUN_00411ebc(int *param_1,undefined *param_2);
 void __cdecl FUN_0041243c(int *param_1,undefined *param_2);
 void __cdecl FUN_00412694(int param_1);
@@ -2192,6 +2193,46 @@ void __cdecl FUN_00411c78(int param_1)
     local_28 = (uint)*(byte *)(param_1 + 0x30);
     local_24 = (uint)*(byte *)(param_1 + 0x31);
     FUN_00411ebc(&local_40,draw_text_half);
+  }
+  return;
+}
+
+
+/* ===== FUN_00411e0c @ 00411e0c ===== */
+
+void FUN_00411e0c(int param_1)
+
+{
+  int iVar1;
+  int iVar2;
+  int iVar3;
+  int iVar4;
+  int iStack_18;
+  int iStack_14;
+  
+  iVar3 = *(int *)(param_1 + 8) >> 0x10;
+  iVar4 = *(int *)(param_1 + 10) >> 0x10;
+  iVar1 = *(int *)(param_1 + 6) >> 0x10;
+  iVar2 = *(int *)(param_1 + 0xc) >> 0x10;
+  if (iVar1 < 0) {
+    iVar4 = iVar4 + iVar1;
+    iVar1 = 0;
+  }
+  if (iVar3 < 0) {
+    iVar2 = iVar2 + iVar3;
+    iVar3 = 0;
+  }
+  if (poly_clipx < iVar1 + iVar4) {
+    iVar4 = poly_clipx - iVar1;
+  }
+  iStack_14 = iVar3;
+  if (poly_clipy < iVar3 + iVar2) {
+    iVar2 = poly_clipy - iVar3;
+  }
+  for (; iStack_18 = iVar1, iStack_14 < iVar3 + iVar2; iStack_14 = iStack_14 + 1) {
+    for (; iStack_18 < iVar1 + iVar4; iStack_18 = iStack_18 + 1) {
+      (&_screenbuffer)[iStack_18 + iStack_14 * 0x280] = *(undefined1 *)(param_1 + 4);
+    }
   }
   return;
 }
