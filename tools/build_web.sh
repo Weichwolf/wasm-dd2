@@ -16,7 +16,7 @@ GAME="$ROOT/DestructionDerby2"
 bash "$ROOT/tools/patch.sh"
 
 F="-std=gnu89 -w -DDD2_BROWSER -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
-UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs"
+UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate"
 OBJS=""; err=0
 for u in $UNITS; do
   c="$ROOT/build/$u.c"; o="/tmp/web_$u.o"

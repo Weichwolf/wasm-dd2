@@ -183,6 +183,9 @@ int main(void){
      * default is 1 -> Init_Overlays would skip its -0x10 tpage adjustment and every overlay/HUD/
      * lamp texture would sample one VRAM page off (the unlit-LED / wrong-texture defect). */
     *(int*)(uintptr_t)0x462fe8 = 0;
+    /* Replicate the rest of the front-end's exit state (fog window, far_z_clip, attract-camera
+     * params, track_lookup tables, player count, ...) captured from the original: dd2_festate.c. */
+    { extern void dd2_apply_frontend_state(void); dd2_apply_frontend_state(); }
     CK("Set_Draw_Mode(0)");         Set_Draw_Mode(0);
     *(int*)(uintptr_t)0x462d68 = 0;
     /* Run the REAL attract demo (dd2h's path): DemoMode sets demo_mode=1, num_cars=0x14,
