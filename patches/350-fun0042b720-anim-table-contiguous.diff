@@ -1,0 +1,70 @@
+FUN_0042b720: 0x1d0-byte anim table is ONE contiguous array (scattered-locals)
+
+FUN_0042b720 copies 0x74 dwords (464 bytes) from the code-section table @0x42a910 into a stack
+buffer Ghidra split into `int local_24c[4]` + `int aiStack_23c[130]` (+adjacent). The copy loop
+writes straight through local_24c into aiStack_23c -- correct only under the original x86 frame
+layout; our compilers place the two arrays independently, so the 464-byte copy SMASHES the frame
+(saved regs/spills) -> null/garbage pointers -> the converged L8/L9/L10 crash (read @0x1e9).
+Merge into one int[134]; aiStack_23c[i] == local_24c[4+i] (asm: single region ebp-0x248..-0x78).
+Same scattered-locals class as EBC/FILELOAD/MATRIXLOCALS.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -18198,8 +18198,7 @@
+   int *piVar11;
+   uint uVar12;
+   bool bVar13;
+-  int local_24c [4];
+-  int aiStack_23c [130];
++  int local_24c [134];
+   int local_34;
+   
+   piVar9 = &DAT_0042a910;
+@@ -18253,18 +18252,18 @@
+         *(undefined2 *)((int)&car_colour_matrix + iVar2) = 0;
+       }
+       else {
+-        aiStack_23c[0x70] = local_24c[uVar12 * 4];
+-        aiStack_23c[0x71] = local_24c[uVar12 * 4 + 1];
+-        iVar5 = local_24c[uVar12 * 4 + 4] - aiStack_23c[0x70] >> 0x1f;
++        local_24c[4 + 0x70] = local_24c[uVar12 * 4];
++        local_24c[4 + 0x71] = local_24c[uVar12 * 4 + 1];
++        iVar5 = local_24c[uVar12 * 4 + 4] - local_24c[4 + 0x70] >> 0x1f;
+         iVar6 = local_24c[uVar12 * 4 + 6] - local_24c[uVar12 * 4 + 2];
+         iVar7 = iVar6 >> 0x1f;
+         iVar6 = (int)((iVar6 + iVar7 * -0x10) - (uint)(iVar7 << 3 < 0)) >> 4;
+-        iVar5 = -((int)(((local_24c[uVar12 * 4 + 4] - aiStack_23c[0x70]) + iVar5 * -0x10) -
++        iVar5 = -((int)(((local_24c[uVar12 * 4 + 4] - local_24c[4 + 0x70]) + iVar5 * -0x10) -
+                        (uint)(iVar5 << 3 < 0)) >> 4);
+         iVar7 = iVar6 * iVar6 + iVar5 * iVar5;
+         iVar8 = iVar7 >> 0x1f;
+         iVar6 = ((iVar5 * (*(int *)(&DAT_0078a74c + param_1 * 0x27c) - local_24c[uVar12 * 4 + 2]) +
+-                 iVar6 * (*(int *)(&DAT_0078a744 + param_1 * 0x27c) - aiStack_23c[0x70])) * 0x40) /
++                 iVar6 * (*(int *)(&DAT_0078a744 + param_1 * 0x27c) - local_24c[4 + 0x70])) * 0x40) /
+                 ((int)((iVar7 + iVar8 * -0x40) - (uint)(iVar8 << 5 < 0)) >> 6);
+         if ((iVar6 < iVar10) || (iVar4 < iVar6)) {
+           iVar2 = param_1 * 0x1e;
+@@ -18373,18 +18372,18 @@
+         *(undefined2 *)((int)&car_colour_matrix + iVar2) = uVar3;
+       }
+       else {
+-        aiStack_23c[0x70] = local_24c[uVar12 * 4];
+-        aiStack_23c[0x71] = local_24c[uVar12 * 4 + 1];
+-        iVar5 = local_24c[uVar12 * 4 + 4] - aiStack_23c[0x70] >> 0x1f;
++        local_24c[4 + 0x70] = local_24c[uVar12 * 4];
++        local_24c[4 + 0x71] = local_24c[uVar12 * 4 + 1];
++        iVar5 = local_24c[uVar12 * 4 + 4] - local_24c[4 + 0x70] >> 0x1f;
+         iVar6 = local_24c[uVar12 * 4 + 6] - local_24c[uVar12 * 4 + 2];
+         iVar7 = iVar6 >> 0x1f;
+         iVar6 = (int)((iVar6 + iVar7 * -0x10) - (uint)(iVar7 << 3 < 0)) >> 4;
+-        iVar5 = -((int)(((local_24c[uVar12 * 4 + 4] - aiStack_23c[0x70]) + iVar5 * -0x10) -
++        iVar5 = -((int)(((local_24c[uVar12 * 4 + 4] - local_24c[4 + 0x70]) + iVar5 * -0x10) -
+                        (uint)(iVar5 << 3 < 0)) >> 4);
+         iVar7 = iVar6 * iVar6 + iVar5 * iVar5;
+         iVar8 = iVar7 >> 0x1f;
+         iVar6 = ((iVar5 * (*(int *)(&DAT_0078a74c + param_1 * 0x27c) - local_24c[uVar12 * 4 + 2]) +
+-                 iVar6 * (*(int *)(&DAT_0078a744 + param_1 * 0x27c) - aiStack_23c[0x70])) * 0x40) /
++                 iVar6 * (*(int *)(&DAT_0078a744 + param_1 * 0x27c) - local_24c[4 + 0x70])) * 0x40) /
+                 ((int)((iVar7 + iVar8 * -0x40) - (uint)(iVar8 << 5 < 0)) >> 6);
+         if ((iVar10 < iVar6) && (iVar6 < iVar4)) {
+           iVar6 = iVar4 - iVar6;
