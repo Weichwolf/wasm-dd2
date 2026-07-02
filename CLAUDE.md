@@ -1,7 +1,15 @@
 # Destruction Derby 2 → WASM
 
-Port **`dd2h.exe`** (1996 game, 640x480 hi-res build) to a reproducible C build (native-primary, WASM
-target). **Code is the truth** — verify every claim against `DestructionDerby2/dd2h.exe` or a run.
+## Goal
+A fully playable 1:1 rebuild of the original **`dd2h.exe`** (Destruction Derby 2, 640x480) with
+**bit-identical audio and video output**: given the same input and RNG state, the rebuild produces the
+same framebuffer every frame and the same audio stream as the original on Windows — menus, track
+select, race, and demo mode fully usable via keyboard/pad, native and in the browser (WASM). The route
+there is a reproducible chain that always starts with `make` (`make decompile → make patch → make
+native / make wasm`), so the whole pipeline binary → decompile → patches → build is implicitly
+documented by the Make targets; every correction to the decompile is a commented, traceable patch.
+No guards, no approximations, no band-aids — any observable deviation from the original is by
+definition a bug. **Code is the truth** — verify every claim against `DestructionDerby2/dd2h.exe` or a run.
 
 ## Pipeline (fixed): `dd2h.exe → decompile → transpile/patch → compile (native/wasm)`
 - **Never hand-edit decompiled engine source** (`re_out/dd2.c`, `re_out/dd2_*.c` = pristine Ghidra output).
