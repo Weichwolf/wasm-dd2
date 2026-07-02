@@ -229,7 +229,7 @@ int _permission;
 /* _playable_bowls wired to image slot 0x467408 (dual-symbol: C-global was 0, baked value lives in image) */
 
 int _polygon_angles;
-int* _prim_buf;
+/* _prim_buf: now a dd2_symbols.h define onto image slot 0x754390 (dual-symbol fix) */
 int _quit_flag;
 int _race_finished;
 int _recorded_pad_type;

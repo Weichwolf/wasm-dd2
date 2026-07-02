@@ -213,7 +213,7 @@ extern int _otsize;
 extern int _pad_option;
 extern int _permission;
 extern int _polygon_angles;
-extern int* _prim_buf;
+#define _prim_buf (*(int**)GIMG(0x00754390))  /* dual-symbol fix: readers use &prim_buf+buffer_num*4 on the image slot; a C global here diverges */
 extern int _quit_flag;
 extern int _race_finished;
 extern int _recorded_pad_type;
