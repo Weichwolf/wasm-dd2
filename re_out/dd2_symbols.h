@@ -1583,7 +1583,7 @@ extern int unaff_retaddr;
 #define DAT_00784298 (*(undefined1*)GIMG(0x00784298))
 #define DAT_00430f10 (*(undefined1*)GIMG(0x00430f10))
 #define DAT_00792a86 (*(undefined1*)GIMG(0x00792a86))
-#define DAT_00792bae (*(int*)GIMG(0x00792bae))
+#define DAT_00792bae (*(unsigned char*)GIMG(0x00792bae))  /* asm 0x43347d: mov BYTE [eax+0x792bae],dl -- all 12 uses are (&DAT_00792bae)[car*0x1b2] byte flags; int typing scaled the byte offset by 4 (InitialiseAI car 15 zeroed the level_data header slots @0x799164 -> L2 wheel-shape walk crash) */
 #define DAT_00792a30 (*(undefined1*)GIMG(0x00792a30))
 #define DAT_00792a38 (*(undefined1*)GIMG(0x00792a38))
 #define DAT_0078a792 (*(undefined1*)GIMG(0x0078a792))
