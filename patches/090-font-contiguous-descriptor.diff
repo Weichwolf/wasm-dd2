@@ -1,0 +1,67 @@
+FONT: Setup_Font/Duplicate_Font contiguous 0x18-byte sprite descriptor (scattered-locals)
+
+Setup_Sprite fills a 0x18-byte sprite descriptor through its 3rd arg; Ghidra split the
+stack buffer into short[6] + four loose tail fields (Setup_Font: local_1c/local_10/
+uStack_e/local_a/local_9; Duplicate_Font: local_30/local_24/uStack_22/local_1e/local_1d)
+-- the 12-byte array under-sizes the write (OOB smash) and the tail reads are
+layout-dependent. The prior dd2.exe-era patch (old 090) neither enlarged the buffer nor
+survived re-typing: its `local_1c + 0xc` reads were SHORT-scaled (=+24 bytes, garbage).
+Both functions now use one undefined1[0x18] with byte-exact tail reads (+0xc,+0xe,
++0x12,+0x13 per the original frame offsets). This is the font/HUD sprite-init path whose
+failure left the static loading/HUD prims (e.g. @0x931d88) all-zero -> degenerate spans
+oversprayed the BSS (watchpoint-proven self-corruption, L1 frontier).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -12607,18 +12607,14 @@
+ 
+ {
+   undefined1 *puVar1;
+-  short local_1c [6];
+-  undefined2 local_10;
+-  undefined2 uStack_e;
+-  undefined1 local_a;
+-  undefined1 local_9;
+-  
+-  Setup_Sprite(0,param_1,local_1c);
++  undefined1 _fd [0x18];
++  
++  Setup_Sprite(0,param_1,(short *)_fd);
+   puVar1 = (undefined1 *)(param_2 * 8 + _DAT_0075440c);
+-  *(undefined2 *)(puVar1 + 2) = local_10;
+-  *(undefined2 *)(puVar1 + 4) = uStack_e;
+-  *puVar1 = local_a;
+-  puVar1[1] = local_9;
++  *(undefined2 *)(puVar1 + 2) = *(undefined2 *)(_fd + 0xc);
++  *(undefined2 *)(puVar1 + 4) = *(undefined2 *)(_fd + 0xe);
++  *puVar1 = _fd[0x12];
++  puVar1[1] = _fd[0x13];
+   *(undefined2 *)(puVar1 + 6) = param_3;
+   return;
+ }
+@@ -12633,18 +12629,14 @@
+ {
+   int iVar1;
+   int iVar2;
+-  short local_30 [6];
+-  undefined2 local_24;
+-  undefined2 uStack_22;
+-  undefined1 local_1e;
+-  undefined1 local_1d;
+-  
+-  Setup_Sprite(0,param_3,local_30);
++  undefined1 _fd [0x18];
++  
++  Setup_Sprite(0,param_3,(short *)_fd);
+   iVar1 = _DAT_0075440c;
+-  *(undefined2 *)(_DAT_0075440c + 2 + param_2 * 8) = local_24;
+-  *(undefined2 *)(iVar1 + 4 + param_2 * 8) = uStack_22;
+-  *(undefined1 *)(iVar1 + param_2 * 8) = local_1e;
+-  *(undefined1 *)(iVar1 + 1 + param_2 * 8) = local_1d;
++  *(undefined2 *)(_DAT_0075440c + 2 + param_2 * 8) = *(undefined2 *)(_fd + 0xc);
++  *(undefined2 *)(iVar1 + 4 + param_2 * 8) = *(undefined2 *)(_fd + 0xe);
++  *(undefined1 *)(iVar1 + param_2 * 8) = _fd[0x12];
++  *(undefined1 *)(iVar1 + 1 + param_2 * 8) = _fd[0x13];
+   iVar2 = 0;
+   *(undefined2 *)(iVar1 + 6 + param_2 * 8) = *(undefined2 *)(iVar1 + 6 + param_1 * 8);
+   do {
