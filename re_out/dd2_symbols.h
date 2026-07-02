@@ -725,7 +725,7 @@ extern int unaff_retaddr;
 #define floaty_camera_ultimate (*(int*)GIMG(0x0046484c))
 #define madbase_object (*(int*)GIMG(0x009400f8))
 #define decrunch_flag (*(int*)GIMG(0x0078a158))
-#define car_lookup (*(int*)GIMG(0x00466a0c))
+#define car_lookup (*(unsigned char*)GIMG(0x00466a0c))  /* BYTE table (20 car-type ids, one per grid slot): binary reads `mov al,[ebx+0x466a0c]` @0x43a897/0x43aa0d...; int typing made (&car_lookup)[i] scale by 4 and read 4 bytes -> sprite names like "CLUT875704106B" -> Search_For_Sprite misses -> car/smoke/debris CLUT tables (0x791ca0 stride 0x58, debris +0x16/+0x36) zero */
 #define Forest_Track_Type (*(undefined1*)GIMG(0x00465da0))
 #define current_player_car (*(int*)GIMG(0x0093ded0))
 #define race_type (*(undefined4*)GIMG(0x004673f4))
