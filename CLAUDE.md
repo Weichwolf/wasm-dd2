@@ -23,31 +23,27 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   + WINEARCH=win32; reads state via /proc/PID/mem, NOT gdb breakpoints).
 
 ## Status (3 sequential stages, each gates the next)
-- **Stage 1 — crash-free: DONE.** Both targets 10/10 on all demo levels via a family of `transpile.py` guards
-  (GEOM-GUARD, GUARD AE/AG/AH/AK/AM/AO, DRAWPRIM-GUARD, FIX BK/PADTYPE…) that convert corruption symptoms into
-  safe skips. Interactive (demo_mode=0, `DD2_LIVE=1`) renders the live race; keyboard input wired
-  (`re_out/dd2_input.c`, FIX KEYMAP/PADTYPE).
-- **Stage 2 — bit-identical: ACTIVE, re-base VALIDATED.** ROOT CAUSE: built from the WRONG binary — **dd2.exe
-  (320x240)** not **dd2h.exe (640x480)**. Framebuffer `@0x700450`: 640x480 8bpp = 0x4b000 vs 320x240 = 0x12c00 →
-  diff **0x38400** = the .bss shift making every DATA addr ≥0x713050 land 0x38400 too low → decompress-window
-  corruption (black-blob cars) + crashes. FIX (works, env `DD2_DD2H`): transpile post-pass shifts every literal
-  in [0x713050,0x940000) by +0x38400 (data shift measured clean; code shifts non-uniformly but C calls by name)
-  + `tools/make_dd2h_image.py` inserts a 0x38400 gap in `dd2_image.bin`. RESULT vs dd2h ref (refcapture.sh,
-  L9/frame151): **level_data_buffer 8.6%→95.7%, car_vertices 97.3%, rgb_lookup 100%, full 50.6%→75.4%.** Working
-  dd2.exe build still 10/10 (env-gated). REMAINING: dd2h build 3/10 crash-free (guards tuned for old layout +
-  residual divergence); MPE heap BASE still not consumed (0x816ff0 = InitHeap self-ptr vs ref real data) —
-  the original allocation-order residual (MPE allocs are IDENTICAL in dd2h: prim 0x60000, heap 0x120000).
-  The dd2h build's crashes are now the RESOLUTION mismatch: dd2.exe code has 320x240 rasterizers (pitch 0x140)
-  that write wild addrs on dd2h's 640x480 data (verified: crash in FUN_0041080d/Draw_All; dr_modes[0] is
-  640x480 in dd2h vs 320x240 in dd2.exe). Patching pitch constants is fragile (640x480 is different CODE, not a
-  const swap). CLEAN PATH (also removes most transpile guards — they were band-aids for the wrong-binary
-  corruption, unneeded with correct dd2h code): swap `re_out/dd2.c` to the **dd2h DECOMPILE** itself (correct
-  640x480 rasterizers + right code; makes the DD2_DD2H +0x38400 shift unnecessary since dd2h code already uses
-  dd2h addrs). Remaining for that: re-recover the GTE register-arg overlay for dd2h (tools/recover_regargs.py),
-  migrate the few legit hand-fixes, delete the now-obsolete guards, rebuild + bit-verify vs dd2h. Image:
-  `re_out/extract_image.py DestructionDerby2/dd2h.exe` gives the correct dd2h memory image (640x480 dr_modes).
-- **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Input path proven
-  (steering responds); browser renders. Blocked on Stage-2 correctness (corrupt geometry).
+- **`master` is DISCARDED.** It was built from the WRONG binary — **dd2.exe (320x240)**, not **dd2h.exe
+  (640x480)** — so its 10/10 crash-free result does NOT count as Stage-1 progress and must never be reported
+  as such. Its `transpile.py` guards were band-aids for wrong-binary corruption. The only valid line of work
+  is branch **`dd2h-rebase`**: the pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, correct
+  640x480 rasterizers/addresses, no +0x38400 shift needed). Image: `re_out/extract_image.py
+  DestructionDerby2/dd2h.exe` gives the correct dd2h memory image (640x480 dr_modes).
+- **Stage 1 — crash-free: NOT reached. ACTIVE on `dd2h-rebase`, currently 0/10.** Build:
+  `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from a dir with the correct
+  (0x580400-byte) `dd2_image.bin`. ~14 committed fixes advanced L9 from an early Load_Sprite_Info crash
+  through the whole init chain (dominant crash class: Ghidra pointer-scaling — int*/short* globals indexed
+  with byte offsets). Crash map: **L1-7** `Generate_Surface_Normals` @0x4268b8 (unrecovered switch jumptable,
+  calls raw code labels); **L8-10** `MulMatrix2` (GTE `extraout_ECX` dropped output register). Remaining big
+  items: in_EAX/register-arg recovery (67 fns), full GTE per-call register wiring via
+  `tools/recover_regargs.py` (static `_g_*` defaults run but give WRONG vectors), the jumptable
+  reconstruction, render loop. Always verify ALL 10 levels, both targets — crashes are level-data-dependent.
+- **Stage 2 — bit-identical: after Stage 1.** Bit-verify vs dd2h reference (`refcapture.sh`, e.g.
+  L9/frame151 memcmp of level_data_buffer/car_vertices/rgb_lookup). Known residual from earlier analysis:
+  MPE heap BASE not consumed (0x816ff0 = InitHeap self-ptr vs ref real data) — allocation-order divergence
+  (MPE allocs identical in dd2h: prim 0x60000, heap 0x120000).
+- **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Input path proven on the
+  old build (steering responds); browser renders.
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
