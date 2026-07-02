@@ -61,6 +61,8 @@ def on_stop(event):
         seen.add(cf)
         gdb.execute(f"dump binary memory {out}/cf{cf:05d}.fb 0x700450 0x74b450")
         gdb.execute(f"dump binary memory {out}/cf{cf:05d}.pal 0x700050 0x700450")
+        if count < 12:
+            gdb.execute(f"dump binary memory {out}/cf{cf:05d}.ts 0x774900 0x796ff0")
         count += 1
         if count >= target:
             gdb.execute(f"dump binary memory {out}/audio.bin 0x803160 0x816ff0")
