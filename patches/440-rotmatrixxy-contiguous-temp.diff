@@ -1,0 +1,116 @@
+RotMatrixX/RotMatrixY: contiguous 15-short matrix temp (scattered-locals)
+
+Both rotate the 3x3 matrix in place: they copy the full 0x1e-byte matrix record into a
+stack temp (7 dwords + 1 short) and recompute two rows from it. Ghidra declared only
+FRAGMENTS of the temp (X: local_44 dword + 6 shorts; Y: short[6] + 3 shorts) -- the copy
+overruns the declared storage and the row reads are layout-dependent. Element mapping is
+usage-certain: X reads pairs (t3,t6),(t4,t7),(t5,t8) to rebuild rows 1&2; Y reads t0..t2
+and t6..t8 for rows 0&2. This was the LAST unfixed member of the RotMatrix family
+(Z fixed in patch 065) and the root of garbage CAR ROTATION MATRICES @0x78a754 -> wheel
+world positions with wild z (gte_SetRotMatrix fed junk) -> phantom barrier collisions on
+frame 1 -> debris with 170M coords -> negative otz -> the L1 Update_Debris crash chain
+(every link watchpoint/asm-proven).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -4251,45 +4251,39 @@
+   int iVar4;
+   undefined4 *puVar5;
+   undefined4 *puVar6;
+-  undefined4 local_44;
+-  short sStack_3e;
+-  short sStack_3c;
+-  short local_3a;
+-  short sStack_38;
+-  short local_36;
+-  short sStack_34;
++  short _t [16];
+   
+   iVar1 = rcos(param_1);
+   iVar2 = rsin(param_1);
+   puVar5 = param_2;
+-  puVar6 = &local_44;
++  puVar6 = (undefined4 *)_t;
+   for (iVar3 = 7; iVar3 != 0; iVar3 = iVar3 + -1) {
+     *puVar6 = *puVar5;
+     puVar5 = puVar5 + 1;
+     puVar6 = puVar6 + 1;
+   }
+   *(undefined2 *)puVar6 = *(undefined2 *)puVar5;
+-  iVar3 = sStack_3e * iVar1 - iVar2 * sStack_38;
++  iVar3 = _t[3] * iVar1 - iVar2 * _t[6];
+   iVar4 = iVar3 >> 0x1f;
+   *(short *)((int)param_2 + 6) =
+        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = sStack_3c * iVar1 - local_36 * iVar2;
++  iVar3 = _t[4] * iVar1 - _t[7] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   *(short *)(param_2 + 2) =
+        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = local_3a * iVar1 - sStack_34 * iVar2;
++  iVar3 = _t[5] * iVar1 - _t[8] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   *(short *)((int)param_2 + 10) =
+        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = sStack_3e * iVar2 + sStack_38 * iVar1;
++  iVar3 = _t[3] * iVar2 + _t[6] * iVar1;
+   iVar4 = iVar3 >> 0x1f;
+   *(short *)(param_2 + 3) =
+        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = local_36 * iVar1 + sStack_3c * iVar2;
++  iVar3 = _t[7] * iVar1 + _t[4] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   *(short *)((int)param_2 + 0xe) =
+        (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar1 = sStack_34 * iVar1 + local_3a * iVar2;
++  iVar1 = _t[8] * iVar1 + _t[5] * iVar2;
+   iVar2 = iVar1 >> 0x1f;
+   *(short *)(param_2 + 4) =
+        (short)((int)((iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
+@@ -4308,38 +4302,35 @@
+   int iVar4;
+   short *psVar5;
+   short *psVar6;
+-  short asStack_44 [6];
+-  short sStack_38;
+-  short local_36;
+-  short sStack_34;
++  short _t [16];
+   
+   iVar1 = rcos(param_1);
+   iVar2 = rsin(param_1);
+   psVar5 = param_2;
+-  psVar6 = asStack_44;
++  psVar6 = _t;
+   for (iVar3 = 7; iVar3 != 0; iVar3 = iVar3 + -1) {
+     *(undefined4 *)psVar6 = *(undefined4 *)psVar5;
+     psVar5 = psVar5 + 2;
+     psVar6 = psVar6 + 2;
+   }
+   *psVar6 = *psVar5;
+-  iVar3 = asStack_44[0] * iVar1 + iVar2 * sStack_38;
++  iVar3 = _t[0] * iVar1 + iVar2 * _t[6];
+   iVar4 = iVar3 >> 0x1f;
+   *param_2 = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = iVar2 * local_36 + asStack_44[1] * iVar1;
++  iVar3 = iVar2 * _t[7] + _t[1] * iVar1;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[1] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = sStack_34 * iVar2 + asStack_44[2] * iVar1;
++  iVar3 = _t[8] * iVar2 + _t[2] * iVar1;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[2] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+   iVar2 = -iVar2;
+-  iVar3 = asStack_44[0] * iVar2 + sStack_38 * iVar1;
++  iVar3 = _t[0] * iVar2 + _t[6] * iVar1;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[6] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = local_36 * iVar1 + asStack_44[1] * iVar2;
++  iVar3 = _t[7] * iVar1 + _t[1] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[7] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar1 = sStack_34 * iVar1 + iVar2 * asStack_44[2];
++  iVar1 = _t[8] * iVar1 + iVar2 * _t[2];
+   iVar2 = iVar1 >> 0x1f;
+   param_2[8] = (short)((int)((iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
+   return;
