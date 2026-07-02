@@ -1,0 +1,180 @@
+_primfuncs handlers: uniform void(int,int,int) signature (wasm call_indirect)
+
+DrawOTag dispatches every prim handler with THREE pushed args (prim, ot-walk pos, ot
+param); asm shows the handlers read [ebp+8] only — except FUN_00411c78 which also reads
+[ebp+0x14] (arg 3; NOTE: Ghidra DROPPED that use in its C — separate reconstruction item).
+All 14 handlers get the uniform 3-arg prototype (ignored params), DrawOTag's call is
+typed void(int,int,int). 28 decl/def sites.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -9,20 +9,20 @@
+ void draw_half(void);
+ void FUN_0041080d(void);
+ void draw_text_half_trans(void);
+-void sub_410d50(void);
+-void sub_410d58(int param_1);
+-void sub_410e44(int param_1);
+-void __cdecl FUN_00410f74(int param_1);
+-void __cdecl FUN_004110a4(int param_1);
+-void __cdecl FUN_004111e8(int param_1);
+-void __cdecl FUN_0041132c(int param_1);
+-void sub_4114c0(int param_1);
+-void sub_411654(int param_1);
+-void sub_4117e8(int param_1);
+-void sub_4118d4(int param_1);
+-void __cdecl FUN_00411a04(int param_1);
+-void __cdecl FUN_00411b34(int param_1);
+-void __cdecl FUN_00411c78(int param_1);
++void sub_410d50(int _p1,int _p2,int _p3);
++void sub_410d58(int param_1,int _p2,int _p3);
++void sub_410e44(int param_1,int _p2,int _p3);
++void __cdecl FUN_00410f74(int param_1,int _p2,int _p3);
++void __cdecl FUN_004110a4(int param_1,int _p2,int _p3);
++void __cdecl FUN_004111e8(int param_1,int _p2,int _p3);
++void __cdecl FUN_0041132c(int param_1,int _p2,int _p3);
++void sub_4114c0(int param_1,int _p2,int _p3);
++void sub_411654(int param_1,int _p2,int _p3);
++void sub_4117e8(int param_1,int _p2,int _p3);
++void sub_4118d4(int param_1,int _p2,int _p3);
++void __cdecl FUN_00411a04(int param_1,int _p2,int _p3);
++void __cdecl FUN_00411b34(int param_1,int _p2,int _p3);
++void __cdecl FUN_00411c78(int param_1,int _p2,int _p3);
+ void FUN_00411e0c(int param_1);
+ void __cdecl FUN_00411ebc(int *param_1,undefined *param_2);
+ void __cdecl FUN_0041243c(int *param_1,undefined *param_2);
+@@ -1455,7 +1455,7 @@
+ 
+ /* ===== sub_410d50 @ 00410d50 ===== */
+ 
+-void sub_410d50(void)
++void sub_410d50(int _p1,int _p2,int _p3)
+ 
+ {
+                     /* START-> C:\PCMPE\libs\gfx.c: ? */
+@@ -1467,7 +1467,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_410d58(int param_1)
++void sub_410d58(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1511,7 +1511,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_410e44(int param_1)
++void sub_410e44(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1563,7 +1563,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_00410f74(int param_1)
++void __cdecl FUN_00410f74(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1615,7 +1615,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_004110a4(int param_1)
++void __cdecl FUN_004110a4(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1673,7 +1673,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_004111e8(int param_1)
++void __cdecl FUN_004111e8(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1731,7 +1731,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_0041132c(int param_1)
++void __cdecl FUN_0041132c(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1799,7 +1799,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_4114c0(int param_1)
++void sub_4114c0(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1867,7 +1867,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_411654(int param_1)
++void sub_411654(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1935,7 +1935,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_4117e8(int param_1)
++void sub_4117e8(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -1979,7 +1979,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void sub_4118d4(int param_1)
++void sub_4118d4(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -2031,7 +2031,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_00411a04(int param_1)
++void __cdecl FUN_00411a04(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -2083,7 +2083,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_00411b34(int param_1)
++void __cdecl FUN_00411b34(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -2141,7 +2141,7 @@
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+ 
+-void __cdecl FUN_00411c78(int param_1)
++void __cdecl FUN_00411c78(int param_1,int _p2,int _p3)
+ 
+ {
+   byte bVar1;
+@@ -2728,7 +2728,7 @@
+   piVar2 = param_1;
+   while (piVar1 = (int *)*param_1, piVar1 != (int *)0xffffffff) {
+     if ((piVar1 == (int *)0x0) ||
+-       ((*(code *)(&_primfuncs)[*(byte *)((int)piVar1 + 7)])(piVar1,piVar2,param_1),
++       ((*(void (*)(int,int,int))(uintptr_t)(&_primfuncs)[*(byte *)((int)piVar1 + 7)])((int)piVar1,(int)piVar2,(int)param_1),
+        param_1 = piVar1, param_1 == (int *)0x0)) {
+       param_1 = piVar2 + -1;
+       piVar2 = param_1;

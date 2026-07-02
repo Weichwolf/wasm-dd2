@@ -1,0 +1,76 @@
+Span-blitter callbacks: void(void) signature (wasm call_indirect type-check)
+
+The textured-span setup fns invoke the per-span blitter (draw_text_half family) through
+Ghidra's `code`; blitters are void(void). 8 sites across the rasterizer setups.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -2405,7 +2405,7 @@
+       DAT_0048001c = local_2c * iVar10 >> 8;
+       dth_y2 = iVar13;
+       dth_v1 = iVar8;
+-      (*(code *)param_2)();
++      (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+       return;
+     }
+     iVar10 = (int)(0x10000 / (longlong)iVar3);
+@@ -2420,7 +2420,7 @@
+       iVar11 = dth_delta2;
+       dth_delta2 = dth_delta1;
+       dth_delta1 = iVar11;
+-      (*(code *)param_2)();
++      (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+       if (iVar14 != iVar13) {
+         iVar11 = (int)(0x10000 / (longlong)(iVar13 - iVar14));
+         DAT_0048001c = local_2c * iVar11 >> 8;
+@@ -2431,20 +2431,20 @@
+         dth_x1 = iVar7;
+         dth_v1 = iVar8;
+         dth_u1 = iVar9;
+-        (*(code *)param_2)();
++        (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+         return;
+       }
+     }
+     else {
+       DAT_0048001c = iVar2 * iVar1 >> 8;
+       DAT_00480034 = iVar1 * iVar4 >> 8;
+-      (*(code *)param_2)();
++      (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+       if (iVar14 != iVar13) {
+         dth_delta2 = (int)(0x10000 / (longlong)(iVar13 - iVar14)) * iVar5 >> 8;
+         dth_y2 = iVar13;
+         dth_y1 = iVar14;
+         dth_x2 = iVar7;
+-        (*(code *)param_2)();
++        (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+       }
+     }
+   }
+@@ -2549,7 +2549,7 @@
+         iVar4 = dth_delta2;
+         dth_delta2 = dth_delta1;
+         dth_delta1 = iVar4;
+-        (*(code *)param_2)();
++        (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+         if (iVar6 == iVar5) {
+           return;
+         }
+@@ -2559,7 +2559,7 @@
+         dth_x1 = iVar2;
+       }
+       else {
+-        (*(code *)param_2)();
++        (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+         if (iVar6 == iVar5) {
+           return;
+         }
+@@ -2569,7 +2569,7 @@
+     }
+     dth_x2 = iVar1;
+     dth_y2 = iVar5;
+-    (*(code *)param_2)();
++    (*(void (*)(void))(uintptr_t)param_2)();  /* span blitter void(void) (wasm) */
+     return;
+   }
+   return;

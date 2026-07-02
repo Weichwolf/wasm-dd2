@@ -23,7 +23,7 @@ int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; r
 void _ot_dispatch(int* piVar1,int* b,int* c){
   (void)b;(void)c;
   unsigned _v=((unsigned*)&_primfuncs)[*(unsigned char*)((int)piVar1+7)];  /* dword fn-ptr table (explicit: _primfuncs is byte-typed in dd2_symbols.h) */
-  if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int*))(unsigned long)_v)(piVar1);
+  if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int,int,int))(unsigned long)_v)((int)(uintptr_t)piVar1,(int)(uintptr_t)b,(int)(uintptr_t)c);
 }
 int SetStdHandle(int a,int b){ (void)a;(void)b; return 0; }
 int timeBeginPeriod(int a){ (void)a; return 0; }
