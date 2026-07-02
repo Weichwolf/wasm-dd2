@@ -24,7 +24,7 @@ mkdir -p "$OUT"
 cd "$GAME"
 timeout "${RUNSEC:-150}" xvfb-run -a -s "-screen 0 640x480x16" wine dd2h.exe >/tmp/refcap_wine.log 2>&1 &
 echo "waiting for _current_level==$LVL & frame in [$FRMIN,$FRMAX]..."
-for i in $(seq 1 40); do
+for i in $(seq 1 $(( ${RUNSEC:-150} / 4 ))); do   # poll for the whole wine run, not a fixed 160s
   sleep 4
   pid=$(pgrep -x dd2h.exe | head -1); [ -z "$pid" ] && { echo "reference exited early"; break; }
   read -r LV FR < <(python3 - "$pid" <<'PY'
