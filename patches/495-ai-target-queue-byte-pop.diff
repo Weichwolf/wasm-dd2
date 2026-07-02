@@ -1,0 +1,19 @@
+AI target queue: BYTE pop (asm mov al,[esi]; and eax,0xff)
+
+AI_Com_Server pops the next target car from the surfai queue (_DAT_0078a378, stepped -1)
+as a single ZERO-EXTENDED BYTE (asm 0x431623-0x431637); the C read the already-decremented
+pointer as a full int -> neighbor bytes leaked into the high half (watchpoint-proven:
+InitialiseAI writes 0xe, the pop stored 0xe0000) -> target*0x1b2 wild -> L8 bowls crash.
+1 site(s). Ninth instance of the width/pair classes.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -22091,7 +22091,7 @@
+         }
+         else {
+           _DAT_0078a378 = _DAT_0078a378 + -1;
+-          *(uint *)(iVar6 + 0x792b8a) = (uint)*(int*)_DAT_0078a378;
++          *(uint *)(iVar6 + 0x792b8a) = (uint)*(unsigned char*)_DAT_0078a378;  /* asm 0x43162a: byte pop (mov al,[esi]; and eax,0xff) */
+         }
+       }
+       if (*(int *)(iVar6 + 0x792b8a) - 1U != (uint)param_1) goto LAB_00431657;
