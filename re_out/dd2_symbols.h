@@ -1063,7 +1063,7 @@ extern int unaff_retaddr;
 #define adjusted_music (*(int*)GIMG(0x009376a4))
 #define _pad_j (*(unsigned char*)GIMG(0x00463042))
 #define _pad_i (*(unsigned char*)GIMG(0x00463041))
-#define far_z_clip (*(undefined4*)GIMG(0x00462fc8))
+#define far_z_clip (*(int*)GIMG(0x00462fc8))  /* SIGNED: Draw_Scene_Object culls with `(z - radius) <= far_z_clip` -- binary uses jg (0x43062f); unsigned type made near-plane-crossing objects (z<radius, e.g. backdrop trees beside the camera) compare as huge unsigned -> wrongly culled vs the reference */
 #define Flying_Objects (*(undefined1*)GIMG(0x0077b6e0))
 #define __atexit (*(int*)GIMG(0x0046c108))
 #define __AccessFileH (*(undefined1*)GIMG(0x00459515))
