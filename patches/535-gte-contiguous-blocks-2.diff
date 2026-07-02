@@ -1,0 +1,189 @@
+Car_1pt_Motion_3D / FUN_00426be4 / Check_Space_Car_Collision: contiguous GTE blocks
+
+Second sweep of the scattered-locals class over GTE call sites (audit of all
+MulMatrix2/Calc_Object_Angles/FUN_004143b0/FUN_004204d0/OuterProduct12 callers):
+- Car_1pt_Motion_3D builds THREE 3x3 short matrices ([ebp-0x100/-0xe0/-0xc0])
+  fed through MulMatrix2 chains, plus the angle SVECTOR @[ebp-0x60] consumed by
+  FUN_004204d0; all were split scalars.
+- FUN_00426be4: OuterProduct12(&local_70,&local_50,&local_60) + in-place
+  FUN_004143b0 -- all THREE 3-int vectors must be real blocks (fixing only one
+  shifts gcc's layout and re-scrambles the others: L8 bowl-init Map_Height
+  crash in the first cut of this patch).
+- Check_Space_Car_Collision passes two 3-int vectors to FUN_004143b0.
+gcc scatters split locals, so the callees saw scrambled blocks (the class that
+produced the L2 cf121 Make_Car_Fly divergence, patch 530). SVECTOR pad zeroed
+for deterministic cross-target state.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -16303,15 +16303,21 @@
+   int iVar8;
+   uint uVar9;
+   int *piVar10;
+-  int local_70;
+-  int local_6c;
+-  int local_68;
+-  int local_60;
+-  int local_5c;
+-  int local_58;
+-  int local_50;
+-  int local_4c;
+-  int local_48;
++  /* three contiguous 3-int vectors: OuterProduct12(&local_70,&local_50,&local_60) and the
++     in-place FUN_004143b0(&local_60,&local_60) consume each as ONE block (scattered-locals
++     class; partial fixes here shift gcc's layout and re-scramble the others -> all three). */
++  int _va[3];
++  int _vc[3];
++  int _vb[3];
++#define local_70 (_va[0])
++#define local_6c (_va[1])
++#define local_68 (_va[2])
++#define local_60 (_vc[0])
++#define local_5c (_vc[1])
++#define local_58 (_vc[2])
++#define local_50 (_vb[0])
++#define local_4c (_vb[1])
++#define local_48 (_vb[2])
+   int local_40;
+   int local_3c;
+   uint local_38;
+@@ -16454,6 +16460,15 @@
+   }
+   return;
+ }
++#undef local_70
++#undef local_6c
++#undef local_68
++#undef local_60
++#undef local_5c
++#undef local_58
++#undef local_50
++#undef local_4c
++#undef local_48
+ 
+ 
+ /* ===== Track_Follow @ 00426ff4 ===== */
+@@ -26734,12 +26749,16 @@
+   int iVar4;
+   int iVar5;
+   int iVar6;
+-  int local_30;
+-  int local_2c;
+-  int local_28;
+-  int local_20;
+-  int local_1c;
+-  int local_18;
++  /* two contiguous 3-int vectors (FUN_004143b0(&local_20,&local_30): src block @[ebp-0x20],
++     dst block @[ebp-0x30]); scattered-locals class. */
++  int _vdst[3];
++  int _vsrc[3];
++#define local_30 (_vdst[0])
++#define local_2c (_vdst[1])
++#define local_28 (_vdst[2])
++#define local_20 (_vsrc[0])
++#define local_1c (_vsrc[1])
++#define local_18 (_vsrc[2])
+   
+   local_20 = *(int *)(&DAT_0078a744 + param_1 * 0x27c) - *(int *)(&DAT_0078a744 + param_2 * 0x27c);
+   local_1c = *(int *)(&DAT_0078a748 + param_1 * 0x27c) - *(int *)(&DAT_0078a748 + param_2 * 0x27c);
+@@ -26806,6 +26825,12 @@
+   }
+   return;
+ }
++#undef local_30
++#undef local_2c
++#undef local_28
++#undef local_20
++#undef local_1c
++#undef local_18
+ 
+ 
+ /* ===== Do_Car_Collisions @ 0043a530 ===== */
+@@ -29569,29 +29594,38 @@
+   int *piVar6;
+   int iVar7;
+   int iVar8;
+-  short local_100 [3];
+-  undefined2 local_fa;
+-  undefined2 local_f8;
+-  undefined2 local_f6;
+-  undefined2 local_f4;
+-  undefined2 local_f2;
+-  short local_f0;
+-  short local_e0 [3];
+-  undefined2 local_da;
+-  undefined2 local_d8;
+-  undefined2 local_d6;
+-  undefined2 local_d4;
+-  undefined2 local_d2;
+-  short local_d0;
+-  short local_c0 [5];
+-  undefined2 local_b6;
+-  undefined2 local_b4;
+-  short local_b2;
+-  undefined2 local_b0;
++  /* contiguous GTE 3x3 short matrices (asm stack blocks @[ebp-0x100/-0xe0/-0xc0], consumed
++     whole by MulMatrix2) + below the angle SVECTOR @[ebp-0x60]. Ghidra split each block into
++     scalars; gcc scatters separate locals -> MulMatrix2 read scrambled matrices (same class
++     as Make_Car_Fly/patch 530). */
++  short _m1[9];
++  short _m3[9];
++  short _m2[9];
++#define local_100 (_m1)
++#define local_fa (_m1[3])
++#define local_f8 (_m1[4])
++#define local_f6 (_m1[5])
++#define local_f4 (_m1[6])
++#define local_f2 (_m1[7])
++#define local_f0 (_m1[8])
++#define local_e0 (_m3)
++#define local_da (_m3[3])
++#define local_d8 (_m3[4])
++#define local_d6 (_m3[5])
++#define local_d4 (_m3[6])
++#define local_d2 (_m3[7])
++#define local_d0 (_m3[8])
++#define local_c0 (_m2)
++#define local_b6 (_m2[5])
++#define local_b4 (_m2[6])
++#define local_b2 (_m2[7])
++#define local_b0 (_m2[8])
+   short local_a0 [16];
+   short local_80 [16];
+-  undefined4 local_60;
+-  short local_5c;
++  short _ang2[4];
++  _ang2[3] = 0;  /* SVECTOR pad: deterministic across targets (original leaves stack garbage) */
++#define local_60 (*(int*)(void*)_ang2)
++#define local_5c (_ang2[2])
+   int local_58 [2];
+   short local_50;
+   short sStack_4e;
+@@ -29834,6 +29868,27 @@
+   FUN_004204d0((short *)(local_34 + 0x50),&local_60);
+   return;
+ }
++#undef local_100
++#undef local_fa
++#undef local_f8
++#undef local_f6
++#undef local_f4
++#undef local_f2
++#undef local_f0
++#undef local_e0
++#undef local_da
++#undef local_d8
++#undef local_d6
++#undef local_d4
++#undef local_d2
++#undef local_d0
++#undef local_c0
++#undef local_b6
++#undef local_b4
++#undef local_b2
++#undef local_b0
++#undef local_60
++#undef local_5c
+ 
+ 
+ /* ===== Car_Drive_Motion_3D& @ 004405bc ===== */
