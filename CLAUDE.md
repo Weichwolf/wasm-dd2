@@ -49,12 +49,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Init_LensFlare contiguous info blocks (595), GTE 18-byte matrix uploads (605 — __globmat short
   truncation left odd matrix elements stale), subdiv dispatch signature (610). Camera EXACT
   (0x3060,-0x103,-0xfa9), frustum normals EXACT, dth span inputs match, sky cull byte-identical.
-  Remaining fb diff: cloud-panorama band (phase/coverage), start-light LEDs + speaker-box face,
-  left-edge backdrop segments, ground trapezoid before the car, sprite dots; state diffs: heap
-  +0x60 alloc shift (one early alloc differs), 0x7959a8 array, 0x93xxxx FE objects. Verification
-  loop: DD2_HIST=<cf> prim histogram + FT4 dump vs tools/refhist.sh; ref captures via 3-stage gdb
-  arming (hbreak 0x4431e8 → 0x420c9c cf-gate → target fn). Audio staging 0x7fa164-0x816ff0 zero in
-  ours (DirectSound stubbed) — Stage 3.
+  Both launchers boot through the REAL
+  Init_Main @0x445814 (InitCardSystem/SaveGames, DIRINFO original-case + case-insensitive fopen
+  shim, Read_CD_Toc_, Load_Game_Vags) → **audio sample staging 0x7fa164-0x816ff0 is 100%
+  byte-identical** to the reference (mixer output = the remaining Stage-3 audio work). Total
+  non-whitelisted full-image state diff: ~4.3KB (card region re-capture noise, debris 2-byte
+  fields, 0x7959a8 array, invisible sky-dome prim phase). Remaining fb diff: cloud-panorama band
+  (visible layer), speaker-box face overdraw order, left-edge backdrop segments, ground trapezoid,
+  sprite dots. Verification loop: DD2_HIST=<cf> prim histogram + FT4 dump (with prim addr) vs
+  tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 → 0x420c9c cf-gate →
+  target fn). Pitfall proven twice: prim-level compares must be restricted to prims that WIN
+  pixels (hidden sky-dome quads drift legitimately).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
