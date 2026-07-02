@@ -94,7 +94,7 @@ static int ids_flip(int t,int a,int b){
         if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);
             FILE* g=fopen(nm,"wb"); if(g){ fwrite(g_pixels,1,640*512,g); fclose(g); } }
     }
-    if(getenv("DD2_INPROBE") && g_frameno<14){
+    if(getenv("DD2_INPROBE") && g_frameno<25){
         unsigned short c04a=*(unsigned short*)(unsigned long)0x71c04au;
         unsigned short c048=*(unsigned short*)(unsigned long)0x71c048u;
         unsigned short prev=*(unsigned short*)(unsigned long)0x463050u;
@@ -111,8 +111,8 @@ static int ids_flip(int t,int a,int b){
         unsigned ec4=*(unsigned*)(unsigned long)0x900ec4u;
         int r74=*(int*)(unsigned long)0x467074u;
         unsigned char* pf=(unsigned char*)(unsigned long)0x46304bu; /* rup,rdown,rleft,DAT4e */
-        fprintf(stderr,"[inprobe f%d] demo=%d quit=%d mode_303e=%u padflags[4b..4e]=%02x %02x %02x %02x c048=0x%04x\n",
-                g_frameno,dmode,_quit_flag,mode,pf[0],pf[1],pf[2],pf[3],c048);
+        fprintf(stderr,"[inprobe f%d] demo=%d quit=%d yq=%d rf=%d curfr=%d ticks=%d pads=%02x%02x%02x%02x c048=0x%04x\n",
+                g_frameno,dmode,_quit_flag,*(int*)0x9376acu,_race_finished,curfr,*(int*)0x7746c0u,pf[0],pf[1],pf[2],pf[3],c048);
     }
     if(getenv("DD2_RANDTRACE") && g_frameno<20){
         extern unsigned g_rand_calls;
