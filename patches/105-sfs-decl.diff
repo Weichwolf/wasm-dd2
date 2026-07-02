@@ -1,0 +1,25 @@
+SFS:decl
+
+FIX SFS (scattered-locals — ASan-PROVEN root of the demo/Track_Follow crash): on the x86 stack,
+FUN_004430b8's local_52 (the per-level strip-search TAG, set by the switch) sat at ebp-0x52 and
+local_4a at ebp-0x4a — CONTIGUOUS right after local_74[8]@ebp-0x74. Search_For_Strip / FUN_00428548
+/ FUN_004287c0 receive (int)local_74 and read the tag at param+0x22 (=local_52) + write the found
+strip at param+0x14. The decompiler split local_52/local_4a into SEPARATE locals -> param+0x22 reads
+2 bytes PAST the 32-byte array (native ASan: load2 redzone trap; WASM: silent wrong tag -> wrong
+starting strip -> car walks off-track -> Track_Follow overrun @~call 1253). Restore x86 contiguity.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -31090,9 +31090,9 @@
+   uint uVar9;
+   undefined4 *puVar10;
+   undefined4 *puVar11;
+-  undefined4 local_74 [8];
+-  undefined2 local_52;
+-  char local_4a;
++  undefined4 local_74 [0xb];  /* FIX SFS: covers ebp-0x74..ebp-0x48; local_52@+0x22, local_4a@+0x2a below */
++#define local_52 (*(undefined2*)((char*)local_74+0x22))
++#define local_4a (*(char*)((char*)local_74+0x2a))
+   int local_48;
+   int *local_44;
+   int local_40;

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DD2 WASM build:  transpile (re_out decompile -> build/ wasm source)  ->  emcc compile + link.
+# DD2 WASM build:  patch (re_out decompile + patches/ -> build/)  ->  emcc compile + link.
 # Usage: tools/build.sh [out.js]   (default /tmp/lvltest/dd2run.js)
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,8 +7,8 @@ OUTJS="${1:-/tmp/lvltest/dd2run.js}"
 mkdir -p "$(dirname "$OUTJS")"
 source "$HOME/Git/emsdk/emsdk_env.sh" >/dev/null 2>&1
 
-# 1) transpile: Ghidra decompile -> WASM source
-python3 "$ROOT/tools/transpile.py"
+# 1) patch: pristine decompile + patches/*.diff -> build/
+bash "$ROOT/tools/patch.sh"
 
 # 2) compile the linked units (re_out/ also holds unlinked Ghidra copies — sprite_handlers.c etc. — skip them)
 F="-std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"

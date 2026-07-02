@@ -1,0 +1,16 @@
+TEST:argv main
+
+TEST harness: allow level select via argv (faithful boot is the menu->race flow, pending the menu
+indirect-call work). Lets build/ run any of the 16 levels for headless verification.
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -28,7 +28,7 @@
+ extern int Play_Game(void);
+ extern void Set_Draw_Mode(int);
+ extern int _current_level;
+-int main(){
++int main(int argc, char** argv){
+     dd2_load_image("dd2_image.bin");
+     dd2_relocate();
+     /* INIT-ALIGN with native_main.c: zero ctor slots holding raw code VAs so __InitRtns skips the

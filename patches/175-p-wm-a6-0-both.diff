@@ -1,0 +1,25 @@
+P:wm a6=0 (both)
+
+element[1]=0 appears in BOTH Set_World_View and Point_Camera (both write world_matrix as int-macros over
+16-bit elements); the 32-bit write zeros element[2]. Fix both (replace-all).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11525,7 +11525,7 @@
+ 
+ {
+   world_matrix = 0x1000;
+-  DAT_00462fa6 = 0;
++  *(short *)(uintptr_t)0x462fa6 = 0;
+   _DAT_00462fa8 = 0;
+   DAT_00462faa = 0;
+   _DAT_00462fac = 0x1000;
+@@ -11897,7 +11897,7 @@
+       _DAT_0075422c = _DAT_00462fac;
+     }
+   }
+-  DAT_00462fa6 = 0;
++  *(short *)(uintptr_t)0x462fa6 = 0;
+   (*(unsigned short*)((char*)&local_3c + 0)) = (undefined2)local_18;
+   local_32 = 0;
+   local_38 = 0;

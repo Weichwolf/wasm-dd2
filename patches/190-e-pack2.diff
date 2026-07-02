@@ -1,0 +1,15 @@
+E:pack2
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1915,7 +1915,7 @@
+     iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+     uStack_28 = (uint)*(byte *)(param_1 + 0x24);
+     uStack_24 = (uint)*(byte *)(param_1 + 0x25);
+-    FUN_00411ebc(&iStack_40,FUN_0041033a);
++    { int _q[12]; _q[0]=iStack_40;_q[1]=iStack_3c;_q[2]=iStack_38;_q[3]=iStack_34;_q[4]=iStack_30;_q[5]=iStack_2c;_q[6]=uStack_28;_q[7]=uStack_24;_q[8]=uStack_20;_q[9]=uStack_1c;_q[10]=uStack_18;_q[11]=uStack_14; FUN_00411ebc((int *)_q,FUN_0041033a); }
+   }
+   return;
+ }

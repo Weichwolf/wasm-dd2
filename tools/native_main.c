@@ -12,7 +12,7 @@
 #include <execinfo.h>
 
 /* DEBUG: poly-command ring buffer (BSS -> no heap shift -> doesn't move the _gpoly-desync heisenbug).
-   Recorded by a transpile debug-patch in FUN_0041fb7c's walk loop; dumped here on crash. */
+   Recorded by a debug-patch in FUN_0041fb7c's walk loop; dumped here on crash. */
 int g_plog[2048]; volatile int g_pidx = 0;
 /* DEBUG: last Draw_Scene_Object dispatch {block, objidx, num_scene_objects, param_1, param_1[1]} */
 volatile int g_lastobj[5];

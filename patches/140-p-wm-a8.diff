@@ -1,0 +1,15 @@
+P:wm a8
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11879,7 +11879,7 @@
+     }
+     else {
+       *(short *)(uintptr_t)0x462fa4 = (short)((iVar3 << 0xc) / (int)uVar4);
+-      _DAT_00462fa8 = (undefined2)((local_14 * -0x1000) / (int)uVar4);
++      *(short *)(uintptr_t)0x462fa8 = (short)((local_14 * -0x1000) / (int)uVar4);
+       DAT_00462faa = (undefined2)(-(local_14 * iVar2) / (int)uVar4);
+       _DAT_00462fac = (undefined2)uVar4;
+       _DAT_00462fb2 = (short)iVar2;

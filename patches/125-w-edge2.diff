@@ -1,0 +1,19 @@
+W:edge2
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -15882,9 +15882,9 @@
+         _e1[1] = piVar4[1] - piVar3[1];
+         _e1[2] = piVar4[2] - piVar3[2];
+         piVar4 = (int *)(iVar6 * 0xc + local_24);
+-        local_60 = *piVar4 - *piVar3;
+-        local_5c = piVar4[1] - piVar3[1];
+-        local_58 = piVar4[2] - piVar3[2];
++        _e2[0] = *piVar4 - *piVar3;
++        _e2[1] = piVar4[1] - piVar3[1];
++        _e2[2] = piVar4[2] - piVar3[2];
+         local_40 = local_6c;
+         OuterProduct12(&local_60,&local_70,&local_50);
+         FUN_004143b0(&local_50,&local_50);

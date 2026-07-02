@@ -1,0 +1,256 @@
+LEVDATA-BYTEOFF _level_data+N byte-offset readers
+
+FIX LEVDATA-BYTEOFF (Ghidra pointer-scaling): the dd2h decompile types `_level_data` as `int*`, so every
+reader `*(T*)(_level_data + N)` scales N by 4 (byte N*4) -- but the original x86 uses N as a BYTE
+displacement (`[reg + N]`). The relocation FUN_00445ca8 uses `_level_data[k]` = dword element k = byte k*4,
+relocating elements [0..0x1c] (bytes 0..0x70). The header is a dword pointer table; readers index it with
+BYTE offsets: e.g. Init_Sky reads `_level_data + 0x1c..0x38` = elements 7..0xe = the 8 skybox shapes
+(verified: elements 7-0xa tex=0x190, 0xb-0xe tex=0x230, all flag=0 valid shape headers). Under the wrong
+int*-scaled reading, `+0x1c` lands on element 0x1c = padding 0x242d8 (flag=0x45, not a shape) whose +0x28
+poly-ptr 0x2d0020 is a wild address -> Create_Object/FUN_0041fcac crash. Every reader byte-offset (0x4..
+0x70) falls inside the relocated element range [0..0x1c], confirming byte semantics. Fix faithfully: make
+the arithmetic byte-based `((int)_level_data + N)` (matches the x86). NOT touched: `_level_data[k]`
+(element relocation) and `X + (int)_level_data` (base add).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -14769,17 +14769,17 @@
+   } while (iVar2 != 0xea0);
+   puVar3 = (undefined4 *)&wheeloff_object_;
+   do {
+-    Create_Object(puVar3,*(int *)(_level_data + 0x48));
++    Create_Object(puVar3,*(int *)((int)_level_data + 0x48));
+     puVar3 = puVar3 + 7;
+   } while (puVar3 != (undefined4 *)&Debris);
+   puVar3 = (undefined4 *)&bonnetoff_object;
+   do {
+-    Create_Object(puVar3,*(int *)(_level_data + 0x4c));
++    Create_Object(puVar3,*(int *)((int)_level_data + 0x4c));
+     puVar3 = puVar3 + 7;
+   } while (puVar3 != (undefined4 *)&wheeloff_index);
+   puVar3 = (undefined4 *)&bootoff_object;
+   do {
+-    Create_Object(puVar3,*(int *)(_level_data + 0x50));
++    Create_Object(puVar3,*(int *)((int)_level_data + 0x50));
+     puVar3 = puVar3 + 7;
+   } while (puVar3 != (undefined4 *)&bonnetoff_object);
+   return;
+@@ -15427,7 +15427,7 @@
+   undefined4 *puVar4;
+   undefined4 *puVar5;
+   
+-  puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x40) + 0x20);
++  puVar4 = *(undefined4 **)(*(int *)((int)_level_data + 0x40) + 0x20);
+   puVar5 = (undefined4 *)&mid_car_vertices;
+   for (iVar2 = 0xcc; iVar2 != 0; iVar2 = iVar2 + -1) {
+     *puVar5 = *puVar4;
+@@ -15439,7 +15439,7 @@
+     puVar4 = (undefined4 *)((int)puVar4 + 1);
+     puVar5 = (undefined4 *)((int)puVar5 + 1);
+   }
+-  puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x44) + 0x20);
++  puVar4 = *(undefined4 **)(*(int *)((int)_level_data + 0x44) + 0x20);
+   puVar5 = (undefined4 *)&high_car_vertices;
+   for (iVar2 = 0xd6; iVar2 != 0; iVar2 = iVar2 + -1) {
+     *puVar5 = *puVar4;
+@@ -15989,8 +15989,8 @@
+     iVar6 = 0;
+     uVar9 = 0;
+     local_14 = 0x80;
+-    _strip_data = *(int *)(_level_data + 4);
+-    _strip_vertex = *(int *)(_level_data + 8);
++    _strip_data = *(int *)((int)_level_data + 4);
++    _strip_vertex = *(int *)((int)_level_data + 8);
+     do {
+       pbVar7 = (byte *)(iVar6 + _strip_data + 4);
+       local_14 = local_14 + *(int *)(&DAT_00463e8c + (uint)*pbVar7 * 4);
+@@ -16035,8 +16035,8 @@
+     } while (iVar6 != 0);
+   }
+   else {
+-    _strip_data = *(int *)(_level_data + 4);
+-    _strip_vertex = *(int *)(_level_data + 8);
++    _strip_data = *(int *)((int)_level_data + 4);
++    _strip_vertex = *(int *)((int)_level_data + 8);
+     local_30 = _strip_data + 0x3640;
+     local_20 = 0;
+     local_2c = _strip_vertex + 0xc;
+@@ -18427,7 +18427,7 @@
+   __lmptr = &sStack_30;
+   FUN_004203dc(psVar1,(int *)(&DAT_0078a744 + param_1 * 0x27c));
+   bVar2 = _DAT_00754256 < 4000;
+-  *(undefined1 **)(*(int *)(_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
++  *(undefined1 **)(*(int *)((int)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
+   iVar3 = VVDraw_Object((undefined4 *)(&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
+   *(int *)(param_1 * 0x27c + 0x78a798) = iVar3;
+   if ((iVar3 != 0) && (bVar2 == 1)) {
+@@ -18497,8 +18497,8 @@
+   
+   Init_Car_Cluts();
+   Create_Object((undefined4 *)(&car_object + _current_player_car * 0x38),
+-                *(int *)(_level_data + 0x44));
+-  Create_Object((undefined4 *)(_current_player_car * 0x38 + 0x781434),*(int *)(_level_data + 0x40));
++                *(int *)((int)_level_data + 0x44));
++  Create_Object((undefined4 *)(_current_player_car * 0x38 + 0x781434),*(int *)((int)_level_data + 0x40));
+   FUN_0043b39c(_current_player_car,_current_player_car,0);
+   iVar3 = 0;
+   if (0 < num_cars) {
+@@ -18518,8 +18518,8 @@
+       iVar1 = _current_player_car;
+       *(undefined2 *)(iVar2 + 0x77d210) = 0;
+       if (iVar3 != iVar1) {
+-        Create_Object((undefined4 *)(&car_object + iVar3 * 0x38),*(int *)(_level_data + 0x3c));
+-        Create_Object(puVar5,*(int *)(_level_data + 0x40));
++        Create_Object((undefined4 *)(&car_object + iVar3 * 0x38),*(int *)((int)_level_data + 0x3c));
++        Create_Object(puVar5,*(int *)((int)_level_data + 0x40));
+         FUN_0043b39c(iVar3,iVar3,1);
+         FUN_0043b39c(iVar3,iVar3,2);
+       }
+@@ -18533,7 +18533,7 @@
+     puVar5 = (undefined4 *)&car_vertices;
+     do {
+       if (iVar3 != _current_player_car) {
+-        puVar4 = *(undefined4 **)(*(int *)(_level_data + 0x40) + 0x20);
++        puVar4 = *(undefined4 **)(*(int *)((int)_level_data + 0x40) + 0x20);
+         puVar6 = puVar5;
+         for (iVar2 = 0xcc; iVar2 != 0; iVar2 = iVar2 + -1) {
+           *puVar6 = *puVar4;
+@@ -18577,8 +18577,8 @@
+ void Init_Wild_Bill(void)
+ 
+ {
+-  Create_Object((undefined4 *)0x781f6c,*(int *)(_level_data + 0x54));
+-  Create_Object((undefined4 *)&cigar_object,*(int *)(_level_data + 0x58));
++  Create_Object((undefined4 *)0x781f6c,*(int *)((int)_level_data + 0x54));
++  Create_Object((undefined4 *)&cigar_object,*(int *)((int)_level_data + 0x58));
+   return;
+ }
+ 
+@@ -18621,12 +18621,12 @@
+     *(int *)(iVar1 + 0x781988) = local_1c;
+     *(undefined4 *)(iVar1 + 0x78198c) = 0xffffffff;
+     if (local_18 == 0) {
+-      Create_Object((undefined4 *)&coaster_car_object,*(int *)(_level_data + 0x54));
++      Create_Object((undefined4 *)&coaster_car_object,*(int *)((int)_level_data + 0x54));
+       *(undefined4 *)(iVar1 + 0x781984) = 0;
+       *(undefined4 *)(iVar1 + 0x78198c) = 0xffffffff;
+     }
+     else {
+-      Create_Object(local_14,*(int *)(_level_data + 0x58));
++      Create_Object(local_14,*(int *)((int)_level_data + 0x58));
+     }
+     iVar1 = iVar1 + 0x50;
+     local_14 = local_14 + 7;
+@@ -19732,7 +19732,7 @@
+   }
+   local_64 = 0x783eb8;
+   local_5c = 0x783f58;
+-  Load_Sprite_Info(*(undefined4 **)(_level_data + 0xc));
++  Load_Sprite_Info(*(undefined4 **)((int)_level_data + 0xc));
+   local_4c = 0x7840e8;
+   local_44 = 0x7837d8;
+   local_6c = 0x784098;
+@@ -21349,14 +21349,14 @@
+ void Init_Sky(void)
+ 
+ {
+-  _sky_shape1 = *(int *)(_level_data + 0x1c);
+-  _sky_shape2 = *(int *)(_level_data + 0x20);
+-  _sky_shape3 = *(int *)(_level_data + 0x24);
+-  _sky_shape4 = *(int *)(_level_data + 0x28);
+-  _sky_shape5 = *(int *)(_level_data + 0x2c);
+-  _sky_shape6 = *(int *)(_level_data + 0x30);
+-  _sky_shape7 = *(int *)(_level_data + 0x34);
+-  _sky_shape8 = *(int *)(_level_data + 0x38);
++  _sky_shape1 = *(int *)((int)_level_data + 0x1c);
++  _sky_shape2 = *(int *)((int)_level_data + 0x20);
++  _sky_shape3 = *(int *)((int)_level_data + 0x24);
++  _sky_shape4 = *(int *)((int)_level_data + 0x28);
++  _sky_shape5 = *(int *)((int)_level_data + 0x2c);
++  _sky_shape6 = *(int *)((int)_level_data + 0x30);
++  _sky_shape7 = *(int *)((int)_level_data + 0x34);
++  _sky_shape8 = *(int *)((int)_level_data + 0x38);
+   Create_Object((undefined4 *)&sky_object,_sky_shape1);
+   Create_Object((undefined4 *)0x78a18c,_sky_shape2);
+   Create_Object((undefined4 *)0x78a1a8,_sky_shape3);
+@@ -23794,10 +23794,10 @@
+       uVar1 = uVar1 + 1;
+     } while (uVar1 < num_cars);
+   }
+-  Create_Object((undefined4 *)&wheel_object,*(int *)(_level_data + 0x14));
+-  Create_Object((undefined4 *)0x78d6ec,*(int *)(_level_data + 0x18));
+-  Create_Object((undefined4 *)0x78d708,*(int *)(_level_data + 0x14));
+-  Create_Object((undefined4 *)0x78d724,*(int *)(_level_data + 0x18));
++  Create_Object((undefined4 *)&wheel_object,*(int *)((int)_level_data + 0x14));
++  Create_Object((undefined4 *)0x78d6ec,*(int *)((int)_level_data + 0x18));
++  Create_Object((undefined4 *)0x78d708,*(int *)((int)_level_data + 0x14));
++  Create_Object((undefined4 *)0x78d724,*(int *)((int)_level_data + 0x18));
+   return;
+ }
+ 
+@@ -32753,8 +32753,8 @@
+   uint local_18;
+   ushort *local_14;
+   
+-  local_14 = (ushort *)(*(int **)(_level_data + 0x10) + 1);
+-  iVar1 = **(int **)(_level_data + 0x10);
++  local_14 = (ushort *)(*(int **)((int)_level_data + 0x10) + 1);
++  iVar1 = **(int **)((int)_level_data + 0x10);
+   local_30 = 0;
+   if (0 < iVar1) {
+     do {
+@@ -32906,7 +32906,7 @@
+   byte local_820 [2048];
+   char local_20 [20];
+   
+-  FUN_00420080(*(int *)(_level_data + 0x10) + 4);
++  FUN_00420080(*(int *)((int)_level_data + 0x10) + 4);
+   Modify_TDF();
+   FUN_004568ee(local_20,s_LEV_X_LEVEL_PAL_0046cf94,_current_level);
+   File_Load(local_20,local_820);
+@@ -36540,21 +36540,21 @@
+   Duplicate_Font(0,3,s_CFONT_0046d494);
+   Duplicate_Font(1,4,s_CFONT2_0046d49c);
+   Duplicate_Font(1,5,s_CFONT2A_0046d4a4);
+-  Create_Object((undefined4 *)0x940130,*(int *)(_level_data + 0x54));
+-  Create_Object((undefined4 *)0x940018,*(int *)(_level_data + 0x58));
+-  Create_Object((undefined4 *)&dpadbuttons_object,*(int *)(_level_data + 0x5c));
+-  Create_Object((undefined4 *)&dpadlabels_object,*(int *)(_level_data + 0x60));
+-  Create_Object((undefined4 *)&negleft_object,*(int *)(_level_data + 100));
+-  Create_Object((undefined4 *)0x9400a4,*(int *)(_level_data + 0x68));
+-  Create_Object((undefined4 *)&negbut1_object,*(int *)(_level_data + 0x3c));
+-  Create_Object((undefined4 *)&negbut2_object,*(int *)(_level_data + 0x40));
+-  Create_Object((undefined4 *)&negbut3_object,*(int *)(_level_data + 0x44));
+-  Create_Object((undefined4 *)&madjoy_object,*(int *)(_level_data + 0x1c));
+-  Create_Object((undefined4 *)&madbut_object,*(int *)(_level_data + 0x20));
+-  Create_Object((undefined4 *)&madbase_object,*(int *)(_level_data + 0x24));
+-  Create_Object((undefined4 *)0x94014c,*(int *)(_level_data + 0x28));
+-  Create_Object((undefined4 *)&carselect_object,*(int *)(_level_data + 0x6c));
+-  Create_Object((undefined4 *)&track_object,*(int *)(_level_data + 0x70));
++  Create_Object((undefined4 *)0x940130,*(int *)((int)_level_data + 0x54));
++  Create_Object((undefined4 *)0x940018,*(int *)((int)_level_data + 0x58));
++  Create_Object((undefined4 *)&dpadbuttons_object,*(int *)((int)_level_data + 0x5c));
++  Create_Object((undefined4 *)&dpadlabels_object,*(int *)((int)_level_data + 0x60));
++  Create_Object((undefined4 *)&negleft_object,*(int *)((int)_level_data + 100));
++  Create_Object((undefined4 *)0x9400a4,*(int *)((int)_level_data + 0x68));
++  Create_Object((undefined4 *)&negbut1_object,*(int *)((int)_level_data + 0x3c));
++  Create_Object((undefined4 *)&negbut2_object,*(int *)((int)_level_data + 0x40));
++  Create_Object((undefined4 *)&negbut3_object,*(int *)((int)_level_data + 0x44));
++  Create_Object((undefined4 *)&madjoy_object,*(int *)((int)_level_data + 0x1c));
++  Create_Object((undefined4 *)&madbut_object,*(int *)((int)_level_data + 0x20));
++  Create_Object((undefined4 *)&madbase_object,*(int *)((int)_level_data + 0x24));
++  Create_Object((undefined4 *)0x94014c,*(int *)((int)_level_data + 0x28));
++  Create_Object((undefined4 *)&carselect_object,*(int *)((int)_level_data + 0x6c));
++  Create_Object((undefined4 *)&track_object,*(int *)((int)_level_data + 0x70));
+   FUN_004204d0((short *)0x9401dc,(int *)&DAT_0046996c);
+   FUN_00420708(local_58,&local_38,0xc);
+   FUN_0044b730();
+@@ -37902,7 +37902,7 @@
+   Duplicate_Font(1,4,s_CFONT2_0046d5d0);
+   Duplicate_Font(1,5,s_CFONT2A_0046d5d8);
+   Setup_Font(s_FONT3_0046d5e0,2,1);
+-  Create_Object((undefined4 *)0x940130,*(int *)(_level_data + 0x54));
++  Create_Object((undefined4 *)0x940130,*(int *)((int)_level_data + 0x54));
+   FUN_004204d0((short *)0x9401dc,(int *)&DAT_0046996c);
+   FUN_00420708(local_58,&local_38,0xc);
+   FUN_0044b730();

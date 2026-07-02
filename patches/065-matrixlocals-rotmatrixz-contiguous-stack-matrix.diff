@@ -1,0 +1,49 @@
+MATRIXLOCALS RotMatrixZ contiguous stack matrix
+
+FIX MATRIXLOCALS (scattered-locals class): the GTE matrix builders (RotMatrixX/Y/Z/YXZ,
+VectorNormalSS) copy the source 3x3 matrix into a CONTIGUOUS stack buffer via a pointer walk
+(`psVar6 = asStack_44; for(N){ *(u32*)psVar6 = ...; psVar6+=2 }`), then read it back by named
+element. Ghidra split that contiguous buffer into a small array + separate shorts (e.g. RotMatrixZ:
+`asStack_44[4]` + local_3c + sStack_3a). clang lays the separate locals anywhere, so the pointer
+copy OVERFLOWS the small array and clobbers adjacent frame slots (param_2 spill / return addr) ->
+`*param_2` writes to a wild addr (eax=0x4) -> crash in Init_Debris_->RotMatrixZ. Fix per-function:
+enlarge the array to hold the whole matrix and alias the split shorts to their true slots. (Only
+RotMatrixZ wired here; the sibling matrix builders have different splits and need the same.)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -4300,9 +4300,7 @@
+   int iVar4;
+   short *psVar5;
+   short *psVar6;
+-  short asStack_44 [4];
+-  short local_3c;
+-  short sStack_3a;
++  short asStack_44 [16];
+   
+   iVar1 = rcos(param_1);
+   iVar2 = rsin(param_1);
+@@ -4317,19 +4315,19 @@
+   iVar3 = asStack_44[0] * iVar1 - asStack_44[3] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   *param_2 = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = asStack_44[1] * iVar1 - local_3c * iVar2;
++  iVar3 = asStack_44[1] * iVar1 - asStack_44[4] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[1] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = asStack_44[2] * iVar1 - sStack_3a * iVar2;
++  iVar3 = asStack_44[2] * iVar1 - asStack_44[5] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[2] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+   iVar3 = iVar2 * asStack_44[0] + asStack_44[3] * iVar1;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[3] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar3 = local_3c * iVar1 + asStack_44[1] * iVar2;
++  iVar3 = asStack_44[4] * iVar1 + asStack_44[1] * iVar2;
+   iVar4 = iVar3 >> 0x1f;
+   param_2[4] = (short)((int)((iVar3 + iVar4 * -0x1000) - (uint)(iVar4 << 0xb < 0)) >> 0xc);
+-  iVar1 = sStack_3a * iVar1 + asStack_44[2] * iVar2;
++  iVar1 = asStack_44[5] * iVar1 + asStack_44[2] * iVar2;
+   iVar2 = iVar1 >> 0x1f;
+   param_2[5] = (short)((int)((iVar1 + iVar2 * -0x1000) - (uint)(iVar2 << 0xb < 0)) >> 0xc);
+   return;

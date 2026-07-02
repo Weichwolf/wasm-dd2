@@ -1,0 +1,15 @@
+P:wm b2
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11882,7 +11882,7 @@
+       *(short *)(uintptr_t)0x462fa8 = (short)((local_14 * -0x1000) / (int)uVar4);
+       *(short *)(uintptr_t)0x462faa = (short)(-(local_14 * iVar2) / (int)uVar4);
+       *(short *)(uintptr_t)0x462fac = (short)uVar4;
+-      _DAT_00462fb2 = (short)iVar2;
++      *(short *)(uintptr_t)0x462fb2 = (short)iVar2;
+       _DAT_00462fb4 = (undefined2)iVar3;
+       _DAT_0075421e = 0;
+       _DAT_00754220 = 0;

@@ -1,0 +1,51 @@
+AJ:Map_Height edge-Y divisor
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -16601,7 +16601,7 @@
+           piVar11 = (int *)((iVar5 + 1) * 0xc + iVar9);
+           param_1[1] = ((*(int *)(pbVar10 + 6) >> 0x10) * (*piVar11 - *param_1) +
+                        (*(int *)(pbVar10 + 10) >> 0x10) * (piVar11[2] - param_1[2])) /
+-                       (*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
++                       _DZ(*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
+           return;
+         }
+         param_1[1] = ((*piVar1 - *param_1) * (*(int *)pbVar10 >> 0x10) +
+@@ -16613,7 +16613,7 @@
+         piVar11 = (int *)((iVar5 + 1) * 0xc + iVar9);
+         param_1[1] = ((*piVar11 - *param_1) * (*(int *)(pbVar10 + 6) >> 0x10) +
+                      (*(int *)(pbVar10 + 10) >> 0x10) * (piVar11[2] - param_1[2])) /
+-                     (*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
++                     _DZ(*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
+         return;
+       case 4:
+       case 6:
+@@ -16627,7 +16627,7 @@
+         piVar11 = (int *)((iVar5 + 1) * 0xc + iVar9);
+         param_1[1] = ((*piVar11 - *param_1) * (*(int *)(pbVar10 + 6) >> 0x10) +
+                      (piVar11[2] - param_1[2]) * (*(int *)(pbVar10 + 10) >> 0x10)) /
+-                     (*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
++                     _DZ(*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
+         return;
+       case 5:
+       case 6:
+@@ -16645,7 +16645,7 @@
+         piVar11 = (int *)((iVar5 + 1) * 0xc + iVar9);
+         param_1[1] = ((*(int *)(pbVar10 + 6) >> 0x10) * (*piVar11 - *param_1) +
+                      (piVar11[2] - param_1[2]) * (*(int *)(pbVar10 + 10) >> 0x10)) /
+-                     (*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
++                     _DZ(*(int *)(pbVar10 + 8) >> 0x10) + piVar11[1];
+         return;
+       }
+       param_1[1] = ((*piVar1 - *param_1) * (*(int *)pbVar10 >> 0x10) +
+@@ -16666,7 +16666,7 @@
+       piVar11 = (int *)((iVar5 + 1) * 0xc + iVar9);
+       iVar4 = ((*(int *)(pbVar10 + 6) >> 0x10) * (*piVar11 - *param_1) +
+               (piVar11[2] - param_1[2]) * (*(int *)(pbVar10 + 10) >> 0x10)) /
+-              (*(int *)(pbVar10 + 8) >> 0x10);
++              _DZ(*(int *)(pbVar10 + 8) >> 0x10);
+       iVar9 = piVar11[1];
+     }
+     param_1[1] = iVar4 + iVar9;

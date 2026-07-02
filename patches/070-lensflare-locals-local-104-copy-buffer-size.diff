@@ -1,0 +1,19 @@
+LENSFLARE-LOCALS local_104 copy-buffer size
+
+FIX LENSFLARE-LOCALS (scattered-locals overflow): Init_LensFlare copies 0x30 u32 (192 bytes) of
+lens-flare template data from &DAT_0042db60 into a contiguous stack buffer via a pointer walk, but
+Ghidra sized the destination as `short local_104 [12]` (24 bytes). The copy overruns 168 bytes,
+clobbering the spilled loop pointer psVar5 -> next store writes to 0x4 -> crash. Enlarge to [96]
+(exactly 192 bytes; ends at ebp-0x44, just before the separate iStack_40 so no overlap).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -19482,7 +19482,7 @@
+   undefined1 *puVar3;
+   undefined4 *puVar4;
+   short *psVar5;
+-  short local_104 [12];
++  short local_104 [96];
+   short local_ec [12];
+   short local_d4 [12];
+   short local_bc [12];

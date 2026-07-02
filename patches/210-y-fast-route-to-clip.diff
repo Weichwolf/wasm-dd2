@@ -1,0 +1,17 @@
+Y:fast-route-to-clip
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1354,7 +1354,9 @@
+         dth_u1 = DAT_0048001c * iVar6 + dth_u1;
+         dth_v1 = DAT_00480034 * iVar6 + dth_v1;
+       }
+-      if (dth_clip == 0) {
++      { int _hh=dth_y2-dth_y1, _a=dth_x1>>8, _b=dth_x2>>8, _c=(dth_x1+dth_delta1*_hh)>>8, _d=(dth_x2+dth_delta2*_hh)>>8;
++        _xsafe = (_a>=0 && _a<=poly_clipx && _b>=0 && _b<=poly_clipx && _c>=0 && _c<=poly_clipx && _d>=0 && _d<=poly_clipx); }
++      if (dth_clip == 0 && _xsafe) {
+         do {
+           iVar6 = DAT_00480038;
+           iVar4 = (dth_x2 >> 8) - (dth_x1 >> 8);

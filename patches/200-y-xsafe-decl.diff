@@ -1,0 +1,20 @@
+Y:xsafe-decl
+
+FIX Y (WASM-safety, faithful-direction): draw_text_half_trans's FAST path (dth_clip==0) writes spans with NO
+X-clamp. The x86 tolerates the benign negative-X / >clipx overrun (harmless writes outside _screenbuffer), but
+WASM bounds-checks and traps. The clip-flag (FUN_00411654) only flags Y<0 / X>poly_clipx, NOT X<0 (left) — so
+off-LEFT track prims (199/765 verts off-left, 166 at the GTE -1024 clamp) fall into the FAST path. Route any prim
+whose X-span leaves [0,poly_clipx] (at the top OR bottom scanline) to the existing faithful CLIP path (else branch),
+which clamps X AND advances the U/V accordingly. Replaces the prior skip-band-aid: the clip path DRAWS the on-screen
+part (so the near track renders) instead of skipping it. On-screen prims keep the FAST path unchanged.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1308,6 +1308,7 @@
+ void draw_text_half_trans(void)
+ 
+ {
++  int _xsafe;
+   undefined1 *puVar1;
+   uint uVar2;
+   uint uVar3;

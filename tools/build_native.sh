@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-/tmp/dd2_native}"
 ASAN="${ASAN:--fsanitize=address}"
 
-python3 "$ROOT/tools/transpile.py" >/dev/null
+bash "$ROOT/tools/patch.sh" >/dev/null
 
 # 32-bit, no-pie (so the 0x400000 image region is free below the 0x08048000 text base),
 # match wasm32's 32-bit pointer model. ASan finds the OOB; -g for line-level backtrace.

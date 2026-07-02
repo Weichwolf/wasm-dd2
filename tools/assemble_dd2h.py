@@ -5,7 +5,7 @@ Part of the dd2.exe->dd2h re-base. Steps:
      MSVC CRT functions (>=0x45a000, or known libc names, or x87-intrinsic bodies) -- libc/compat provide them.
   2. Prepend: includes + GTE register-file globals (dd2h addrs) + forward declarations (from the decomp's
      function markers, excluding compat/libc names).
-Output: re_out/dd2.c  (then transpile applies the fixes as usual).
+Output: re_out/dd2.c  (then `make patch` applies the patches/ series onto it).
 """
 import re, sys
 DECOMP = sys.argv[1] if len(sys.argv) > 1 else "re_out/dd2_decomp.c"
@@ -107,7 +107,7 @@ prologue = ('#include "ghidra_compat.h"\n#include "dd2_symbols.h"\n#include <std
 # FUN_00414016/99, RotTrans...) pass their in/out vectors in esi/edi/ebx/ebp. Ghidra models only stack
 # args, so it emits bare `short *unaff_ESI;` (uninitialised local -> null deref). Bind each dropped
 # register to the emulated-register global (_g_esi/_g_edi/_g_ebx/_g_ebp) the caller-chain sets, exactly
-# as the dd2.exe overlay did. transpile.py's GTE wiring (FIX Q/N, GTERPT...) then anchors on this form.
+# as the dd2.exe overlay did. The GTE wiring patches (FIX Q/N, GTERPT...) then anchor on this form.
 def _conv_unaff(m):
     ind, typ, reg = m.group(1), m.group(2), m.group(3)
     g = {'ESI':'_g_esi','EDI':'_g_edi','EBX':'_g_ebx','EBP':'_g_ebp'}[reg]
@@ -115,7 +115,7 @@ def _conv_unaff(m):
     return "%s%sunaff_%s=(%s)(uintptr_t)%s;" % (ind, typ, reg, cast, g)
 gamecode = re.sub(r'(?m)^(\s*)([\w ]+\*? *)unaff_(ESI|EDI|EBX|EBP);$', _conv_unaff, gamecode)
 # in_EAX: the dropped EAX input register (e.g. FUN_00456d27 dword-memset takes its dest in EAX). Bind
-# to the emulated-register global _g_eax; callers set _g_eax before the call (transpile.py wires them).
+# to the emulated-register global _g_eax; callers set _g_eax before the call (patches wire them).
 def _conv_ineax(m):
     ind, typ = m.group(1), m.group(2)
     if typ.split() and typ.split()[0] in ('return',):   # `return in_EAX;` is a statement, not a decl

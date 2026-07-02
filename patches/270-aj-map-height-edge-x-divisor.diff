@@ -1,0 +1,50 @@
+AJ:Map_Height edge-X divisor
+
+FIX AJ (Map_Height edge-divisor WASM-safety): the scanline edge interpolation in Map_Height
+(dd2.c:12289..) divides by an edge X/Y screen-delta: (*(int*)(pbVar10+2)>>0x10) and
+(*(int*)(pbVar10+8)>>0x10). For a degenerate (zero-extent) projected edge the delta is 0;
+x86 silently never lands the front-end's edge delta exactly on 0, but WASM TRAPS on integer
+divide-by-zero. Faithful guard: den==0 -> 1 (only changes behaviour when the divisor is already
+0, i.e. unreachable on real geometry; no effect on the verified race tracks). The '+ piVarX[1]'
+adds to the QUOTIENT (C: '/' binds before '+'), so wrapping the divisor preserves precedence.
+All 9 patterns are divisors, all inside Map_Height. This unblocks the front-end /0; race sweep
+with the guard = 10/11 (only the L7 documented residual), no regression. [[dd2-frontend-nav-input]]
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -16606,7 +16606,7 @@
+         }
+         param_1[1] = ((*piVar1 - *param_1) * (*(int *)pbVar10 >> 0x10) +
+                      (*(int *)(pbVar10 + 4) >> 0x10) * (piVar1[2] - param_1[2])) /
+-                     (*(int *)(pbVar10 + 2) >> 0x10) + piVar1[1];
++                     _DZ(*(int *)(pbVar10 + 2) >> 0x10) + piVar1[1];
+         return;
+       case 1:
+       case 3:
+@@ -16635,7 +16635,7 @@
+         piVar11 = (int *)(iVar7 * 0xc + iVar9);
+         param_1[1] = ((*(int *)pbVar10 >> 0x10) * (*piVar11 - *param_1) +
+                      (piVar11[2] - param_1[2]) * (*(int *)(pbVar10 + 4) >> 0x10)) /
+-                     (*(int *)(pbVar10 + 2) >> 0x10) + piVar11[1];
++                     _DZ(*(int *)(pbVar10 + 2) >> 0x10) + piVar11[1];
+         return;
+       }
+       piVar11 = (int *)(iVar9 + iVar5 * 0xc);
+@@ -16650,7 +16650,7 @@
+       }
+       param_1[1] = ((*piVar1 - *param_1) * (*(int *)pbVar10 >> 0x10) +
+                    (piVar1[2] - param_1[2]) * (*(int *)(pbVar10 + 4) >> 0x10)) /
+-                   (*(int *)(pbVar10 + 2) >> 0x10) + piVar1[1];
++                   _DZ(*(int *)(pbVar10 + 2) >> 0x10) + piVar1[1];
+       return;
+     }
+     piVar11 = (int *)(iVar9 + iVar5 * 0xc);
+@@ -16659,7 +16659,7 @@
+         (param_1[2] - piVar1[5]) * (*piVar11 - piVar1[3]) < 0) {
+       iVar4 = ((*(int *)pbVar10 >> 0x10) * (*piVar1 - *param_1) +
+               (piVar1[2] - param_1[2]) * (*(int *)(pbVar10 + 4) >> 0x10)) /
+-              (*(int *)(pbVar10 + 2) >> 0x10);
++              _DZ(*(int *)(pbVar10 + 2) >> 0x10);
+       iVar9 = piVar1[1];
+     }
+     else {

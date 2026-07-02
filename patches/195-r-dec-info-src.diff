@@ -1,0 +1,90 @@
+R:dec_info src
+
+FIX R (dual-symbol): Decrunch_Object_Block writes the decompress src to the dead C-global _dec_info
+instead of the image slot dec_info (0x750f48) that Decompress reads.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -13505,59 +13505,59 @@
+   bool bVar1;
+   
+   bVar1 = (param_2 & 0x80000000) == 0;
+-  if (param_1 == padmap) {
++  if (param_1 == (unsigned char)(padmap)) {
+     DAT_0046303f = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_0046302d) {
++  if (param_1 == (unsigned char)(DAT_0046302d)) {
+     _pad_start = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_0046302e) {
++  if (param_1 == (unsigned char)(DAT_0046302e)) {
+     _pad_lup = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_0046302f) {
++  if (param_1 == (unsigned char)(DAT_0046302f)) {
+     DAT_00463046 = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463030) {
++  if (param_1 == (unsigned char)(DAT_00463030)) {
+     _pad_ldown = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463031) {
++  if (param_1 == (unsigned char)(DAT_00463031)) {
+     _pad_lleft = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463034) {
++  if (param_1 == (unsigned char)(DAT_00463034)) {
+     DAT_00463047 = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463032) {
++  if (param_1 == (unsigned char)(DAT_00463032)) {
+     DAT_00463048 = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463035) {
++  if (param_1 == (unsigned char)(DAT_00463035)) {
+     DAT_00463049 = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463033) {
++  if (param_1 == (unsigned char)(DAT_00463033)) {
+     DAT_0046304a = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463036) {
++  if (param_1 == (unsigned char)(DAT_00463036)) {
+     _pad_rup = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463037) {
++  if (param_1 == (unsigned char)(DAT_00463037)) {
+     DAT_0046304e = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463038) {
++  if (param_1 == (unsigned char)(DAT_00463038)) {
+     _pad_rdown = bVar1;
+     return;
+   }
+-  if (param_1 == DAT_00463039) {
++  if (param_1 == (unsigned char)(DAT_00463039)) {
+     _pad_rleft = bVar1;
+   }
+   return;
+@@ -20858,7 +20858,7 @@
+     Setup_Object_Block(*(undefined4 **)(&active_object_blocks + _DAT_0078a15c * 4),_DAT_0078a15c);
+     *(int *)(&active_block_numbers + _DAT_0078a15c * 4) = _decrunch_block;
+   }
+-  _dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);
++  dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);
+   _DAT_00789354 = 0x400;
+   _DAT_00789356 = 0;
+   _decrunch_flag = 1;

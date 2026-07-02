@@ -1,0 +1,60 @@
+EAXARG-456d27 scene-header fill dest=0x7892a0
+
+FIX EAXARG-456d27 (dropped EAX register arg): FUN_00456d27 is a __fastcall dword-memset that takes
+its DEST in EAX (bound to _g_eax in assemble_dd2h.py). Recovered from dd2h.exe disasm: every
+`FUN_00456d27(0xe,0xffffffff)` call sets `mov eax,0x7892a0` (fill 14 dwords of the scene object
+header @0x7892a0 with -1); the `FUN_00456d27(2,0)` call sets `mov eax,0x939b80`. Set _g_eax before
+each via the comma operator (faithful: same dest the original loads into EAX). Without it in_EAX is
+an uninitialised wild ptr -> crash in Init_Scene.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -20546,7 +20546,7 @@
+     *(undefined4 **)(&active_object_blocks + iVar2) = puVar1;
+     iVar2 = iVar3;
+   } while (iVar3 != 0x38);
+-  FUN_00456d27(0xe,0xffffffff);
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
+   switch(_current_level) {
+   case 1:
+     Init_Wild_Bill();
+@@ -21104,7 +21104,7 @@
+   int iVar2;
+   int *piVar3;
+   
+-  FUN_00456d27(0xe,0xffffffff);
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
+   iVar2 = 0;
+   iVar1 = 0;
+   do {
+@@ -21136,7 +21136,7 @@
+   int local_4c [14];
+   
+   if (7 < _current_level) {
+-    FUN_00456d27(0xe,0xffffffff);
++    (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
+     iVar2 = 0;
+     iVar3 = 0;
+     do {
+@@ -21150,8 +21150,8 @@
+     return;
+   }
+   iVar3 = *(int *)(_camera_fd_pt + 0x14);
+-  FUN_00456d27(0xe,0xffffffff);
+-  FUN_00456d27(0xe,0xffffffff);
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
+   iVar2 = 0;
+   do {
+     iVar6 = _strip_data;
+@@ -21243,8 +21243,8 @@
+   int iStack_14;
+   
+   iVar4 = *(int *)(_camera_fd_pt + 0x14);
+-  FUN_00456d27(0xe,0xffffffff);
+-  FUN_00456d27(0xe,0xffffffff);
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
++  (_g_eax=0x7892a0, FUN_00456d27(0xe,0xffffffff));
+   iVar3 = 0;
+   do {
+     iVar1 = _strip_data;

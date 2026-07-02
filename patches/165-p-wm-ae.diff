@@ -1,0 +1,15 @@
+P:wm ae
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11888,7 +11888,7 @@
+       _DAT_00754220 = 0;
+       _DAT_00754222 = 0;
+       _DAT_00754228 = 0;
+-      _DAT_00462fae = (undefined2)(-(iVar2 * iVar3) / (int)uVar4);
++      *(short *)(uintptr_t)0x462fae = (short)(-(iVar2 * iVar3) / (int)uVar4);
+       _tilt_sprite_matrix = 0x1000;
+       _DAT_00754226 = -_DAT_00462fb2;
+       _DAT_00462fb0 = (undefined2)local_14;

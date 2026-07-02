@@ -1,0 +1,38 @@
+TEST:demomodelevel-inject
+
+Inject DemoModeLevel: faithful copy of DemoMode@0x44b4e0 with _current_level forced (DD2_LEVEL/argv).
+The WASM runtime must run the SAME crash-free attract path as native_main.c (direct Play_Game = the
+old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks level, Order_Cars, Play_Game.
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -28,6 +28,29 @@
+ extern int Play_Game(void);
+ extern void Set_Draw_Mode(int);
+ extern int _current_level;
++extern int DemoMode(void); extern void Setup_Pad(int); extern void Order_Cars(void); extern int rand(void);
++extern char* getenv(const char*); extern int atoi(const char*);
++static int DemoModeLevel(int lvl){
++  /* Seed the keyboard pad type (0x71c051=1) BEFORE Setup_Pad records _recorded_pad_type: the
++     cold level-launcher skips the front-end that would establish it, so it defaults to 0 (BSS)
++     while FUN_00422c74 sets 0x71c051=1 (keyboard) every race frame -> DAT_0071c051 != _recorded_pad_type
++     -> spurious Pause_Mode on the live (demo_mode=0) path. Harmless for demo_mode=1 (pause gated on
++     demo_mode==0). 0x46303e (input source) is already 0=keyboard by BSS. */
++  *(unsigned char*)0x71c051 = 1;
++  Setup_Pad(1);
++  *(int*)0x905a1c=*(int*)0x4673f4; *(int*)0x905a18=*(int*)0x4673f8;
++  /* demo_mode=1 (recorded-pad attract) by default; DD2_LIVE -> 0 = live keyboard input.
++     The demo_mode=0 WASM 'table index out of bounds' trap is FIXED (DRAWPRIM-GUARD routes
++     DrawPrim through _ot_dispatch); the browser interactive build now runs the live race. */
++  *(int*)0x46385c = getenv("DD2_LIVE") ? 0 : 1;
++  *(int*)0x905a14=*(int*)0x467400; *(int*)0x467400=2;
++  *(int*)0x905a10=*(int*)0x46765c; *(int*)0x46765c=0x14;
++  *(int*)0x4673f8=0; *(int*)0x4673f4=0;
++  { char* le=getenv("DD2_LEVEL"); int el=le?atoi(le):0; int iVar1=rand();
++    _current_level = el ? el : (lvl ? lvl : (iVar1%10+1)); }
++  Order_Cars();
++  return Play_Game();
++}
+ int main(int argc, char** argv){
+     dd2_load_image("dd2_image.bin");
+     dd2_relocate();

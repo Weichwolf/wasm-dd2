@@ -1,0 +1,84 @@
+GUARD AH OT-insert wild puVar7 (puStack_14, 8sp x6)
+
+GUARD AH (OT-insert wild puVar7, same class as GUARD AE/AF/AG): 5 sibling rasterizer functions
+(draw_face_3pt/4pt/4pt_text and co.) compute an ordering-table slot pointer `puVar7` from `__otz`,
+itself derived from vertex data reachable via the same corrupted-geometry chain as the other
+GUARD fixes (confirmed: native L2 crashes here, `draw_face_4pt_text` @ build/dd2.c:46751,
+dereferencing a wild puVar7). Guard the OT linked-list splice (read old head, write new head,
+link old head to new node) at its point of use: skip it (don't insert this primitive into the
+OT) if puVar7 falls outside the valid image+heap range. Only fires on already-corrupt state.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -7310,9 +7310,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -7465,9 +7467,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -8890,9 +8894,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+         __rgb0 = (uint)*(byte *)(piStack_18 + 1);
+         __vr3 = __vr2;
+         _DAT_0074c4f4 = _DAT_0074c4e4;
+@@ -9425,9 +9431,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -9503,9 +9511,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -9581,9 +9591,11 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
++        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
++        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;

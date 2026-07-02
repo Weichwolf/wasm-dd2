@@ -1,0 +1,267 @@
+GPOLY-BYTEOFF poly-handler _gpoly+N (N>=4) byte offsets
+
+FIX GPOLY-BYTEOFF (same Ghidra pointer-scaling class as LEVDATA): _gpoly is typed `short*`, so the
+poly-command RASTERIZER handlers' `_gpoly + N` scale N by 2. But the poly records are byte-addressed:
+each textured-quad record is 0x14 (20) bytes (GPU primitive `RR GG BB 2c` header repeats every 20
+bytes in the level data), and the handlers advance `_gpoly = _gpoly + 0x14` -- which as short* is 40
+bytes = DOUBLE the record -> after the first command the walk lands mid-record on garbage (count=787,
+cmd=153) -> FUN_0041fcac dispatches PTR_LAB[153] (OOB) = wild ptr -> crash in Init_Sky. The field
+reads (+4/+6/+0xc.. = the primitive color/uv/xy) are byte offsets too. The command-WALK in
+FUN_0041fcac uses `_gpoly + 1/2` (byte 2 = cmd, +2 short = 4-byte header) which ARE short-correct and
+must stay. So convert only `_gpoly + N` with N>=4 (the handler record-field/advance offsets) to byte
+arithmetic `(int)_gpoly + N`; leave the walk's N in {1,2,3}.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -6865,11 +6865,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x20;
+     *(undefined1 *)(_gprim2 + 7) = 0x20;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x10;
++    _gpoly = (int)_gpoly + 0x10;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x14;
+     _gprim1 = _gprim1 + 0x14;
+@@ -7147,11 +7147,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x28;
+     *(undefined1 *)(_gprim2 + 7) = 0x28;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x10;
++    _gpoly = (int)_gpoly + 0x10;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x18;
+     _gprim1 = _gprim1 + 0x18;
+@@ -7487,10 +7487,10 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x24;
+-    _gprim1[1] = *(undefined4 *)(_gpoly + 4);
+-    iVar1 = *(int *)(_gpoly + 6) >> 0x10;
++    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);
++    iVar1 = *(int *)((int)_gpoly + 6) >> 0x10;
+     *(undefined2 *)((int)_gprim1 + 0x16) = *(undefined2 *)(_gtexture + iVar1 * 0xc);
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);
+     if (((*(byte *)((int)_gprim1 + 0x17) & 0x80) != 0) &&
+        (*(char *)(__clutspace + 0x800 +
+                  ((int)(uint)(ushort)((*(ushort *)((int)_gprim1 + 0x16) >> 8 & 0x7f) << 8) >> 4) +
+@@ -7514,7 +7514,7 @@
+       puVar3 = (undefined4 *)((int)puVar3 + 1);
+     }
+     puStack_14 = puStack_14 + 8;
+-    _gpoly = _gpoly + 0x14;
++    _gpoly = (int)_gpoly + 0x14;
+     _gprim1 = _gprim1 + 8;
+   }
+   _gprim2 = puStack_14;
+@@ -8140,10 +8140,10 @@
+   local_14 = _gprim2;
+   for (local_18 = 0; local_18 < param_1; local_18 = local_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x2c;
+-    _gprim1[1] = *(undefined4 *)(_gpoly + 4);
+-    iVar1 = *(int *)(_gpoly + 6) >> 0x10;
++    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);
++    iVar1 = *(int *)((int)_gpoly + 6) >> 0x10;
+     *(undefined2 *)((int)_gprim1 + 0x16) = *(undefined2 *)(_gtexture + iVar1 * 0xc);
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);
+     if (((*(byte *)((int)_gprim1 + 0x17) & 0x80) != 0) &&
+        (*(char *)((uint)*(ushort *)((int)_gprim1 + 0xe) * 0x1000 +
+                   ((int)(uint)(ushort)((*(ushort *)((int)_gprim1 + 0x16) >> 8 & 0x7f) << 8) >> 4) +
+@@ -8168,7 +8168,7 @@
+       puVar3 = (undefined4 *)((int)puVar3 + 1);
+     }
+     local_14 = local_14 + 10;
+-    _gpoly = _gpoly + 0x14;
++    _gpoly = (int)_gpoly + 0x14;
+     _gprim1 = _gprim1 + 10;
+   }
+   _gprim2 = local_14;
+@@ -8928,11 +8928,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x30;
+     *(undefined1 *)(_gprim2 + 7) = 0x30;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x18;
++    _gpoly = (int)_gpoly + 0x18;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x1c;
+     _gprim1 = _gprim1 + 0x1c;
+@@ -8954,11 +8954,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x30;
+     *(undefined1 *)(_gprim2 + 7) = 0x30;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x14;
++    _gpoly = (int)_gpoly + 0x14;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x1c;
+     _gprim1 = _gprim1 + 0x1c;
+@@ -9236,11 +9236,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x38;
+     *(undefined1 *)(_gprim2 + 7) = 0x38;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x1c;
++    _gpoly = (int)_gpoly + 0x1c;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x24;
+     _gprim1 = _gprim1 + 0x24;
+@@ -9262,11 +9262,11 @@
+   for (iVar2 = 0; iVar2 < param_1; iVar2 = iVar2 + 1) {
+     *(undefined1 *)(_gprim1 + 7) = 0x38;
+     *(undefined1 *)(_gprim2 + 7) = 0x38;
+-    uVar1 = *(undefined4 *)(_gpoly + 4);
++    uVar1 = *(undefined4 *)((int)_gpoly + 4);
+     *(undefined4 *)(_gprim2 + 4) = uVar1;
+     *(undefined4 *)(_gprim1 + 4) = uVar1;
+     *(undefined1 *)(_gprim2 + 4) = 0;
+-    _gpoly = _gpoly + 0x18;
++    _gpoly = (int)_gpoly + 0x18;
+     *(undefined1 *)(_gprim1 + 4) = *(undefined1 *)(_gprim2 + 4);
+     _gprim2 = _gprim2 + 0x24;
+     _gprim1 = _gprim1 + 0x24;
+@@ -9603,12 +9603,12 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x34;
+-    _gprim1[1] = *(undefined4 *)(_gpoly + 4);
+-    _gprim1[4] = *(undefined4 *)(_gpoly + 8);
+-    _gprim1[7] = *(undefined4 *)(_gpoly + 0xc);
+-    puVar1 = (undefined2 *)(_gtexture + (*(int *)(_gpoly + 0xe) >> 0x10) * 0xc);
++    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);
++    _gprim1[4] = *(undefined4 *)((int)_gpoly + 8);
++    _gprim1[7] = *(undefined4 *)((int)_gpoly + 0xc);
++    puVar1 = (undefined2 *)(_gtexture + (*(int *)((int)_gpoly + 0xe) >> 0x10) * 0xc);
+     *(undefined2 *)((int)_gprim1 + 0x1a) = *puVar1;
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 0x12);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 0x12);
+     *(undefined2 *)(_gprim1 + 3) = puVar1[2];
+     *(undefined2 *)(_gprim1 + 6) = puVar1[3];
+     *(undefined2 *)(_gprim1 + 9) = puVar1[4];
+@@ -9625,7 +9625,7 @@
+       puVar4 = (undefined4 *)((int)puVar4 + 1);
+     }
+     puStack_14 = puStack_14 + 10;
+-    _gpoly = _gpoly + 0x1c;
++    _gpoly = (int)_gpoly + 0x1c;
+     _gprim1 = _gprim1 + 10;
+   }
+   _gprim2 = puStack_14;
+@@ -9650,9 +9650,9 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x34;
+-    puVar1 = (undefined2 *)((*(int *)(_gpoly + 6) >> 0x10) * 0xc + _gtexture);
++    puVar1 = (undefined2 *)((*(int *)((int)_gpoly + 6) >> 0x10) * 0xc + _gtexture);
+     *(undefined2 *)((int)_gprim1 + 0x1a) = *puVar1;
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);
+     *(undefined2 *)(_gprim1 + 3) = puVar1[2];
+     *(undefined2 *)(_gprim1 + 6) = puVar1[3];
+     *(undefined2 *)(_gprim1 + 9) = puVar1[4];
+@@ -9669,7 +9669,7 @@
+       puVar4 = (undefined4 *)((int)puVar4 + 1);
+     }
+     puStack_14 = puStack_14 + 10;
+-    _gpoly = _gpoly + 0x18;
++    _gpoly = (int)_gpoly + 0x18;
+     _gprim1 = _gprim1 + 10;
+   }
+   _gprim2 = puStack_14;
+@@ -10044,13 +10044,13 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x3c;
+-    _gprim1[1] = *(undefined4 *)(_gpoly + 4);
+-    _gprim1[4] = *(undefined4 *)(_gpoly + 8);
+-    _gprim1[7] = *(undefined4 *)(_gpoly + 0xc);
+-    _gprim1[10] = *(undefined4 *)(_gpoly + 0x10);
+-    puVar1 = (undefined2 *)((*(int *)(_gpoly + 0x12) >> 0x10) * 0xc + _gtexture);
++    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);
++    _gprim1[4] = *(undefined4 *)((int)_gpoly + 8);
++    _gprim1[7] = *(undefined4 *)((int)_gpoly + 0xc);
++    _gprim1[10] = *(undefined4 *)((int)_gpoly + 0x10);
++    puVar1 = (undefined2 *)((*(int *)((int)_gpoly + 0x12) >> 0x10) * 0xc + _gtexture);
+     *(undefined2 *)((int)_gprim1 + 0x1a) = *puVar1;
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 0x16);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 0x16);
+     *(undefined2 *)(_gprim1 + 3) = puVar1[2];
+     *(undefined2 *)(_gprim1 + 6) = puVar1[3];
+     *(undefined2 *)(_gprim1 + 9) = puVar1[4];
+@@ -10068,7 +10068,7 @@
+       puVar4 = (undefined4 *)((int)puVar4 + 1);
+     }
+     puStack_14 = puStack_14 + 0xd;
+-    _gpoly = _gpoly + 0x20;
++    _gpoly = (int)_gpoly + 0x20;
+     _gprim1 = _gprim1 + 0xd;
+   }
+   _gprim2 = puStack_14;
+@@ -10093,9 +10093,9 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x3c;
+-    puVar1 = (undefined2 *)((*(int *)(_gpoly + 6) >> 0x10) * 0xc + _gtexture);
++    puVar1 = (undefined2 *)((*(int *)((int)_gpoly + 6) >> 0x10) * 0xc + _gtexture);
+     *(undefined2 *)((int)_gprim1 + 0x1a) = *puVar1;
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);
+     *(undefined2 *)(_gprim1 + 3) = puVar1[2];
+     *(undefined2 *)(_gprim1 + 6) = puVar1[3];
+     *(undefined2 *)(_gprim1 + 9) = puVar1[4];
+@@ -10113,7 +10113,7 @@
+       puVar4 = (undefined4 *)((int)puVar4 + 1);
+     }
+     puStack_14 = puStack_14 + 0xd;
+-    _gpoly = _gpoly + 0x1c;
++    _gpoly = (int)_gpoly + 0x1c;
+     _gprim1 = _gprim1 + 0xd;
+   }
+   _gprim2 = puStack_14;
+@@ -10519,11 +10519,11 @@
+   puStack_14 = _gprim2;
+   for (iStack_18 = 0; iStack_18 < param_1; iStack_18 = iStack_18 + 1) {
+     *(undefined1 *)((int)_gprim1 + 7) = 0x2c;
+-    _gprim1[1] = *(undefined4 *)(_gpoly + 4);
++    _gprim1[1] = *(undefined4 *)((int)_gpoly + 4);
+     *(char *)((int)_gprim1 + 7) = *(char *)((int)_gprim1 + 7) + -0x10;
+-    puVar1 = (ushort *)((*(int *)(_gpoly + 6) >> 0x10) * 0xc + _gtexture);
++    puVar1 = (ushort *)((*(int *)((int)_gpoly + 6) >> 0x10) * 0xc + _gtexture);
+     *(ushort *)((int)_gprim1 + 0x16) = *puVar1 & 0x1f | 0x20;
+-    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)(_gpoly + 10);
++    *(undefined2 *)((int)_gprim1 + 0xe) = *(undefined2 *)((int)_gpoly + 10);
+     *(ushort *)(_gprim1 + 3) = puVar1[2];
+     *(ushort *)(_gprim1 + 5) = puVar1[3];
+     *(ushort *)(_gprim1 + 7) = puVar1[4];
+@@ -10541,7 +10541,7 @@
+       puVar4 = (undefined4 *)((int)puVar4 + 1);
+     }
+     puStack_14 = puStack_14 + 10;
+-    _gpoly = _gpoly + 0x14;
++    _gpoly = (int)_gpoly + 0x14;
+     _gprim1 = _gprim1 + 10;
+   }
+   _gprim2 = puStack_14;

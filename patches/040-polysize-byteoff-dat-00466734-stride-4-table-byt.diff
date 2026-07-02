@@ -1,0 +1,86 @@
+POLYSIZE-BYTEOFF DAT_00466734 stride-4 table byte offsets
+
+FIX POLYSIZE-BYTEOFF (int* stride-4 table): the poly record-size table @0x466734 (int entries
+20/24/32/40.. = bytes-per-poly-type, indexed by (cmd>>2)) is read as `&DAT_00466734 + (cmd>>2)*4`.
+The explicit `*4` is a BYTE stride (4 bytes/int entry), but the int* base scales it x4 -> reads the
+wrong size -> iVar5 = size*count explodes -> car-graphics prim pointer (_prim_buf+iVar5) goes wild
+-> OOB write crash in FUN_0043c618 (Init_Car_Graphics). Byte-address it. Same class as the others.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -26822,8 +26822,8 @@
+           FUN_0043c868(local_20,local_1c,local_14,0x7922e0,local_54);
+           FUN_0043c868(local_20,local_1c,local_14,0x7922e0,local_54);
+         }
+-        local_20 = local_20 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+-        local_1c = local_1c + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
++        local_20 = local_20 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
++        local_1c = local_1c + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+         psVar6 = (short *)((int)psVar5 + uVar8 * iVar7);
+       }
+       local_44 = local_44 + 0x38;
+@@ -26867,8 +26867,8 @@
+           FUN_0043c868(local_24,local_18,&DAT_00466814,0x7922e0,local_58);
+           FUN_0043c868(local_24,local_18,&DAT_00466817,0x7922e0,local_58);
+         }
+-        local_24 = local_24 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+-        local_18 = local_18 + iVar7 * *(int *)(&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
++        local_24 = local_24 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
++        local_18 = local_18 + iVar7 * *(int *)((int)&DAT_00466734 + ((int)(uint)bVar1 >> 2) * 4);
+         psVar6 = (short *)((int)psVar5 + uVar8 * iVar7);
+       }
+       local_48 = local_48 + 0x38;
+@@ -26938,7 +26938,7 @@
+         }
+       }
+       psVar6 = (short *)((int)psVar6 + (int)sVar3 * (uint)bVar1 + 4);
+-      iVar5 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
++      iVar5 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+     }
+   }
+   return;
+@@ -26991,7 +26991,7 @@
+         }
+       }
+     }
+-    iVar5 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
++    iVar5 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+     iVar9 = iVar9 + iVar5;
+     iVar6 = iVar6 + iVar5;
+   }
+@@ -27033,7 +27033,7 @@
+       }
+     }
+     local_14 = (short *)((int)local_14 + (int)sVar3 * (uint)bVar1 + 4);
+-    iVar4 = *(int *)(&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
++    iVar4 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar2 >> 2) * 4) * (int)sVar3;
+     iVar6 = iVar6 + iVar4;
+     iVar7 = iVar7 + iVar4;
+   }
+@@ -27205,7 +27205,7 @@
+       }
+     }
+     psVar7 = (short *)((int)psVar7 + (int)sVar4 * (uint)bVar2 + 4);
+-    iVar6 = *(int *)(&DAT_00466734 + ((int)(uint)bVar3 >> 2) * 4) * (int)sVar4;
++    iVar6 = *(int *)((int)&DAT_00466734 + ((int)(uint)bVar3 >> 2) * 4) * (int)sVar4;
+     iVar8 = iVar8 + iVar6;
+   }
+   return;
+@@ -27413,7 +27413,7 @@
+       }
+     }
+     psVar5 = (short *)((int)psVar5 + local_28 * local_24 + 4);
+-    local_28 = *(int *)(&DAT_00466734 + ((int)local_2c >> 2) * 4) * local_28;
++    local_28 = *(int *)((int)&DAT_00466734 + ((int)local_2c >> 2) * 4) * local_28;
+     iVar4 = iVar4 + local_28;
+   }
+   return;
+@@ -27621,7 +27621,7 @@
+       }
+     }
+     psVar5 = (short *)((int)psVar5 + local_2c * local_28 + 4);
+-    local_2c = *(int *)(&DAT_00466734 + ((int)local_24 >> 2) * 4) * local_2c;
++    local_2c = *(int *)((int)&DAT_00466734 + ((int)local_24 >> 2) * 4) * local_2c;
+     iVar3 = iVar3 + local_2c;
+   }
+   return;

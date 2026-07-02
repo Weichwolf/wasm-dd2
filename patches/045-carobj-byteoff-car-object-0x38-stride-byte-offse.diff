@@ -1,0 +1,226 @@
+CAROBJ-BYTEOFF car_object 0x38-stride byte offsets
+
+FIX CAROBJ-BYTEOFF (int* byte-stride array): `car_object` is an array of 0x38-byte car records but is
+typed int*, so writers `&car_object + idx*0x38` scale to idx*0xe0 -> store the car's shapes at the
+WRONG slot. Readers use `idx*0x38 + 0x781418` (byte-correct, raw base addr), so reads see null ->
+crash in FUN_0043b39c (Init_Car_Graphics) deref of a null shape. Byte-address all &car_object writers
+to match the readers. Same scaling class.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -18428,7 +18428,7 @@
+   FUN_004203dc(psVar1,(int *)(&DAT_0078a744 + param_1 * 0x27c));
+   bVar2 = _DAT_00754256 < 4000;
+   *(undefined1 **)(*(int *)((int)_level_data + 0x40) + 0x20) = &car_vertices + param_1 * 0x330;
+-  iVar3 = VVDraw_Object((undefined4 *)(&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
++  iVar3 = VVDraw_Object((undefined4 *)((int)&car_object + (uint)bVar2 * 0x1c + param_1 * 0x38));
+   *(int *)(param_1 * 0x27c + 0x78a798) = iVar3;
+   if ((iVar3 != 0) && (bVar2 == 1)) {
+     *(short *)(param_1 * 0x27c + 0x78a6b0) = -*(short *)(param_1 * 0x1b2 + 0x792a82);
+@@ -18469,7 +18469,7 @@
+                      );
+   __lmptr = &sStack_34;
+   FUN_004203dc(local_14,(int *)(&DAT_0078a744 + iVar3));
+-  iVar1 = VVDraw_Object((undefined4 *)(&car_object + param_1 * 0x38));
++  iVar1 = VVDraw_Object((undefined4 *)((int)&car_object + param_1 * 0x38));
+   *(int *)(iVar3 + 0x78a798) = iVar1;
+   if (iVar1 != 0) {
+     *(short *)(iVar3 + 0x78a6b0) = -*(short *)(param_1 * 0x1b2 + 0x792a82);
+@@ -18496,7 +18496,7 @@
+   undefined4 *puVar6;
+   
+   Init_Car_Cluts();
+-  Create_Object((undefined4 *)(&car_object + _current_player_car * 0x38),
++  Create_Object((undefined4 *)((int)&car_object + _current_player_car * 0x38),
+                 *(int *)((int)_level_data + 0x44));
+   Create_Object((undefined4 *)(_current_player_car * 0x38 + 0x781434),*(int *)((int)_level_data + 0x40));
+   FUN_0043b39c(_current_player_car,_current_player_car,0);
+@@ -18518,7 +18518,7 @@
+       iVar1 = _current_player_car;
+       *(undefined2 *)(iVar2 + 0x77d210) = 0;
+       if (iVar3 != iVar1) {
+-        Create_Object((undefined4 *)(&car_object + iVar3 * 0x38),*(int *)((int)_level_data + 0x3c));
++        Create_Object((undefined4 *)((int)&car_object + iVar3 * 0x38),*(int *)((int)_level_data + 0x3c));
+         Create_Object(puVar5,*(int *)((int)_level_data + 0x40));
+         FUN_0043b39c(iVar3,iVar3,1);
+         FUN_0043b39c(iVar3,iVar3,2);
+@@ -23344,7 +23344,7 @@
+       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
+         Check_Bonnet_Removal(param_2);
+       }
+-      puVar3 = &car_object + param_2 * 0x38;
++      puVar3 = (int)&car_object + param_2 * 0x38;
+       puVar8 = &car_handling + param_2 * 0x1b2;
+       if (param_2 == _current_player_car) {
+         iVar5 = 0;
+@@ -23381,7 +23381,7 @@
+       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
+         Check_Boot_Removal(param_2);
+       }
+-      puVar3 = &car_object + param_2 * 0x38;
++      puVar3 = (int)&car_object + param_2 * 0x38;
+       puVar8 = &car_handling + param_2 * 0x1b2;
+       if (param_2 == _current_player_car) {
+         iVar5 = 0;
+@@ -23408,7 +23408,7 @@
+       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
+         Check_Bonnet_Removal(param_2);
+       }
+-      puVar3 = &car_object + param_2 * 0x38;
++      puVar3 = (int)&car_object + param_2 * 0x38;
+       puVar8 = &car_handling + param_2 * 0x1b2;
+       if (param_2 != _current_player_car) goto LAB_00434667;
+       iVar5 = 0;
+@@ -23436,7 +23436,7 @@
+       if (0xfa000 < (int)((uVar9 ^ uVar7) - uVar7)) {
+         Check_Boot_Removal(param_2);
+       }
+-      puVar3 = &car_object + param_2 * 0x38;
++      puVar3 = (int)&car_object + param_2 * 0x38;
+       puVar8 = &car_handling + param_2 * 0x1b2;
+       if (param_2 != _current_player_car) {
+         uVar12 = 1;
+@@ -25106,7 +25106,7 @@
+       Check_Bonnet_Removal(param_2);
+     }
+     puVar10 = &car_handling + param_2 * 0x1b2;
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar11 = 0;
+       uVar13 = 0;
+@@ -25134,7 +25134,7 @@
+       Check_Bonnet_Removal(param_2);
+     }
+     puVar10 = &car_handling + param_2 * 0x1b2;
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 != _current_player_car) goto LAB_00437942;
+     iVar11 = 0;
+     uVar13 = 0;
+@@ -25162,7 +25162,7 @@
+       FUN_0044520c(param_2,1);
+     }
+     puVar10 = &car_handling + param_2 * 0x1b2;
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar11 = 0;
+       uVar13 = 1;
+@@ -25196,7 +25196,7 @@
+     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
+       FUN_0044520c(param_2,3);
+     }
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     puVar10 = &car_handling + param_2 * 0x1b2;
+     if (param_2 == _current_player_car) {
+       iVar11 = 0;
+@@ -25232,7 +25232,7 @@
+     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
+       FUN_0044520c(param_1,0);
+     }
+-    puVar10 = &car_object + param_1 * 0x38;
++    puVar10 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar11 = 0;
+       iVar1 = _current_player_car;
+@@ -25262,7 +25262,7 @@
+     if (0x64000 < (int)((uVar3 ^ uVar4) - uVar4)) {
+       FUN_0044520c(param_1,2);
+     }
+-    puVar10 = &car_object + param_1 * 0x38;
++    puVar10 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar11 = 0;
+       iVar1 = _current_player_car;
+@@ -25308,7 +25308,7 @@
+     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
+       Check_Boot_Removal(param_1);
+     }
+-    puVar10 = &car_object + param_1 * 0x38;
++    puVar10 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar11 = 0;
+       iVar1 = _current_player_car;
+@@ -25344,7 +25344,7 @@
+     if (0xc8000 < (int)((uVar3 ^ uVar4) - uVar4)) {
+       Check_Bonnet_Removal(param_1);
+     }
+-    puVar10 = &car_object + param_1 * 0x38;
++    puVar10 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar11 = 0;
+       iVar1 = _current_player_car;
+@@ -25716,7 +25716,7 @@
+         *(undefined4 *)(iVar1 + 0x792b12) = 0xfff;
+       }
+     }
+-    puVar2 = &car_object + param_1 * 0x38;
++    puVar2 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar3 = 0;
+       iVar1 = _current_player_car;
+@@ -25743,7 +25743,7 @@
+         *(undefined4 *)(iVar1 + 0x792afe) = 0xfff;
+       }
+     }
+-    puVar2 = &car_object + param_1 * 0x38;
++    puVar2 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar3 = 0;
+       iVar1 = _current_player_car;
+@@ -25786,7 +25786,7 @@
+     iVar1 = param_1 * 0x1b2;
+     *(undefined4 *)(iVar1 + 0x792b06) = *(undefined4 *)(iVar1 + 0x792b02);
+     *(undefined4 *)(iVar1 + 0x792b0e) = *(undefined4 *)(iVar1 + 0x792b0a);
+-    puVar2 = &car_object + param_1 * 0x38;
++    puVar2 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar4 = 0;
+       iVar3 = _current_player_car;
+@@ -25819,7 +25819,7 @@
+     iVar1 = param_1 * 0x1b2;
+     *(undefined4 *)(iVar1 + 0x792af2) = *(undefined4 *)(iVar1 + 0x792aee);
+     *(undefined4 *)(iVar1 + 0x792afa) = *(undefined4 *)(iVar1 + 0x792af6);
+-    puVar2 = &car_object + param_1 * 0x38;
++    puVar2 = (int)&car_object + param_1 * 0x38;
+     if (param_1 == _current_player_car) {
+       iVar4 = 0;
+       iVar3 = _current_player_car;
+@@ -25849,7 +25849,7 @@
+         *(undefined4 *)(iVar1 + 0x792b12) = 0xfff;
+       }
+     }
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar3 = 0;
+       iVar1 = _current_player_car;
+@@ -25892,7 +25892,7 @@
+     iVar1 = param_2 * 0x1b2;
+     *(undefined4 *)(iVar1 + 0x792b06) = *(undefined4 *)(iVar1 + 0x792b02);
+     *(undefined4 *)(iVar1 + 0x792b0e) = *(undefined4 *)(iVar1 + 0x792b0a);
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar4 = 0;
+       iVar3 = _current_player_car;
+@@ -25925,7 +25925,7 @@
+     iVar1 = param_2 * 0x1b2;
+     *(undefined4 *)(iVar1 + 0x792af2) = *(undefined4 *)(iVar1 + 0x792aee);
+     *(undefined4 *)(iVar1 + 0x792afa) = *(undefined4 *)(iVar1 + 0x792af6);
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar4 = 0;
+       iVar3 = _current_player_car;
+@@ -25954,7 +25954,7 @@
+         *(undefined4 *)(iVar1 + 0x792afe) = 0xfff;
+       }
+     }
+-    puVar2 = &car_object + param_2 * 0x38;
++    puVar2 = (int)&car_object + param_2 * 0x38;
+     if (param_2 == _current_player_car) {
+       iVar3 = 0;
+       iVar1 = _current_player_car;

@@ -1,0 +1,18 @@
+GUARD AH2 OT-insert wild puVar5 (puVar6)
+
+(rationale: see preceding patch in the series)
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -8823,9 +8823,11 @@
+         puVar6[6] = iVar9;
+         puVar6[8] = iVar11;
+         puVar5 = (undefined4 *)(iVar4 * 4 + iVar3);
++        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puVar6;
+         *puVar6 = uVar2;
++        }
+         __rgb0 = (uint)*(byte *)(iStack_20 + 4);
+         gte_dpcs();
+         *(undefined1 *)(puVar6 + 1) = _rgb0;
