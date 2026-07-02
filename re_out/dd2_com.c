@@ -52,7 +52,7 @@ static int g_frameno = 0;
 extern unsigned char g_palette[256*4];  /* defined below; captured DDraw palette (RGBA-ish per entry) */
 #ifdef DD2_BROWSER
 #include <emscripten.h>
-/* Blit the engine's 320x240 8-bit indexed framebuffer (@0x700450) to the page <canvas> via the
+/* Blit the engine's 640x480 8-bit indexed framebuffer (dd2h) (@0x700450) to the page <canvas> via the
    captured palette, then yield to the browser event loop (ASYNCIFY) so it can paint + deliver input.
    Guarded by DD2_BROWSER so the headless node build (build.sh) is completely unaffected. */
 EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
@@ -80,16 +80,16 @@ static int ids_flip(int t,int a,int b){
 #endif
     const char* dir = getenv("DD2_FRAMEDIR");
     if(dir){
-        /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 320x240 8-bit framebuffer
+        /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 640x480 8-bit framebuffer (dd2h)
            (where ALL decompiled rasterizers draw; this is the faithful bit-exact comparison
            surface — identical buffer in reference dd2h.exe). */
         char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
-        FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,320*240,f); fclose(f); }
+        FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,640*480,f); fclose(f); }
         /* current_frame-keyed dump for ref alignment: name by engine frame counter @0x462ff0
            (same counter tools/refcap.c polls in the reference) so frames line up across builds. */
         if(getenv("DD2_CFDUMP")){ int cf=*(int*)(unsigned long)0x462ff0u;
             char nm2[256]; sprintf(nm2,"%s/cf%05d.bin", dir, cf);
-            FILE* g2=fopen(nm2,"wb"); if(g2){ fwrite((void*)(unsigned long)0x700450u,1,320*240,g2); fclose(g2); } }
+            FILE* g2=fopen(nm2,"wb"); if(g2){ fwrite((void*)(unsigned long)0x700450u,1,640*480,g2); fclose(g2); } }
         /* secondary: the DDraw primary (HUD-only until the _screenbuffer->primary Blt is wired) */
         if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);
             FILE* g=fopen(nm,"wb"); if(g){ fwrite(g_pixels,1,640*512,g); fclose(g); } }
