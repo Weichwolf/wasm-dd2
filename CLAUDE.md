@@ -27,7 +27,8 @@ target). **Code is the truth** — verify every claim against `DestructionDerby2
   Memory image: `re_out/extract_image.py DestructionDerby2/dd2h.exe` → `dd2_image.bin` (0x580400 bytes).
 - **Stage 1 — crash-free: ACTIVE, currently 0/10.** Build:
   `DD2H_BESTEFFORT=1 ASAN=' ' bash tools/build_native.sh /tmp/dd2h_na`, run from `DestructionDerby2/` as
-  `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize crashes with `addr2line -f -e`. Dominant crash
+  `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize crashes with `addr2line -f -e`. (Gdb HW
+  watchpoints do NOT fire in the mmap'd image region — kernel/fread writes bypass them.) Dominant crash
   class: Ghidra pointer-scaling (int*/short* globals indexed with byte offsets). Crash map: **L1-7**
   `Generate_Surface_Normals` @0x4268b8 (unrecovered switch jumptable, calls raw code labels); **L8-10**
   `MulMatrix2` (GTE `extraout_ECX` dropped output register). Big open items: in_EAX/register-arg recovery
