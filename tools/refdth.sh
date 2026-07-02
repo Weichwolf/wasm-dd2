@@ -37,38 +37,21 @@ import gdb
 inf = gdb.selected_inferior()
 def r32(a):
     return int.from_bytes(inf.read_memory(a, 4).tobytes(), 'little')
-def r8(a):
-    return inf.read_memory(a, 1).tobytes()[0]
 cf = r32(0x462ff0)
-cdb = r32(0x754380)
-otsize = r32(0x754260)
-ot = r32(cdb + 0x8a)
-cur = ot + otsize*4 - 4
-hist = {}
-n = 0
-p = r32(cur)
-guard = 0
-while p != 0xffffffff and guard < 500000:
-    guard += 1
-    if p == 0:
-        cur -= 4
-        if cur < ot: break
-        p = r32(cur); continue
-    t = r8(p + 7)
-    hist[t] = hist.get(t, 0) + 1
-    n += 1
-    nxt = r32(p)
-    if nxt == 0:
-        cur -= 4
-        if cur < ot: break
-        p = r32(cur)
-    else:
-        p = nxt
-print(f"[REFHIST] cf{cf} cdb={cdb:#x} ot={ot:#x} n={n}: " + " ".join(f"{k:02x}:{v}" for k,v in sorted(hist.items())))
+out=[]
+gdb.execute("delete")
+gdb.execute("hbreak *0x410010")
+for i in range(24):
+    gdb.execute("continue")
+    vals=(r32(0x480044),r32(0x480014),r32(0x48004c),r32(0x480048),r32(0x48002c),r32(0x480028),r32(0x480024),r32(0x480020),r32(0x480030),r32(0x480010))
+    out.append(vals)
+print(f"[REFDTH] cf{r32(0x462ff0)}")
+for v in out:
+    print("[REFDTH] tp=%04x cl=%02x u=%08x v=%08x x1=%08x x2=%08x y1=%d y2=%d sh=%d clip=%d"%v)
 gdb.execute("detach"); gdb.execute("quit")
 end
 GEOF
-    gdb --nx -batch -x /tmp/refhist.gdb >/tmp/refhist_gdb.log 2>&1; grep -a REFHIST /tmp/refhist_gdb.log || tail -5 /tmp/refhist_gdb.log
+    gdb --nx -batch -x /tmp/refhist.gdb >/tmp/refhist_gdb.log 2>&1; grep -a REFDTH /tmp/refhist_gdb.log | head -30 || tail -5 /tmp/refhist_gdb.log
     break
   fi
 done
