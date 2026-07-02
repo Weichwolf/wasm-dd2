@@ -41,6 +41,20 @@ PY
 )
   echo "  t~$((i*4))s: level=$LV frame=$FR"
   if [ "$LV" = "$LVL" ] && [ "$FR" -ge "$FRMIN" ] && [ "$FR" -le "$FRMAX" ] 2>/dev/null; then
+    # tick-precise: busy-poll current_frame until it INCREMENTS, freeze the process at that
+    # instant (SIGSTOP), dump everything from ONE consistent moment, record the exact frame.
+    FREXACT=$(python3 - "$pid" <<'PY'
+import sys,struct,os,time
+pid=sys.argv[1]
+f=open(f"/proc/{pid}/mem","rb")
+def cf():
+    f.seek(0x462ff0); return struct.unpack('<i',f.read(4))[0]
+base=cf(); t0=time.time()
+while cf()==base and time.time()-t0<10: pass
+os.kill(int(pid),19)  # SIGSTOP right after the frame flip
+print(cf())
+PY
+)
     python3 - "$pid" "$OUT" <<'PY'
 import sys
 pid,out=sys.argv[1],sys.argv[2]
@@ -53,8 +67,10 @@ dump(0x796ff0,0x80000,"gamedata.bin")
 dump(0x774900,0x226f0,"trackstate.bin")  # debris/camera-strip records, recorded_strips_, car_fd
 dump(0x700450,0x4b000,"framebuf.bin")   # 640x480 8bpp engine framebuffer (bit-exact video target)
 dump(0x700050,0x400,"palette.bin")
+dump(0x460000,0x10000,"lowdata.bin")    # 0x46xxxx state (demo settings, counters)
 PY
-    echo "level=$LV frame=$FR" > "$OUT/checkpoint.txt"; echo "captured -> $OUT"; break
+    kill -CONT "$pid" 2>/dev/null
+    echo "level=$LV frame=$FREXACT" > "$OUT/checkpoint.txt"; echo "captured (frozen at frame $FREXACT) -> $OUT"; break
   fi
 done
 pkill -x dd2h.exe 2>/dev/null; pkill -x wine 2>/dev/null; sleep 1
