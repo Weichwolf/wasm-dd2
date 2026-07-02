@@ -884,8 +884,8 @@ extern int unaff_retaddr;
 #define Replay_Script (*(int*)GIMG(0x009376b0))
 #define Zoom (*(undefined4*)GIMG(0x0046524c))
 #define car_order (*(unsigned char*)GIMG(0x00795c28))  /* 20-byte grid-order table: placement reads (&car_order)[i] as BYTES */
-#define poly_clipy (*(undefined4*)GIMG(0x00460028))
-#define poly_clipx (*(undefined4*)GIMG(0x00460024))
+#define poly_clipy (*(int*)GIMG(0x00460028))  /* SIGNED: dth edge walker compares dth_y1 < poly_clipy with y1 often NEGATIVE (sky spans start above the screen); unsigned type made the whole span a no-op -> top sky band never painted (black wedges) */
+#define poly_clipx (*(int*)GIMG(0x00460024))  /* SIGNED: same class -- x-clip tests compare possibly-negative span x against it */
 #define flag1_textures (*(undefined1*)GIMG(0x004650a4))
 #define _AccessFList (*(int*)GIMG(0x0046c360))
 #define prim_buf (*(undefined1*)GIMG(0x00754390))
@@ -1869,11 +1869,11 @@ extern int unaff_retaddr;
 #define DAT_00467498 (*(int*)GIMG(0x00467498))
 #define DAT_00467564 (*(int*)GIMG(0x00467564))
 #define DAT_0093de77 (*(int*)GIMG(0x0093de77))
-#define DAT_0093de74 (*(int*)GIMG(0x0093de74))
-#define DAT_0074b561 (*(int*)GIMG(0x0074b561))
+#define DAT_0093de74 (*(unsigned char*)GIMG(0x0093de74))  /* BYTE: Load_Completion_Status bar-colour copy is mov dl,BYTE (0x44b8cb/0x44b933); int typing copied 4 bytes and clobbered the prim G/B/code bytes -> loading bar drew with garbage header over the sky band */
+#define DAT_0074b561 (*(unsigned char*)GIMG(0x0074b561))  /* BYTE: Load_Completion_Status bar-colour copy is mov dl,BYTE (0x44b8cb/0x44b933); int typing copied 4 bytes and clobbered the prim G/B/code bytes -> loading bar drew with garbage header over the sky band */
 #define DAT_0093de9b (*(int*)GIMG(0x0093de9b))
-#define DAT_0093de98 (*(int*)GIMG(0x0093de98))
-#define DAT_0074bd1d (*(int*)GIMG(0x0074bd1d))
+#define DAT_0093de98 (*(unsigned char*)GIMG(0x0093de98))  /* BYTE: Load_Completion_Status bar-colour copy is mov dl,BYTE (0x44b8cb/0x44b933); int typing copied 4 bytes and clobbered the prim G/B/code bytes -> loading bar drew with garbage header over the sky band */
+#define DAT_0074bd1d (*(unsigned char*)GIMG(0x0074bd1d))  /* BYTE: Load_Completion_Status bar-colour copy is mov dl,BYTE (0x44b8cb/0x44b933); int typing copied 4 bytes and clobbered the prim G/B/code bytes -> loading bar drew with garbage header over the sky band */
 #define DAT_00467568 (*(int*)GIMG(0x00467568))
 #define DAT_0046758c (*(undefined1*)GIMG(0x0046758c))
 #define DAT_0093def2 (*(undefined1*)GIMG(0x0093def2))
