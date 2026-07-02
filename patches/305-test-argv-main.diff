@@ -8,7 +8,7 @@ indirect-call work). Lets build/ run any of the 16 levels for headless verificat
 @@ -28,7 +28,7 @@
  extern int Play_Game(void);
  extern void Set_Draw_Mode(int);
- extern int _current_level;
+ #define _current_level (*(int*)0x936ff4)  /* image slot (dual-symbol fix) */
 -int main(){
 +int main(int argc, char** argv){
      dd2_load_image("dd2_image.bin");

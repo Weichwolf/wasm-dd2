@@ -102,8 +102,10 @@ static int ids_flip(int t,int a,int b){
         int dmode=*(int*)(unsigned long)0x46385cu;
         int ncars=*(int*)(unsigned long)0x46765cu;
         int curfr=*(int*)(unsigned long)0x462ff0u;
-        extern int _quit_flag, _race_finished;
-        extern void* _Replay_Script_Ptr;
+        /* dual-symbol fix: image slots */
+#define _quit_flag (*(int*)0x7746ac)
+#define _race_finished (*(int*)0x795df4)
+#define _Replay_Script_Ptr (*(void**)0x9392b4)
         unsigned rsp=(unsigned)(unsigned long)_Replay_Script_Ptr;
         unsigned rs=0x8ff2b0u, ft=0x900eb0u;
         unsigned ec4=*(unsigned*)(unsigned long)0x900ec4u;

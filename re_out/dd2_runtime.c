@@ -27,7 +27,7 @@ extern void __InitRtns(void);
 extern int Init_Application(void* hInst);
 extern int Play_Game(void);
 extern void Set_Draw_Mode(int);
-extern int _current_level;
+#define _current_level (*(int*)0x936ff4)  /* image slot (dual-symbol fix) */
 int main(){
     dd2_load_image("dd2_image.bin");
     dd2_relocate();

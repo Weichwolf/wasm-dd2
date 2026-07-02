@@ -60,7 +60,7 @@ extern int  Init_Application(void* hInst);
 extern int  Play_Game(void);
 extern int  DemoMode(void);
 extern void Set_Draw_Mode(int);
-extern int  _current_level;
+#define _current_level (*(int*)0x936ff4)  /* image slot (dual-symbol fix) */
 extern void Setup_Pad(int);
 extern void Order_Cars(void);
 extern void Init_Front_End(void);

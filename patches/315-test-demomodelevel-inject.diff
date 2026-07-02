@@ -9,7 +9,7 @@ old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks le
 @@ -28,6 +28,29 @@
  extern int Play_Game(void);
  extern void Set_Draw_Mode(int);
- extern int _current_level;
+ #define _current_level (*(int*)0x936ff4)  /* image slot (dual-symbol fix) */
 +extern int DemoMode(void); extern void Setup_Pad(int); extern void Order_Cars(void); extern int rand(void);
 +extern char* getenv(const char*); extern int atoi(const char*);
 +static int DemoModeLevel(int lvl){

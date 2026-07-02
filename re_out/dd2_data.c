@@ -94,16 +94,16 @@ int PTR_LAB_0042a4c0;
 
 int UNK_00458895;
 /* _DummyPoly removed: now #define'd to DummyPoly (GIMG 0x74a6d0) — see FIX DUMMYPOLY-ALIAS */
-int _FirstTime;
-int _Lap_Timer;
-int _Last_Lap_Timer;
-int _Now_Timing_Lap;
-int _Old_Cam_Mode;
-int _Replay_Invalid;
-int _Replay_Level;
-int _Replay_Script;
-int* _Replay_Script_Ptr;
-int _Timing_Delay;
+/* _FirstTime -> image slot 0x009392b0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Lap_Timer -> image slot 0x00795ddc (dual-symbol fix, define in dd2_symbols.h) */
+/* _Last_Lap_Timer -> image slot 0x00795de8 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Now_Timing_Lap -> image slot 0x00795dd4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Old_Cam_Mode -> image slot 0x00464a68 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Replay_Invalid -> image slot 0x009392c0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Replay_Level -> image slot 0x009392bc (dual-symbol fix, define in dd2_symbols.h) */
+/* _Replay_Script -> image slot 0x009376b0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Replay_Script_Ptr -> image slot 0x009392b4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _Timing_Delay -> image slot 0x00795df8 (dual-symbol fix, define in dd2_symbols.h) */
 /* _Z_DISTANCE wired to image slot 0x4604c2 (was uninit C global=0; real far-clip=26000) */
 int __AccessFHeap;
 int __AccessFList;
@@ -112,9 +112,9 @@ int __AccessNHeap;
 int __AccessTDList;
 int __FiniAccessH;
 int __InitAccessH;
-int* __LpCmdLine;
-int __LpDllName;
-int __LpPgmName;
+/* __LpCmdLine -> image slot 0x0046c3c0 (dual-symbol fix, define in dd2_symbols.h) */
+/* __LpDllName -> image slot 0x0046c3c8 (dual-symbol fix, define in dd2_symbols.h) */
+/* __LpPgmName -> image slot 0x0046c3c4 (dual-symbol fix, define in dd2_symbols.h) */
 int __MultipleThread;
 int __ReleaseFHeap;
 int __ReleaseFileH;
@@ -123,147 +123,147 @@ int __ReleaseNHeap;
 code* __WinMainProc;
 
 int ___ExceptionFilter;
-int ___FirstThreadData;
-int ___Is_DLL;
-int ___OpenStreams;
-int __bcrgb;
-int __cmptr;
-int __fcrgb;
-int __flg;
-int* __lmptr;
-int __op0;
-int __opvr0;
-int __opvr1;
-int __opz;
-int __otz;
-int __rgb0;
-int __scrx;
-int __scry;
+/* ___FirstThreadData -> image slot 0x0094097c (dual-symbol fix, define in dd2_symbols.h) */
+/* ___Is_DLL -> image slot 0x00940978 (dual-symbol fix, define in dd2_symbols.h) */
+/* ___OpenStreams -> image slot 0x00940980 (dual-symbol fix, define in dd2_symbols.h) */
+/* __bcrgb -> image slot 0x0074c6c4 (dual-symbol fix, define in dd2_symbols.h) */
+/* __cmptr -> image slot 0x0074c6c0 (dual-symbol fix, define in dd2_symbols.h) */
+/* __fcrgb -> image slot 0x0074c6ec (dual-symbol fix, define in dd2_symbols.h) */
+/* __flg -> image slot 0x0074c6dc (dual-symbol fix, define in dd2_symbols.h) */
+/* __lmptr -> image slot 0x0074c6d8 (dual-symbol fix, define in dd2_symbols.h) */
+/* __op0 -> image slot 0x0074c580 (dual-symbol fix, define in dd2_symbols.h) */
+/* __opvr0 -> image slot 0x0074c570 (dual-symbol fix, define in dd2_symbols.h) */
+/* __opvr1 -> image slot 0x0074c560 (dual-symbol fix, define in dd2_symbols.h) */
+/* __opz -> image slot 0x0074c6c8 (dual-symbol fix, define in dd2_symbols.h) */
+/* __otz -> image slot 0x0074c6bc (dual-symbol fix, define in dd2_symbols.h) */
+/* __rgb0 -> image slot 0x0074c6e0 (dual-symbol fix, define in dd2_symbols.h) */
+/* __scrx -> image slot 0x0074c6d0 (dual-symbol fix, define in dd2_symbols.h) */
+/* __scry -> image slot 0x0074c6cc (dual-symbol fix, define in dd2_symbols.h) */
 int __sigabort;
-int __vr0;
-int __vr1;
-int __vr2;
-int __vr3;
+/* __vr0 -> image slot 0x0074c500 (dual-symbol fix, define in dd2_symbols.h) */
+/* __vr1 -> image slot 0x0074c510 (dual-symbol fix, define in dd2_symbols.h) */
+/* __vr2 -> image slot 0x0074c4e0 (dual-symbol fix, define in dd2_symbols.h) */
+/* __vr3 -> image slot 0x0074c4f0 (dual-symbol fix, define in dd2_symbols.h) */
 /* _active_block_numbers alias */
-int _actual_season_number;
+/* _actual_season_number -> image slot 0x004682f4 (dual-symbol fix, define in dd2_symbols.h) */
 /* _add_transparency_table -> image slot 0x7140c8 (dual-symbol) */
-int _adjusted_music;
-int _adjusted_sfx;
-int _applause;
+/* _adjusted_music -> image slot 0x009376a4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _adjusted_sfx -> image slot 0x009376a0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _applause -> image slot 0x00939b14 (dual-symbol fix, define in dd2_symbols.h) */
 
-int _boot_objects_count;
-int _bootoff_index;
-int _camera_collision;
+/* _boot_objects_count -> image slot 0x0077c748 (dual-symbol fix, define in dd2_symbols.h) */
+/* _bootoff_index -> image slot 0x0077c754 (dual-symbol fix, define in dd2_symbols.h) */
+/* _camera_collision -> image slot 0x0077cf68 (dual-symbol fix, define in dd2_symbols.h) */
 /* _camera_fd alias */
-int _camera_fd_pt;
-int _car0_being_obstructed;
-int _car_info;
-int _cars_in_crash;
+/* _camera_fd_pt -> image slot 0x0077cf70 (dual-symbol fix, define in dd2_symbols.h) */
+/* _car0_being_obstructed -> image slot 0x0078a380 (dual-symbol fix, define in dd2_symbols.h) */
+/* _car_info -> image slot 0x00795c40 (dual-symbol fix, define in dd2_symbols.h) */
+/* _cars_in_crash -> image slot 0x00939b1c (dual-symbol fix, define in dd2_symbols.h) */
 
-int _commentating;
+/* _commentating -> image slot 0x00939b64 (dual-symbol fix, define in dd2_symbols.h) */
 /* _corner_fd alias */
-int _crowd_volume;
-int _current_level;
-int _current_player;
-int _current_player_car;
-int _current_race;
-int _current_season;
-int _dec_info;
-int _decrunch_block;
-int _decrunch_flag;
-int _draw_frame;
-int _dth_shade;
-int _euphoria;
-int _flag;
-int _flame_frame_count;
-int _flash1_frame_count;
-int _flash2_frame_count;
-int _flash3_frame_count;
-int _floaty_camera_fd;
-int _frame_skip;
-int _frame_wait;
-int _frames_per_sec;
-int _free_mem;
-int _fx;
-int _fx_1;
-int _fx_10;
-int _fx_11;
-int _fx_15;
-int _fx_17;
-int _fx_18;
-int _fx_2;
-int _fx_21;
-int _fx_22;
-int _fx_3;
-int _fx_4;
-int _fx_5;
-int _fx_6;
-int _fx_7;
-int _fx_8;
-int _fx_9;
-int _g_sprite_info;
-int _gnormals;
+/* _crowd_volume -> image slot 0x00939b6c (dual-symbol fix, define in dd2_symbols.h) */
+/* _current_level -> image slot 0x00936ff4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _current_player -> image slot 0x0093decc (dual-symbol fix, define in dd2_symbols.h) */
+/* _current_player_car -> image slot 0x0093ded0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _current_race -> image slot 0x0093dec8 (dual-symbol fix, define in dd2_symbols.h) */
+/* _current_season -> image slot 0x0093dec0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _dec_info -> image slot 0x00789348 (dual-symbol fix, define in dd2_symbols.h) */
+/* _decrunch_block -> image slot 0x0078a160 (dual-symbol fix, define in dd2_symbols.h) */
+/* _decrunch_flag -> image slot 0x0078a158 (dual-symbol fix, define in dd2_symbols.h) */
+/* _draw_frame -> image slot 0x007746bc (dual-symbol fix, define in dd2_symbols.h) */
+/* _dth_shade -> image slot 0x00480030 (dual-symbol fix, define in dd2_symbols.h) */
+/* _euphoria -> image slot 0x00939b30 (dual-symbol fix, define in dd2_symbols.h) */
+/* _flag -> image slot 0x00464a8c (dual-symbol fix, define in dd2_symbols.h) */
+/* _flame_frame_count -> image slot 0x00781efc (dual-symbol fix, define in dd2_symbols.h) */
+/* _flash1_frame_count -> image slot 0x00781f00 (dual-symbol fix, define in dd2_symbols.h) */
+/* _flash2_frame_count -> image slot 0x00781f08 (dual-symbol fix, define in dd2_symbols.h) */
+/* _flash3_frame_count -> image slot 0x00781f04 (dual-symbol fix, define in dd2_symbols.h) */
+/* _floaty_camera_fd -> image slot 0x0077cf3c (dual-symbol fix, define in dd2_symbols.h) */
+/* _frame_skip -> image slot 0x007746b8 (dual-symbol fix, define in dd2_symbols.h) */
+/* _frame_wait -> image slot 0x007746a4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _frames_per_sec -> image slot 0x00462ffc (dual-symbol fix, define in dd2_symbols.h) */
+/* _free_mem -> image slot 0x0075439c (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx -> image slot 0x00939b34 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_1 -> image slot 0x00939b4c (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_10 -> image slot 0x00939b2c (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_11 -> image slot 0x00939b28 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_15 -> image slot 0x00939b24 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_17 -> image slot 0x00939b58 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_18 -> image slot 0x00939b74 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_2 -> image slot 0x00939b54 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_21 -> image slot 0x00939b5c (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_22 -> image slot 0x00939b10 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_3 -> image slot 0x00939b50 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_4 -> image slot 0x00939b44 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_5 -> image slot 0x00939b40 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_6 -> image slot 0x00939b48 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_7 -> image slot 0x00939b70 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_8 -> image slot 0x00939b20 (dual-symbol fix, define in dd2_symbols.h) */
+/* _fx_9 -> image slot 0x00939b3c (dual-symbol fix, define in dd2_symbols.h) */
+/* _g_sprite_info -> image slot 0x0074f1a0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _gnormals -> image slot 0x007541d4 (dual-symbol fix, define in dd2_symbols.h) */
 short* _gpoly;
-int* _gprim1;
-int _gprim2;
-int _grounded_count;
-int _gtexture;
-int _gtexture_def;
+/* _gprim1 -> image slot 0x007541d0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _gprim2 -> image slot 0x007541cc (dual-symbol fix, define in dd2_symbols.h) */
+/* _grounded_count -> image slot 0x00792640 (dual-symbol fix, define in dd2_symbols.h) */
+/* _gtexture -> image slot 0x007541dc (dual-symbol fix, define in dd2_symbols.h) */
+/* _gtexture_def -> image slot 0x007541f8 (dual-symbol fix, define in dd2_symbols.h) */
 /* _h_norm wired to image slot 0x71bde8 (overlapping-read dual-symbol fix) */
 /* _highlight_colour wired to image slot 0x4699c8 (dual-symbol: C-global was 0, baked value lives in image) */
 /* _hlf_transparency_table -> image slot 0x714050 (dual-symbol) */
-int _last_time;
-int* _level_data;
-int _light_matrix;
+/* _last_time -> image slot 0x007746a0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _level_data -> image slot 0x00936ff0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _light_matrix -> image slot 0x007541d8 (dual-symbol fix, define in dd2_symbols.h) */
 int _local_1e;
 int _local_24;
 int _local_26;
-int _mem_size;
+/* _mem_size -> image slot 0x00774694 (dual-symbol fix, define in dd2_symbols.h) */
 /* _num_races wired to image slot 0x467654 (dual-symbol: C-global was 0, baked value lives in image) */
-int _num_spies;
-int _num_strips;
-int _old_flying_index;
-int _otsize;
-int _pad_option;
-int _permission;
+/* _num_spies -> image slot 0x0074f1a4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _num_strips -> image slot 0x0077cef0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _old_flying_index -> image slot 0x0077c750 (dual-symbol fix, define in dd2_symbols.h) */
+/* _otsize -> image slot 0x00754260 (dual-symbol fix, define in dd2_symbols.h) */
+/* _pad_option -> image slot 0x00467414 (dual-symbol fix, define in dd2_symbols.h) */
+/* _permission -> image slot 0x00796f58 (dual-symbol fix, define in dd2_symbols.h) */
 /* _playable_bowls wired to image slot 0x467408 (dual-symbol: C-global was 0, baked value lives in image) */
 
-int _polygon_angles;
+/* _polygon_angles -> image slot 0x007746f8 (dual-symbol fix, define in dd2_symbols.h) */
 /* _prim_buf: now a dd2_symbols.h define onto image slot 0x754390 (dual-symbol fix) */
-int _quit_flag;
-int _race_finished;
-int _recorded_pad_type;
+/* _quit_flag -> image slot 0x007746ac (dual-symbol fix, define in dd2_symbols.h) */
+/* _race_finished -> image slot 0x00795df4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _recorded_pad_type -> image slot 0x007746a8 (dual-symbol fix, define in dd2_symbols.h) */
 
 
-int* _screen_line_list;
-int _screen_poly_list;
-int _sky_shape1;
-int _sky_shape2;
-int _sky_shape3;
-int _sky_shape4;
-int _sky_shape5;
-int _sky_shape6;
-int _sky_shape7;
-int _sky_shape8;
+/* _screen_line_list -> image slot 0x00940008 (dual-symbol fix, define in dd2_symbols.h) */
+/* _screen_poly_list -> image slot 0x00940010 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape1 -> image slot 0x0078a260 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape2 -> image slot 0x0078a264 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape3 -> image slot 0x0078a268 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape4 -> image slot 0x0078a250 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape5 -> image slot 0x0078a254 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape6 -> image slot 0x0078a258 (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape7 -> image slot 0x0078a25c (dual-symbol fix, define in dd2_symbols.h) */
+/* _sky_shape8 -> image slot 0x0078a26c (dual-symbol fix, define in dd2_symbols.h) */
 /* _sound_volume wired to image slot 0x467410 (dual-symbol: C-global was 0, baked value lives in image) */
-int _sprite_matrix;
-int _stats_recorded;
-int _strip_data;
-int _strip_vertex;
+/* _sprite_matrix -> image slot 0x007541fc (dual-symbol fix, define in dd2_symbols.h) */
+/* _stats_recorded -> image slot 0x0046741c (dual-symbol fix, define in dd2_symbols.h) */
+/* _strip_data -> image slot 0x0077cef8 (dual-symbol fix, define in dd2_symbols.h) */
+/* _strip_vertex -> image slot 0x0077cef4 (dual-symbol fix, define in dd2_symbols.h) */
 /* _sub_transparency_table -> image slot 0x7140d0 (dual-symbol) */
-int _surfai;
-int _tilt_sprite_matrix;
-int _tot_time;
-int _total_collisions;
-int _total_dest_timer;
-int _track_height;
-int _u;
-int _v_norm;
-int _value;
-int _wheeloff_index;
-int _whllck;
-int _yes_quit;
-int _yes_retire;
+/* _surfai -> image slot 0x0078a388 (dual-symbol fix, define in dd2_symbols.h) */
+/* _tilt_sprite_matrix -> image slot 0x0075421c (dual-symbol fix, define in dd2_symbols.h) */
+/* _tot_time -> image slot 0x007746b4 (dual-symbol fix, define in dd2_symbols.h) */
+/* _total_collisions -> image slot 0x00939b60 (dual-symbol fix, define in dd2_symbols.h) */
+/* _total_dest_timer -> image slot 0x0078428c (dual-symbol fix, define in dd2_symbols.h) */
+/* _track_height -> image slot 0x0077cf6c (dual-symbol fix, define in dd2_symbols.h) */
+/* _u -> image slot 0x00939b38 (dual-symbol fix, define in dd2_symbols.h) */
+/* _v_norm -> image slot 0x007541f0 (dual-symbol fix, define in dd2_symbols.h) */
+/* _value -> image slot 0x007543a8 (dual-symbol fix, define in dd2_symbols.h) */
+/* _wheeloff_index -> image slot 0x0077c740 (dual-symbol fix, define in dd2_symbols.h) */
+/* _whllck -> image slot 0x0078a384 (dual-symbol fix, define in dd2_symbols.h) */
+/* _yes_quit -> image slot 0x009376ac (dual-symbol fix, define in dd2_symbols.h) */
+/* _yes_retire -> image slot 0x009376a8 (dual-symbol fix, define in dd2_symbols.h) */
 
 /* iRam00749038 -> #define 0x749038 in dd2_symbols.h (image address, not a C-global) */
 int pHVar1;
