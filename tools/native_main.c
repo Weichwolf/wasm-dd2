@@ -232,6 +232,8 @@ int main(void){
         W32(0x4673f8, 0);   /* race_mode = 0 */
         CK("Init_Front_End()"); Init_Front_End();
         *(int*)(uintptr_t)0x462fe8 = 0;  /* pal_flag: FE init must not undo the ddmain default */
+        *(int*)(uintptr_t)0x467420 = 0;  /* restart_cd_audio: the FE menu loop's first pass clears it
+                                            (Front_End @0x4502a8 after Start_CD_Audio); we skip the loop */
         { extern void dd2_apply_frontend_state(void); dd2_apply_frontend_state(); }
         CK("DemoModeLevel()");
         DemoModeLevel(atoi(getenv("DD2_LEVEL")));

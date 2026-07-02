@@ -1,0 +1,16 @@
+WASM launcher: clear restart_cd_audio after Init_Front_End (parity with native)
+
+Init_Front_End sets restart_cd_audio=1; the original's Front_End menu loop
+clears it on its first pass (0x4502a8, after Start_CD_Audio). The launcher
+skips the loop, so the flag stayed 1 (reference: 0 at race time).
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -51,6 +51,7 @@
+   *(int*)0x4673f8 = 0;  /* race_mode */
+   { extern void Init_Front_End(void); Init_Front_End(); }
+   *(int*)0x462fe8 = 0;
++  *(int*)0x467420 = 0;  /* restart_cd_audio: FE menu loop's first pass clears it (Front_End @0x4502a8) */
+   { extern void dd2_apply_frontend_state(void); dd2_apply_frontend_state(); }
+   Setup_Pad(1);
+   *(int*)0x93de1c=*(int*)0x4673f4; *(int*)0x93de18=*(int*)0x4673f8;
