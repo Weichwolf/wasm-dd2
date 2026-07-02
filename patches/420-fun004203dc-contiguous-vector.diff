@@ -1,0 +1,43 @@
+FUN_004203dc: contiguous camera-relative position vector (scattered-locals)
+
+The camera-transform setup subtracts the camera position from the object position into
+THREE SEPARATE int locals (local_20/local_1c/local_18) and passes &local_20 to
+ApplyMatrixLV, which reads param_2[0..2] as a contiguous vector -- layout-dependent UB
+under our compilers. Result: the transformed camera position DAT_0075424e (and thus
+TRANSVEC @0x74c702, gdb-verified z=0x1ac93400 garbage) was matrix x stack-junk ->
+every otz wild -> the post-FIX-Q whole-map OT-splice crashes. Same scattered-locals
+class as patches 330/335/415.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -11906,21 +11906,19 @@
+ void __cdecl FUN_004203dc(short *param_1,int *param_2)
+ 
+ {
+-  int local_20;
+-  int local_1c;
+-  int local_18;
++  int _v [3];
+   
+   if (param_1 == (short *)0x0) {
+-    local_20 = *param_2 - DAT_00462fb6;
+-    local_1c = param_2[1] - _DAT_00462fba;
+-    local_18 = param_2[2] - DAT_00462fbe;
+-    ApplyMatrixLV(&world_matrix,&local_20,(uint *)&DAT_0075424e);
++    _v[0] = *param_2 - DAT_00462fb6;
++    _v[1] = param_2[1] - _DAT_00462fba;
++    _v[2] = param_2[2] - DAT_00462fbe;
++    ApplyMatrixLV(&world_matrix,_v,(uint *)&DAT_0075424e);
+   }
+   else {
+-    local_20 = *param_2 - DAT_00462fb6;
+-    local_1c = param_2[1] - _DAT_00462fba;
+-    local_18 = param_2[2] - DAT_00462fbe;
+-    ApplyMatrixLV(&world_matrix,&local_20,(uint *)&DAT_0075424e);
++    _v[0] = *param_2 - DAT_00462fb6;
++    _v[1] = param_2[1] - _DAT_00462fba;
++    _v[2] = param_2[2] - DAT_00462fbe;
++    ApplyMatrixLV(&world_matrix,_v,(uint *)&DAT_0075424e);
+     gte_MulMatrix0((undefined4 *)&world_matrix,param_1,(undefined4 *)0x75423c);  /* asm 0x420433: push 0x75423c */
+     gte_SetRotMatrix((undefined2 *)0x75423c);
+   }
