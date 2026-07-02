@@ -73,6 +73,11 @@ extern int  dd2_input_selftest(void);   /* dd2_input.c: verify key->Translate_Ke
 #define W32(va,val) (*(int*)(uintptr_t)(va) = (int)(val))
 #define R32(va)     (*(int*)(uintptr_t)(va))
 static int DemoModeLevel(int lvl){
+    /* Seed keyboard pad type BEFORE Setup_Pad records _recorded_pad_type -- MUST match the WASM
+     * runtime (patch 315) and the reference (dd2h front-end sets 0x754451=1 for keyboard). Without
+     * this, _recorded_pad_type=0 here vs 1 on wasm -> the demo replay decodes differently ->
+     * native/wasm state divergence from the first pad-dependent frame. */
+    *(unsigned char*)0x754451 = 1;
     Setup_Pad(1);
     W32(0x93de1c, R32(0x4673f4));            /* save race_type */
     W32(0x93de18, R32(0x4673f8));            /* save race_mode */
@@ -93,6 +98,11 @@ static int DemoModeLevel(int lvl){
  * the recorded-pad replay. The player car responds to _pad_* (set via Translate_Keypress); AI drives
  * the rest. Tests whether the Stage-1 crash fixes made real gameplay (not just the attract demo) run. */
 static int PlayModeLevel(int lvl){
+    /* Seed keyboard pad type BEFORE Setup_Pad records _recorded_pad_type -- MUST match the WASM
+     * runtime (patch 315) and the reference (dd2h front-end sets 0x754451=1 for keyboard). Without
+     * this, _recorded_pad_type=0 here vs 1 on wasm -> the demo replay decodes differently ->
+     * native/wasm state divergence from the first pad-dependent frame. */
+    *(unsigned char*)0x754451 = 1;
     Setup_Pad(1);
     W32(0x93de1c, R32(0x4673f4));
     W32(0x93de18, R32(0x4673f8));
@@ -194,7 +204,12 @@ int main(void){
         W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */
         W32(0x4673f8, 0);   /* race_mode = 0 */
         CK("Init_Front_End()"); Init_Front_End();
-        Setup_Pad(1);
+        /* Seed keyboard pad type BEFORE Setup_Pad records _recorded_pad_type -- MUST match the WASM
+     * runtime (patch 315) and the reference (dd2h front-end sets 0x754451=1 for keyboard). Without
+     * this, _recorded_pad_type=0 here vs 1 on wasm -> the demo replay decodes differently ->
+     * native/wasm state divergence from the first pad-dependent frame. */
+    *(unsigned char*)0x754451 = 1;
+    Setup_Pad(1);
         { const char* h = getenv("DD2_HOLD");
           if (h) { extern void dd2_key_event(unsigned int, int);
                    dd2_key_event((unsigned int)strtol(h,0,0), 1);

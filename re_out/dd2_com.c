@@ -141,6 +141,11 @@ static int ids_flip(int t,int a,int b){
         extern unsigned g_rand_calls;
         fprintf(stderr,"[frame %d] rand_calls=%u\n", g_frameno, g_rand_calls);
     }
+    if(getenv("DD2_STATECF")){   /* one-shot full-state dump keyed by ENGINE frame 0x462ff0 (aligns native/wasm/ref) */
+        static int done=0; int want=atoi(getenv("DD2_STATECF"));
+        if(!done && *(int*)(unsigned long)0x462ff0u==want){ const char* dir=getenv("DD2_FRAMEDIR");
+            if(dir){ char nm[256]; sprintf(nm,"%s/statecf%05d.bin",dir,want);
+                FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x400000u,1,0x500000,f); fclose(f); done=1; } } } }
     if(getenv("DD2_STATEDUMP")){
         int want = atoi(getenv("DD2_STATEDUMP"));
         if(g_frameno==want){ const char* dir=getenv("DD2_FRAMEDIR");
