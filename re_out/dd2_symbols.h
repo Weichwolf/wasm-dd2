@@ -1638,7 +1638,7 @@ extern int unaff_retaddr;
 #define DAT_0046649c (*(int*)GIMG(0x0046649c))
 #define DAT_004664b4 (*(int*)GIMG(0x004664b4))
 #define DAT_004664cc (*(int*)GIMG(0x004664cc))
-#define DAT_00466290 (*(int**)GIMG(0x00466290))
+#define DAT_00466290 (*(short**)GIMG(0x00466290))  /* particle free-stack ptr: SHORT entries (FreeParticle steps by 2) */
 #define DAT_004664fc (*(int*)GIMG(0x004664fc))
 #define DAT_00466376 (*(undefined1*)GIMG(0x00466376))
 #define DAT_00466377 (*(undefined1*)GIMG(0x00466377))
