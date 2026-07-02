@@ -42,7 +42,7 @@ int main(){
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
     __InitRtns();
     dd2_com_init();
-    Read_Directory("Dirinfo");
+    Read_Directory("DIRINFO");  /* original-case (Init_Main @0x445814); fopen shim case-folds like Windows */
     *(int*)0x462d68 = 1;  /* during init: make FUN_004159a8 skip DirectSound COM setup */
     Init_Application((void*)1);
     /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;

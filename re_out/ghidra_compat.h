@@ -7,6 +7,11 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+/* engine fopen -> case-insensitive shim (dd2_filio.c): Windows/wine lookup semantics */
+#ifndef DD2_NO_FOPEN_WRAP
+FILE* dd2_fopen_ci(const char*, const char*);
+#define fopen dd2_fopen_ci
+#endif
 #include <stdlib.h>
 // (decompiled MSVC CRT functions that touch FILE internals are excluded from the build; libc provides stdio)
 
