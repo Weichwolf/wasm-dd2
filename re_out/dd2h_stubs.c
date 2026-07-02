@@ -30,7 +30,7 @@ void _ot_dispatch(int* piVar1,int* b,int* c){
      the PREVIOUS prim painted it. Probes: (100,40),(500,60) cloud band; (320,150) box face; (320,430) ground. */
   { static int _pw=-2; if(_pw==-2){ extern char* getenv(const char*); char* e=getenv("DD2_PIXWIN"); extern int atoi(const char*); _pw=e?atoi(e):-1; }
     if(_pw>=0){
-      static const int PX[4][2]={{290,120},{320,105},{280,420},{320,430}};
+      static const int PX[4][2]={{285,130},{350,130},{60,205},{240,415}};
       static unsigned char _last[4]; static void* _prev; static int _init=0, _done=0;
       int _cf=*(int*)(uintptr_t)0x462ff0;
       if(_cf<=_pw && !_done){
