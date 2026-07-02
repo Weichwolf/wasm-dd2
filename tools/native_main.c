@@ -175,7 +175,10 @@ int main(void){
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(uintptr_t)&dd2_crt_lock; }
     CK("__InitRtns()");             __InitRtns();
     CK("dd2_com_init()");           dd2_com_init();
-    CK("Read_Directory(DIRINFO)");  Read_Directory("DIRINFO");  /* original-case (Init_Main @0x445814 passes s_DIRINFO_0046cf68); fopen shim is case-insensitive like Windows */
+    /* The original boots through Init_Main @0x445814: Init_Controller_, Profile_Init, Sound_Init,
+     * VSync+VSyncCallback, InitCardSystem (loads/creates SaveGames -> card buffer 0x754460),
+     * Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags. Run the real thing. */
+    { extern void Init_Main(void); CK("Init_Main()"); Init_Main(); }
     *(int*)(uintptr_t)0x462d68 = 1;          /* skip DirectSound COM during init */
     CK("Init_Application()");       Init_Application((void*)1);
     *(int*)(uintptr_t)0x463010 = -1;

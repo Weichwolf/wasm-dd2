@@ -1,0 +1,23 @@
+WASM launcher: boot through the real Init_Main (parity with native)
+
+Replaces the lone Read_Directory call with the original boot chain
+(Init_Main @0x445814): Init_Controller_, Profile_Init, Sound_Init, VSync
+callback, InitCardSystem (SaveGames), Read_Directory("DIRINFO"),
+Read_CD_Toc_, Load_Game_Vags. The VAG load fills the audio sample staging
+0x7fa164-0x816ff0 byte-identical to the frozen reference (was all zero).
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -81,7 +81,11 @@
+     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
+     __InitRtns();
+     dd2_com_init();
+-    Read_Directory("DIRINFO");  /* original-case (Init_Main @0x445814); fopen shim case-folds like Windows */
++    /* Boot through the real Init_Main @0x445814 (like tools/native_main.c): Init_Controller_,
++       Profile_Init, Sound_Init, VSync+VSyncCallback, InitCardSystem (SaveGames -> card buffer),
++       Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags -- the VAG load fills the audio
++       staging 0x7fa164-0x816ff0 byte-identical to the reference. */
++    { extern void Init_Main(void); Init_Main(); }
+     *(int*)0x462d68 = 1;  /* during init: make FUN_004159a8 skip DirectSound COM setup */
+     Init_Application((void*)1);
+     /* front-end normally sets the video mode (creates the DDraw primary surface) before the race;
