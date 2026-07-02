@@ -1,0 +1,44 @@
+Strip_Trigger_Handler: uniform void(int) trigger-table signature (wasm call_indirect)
+
+The pit/strip trigger table @0x467084 mixes handlers Ghidra typed void(int)
+(PitOut/PitIn/Pit_Stop1), void(void) (Pit_Stop2) and the unexported no-op
+0x448e50 (stub, now void(int) in dd2h_stubs.c); the x86 caller pushes the car
+index for all of them (cdecl caller cleanup makes the arity mismatch harmless
+natively), but WASM's typed call_indirect traps: "null function or function
+signature mismatch" in Strip_Trigger_Handler as soon as a car crosses a pit
+strip. Give Pit_Stop2 an ignored int arg and type the call through
+void(*)(int) (same normalization as patches 450-480).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -509,7 +509,7 @@
+ void PitOut(int param_1);
+ void PitIn(int param_1);
+ void Pit_Stop1(int param_1);
+-void Pit_Stop2(void);
++void Pit_Stop2(int _car);
+ void Strip_Trigger_Handler(void);
+ void __cdecl Sparking(uint param_1,int param_2);
+ undefined4 __cdecl LoadSave(uint param_1,undefined4 *param_2);
+@@ -35171,9 +35171,9 @@
+ 
+ /* ===== Pit_Stop2 @ 00448f88 ===== */
+ 
+-void Pit_Stop2(void)
+-
+-{
++void Pit_Stop2(int _car)
++
++{  /* ignored car-index arg: uniform trigger-table signature (wasm call_indirect) */
+   return;
+ }
+ 
+@@ -35194,7 +35194,7 @@
+     do {
+       if ((*(char *)(iVar3 + 0x7926bb) != '\0') &&
+          (uVar1 = (uint)*(byte *)(_strip_data + *(int *)(&DAT_007926a4 + iVar3) + 6), uVar1 < 7)) {
+-        (*(code *)(&PTR_LAB_00467084)[uVar1])(iVar2);
++        (*(void (*)(int))(uintptr_t)(&PTR_LAB_00467084)[uVar1])(iVar2);  /* uniform void(int) trigger signature (wasm call_indirect type check) */
+       }
+       iVar2 = iVar2 + 1;
+       iVar3 = iVar3 + 0x2c;

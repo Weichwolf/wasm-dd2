@@ -1,0 +1,179 @@
+Edge-sorter callers: contiguous vertex array (scattered-locals class)
+
+The poly primfuncs build a stack vertex array [x1,y1,x2,y2,x3,y3(,u,v...)] at
+[ebp-0x40..] and pass its base to the edge sorter (FUN_0041243c/FUN_00411ebc),
+which indexes it as ONE array. Ghidra models the slots as separate locals
+(iStack_40..) and passes &iStack_40 -- but gcc lays separate locals out in a
+different order, so the sorter reads a SCRAMBLED vertex list (proven live on
+L8 frame 0x9b: memory at the passed base = {x1,y3,y2,y1,x3,x2}; a y-value
+landed in an x slot -> negative x2 on the unclipped path -> wild span fill
+zeroing megabytes of the image, incl. the cdb OT pointer and prim buffers).
+Replaces the 5 remaining &iStack_40 sites (sub_410d58, sub_410e44, sub_4114c0,
+the +0xe-stride tri, sub_4118d4) with a real int _q[] array, same slot order
+as the original stack frame. Sibling sites were already converted earlier.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -1494,14 +1494,17 @@
+   }
+   if ((bVar1 & bVar2 & bVar3) == 0) {
+     dth_clip = (uint)(bVar3 != 0 || (bVar1 != 0 || bVar2 != 0));
+-    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+-    iStack_38 = *(int *)(param_1 + 10) >> 0x10;
+-    iStack_30 = *(int *)(param_1 + 0xe) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+-    iStack_34 = *(int *)(param_1 + 0xc) >> 0x10;
+-    iStack_2c = *(int *)(param_1 + 0x10) >> 0x10;
+-    _dth_shade = (uint)*(byte *)(param_1 + 4);
+-    FUN_0041243c(&iStack_40,draw_half);
++    { int _q[6];  /* contiguous vertex array: asm keeps [x1,y1,x2,y2,x3,y3] at [ebp-0x40..-0x2c]
++                     and the edge sorter indexes it as ONE array; gcc scatters the separate
++                     iStack_* locals, so &iStack_40 is NOT that array (scrambled vertices) */
++      _q[0] = *(int *)(param_1 + 6) >> 0x10;
++      _q[2] = *(int *)(param_1 + 10) >> 0x10;
++      _q[4] = *(int *)(param_1 + 0xe) >> 0x10;
++      _q[1] = *(int *)(param_1 + 8) >> 0x10;
++      _q[3] = *(int *)(param_1 + 0xc) >> 0x10;
++      _q[5] = *(int *)(param_1 + 0x10) >> 0x10;
++      _dth_shade = (uint)*(byte *)(param_1 + 4);
++      FUN_0041243c(_q,draw_half); }
+   }
+   return;
+ }
+@@ -1543,17 +1546,20 @@
+   }
+   if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+     dth_clip = (uint)(bVar4 != 0 || ((bVar1 != 0 || bVar2 != 0) || bVar3 != 0));
+-    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+-    iStack_38 = *(int *)(param_1 + 10) >> 0x10;
+-    iStack_30 = *(int *)(param_1 + 0xe) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+-    iStack_34 = *(int *)(param_1 + 0xc) >> 0x10;
+-    iStack_2c = *(int *)(param_1 + 0x10) >> 0x10;
+-    _dth_shade = (uint)*(byte *)(param_1 + 4);
+-    FUN_0041243c(&iStack_40,draw_half);
+-    iStack_40 = *(int *)(param_1 + 0x12) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 0x14) >> 0x10;
+-    FUN_0041243c(&iStack_40,draw_half);
++    { int _q[6];  /* contiguous vertex array: asm keeps [x1,y1,x2,y2,x3,y3] at [ebp-0x40..-0x2c]
++                     and the edge sorter indexes it as ONE array; gcc scatters the separate
++                     iStack_* locals, so &iStack_40 is NOT that array (scrambled vertices) */
++      _q[0] = *(int *)(param_1 + 6) >> 0x10;
++      _q[2] = *(int *)(param_1 + 10) >> 0x10;
++      _q[4] = *(int *)(param_1 + 0xe) >> 0x10;
++      _q[1] = *(int *)(param_1 + 8) >> 0x10;
++      _q[3] = *(int *)(param_1 + 0xc) >> 0x10;
++      _q[5] = *(int *)(param_1 + 0x10) >> 0x10;
++      _dth_shade = (uint)*(byte *)(param_1 + 4);
++      FUN_0041243c(_q,draw_half);
++      _q[0] = *(int *)(param_1 + 0x12) >> 0x10;
++      _q[1] = *(int *)(param_1 + 0x14) >> 0x10;
++      FUN_0041243c(_q,draw_half); }
+   }
+   return;
+ }
+@@ -1839,25 +1845,27 @@
+     dth_clip = (uint)(bVar4 != 0 || (bVar3 != 0 || (bVar1 != 0 || bVar2 != 0)));
+     dth_clut = (uint)*(ushort *)(param_1 + 0xe);
+     dth_tpage = (uint)*(ushort *)(param_1 + 0x16);
+-    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+-    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+-    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+-    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+-    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+-    uStack_28 = (uint)*(byte *)(param_1 + 0xc);
+-    uStack_20 = (uint)*(byte *)(param_1 + 0x14);
+-    uStack_18 = (uint)*(byte *)(param_1 + 0x1c);
+-    uStack_24 = (uint)*(byte *)(param_1 + 0xd);
+-    uStack_1c = (uint)*(byte *)(param_1 + 0x15);
+-    uStack_14 = (uint)*(byte *)(param_1 + 0x1d);
+-    _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;
+-    FUN_00411ebc(&iStack_40,draw_text_half_trans);
+-    iStack_40 = *(int *)(param_1 + 0x1e) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+-    uStack_28 = (uint)*(byte *)(param_1 + 0x24);
+-    uStack_24 = (uint)*(byte *)(param_1 + 0x25);
+-    FUN_00411ebc(&iStack_40,draw_text_half_trans);
++    { int _q[12]; /* contiguous [x,y]*3 + [u,v]*3: asm stack array [ebp-0x40..-0x14]; gcc
++                     scatters the separate locals, so &iStack_40 is NOT that array */
++      _q[0] = *(int *)(param_1 + 6) >> 0x10;
++      _q[2] = *(int *)(param_1 + 0xe) >> 0x10;
++      _q[4] = *(int *)(param_1 + 0x16) >> 0x10;
++      _q[1] = *(int *)(param_1 + 8) >> 0x10;
++      _q[3] = *(int *)(param_1 + 0x10) >> 0x10;
++      _q[5] = *(int *)(param_1 + 0x18) >> 0x10;
++      _q[6] = (uint)*(byte *)(param_1 + 0xc);
++      _q[8] = (uint)*(byte *)(param_1 + 0x14);
++      _q[10] = (uint)*(byte *)(param_1 + 0x1c);
++      _q[7] = (uint)*(byte *)(param_1 + 0xd);
++      _q[9] = (uint)*(byte *)(param_1 + 0x15);
++      _q[11] = (uint)*(byte *)(param_1 + 0x1d);
++      _dth_shade = (int)(uint)*(byte *)(param_1 + 4) >> 4;
++      FUN_00411ebc(_q,draw_text_half_trans);
++      _q[0] = *(int *)(param_1 + 0x1e) >> 0x10;
++      _q[1] = *(int *)(param_1 + 0x20) >> 0x10;
++      _q[6] = (uint)*(byte *)(param_1 + 0x24);
++      _q[7] = (uint)*(byte *)(param_1 + 0x25);
++      FUN_00411ebc(_q,draw_text_half_trans); }
+   }
+   return;
+ }
+@@ -1962,14 +1970,17 @@
+   }
+   if ((bVar1 & bVar2 & bVar3) == 0) {
+     dth_clip = (uint)(bVar3 != 0 || (bVar1 != 0 || bVar2 != 0));
+-    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+-    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+-    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+-    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+-    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+-    _dth_shade = (uint)*(byte *)(param_1 + 4);
+-    FUN_0041243c(&iStack_40,draw_half);
++    { int _q[6];  /* contiguous vertex array: asm keeps [x1,y1,x2,y2,x3,y3] at [ebp-0x40..-0x2c]
++                     and the edge sorter indexes it as ONE array; gcc scatters the separate
++                     iStack_* locals, so &iStack_40 is NOT that array (scrambled vertices) */
++      _q[0] = *(int *)(param_1 + 6) >> 0x10;
++      _q[2] = *(int *)(param_1 + 0xe) >> 0x10;
++      _q[4] = *(int *)(param_1 + 0x16) >> 0x10;
++      _q[1] = *(int *)(param_1 + 8) >> 0x10;
++      _q[3] = *(int *)(param_1 + 0x10) >> 0x10;
++      _q[5] = *(int *)(param_1 + 0x18) >> 0x10;
++      _dth_shade = (uint)*(byte *)(param_1 + 4);
++      FUN_0041243c(_q,draw_half); }
+   }
+   return;
+ }
+@@ -2011,17 +2022,20 @@
+   }
+   if ((bVar4 & bVar1 & bVar2 & bVar3) == 0) {
+     dth_clip = (uint)(bVar4 != 0 || ((bVar1 != 0 || bVar2 != 0) || bVar3 != 0));
+-    iStack_40 = *(int *)(param_1 + 6) >> 0x10;
+-    iStack_38 = *(int *)(param_1 + 0xe) >> 0x10;
+-    iStack_30 = *(int *)(param_1 + 0x16) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 8) >> 0x10;
+-    iStack_34 = *(int *)(param_1 + 0x10) >> 0x10;
+-    iStack_2c = *(int *)(param_1 + 0x18) >> 0x10;
+-    _dth_shade = (uint)*(byte *)(param_1 + 4);
+-    FUN_0041243c(&iStack_40,draw_half);
+-    iStack_40 = *(int *)(param_1 + 0x1e) >> 0x10;
+-    iStack_3c = *(int *)(param_1 + 0x20) >> 0x10;
+-    FUN_0041243c(&iStack_40,draw_half);
++    { int _q[6];  /* contiguous vertex array: asm keeps [x1,y1,x2,y2,x3,y3] at [ebp-0x40..-0x2c]
++                     and the edge sorter indexes it as ONE array; gcc scatters the separate
++                     iStack_* locals, so &iStack_40 is NOT that array (scrambled vertices) */
++      _q[0] = *(int *)(param_1 + 6) >> 0x10;
++      _q[2] = *(int *)(param_1 + 0xe) >> 0x10;
++      _q[4] = *(int *)(param_1 + 0x16) >> 0x10;
++      _q[1] = *(int *)(param_1 + 8) >> 0x10;
++      _q[3] = *(int *)(param_1 + 0x10) >> 0x10;
++      _q[5] = *(int *)(param_1 + 0x18) >> 0x10;
++      _dth_shade = (uint)*(byte *)(param_1 + 4);
++      FUN_0041243c(_q,draw_half);
++      _q[0] = *(int *)(param_1 + 0x1e) >> 0x10;
++      _q[1] = *(int *)(param_1 + 0x20) >> 0x10;
++      FUN_0041243c(_q,draw_half); }
+   }
+   return;
+ }

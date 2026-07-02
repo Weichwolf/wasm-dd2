@@ -14,7 +14,7 @@ re-assembled; this patch adds their relocation-map entries.
  extern int FUN_00448368();
 +extern int FUN_0041eeec();
 +extern int FUN_0041fa30();
- extern int FUN_00448e50();
+ extern void FUN_00448e50(int);
  extern int PitOut();
  extern int PitIn();
 @@ -1356,6 +1358,8 @@

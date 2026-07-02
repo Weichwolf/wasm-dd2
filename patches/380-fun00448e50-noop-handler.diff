@@ -12,7 +12,7 @@ frontier). Provide the no-op in dd2h_stubs.c and map it in the dispatch table.
  extern int Load_Game_Vags();
  extern int Clear_SoundFx();
  extern int FUN_00448368();
-+extern int FUN_00448e50();
++extern void FUN_00448e50(int);
  extern int PitOut();
  extern int PitIn();
  extern int Pit_Stop1();

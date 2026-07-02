@@ -3,7 +3,9 @@
 int _control87(){ return 0; }
 int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c; if(b)*b=0; return 1; /* DSERR: no sound device */ }
 int _DZ(int x){ return x; }  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)` */
-int FUN_00448e50(){ return 0; }  /* @0x448e50: empty no-op race-event handler (Ghidra didn't export) */  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)`; faithful = plain divisor */
+void FUN_00448e50(int _car){ (void)_car; }  /* @0x448e50: empty no-op strip-trigger handler (Ghidra didn't
+  export it). Typed void(int) to match the Strip_Trigger_Handler indirect call (car index arg) -- all
+  entries of the trigger table @0x467084 must share one signature for the wasm call_indirect type check. */
 void ExitProcess(int a){ extern int printf(const char*,...); extern void exit(int); printf("[ExitProcess] code=%d\n",a); exit(a); }
 int GetCommandLineA(){ return 0; }
 int GetCurrentProcessId(){ return 0; }

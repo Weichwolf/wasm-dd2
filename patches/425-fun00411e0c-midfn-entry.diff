@@ -14,7 +14,7 @@ Created via CreateMissingFns (951 fns exported), this patch maps it for relocati
 +extern int FUN_00411e0c();
  extern int FUN_0041eeec();
  extern int FUN_0041fa30();
- extern int FUN_00448e50();
+ extern void FUN_00448e50(int);
 @@ -1358,6 +1359,7 @@
  {0x00448310,(void*)&Load_Game_Vags},
  {0x00448364,(void*)&Clear_SoundFx},
