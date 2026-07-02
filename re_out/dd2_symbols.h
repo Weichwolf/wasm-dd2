@@ -213,7 +213,7 @@ extern int _otsize;
 extern int _pad_option;
 extern int _permission;
 extern int _polygon_angles;
-#define _prim_buf (*(int**)GIMG(0x00754390))  /* dual-symbol fix: readers use &prim_buf+buffer_num*4 on the image slot; a C global here diverges */
+#define _prim_buf (*(int*)GIMG(0x00754390))  /* prim buffer base as INT: Ghidra undefined4* arithmetic is BYTE-based (node stride 8 bytes; FUN_00420f9c mixes iVar3+4+i*8 raw with _prim_buf+i*8) */
 extern int _quit_flag;
 extern int _race_finished;
 extern int _recorded_pad_type;
