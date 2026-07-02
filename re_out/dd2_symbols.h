@@ -2984,7 +2984,7 @@ extern int unaff_retaddr;
 #define _DAT_00792a76 (*(int*)GIMG(0x00792a76))
 #define _DAT_00792544 (*(int*)GIMG(0x00792544))
 #define _DAT_0074c4f4 (*(int*)GIMG(0x0074c4f4))
-#define _DAT_0077cf34 (*(int*)GIMG(0x0077cf34))
+#define _DAT_0077cf34 (*(short*)GIMG(0x0077cf34))  /* 16-bit strip-pos field; the binary reads the PAIR via `mov eax,[0x77cf34]; sar eax,0x10` (old-school two-fields-one-load hack) and Ghidra folded the shifted read into this symbol */
 #define _DAT_0074c568 (*(int*)GIMG(0x0074c568))
 #define _DAT_0093de90 (*(int*)GIMG(0x0093de90))
 #define _DAT_00791bae (*(int*)GIMG(0x00791bae))
