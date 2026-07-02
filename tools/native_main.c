@@ -179,6 +179,10 @@ int main(void){
     *(int*)(uintptr_t)0x462d68 = 1;          /* skip DirectSound COM during init */
     CK("Init_Application()");       Init_Application((void*)1);
     *(int*)(uintptr_t)0x463010 = -1;
+    /* ddmain@0x423b28 sets pal_flag=0 before any init; our CRT bypass skips ddmain, and the image
+     * default is 1 -> Init_Overlays would skip its -0x10 tpage adjustment and every overlay/HUD/
+     * lamp texture would sample one VRAM page off (the unlit-LED / wrong-texture defect). */
+    *(int*)(uintptr_t)0x462fe8 = 0;
     CK("Set_Draw_Mode(0)");         Set_Draw_Mode(0);
     *(int*)(uintptr_t)0x462d68 = 0;
     /* Run the REAL attract demo (dd2h's path): DemoMode sets demo_mode=1, num_cars=0x14,

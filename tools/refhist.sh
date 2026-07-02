@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Reference prim-type histogram: freeze the original at Draw_All (hbreak 0x420c9c) on level $LVL
+# and walk the OT exactly like DrawOTag does (cdb @0x754264/0x7542f2, OT ptr @cdb+0x8a, otsize
+# @0x754260), counting the type byte at prim+7. Compare with our build's [HIST] instrumentation.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GAME="${GAME:-$ROOT/DestructionDerby2}"
+LVL="${LVL:-2}"
+export WINEPREFIX="${WINEPREFIX:-$ROOT/.wine-dd2}"
+export WINEARCH=win32
+cd "$GAME"
+timeout "${RUNSEC:-1400}" xvfb-run -a -s "-screen 0 640x480x16" wine dd2h.exe >/tmp/refhist_wine.log 2>&1 &
+echo "waiting for level $LVL ..."
+for i in $(seq 1 $(( ${RUNSEC:-1400} / 4 ))); do
+  sleep 4
+  pid=$(pgrep -x dd2h.exe | head -1); [ -z "$pid" ] && { echo "exited"; exit 1; }
+  read -r LV FR < <(python3 - "$pid" <<'PY'
+import sys,struct
+pid=sys.argv[1]
+def rd(a):
+    try:
+        with open(f"/proc/{pid}/mem","rb") as f: f.seek(a); return struct.unpack('<i',f.read(4))[0]
+    except: return -1
+print(rd(0x936ff4), rd(0x462ff0))
+PY
+)
+  echo "  t~$((i*4))s: level=$LV frame=$FR"
+  if [ "$LV" = "$LVL" ] && [ "$FR" -ge 1 ] && [ "$FR" -le 30 ] 2>/dev/null; then
+    cat > /tmp/refhist.gdb <<GEOF
+set auto-solib-add off
+set pagination off
+attach $pid
+hbreak *0x420c9c
+continue
+python
+import gdb
+inf = gdb.selected_inferior()
+def r32(a):
+    return int.from_bytes(inf.read_memory(a, 4).tobytes(), 'little')
+def r8(a):
+    return inf.read_memory(a, 1).tobytes()[0]
+cf = r32(0x462ff0)
+cdb = r32(0x754264)
+otsize = r32(0x754260)
+ot = r32(cdb + 0x8a)
+cur = ot + otsize*4 - 4
+hist = {}
+n = 0
+p = r32(cur)
+guard = 0
+while p != 0xffffffff and guard < 500000:
+    guard += 1
+    if p == 0:
+        cur -= 4
+        if cur < ot: break
+        p = r32(cur); continue
+    t = r8(p + 7)
+    hist[t] = hist.get(t, 0) + 1
+    n += 1
+    nxt = r32(p)
+    if nxt == 0:
+        cur -= 4
+        if cur < ot: break
+        p = r32(cur)
+    else:
+        p = nxt
+print(f"[REFHIST] cf{cf} cdb={cdb:#x} ot={ot:#x} n={n}: " + " ".join(f"{k:02x}:{v}" for k,v in sorted(hist.items())))
+gdb.execute("detach"); gdb.execute("quit")
+end
+GEOF
+    gdb --nx -batch -x /tmp/refhist.gdb >/tmp/refhist_gdb.log 2>&1; grep -a REFHIST /tmp/refhist_gdb.log || tail -5 /tmp/refhist_gdb.log
+    break
+  fi
+done
+pkill -x dd2h.exe 2>/dev/null; pkill -x wine 2>/dev/null; sleep 1

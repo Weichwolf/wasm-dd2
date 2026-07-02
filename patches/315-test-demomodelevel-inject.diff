@@ -6,7 +6,7 @@ old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks le
 
 --- a/dd2_runtime.c
 +++ b/dd2_runtime.c
-@@ -28,6 +28,29 @@
+@@ -28,6 +28,32 @@
  extern int Play_Game(void);
  extern void Set_Draw_Mode(int);
  #define _current_level (*(int*)0x936ff4)  /* image slot (dual-symbol fix) */
@@ -19,6 +19,9 @@ old f1179 demo-state crash). DemoMode sets demo_mode/num_cars/race_car, picks le
 +     -> spurious Pause_Mode on the live (demo_mode=0) path. Harmless for demo_mode=1 (pause gated on
 +     demo_mode==0). 0x46303e (input source) is already 0=keyboard by BSS. */
 +  *(unsigned char*)0x754451 = 1;
++  /* ddmain@0x423b28 sets pal_flag=0; the CRT bypass skips ddmain (image default 1) and
++     Init_Overlays would skip its -0x10 tpage adjust -> overlay textures one VRAM page off. */
++  *(int*)0x462fe8 = 0;
 +  Setup_Pad(1);
 +  *(int*)0x93de1c=*(int*)0x4673f4; *(int*)0x93de18=*(int*)0x4673f8;
 +  /* demo_mode=1 (recorded-pad attract) by default; DD2_LIVE -> 0 = live keyboard input.
