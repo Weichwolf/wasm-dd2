@@ -21,7 +21,7 @@ int mciSendCommandA(){ return 0; }
    rasterizer range [0x410000,0x460000). No recursion into DrawPrim. */
 void _ot_dispatch(int* piVar1,int* b,int* c){
   (void)b;(void)c;
-  unsigned _v=(unsigned)(&_primfuncs)[*(unsigned char*)((int)piVar1+7)];
+  unsigned _v=((unsigned*)&_primfuncs)[*(unsigned char*)((int)piVar1+7)];  /* dword fn-ptr table (explicit: _primfuncs is byte-typed in dd2_symbols.h) */
   if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int*))(unsigned long)_v)(piVar1);
 }
 int SetStdHandle(){ return 0; }

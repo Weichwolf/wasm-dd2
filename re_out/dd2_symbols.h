@@ -1,124 +1,1341 @@
 #ifndef DD2_SYMBOLS_H
-#define DD2_SYMBOLS_H
 #include "ghidra_compat.h"
+#define GIMG(va) ((unsigned char*)(uintptr_t)(va))
 extern unsigned char* g_image;
 extern int dd2_asset_off;
 extern int dd2_asset_size;
-#define GIMG(va) ((unsigned char*)(uintptr_t)(va))
-#define DAT_00744de4 (*(int*)GIMG(0x0077d1e4))
-#define PTR_DAT_00464bf8 (*(undefined4*)GIMG(0x00464bf8))
-#define PTR_FUN_0042a4c4 (*(undefined4*)GIMG(0x0042a4c4))
-#define PTR_LAB_0042a4c4 (*(undefined4*)GIMG(0x0042a4c4))
-#define DAT_00466432 (*(undefined1*)GIMG(0x00466432))
-#define DAT_004664f0 (*(undefined1*)GIMG(0x004664f0))
-#define DAT_004664f2 (*(undefined1*)GIMG(0x004664f2))
-#define DAT_004664f6 (*(undefined1*)GIMG(0x004664f6))
-#define DAT_004664f7 (*(undefined1*)GIMG(0x004664f7))
-#define DAT_00466370 (*(undefined1*)GIMG(0x00466370))
-#define DAT_00466372 (*(undefined1*)GIMG(0x00466372))
-#define DAT_00466376 (*(undefined1*)GIMG(0x00466376))
-#define DAT_00466377 (*(undefined1*)GIMG(0x00466377))
-#define DAT_00466430 (*(undefined1*)GIMG(0x00466430))
-#define DAT_00466436 (*(undefined1*)GIMG(0x00466436))
-#define DAT_00466437 (*(undefined1*)GIMG(0x00466437))
-#define _DAT_00716c18 (*(int*)GIMG(0x0074f018))
-#define s__R_JL_T__0046ad0c ((char*)GIMG(0x0046ad0c))
-#define s__R_JL_T__0046be14 ((char*)GIMG(0x0046be14))
-#define s__R_JL_T__0046b620 ((char*)GIMG(0x0046b620))
-#define DAT_00467bf4 (*(int*)GIMG(0x00467bf4))
-#define DAT_00467eec (*(int*)GIMG(0x00467eec))
-#define PTR_DAT_00464bf4 (*(int*)GIMG(0x00464bf4))
 void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured ground rasterizer (real body in dd2.c, re-decompiled 2026-06-29). The old `#define draw_text_half FUN_0041080d` was WRONG — 0x41080d is the pure-shade blitter — and made the textured ground render flat idx-68. */
-#define AI_CommandListDEAD (*(int*)GIMG(0x0046597c))
-#define AI_CommandListGeneral_Steer_Left (*(int*)GIMG(0x004659b0))
-#define AI_CommandListGeneral_Steer_Right (*(int*)GIMG(0x00465998))
-#define AI_CommandListPanic_Swerve_Right (*(int*)GIMG(0x004659f8))
-#define AI_CommandListReDetermine (*(int*)GIMG(0x00465990))
-#define AI_CommandListSharp_Reverse_Left (*(int*)GIMG(0x004659e0))
-#define AI_CommandListSharp_Reverse_Right (*(int*)GIMG(0x004659c8))
-#define Anim (*(int*)GIMG(0x007786e0))
+extern int DAT_00000186;
+extern int DAT_00415644;
+extern int DAT_00415648;
+extern int DAT_0041564c;
+extern int DAT_00415650;
+extern int DAT_00415654;
+extern int DAT_0042a380;
+extern int DAT_0042a7e0;
+extern int DAT_0042e004;
+extern int DAT_0042e00c;
+extern int DAT_0042e010;
+extern int DAT_0042e014;
+extern int DAT_0042e018;
+extern int DAT_0042e01c;
+extern int DAT_00430de0;
+extern int DAT_00443f70;
+extern int DAT_00444860;
+extern int DAT_004448a0;
+extern int DAT_00449370;
+extern int DAT_00449388;
+extern int DAT_0044c8d0;
+extern int DAT_0044c8d4;
+extern int DAT_00450070;
+extern int DAT_00450088;
+extern int DAT_004500a0;
+extern int DAT_004500b8;
+extern int DAT_004500d0;
+extern int DAT_00450c20;
+extern int DAT_00450c40;
+extern int DAT_00450c5e;
+extern int DAT_00450c62;
+extern int DAT_00450c66;
+extern int DAT_00453cd0;
+extern int DAT_00453ce8;
+extern int DAT_00453d00;
+extern int DAT_00453d18;
+extern int DAT_00453d30;
+extern int DAT_00454af0;
+extern int DAT_00454b08;
+extern int DAT_00454b20;
+extern int DAT_00454b38;
+extern int DAT_00454b50;
+extern int DAT_004552e0;
+extern int DAT_004552f8;
+extern int DAT_00455310;
+extern int DAT_00455328;
+extern int DAT_00455340;
+extern int DAT_00459339;
+extern int DAT_004593d6;
+extern int DAT_004593ea;
+extern int DAT_0045953b;
+extern int DAT_009063b4_1;
+extern int DAT_009063b8_1;
+extern int DAT_5af34e72;
+extern int LAB_0041341c;
+extern int LAB_004239b0;
+extern int LAB_00445670;
+extern int LAB_00453a40;
+extern int LAB_00456bd3;
+extern int LAB_004576de;
+extern int LAB_004576e7;
+extern int PTR_DAT_0044e200;
+extern int PTR_DAT_0044e204;
+extern int PTR_DAT_0044e208;
+extern int PTR_DAT_0044e20c;
+extern int PTR_DAT_0044e210;
+extern int PTR_DAT_0044e214;
+extern int PTR_DAT_0044e218;
+extern int PTR_DAT_0044e21c;
+extern int PTR_DAT_0044e220;
+extern int PTR_DAT_0044e224;
+extern int PTR_DAT_0044e228;
+extern int PTR_DAT_0044e22c;
+extern int PTR_DAT_0044e230;
+extern int PTR_DAT_0044e234;
+extern int PTR_DAT_0044e238;
+extern int PTR_LAB_00426740;
+extern int PTR_LAB_00426764;
+extern int PTR_LAB_0042a4c0;
+extern int UNK_00458895;
+/* FIX DUMMYPOLY-ALIAS: the decompiler split DummyPoly into the GIMG cell `DummyPoly`@0x74a6d0
+ * AND a bare `extern int _DummyPoly` (allocated in dead BSS by dd2_data.c). DrawFlagObject does
+ * `_DummyPoly = old_OT_head; OT_head = &DummyPoly` to chain DummyPoly into the OT — but writing
+ * _DummyPoly into BSS left the REAL link at 0x74a6d0 = 0, so DrawOTag walked off the bottom of
+ * the OT bucket array into the malloc heap (the f145 underflow crash). Alias them to one cell. */
+extern int _FirstTime;
+extern int _Lap_Timer;
+extern int _Last_Lap_Timer;
+extern int _Now_Timing_Lap;
+extern int _Old_Cam_Mode;
+extern int _Replay_Invalid;
+extern int _Replay_Level;
+extern int _Replay_Script;
+extern int* _Replay_Script_Ptr;
+extern int _Timing_Delay;
+extern int __AccessFHeap;
+extern int __AccessFList;
+extern int __AccessFileH;
+extern int __AccessNHeap;
+extern int __AccessTDList;
+extern int __FiniAccessH;
+extern int __InitAccessH;
+extern int* __LpCmdLine;
+extern int __LpDllName;
+extern int __LpPgmName;
+extern int __MultipleThread;
+extern int __ReleaseFHeap;
+extern int __ReleaseFileH;
+extern int __ReleaseIOB;
+extern int __ReleaseNHeap;
+extern code* __WinMainProc;
+extern int ___ExceptionFilter;
+extern int ___FirstThreadData;
+extern int ___Is_DLL;
+extern int ___OpenStreams;
+extern int __bcrgb;
+extern unsigned char* __clutspace;
+extern int __cmptr;
+extern int __fcrgb;
+extern int __flg;
+extern int* __lmptr;
+extern int __op0;
+extern int __opvr0;
+extern int __opvr1;
+extern int __opz;
+extern int __otz;
+extern int __rgb0;
+extern int __scrx;
+extern int __scry;
+extern int __sigabort;
+extern unsigned char* __texturespace;
+extern int __vr0;
+extern int __vr1;
+extern int __vr2;
+extern int __vr3;
+extern int _actual_season_number;
+extern int _adjusted_music;
+extern int _adjusted_sfx;
+extern int _applause;
+extern int _boot_objects_count;
+extern int _bootoff_index;
+extern int _camera_collision;
+extern int _camera_fd_pt;
+extern int _car0_being_obstructed;
+extern int _car_info;
+extern int _cars_in_crash;
+extern int _commentating;
+extern int _crowd_volume;
+extern int _current_level;
+extern int _current_player;
+extern int _current_player_car;
+extern int _current_race;
+extern int _current_season;
+extern int _dec_info;
+extern int _decrunch_block;
+extern int _decrunch_flag;
+extern int _draw_frame;
+extern int _dth_shade;
+extern int _euphoria;
+extern int _flag;
+extern int _flame_frame_count;
+extern int _flash1_frame_count;
+extern int _flash2_frame_count;
+extern int _flash3_frame_count;
+extern int _floaty_camera_fd;
+extern int _frame_skip;
+extern int _frame_wait;
+extern int _frames_per_sec;
+extern int _free_mem;
+extern int _fx;
+extern int _fx_1;
+extern int _fx_10;
+extern int _fx_11;
+extern int _fx_15;
+extern int _fx_17;
+extern int _fx_18;
+extern int _fx_2;
+extern int _fx_21;
+extern int _fx_22;
+extern int _fx_3;
+extern int _fx_4;
+extern int _fx_5;
+extern int _fx_6;
+extern int _fx_7;
+extern int _fx_8;
+extern int _fx_9;
+extern int _g_sprite_info;
+extern int _gnormals;
+extern short* _gpoly;
+extern int* _gprim1;
+extern int _gprim2;
+extern int _grounded_count;
+extern int _gtexture;
+extern int _gtexture_def;
+extern int _last_time;
+extern int* _level_data;
+extern int _light_matrix;
+extern int _local_1e;
+extern int _local_24;
+extern int _local_26;
+extern int _mem_size;
+extern int _num_spies;
+extern int _num_strips;
+extern int _old_flying_index;
+extern int _otsize;
+extern int _pad_option;
+extern int _permission;
+extern int _polygon_angles;
+extern int* _prim_buf;
+extern int _quit_flag;
+extern int _race_finished;
+extern int _recorded_pad_type;
+extern int* _screen_line_list;
+extern int _screen_poly_list;
+extern int _sky_shape1;
+extern int _sky_shape2;
+extern int _sky_shape3;
+extern int _sky_shape4;
+extern int _sky_shape5;
+extern int _sky_shape6;
+extern int _sky_shape7;
+extern int _sky_shape8;
+extern int _sprite_matrix;
+extern int _stats_recorded;
+extern int _strip_data;
+extern int _strip_vertex;
+extern int _surfai;
+extern int _tilt_sprite_matrix;
+extern int _tot_time;
+extern int _total_collisions;
+extern int _total_dest_timer;
+extern int _track_height;
+extern int _u;
+extern int _v_norm;
+extern int _value;
+extern int _wheeloff_index;
+extern int _whllck;
+extern int _yes_quit;
+extern int _yes_retire;
+extern int pHVar1;
+extern int pHVar6;
+extern int sRam00465932;
+extern int sRam00465934;
+extern int sRam00465936;
+extern int sRam00465942;
+extern int sRam00465944;
+extern int sRam00465946;
+extern int sRam0046956a;
+extern int sRam0046be12;
+extern int sRam0071410a;
+extern int sRam007597b8;
+extern int sRam007597c0;
+extern int sRam007597c8;
+extern int sRam007597d0;
+extern int sRam007597d8;
+extern int sRam007597e0;
+extern int sRam007597e8;
+extern int stack0x00000008;
+extern int stack0x0000000c;
+extern int stack0xfffffbd4;
+extern int stack0xfffffbd5;
+extern int stack0xfffffbd6;
+extern int stack0xffffff78;
+extern int stack0xffffffa0;
+extern int stack0xffffffbf;
+extern int stack0xfffffff4;
+extern int stack0xfffffffc;
+extern int uRam00464e52;
+extern int uRam00464e5a;
+extern int uRam0073c2f4;
+extern int uRam00744b36;
+extern int uRam007598a0;
+extern int uRam007598a2;
+extern int uRam007598a4;
+extern int uRam007598a6;
+extern int uRam007598a8;
+extern int uRam007598ae;
+extern int uVar1;
+void __cdecl FUN_004128a6(undefined4 *param_1,uint param_2,int param_3);
+void FUN_00412e8c(void);
+void __cdecl FUN_00412e9c(int param_1);
+void FUN_00413014(void);
+undefined4 FUN_00413070(void);
+LRESULT FUN_004132b0(HWND param_1,uint param_2,uint param_3,uint param_4);
+void __cdecl FUN_00413448(int param_1);
+void FUN_00413b4e(void);
+void FUN_00413dc8(short *param_1,short *unaff_ESI,short *unaff_EDI);
+void FUN_00413f45(void);
+void FUN_00413fd2(void);
+void FUN_00414055(void);
+uint __cdecl FUN_00414360(int *param_1,int *param_2);
+void __cdecl FUN_004148d0(int param_1,int param_2,int param_3,int param_4);
+void __cdecl FUN_00415160(void *param_1,undefined *param_2);
+void __cdecl FUN_004153d4(undefined4 *param_1);
+undefined4 __cdecl FUN_00415404(char *param_1);
+void __cdecl FUN_00415448(char *param_1,uint *param_2);
+undefined4 __cdecl FUN_004154b8(int param_1,int param_2);
+undefined4 __cdecl FUN_0041574c(int *param_1,HGLOBAL param_2);
+undefined4 __cdecl FUN_004157e8(int *param_1,undefined4 *param_2,int param_3);
+undefined4 __cdecl Parse_RIFF_Wave(int *param_1,int *param_2,int *param_3,uint *param_4);
+void __cdecl Init_DirectSound(undefined4 param_1);
+void FUN_00415a94(void);
+void __cdecl FUN_00415b50(uint param_1);
+void __cdecl FUN_00415f64(int param_1,int param_2);
+undefined4 FUN_00416044(void);
+void FUN_0041611c(void);
+void __cdecl FUN_0041612c(char param_1,undefined4 param_2);
+void FUN_00416264(void);
+int __cdecl Parse_Sound_Bank(int param_1);
+void FUN_0041643c(void);
+int FUN_00416494(void);
+undefined4 __cdecl FUN_004164d4(int param_1,int param_2);
+int __cdecl Sound_Volume_To_dB(uint param_1);
+void __cdecl FUN_004166c4(int param_1,char *param_2,ushort *param_3);
+undefined4 __cdecl FUN_00416a10(int param_1);
+void __cdecl FUN_0041a2f4(int param_1);
+void __cdecl FUN_0041f6a0(int param_1);
+int __cdecl FUN_0041fb7c(undefined4 *param_1);
+void __cdecl Draw_Object_Polys(undefined4 *param_1,int param_2);
+void __cdecl FUN_0041ff50(undefined4 param_1);
+void __cdecl FUN_0042003c(undefined4 param_1,undefined4 param_2);
+void __cdecl FUN_00420060(undefined4 param_1);
+void __cdecl FUN_004202ac(short *param_1,int *param_2);
+void __cdecl FUN_004203a0(short *param_1,int *param_2);
+void __cdecl FUN_004205d8(undefined4 param_1,int *param_2,uint param_3);
+void FUN_00420b1c(void);
+void __cdecl FUN_00420cf0(int param_1,ushort param_2,undefined2 param_3,undefined1 *param_4,undefined4 param_5);
+int __cdecl FUN_00420e6c(int param_1);
+void __cdecl FUN_00420ee8(uint param_1);
+void FUN_00422064(void);
+int __cdecl FUN_004220cc(undefined1 *param_1,int param_2,int param_3);
+int __cdecl FUN_00422128(int *param_1,int param_2,int param_3);
+int __cdecl FUN_00422184(int *param_1,int param_2,int param_3);
+void FUN_004221ec(void);
+void __cdecl FUN_00422358(int param_1,int param_2,int param_3);
+void __cdecl FUN_00422548(int param_1,int param_2,int param_3);
+void __cdecl FUN_0042293c(int param_1,int param_2,int param_3);
+void FUN_00422c74(void);
+void __cdecl FUN_0042304c(byte *param_1);
+void FUN_00423210(void);
+int FUN_0042353c(void);
+int __cdecl FUN_004237c0(int param_1);
+int __cdecl FUN_00423804(int param_1,int param_2);
+void FUN_00424930(void);
+void __cdecl FUN_00425314(int param_1);
+void __cdecl FUN_00425a98(int param_1);
+undefined4 __cdecl FUN_00425b88(int param_1);
+void __cdecl FUN_00425e74(int param_1,int param_2,undefined4 param_3,int param_4,int param_5);
+void Compute_Bowl_Cell_Normals(void);
+void __cdecl FUN_00428548(int param_1,int *param_2,int param_3);
+void __cdecl FUN_004287c0(int param_1,int param_2);
+void __cdecl FUN_004288d0(int param_1);
+void __cdecl Play_Race_Start_Sounds(int param_1);
+void __cdecl FUN_004295e4(int param_1);
+void FUN_00429994(void);
+void __cdecl FUN_0042a4d8(int param_1);
+void __cdecl FUN_0042b5f0(int param_1);
+void __cdecl FUN_0042c1a4(int param_1);
+void FUN_0042fa4c(void);
+void FUN_0042fd58(void);
+void Draw_Scene_Object_Blocks(void);
+void FUN_004308b8(void);
+void __cdecl FUN_00430a30(int param_1);
+void __fastcall FUN_00430bde(int param_1);
+void __cdecl FUN_00430efc(int param_1,short param_2,short param_3,short param_4,int param_5);
+undefined4 __cdecl FUN_00432f98(int param_1);
+void FUN_00433a70(void);
+void FUN_004351d0(void);
+void __cdecl FUN_00435254(int param_1);
+int FUN_00436c04(void);
+void Update_Particles(void);
+void __cdecl FUN_00436dd0(int param_1);
+void __cdecl FUN_0043709c(int param_1,int param_2,int param_3);
+void __cdecl FUN_004371fc(int param_1,int param_2,int param_3,int param_4,short param_5,int param_6,uint param_7, undefined4 param_8);
+void __cdecl FUN_0043b26c(int param_1,int param_2,int param_3);
+void __cdecl FUN_0043b7bc(int param_1,int param_2,int param_3,int param_4,int param_5);
+void __cdecl FUN_0043c4e8(int param_1,int param_2,int *param_3,int param_4);
+void __cdecl FUN_0043c55c(int param_1,int param_2,int *param_3,int param_4);
+void __cdecl FUN_0043c5d0(int param_1,int param_2,char *param_3,int param_4,int param_5);
+void __cdecl FUN_0043c738(int param_1,int param_2,char *param_3,int param_4,int param_5);
+void __cdecl FUN_0043dbd8(int param_1);
+void __cdecl FUN_0043dd00(int param_1);
+void FUN_00440980(void);
+void __cdecl FUN_00440ac4(int param_1);
+void __cdecl FUN_00440f60(int param_1);
+void __cdecl FUN_00441394(int param_1,int param_2);
+void __cdecl FUN_0044282c(int param_1);
+void __cdecl Compute_Car_Screen_Pos(int param_1);
+void FUN_004430b8(void);
+void FUN_00443b10(void);
+void FUN_00443f90(void);
+void __cdecl FUN_00444048(int param_1);
+void __cdecl FUN_004448e0(int param_1);
+void __cdecl FUN_00444a60(int param_1);
+void __cdecl FUN_00444e3c(int param_1);
+void __cdecl FUN_00444fcc(int param_1,int param_2);
+void __cdecl FUN_00445030(int param_1,int param_2);
+void __cdecl FUN_004450dc(int param_1,uint param_2);
+void FUN_00445b40(void);
+void FUN_00445b78(void);
+void FUN_00446c10(void);
+void __cdecl FUN_004471c0(int param_1);
+void FUN_004477a0(void);
+void FUN_00447960(void);
+void Update_Engine_Sound(void);
+int __cdecl FUN_004480bc(int param_1);
+void Update_Commentary(void);
+void FUN_004496d8(void);
+undefined4 __cdecl FUN_00449728(uint param_1);
+void FUN_00449928(void);
+void FUN_00449958(void);
+void __cdecl FUN_00449c54(undefined4 param_1);
+void __cdecl FUN_00449dd8(undefined4 param_1);
+undefined4 __cdecl FUN_00449ee0(uint param_1);
+void __cdecl FUN_0044a1a4(undefined4 param_1,int param_2);
+void __cdecl FUN_0044a2b0(undefined4 param_1,int param_2);
+undefined4 __cdecl FUN_0044a32c(undefined4 param_1,int param_2,undefined4 *param_3);
+undefined4 __cdecl FUN_0044a3a0(undefined4 param_1,int param_2,undefined4 *param_3);
+undefined4 __cdecl FUN_0044a4e4(char *param_1);
+void __cdecl FUN_0044a904(int param_1);
+void FUN_0044aa28(void);
+void FUN_0044aaf0(void);
+void __cdecl FUN_0044ac9c(undefined2 *param_1,undefined2 param_2);
+void __cdecl FUN_0044aec8(int *param_1);
+void FUN_0044b5c0(void);
+void FUN_0044b684(void);
+void FUN_0044b970(void);
+void __cdecl FUN_0044b9c0(char *param_1);
+void FUN_0044bb88(void);
+void __cdecl FUN_0044c418(int param_1,int param_2);
+void __cdecl FUN_0044c538(int param_1,int param_2);
+void __cdecl FUN_0044c800(int *param_1,int param_2);
+void FUN_0044c8e8(void);
+void FUN_0044cb48(void);
+void FUN_0044ccb8(void);
+void FUN_0044ced4(void);
+void FUN_0044cef0(void);
+void FUN_0044d0e4(void);
+void FUN_0044d3d4(void);
+void FUN_0044d538(void);
+int FUN_0044d630(void);
+void FUN_0044d650(void);
+void FUN_0044d974(void);
+void FUN_0044db70(void);
+void FUN_0044e148(void);
+int FUN_0044e170(void);
+void __cdecl FUN_0044e440(int *param_1);
+void FUN_0044e618(void);
+void FUN_0044e6a0(void);
+void FUN_0044eb1c(void);
+undefined4 __cdecl FUN_0044ecac(undefined4 param_1);
+void __cdecl FUN_0044f5c8(int param_1,int param_2,int param_3);
+void __cdecl FUN_0044f65c(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 FUN_0044f6b0(void);
+void __cdecl FUN_0044f814(undefined4 param_1);
+undefined4 __cdecl FUN_0044fbc0(undefined4 param_1,uint param_2);
+uint FUN_0044fca4(void);
+void __cdecl FUN_0044fce8(undefined1 *param_1,int param_2);
+void __cdecl FUN_0044fdb4(undefined4 param_1,undefined4 param_2,int param_3);
+void FUN_0044ff48(void);
+void FUN_00450640(void);
+undefined4 FUN_0045099c(void);
+void __cdecl FUN_00450c7c(short *param_1);
+void __cdecl FUN_00450e20(int param_1);
+void FUN_004518ac(void);
+void FUN_00451a80(void);
+void FUN_00451ac0(void);
+void FUN_00451ae0(void);
+void FUN_00451d4c(void);
+void FUN_00451d6c(void);
+void FUN_00451fdc(void);
+void FUN_00451ff0(void);
+undefined4 FUN_0045202c(void);
+void FUN_00452090(void);
+undefined4 FUN_004525a0(void);
+void FUN_00452790(void);
+undefined4 FUN_004527f0(void);
+void FUN_004529d4(void);
+bool FUN_00452a34(void);
+void FUN_00452d30(void);
+undefined4 FUN_00452da0(void);
+undefined4 FUN_00452dc0(void);
+void FUN_00452fa4(void);
+void FUN_00452fc4(void);
+void FUN_00453580(void);
+void __cdecl FUN_004535c0(int param_1);
+void FUN_004539d0(void);
+void FUN_004539f0(void);
+undefined4 FUN_00453a18(void);
+undefined4 FUN_00453a20(void);
+void FUN_00453b98(void);
+void FUN_00454158(void);
+void FUN_004541e8(void);
+void FUN_00454278(void);
+void FUN_00454308(void);
+void FUN_00454398(void);
+undefined4 FUN_00454550(void);
+void FUN_00454804(void);
+void FUN_00454a70(void);
+void FUN_00454e9c(void);
+undefined4 FUN_00454f0c(void);
+undefined4 FUN_004551b0(void);
+void FUN_00455260(void);
+void FUN_0045572c(void);
+undefined4 FUN_004559d4(void);
+int * __cdecl FUN_00455de4(char *param_1,byte param_2,uint param_3,int param_4,int *param_5);
+int * __cdecl FUN_00455edb(char *param_1,byte *param_2,int param_3);
+FILE * __cdecl FUN_00455f3b(FILE *param_1);
+int * __cdecl FUN_00455fb0(char *param_1,byte *param_2,FILE *param_3);
+undefined4 __cdecl FUN_00456034(int param_1,int *param_2);
+undefined4 __cdecl FUN_0045607b(int *param_1,LONG param_2,uint param_3);
+int __cdecl FUN_0045644e(int param_1);
+void __cdecl FUN_0045645e(undefined1 *param_1,uint param_2);
+void __cdecl FUN_00456717(int *param_1,undefined1 param_2);
+int FUN_0045672e(char* buf, const char* fmt, ...);
+int FUN_00456af2(void);
+void __fastcall FUN_00456b30(uint param_1,uint param_2);
+void __fastcall FUN_00456b67(uint param_1,undefined4 param_2);
+undefined4 __cdecl FUN_00456bf3(undefined4 *param_1,byte *param_2,int *param_3);
+int __cdecl FUN_00456cae(int param_1);
+void __cdecl FUN_00456cdf(undefined4 param_1);
+undefined4 FUN_0045703b(void);
+void FUN_00457040(void);
+void __cdecl FUN_00457041(int param_1);
+void __cdecl FUN_0045704f(int param_1);
+int __cdecl FUN_004571e4(undefined4 *param_1);
+DWORD __cdecl FUN_004572f8(int param_1,LONG param_2,DWORD param_3);
+DWORD __cdecl FUN_00457408(int param_1,LPVOID param_2,DWORD param_3);
+undefined4 __cdecl FUN_00457571(undefined4 *param_1);
+undefined4 __cdecl FUN_00457631(int param_1);
+void FUN_004576c5(void);
+byte * __cdecl FUN_00457d39(char *param_1,int *param_2,int param_3);
+char * __cdecl FUN_00457e84(char *param_1,int param_2);
+int __cdecl FUN_00457ee9(char *param_1,undefined4 param_2,int param_3);
+int __cdecl FUN_00457f0f(short *param_1,undefined4 param_2,int param_3);
+void __cdecl FUN_00457f40(int param_1,char *param_2,int param_3);
+void __cdecl FUN_00457f9f(char *param_1,uint param_2,int param_3);
+int __cdecl FUN_0045809c(undefined4 param_1,undefined4 param_2,undefined4 param_3);
+undefined8 __thiscall FUN_004580b7(void *this,ushort *param_1,int *param_2,int param_3,ushort *param_4);
+void __cdecl FUN_004585e8(byte *param_1);
+void __cdecl FUN_00458964(HANDLE param_1,uint param_2);
+void FUN_00458a31(void);
+int __cdecl FUN_00458b45(byte *param_1,byte *param_2);
+undefined4 __cdecl FUN_00458bc7(uint param_1);
+void __cdecl FUN_00458cc5(int param_1,uint param_2);
+undefined2 FUN_00458e2f(void);
+int __cdecl FUN_0045987f(int param_1);
+undefined8 __cdecl FUN_00459968(char *param_1,int *param_2,int param_3);
+void __cdecl FUN_00459a88(char *param_1,int param_2);
+void FUN_00459b19(void);
+int * __cdecl FUN_00459b51(int *param_1);
+undefined4 __cdecl FUN_00459bc5(uint param_1);
+bool __cdecl FUN_00459c68(uint *param_1);
+int __cdecl FUN_00459e4a(int param_1);
+undefined1 * FUN_00459e6e(void);
+void __cdecl FUN_00459ea8(uint *param_1,uint param_2);
+void FUN_00459f57(void);
+LPVOID FUN_00459fc0(void);
+undefined4 __cdecl FUN_00459ff5(undefined4 param_1,int param_2);
+void FUN_0045a10b(char *param_1);
+uint __cdecl FUN_0045a174(HANDLE param_1);
+int __cdecl FUN_0045a3b0(char *param_1,int param_2,int param_3,int param_4);
+char * __cdecl FUN_0045a453(char *param_1,char *param_2,int param_3,int param_4);
+void __cdecl FUN_0045a4c6(undefined1 *param_1,size_t param_2,size_t param_3);
+undefined4 __cdecl FUN_0045a9f1(HLOCAL param_1);
+void __cdecl FUN_0045aa4a(HLOCAL param_1);
+int __cdecl FUN_0045aa9f(int param_1);
+void __cdecl FUN_0045aaac(uint param_1,uint param_2);
+undefined4 FUN_0045acb6(void);
+undefined4 __cdecl FUN_0045ad67(short *param_1);
+void FUN_0045ad94(void);
+undefined4 FUN_0045ae0c(void);
+undefined8 __fastcall FUN_0045aeaa(undefined4 param_1,undefined4 param_2);
+void __fastcall FUN_0045b3d9(undefined4 param_1,uint param_2);
+void FUN_0045b5ae(void);
+undefined8 __cdecl FUN_0045b5d4(int param_1,uint param_2,uint param_3);
+void __fastcall FUN_0045b688(undefined4 param_1,uint *param_2);
+uint __fastcall FUN_0045b6f3(undefined4 param_1,int param_2);
+int FUN_0045b75d(void);
+void FUN_0045b812(void);
+uint __cdecl FUN_0045b814(int param_1,uint param_2,ushort param_3,undefined4 param_4,uint param_5,uint param_6);
+void FUN_0045bdda(void);
+undefined4 FUN_0045be98(uint param_1);
+undefined4 FUN_0045c2ab(void);
+extern int extraout_DL;
+extern int extraout_DL_00;
+extern int extraout_EAX;
+extern int extraout_ECX;
+extern int extraout_ECX_00;
+extern int extraout_ECX_01;
+extern int extraout_EDX;
+extern int extraout_ST0;
+extern int extraout_ST0_00;
+extern int extraout_ST1;
+extern int extraout_var;
+extern int in_AF;
+extern int in_AL;
+extern int in_DS;
+extern int in_EAX;
+extern int in_ECX;
+extern int in_EDX;
+extern int in_FPUControlWord;
+extern int in_FPUStatusWord;
+extern int in_ST0;
+extern int in_ST1;
+extern int unaff_BH;
+extern int unaff_EBP;
+extern int unaff_EBX;
+extern int unaff_EDI;
+extern int unaff_ESI;
+extern int unaff_FS_OFFSET;
+extern int unaff_retaddr;
+#endif
+#define Rsrc_Icon_1_0 (*(undefined1*)GIMG(0x009800a8))
+#define Rsrc_GroupIcon_L0_0 (*(undefined1*)GIMG(0x00980390))
+#define fi_texture (*(int*)GIMG(0x00796f70))
+#define _WindowsKbhit (*(int*)GIMG(0x0046c3a4))
 #define Arctan_Table (*(int*)GIMG(0x00463054))
+#define Pause (*(int*)GIMG(0x004686c4))
+#define pause_txt (*(undefined1*)GIMG(0x00937410))
+#define roller (*(undefined1*)GIMG(0x00781940))
+#define AI_CommandListGeneral_Steer_Left (*(int*)GIMG(0x004659b0))
+#define floaty_camera_fd (*(int*)GIMG(0x0077cf3c))
+#define FacePolys (*(undefined1*)GIMG(0x0093fc80))
+#define Liberty_Track_Type (*(int*)GIMG(0x00465da8))
+#define FlagPolys (*(undefined1*)GIMG(0x00781f90))
+#define champ_info (*(undefined1*)GIMG(0x0093dee0))
+#define __GetThreadPtr (*(int*)GIMG(0x0046c32c))
+#define scene_light_matrix (*(undefined4*)GIMG(0x00465854))
+#define value (*(int*)GIMG(0x007543a8))
+#define dth_clut (*(undefined4*)GIMG(0x00480014))
+#define dth_clip (*(undefined4*)GIMG(0x00480010))
+#define quick_racetype_offset (*(undefined4*)GIMG(0x00467418))
+#define current_player (*(int*)GIMG(0x0093decc))
+#define _WindowsStdout (*(int(**)())GIMG(0x0046c3a0))
+#define in_640 (*(undefined4*)GIMG(0x00460480))
+#define Template (*(int*)GIMG(0x00774708))
+#define dent_area (*(int*)GIMG(0x00463d3c))
+#define ZValue (*(undefined2*)GIMG(0x00465250))
+#define drive_textures (*(undefined1*)GIMG(0x00465064))
+#define dr_modes (*(undefined1*)GIMG(0x00463004))
 #define Attribute (*(int*)GIMG(0x00791ad4))
-#define BackPoly (*(int*)GIMG(0x0093fbe0))
-#define BaseHandicaps (*(int*)GIMG(0x00465a70))
-#define CLUT_Anim_Casino (*(int*)GIMG(0x0046518c))
-#define CLUT_Anim_Dollar (*(int*)GIMG(0x00465160))
-#define CLUT_Anim_Safe (*(int*)GIMG(0x00465174))
-#define CLUT_Anim_Twist1 (*(int*)GIMG(0x004651d0))
-#define CLUT_Anim_Twist2 (*(int*)GIMG(0x004651e4))
-#define COSE (*(int*)GIMG(0x004604c8))
-#define Car_Friction (*(int*)GIMG(0x00465a20))
+#define dec_info (*(int*)GIMG(0x00789348))
+#define frames_per_sec (*(int*)GIMG(0x00462ffc))
+#define sd_shadow (*(int*)GIMG(0x00466e94))
+#define grounded_count (*(undefined1*)GIMG(0x00792640))
+#define goose_textures (*(undefined1*)GIMG(0x00465078))
+#define car_position (*(int*)GIMG(0x0078427c))
+#define sun_position (*(int*)GIMG(0x0046526c))
+#define point (*(undefined1*)GIMG(0x004670a0))
+#define __FirstThreadData (*(int*)GIMG(0x0094097c))
+#define PointyBits (*(undefined1*)GIMG(0x0078a270))
+#define flame_textures (*(undefined1*)GIMG(0x00465148))
+#define dth_delta1 (*(undefined4*)GIMG(0x00480040))
+#define dth_delta2 (*(undefined4*)GIMG(0x0048003c))
+#define tot_time (*(int*)GIMG(0x007746b4))
+#define current_frame (*(undefined4*)GIMG(0x00462ff0))
+#define __AccessTDList (*(undefined1*)GIMG(0x0045958c))
+#define _WindowExitRtn (*(int(**)())GIMG(0x0046c3b4))
+#define _AccessTDList (*(int*)GIMG(0x0046c358))
+#define sd_select_txt (*(int*)GIMG(0x00467034))
+#define damage_car (*(undefined1*)GIMG(0x0077cf80))
+#define floaty_camera_sca (*(int*)GIMG(0x00464678))
+#define dirbuf (*(int*)GIMG(0x0074c710))
+#define dth_u1 (*(undefined4*)GIMG(0x0048004c))
+#define screen_height (*(undefined4*)GIMG(0x00462ff8))
+#define madbut_object (*(int*)GIMG(0x00940034))
+#define sd_damage_topr (*(int*)GIMG(0x00464c3c))
+#define sd_damage_topl (*(int*)GIMG(0x00464c24))
+#define fx_15 (*(int*)GIMG(0x00939b24))
+#define old_flying_index (*(int*)GIMG(0x0077c750))
+#define _amblksiz (*(int*)GIMG(0x0046c51c))
+#define screen_text_list (*(int*)GIMG(0x00940014))
+#define __InitAccessH (*(undefined1*)GIMG(0x00459539))
+#define dollar_frame_count (*(undefined4*)GIMG(0x00465170))
+#define Collision_Counter (*(undefined4*)GIMG(0x00467068))
+#define _WindowsIsWindowedHandle (*(int(**)())GIMG(0x0046c374))
+#define sd_pause_txt (*(int*)GIMG(0x00466ecc))
+#define euphoria (*(int*)GIMG(0x00939b30))
+#define Pit_Timing_Delay (*(undefined4*)GIMG(0x004653c4))
+#define Replay_Level (*(int*)GIMG(0x009392bc))
+#define flag2_wave_count (*(undefined4*)GIMG(0x004650d8))
+#define flag1_wave_count (*(undefined4*)GIMG(0x004650d4))
+#define slab_position (*(int*)GIMG(0x0046995c))
+#define _ThreadExitRtn (*(int*)GIMG(0x0046c368))
+#define _ReleaseFList (*(int*)GIMG(0x0046c364))
+#define __ModF (*(undefined1*)GIMG(0x0045b4be))
+#define _fmode (*(int*)GIMG(0x0046c31d))
+#define _cbyte (*(int*)GIMG(0x0046c3e0))
+#define strip_vertex (*(int*)GIMG(0x0077cef4))
+#define _lmptr (*(int*)GIMG(0x0074c6d8))
+#define _cmptr (*(int*)GIMG(0x0074c6c0))
+#define _texturespace (*(int*)GIMG(0x0074c4cc))
+#define TopHandicaps (*(undefined1*)GIMG(0x00465ac0))
+#define drive_frame_count (*(undefined4*)GIMG(0x00465074))
+#define _WindowsYieldControl (*(int*)GIMG(0x0046c394))
+#define gtexture (*(int*)GIMG(0x007541dc))
+#define coaster_car_object (*(int*)GIMG(0x00781d00))
+#define __Save8087 (*(int*)GIMG(0x0046c4fc))
+#define Speedway_Corner_Data (*(int*)GIMG(0x00465ca0))
+#define cigar_angles (*(undefined4*)GIMG(0x00464e54))
+#define car_fd (*(undefined1*)GIMG(0x00792690))
+#define dth_v1 (*(undefined4*)GIMG(0x00480048))
+#define __tmpfnext (*(int*)GIMG(0x0046c31c))
+#define cam_angles (*(int*)GIMG(0x00464a98))
+#define strip_data (*(int*)GIMG(0x0077cef8))
+#define level_data_buffer (*(int*)GIMG(0x00796ff0))
+#define camera_fd_pt (*(int*)GIMG(0x0077cf70))
+#define camera_fd (*(int*)GIMG(0x0077cf10))
+#define __FiniThreadProcessing (*(undefined1*)GIMG(0x0045a2c6))
+#define car_speed (*(int*)GIMG(0x00784288))
+#define slab_light_matrix (*(int*)GIMG(0x00469994))
+#define Smoke_Animation1 (*(int*)GIMG(0x00466294))
+#define __Rest8087 (*(int*)GIMG(0x0046c500))
+#define Old_Cam_Mode (*(int*)GIMG(0x00464a68))
+#define floaty_camera_ultimate (*(int*)GIMG(0x0046484c))
+#define madbase_object (*(int*)GIMG(0x009400f8))
+#define decrunch_flag (*(int*)GIMG(0x0078a158))
+#define car_lookup (*(int*)GIMG(0x00466a0c))
+#define Forest_Track_Type (*(undefined1*)GIMG(0x00465da0))
+#define current_player_car (*(int*)GIMG(0x0093ded0))
+#define race_type (*(undefined4*)GIMG(0x004673f4))
+#define race_mode (*(undefined4*)GIMG(0x004673f8))
+#define demo_flash (*(undefined4*)GIMG(0x004652a0))
+#define total_dest_timer (*(int*)GIMG(0x0078428c))
+#define sun_images (*(undefined1*)GIMG(0x007830e0))
+#define Movie_Playing (*(undefined4*)GIMG(0x00462cd4))
+#define AI_CommandListReDetermine (*(int*)GIMG(0x00465990))
+#define cigar_object (*(int*)GIMG(0x00781f50))
+#define _fcrgb (*(int*)GIMG(0x0074c6ec))
+#define _bcrgb (*(int*)GIMG(0x0074c6c4))
+#define counter_thing (*(undefined4*)GIMG(0x0046706c))
+#define car_colour_matrix (*(undefined1*)GIMG(0x0077d200))
+#define sdOverdata (*(int*)GIMG(0x0046522e))
+#define __AccessFHeap (*(undefined1*)GIMG(0x0045957b))
+#define SpinTable (*(undefined1*)GIMG(0x00465e90))
+#define buffer_num (*(undefined4*)GIMG(0x00462fec))
+#define ___begtext (*(undefined1*)GIMG(0x00410003))
+#define corner_fd (*(undefined1*)GIMG(0x007924e0))
+#define music_volume (*(int*)GIMG(0x0046740c))
+#define flag2_wave_frames (*(undefined1*)GIMG(0x00781918))
+#define flag1_wave_frames (*(undefined1*)GIMG(0x00781900))
+#define __sig_fini_rtn (*(undefined4*)GIMG(0x0046c370))
+#define damage (*(int*)GIMG(0x007836d0))
+#define Speedway_Wheel_Locking_Speed (*(int*)GIMG(0x00465d00))
+#define __sig_init_rtn (*(int*)GIMG(0x0046c36c))
+#define NameArray (*(int*)GIMG(0x00468624))
+#define sd_damage_car (*(int*)GIMG(0x00464c0c))
+#define rot_points (*(undefined1*)GIMG(0x0074f1c0))
+#define fx_17 (*(int*)GIMG(0x00939b58))
+#define _start_TI (*(int*)GIMG(0x0046ff6c))
+#define FXPage (*(undefined1*)GIMG(0x009392d0))
+#define sky_shape8 (*(int*)GIMG(0x0078a26c))
+#define sky_shape3 (*(int*)GIMG(0x0078a268))
+#define sky_shape2 (*(int*)GIMG(0x0078a264))
+#define sky_shape1 (*(int*)GIMG(0x0078a260))
+#define sky_shape7 (*(int*)GIMG(0x0078a25c))
+#define sky_shape6 (*(int*)GIMG(0x0078a258))
+#define sky_shape5 (*(int*)GIMG(0x0078a254))
+#define sky_shape4 (*(int*)GIMG(0x0078a250))
+#define sdRacedata (*(int*)GIMG(0x00465216))
+#define __AccessNHeap (*(undefined1*)GIMG(0x0045956d))
+#define gnormals (*(int*)GIMG(0x007541d4))
+#define add_transparency_table (*(int*)GIMG(0x0074c4c8))
+#define left_collision_offsets (*(undefined1*)GIMG(0x00465e30))
+#define rgb_lookup (*(unsigned char*)GIMG(0x0074b450))
+#define cont_game (*(undefined1*)GIMG(0x009373c0))
+#define boot_quads (*(int*)GIMG(0x00466a88))
+#define quit_flag (*(int*)GIMG(0x007746ac))
+#define hlf_transparency_table (*(int*)GIMG(0x0074c450))
+#define free_mem (*(int*)GIMG(0x0075439c))
+#define Stunt_Wheel_Locking_Speed (*(int*)GIMG(0x00465d50))
+#define sd_no_txt (*(int*)GIMG(0x00466fbc))
+#define old_index (*(int*)GIMG(0x0077c75c))
+#define ParticleAvailabilityList (*(undefined1*)GIMG(0x0078a458))
+#define __fdiv_chk (*(undefined1*)GIMG(0x0045bfad))
+#define polygon_angles (*(undefined1*)GIMG(0x007746f8))
+#define adjusted_sfx (*(int*)GIMG(0x009376a0))
+#define sub_transparency_table (*(int*)GIMG(0x0074c4d0))
+#define __RegisterThreadData (*(undefined1*)GIMG(0x0045aeb1))
+#define d9 (*(int*)GIMG(0x00463aac))
+#define d8 (*(int*)GIMG(0x00463a6c))
+#define d7 (*(int*)GIMG(0x00463a24))
+#define d6 (*(int*)GIMG(0x004639e4))
+#define d5 (*(int*)GIMG(0x004639cc))
+#define d4 (*(int*)GIMG(0x00463984))
+#define d3 (*(int*)GIMG(0x0046394c))
+#define d2 (*(int*)GIMG(0x00463904))
+#define d1 (*(int*)GIMG(0x004638cc))
+#define db (*(undefined1*)GIMG(0x00754264))
+#define padmap (*(int*)GIMG(0x0046302c))
+#define flare_info (*(int*)GIMG(0x00465254))
+#define season_statistics (*(undefined1*)GIMG(0x0093e7c0))
+#define Anim (*(undefined1*)GIMG(0x007786e0))
+#define _AccessIOB (*(int*)GIMG(0x0046c340))
+#define PIT_DONE (*(undefined4*)GIMG(0x00467058))
+#define dth_tpage (*(undefined4*)GIMG(0x00480044))
+#define surfai (*(int*)GIMG(0x0078a388))
+#define scene_colour_vectors (*(undefined1*)GIMG(0x00465922))
+#define COSE (*(undefined1*)GIMG(0x004604c8))
+#define gtexture_def (*(int*)GIMG(0x007541f8))
+#define pal_flag (*(undefined4*)GIMG(0x00462fe8))
+#define Done (*(int*)GIMG(0x00467070))
+#define data (*(int*)GIMG(0x00791c10))
+#define j_frame_count (*(int*)GIMG(0x004651cc))
 #define Caravan_Track_Type (*(int*)GIMG(0x00465d70))
-#define Collision_Counter (*(int*)GIMG(0x00467068))
-#define DAT_00460004 (*(int*)GIMG(0x00460004))
+#define Now_Timing_Lap (*(int*)GIMG(0x00795dd4))
+#define fx_7 (*(int*)GIMG(0x00939b70))
+#define fx_2 (*(int*)GIMG(0x00939b54))
+#define fx_3 (*(int*)GIMG(0x00939b50))
+#define fx_1 (*(int*)GIMG(0x00939b4c))
+#define fx_6 (*(int*)GIMG(0x00939b48))
+#define fx_4 (*(int*)GIMG(0x00939b44))
+#define fx_5 (*(int*)GIMG(0x00939b40))
+#define fx_9 (*(int*)GIMG(0x00939b3c))
+#define fx_10 (*(int*)GIMG(0x00939b2c))
+#define fx_8 (*(int*)GIMG(0x00939b20))
+#define sd_music_vol (*(int*)GIMG(0x00466efc))
+#define flag (*(undefined2*)GIMG(0x00464a8c))
+#define dth_shade (*(int*)GIMG(0x00480030))
+#define sound_volume (*(undefined4*)GIMG(0x00467410))
+#define offset_table (*(undefined1*)GIMG(0x00464a6c))
+#define high_car_vertices (*(int*)GIMG(0x0077c760))
+#define ParticlePositionList (*(undefined1*)GIMG(0x0078a390))
+#define Forest_Wheel_Locking_Speed (*(int*)GIMG(0x00465d40))
+#define flare_images (*(undefined1*)GIMG(0x00782e60))
+#define _InitAccessH (*(int*)GIMG(0x0046c338))
+#define hold (*(int*)GIMG(0x00791c28))
+#define casino_frame_count (*(undefined4*)GIMG(0x004651b8))
+#define sky_object (*(int*)GIMG(0x0078a170))
+#define car_object (*(undefined1*)GIMG(0x00781418))
+#define race_track (*(undefined4*)GIMG(0x004673fc))
+#define recorded_pad_type (*(int*)GIMG(0x007746a8))
+#define bowl_cars (*(int*)GIMG(0x0078a364))
+#define demo_mode (*(undefined4*)GIMG(0x0046385c))
+#define particle (*(undefined1*)GIMG(0x0078d740))
+#define player_names (*(int*)GIMG(0x0093e318))
+#define commentating (*(int*)GIMG(0x00939b64))
+#define hanging_x (*(int*)GIMG(0x00796c28))
+#define fastest_laps (*(undefined1*)GIMG(0x004680c0))
+#define bonnet_quads (*(int*)GIMG(0x00466a60))
+#define __int23_exit (*(int*)GIMG(0x0046c10c))
+#define _rgb1 (*(int*)GIMG(0x0074c6e4))
+#define __heap_enabled (*(int*)GIMG(0x0046c518))
+#define sca_textures (*(undefined1*)GIMG(0x0046501c))
+#define num_textures (*(undefined4*)GIMG(0x00462ce0))
+#define __set_EINVAL (*(undefined1*)GIMG(0x00456e8f))
+#define world_angles (*(int*)GIMG(0x007541e0))
+#define u (*(int*)GIMG(0x00939b38))
+#define SCA_Track_Type (*(int*)GIMG(0x00465db8))
+#define ___FPE_handler (*(int*)GIMG(0x0046c3fb))
+#define rot_flags (*(undefined1*)GIMG(0x007531c0))
+#define car_edge_pos (*(int*)GIMG(0x00464cd2))
+#define track_position (*(int*)GIMG(0x00464e7c))
+#define _nheapmin (*(undefined1*)GIMG(0x0045aba5))
+#define sd_damage_botr (*(int*)GIMG(0x00464c9c))
+#define sd_damage_botl (*(int*)GIMG(0x00464c84))
+#define sd_damage_midr (*(int*)GIMG(0x00464c6c))
+#define sd_damage_midl (*(int*)GIMG(0x00464c54))
+#define applause (*(int*)GIMG(0x00939b14))
+#define __ExceptionHandled (*(int*)GIMG(0x00940994))
+#define current_race (*(int*)GIMG(0x0093dec8))
+#define fx_21 (*(int*)GIMG(0x00939b5c))
+#define fx_11 (*(int*)GIMG(0x00939b28))
+#define _ReleaseNHeap (*(int*)GIMG(0x0046c350))
+#define PIT_STOP (*(undefined4*)GIMG(0x00467054))
+#define ___ExceptionFilter (*(undefined1*)GIMG(0x0045903b))
+#define __GetNTCreateAttr (*(undefined1*)GIMG(0x00458c40))
+#define music_vol (*(undefined1*)GIMG(0x00937600))
+#define light_matrix (*(int*)GIMG(0x007541d8))
+#define screen_width (*(undefined4*)GIMG(0x00462ff4))
+#define _LpCmdLine (*(int*)GIMG(0x0046c3c0))
+#define exit_game (*(undefined1*)GIMG(0x009374b0))
+#define dent_area_lookup (*(undefined1*)GIMG(0x00463d94))
+#define Replay_Script (*(int*)GIMG(0x009376b0))
+#define Zoom (*(undefined4*)GIMG(0x0046524c))
+#define car_order (*(int*)GIMG(0x00795c28))
+#define poly_clipy (*(undefined4*)GIMG(0x00460028))
+#define poly_clipx (*(undefined4*)GIMG(0x00460024))
+#define flag1_textures (*(undefined1*)GIMG(0x004650a4))
+#define _AccessFList (*(int*)GIMG(0x0046c360))
+#define prim_buf (*(undefined1*)GIMG(0x00754390))
+#define world_matrix (*(int*)GIMG(0x00462fa4))
+#define AI_CommandListGeneral_Steer_Right (*(int*)GIMG(0x00465998))
+#define sd_sure2_txt (*(int*)GIMG(0x00466fd4))
+#define hanging_y (*(int*)GIMG(0x00796a90))
+#define tilt_sprite_matrix (*(int*)GIMG(0x0075421c))
+#define _ReleaseFHeap (*(int*)GIMG(0x0046c354))
+#define _AccessFileH (*(int*)GIMG(0x0046c330))
+#define _op0 (*(int*)GIMG(0x0074c580))
+#define _vr1 (*(int*)GIMG(0x0074c510))
+#define _vr0 (*(int*)GIMG(0x0074c500))
+#define _vr3 (*(int*)GIMG(0x0074c4f0))
+#define _vr2 (*(int*)GIMG(0x0074c4e0))
+#define _rgb0 (*(int*)GIMG(0x0074c6e0))
+#define _flg (*(int*)GIMG(0x0074c6dc))
+#define _psp (*(int*)GIMG(0x0046c3cc))
+#define _opz (*(int*)GIMG(0x0074c6c8))
+#define _otz (*(int*)GIMG(0x0074c6bc))
+#define _AccessFHeap (*(int*)GIMG(0x0046c34c))
+#define Level4_Personality (*(undefined1*)GIMG(0x00465c00))
+#define Level3_Personality (*(undefined1*)GIMG(0x00465bb0))
+#define Level2_Personality (*(undefined1*)GIMG(0x00465b60))
+#define Level1_Personality (*(undefined1*)GIMG(0x00465b10))
+#define _AccessNHeap (*(int*)GIMG(0x0046c348))
+#define crowd_volume (*(int*)GIMG(0x00939b6c))
+#define fx (*(int*)GIMG(0x00939b34))
+#define scene_objects (*(undefined1*)GIMG(0x007845a0))
+#define FirstTime (*(int*)GIMG(0x009392b0))
+#define fi_levdat (*(int*)GIMG(0x00796f60))
+#define frame_rate (*(int*)GIMG(0x007746c4))
+#define _LpPgmName (*(int*)GIMG(0x0046c3c4))
+#define __FPE_handler_exit (*(int*)GIMG(0x0046c110))
+#define __AccessSema4 (*(int*)GIMG(0x0046c4e8))
+#define sd_spark (*(int*)GIMG(0x004664e4))
+#define cars_in_crash (*(int*)GIMG(0x00939b1c))
+#define sure2_txt (*(undefined1*)GIMG(0x009370a0))
+#define fx_22 (*(int*)GIMG(0x00939b10))
+#define info_screen_dire_stats (*(int*)GIMG(0x00469bb8))
+#define negleft_object (*(int*)GIMG(0x009401a0))
+#define __OpenStreams (*(int*)GIMG(0x00940980))
+#define car_wheel_fd (*(undefined1*)GIMG(0x00794be8))
+#define whllck (*(int*)GIMG(0x0078a384))
+#define camera_offset (*(undefined2*)GIMG(0x00464a88))
+#define _LpDllName (*(int*)GIMG(0x0046c3c8))
+#define h_norm (*(short*)GIMG(0x007541e8))
+#define floaty_camera_speedway (*(int*)GIMG(0x00463f4c))
+#define negbut2_object (*(int*)GIMG(0x00940114))
+#define negbut1_object (*(int*)GIMG(0x009400dc))
+#define negbut3_object (*(int*)GIMG(0x00940088))
+#define time_phase_shift (*(undefined4*)GIMG(0x00465248))
+#define bootoff_index (*(int*)GIMG(0x0077c754))
+#define decrunch_block (*(int*)GIMG(0x0078a160))
+#define __FPE_handler (*(int*)GIMG(0x0046c3fb))
+#define sd_x_key (*(int*)GIMG(0x0046701c))
+#define sure_txt (*(undefined1*)GIMG(0x00937460))
+#define flag2_textures (*(undefined1*)GIMG(0x004650bc))
+#define _WindowsNewWindow (*(int(**)())GIMG(0x0046c37c))
+#define flame_anim_frames (*(undefined1*)GIMG(0x007818c0))
+#define floaty_camera_caprio (*(int*)GIMG(0x00464438))
+#define hanging_z (*(int*)GIMG(0x00796dc0))
+#define sd_totitle_txt (*(int*)GIMG(0x00466f74))
+#define __FiniAccessH (*(undefined1*)GIMG(0x00459547))
+#define floaty_camera_forest (*(int*)GIMG(0x00464288))
+#define Car_Friction (*(undefined1*)GIMG(0x00465a20))
+#define wild_bill_position (*(int*)GIMG(0x00464e6c))
+#define track_info (*(undefined1*)GIMG(0x00466df0))
+#define goose_frame_count (*(undefined4*)GIMG(0x004650a0))
+#define __AccessFList (*(undefined1*)GIMG(0x004595a0))
+#define _ExtenderSubtype (*(int*)GIMG(0x0046c3ef))
+#define disable_save_game (*(undefined4*)GIMG(0x0046a924))
+#define Pit_Timer (*(undefined4*)GIMG(0x0046705c))
+#define SCA_Data (*(undefined2*)GIMG(0x00466da0))
+#define FireFrames (*(int*)GIMG(0x004665c0))
+#define _WindowsDestroyOnClose (*(int*)GIMG(0x0046c390))
+#define _screenbuffer (*(undefined1*)GIMG(0x00700450))
+#define car_vertices (*(undefined1*)GIMG(0x0077d458))
+#define cheese (*(int*)GIMG(0x0074f1b0))
+#define stats_recorded (*(undefined4*)GIMG(0x0046741c))
+#define RacePoly (*(undefined1*)GIMG(0x00782db0))
+#define BackPoly (*(undefined1*)GIMG(0x0093fbe0))
+#define camera_car (*(undefined4*)GIMG(0x00463eec))
+#define v_norm (*(int*)GIMG(0x007541f0))
+#define carselect_object (*(int*)GIMG(0x0094006c))
+#define sd_smoke (*(int*)GIMG(0x00466364))
+#define Ultimate_Wheel_Locking_Speed (*(int*)GIMG(0x00465d28))
+#define __EFG_printf (*(int*)GIMG(0x0046c4f4))
+#define race_car (*(undefined4*)GIMG(0x00467400))
+#define card_data (*(undefined1*)GIMG(0x00774464))
+#define restart_cd_audio (*(undefined4*)GIMG(0x00467420))
+#define _ReleaseTDList (*(int*)GIMG(0x0046c35c))
+#define slab_background_colour (*(int*)GIMG(0x004699c4))
+#define car_info (*(undefined1*)GIMG(0x00795c40))
+#define Race_Personality (*(undefined1*)GIMG(0x00465c50))
+#define __iob (*(int*)GIMG(0x0046c114))
+#define _rgb2 (*(int*)GIMG(0x0074c6e8))
+#define _opvr0 (*(int*)GIMG(0x0074c570))
+#define _opvr1 (*(int*)GIMG(0x0074c560))
+#define pause_tile (*(undefined1*)GIMG(0x009375d0))
+#define sd_sfx_vol (*(int*)GIMG(0x00466f2c))
+#define NamePolys (*(undefined1*)GIMG(0x0093fcd0))
+#define depth_cue_near (*(int*)GIMG(0x00462fd8))
+#define Track_Records (*(undefined1*)GIMG(0x00466e3c))
+#define Replay_Invalid (*(int*)GIMG(0x009392c0))
+#define mem_size (*(int*)GIMG(0x00774694))
+#define num_spies (*(int*)GIMG(0x0074f1a4))
+#define actual_season_number (*(undefined4*)GIMG(0x004682f4))
+#define flash3_anim_frames (*(undefined1*)GIMG(0x00781ed8))
+#define flash1_anim_frames (*(undefined1*)GIMG(0x00781eb4))
+#define flash2_anim_frames (*(undefined1*)GIMG(0x00781e90))
+#define mid_car_vertices (*(int*)GIMG(0x0077cba8))
+#define num_races (*(undefined1*)GIMG(0x00467654))
+#define strip_data_fi (*(int*)GIMG(0x0077cee8))
+#define _primfuncs (*(int*)GIMG(0x0046002c))
+#define debris_cluts (*(undefined1*)GIMG(0x007746d0))
+#define move_key (*(undefined1*)GIMG(0x00937230))
+#define move_txt (*(undefined1*)GIMG(0x00937050))
+#define _pad_start (*(unsigned char*)GIMG(0x00463040))
+#define wild_bill_angles (*(undefined4*)GIMG(0x00464e4c))
+#define CLUT_Anim_Casino (*(undefined1*)GIMG(0x0046518c))
+#define info_dmode (*(int*)GIMG(0x00937370))
+#define current_level (*(int*)GIMG(0x00936ff4))
+#define active_block_numbers (*(undefined1*)GIMG(0x007892a0))
+#define goose_anim_frames (*(undefined1*)GIMG(0x007818d8))
+#define bonnetoff_object (*(undefined1*)GIMG(0x0077c660))
+#define CLUT_Anim_Safe (*(undefined1*)GIMG(0x00465174))
+#define DummyPoly (*(int*)GIMG(0x00782ad0))
+#define safe_frame_count (*(undefined4*)GIMG(0x00465188))
+#define wheeloff_index (*(int*)GIMG(0x0077c740))
+#define __FreeThreadDataList (*(undefined1*)GIMG(0x0045a273))
+#define _Extender (*(int*)GIMG(0x0046c3ee))
+#define CLUT_Anim_Twist2 (*(undefined1*)GIMG(0x004651e4))
+#define CLUT_Anim_Twist1 (*(undefined1*)GIMG(0x004651d0))
+#define slab_bounce_table (*(undefined1*)GIMG(0x004699d0))
+#define flame_frame_count (*(int*)GIMG(0x00781efc))
+#define _clutspace (*(int*)GIMG(0x0074c4d4))
+#define __MultipleThread (*(undefined1*)GIMG(0x004595b4))
+#define __sigabort (*(undefined1*)GIMG(0x00458e9b))
+#define CLUT_Anim_Dollar (*(undefined1*)GIMG(0x00465160))
+#define num_scene_objects (*(undefined1*)GIMG(0x007892d8))
+#define __ReleaseFileH (*(undefined1*)GIMG(0x00459527))
+#define landing_data (*(undefined1*)GIMG(0x00466b50))
+#define _BigPow10Table (*(int*)GIMG(0x0046fedc))
+#define gprim1 (*(int*)GIMG(0x007541d0))
+#define gprim2 (*(int*)GIMG(0x007541cc))
+#define car_handling (*(undefined1*)GIMG(0x00792a00))
+#define AI_CommandListSharp_Reverse_Left (*(int*)GIMG(0x004659e0))
+#define strip_postincrements (*(undefined1*)GIMG(0x00463ebc))
+#define dpadbuttons_object (*(int*)GIMG(0x009400c0))
+#define info_tile (*(int*)GIMG(0x009375a0))
+#define surface_traction_coeff (*(undefined1*)GIMG(0x00466d98))
+#define surface_friction_coeff (*(undefined1*)GIMG(0x00466d90))
+#define _FiniAccessH (*(int*)GIMG(0x0046c33c))
+#define _child (*(int*)GIMG(0x0046c3e8))
+#define sd_notches_sfx (*(int*)GIMG(0x00466f44))
+#define __RegisterThreadDataSize (*(undefined1*)GIMG(0x0045a01c))
+#define _osbuild (*(int*)GIMG(0x0046c3f9))
+#define shadow (*(undefined1*)GIMG(0x00795e10))
+#define _heapmin (*(undefined1*)GIMG(0x0045aba5))
+#define current_season (*(int*)GIMG(0x0093dec0))
+#define OverPoly (*(undefined1*)GIMG(0x00782af0))
+#define __umaskval (*(undefined1*)GIMG(0x0046c410))
+#define num_cars (*(undefined4*)GIMG(0x0046765c))
+#define info_screen_text (*(int*)GIMG(0x00469b0c))
+#define _far_fog (*(int*)GIMG(0x00462cd0))
+#define __Is_DLL (*(int*)GIMG(0x00940978))
+#define _pad_rup (*(unsigned char*)GIMG(0x0046304b))
+#define _pad_lup (*(unsigned char*)GIMG(0x00463043))
+#define bonnet_quad_list (*(int*)GIMG(0x00466a48))
+#define sd_notches_music (*(int*)GIMG(0x00466f14))
+#define car_light_matrix (*(undefined4*)GIMG(0x00464cb4))
+#define Last_Lap_Timer (*(int*)GIMG(0x00795de8))
+#define use_joystick (*(undefined4*)GIMG(0x00463028))
+#define adjusted_music (*(int*)GIMG(0x009376a4))
+#define _pad_j (*(unsigned char*)GIMG(0x00463042))
+#define _pad_i (*(unsigned char*)GIMG(0x00463041))
+#define far_z_clip (*(undefined4*)GIMG(0x00462fc8))
+#define Flying_Objects (*(undefined1*)GIMG(0x0077b6e0))
+#define __atexit (*(int*)GIMG(0x0046c108))
+#define __AccessFileH (*(undefined1*)GIMG(0x00459515))
+#define camera_collision (*(int*)GIMG(0x0077cf68))
+#define image_info (*(int*)GIMG(0x00782e00))
+#define __NTThreadFini (*(undefined1*)GIMG(0x00459705))
+#define frame_skip (*(int*)GIMG(0x007746b8))
+#define frame_wait (*(int*)GIMG(0x007746a4))
+#define Lap_Timer (*(int*)GIMG(0x00795ddc))
+#define _IsTable (*(int*)GIMG(0x0046fdb0))
+#define timing (*(int*)GIMG(0x00463858))
+#define depth_cue_far (*(int*)GIMG(0x00462fdc))
+#define FaceArray (*(int*)GIMG(0x004685e4))
+#define __real87 (*(int*)GIMG(0x0046c105))
+#define _osmajor (*(int*)GIMG(0x0046c3f7))
+#define prim_buf_size (*(undefined4*)GIMG(0x00463014))
+#define _WindowsRemoveWindowedHandle (*(int(**)())GIMG(0x0046c378))
+#define _globmat (*(short*)GIMG(0x0074c6f0))
+#define num_strips (*(int*)GIMG(0x0077cef0))
+#define camera_switch (*(int*)GIMG(0x00464a94))
+#define _STACKTOP (*(int*)GIMG(0x0046c3d4))
+#define still_running (*(int*)GIMG(0x00784284))
+#define _WindowsStdin (*(int(**)())GIMG(0x0046c39c))
+#define BaseHandicaps (*(undefined1*)GIMG(0x00465a70))
+#define track_lookup (*(undefined1*)GIMG(0x00467424))
+#define race_finished (*(int*)GIMG(0x00795df4))
+#define car0_being_obstructed (*(int*)GIMG(0x0078a380))
+#define scene_position (*(undefined1*)GIMG(0x007876a0))
+#define pad_option (*(undefined2*)GIMG(0x00467414))
+#define safe_anim (*(undefined1*)GIMG(0x00781e50))
+#define notches_music (*(undefined1*)GIMG(0x00937550))
+#define screen_poly_list (*(int*)GIMG(0x00940010))
+#define madjoy_object (*(int*)GIMG(0x00940184))
+#define __fdiv_fpr (*(undefined1*)GIMG(0x0045baeb))
+#define __NFiles (*(int*)GIMG(0x0046c428))
+#define track_object (*(int*)GIMG(0x00940168))
+#define _osminor (*(int*)GIMG(0x0046c3f8))
+#define permission (*(int*)GIMG(0x00796f58))
+#define track_height (*(int*)GIMG(0x0077cf6c))
+#define __fheap_clean (*(int*)GIMG(0x00940985))
+#define __nheap_clean (*(int*)GIMG(0x00940984))
+#define Replay_Action_Repeat (*(undefined4*)GIMG(0x0046707c))
+#define PIT_IN (*(undefined4*)GIMG(0x0046704c))
+#define Stunt_Corner_Data (*(int*)GIMG(0x00465cf0))
+#define screen_line_list (*(int*)GIMG(0x00940008))
+#define __LargestSizeB4MiniHeapRover (*(int*)GIMG(0x0046c408))
+#define _WindowsSetAbout (*(int*)GIMG(0x0046c384))
+#define File_Func_List (*(int*)GIMG(0x00462ce4))
+#define lap_name_entry (*(int*)GIMG(0x0093e7b0))
+#define dth_x1 (*(undefined4*)GIMG(0x0048002c))
+#define dth_x2 (*(undefined4*)GIMG(0x00480028))
+#define highlight_colour (*(int*)GIMG(0x004699c8))
+#define yes_quit (*(int*)GIMG(0x009376ac))
+#define final_places (*(int*)GIMG(0x00795dfc))
+#define __ReleaseIOB (*(undefined1*)GIMG(0x00459507))
+#define fx_18 (*(int*)GIMG(0x00939b74))
+#define _WindowsShutDown (*(int*)GIMG(0x0046c398))
+#define cigar_position (*(int*)GIMG(0x00464e5c))
+#define AI_CommandListPanic_Swerve_Right (*(int*)GIMG(0x004659f8))
+#define _STACKLOW (*(int*)GIMG(0x0046c3d0))
+#define Z_DISTANCE (*(undefined2*)GIMG(0x004604c2))
+#define dpadlabels_object (*(int*)GIMG(0x00940050))
+#define level_data (*(int*)GIMG(0x00936ff0))
+#define x_key (*(undefined1*)GIMG(0x00937190))
+#define AI_CommandListSharp_Reverse_Right (*(int*)GIMG(0x004659c8))
+#define last_time (*(int*)GIMG(0x007746a0))
+#define draw_frame (*(int*)GIMG(0x007746bc))
+#define _WinMainProc (*(int*)GIMG(0x00940988))
+#define _pad_rleft (*(unsigned char*)GIMG(0x0046304d))
+#define _pad_lleft (*(unsigned char*)GIMG(0x00463045))
+#define wheel_object (*(undefined1*)GIMG(0x0078d6d0))
+#define _WindowsGetche (*(int*)GIMG(0x0046c3ac))
+#define _WindowsGetch (*(undefined4*)GIMG(0x0046c3a8))
+#define sprite_matrix (*(int*)GIMG(0x007541fc))
+#define __chipbug (*(int*)GIMG(0x0046c538))
+#define no_txt (*(undefined1*)GIMG(0x009372d0))
+#define audible_distance (*(undefined1*)GIMG(0x009393c0))
+#define _scry (*(int*)GIMG(0x0074c6cc))
+#define __chk8087 (*(undefined1*)GIMG(0x004578e8))
+#define Load_Graphics (*(undefined1*)GIMG(0x00445894))
+#define playable_bowls (*(undefined2*)GIMG(0x00467408))
+#define AI_CommandListDEAD (*(int*)GIMG(0x0046597c))
+#define boot_quad_list (*(int*)GIMG(0x00466a80))
+#define Debris (*(undefined1*)GIMG(0x007748e0))
+#define dth_y1 (*(undefined4*)GIMG(0x00480024))
+#define dth_y2 (*(undefined4*)GIMG(0x00480020))
+#define __ReleaseSema4 (*(int*)GIMG(0x0046c4ec))
+#define __ReleaseFHeap (*(undefined1*)GIMG(0x00459585))
+#define __ReleaseNHeap (*(undefined1*)GIMG(0x00459574))
+#define camera_section (*(undefined4*)GIMG(0x00464a84))
+#define __ThreadDataSize (*(int*)GIMG(0x0046c508))
+#define _near_fog (*(int*)GIMG(0x00462ccc))
+#define total_collisions (*(int*)GIMG(0x00939b60))
+#define Replay_Script_Ptr (*(int*)GIMG(0x009392b4))
+#define __AccessSema4Fini (*(int*)GIMG(0x0046ff66))
+#define gpoly (*(int*)GIMG(0x007541c8))
+#define total_time (*(int*)GIMG(0x007746b0))
+#define info_screen_directions (*(int*)GIMG(0x00469bac))
+#define j_anim (*(undefined1*)GIMG(0x00781890))
+#define _pad_rdown (*(unsigned char*)GIMG(0x0046304c))
+#define _pad_ldown (*(unsigned char*)GIMG(0x00463044))
+#define _WindowsPutch (*(undefined4*)GIMG(0x0046c3b0))
+#define g_sprite_info (*(int*)GIMG(0x0074f1a0))
+#define drive_anim_frames (*(undefined1*)GIMG(0x00781930))
+#define _ReleaseFileH (*(int*)GIMG(0x0046c334))
+#define bootoff_object (*(undefined1*)GIMG(0x0077c580))
+#define __8087 (*(int*)GIMG(0x0046c104))
+#define __no87 (*(int*)GIMG(0x0046c3ec))
+#define _scrx (*(int*)GIMG(0x0074c6d0))
+#define memory_card_clut (*(int*)GIMG(0x00467370))
+#define _HugeValue (*(int*)GIMG(0x0046fed4))
+#define __nheapbeg (*(int*)GIMG(0x0046c400))
+#define __WD_Present (*(int*)GIMG(0x0046c52c))
+#define boot_objects_count (*(int*)GIMG(0x0077c748))
+#define yes_retire (*(int*)GIMG(0x009376a8))
+#define Timing_Delay (*(int*)GIMG(0x00795df8))
+#define __nullarea (*(int*)GIMG(0x00460000))
+#define flash2_frame_count (*(int*)GIMG(0x00781f08))
+#define flash3_frame_count (*(int*)GIMG(0x00781f04))
+#define flash1_frame_count (*(int*)GIMG(0x00781f00))
+#define __8087cw (*(int*)GIMG(0x0046c504))
+#define active_object_blocks (*(undefined1*)GIMG(0x00789310))
+#define twist2_frame_count (*(undefined4*)GIMG(0x004651f4))
+#define twist1_frame_count (*(undefined4*)GIMG(0x004651e0))
+#define memory_card_icon (*(int*)GIMG(0x004672f0))
+#define num_of_ranks (*(int*)GIMG(0x00795dd0))
+#define ___chipbug (*(int*)GIMG(0x0046c538))
+#define floaty_camera_liberty (*(int*)GIMG(0x00464558))
+#define otsize (*(int*)GIMG(0x00754260))
+#define entry (*(undefined1*)GIMG(0x00456c34))
+#define switchdataD_0043851c (*(undefined4*)GIMG(0x0043851c))
+#define switchdataD_00427f28 (*(undefined4*)GIMG(0x00427f28))
+#define switchdataD_004470f0 (*(undefined4*)GIMG(0x004470f0))
+#define switchdataD_00447108 (*(undefined4*)GIMG(0x00447108))
+#define switchdataD_00427f4c (*(undefined4*)GIMG(0x00427f4c))
+#define switchdataD_0043852c (*(undefined4*)GIMG(0x0043852c))
+#define switchdataD_00446d84 (*(undefined4*)GIMG(0x00446d84))
+#define switchdataD_0043328c (*(undefined4*)GIMG(0x0043328c))
+#define switchdataD_0045107c (*(undefined4*)GIMG(0x0045107c))
+#define switchdataD_0043329c (*(undefined4*)GIMG(0x0043329c))
+#define switchdataD_0042cfdc (*(undefined4*)GIMG(0x0042cfdc))
+#define switchdataD_00432d6c (*(undefined4*)GIMG(0x00432d6c))
+#define switchdataD_00430340 (*(undefined4*)GIMG(0x00430340))
+#define switchdataD_004297a0 (*(undefined4*)GIMG(0x004297a0))
+#define switchdataD_00442df4 (*(undefined4*)GIMG(0x00442df4))
+#define switchdataD_00416a30 (*(undefined4*)GIMG(0x00416a30))
+#define switchdataD_0044637c (*(undefined4*)GIMG(0x0044637c))
+#define switchdataD_0042cbcc (*(undefined4*)GIMG(0x0042cbcc))
+#define switchdataD_00420e10 (*(undefined4*)GIMG(0x00420e10))
+#define switchdataD_004431d0 (*(undefined4*)GIMG(0x004431d0))
+#define switchdataD_00426fb4 (*(undefined4*)GIMG(0x00426fb4))
+#define switchdataD_0043730c (*(undefined4*)GIMG(0x0043730c))
+#define switchdataD_0043731c (*(undefined4*)GIMG(0x0043731c))
+#define switchdataD_00431470 (*(undefined4*)GIMG(0x00431470))
+#define switchdataD_004451fc (*(undefined4*)GIMG(0x004451fc))
+#define switchdataD_00425f90 (*(undefined4*)GIMG(0x00425f90))
+#define switchdataD_0043e61c (*(undefined4*)GIMG(0x0043e61c))
+#define switchdataD_0042c878 (*(undefined4*)GIMG(0x0042c878))
+#define switchdataD_0043b6c8 (*(undefined4*)GIMG(0x0043b6c8))
+#define switchdataD_0044057c (*(undefined4*)GIMG(0x0044057c))
+#define switchdataD_0043fc38 (*(undefined4*)GIMG(0x0043fc38))
+#define switchdataD_00433f50 (*(undefined4*)GIMG(0x00433f50))
+#define switchdataD_00433f60 (*(undefined4*)GIMG(0x00433f60))
+#define switchdataD_0043c030 (*(undefined4*)GIMG(0x0043c030))
+#define switchdataD_0043ba44 (*(undefined4*)GIMG(0x0043ba44))
+#define switchdataD_0044c380 (*(undefined4*)GIMG(0x0044c380))
+#define switchdataD_00449f38 (*(undefined4*)GIMG(0x00449f38))
+#define switchdataD_0044a2fc (*(undefined4*)GIMG(0x0044a2fc))
+#define switchdataD_00449da0 (*(undefined4*)GIMG(0x00449da0))
+#define switchdataD_004549b0 (*(undefined4*)GIMG(0x004549b0))
+#define switchdataD_0044ee58 (*(undefined4*)GIMG(0x0044ee58))
+#define switchdataD_0044b964 (*(undefined4*)GIMG(0x0044b964))
+#define switchdataD_0044fd6c (*(undefined4*)GIMG(0x0044fd6c))
+#define switchdataD_0044f9bc (*(undefined4*)GIMG(0x0044f9bc))
+#define switchdataD_00453d48 (*(undefined4*)GIMG(0x00453d48))
+#define _nfree (*(undefined1*)GIMG(0x00456848))
+#define _wstart2_ (*(undefined1*)GIMG(0x00456c34))
+#define _nmalloc (*(undefined1*)GIMG(0x0045793d))
+#define _dosretax (*(undefined1*)GIMG(0x00458d6a))
+#define _nrealloc (*(undefined1*)GIMG(0x0045a07d))
+#define _nexpand (*(undefined1*)GIMG(0x0045ae2c))
 #define DAT_0046000c (*(int*)GIMG(0x0046000c))
+#define DAT_00460004 (*(int*)GIMG(0x00460004))
+#define DAT_00480038 (*(int*)GIMG(0x00480038))
+#define DAT_0048001c (*(int*)GIMG(0x0048001c))
+#define DAT_00480034 (*(int*)GIMG(0x00480034))
+#define DAT_00480018 (*(int*)GIMG(0x00480018))
 #define DAT_00460010 (*(int*)GIMG(0x00460010))
-#define DAT_0046042c (*(int*)GIMG(0x0046042c))
-#define DAT_00460434 (*(int*)GIMG(0x00460434))
-#define DAT_00460438 (*(int**)GIMG(0x00460438))
-#define DAT_0046043c (*(int**)GIMG(0x0046043c))
-#define DAT_00460440 (*(int**)GIMG(0x00460440))
-#define DAT_00460444 (*(int**)GIMG(0x00460444))
-#define DAT_00460448 (*(int*)GIMG(0x00460448))
-#define DAT_0046044c (*(int*)GIMG(0x0046044c))
-#define DAT_00460474 (*(int*)GIMG(0x00460474))
-#define DAT_00460478 (*(int*)GIMG(0x00460478))
 #define DAT_0046047c (*(int*)GIMG(0x0046047c))
-#define DAT_00460488 (*(int*)GIMG(0x00460488))
-#define DAT_0046048c (*(int*)GIMG(0x0046048c))
-#define DAT_00460490 (*(int*)GIMG(0x00460490))
+#define DAT_00460474 (*(int*)GIMG(0x00460474))
+#define DAT_0046044c (*(int*)GIMG(0x0046044c))
+#define DAT_00460448 (*(int*)GIMG(0x00460448))
+#define DAT_0046042c (*(int*)GIMG(0x0046042c))
+#define DAT_0074c458 (*(int*)GIMG(0x0074c458))
+#define DAT_00460440 (*(int**)GIMG(0x00460440))
+#define DAT_0046043c (*(int**)GIMG(0x0046043c))
+#define DAT_00460444 (*(int**)GIMG(0x00460444))
+#define DAT_00460438 (*(int**)GIMG(0x00460438))
+#define DAT_00700050 (*(int*)GIMG(0x00700050))
+#define DAT_00460478 (*(int*)GIMG(0x00460478))
+#define DAT_00460434 (*(int*)GIMG(0x00460434))
 #define DAT_004604a0 (*(int*)GIMG(0x004604a0))
 #define DAT_004604a4 (*(int*)GIMG(0x004604a4))
 #define DAT_004604a8 (*(int*)GIMG(0x004604a8))
 #define DAT_004604ac (*(int*)GIMG(0x004604ac))
 #define DAT_004604b0 (*(int*)GIMG(0x004604b0))
+#define DAT_00460cc8 (*(undefined1*)GIMG(0x00460cc8))
 #define DAT_004604b2 (*(int*)GIMG(0x004604b2))
 #define DAT_004604b6 (*(int*)GIMG(0x004604b6))
 #define DAT_004604ba (*(int*)GIMG(0x004604ba))
 #define DAT_004604be (*(int*)GIMG(0x004604be))
-#define DAT_00460cc8 (*(int*)GIMG(0x00460cc8))
+#define DAT_00460494 (*(undefined1*)GIMG(0x00460494))
+#define DAT_0046049a (*(undefined1*)GIMG(0x0046049a))
+#define DAT_00460496 (*(undefined1*)GIMG(0x00460496))
+#define DAT_0046049c (*(undefined1*)GIMG(0x0046049c))
+#define DAT_00460498 (*(undefined1*)GIMG(0x00460498))
+#define DAT_0046049e (*(undefined1*)GIMG(0x0046049e))
+#define DAT_00460488 (*(int*)GIMG(0x00460488))
+#define DAT_0046048c (*(int*)GIMG(0x0046048c))
+#define DAT_00460490 (*(int*)GIMG(0x00460490))
 #define DAT_00462cc8 (*(int*)GIMG(0x00462cc8))
 #define DAT_00462cd8 (*(int*)GIMG(0x00462cd8))
 #define DAT_00462cdc (*(int*)GIMG(0x00462cdc))
 #define DAT_00462d64 (*(int*)GIMG(0x00462d64))
+#define DAT_0074ef18 (*(int*)GIMG(0x0074ef18))
+#define DAT_0046c7c4 (*(int*)GIMG(0x0046c7c4))
+#define DAT_007543d0 (*(undefined1*)GIMG(0x007543d0))
+#define DAT_00415694 (*(undefined1*)GIMG(0x00415694))
+#define DAT_00415698 (*(undefined1*)GIMG(0x00415698))
+#define DAT_0041569c (*(undefined1*)GIMG(0x0041569c))
+#define DAT_004156a0 (*(undefined1*)GIMG(0x004156a0))
+#define DAT_004156a4 (*(undefined1*)GIMG(0x004156a4))
 #define DAT_00462d68 (*(int*)GIMG(0x00462d68))
-#define DAT_00462d6c (*(int*)GIMG(0x00462d6c))
-#define DAT_00462d70 (*(int*)GIMG(0x00462d70))
+#define DAT_0074f19c (*(int*)GIMG(0x0074f19c))
+#define DAT_0074f120 (*(undefined1*)GIMG(0x0074f120))
+#define DAT_0074f124 (*(undefined1*)GIMG(0x0074f124))
+#define DAT_0074f12a (*(undefined1*)GIMG(0x0074f12a))
+#define DAT_0074f128 (*(undefined1*)GIMG(0x0074f128))
+#define DAT_0074f12c (*(undefined1*)GIMG(0x0074f12c))
+#define DAT_0074f12e (*(undefined1*)GIMG(0x0074f12e))
+#define DAT_0074f132 (*(undefined1*)GIMG(0x0074f132))
+#define DAT_0074f130 (*(undefined1*)GIMG(0x0074f130))
+#define DAT_00462d84 (*(int*)GIMG(0x00462d84))
 #define DAT_00462d74 (*(int*)GIMG(0x00462d74))
 #define DAT_00462d78 (*(int*)GIMG(0x00462d78))
 #define DAT_00462d80 (*(int*)GIMG(0x00462d80))
-#define DAT_00462d84 (*(int*)GIMG(0x00462d84))
+#define DAT_00462d70 (*(int*)GIMG(0x00462d70))
+#define DAT_00462d6c (*(int*)GIMG(0x00462d6c))
 #define DAT_00462d88 (*(int*)GIMG(0x00462d88))
 #define DAT_00462d8c (*(int*)GIMG(0x00462d8c))
 #define DAT_00462d90 (*(int*)GIMG(0x00462d90))
+#define DAT_0074f1c4 (*(undefined1*)GIMG(0x0074f1c4))
+#define DAT_0074f1c8 (*(undefined1*)GIMG(0x0074f1c8))
+#define PTR_FUN_00462ef4 (*(int*)GIMG(0x00462ef4))
+#define DAT_00462fcc (*(int*)GIMG(0x00462fcc))
+#define DAT_00462fc4 (*(int*)GIMG(0x00462fc4))
+#define DAT_00462fb6 (*(int*)GIMG(0x00462fb6))
+#define DAT_00462fbe (*(int*)GIMG(0x00462fbe))
 #define DAT_00462fa6 (*(int*)GIMG(0x00462fa6))
 #define DAT_00462faa (*(int*)GIMG(0x00462faa))
-#define DAT_00462fb6 (*(int*)GIMG(0x00462fb6))
-#define DAT_00462fba (*(int*)GIMG(0x00462fba))
-#define DAT_00462fbe (*(int*)GIMG(0x00462fbe))
-#define DAT_00462fc4 (*(int*)GIMG(0x00462fc4))
-#define DAT_00462fcc (*(int*)GIMG(0x00462fcc))
-#define DAT_00463002 (*(int*)GIMG(0x00463002))
-#define DAT_00463006 (*(int*)GIMG(0x00463006))
+#define DAT_0075424e (*(int*)GIMG(0x0075424e))
 #define DAT_00463010 (*(int*)GIMG(0x00463010))
+#define DAT_00463002 (*(undefined1*)GIMG(0x00463002))
+#define DAT_00463006 (*(undefined1*)GIMG(0x00463006))
+#define DAT_007542ee (*(undefined1*)GIMG(0x007542ee))
 #define DAT_00463018 (*(int*)GIMG(0x00463018))
-#define DAT_0046301c (*(int*)GIMG(0x0046301c))
 #define DAT_00463020 (*(int*)GIMG(0x00463020))
-#define DAT_00463024 (*(int*)GIMG(0x00463024))
-#define DAT_0046302d (*(int*)GIMG(0x0046302d))
-#define DAT_0046302e (*(int*)GIMG(0x0046302e))
-#define DAT_0046302f (*(int*)GIMG(0x0046302f))
-#define DAT_00463030 (*(int*)GIMG(0x00463030))
-#define DAT_00463031 (*(int*)GIMG(0x00463031))
-#define DAT_00463032 (*(int*)GIMG(0x00463032))
-#define DAT_00463033 (*(int*)GIMG(0x00463033))
-#define DAT_00463034 (*(int*)GIMG(0x00463034))
-#define DAT_00463035 (*(int*)GIMG(0x00463035))
-#define DAT_00463036 (*(int*)GIMG(0x00463036))
-#define DAT_00463037 (*(int*)GIMG(0x00463037))
-#define DAT_00463038 (*(int*)GIMG(0x00463038))
-#define DAT_00463039 (*(int*)GIMG(0x00463039))
+#define DAT_0046301c (*(int*)GIMG(0x0046301c))
+#define DAT_007543a0 (*(undefined1*)GIMG(0x007543a0))
+#define DAT_0046c89c (*(int*)GIMG(0x0046c89c))
+#define DAT_0046c898 (*(int*)GIMG(0x0046c898))
 #define DAT_0046303e (*(int*)GIMG(0x0046303e))
+#define DAT_00463024 (*(int*)GIMG(0x00463024))
+#define DAT_00754451 (*(int*)GIMG(0x00754451))
 #define DAT_0046303f (*(int*)GIMG(0x0046303f))
 #define DAT_00463046 (*(unsigned char*)GIMG(0x00463046))
 #define DAT_00463047 (*(unsigned char*)GIMG(0x00463047))
@@ -126,71 +1343,142 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_00463049 (*(unsigned char*)GIMG(0x00463049))
 #define DAT_0046304a (*(unsigned char*)GIMG(0x0046304a))
 #define DAT_0046304e (*(unsigned char*)GIMG(0x0046304e))
-#define DAT_0046304f (*(unsigned char*)GIMG(0x0046304f))
 #define DAT_00463050 (*(unsigned short*)GIMG(0x00463050))
-#define DAT_00463052 (*(int*)GIMG(0x00463052))
+#define DAT_00754450 (*(int*)GIMG(0x00754450))
+#define DAT_0046304f (*(unsigned char*)GIMG(0x0046304f))
+#define DAT_0046302d (*(int*)GIMG(0x0046302d))
+#define DAT_0046302e (*(int*)GIMG(0x0046302e))
+#define DAT_0046302f (*(int*)GIMG(0x0046302f))
+#define DAT_00463030 (*(int*)GIMG(0x00463030))
+#define DAT_00463031 (*(int*)GIMG(0x00463031))
+#define DAT_00463034 (*(int*)GIMG(0x00463034))
+#define DAT_00463032 (*(int*)GIMG(0x00463032))
+#define DAT_00463035 (*(int*)GIMG(0x00463035))
+#define DAT_00463033 (*(int*)GIMG(0x00463033))
+#define DAT_00463036 (*(int*)GIMG(0x00463036))
+#define DAT_00463037 (*(int*)GIMG(0x00463037))
+#define DAT_00463038 (*(int*)GIMG(0x00463038))
+#define DAT_00463039 (*(int*)GIMG(0x00463039))
+#define DAT_0046c8e8 (*(int*)GIMG(0x0046c8e8))
+#define DAT_0046c8f8 (*(int*)GIMG(0x0046c8f8))
+#define DAT_00774486 (*(undefined1*)GIMG(0x00774486))
+#define DAT_0077447a (*(undefined1*)GIMG(0x0077447a))
+#define DAT_00774484 (*(undefined1*)GIMG(0x00774484))
+#define DAT_0046c8fc (*(undefined1*)GIMG(0x0046c8fc))
+#define DAT_0046c920 (*(int*)GIMG(0x0046c920))
+#define DAT_00463052 (*(undefined1*)GIMG(0x00463052))
+#define DAT_00463ef4 (*(int*)GIMG(0x00463ef4))
+#define DAT_00467074 (*(int*)GIMG(0x00467074))
+#define DAT_00463ef0 (*(int*)GIMG(0x00463ef0))
+#define DAT_007746fa (*(undefined1*)GIMG(0x007746fa))
+#define DAT_007746fc (*(undefined1*)GIMG(0x007746fc))
+#define DAT_00463878 (*(int*)GIMG(0x00463878))
+#define DAT_0046388a (*(int*)GIMG(0x0046388a))
+#define DAT_0046388e (*(int*)GIMG(0x0046388e))
+#define DAT_00463892 (*(int*)GIMG(0x00463892))
+#define DAT_00774748 (*(undefined1*)GIMG(0x00774748))
+#define DAT_00462fba (*(int*)GIMG(0x00462fba))
+#define DAT_00463896 (*(int*)GIMG(0x00463896))
 #define DAT_00463860 (*(int*)GIMG(0x00463860))
 #define DAT_00463864 (*(int*)GIMG(0x00463864))
 #define DAT_00463868 (*(int*)GIMG(0x00463868))
 #define DAT_0046386c (*(int*)GIMG(0x0046386c))
 #define DAT_00463870 (*(int*)GIMG(0x00463870))
 #define DAT_00463874 (*(int*)GIMG(0x00463874))
-#define DAT_00463878 (*(int*)GIMG(0x00463878))
-#define DAT_0046388a (*(int*)GIMG(0x0046388a))
-#define DAT_0046388e (*(int*)GIMG(0x0046388e))
-#define DAT_00463892 (*(int*)GIMG(0x00463892))
-#define DAT_00463896 (*(int*)GIMG(0x00463896))
-#define DAT_004638b8 (*(int*)GIMG(0x004638b8))
+#define DAT_0078a744 (*(undefined1*)GIMG(0x0078a744))
+#define DAT_0078a748 (*(undefined1*)GIMG(0x0078a748))
+#define DAT_0078a74c (*(undefined1*)GIMG(0x0078a74c))
+#define DAT_0078a750 (*(undefined1*)GIMG(0x0078a750))
+#define DAT_0078a520 (*(undefined1*)GIMG(0x0078a520))
+#define DAT_0078a51e (*(undefined1*)GIMG(0x0078a51e))
+#define DAT_00792a76 (*(undefined1*)GIMG(0x00792a76))
+#define DAT_0078a790 (*(undefined1*)GIMG(0x0078a790))
 #define DAT_004638bc (*(int*)GIMG(0x004638bc))
-#define DAT_004638c0 (*(int*)GIMG(0x004638c0))
+#define DAT_004638b8 (*(int*)GIMG(0x004638b8))
 #define DAT_004638c4 (*(int*)GIMG(0x004638c4))
-#define DAT_00463dcc (*(int*)GIMG(0x00463dcc))
-#define DAT_00463dd0 (*(int*)GIMG(0x00463dd0))
-#define DAT_00463e2c (*(int*)GIMG(0x00463e2c))
-#define DAT_00463e30 (*(int*)GIMG(0x00463e30))
-#define DAT_00463e8c (*(int*)GIMG(0x00463e8c))
-#define DAT_00463ef0 (*(int*)GIMG(0x00463ef0))
-#define DAT_00463ef8 (*(int*)GIMG(0x00463ef8))
+#define DAT_004638c0 (*(int*)GIMG(0x004638c0))
+#define DAT_00465dd0 (*(undefined1*)GIMG(0x00465dd0))
+#define DAT_00465dd4 (*(undefined1*)GIMG(0x00465dd4))
+#define DAT_00465e34 (*(undefined1*)GIMG(0x00465e34))
+#define DAT_00463dcc (*(undefined1*)GIMG(0x00463dcc))
+#define DAT_00463dd0 (*(undefined1*)GIMG(0x00463dd0))
+#define PTR_LAB_00426870 (*(undefined1*)GIMG(0x00426870))
+#define PTR_LAB_00426894 (*(undefined1*)GIMG(0x00426894))
+#define DAT_00463e8c (*(undefined1*)GIMG(0x00463e8c))
+#define DAT_00463e2c (*(undefined1*)GIMG(0x00463e2c))
+#define DAT_00463e30 (*(undefined1*)GIMG(0x00463e30))
 #define DAT_00463efc (*(int*)GIMG(0x00463efc))
 #define DAT_00463f00 (*(int*)GIMG(0x00463f00))
 #define DAT_00463f04 (*(int*)GIMG(0x00463f04))
-#define DAT_00463f08 (*(int*)GIMG(0x00463f08))
-#define DAT_00463f0c (*(int*)GIMG(0x00463f0c))
 #define DAT_00463f10 (*(int*)GIMG(0x00463f10))
-#define DAT_00463f14 (*(int*)GIMG(0x00463f14))
-#define DAT_00463f1c (*(int*)GIMG(0x00463f1c))
-#define DAT_00463f20 (*(int*)GIMG(0x00463f20))
-#define DAT_00463f24 (*(int*)GIMG(0x00463f24))
-#define DAT_00463f28 (*(int*)GIMG(0x00463f28))
-#define DAT_00463f2c (*(int*)GIMG(0x00463f2c))
-#define DAT_00464a70 (*(int*)GIMG(0x00464a70))
+#define DAT_00463f0c (*(int*)GIMG(0x00463f0c))
+#define DAT_00463ef8 (*(int*)GIMG(0x00463ef8))
+#define DAT_00463f08 (*(int*)GIMG(0x00463f08))
+#define DAT_00792a7a (*(undefined1*)GIMG(0x00792a7a))
+#define DAT_0077cf3a (*(int*)GIMG(0x0077cf3a))
+#define DAT_0077cf37 (*(int*)GIMG(0x0077cf37))
+#define DAT_0077cf38 (*(unsigned char*)GIMG(0x0077cf38))
+#define DAT_0077cf00 (*(int*)GIMG(0x0077cf00))
+#define DAT_00467064 (*(int*)GIMG(0x00467064))
 #define DAT_00464a90 (*(int*)GIMG(0x00464a90))
+#define DAT_00464a70 (*(undefined1*)GIMG(0x00464a70))
+#define DAT_00464bf0 (*(int*)GIMG(0x00464bf0))
+#define DAT_00464aa8 (*(int*)GIMG(0x00464aa8))
+#define DAT_00464bb0 (*(undefined1*)GIMG(0x00464bb0))
+#define DAT_00464bb4 (*(undefined1*)GIMG(0x00464bb4))
+#define DAT_00464bb8 (*(undefined1*)GIMG(0x00464bb8))
+#define DAT_00464bbc (*(undefined1*)GIMG(0x00464bbc))
+#define DAT_00464ab0 (*(undefined1*)GIMG(0x00464ab0))
 #define DAT_00464aa0 (*(int*)GIMG(0x00464aa0))
 #define DAT_00464aa4 (*(int*)GIMG(0x00464aa4))
-#define DAT_00464aa8 (*(int*)GIMG(0x00464aa8))
+#define DAT_00463f14 (*(int*)GIMG(0x00463f14))
+#define DAT_00463f2c (*(int*)GIMG(0x00463f2c))
+#define DAT_00463f28 (*(int*)GIMG(0x00463f28))
+#define DAT_00463f1c (*(int*)GIMG(0x00463f1c))
+#define DAT_00463f24 (*(int*)GIMG(0x00463f24))
+#define DAT_00463f20 (*(int*)GIMG(0x00463f20))
+#define DAT_007926b0 (*(undefined1*)GIMG(0x007926b0))
 #define DAT_00464aac (*(int*)GIMG(0x00464aac))
-#define DAT_00464ab0 (*(int*)GIMG(0x00464ab0))
-#define DAT_00464bb0 (*(int*)GIMG(0x00464bb0))
-#define DAT_00464bb4 (*(int*)GIMG(0x00464bb4))
-#define DAT_00464bb8 (*(int*)GIMG(0x00464bb8))
-#define DAT_00464bbc (*(int*)GIMG(0x00464bbc))
-#define DAT_00464bf0 (*(int*)GIMG(0x00464bf0))
-#define DAT_00464c0e (*(int*)GIMG(0x00464c0e))
-#define DAT_00464c26 (*(int*)GIMG(0x00464c26))
-#define DAT_00464c3e (*(int*)GIMG(0x00464c3e))
-#define DAT_00464c56 (*(int*)GIMG(0x00464c56))
-#define DAT_00464c6e (*(int*)GIMG(0x00464c6e))
-#define DAT_00464c86 (*(int*)GIMG(0x00464c86))
-#define DAT_00464c9e (*(int*)GIMG(0x00464c9e))
-#define DAT_00464cb8 (*(int*)GIMG(0x00464cb8))
-#define DAT_00464cd0 (*(int*)GIMG(0x00464cd0))
-#define DAT_00464cd4 (*(int*)GIMG(0x00464cd4))
-#define DAT_00464cf0 (*(int*)GIMG(0x00464cf0))
+#define DAT_0046c988 (*(int*)GIMG(0x0046c988))
+#define DAT_0046c98c (*(int*)GIMG(0x0046c98c))
+#define DAT_0046c990 (*(int*)GIMG(0x0046c990))
+#define DAT_0046c994 (*(int*)GIMG(0x0046c994))
+#define DAT_0046c998 (*(int*)GIMG(0x0046c998))
+#define DAT_0046c99c (*(int*)GIMG(0x0046c99c))
+#define DAT_0046c9a0 (*(int*)GIMG(0x0046c9a0))
+#define DAT_0042a4b0 (*(undefined1*)GIMG(0x0042a4b0))
+#define DAT_0077d1e0 (*(undefined1*)GIMG(0x0077d1e0))
+#define PTR_DAT_00464bf4 (*(undefined1*)GIMG(0x00464bf4))
+#define DAT_0046c9a4 (*(int*)GIMG(0x0046c9a4))
+#define DAT_0046c9a8 (*(int*)GIMG(0x0046c9a8))
+#define DAT_0046c9ac (*(int*)GIMG(0x0046c9ac))
+#define DAT_0046c9b0 (*(int*)GIMG(0x0046c9b0))
+#define DAT_0046c9b4 (*(int*)GIMG(0x0046c9b4))
+#define DAT_0046c9b8 (*(int*)GIMG(0x0046c9b8))
+#define DAT_0046c9bc (*(int*)GIMG(0x0046c9bc))
+#define PTR_LAB_0042a5f0 (*(undefined1*)GIMG(0x0042a5f0))
+#define DAT_00792a92 (*(undefined1*)GIMG(0x00792a92))
+#define DAT_00792a10 (*(undefined1*)GIMG(0x00792a10))
+#define DAT_00464d2c (*(undefined1*)GIMG(0x00464d2c))
+#define DAT_00464cd0 (*(undefined1*)GIMG(0x00464cd0))
+#define DAT_00464cd4 (*(undefined1*)GIMG(0x00464cd4))
 #define DAT_00464cf4 (*(int*)GIMG(0x00464cf4))
+#define DAT_00464cf0 (*(int*)GIMG(0x00464cf0))
+#define DAT_00792ac6 (*(undefined1*)GIMG(0x00792ac6))
+#define DAT_007746c0 (*(int*)GIMG(0x007746c0))
 #define DAT_00464d1c (*(int*)GIMG(0x00464d1c))
-#define DAT_00464d2c (*(int*)GIMG(0x00464d2c))
-#define DAT_00464e50 (*(int*)GIMG(0x00464e50))
-#define DAT_00464e58 (*(int*)GIMG(0x00464e58))
+#define DAT_00792b1a (*(undefined1*)GIMG(0x00792b1a))
+#define DAT_0042a910 (*(undefined1*)GIMG(0x0042a910))
+#define DAT_00465924 (*(undefined1*)GIMG(0x00465924))
+#define DAT_00465926 (*(undefined1*)GIMG(0x00465926))
+#define DAT_00465920 (*(undefined1*)GIMG(0x00465920))
+#define DAT_0046591a (*(undefined1*)GIMG(0x0046591a))
+#define DAT_0046591c (*(undefined1*)GIMG(0x0046591c))
+#define DAT_0046591e (*(undefined1*)GIMG(0x0046591e))
+#define DAT_004658c2 (*(undefined1*)GIMG(0x004658c2))
+#define DAT_004658c4 (*(undefined1*)GIMG(0x004658c4))
+#define DAT_00464cb8 (*(int*)GIMG(0x00464cb8))
+#define DAT_004658c6 (*(undefined1*)GIMG(0x004658c6))
 #define DAT_00464e80 (*(int*)GIMG(0x00464e80))
 #define DAT_00464e84 (*(int*)GIMG(0x00464e84))
 #define DAT_00464e88 (*(int*)GIMG(0x00464e88))
@@ -198,41 +1486,63 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_00464e90 (*(int*)GIMG(0x00464e90))
 #define DAT_00464e94 (*(int*)GIMG(0x00464e94))
 #define DAT_00464e98 (*(int*)GIMG(0x00464e98))
-#define DAT_004651f8 (*(int*)GIMG(0x004651f8))
+#define PTR_DAT_004651bc (*(undefined1*)GIMG(0x004651bc))
+#define DAT_00464e58 (*(int*)GIMG(0x00464e58))
+#define DAT_00464e50 (*(int*)GIMG(0x00464e50))
+#define DAT_00782ad7 (*(int*)GIMG(0x00782ad7))
+#define DAT_0046cc58 (*(int*)GIMG(0x0046cc58))
+#define DAT_0046cc60 (*(int*)GIMG(0x0046cc60))
 #define DAT_0046520a (*(int*)GIMG(0x0046520a))
 #define DAT_0046520e (*(int*)GIMG(0x0046520e))
 #define DAT_00465212 (*(int*)GIMG(0x00465212))
+#define DAT_004651f8 (*(int*)GIMG(0x004651f8))
+#define DAT_0042db60 (*(undefined1*)GIMG(0x0042db60))
+#define DAT_0046526e (*(undefined1*)GIMG(0x0046526e))
+#define DAT_0042dc20 (*(undefined1*)GIMG(0x0042dc20))
+#define DAT_0046cc90 (*(int*)GIMG(0x0046cc90))
+#define DAT_0046526a (*(int*)GIMG(0x0046526a))
 #define DAT_00465255 (*(int*)GIMG(0x00465255))
 #define DAT_00465256 (*(int*)GIMG(0x00465256))
-#define DAT_0046526a (*(int*)GIMG(0x0046526a))
-#define DAT_0046526e (*(int*)GIMG(0x0046526e))
+#define DAT_00465800 (*(int*)GIMG(0x00465800))
+#define DAT_0046548a (*(int*)GIMG(0x0046548a))
+#define DAT_004654a2 (*(int*)GIMG(0x004654a2))
+#define DAT_00464c0e (*(int*)GIMG(0x00464c0e))
+#define DAT_00464c26 (*(int*)GIMG(0x00464c26))
+#define DAT_00464c3e (*(int*)GIMG(0x00464c3e))
+#define DAT_00464c56 (*(int*)GIMG(0x00464c56))
+#define DAT_00464c6e (*(int*)GIMG(0x00464c6e))
+#define DAT_00464c86 (*(int*)GIMG(0x00464c86))
+#define DAT_00464c9e (*(int*)GIMG(0x00464c9e))
+#define DAT_0046572a (*(undefined1*)GIMG(0x0046572a))
 #define DAT_004652a4 (*(int*)GIMG(0x004652a4))
-#define DAT_004652bc (*(int*)GIMG(0x004652bc))
-#define DAT_004652d4 (*(int*)GIMG(0x004652d4))
-#define DAT_004652ec (*(int*)GIMG(0x004652ec))
-#define DAT_00465304 (*(int*)GIMG(0x00465304))
 #define DAT_0046531c (*(int*)GIMG(0x0046531c))
 #define DAT_00465334 (*(int*)GIMG(0x00465334))
 #define DAT_0046534c (*(int*)GIMG(0x0046534c))
 #define DAT_00465364 (*(int*)GIMG(0x00465364))
-#define DAT_0046537c (*(int*)GIMG(0x0046537c))
-#define DAT_00465394 (*(int*)GIMG(0x00465394))
-#define DAT_004653ac (*(int*)GIMG(0x004653ac))
-#define DAT_004653c8 (*(int*)GIMG(0x004653c8))
+#define DAT_004652bc (*(int*)GIMG(0x004652bc))
+#define DAT_004652d4 (*(int*)GIMG(0x004652d4))
+#define DAT_004652ec (*(int*)GIMG(0x004652ec))
+#define DAT_00465304 (*(int*)GIMG(0x00465304))
+#define DAT_0046cccc (*(int*)GIMG(0x0046cccc))
 #define DAT_004653e0 (*(int*)GIMG(0x004653e0))
+#define DAT_0046ccd4 (*(int*)GIMG(0x0046ccd4))
+#define DAT_0046537c (*(int*)GIMG(0x0046537c))
+#define DAT_0046ccd8 (*(int*)GIMG(0x0046ccd8))
+#define DAT_00465394 (*(int*)GIMG(0x00465394))
+#define DAT_0046ccdc (*(int*)GIMG(0x0046ccdc))
+#define DAT_004653ac (*(int*)GIMG(0x004653ac))
 #define DAT_004653f8 (*(int*)GIMG(0x004653f8))
 #define DAT_00465410 (*(int*)GIMG(0x00465410))
 #define DAT_00465428 (*(int*)GIMG(0x00465428))
 #define DAT_00465440 (*(int*)GIMG(0x00465440))
+#define DAT_00465488 (*(int*)GIMG(0x00465488))
+#define DAT_004654a0 (*(int*)GIMG(0x004654a0))
 #define DAT_00465458 (*(int*)GIMG(0x00465458))
 #define DAT_00465470 (*(int*)GIMG(0x00465470))
-#define DAT_00465488 (*(int*)GIMG(0x00465488))
-#define DAT_0046548a (*(int*)GIMG(0x0046548a))
-#define DAT_004654a0 (*(int*)GIMG(0x004654a0))
-#define DAT_004654a2 (*(int*)GIMG(0x004654a2))
 #define DAT_004654b8 (*(int*)GIMG(0x004654b8))
 #define DAT_004654d0 (*(int*)GIMG(0x004654d0))
 #define DAT_004654e8 (*(int*)GIMG(0x004654e8))
+#define DAT_0046cd20 (*(int*)GIMG(0x0046cd20))
 #define DAT_00465500 (*(int*)GIMG(0x00465500))
 #define DAT_00465518 (*(int*)GIMG(0x00465518))
 #define DAT_00465530 (*(int*)GIMG(0x00465530))
@@ -243,61 +1553,76 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_004655a8 (*(int*)GIMG(0x004655a8))
 #define DAT_004655c0 (*(int*)GIMG(0x004655c0))
 #define DAT_004655d8 (*(int*)GIMG(0x004655d8))
+#define DAT_00466df2 (*(undefined1*)GIMG(0x00466df2))
 #define DAT_004655f0 (*(int*)GIMG(0x004655f0))
 #define DAT_00465608 (*(int*)GIMG(0x00465608))
 #define DAT_00465698 (*(int*)GIMG(0x00465698))
 #define DAT_00465728 (*(int*)GIMG(0x00465728))
-#define DAT_0046572a (*(int*)GIMG(0x0046572a))
 #define DAT_004657b8 (*(int*)GIMG(0x004657b8))
 #define DAT_004657d0 (*(int*)GIMG(0x004657d0))
+#define DAT_004653c8 (*(int*)GIMG(0x004653c8))
+#define DAT_0046cd34 (*(int*)GIMG(0x0046cd34))
 #define DAT_004657e8 (*(int*)GIMG(0x004657e8))
-#define DAT_00465800 (*(int*)GIMG(0x00465800))
-#define DAT_00465804 (*(int*)GIMG(0x00465804))
+#define DAT_00467060 (*(int*)GIMG(0x00467060))
+#define DAT_00466e38 (*(int*)GIMG(0x00466e38))
+#define DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
+#define DAT_00466e44 (*(undefined1*)GIMG(0x00466e44))
+#define DAT_00466e40 (*(undefined1*)GIMG(0x00466e40))
+#define DAT_0042e134 (*(undefined1*)GIMG(0x0042e134))
+#define DAT_0042e13c (*(undefined1*)GIMG(0x0042e13c))
+#define DAT_0042e140 (*(undefined1*)GIMG(0x0042e140))
+#define DAT_00465804 (*(undefined1*)GIMG(0x00465804))
+#define DAT_0042e14c (*(undefined1*)GIMG(0x0042e14c))
+#define DAT_0042e148 (*(undefined1*)GIMG(0x0042e148))
+#define DAT_0042e144 (*(undefined1*)GIMG(0x0042e144))
+#define DAT_00465872 (*(undefined1*)GIMG(0x00465872))
 #define DAT_00465858 (*(int*)GIMG(0x00465858))
-#define DAT_00465872 (*(int*)GIMG(0x00465872))
-#define DAT_004658c2 (*(int*)GIMG(0x004658c2))
-#define DAT_004658c4 (*(int*)GIMG(0x004658c4))
-#define DAT_004658c6 (*(int*)GIMG(0x004658c6))
-#define DAT_0046591a (*(int*)GIMG(0x0046591a))
-#define DAT_0046591c (*(int*)GIMG(0x0046591c))
-#define DAT_0046591e (*(int*)GIMG(0x0046591e))
-#define DAT_00465920 (*(int*)GIMG(0x00465920))
-#define DAT_00465924 (*(int*)GIMG(0x00465924))
-#define DAT_00465926 (*(int*)GIMG(0x00465926))
+#define DAT_007892a4 (*(undefined1*)GIMG(0x007892a4))
+#define DAT_00784298 (*(undefined1*)GIMG(0x00784298))
+#define DAT_00430f10 (*(undefined1*)GIMG(0x00430f10))
+#define DAT_00792a86 (*(undefined1*)GIMG(0x00792a86))
+#define DAT_00792bae (*(int*)GIMG(0x00792bae))
+#define DAT_00792a30 (*(undefined1*)GIMG(0x00792a30))
+#define DAT_00792a38 (*(undefined1*)GIMG(0x00792a38))
+#define DAT_0078a792 (*(undefined1*)GIMG(0x0078a792))
+#define DAT_00792a18 (*(undefined1*)GIMG(0x00792a18))
+#define DAT_00792ba2 (*(undefined1*)GIMG(0x00792ba2))
+#define DAT_007926a4 (*(undefined1*)GIMG(0x007926a4))
 #define DAT_00465980 (*(int*)GIMG(0x00465980))
-#define DAT_00465a0c (*(int*)GIMG(0x00465a0c))
-#define DAT_00465cb0 (*(int*)GIMG(0x00465cb0))
-#define DAT_00465cc8 (*(int*)GIMG(0x00465cc8))
-#define DAT_00465ce0 (*(int*)GIMG(0x00465ce0))
-#define DAT_00465ce8 (*(int*)GIMG(0x00465ce8))
-#define DAT_00465d10 (*(int*)GIMG(0x00465d10))
-#define DAT_00465d48 (*(int*)GIMG(0x00465d48))
-#define DAT_00465d58 (*(int*)GIMG(0x00465d58))
-#define DAT_00465d88 (*(int*)GIMG(0x00465d88))
+#define DAT_00795c46 (*(undefined1*)GIMG(0x00795c46))
 #define DAT_00465db0 (*(int*)GIMG(0x00465db0))
-#define DAT_00465dd0 (*(int*)GIMG(0x00465dd0))
-#define DAT_00465dd4 (*(int*)GIMG(0x00465dd4))
-#define DAT_00465e34 (*(int*)GIMG(0x00465e34))
-#define DAT_00466290 (*(short**)GIMG(0x00466290))  /* free-list stack ptr: short* not int* (deref=2-byte short, +/-1 = 2-byte stride) */
+#define DAT_00465ce0 (*(int*)GIMG(0x00465ce0))
+#define DAT_00465d88 (*(int*)GIMG(0x00465d88))
+#define DAT_00465cc8 (*(int*)GIMG(0x00465cc8))
+#define DAT_00465d10 (*(int*)GIMG(0x00465d10))
+#define DAT_00465cb0 (*(int*)GIMG(0x00465cb0))
+#define DAT_00465d48 (*(int*)GIMG(0x00465d48))
+#define DAT_00465ce8 (*(int*)GIMG(0x00465ce8))
+#define DAT_00465d58 (*(int*)GIMG(0x00465d58))
+#define DAT_00465a0c (*(int*)GIMG(0x00465a0c))
+#define DAT_007924f4 (*(undefined1*)GIMG(0x007924f4))
+#define DAT_007924e8 (*(undefined1*)GIMG(0x007924e8))
+#define DAT_00792a14 (*(undefined1*)GIMG(0x00792a14))
+#define DAT_00466310 (*(int*)GIMG(0x00466310))
+#define DAT_00466328 (*(int*)GIMG(0x00466328))
+#define DAT_0046cd48 (*(int*)GIMG(0x0046cd48))
 #define DAT_004662f8 (*(int*)GIMG(0x004662f8))
-#define DAT_00466304 (*(int*)GIMG(0x00466304))
-#define DAT_00466306 (*(int*)GIMG(0x00466306))
 #define DAT_0046630a (*(int*)GIMG(0x0046630a))
 #define DAT_0046630b (*(int*)GIMG(0x0046630b))
-#define DAT_00466310 (*(int*)GIMG(0x00466310))
-#define DAT_0046631c (*(int*)GIMG(0x0046631c))
-#define DAT_0046631e (*(int*)GIMG(0x0046631e))
+#define DAT_00466304 (*(int*)GIMG(0x00466304))
+#define DAT_00466306 (*(int*)GIMG(0x00466306))
 #define DAT_00466322 (*(int*)GIMG(0x00466322))
 #define DAT_00466323 (*(int*)GIMG(0x00466323))
-#define DAT_00466328 (*(int*)GIMG(0x00466328))
-#define DAT_00466334 (*(int*)GIMG(0x00466334))
-#define DAT_00466336 (*(int*)GIMG(0x00466336))
+#define DAT_0046631c (*(int*)GIMG(0x0046631c))
+#define DAT_0046631e (*(int*)GIMG(0x0046631e))
 #define DAT_0046633a (*(int*)GIMG(0x0046633a))
 #define DAT_0046633b (*(int*)GIMG(0x0046633b))
+#define DAT_00466334 (*(int*)GIMG(0x00466334))
+#define DAT_00466336 (*(int*)GIMG(0x00466336))
 #define DAT_00466340 (*(int*)GIMG(0x00466340))
-#define DAT_00466342 (*(int*)GIMG(0x00466342))
-#define DAT_00466344 (*(int*)GIMG(0x00466344))
-#define DAT_00466346 (*(int*)GIMG(0x00466346))
+#define DAT_00466344 (*(undefined1*)GIMG(0x00466344))
+#define DAT_00466346 (*(undefined1*)GIMG(0x00466346))
+#define DAT_00466342 (*(undefined1*)GIMG(0x00466342))
 #define DAT_0046637c (*(int*)GIMG(0x0046637c))
 #define DAT_00466394 (*(int*)GIMG(0x00466394))
 #define DAT_004663ac (*(int*)GIMG(0x004663ac))
@@ -313,45 +1638,43 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_0046649c (*(int*)GIMG(0x0046649c))
 #define DAT_004664b4 (*(int*)GIMG(0x004664b4))
 #define DAT_004664cc (*(int*)GIMG(0x004664cc))
+#define DAT_00466290 (*(int**)GIMG(0x00466290))
 #define DAT_004664fc (*(int*)GIMG(0x004664fc))
+#define DAT_00466376 (*(undefined1*)GIMG(0x00466376))
+#define DAT_00466377 (*(undefined1*)GIMG(0x00466377))
+#define DAT_00466370 (*(undefined1*)GIMG(0x00466370))
+#define DAT_00466372 (*(undefined1*)GIMG(0x00466372))
+#define DAT_00466436 (*(undefined1*)GIMG(0x00466436))
+#define DAT_00466437 (*(undefined1*)GIMG(0x00466437))
+#define DAT_00466430 (*(undefined1*)GIMG(0x00466430))
+#define DAT_00466432 (*(undefined1*)GIMG(0x00466432))
+#define DAT_004664f6 (*(undefined1*)GIMG(0x004664f6))
+#define DAT_004664f7 (*(undefined1*)GIMG(0x004664f7))
+#define DAT_004664f0 (*(undefined1*)GIMG(0x004664f0))
+#define DAT_004664f2 (*(undefined1*)GIMG(0x004664f2))
 #define DAT_0046653e (*(int*)GIMG(0x0046653e))
+#define DAT_0078a51c (*(int*)GIMG(0x0078a51c))
 #define DAT_00466626 (*(int*)GIMG(0x00466626))
 #define DAT_0046662a (*(int*)GIMG(0x0046662a))
 #define DAT_0046662e (*(int*)GIMG(0x0046662e))
-#define DAT_004666f4 (*(int*)GIMG(0x004666f4))
-#define DAT_00466704 (*(int*)GIMG(0x00466704))
-#define DAT_00466714 (*(int*)GIMG(0x00466714))
-#define DAT_00466724 (*(int*)GIMG(0x00466724))
-#define DAT_00466734 (*(int*)GIMG(0x00466734))
-#define DAT_00466754 (*(int*)GIMG(0x00466754))
-#define DAT_0046675d (*(int*)GIMG(0x0046675d))
-#define DAT_00466772 (*(int*)GIMG(0x00466772))
-#define DAT_0046677c (*(int*)GIMG(0x0046677c))
-#define DAT_00466786 (*(int*)GIMG(0x00466786))
-#define DAT_0046678f (*(int*)GIMG(0x0046678f))
+#define DAT_00791bf0 (*(undefined1*)GIMG(0x00791bf0))
+#define DAT_00791bf8 (*(undefined1*)GIMG(0x00791bf8))
+#define DAT_00466704 (*(undefined1*)GIMG(0x00466704))
+#define DAT_004666f4 (*(undefined1*)GIMG(0x004666f4))
+#define DAT_00466724 (*(undefined1*)GIMG(0x00466724))
+#define DAT_00466714 (*(undefined1*)GIMG(0x00466714))
+#define DAT_00791b94 (*(undefined1*)GIMG(0x00791b94))
+#define DAT_0046cdd4 (*(int*)GIMG(0x0046cdd4))
+#define DAT_0046cdd8 (*(int*)GIMG(0x0046cdd8))
+#define DAT_0046cddc (*(int*)GIMG(0x0046cddc))
+#define DAT_0046cde0 (*(int*)GIMG(0x0046cde0))
+#define DAT_0046cde4 (*(int*)GIMG(0x0046cde4))
+#define DAT_0046cef0 (*(int*)GIMG(0x0046cef0))
+#define DAT_00466a20 (*(int*)GIMG(0x00466a20))
+#define DAT_00466a21 (*(int*)GIMG(0x00466a21))
 #define DAT_00466796 (*(int*)GIMG(0x00466796))
 #define DAT_0046679f (*(int*)GIMG(0x0046679f))
-#define DAT_004667a8 (*(int*)GIMG(0x004667a8))
-#define DAT_004667b6 (*(int*)GIMG(0x004667b6))
-#define DAT_004667be (*(int*)GIMG(0x004667be))
-#define DAT_004667c4 (*(int*)GIMG(0x004667c4))
-#define DAT_004667c8 (*(int*)GIMG(0x004667c8))
-#define DAT_004667cc (*(int*)GIMG(0x004667cc))
-#define DAT_004667cf (*(int*)GIMG(0x004667cf))
-#define DAT_004667d6 (*(int*)GIMG(0x004667d6))
-#define DAT_004667d9 (*(int*)GIMG(0x004667d9))
-#define DAT_004667e5 (*(int*)GIMG(0x004667e5))
-#define DAT_004667e7 (*(int*)GIMG(0x004667e7))
-#define DAT_004667e9 (*(int*)GIMG(0x004667e9))
-#define DAT_004667ec (*(int*)GIMG(0x004667ec))
-#define DAT_004667f0 (*(int*)GIMG(0x004667f0))
-#define DAT_004667f2 (*(int*)GIMG(0x004667f2))
-#define DAT_004667f5 (*(int*)GIMG(0x004667f5))
-#define DAT_004667fc (*(int*)GIMG(0x004667fc))
-#define DAT_004667ff (*(int*)GIMG(0x004667ff))
-#define DAT_0046680a (*(int*)GIMG(0x0046680a))
-#define DAT_0046680c (*(int*)GIMG(0x0046680c))
-#define DAT_00466810 (*(int*)GIMG(0x00466810))
+#define DAT_00466734 (*(undefined1*)GIMG(0x00466734))
 #define DAT_00466814 (*(int*)GIMG(0x00466814))
 #define DAT_00466817 (*(int*)GIMG(0x00466817))
 #define DAT_00466834 (*(int*)GIMG(0x00466834))
@@ -360,661 +1683,525 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define DAT_00466934 (*(int*)GIMG(0x00466934))
 #define DAT_004669b4 (*(int*)GIMG(0x004669b4))
 #define DAT_004669bc (*(int*)GIMG(0x004669bc))
-#define DAT_00466a20 (*(int*)GIMG(0x00466a20))
-#define DAT_00466a21 (*(int*)GIMG(0x00466a21))
-#define DAT_00466a45 (*(int*)GIMG(0x00466a45))
-#define DAT_00466a4a (*(int*)GIMG(0x00466a4a))
-#define DAT_00466a7d (*(int*)GIMG(0x00466a7d))
-#define DAT_00466a96 (*(int*)GIMG(0x00466a96))
+#define DAT_00466a4a (*(undefined1*)GIMG(0x00466a4a))
+#define DAT_00466a45 (*(undefined1*)GIMG(0x00466a45))
+#define DAT_00466a7d (*(undefined1*)GIMG(0x00466a7d))
+#define DAT_0046678f (*(int*)GIMG(0x0046678f))
+#define DAT_004667ec (*(int*)GIMG(0x004667ec))
+#define DAT_0046677c (*(int*)GIMG(0x0046677c))
+#define DAT_004667e7 (*(int*)GIMG(0x004667e7))
+#define DAT_004667cf (*(int*)GIMG(0x004667cf))
+#define DAT_00466754 (*(int*)GIMG(0x00466754))
+#define DAT_004667cc (*(int*)GIMG(0x004667cc))
+#define DAT_00466772 (*(int*)GIMG(0x00466772))
+#define DAT_004667e5 (*(int*)GIMG(0x004667e5))
+#define DAT_00466786 (*(int*)GIMG(0x00466786))
+#define DAT_004667e9 (*(int*)GIMG(0x004667e9))
+#define DAT_004667d6 (*(int*)GIMG(0x004667d6))
+#define DAT_004667d9 (*(int*)GIMG(0x004667d9))
+#define DAT_0046675d (*(int*)GIMG(0x0046675d))
+#define DAT_004667ff (*(int*)GIMG(0x004667ff))
+#define DAT_0046680a (*(int*)GIMG(0x0046680a))
+#define DAT_004667be (*(int*)GIMG(0x004667be))
+#define DAT_0046680c (*(int*)GIMG(0x0046680c))
+#define DAT_004667c8 (*(int*)GIMG(0x004667c8))
+#define DAT_004667fc (*(int*)GIMG(0x004667fc))
+#define DAT_00466810 (*(int*)GIMG(0x00466810))
+#define DAT_004667c4 (*(int*)GIMG(0x004667c4))
+#define DAT_004667b6 (*(int*)GIMG(0x004667b6))
+#define DAT_004667f2 (*(int*)GIMG(0x004667f2))
+#define DAT_004667a8 (*(int*)GIMG(0x004667a8))
+#define DAT_004667f0 (*(int*)GIMG(0x004667f0))
+#define DAT_004667f5 (*(int*)GIMG(0x004667f5))
+#define DAT_0079250a (*(int*)GIMG(0x0079250a))
+#define DAT_00792536 (*(int*)GIMG(0x00792536))
+#define DAT_00792562 (*(int*)GIMG(0x00792562))
+#define DAT_0079258e (*(int*)GIMG(0x0079258e))
+#define DAT_007925ba (*(int*)GIMG(0x007925ba))
+#define DAT_007925e6 (*(int*)GIMG(0x007925e6))
+#define DAT_00792612 (*(int*)GIMG(0x00792612))
+#define DAT_0079263e (*(int*)GIMG(0x0079263e))
 #define DAT_00466a9a (*(int*)GIMG(0x00466a9a))
-#define DAT_00466a9e (*(int*)GIMG(0x00466a9e))
+#define DAT_00466a96 (*(undefined1*)GIMG(0x00466a96))
 #define DAT_00466aa2 (*(int*)GIMG(0x00466aa2))
-#define DAT_00466aa6 (*(int*)GIMG(0x00466aa6))
+#define DAT_00466a9e (*(int*)GIMG(0x00466a9e))
+#define DAT_0079250c (*(int*)GIMG(0x0079250c))
 #define DAT_00466aaa (*(int*)GIMG(0x00466aaa))
-#define DAT_00466aae (*(int*)GIMG(0x00466aae))
+#define DAT_00466aa6 (*(int*)GIMG(0x00466aa6))
+#define DAT_00792538 (*(int*)GIMG(0x00792538))
 #define DAT_00466ab2 (*(int*)GIMG(0x00466ab2))
-#define DAT_00466ab6 (*(int*)GIMG(0x00466ab6))
+#define DAT_00466aae (*(int*)GIMG(0x00466aae))
+#define DAT_00792564 (*(int*)GIMG(0x00792564))
 #define DAT_00466aba (*(int*)GIMG(0x00466aba))
-#define DAT_00466abe (*(int*)GIMG(0x00466abe))
+#define DAT_00466ab6 (*(int*)GIMG(0x00466ab6))
+#define DAT_00792590 (*(int*)GIMG(0x00792590))
 #define DAT_00466ac2 (*(int*)GIMG(0x00466ac2))
-#define DAT_00466ac6 (*(int*)GIMG(0x00466ac6))
+#define DAT_00466abe (*(int*)GIMG(0x00466abe))
+#define DAT_007925bc (*(int*)GIMG(0x007925bc))
 #define DAT_00466aca (*(int*)GIMG(0x00466aca))
-#define DAT_00466ace (*(int*)GIMG(0x00466ace))
+#define DAT_00466ac6 (*(int*)GIMG(0x00466ac6))
+#define DAT_007925e8 (*(int*)GIMG(0x007925e8))
 #define DAT_00466ad2 (*(int*)GIMG(0x00466ad2))
-#define DAT_00466ad8 (*(int*)GIMG(0x00466ad8))
-#define DAT_00466adc (*(int*)GIMG(0x00466adc))
-#define DAT_00466ae0 (*(int*)GIMG(0x00466ae0))
-#define DAT_00466ae4 (*(int*)GIMG(0x00466ae4))
-#define DAT_00466b28 (*(int*)GIMG(0x00466b28))
-#define DAT_00466b2c (*(int*)GIMG(0x00466b2c))
-#define DAT_00466b54 (*(int*)GIMG(0x00466b54))
-#define DAT_00466d4e (*(int*)GIMG(0x00466d4e))
-#define DAT_00466d50 (*(int*)GIMG(0x00466d50))
+#define DAT_00466ace (*(int*)GIMG(0x00466ace))
+#define DAT_00792614 (*(int*)GIMG(0x00792614))
+#define DAT_00792444 (*(undefined1*)GIMG(0x00792444))
+#define DAT_007924e4 (*(undefined1*)GIMG(0x007924e4))
+#define DAT_007924fe (*(undefined1*)GIMG(0x007924fe))
+#define DAT_00792694 (*(undefined1*)GIMG(0x00792694))
+#define DAT_00466ad8 (*(undefined1*)GIMG(0x00466ad8))
+#define DAT_00466adc (*(undefined1*)GIMG(0x00466adc))
+#define DAT_00466ae0 (*(undefined1*)GIMG(0x00466ae0))
+#define DAT_00466ae4 (*(undefined1*)GIMG(0x00466ae4))
+#define DAT_00466b28 (*(undefined1*)GIMG(0x00466b28))
+#define DAT_00466b2c (*(undefined1*)GIMG(0x00466b2c))
+#define DAT_00466b54 (*(undefined1*)GIMG(0x00466b54))
 #define DAT_00466d52 (*(int*)GIMG(0x00466d52))
-#define DAT_00466d56 (*(int*)GIMG(0x00466d56))
+#define DAT_00466d4e (*(int*)GIMG(0x00466d4e))
 #define DAT_00466d5a (*(int*)GIMG(0x00466d5a))
-#define DAT_00466d5e (*(int*)GIMG(0x00466d5e))
+#define DAT_00466d56 (*(int*)GIMG(0x00466d56))
 #define DAT_00466d62 (*(int*)GIMG(0x00466d62))
-#define DAT_00466d66 (*(int*)GIMG(0x00466d66))
+#define DAT_00466d5e (*(int*)GIMG(0x00466d5e))
 #define DAT_00466d6a (*(int*)GIMG(0x00466d6a))
-#define DAT_00466d6e (*(int*)GIMG(0x00466d6e))
+#define DAT_00466d66 (*(int*)GIMG(0x00466d66))
 #define DAT_00466d72 (*(int*)GIMG(0x00466d72))
-#define DAT_00466d76 (*(int*)GIMG(0x00466d76))
+#define DAT_00466d6e (*(int*)GIMG(0x00466d6e))
 #define DAT_00466d7a (*(int*)GIMG(0x00466d7a))
-#define DAT_00466d7e (*(int*)GIMG(0x00466d7e))
+#define DAT_00466d76 (*(int*)GIMG(0x00466d76))
 #define DAT_00466d82 (*(int*)GIMG(0x00466d82))
-#define DAT_00466d86 (*(int*)GIMG(0x00466d86))
+#define DAT_00466d7e (*(int*)GIMG(0x00466d7e))
 #define DAT_00466d8a (*(int*)GIMG(0x00466d8a))
-#define DAT_00466dee (*(int*)GIMG(0x00466dee))
-#define DAT_00466df2 (*(int*)GIMG(0x00466df2))
-#define DAT_00466df4 (*(int*)GIMG(0x00466df4))
-#define DAT_00466e38 (*(int*)GIMG(0x00466e38))
-#define DAT_00466e40 (*(int*)GIMG(0x00466e40))
-#define DAT_00466e44 (*(int*)GIMG(0x00466e44))
+#define DAT_00466d86 (*(int*)GIMG(0x00466d86))
+#define DAT_00466dee (*(undefined1*)GIMG(0x00466dee))
+#define DAT_00795c52 (*(undefined1*)GIMG(0x00795c52))
 #define DAT_00466e90 (*(int*)GIMG(0x00466e90))
-#define DAT_00466eac (*(int*)GIMG(0x00466eac))
-#define DAT_00466ebc (*(int*)GIMG(0x00466ebc))
+#define DAT_004440a0 (*(undefined1*)GIMG(0x004440a0))
+#define DAT_0077d45c (*(undefined1*)GIMG(0x0077d45c))
+#define DAT_00444990 (*(undefined1*)GIMG(0x00444990))
+#define DAT_004449d0 (*(undefined1*)GIMG(0x004449d0))
+#define DAT_00466eac (*(undefined1*)GIMG(0x00466eac))
+#define DAT_00466ebc (*(undefined1*)GIMG(0x00466ebc))
 #define DAT_00466ee4 (*(int*)GIMG(0x00466ee4))
-#define DAT_00466f26 (*(int*)GIMG(0x00466f26))
-#define DAT_00466f27 (*(int*)GIMG(0x00466f27))
-#define DAT_00466f56 (*(int*)GIMG(0x00466f56))
-#define DAT_00466f57 (*(int*)GIMG(0x00466f57))
 #define DAT_00466f5c (*(int*)GIMG(0x00466f5c))
 #define DAT_00466f8c (*(int*)GIMG(0x00466f8c))
-#define DAT_00466fa4 (*(int*)GIMG(0x00466fa4))
-#define DAT_00466fec (*(int*)GIMG(0x00466fec))
-#define DAT_00467004 (*(int*)GIMG(0x00467004))
-#define DAT_00467060 (*(int*)GIMG(0x00467060))
-#define DAT_00467064 (*(int*)GIMG(0x00467064))
-#define DAT_00467074 (*(int*)GIMG(0x00467074))
-#define DAT_00467078 (*(int*)GIMG(0x00467078))
-#define DAT_004670a8 (*(int*)GIMG(0x004670a8))
-#define DAT_004670ac (*(int*)GIMG(0x004670ac))
-#define DAT_004670b0 (*(int*)GIMG(0x004670b0))
-#define DAT_004670b8 (*(int*)GIMG(0x004670b8))
-#define DAT_004670bc (*(int*)GIMG(0x004670bc))
-#define DAT_004670e0 (*(int*)GIMG(0x004670e0))
-#define DAT_004670e4 (*(int*)GIMG(0x004670e4))
-#define DAT_00467168 (*(int*)GIMG(0x00467168))
-#define DAT_00467180 (*(int*)GIMG(0x00467180))
-#define DAT_00467198 (*(int*)GIMG(0x00467198))
-#define DAT_004671b0 (*(int*)GIMG(0x004671b0))
-#define DAT_004671c8 (*(int*)GIMG(0x004671c8))
-#define DAT_00467224 (*(int*)GIMG(0x00467224))
-#define DAT_00467390 (*(int*)GIMG(0x00467390))
-#define DAT_00467394 (*(int*)GIMG(0x00467394))
-#define DAT_004673ac (*(int*)GIMG(0x004673ac))
-#define DAT_004673c4 (*(int*)GIMG(0x004673c4))
-#define DAT_004673dc (*(int*)GIMG(0x004673dc))
-#define DAT_00467498 (*(int*)GIMG(0x00467498))
-#define DAT_004674e8 (*(int*)GIMG(0x004674e8))
-#define DAT_00467534 (*(int*)GIMG(0x00467534))
-#define DAT_00467564 (*(int*)GIMG(0x00467564))
-#define DAT_00467568 (*(int*)GIMG(0x00467568))
-#define DAT_0046757a (*(int*)GIMG(0x0046757a))
-#define DAT_0046758c (*(int*)GIMG(0x0046758c))
-#define DAT_00467658 (*(int*)GIMG(0x00467658))
-#define DAT_00467660 (*(int*)GIMG(0x00467660))
-#define DAT_00467794 (*(int*)GIMG(0x00467794))
-#define DAT_00468094 (*(int*)GIMG(0x00468094))
-#define DAT_004680ca (*(int*)GIMG(0x004680ca))
-#define DAT_004680cc (*(int*)GIMG(0x004680cc))
-#define DAT_004680ce (*(int*)GIMG(0x004680ce))
-#define DAT_004680d0 (*(int*)GIMG(0x004680d0))
-#define DAT_004680e0 (*(int*)GIMG(0x004680e0))
-#define DAT_004680f0 (*(int*)GIMG(0x004680f0))
-#define DAT_00468100 (*(int*)GIMG(0x00468100))
-#define DAT_004682f0 (*(int*)GIMG(0x004682f0))
-#define DAT_004685e0 (*(int*)GIMG(0x004685e0))
-#define DAT_00468664 (*(int*)GIMG(0x00468664))
-#define DAT_0046867c (*(int*)GIMG(0x0046867c))
-#define DAT_00468694 (*(int*)GIMG(0x00468694))
-#define DAT_004686ac (*(int*)GIMG(0x004686ac))
-#define DAT_00468728 (*(int*)GIMG(0x00468728))
-#define DAT_00468818 (*(int*)GIMG(0x00468818))
-#define DAT_00468ac8 (*(int*)GIMG(0x00468ac8))
-#define DAT_00468ea4 (*(int*)GIMG(0x00468ea4))
-#define DAT_00468eb4 (*(int*)GIMG(0x00468eb4))
-#define DAT_00468eb8 (*(int*)GIMG(0x00468eb8))
-#define DAT_00468ebc (*(int*)GIMG(0x00468ebc))
-#define DAT_00468edc (*(int*)GIMG(0x00468edc))
-#define DAT_00469120 (*(int*)GIMG(0x00469120))
-#define DAT_00469220 (*(int*)GIMG(0x00469220))
-#define DAT_00469274 (*(int*)GIMG(0x00469274))
-#define DAT_004692b0 (*(int*)GIMG(0x004692b0))
-#define DAT_00469348 (*(int*)GIMG(0x00469348))
-#define DAT_004693a8 (*(int*)GIMG(0x004693a8))
-#define DAT_00469560 (*(int*)GIMG(0x00469560))
-#define DAT_00469564 (*(int*)GIMG(0x00469564))
-#define DAT_004696a4 (*(int*)GIMG(0x004696a4))
-#define DAT_0046974c (*(int*)GIMG(0x0046974c))
-#define DAT_004697c4 (*(int*)GIMG(0x004697c4))
-#define DAT_004697c8 (*(int*)GIMG(0x004697c8))
-#define DAT_004697ca (*(int*)GIMG(0x004697ca))
-#define DAT_004697d4 (*(int*)GIMG(0x004697d4))
-#define DAT_004698a4 (*(int*)GIMG(0x004698a4))
-#define DAT_004698a5 (*(int*)GIMG(0x004698a5))
-#define DAT_004698a6 (*(int*)GIMG(0x004698a6))
-#define DAT_004698a7 (*(int*)GIMG(0x004698a7))
-#define DAT_0046996c (*(int*)GIMG(0x0046996c))
-#define DAT_00469974 (*(int*)GIMG(0x00469974))
-#define DAT_004699b4 (*(int*)GIMG(0x004699b4))
-#define DAT_004699c9 (*(int*)GIMG(0x004699c9))
-#define DAT_004699ca (*(int*)GIMG(0x004699ca))
-#define DAT_004699cc (*(int*)GIMG(0x004699cc))
-#define DAT_004699d2 (*(int*)GIMG(0x004699d2))
-#define DAT_00469efc (*(int*)GIMG(0x00469efc))
-#define DAT_00469f4c (*(int*)GIMG(0x00469f4c))
-#define DAT_00469f9c (*(int*)GIMG(0x00469f9c))
-#define DAT_0046a110 (*(int*)GIMG(0x0046a110))
-#define DAT_0046a17c (*(int*)GIMG(0x0046a17c))
-#define DAT_0046a1e4 (*(int*)GIMG(0x0046a1e4))
-#define DAT_0046a1e6 (*(int*)GIMG(0x0046a1e6))
-#define DAT_0046a208 (*(int*)GIMG(0x0046a208))
-#define DAT_0046a20a (*(int*)GIMG(0x0046a20a))
-#define DAT_0046a2ca (*(int*)GIMG(0x0046a2ca))
-#define DAT_0046a308 (*(int*)GIMG(0x0046a308))
-#define DAT_0046a370 (*(int*)GIMG(0x0046a370))
-#define DAT_0046a372 (*(int*)GIMG(0x0046a372))
-#define DAT_0046a3a8 (*(int*)GIMG(0x0046a3a8))
-#define DAT_0046a3aa (*(int*)GIMG(0x0046a3aa))
-#define DAT_0046a444 (*(int*)GIMG(0x0046a444))
-#define DAT_0046a4d0 (*(int*)GIMG(0x0046a4d0))
-#define DAT_0046a534 (*(int*)GIMG(0x0046a534))
-#define DAT_0046a538 (*(int*)GIMG(0x0046a538))
-#define DAT_0046a53a (*(int*)GIMG(0x0046a53a))
-#define DAT_0046a570 (*(int*)GIMG(0x0046a570))
-#define DAT_0046a571 (*(int*)GIMG(0x0046a571))
-#define DAT_0046a572 (*(int*)GIMG(0x0046a572))
-#define DAT_0046a573 (*(int*)GIMG(0x0046a573))
-#define DAT_0046a672 (*(int*)GIMG(0x0046a672))
-#define DAT_0046a6b8 (*(int*)GIMG(0x0046a6b8))
-#define DAT_0046a720 (*(int*)GIMG(0x0046a720))
-#define DAT_0046a722 (*(int*)GIMG(0x0046a722))
-#define DAT_0046a76c (*(int*)GIMG(0x0046a76c))
-#define DAT_0046a76e (*(int*)GIMG(0x0046a76e))
-#define DAT_0046a920 (*(int*)GIMG(0x0046a920))
-#define DAT_0046a9b8 (*(int*)GIMG(0x0046a9b8))
-#define DAT_0046aa3c (*(int*)GIMG(0x0046aa3c))
-#define DAT_0046aaa4 (*(int*)GIMG(0x0046aaa4))
-#define DAT_0046aaa6 (*(int*)GIMG(0x0046aaa6))
-#define DAT_0046aacc (*(int*)GIMG(0x0046aacc))
-#define DAT_0046ad00 (*(int*)GIMG(0x0046ad00))
-#define DAT_0046ae20 (*(int*)GIMG(0x0046ae20))
-#define DAT_0046aef8 (*(int*)GIMG(0x0046aef8))
-#define DAT_0046af4c (*(int*)GIMG(0x0046af4c))
-#define DAT_0046af4d (*(int*)GIMG(0x0046af4d))
-#define DAT_0046af4e (*(int*)GIMG(0x0046af4e))
-#define DAT_0046af70 (*(int*)GIMG(0x0046af70))
-#define DAT_0046af74 (*(int*)GIMG(0x0046af74))
-#define DAT_0046af76 (*(int*)GIMG(0x0046af76))
-#define DAT_0046afe8 (*(int*)GIMG(0x0046afe8))
-#define DAT_0046afe9 (*(int*)GIMG(0x0046afe9))
-#define DAT_0046afea (*(int*)GIMG(0x0046afea))
-#define DAT_0046afeb (*(int*)GIMG(0x0046afeb))
-#define DAT_0046b000 (*(int*)GIMG(0x0046b000))
-#define DAT_0046b001 (*(int*)GIMG(0x0046b001))
-#define DAT_0046b002 (*(int*)GIMG(0x0046b002))
-#define DAT_0046b003 (*(int*)GIMG(0x0046b003))
-#define DAT_0046b6c0 (*(int*)GIMG(0x0046b6c0))
-#define DAT_0046b74c (*(int*)GIMG(0x0046b74c))
-#define DAT_0046b7a0 (*(int*)GIMG(0x0046b7a0))
-#define DAT_0046b7a1 (*(int*)GIMG(0x0046b7a1))
-#define DAT_0046b7a2 (*(int*)GIMG(0x0046b7a2))
-#define DAT_0046b7c4 (*(int*)GIMG(0x0046b7c4))
-#define DAT_0046b7c8 (*(int*)GIMG(0x0046b7c8))
-#define DAT_0046b7ca (*(int*)GIMG(0x0046b7ca))
-#define DAT_0046b800 (*(int*)GIMG(0x0046b800))
-#define DAT_0046b801 (*(int*)GIMG(0x0046b801))
-#define DAT_0046b802 (*(int*)GIMG(0x0046b802))
-#define DAT_0046b803 (*(int*)GIMG(0x0046b803))
-#define DAT_0046b824 (*(int*)GIMG(0x0046b824))
-#define DAT_0046b8a8 (*(int*)GIMG(0x0046b8a8))
-#define DAT_0046be0a (*(int*)GIMG(0x0046be0a))
-#define DAT_0046bf14 (*(int*)GIMG(0x0046bf14))
-#define DAT_0046bfe4 (*(int*)GIMG(0x0046bfe4))
-#define DAT_0046c038 (*(int*)GIMG(0x0046c038))
-#define DAT_0046c039 (*(int*)GIMG(0x0046c039))
-#define DAT_0046c03a (*(int*)GIMG(0x0046c03a))
-#define DAT_0046c05c (*(int*)GIMG(0x0046c05c))
-#define DAT_0046c060 (*(int*)GIMG(0x0046c060))
-#define DAT_0046c062 (*(int*)GIMG(0x0046c062))
-#define DAT_0046c0d4 (*(int*)GIMG(0x0046c0d4))
-#define DAT_0046c0d5 (*(int*)GIMG(0x0046c0d5))
-#define DAT_0046c0d6 (*(int*)GIMG(0x0046c0d6))
-#define DAT_0046c0d7 (*(int*)GIMG(0x0046c0d7))
-#define DAT_0046c0ec (*(int*)GIMG(0x0046c0ec))
-#define DAT_0046c0ed (*(int*)GIMG(0x0046c0ed))
-#define DAT_0046c0ee (*(int*)GIMG(0x0046c0ee))
-#define DAT_0046c0ef (*(int*)GIMG(0x0046c0ef))
-#define DAT_0046c12e (*(int*)GIMG(0x0046c12e))
-#define DAT_0046c162 (*(int*)GIMG(0x0046c162))
-#define DAT_0046c328 (*(int*)GIMG(0x0046c328))
-#define DAT_0046c380 (*(code**)GIMG(0x0046c380))
-#define DAT_0046c3bc (*(int*)GIMG(0x0046c3bc))
-#define DAT_0046c3d8 (*(int*)GIMG(0x0046c3d8))
-#define DAT_0046c404 (*(int*)GIMG(0x0046c404))
-#define DAT_0046c40c (*(int*)GIMG(0x0046c40c))
-#define DAT_0046c510 (*(int*)GIMG(0x0046c510))
-#define DAT_0046c530 (*(int*)GIMG(0x0046c530))
-#define DAT_0046c534 (*(int*)GIMG(0x0046c534))
-#define DAT_0046c7c4 (*(int*)GIMG(0x0046c7c4))
-#define DAT_0046c898 (*(int*)GIMG(0x0046c898))
-#define DAT_0046c89c (*(int*)GIMG(0x0046c89c))
-#define DAT_0046c8e8 (*(int*)GIMG(0x0046c8e8))
-#define DAT_0046c8f8 (*(int*)GIMG(0x0046c8f8))
-#define DAT_0046c920 (*(int*)GIMG(0x0046c920))
-#define DAT_0046c988 (*(int*)GIMG(0x0046c988))
-#define DAT_0046c98c (*(int*)GIMG(0x0046c98c))
-#define DAT_0046c990 (*(int*)GIMG(0x0046c990))
-#define DAT_0046c994 (*(int*)GIMG(0x0046c994))
-#define DAT_0046c998 (*(int*)GIMG(0x0046c998))
-#define DAT_0046c99c (*(int*)GIMG(0x0046c99c))
-#define DAT_0046c9a0 (*(int*)GIMG(0x0046c9a0))
-#define DAT_0046c9a4 (*(int*)GIMG(0x0046c9a4))
-#define DAT_0046c9a8 (*(int*)GIMG(0x0046c9a8))
-#define DAT_0046c9ac (*(int*)GIMG(0x0046c9ac))
-#define DAT_0046c9b0 (*(int*)GIMG(0x0046c9b0))
-#define DAT_0046c9b4 (*(int*)GIMG(0x0046c9b4))
-#define DAT_0046c9b8 (*(int*)GIMG(0x0046c9b8))
-#define DAT_0046c9bc (*(int*)GIMG(0x0046c9bc))
-#define DAT_0046cc58 (*(int*)GIMG(0x0046cc58))
-#define DAT_0046cc60 (*(int*)GIMG(0x0046cc60))
-#define DAT_0046cc90 (*(int*)GIMG(0x0046cc90))
-#define DAT_0046cccc (*(int*)GIMG(0x0046cccc))
-#define DAT_0046ccd4 (*(int*)GIMG(0x0046ccd4))
-#define DAT_0046ccd8 (*(int*)GIMG(0x0046ccd8))
-#define DAT_0046ccdc (*(int*)GIMG(0x0046ccdc))
-#define DAT_0046cd20 (*(int*)GIMG(0x0046cd20))
-#define DAT_0046cd34 (*(int*)GIMG(0x0046cd34))
-#define DAT_0046cd48 (*(int*)GIMG(0x0046cd48))
-#define DAT_0046cdd4 (*(int*)GIMG(0x0046cdd4))
-#define DAT_0046cdd8 (*(int*)GIMG(0x0046cdd8))
-#define DAT_0046cddc (*(int*)GIMG(0x0046cddc))
-#define DAT_0046cde0 (*(int*)GIMG(0x0046cde0))
-#define DAT_0046cde4 (*(int*)GIMG(0x0046cde4))
-#define DAT_0046cef0 (*(int*)GIMG(0x0046cef0))
 #define DAT_0046d02c (*(int*)GIMG(0x0046d02c))
+#define DAT_00466fa4 (*(int*)GIMG(0x00466fa4))
 #define DAT_0046d030 (*(int*)GIMG(0x0046d030))
 #define DAT_0046d034 (*(int*)GIMG(0x0046d034))
 #define DAT_0046d03c (*(int*)GIMG(0x0046d03c))
 #define DAT_0046d044 (*(int*)GIMG(0x0046d044))
 #define DAT_0046d060 (*(int*)GIMG(0x0046d060))
+#define DAT_00466fec (*(int*)GIMG(0x00466fec))
+#define DAT_00467004 (*(int*)GIMG(0x00467004))
+#define DAT_00466f26 (*(int*)GIMG(0x00466f26))
+#define DAT_00466f27 (*(int*)GIMG(0x00466f27))
+#define DAT_00466f56 (*(int*)GIMG(0x00466f56))
+#define DAT_00466f57 (*(int*)GIMG(0x00466f57))
+#define DAT_00939410 (*(int*)GIMG(0x00939410))
+#define DAT_009392e4 (*(undefined1*)GIMG(0x009392e4))
+#define DAT_00939374 (*(undefined1*)GIMG(0x00939374))
+#define DAT_00797000 (*(int*)GIMG(0x00797000))
+#define DAT_00466df4 (*(undefined1*)GIMG(0x00466df4))
+#define PTR_LAB_00467084 (*(int*)GIMG(0x00467084))
+#define DAT_004670ac (*(int*)GIMG(0x004670ac))
+#define DAT_004670a8 (*(int*)GIMG(0x004670a8))
+#define DAT_004670b0 (*(undefined1*)GIMG(0x004670b0))
+#define DAT_004670bc (*(int*)GIMG(0x004670bc))
+#define DAT_004670b8 (*(int*)GIMG(0x004670b8))
+#define DAT_004670e4 (*(undefined1*)GIMG(0x004670e4))
+#define DAT_004670e0 (*(undefined1*)GIMG(0x004670e0))
+#define DAT_00467224 (*(int*)GIMG(0x00467224))
+#define DAT_004671c8 (*(int*)GIMG(0x004671c8))
+#define PTR_DAT_00467270 (*(undefined4*)GIMG(0x00467270))
+#define PTR_DAT_0046725c (*(undefined4*)GIMG(0x0046725c))
+#define DAT_00467390 (*(int*)GIMG(0x00467390))
+#define DAT_0074bc50 (*(int*)GIMG(0x0074bc50))
+#define DAT_0074b71d (*(int*)GIMG(0x0074b71d))
+#define DAT_0093a310 (*(int*)GIMG(0x0093a310))
+#define DAT_0093a314 (*(int*)GIMG(0x0093a314))
+#define DAT_00467168 (*(int*)GIMG(0x00467168))
+#define DAT_004671b0 (*(int*)GIMG(0x004671b0))
+#define PTR_DAT_004672ac (*(undefined4*)GIMG(0x004672ac))
+#define PTR_DAT_004672c0 (*(undefined4*)GIMG(0x004672c0))
 #define DAT_0046d0a4 (*(int*)GIMG(0x0046d0a4))
+#define DAT_004494b0 (*(undefined1*)GIMG(0x004494b0))
+#define DAT_004494c8 (*(undefined1*)GIMG(0x004494c8))
+#define DAT_00467180 (*(int*)GIMG(0x00467180))
+#define DAT_00467198 (*(int*)GIMG(0x00467198))
+#define PTR_DAT_00467248 (*(undefined4*)GIMG(0x00467248))
+#define PTR_DAT_00467234 (*(undefined4*)GIMG(0x00467234))
+#define PTR_DAT_00467298 (*(undefined4*)GIMG(0x00467298))
+#define PTR_DAT_00467284 (*(undefined4*)GIMG(0x00467284))
+#define DAT_00467394 (*(int*)GIMG(0x00467394))
+#define DAT_004673ac (*(int*)GIMG(0x004673ac))
+#define DAT_004673c4 (*(int*)GIMG(0x004673c4))
+#define DAT_004673dc (*(int*)GIMG(0x004673dc))
+#define DAT_0093a3c8 (*(int*)GIMG(0x0093a3c8))
+#define DAT_0093a3c9 (*(int*)GIMG(0x0093a3c9))
+#define DAT_0093a3ca (*(int*)GIMG(0x0093a3ca))
+#define DAT_0093a39c (*(int*)GIMG(0x0093a39c))
+#define DAT_0093a43c (*(int*)GIMG(0x0093a43c))
+#define DAT_0093a464 (*(int*)GIMG(0x0093a464))
+#define DAT_0093a3c4 (*(int*)GIMG(0x0093a3c4))
+#define DAT_0093a3ec (*(int*)GIMG(0x0093a3ec))
+#define DAT_0093a414 (*(int*)GIMG(0x0093a414))
+#define DAT_00467078 (*(int*)GIMG(0x00467078))
+#define DAT_0093a4a2 (*(int*)GIMG(0x0093a4a2))
+#define DAT_0093c0a2 (*(int*)GIMG(0x0093c0a2))
+#define DAT_0093a490 (*(int*)GIMG(0x0093a490))
+#define DAT_0046757a (*(int*)GIMG(0x0046757a))
+#define DAT_00467658 (*(int*)GIMG(0x00467658))
+#define DAT_00467660 (*(int*)GIMG(0x00467660))
+#define DAT_004682f0 (*(int*)GIMG(0x004682f0))
+#define DAT_0044b2a0 (*(undefined1*)GIMG(0x0044b2a0))
+#define DAT_0044b2a8 (*(undefined1*)GIMG(0x0044b2a8))
+#define DAT_0044b2ac (*(undefined1*)GIMG(0x0044b2ac))
+#define DAT_0044b2b0 (*(undefined1*)GIMG(0x0044b2b0))
+#define DAT_0044b2b4 (*(undefined1*)GIMG(0x0044b2b4))
+#define DAT_0044b2a4 (*(undefined1*)GIMG(0x0044b2a4))
 #define DAT_0046d47c (*(int*)GIMG(0x0046d47c))
+#define DAT_0046996c (*(int*)GIMG(0x0046996c))
+#define PTR_DAT_00467520 (*(undefined4*)GIMG(0x00467520))
 #define DAT_0046d4cc (*(int*)GIMG(0x0046d4cc))
+#define DAT_00467534 (*(undefined1*)GIMG(0x00467534))
+#define DAT_004674e8 (*(int*)GIMG(0x004674e8))
+#define DAT_00467498 (*(int*)GIMG(0x00467498))
+#define DAT_00467564 (*(int*)GIMG(0x00467564))
+#define DAT_0093de77 (*(int*)GIMG(0x0093de77))
+#define DAT_0093de74 (*(int*)GIMG(0x0093de74))
+#define DAT_0074b561 (*(int*)GIMG(0x0074b561))
+#define DAT_0093de9b (*(int*)GIMG(0x0093de9b))
+#define DAT_0093de98 (*(int*)GIMG(0x0093de98))
+#define DAT_0074bd1d (*(int*)GIMG(0x0074bd1d))
+#define DAT_00467568 (*(int*)GIMG(0x00467568))
+#define DAT_0046758c (*(undefined1*)GIMG(0x0046758c))
+#define DAT_0093def2 (*(undefined1*)GIMG(0x0093def2))
+#define DAT_00467794 (*(int*)GIMG(0x00467794))
+#define DAT_0093def4 (*(undefined1*)GIMG(0x0093def4))
 #define DAT_0046d594 (*(int*)GIMG(0x0046d594))
+#define DAT_0044ca90 (*(undefined1*)GIMG(0x0044ca90))
+#define DAT_0044ca98 (*(undefined1*)GIMG(0x0044ca98))
+#define DAT_0044ca9c (*(undefined1*)GIMG(0x0044ca9c))
+#define DAT_0044caa0 (*(undefined1*)GIMG(0x0044caa0))
+#define DAT_0044caa4 (*(undefined1*)GIMG(0x0044caa4))
+#define DAT_0044ca94 (*(undefined1*)GIMG(0x0044ca94))
 #define DAT_0046d5b8 (*(int*)GIMG(0x0046d5b8))
+#define DAT_00467834 (*(undefined1*)GIMG(0x00467834))
+#define DAT_004677c8 (*(undefined1*)GIMG(0x004677c8))
+#define DAT_004677be (*(undefined1*)GIMG(0x004677be))
+#define DAT_00467bf4 (*(int*)GIMG(0x00467bf4))
+#define DAT_00467ca8 (*(undefined1*)GIMG(0x00467ca8))
+#define DAT_00467c30 (*(undefined1*)GIMG(0x00467c30))
+#define DAT_00467c26 (*(undefined1*)GIMG(0x00467c26))
+#define DAT_00467eec (*(int*)GIMG(0x00467eec))
 #define DAT_0046d7b8 (*(int*)GIMG(0x0046d7b8))
+#define DAT_0093eb6c (*(int*)GIMG(0x0093eb6c))
+#define DAT_00468094 (*(undefined1*)GIMG(0x00468094))
+#define DAT_004680ca (*(undefined1*)GIMG(0x004680ca))
+#define DAT_004680cc (*(undefined1*)GIMG(0x004680cc))
+#define DAT_004680ce (*(undefined1*)GIMG(0x004680ce))
+#define DAT_004680f0 (*(undefined1*)GIMG(0x004680f0))
+#define DAT_00468100 (*(undefined1*)GIMG(0x00468100))
+#define DAT_004680e0 (*(undefined1*)GIMG(0x004680e0))
+#define DAT_004680d0 (*(undefined1*)GIMG(0x004680d0))
+#define DAT_004685e0 (*(int*)GIMG(0x004685e0))
+#define DAT_004683b0 (*(undefined1*)GIMG(0x004683b0))
+#define DAT_00468344 (*(undefined1*)GIMG(0x00468344))
+#define DAT_0046833a (*(undefined1*)GIMG(0x0046833a))
 #define DAT_0046da04 (*(int*)GIMG(0x0046da04))
+#define PTR_DAT_004683e8 (*(undefined4*)GIMG(0x004683e8))
+#define DAT_00468664 (*(int*)GIMG(0x00468664))
+#define DAT_004686ac (*(int*)GIMG(0x004686ac))
+#define DAT_0046867c (*(int*)GIMG(0x0046867c))
+#define DAT_00468694 (*(int*)GIMG(0x00468694))
+#define PTR_DAT_00468b00 (*(undefined4*)GIMG(0x00468b00))
+#define PTR_DAT_00468b14 (*(undefined4*)GIMG(0x00468b14))
+#define DAT_00468ac8 (*(int*)GIMG(0x00468ac8))
+#define DAT_00468728 (*(undefined1*)GIMG(0x00468728))
+#define DAT_00468818 (*(undefined1*)GIMG(0x00468818))
+#define DAT_00468e80 (*(undefined1*)GIMG(0x00468e80))
+#define DAT_00468da4 (*(undefined1*)GIMG(0x00468da4))
+#define DAT_00468cc4 (*(undefined1*)GIMG(0x00468cc4))
+#define DAT_0093fd30 (*(int*)GIMG(0x0093fd30))
+#define PTR_DAT_0044e3c0 (*(undefined4*)GIMG(0x0044e3c0))
+#define PTR_DAT_0044e3c4 (*(undefined4*)GIMG(0x0044e3c4))
+#define PTR_DAT_0044e3c8 (*(undefined4*)GIMG(0x0044e3c8))
+#define PTR_DAT_0044e3cc (*(undefined4*)GIMG(0x0044e3cc))
+#define PTR_DAT_0044e3d0 (*(undefined4*)GIMG(0x0044e3d0))
+#define PTR_DAT_0044e3d4 (*(undefined4*)GIMG(0x0044e3d4))
+#define PTR_DAT_0044e3d8 (*(undefined4*)GIMG(0x0044e3d8))
+#define PTR_DAT_0044e3dc (*(undefined4*)GIMG(0x0044e3dc))
+#define PTR_DAT_0044e3e0 (*(undefined4*)GIMG(0x0044e3e0))
+#define PTR_DAT_0044e3e4 (*(undefined4*)GIMG(0x0044e3e4))
+#define PTR_DAT_0044e3e8 (*(undefined4*)GIMG(0x0044e3e8))
+#define PTR_DAT_0044e3ec (*(undefined4*)GIMG(0x0044e3ec))
+#define PTR_DAT_0044e3f0 (*(undefined4*)GIMG(0x0044e3f0))
+#define PTR_DAT_0044e3f4 (*(undefined4*)GIMG(0x0044e3f4))
+#define PTR_DAT_0044e3f8 (*(undefined4*)GIMG(0x0044e3f8))
+#define PTR_DAT_00468df0 (*(undefined4*)GIMG(0x00468df0))
+#define PTR_DAT_00468ddc (*(undefined4*)GIMG(0x00468ddc))
+#define DAT_0093fd40 (*(undefined1*)GIMG(0x0093fd40))
+#define DAT_00468eb8 (*(int*)GIMG(0x00468eb8))
+#define DAT_00468eb4 (*(int*)GIMG(0x00468eb4))
+#define DAT_00468ebc (*(int*)GIMG(0x00468ebc))
+#define DAT_00468edc (*(int*)GIMG(0x00468edc))
+#define DAT_00468ea4 (*(int*)GIMG(0x00468ea4))
 #define DAT_0046dcc4 (*(int*)GIMG(0x0046dcc4))
 #define DAT_0046dccc (*(int*)GIMG(0x0046dccc))
 #define DAT_0046dcd4 (*(int*)GIMG(0x0046dcd4))
+#define DAT_00468fdc (*(undefined1*)GIMG(0x00468fdc))
+#define DAT_00468f74 (*(undefined1*)GIMG(0x00468f74))
+#define DAT_00469188 (*(undefined1*)GIMG(0x00469188))
+#define DAT_0046918a (*(undefined1*)GIMG(0x0046918a))
+#define PTR_FUN_0046918c (*(undefined4*)GIMG(0x0046918c))
+#define DAT_00469120 (*(int*)GIMG(0x00469120))
+#define DAT_004690a0 (*(undefined1*)GIMG(0x004690a0))
+#define DAT_004691c2 (*(undefined1*)GIMG(0x004691c2))
+#define DAT_004691c0 (*(undefined1*)GIMG(0x004691c0))
+#define PTR_FUN_00469190 (*(undefined4*)GIMG(0x00469190))
+#define PTR_DAT_00469158 (*(undefined4*)GIMG(0x00469158))
+#define PTR_DAT_0046916c (*(undefined4*)GIMG(0x0046916c))
+#define DAT_00469220 (*(int*)GIMG(0x00469220))
+#define DAT_004691e4 (*(undefined1*)GIMG(0x004691e4))
+#define DAT_004692b0 (*(int*)GIMG(0x004692b0))
+#define DAT_00469274 (*(int*)GIMG(0x00469274))
+#define DAT_0093fd90 (*(int*)GIMG(0x0093fd90))
+#define DAT_0093fd9d (*(int*)GIMG(0x0093fd9d))
+#define DAT_0093fd9c (*(int*)GIMG(0x0093fd9c))
+#define DAT_0093fd98 (*(int*)GIMG(0x0093fd98))
+#define DAT_0093fd93 (*(int*)GIMG(0x0093fd93))
+#define DAT_0093fd95 (*(int*)GIMG(0x0093fd95))
+#define DAT_0093fd99 (*(int*)GIMG(0x0093fd99))
+#define DAT_004693a8 (*(int*)GIMG(0x004693a8))
+#define DAT_00469348 (*(int*)GIMG(0x00469348))
+#define DAT_00469564 (*(int*)GIMG(0x00469564))
+#define DAT_00469560 (*(int*)GIMG(0x00469560))
+#define PTR_DAT_004693e0 (*(undefined4*)GIMG(0x004693e0))
+#define PTR_FUN_004697cc (*(int*)GIMG(0x004697cc))
+#define DAT_0046974c (*(int*)GIMG(0x0046974c))
+#define DAT_004696a4 (*(int*)GIMG(0x004696a4))
+#define DAT_004698a4 (*(int*)GIMG(0x004698a4))
+#define DAT_004697d4 (*(undefined1*)GIMG(0x004697d4))
+#define DAT_004697c4 (*(int*)GIMG(0x004697c4))
+#define DAT_004697c8 (*(int*)GIMG(0x004697c8))
+#define DAT_004697ca (*(int*)GIMG(0x004697ca))
+#define DAT_004698a6 (*(int*)GIMG(0x004698a6))
+#define DAT_004698a5 (*(int*)GIMG(0x004698a5))
+#define DAT_004698a7 (*(int*)GIMG(0x004698a7))
+#define PTR_FUN_004697d0 (*(int*)GIMG(0x004697d0))
+#define PTR_DAT_0046975c (*(undefined4*)GIMG(0x0046975c))
+#define PTR_DAT_00469784 (*(undefined4*)GIMG(0x00469784))
+#define PTR_DAT_00469770 (*(undefined4*)GIMG(0x00469770))
+#define PTR_DAT_00469798 (*(undefined4*)GIMG(0x00469798))
+#define DAT_00450230 (*(undefined1*)GIMG(0x00450230))
+#define DAT_00450248 (*(undefined1*)GIMG(0x00450248))
+#define DAT_00450260 (*(undefined1*)GIMG(0x00450260))
+#define DAT_00450278 (*(undefined1*)GIMG(0x00450278))
+#define DAT_00450290 (*(undefined1*)GIMG(0x00450290))
+#define PTR_DAT_004697ac (*(undefined4*)GIMG(0x004697ac))
 #define DAT_0046e46c (*(int*)GIMG(0x0046e46c))
+#define DAT_00450de0 (*(undefined1*)GIMG(0x00450de0))
+#define DAT_00450e00 (*(undefined1*)GIMG(0x00450e00))
+#define DAT_004699d2 (*(undefined1*)GIMG(0x004699d2))
+#define DAT_00450e1e (*(undefined1*)GIMG(0x00450e1e))
+#define DAT_00450e26 (*(undefined1*)GIMG(0x00450e26))
+#define DAT_00450e22 (*(undefined1*)GIMG(0x00450e22))
+#define DAT_00940000 (*(undefined1*)GIMG(0x00940000))
+#define DAT_004699cc (*(int*)GIMG(0x004699cc))
+#define DAT_004699ca (*(int*)GIMG(0x004699ca))
+#define DAT_004699c9 (*(int*)GIMG(0x004699c9))
+#define DAT_004699b4 (*(int*)GIMG(0x004699b4))
+#define DAT_00469974 (*(int*)GIMG(0x00469974))
+#define DAT_00469b74 (*(undefined1*)GIMG(0x00469b74))
+#define DAT_00469b76 (*(undefined1*)GIMG(0x00469b76))
+#define PTR_FUN_00469b78 (*(undefined4*)GIMG(0x00469b78))
+#define DAT_00469a80 (*(undefined1*)GIMG(0x00469a80))
+#define PTR_DAT_00469b44 (*(undefined4*)GIMG(0x00469b44))
+#define PTR_DAT_00469b58 (*(undefined4*)GIMG(0x00469b58))
+#define PTR_DAT_00469d78 (*(undefined4*)GIMG(0x00469d78))
+#define PTR_DAT_00469d64 (*(undefined4*)GIMG(0x00469d64))
+#define DAT_00469efc (*(int*)GIMG(0x00469efc))
+#define PTR_DAT_0046a024 (*(undefined4*)GIMG(0x0046a024))
 #define DAT_0046ecdc (*(int*)GIMG(0x0046ecdc))
-#define DAT_0046f020 (*(int*)GIMG(0x0046f020))
-#define DAT_0046f2ac (*(int*)GIMG(0x0046f2ac))
-#define DAT_0046f2b4 (*(int*)GIMG(0x0046f2b4))
-#define DAT_0046f33c (*(int*)GIMG(0x0046f33c))
-#define DAT_0046f658 (*(int*)GIMG(0x0046f658))
-#define DAT_0046f660 (*(int*)GIMG(0x0046f660))
-#define DAT_0046f6c4 (*(int*)GIMG(0x0046f6c4))
-#define DAT_0046f88c (*(int*)GIMG(0x0046f88c))
-#define DAT_0046f894 (*(int*)GIMG(0x0046f894))
-#define DAT_0046f930 (*(int*)GIMG(0x0046f930))
-#define DAT_0046fa08 (*(int*)GIMG(0x0046fa08))
-#define DAT_0046fc94 (*(int*)GIMG(0x0046fc94))
-#define DAT_0046fc98 (*(int*)GIMG(0x0046fc98))
-#define DAT_0046fca4 (*(int*)GIMG(0x0046fca4))
-#define DAT_0046fca8 (*(int*)GIMG(0x0046fca8))
-#define DAT_0046fcac (*(int*)GIMG(0x0046fcac))
-#define DAT_0046fda9 (*(int*)GIMG(0x0046fda9))
-#define DAT_0046fec4 (*(int*)GIMG(0x0046fec4))
-#define DAT_0046fec8 (*(int*)GIMG(0x0046fec8))
-#define DAT_0046fecc (*(int*)GIMG(0x0046fecc))
-#define DAT_0046fed0 (*(int*)GIMG(0x0046fed0))
-#define DAT_0046fed8 (*(int*)GIMG(0x0046fed8))
-#define DAT_0046fede (*(int*)GIMG(0x0046fede))
-#define DAT_0046fee2 (*(int*)GIMG(0x0046fee2))
-#define DAT_0046ff2c (*(int*)GIMG(0x0046ff2c))
-#define DAT_0046ff48 (*(int*)GIMG(0x0046ff48))
-#define DAT_0046ff60 (*(int*)GIMG(0x0046ff60))
-#define DAT_00480018 (*(int*)GIMG(0x00480018))
-#define DAT_0048001c (*(int*)GIMG(0x0048001c))
-#define DAT_00480034 (*(int*)GIMG(0x00480034))
-#define DAT_00480038 (*(int*)GIMG(0x00480038))
-#define DAT_00700050 (*(int*)GIMG(0x00700050))
-#define DAT_00713161 (*(int*)GIMG(0x0074b561))
-#define DAT_0071331d (*(int*)GIMG(0x0074b71d))
-#define DAT_00713850 (*(int*)GIMG(0x0074bc50))
-#define DAT_0071391d (*(int*)GIMG(0x0074bd1d))
-#define DAT_00714058 (*(int*)GIMG(0x0074c458))
-#define DAT_00716b18 (*(int*)GIMG(0x0074ef18))
-#define DAT_00716d20 (*(int*)GIMG(0x0074f120))
-#define DAT_00716d24 (*(int*)GIMG(0x0074f124))
-#define DAT_00716d28 (*(int*)GIMG(0x0074f128))
-#define DAT_00716d2a (*(int*)GIMG(0x0074f12a))
-#define DAT_00716d2c (*(int*)GIMG(0x0074f12c))
-#define DAT_00716d2e (*(int*)GIMG(0x0074f12e))
-#define DAT_00716d30 (*(int*)GIMG(0x0074f130))
-#define DAT_00716d32 (*(int*)GIMG(0x0074f132))
-#define DAT_00716d9c (*(int*)GIMG(0x0074f19c))
-#define DAT_00716dc4 (*(int*)GIMG(0x0074f1c4))
-#define DAT_00716dc8 (*(int*)GIMG(0x0074f1c8))
-#define DAT_0071be4e (*(int*)GIMG(0x0075424e))
-#define DAT_0071beee (*(int*)GIMG(0x007542ee))
-#define DAT_0071bfa0 (*(int*)GIMG(0x007543a0))
-#define DAT_0071bfd0 (*(int*)GIMG(0x007543d0))
-#define DAT_0071c050 (*(int*)GIMG(0x00754450))
-#define DAT_0071c051 (*(int*)GIMG(0x00754451))
-#define DAT_0073c07a (*(int*)GIMG(0x0077447a))
-#define DAT_0073c084 (*(int*)GIMG(0x00774484))
-#define DAT_0073c086 (*(int*)GIMG(0x00774486))
-#define DAT_0073c2c0 (*(int*)GIMG(0x007746c0))
-#define DAT_0073c2fa (*(int*)GIMG(0x007746fa))
-#define DAT_0073c2fc (*(int*)GIMG(0x007746fc))
-#define DAT_0073c348 (*(int*)GIMG(0x00774748))
-#define DAT_00744b00 (*(int*)GIMG(0x0077cf00))
-#define DAT_00744b37 (*(int*)GIMG(0x0077cf37))
-#define DAT_00744b38 (*(unsigned char*)GIMG(0x0077cf38))  /* byte not int: x86 reads "mov cl,byte[0x744b38]"; int read pulled in adjacent DAT_00744b3a counter -> garbage strip index */
-#define DAT_00744b3a (*(int*)GIMG(0x0077cf3a))
-#define DAT_00744de0 (*(int*)GIMG(0x0077d1e0))
-#define DAT_0074505c (*(int*)GIMG(0x0077d45c))
-#define DAT_0074a6d7 (*(int*)GIMG(0x00782ad7))
-#define DAT_0074be98 (*(int*)GIMG(0x00784298))
-#define DAT_00750ea4 (*(int*)GIMG(0x007892a4))
-#define DAT_0075211c (*(int*)GIMG(0x0078a51c))
-#define DAT_0075211e (*(int*)GIMG(0x0078a51e))
-#define DAT_00752120 (*(int*)GIMG(0x0078a520))
-#define DAT_00752344 (*(int*)GIMG(0x0078a744))
-#define DAT_00752348 (*(int*)GIMG(0x0078a748))
-#define DAT_0075234c (*(int*)GIMG(0x0078a74c))
-#define DAT_00752350 (*(int*)GIMG(0x0078a750))
-#define DAT_00752390 (*(int*)GIMG(0x0078a790))
-#define DAT_00752392 (*(int*)GIMG(0x0078a792))
-#define DAT_00759794 (*(int*)GIMG(0x00791b94))
-#define DAT_007597f0 (*(int*)GIMG(0x00791bf0))
-#define DAT_007597f8 (*(int*)GIMG(0x00791bf8))
-#define DAT_0075a044 (*(int*)GIMG(0x00792444))
-#define DAT_0075a0e4 (*(int*)GIMG(0x007924e4))
-#define DAT_0075a0e8 (*(int*)GIMG(0x007924e8))
-#define DAT_0075a0f4 (*(int*)GIMG(0x007924f4))
-#define DAT_0075a0fe (*(int*)GIMG(0x007924fe))
-#define DAT_0075a10a (*(int*)GIMG(0x0079250a))
-#define DAT_0075a10c (*(int*)GIMG(0x0079250c))
-#define DAT_0075a136 (*(int*)GIMG(0x00792536))
-#define DAT_0075a138 (*(int*)GIMG(0x00792538))
-#define DAT_0075a162 (*(int*)GIMG(0x00792562))
-#define DAT_0075a164 (*(int*)GIMG(0x00792564))
-#define DAT_0075a18e (*(int*)GIMG(0x0079258e))
-#define DAT_0075a190 (*(int*)GIMG(0x00792590))
-#define DAT_0075a1ba (*(int*)GIMG(0x007925ba))
-#define DAT_0075a1bc (*(int*)GIMG(0x007925bc))
-#define DAT_0075a1e6 (*(int*)GIMG(0x007925e6))
-#define DAT_0075a1e8 (*(int*)GIMG(0x007925e8))
-#define DAT_0075a212 (*(int*)GIMG(0x00792612))
-#define DAT_0075a214 (*(int*)GIMG(0x00792614))
-#define DAT_0075a23e (*(int*)GIMG(0x0079263e))
-#define DAT_0075a294 (*(int*)GIMG(0x00792694))
-#define DAT_0075a2a4 (*(int*)GIMG(0x007926a4))
-#define DAT_0075a2b0 (*(int*)GIMG(0x007926b0))
-#define DAT_0075a610 (*(int*)GIMG(0x00792a10))
-#define DAT_0075a614 (*(int*)GIMG(0x00792a14))
-#define DAT_0075a618 (*(int*)GIMG(0x00792a18))
-#define DAT_0075a630 (*(int*)GIMG(0x00792a30))
-#define DAT_0075a638 (*(int*)GIMG(0x00792a38))
-#define DAT_0075a676 (*(int*)GIMG(0x00792a76))
-#define DAT_0075a67a (*(int*)GIMG(0x00792a7a))
-#define DAT_0075a686 (*(int*)GIMG(0x00792a86))
-#define DAT_0075a692 (*(int*)GIMG(0x00792a92))
-#define DAT_0075a6c6 (*(int*)GIMG(0x00792ac6))
-#define DAT_0075a71a (*(int*)GIMG(0x00792b1a))
-#define DAT_0075a7a2 (*(int*)GIMG(0x00792ba2))
-#define DAT_0075a7ae (*(int*)GIMG(0x00792bae))
-#define DAT_0075d846 (*(int*)GIMG(0x00795c46))
-#define DAT_0075d852 (*(int*)GIMG(0x00795c52))
-#define DAT_0075d9d8 (*(int*)GIMG(0x00795dd8))
-#define DAT_0075ec00 (*(int*)GIMG(0x00797000))
-#define DAT_0075f026 (*(int*)GIMG(0x00797426))
-#define DAT_00900ee4 (*(int*)GIMG(0x009392e4))
-#define DAT_00900f74 (*(int*)GIMG(0x00939374))
-#define DAT_00901010 (*(int*)GIMG(0x00939410))
-#define DAT_00901f10 (*(int*)GIMG(0x0093a310))
-#define DAT_00901f14 (*(int*)GIMG(0x0093a314))
-#define DAT_00901f9c (*(int*)GIMG(0x0093a39c))
-#define DAT_00901fc4 (*(int*)GIMG(0x0093a3c4))
-#define DAT_00901fc8 (*(int*)GIMG(0x0093a3c8))
-#define DAT_00901fc9 (*(int*)GIMG(0x0093a3c9))
-#define DAT_00901fca (*(int*)GIMG(0x0093a3ca))
-#define DAT_00901fec (*(int*)GIMG(0x0093a3ec))
-#define DAT_00902014 (*(int*)GIMG(0x0093a414))
-#define DAT_0090203c (*(int*)GIMG(0x0093a43c))
-#define DAT_00902064 (*(int*)GIMG(0x0093a464))
-#define DAT_00902090 (*(int*)GIMG(0x0093a490))
-#define DAT_009020a2 (*(int*)GIMG(0x0093a4a2))
-#define DAT_00903ca2 (*(int*)GIMG(0x0093c0a2))
-#define DAT_00905a74 (*(int*)GIMG(0x0093de74))
-#define DAT_00905a77 (*(int*)GIMG(0x0093de77))
-#define DAT_00905a98 (*(int*)GIMG(0x0093de98))
-#define DAT_00905a9b (*(int*)GIMG(0x0093de9b))
-#define DAT_00905af2 (*(int*)GIMG(0x0093def2))
-#define DAT_00905af4 (*(int*)GIMG(0x0093def4))
-#define DAT_009063b1 (*(int*)GIMG(0x0093e7b1))
-#define DAT_009063b2 (*(int*)GIMG(0x0093e7b2))
-#define DAT_009063b3 (*(int*)GIMG(0x0093e7b3))
-#define DAT_009063b4 (*(int*)GIMG(0x0093e7b4))
-#define DAT_009063b8 (*(int*)GIMG(0x0093e7b8))
-#define DAT_0090676c (*(int*)GIMG(0x0093eb6c))
-#define DAT_00907930 (*(int*)GIMG(0x0093fd30))
-#define DAT_00907940 (*(int*)GIMG(0x0093fd40))
-#define DAT_00907990 (*(int*)GIMG(0x0093fd90))
-#define DAT_00907993 (*(int*)GIMG(0x0093fd93))
-#define DAT_00907995 (*(int*)GIMG(0x0093fd95))
-#define DAT_00907998 (*(int*)GIMG(0x0093fd98))
-#define DAT_00907999 (*(int*)GIMG(0x0093fd99))
-#define DAT_0090799c (*(int*)GIMG(0x0093fd9c))
-#define DAT_0090799d (*(int*)GIMG(0x0093fd9d))
-#define DAT_00907c00 (*(int*)GIMG(0x00940000))
-#define DAT_00908574 (*(int*)GIMG(0x00940974))
-#define DAT_009085a8 (*(int*)GIMG(0x009409a8))
-#define DAT_009086f8 (*(int*)GIMG(0x00940af8))
-#define Debris (*(int*)GIMG(0x007748e0))
-#define Done (*(int*)GIMG(0x00467070))
-#define DummyPoly (*(int*)GIMG(0x00782ad0))
-#define FXPage (*(int*)GIMG(0x009392d0))
-#define FaceArray (*(int*)GIMG(0x004685e4))
-#define FacePolys (*(int*)GIMG(0x0093fc80))
-#define File_Func_List (*(int*)GIMG(0x00462ce4))
-#define FireFrames (*(int*)GIMG(0x004665c0))
-#define FirstTime (*(int*)GIMG(0x009392b0))
-#define FlagPolys (*(int*)GIMG(0x00781f90))
-#define Flying_Objects (*(int*)GIMG(0x0077b6e0))
-#define Forest_Track_Type (*(int*)GIMG(0x00465da0))
-#define Forest_Wheel_Locking_Speed (*(int*)GIMG(0x00465d40))
-#define Lap_Timer (*(int*)GIMG(0x00795ddc))
-#define Last_Lap_Timer (*(int*)GIMG(0x00795de8))
-#define Level1_Personality (*(int*)GIMG(0x00465b10))
-#define Level2_Personality (*(int*)GIMG(0x00465b60))
-#define Level3_Personality (*(int*)GIMG(0x00465bb0))
-#define Level4_Personality (*(int*)GIMG(0x00465c00))
-#define Liberty_Track_Type (*(int*)GIMG(0x00465da8))
-#define Movie_Playing (*(int*)GIMG(0x00462cd4))
-#define NameArray (*(int*)GIMG(0x00468624))
-#define NamePolys (*(int*)GIMG(0x0093fcd0))
-#define Now_Timing_Lap (*(int*)GIMG(0x00795dd4))
-#define Old_Cam_Mode (*(int*)GIMG(0x00464a68))
-#define OverPoly (*(int*)GIMG(0x00782af0))
-#define PIT_DONE (*(int*)GIMG(0x00467058))
-#define PIT_IN (*(int*)GIMG(0x0046704c))
-#define PIT_STOP (*(int*)GIMG(0x00467054))
-#define PTR_DAT_004651bc (*(int*)GIMG(0x004651bc))
-#define PTR_DAT_00467234 (*(int*)GIMG(0x00467234))
-#define PTR_DAT_00467248 (*(int*)GIMG(0x00467248))
-#define PTR_DAT_0046725c (*(int*)GIMG(0x0046725c))
-#define PTR_DAT_00467270 (*(int*)GIMG(0x00467270))
-#define PTR_DAT_00467284 (*(int*)GIMG(0x00467284))
-#define PTR_DAT_00467298 (*(int*)GIMG(0x00467298))
-#define PTR_DAT_004672ac (*(int*)GIMG(0x004672ac))
-#define PTR_DAT_004672c0 (*(int*)GIMG(0x004672c0))
-#define PTR_DAT_00467520 (*(int*)GIMG(0x00467520))
-#define PTR_DAT_004683e8 (*(int*)GIMG(0x004683e8))
-#define PTR_DAT_00468b00 (*(int*)GIMG(0x00468b00))
-#define PTR_DAT_00468b14 (*(int*)GIMG(0x00468b14))
-#define PTR_DAT_00468ddc (*(int*)GIMG(0x00468ddc))
-#define PTR_DAT_00468df0 (*(int*)GIMG(0x00468df0))
-#define PTR_DAT_00469158 (*(int*)GIMG(0x00469158))
-#define PTR_DAT_0046916c (*(int*)GIMG(0x0046916c))
-#define PTR_DAT_004693e0 (*(int*)GIMG(0x004693e0))
-#define PTR_DAT_0046975c (*(int*)GIMG(0x0046975c))
-#define PTR_DAT_00469770 (*(int*)GIMG(0x00469770))
-#define PTR_DAT_00469784 (*(int*)GIMG(0x00469784))
-#define PTR_DAT_00469798 (*(int*)GIMG(0x00469798))
-#define PTR_DAT_004697ac (*(int*)GIMG(0x004697ac))
-#define PTR_DAT_00469b44 (*(int*)GIMG(0x00469b44))
-#define PTR_DAT_00469b58 (*(int*)GIMG(0x00469b58))
-#define PTR_DAT_00469d64 (*(int*)GIMG(0x00469d64))
-#define PTR_DAT_00469d78 (*(int*)GIMG(0x00469d78))
+#define PTR_DAT_0046a010 (*(undefined4*)GIMG(0x0046a010))
+#define PTR_DAT_00469ffc (*(undefined4*)GIMG(0x00469ffc))
 #define PTR_DAT_00469fd4 (*(int**)GIMG(0x00469fd4))
 #define PTR_DAT_00469fe8 (*(int**)GIMG(0x00469fe8))
-#define PTR_DAT_00469ffc (*(int*)GIMG(0x00469ffc))
-#define PTR_DAT_0046a010 (*(int*)GIMG(0x0046a010))
-#define PTR_DAT_0046a024 (*(int*)GIMG(0x0046a024))
-#define PTR_DAT_0046a1b4 (*(int*)GIMG(0x0046a1b4))
-#define PTR_DAT_0046a1c8 (*(int*)GIMG(0x0046a1c8))
-#define PTR_DAT_0046a340 (*(int*)GIMG(0x0046a340))
-#define PTR_DAT_0046a354 (*(int*)GIMG(0x0046a354))
-#define PTR_DAT_0046a508 (*(int*)GIMG(0x0046a508))
-#define PTR_DAT_0046a51c (*(int*)GIMG(0x0046a51c))
-#define PTR_DAT_0046a6f0 (*(int*)GIMG(0x0046a6f0))
-#define PTR_DAT_0046a704 (*(int*)GIMG(0x0046a704))
-#define PTR_DAT_0046a8f4 (*(int*)GIMG(0x0046a8f4))
-#define PTR_DAT_0046a908 (*(int*)GIMG(0x0046a908))
-#define PTR_DAT_0046aa74 (*(int*)GIMG(0x0046aa74))
-#define PTR_DAT_0046aa88 (*(int*)GIMG(0x0046aa88))
-#define PTR_DAT_0046ab80 (*(int*)GIMG(0x0046ab80))
-#define PTR_DAT_0046af08 (*(int*)GIMG(0x0046af08))
-#define PTR_DAT_0046af1c (*(int*)GIMG(0x0046af1c))
-#define PTR_DAT_0046af30 (*(int*)GIMG(0x0046af30))
-#define PTR_DAT_0046af44 (*(int*)GIMG(0x0046af44))
-#define PTR_DAT_0046af58 (*(int*)GIMG(0x0046af58))
-#define PTR_DAT_0046b784 (*(int*)GIMG(0x0046b784))
-#define PTR_DAT_0046b798 (*(int*)GIMG(0x0046b798))
-#define PTR_DAT_0046b7ac (*(int*)GIMG(0x0046b7ac))
-#define PTR_DAT_0046c01c (*(int*)GIMG(0x0046c01c))
-#define PTR_DAT_0046c030 (*(int*)GIMG(0x0046c030))
-#define PTR_DAT_0046c044 (*(int*)GIMG(0x0046c044))
-#define PTR_DAT_0046c47c (*(int**)GIMG(0x0046c47c))
-#define PTR_FUN_004697cc (*(int*)GIMG(0x004697cc))
-#define PTR_FUN_004697d0 (*(int*)GIMG(0x004697d0))
+#define DAT_00469f9c (*(int*)GIMG(0x00469f9c))
+#define DAT_00469f4c (*(int*)GIMG(0x00469f4c))
+#define DAT_0093e7b1 (*(int*)GIMG(0x0093e7b1))
+#define DAT_0093e7b2 (*(int*)GIMG(0x0093e7b2))
+#define DAT_0093e7b3 (*(int*)GIMG(0x0093e7b3))
+#define DAT_0093e7b4 (*(int*)GIMG(0x0093e7b4))
+#define DAT_0093e7b8 (*(int*)GIMG(0x0093e7b8))
+#define DAT_0046a1e4 (*(int*)GIMG(0x0046a1e4))
+#define DAT_0046a1e6 (*(int*)GIMG(0x0046a1e6))
 #define PTR_FUN_0046a1e8 (*(int*)GIMG(0x0046a1e8))
+#define DAT_0046a17c (*(int*)GIMG(0x0046a17c))
+#define DAT_0046a110 (*(int*)GIMG(0x0046a110))
+#define DAT_0046a20a (*(int*)GIMG(0x0046a20a))
+#define DAT_0046a208 (*(int*)GIMG(0x0046a208))
 #define PTR_FUN_0046a1ec (*(int*)GIMG(0x0046a1ec))
+#define PTR_DAT_0046a1b4 (*(undefined4*)GIMG(0x0046a1b4))
+#define PTR_DAT_0046a1c8 (*(undefined4*)GIMG(0x0046a1c8))
+#define DAT_0046a370 (*(int*)GIMG(0x0046a370))
+#define DAT_0046a372 (*(int*)GIMG(0x0046a372))
 #define PTR_FUN_0046a374 (*(int*)GIMG(0x0046a374))
+#define DAT_0046a308 (*(int*)GIMG(0x0046a308))
+#define DAT_0046a2ca (*(int*)GIMG(0x0046a2ca))
+#define DAT_0046a3aa (*(int*)GIMG(0x0046a3aa))
+#define DAT_0046a3a8 (*(int*)GIMG(0x0046a3a8))
 #define PTR_FUN_0046a378 (*(int*)GIMG(0x0046a378))
+#define PTR_DAT_0046a340 (*(undefined4*)GIMG(0x0046a340))
+#define PTR_DAT_0046a354 (*(undefined4*)GIMG(0x0046a354))
+#define DAT_0046a538 (*(int*)GIMG(0x0046a538))
+#define DAT_0046a53a (*(int*)GIMG(0x0046a53a))
 #define PTR_FUN_0046a53c (*(int*)GIMG(0x0046a53c))
+#define DAT_0046a4d0 (*(int*)GIMG(0x0046a4d0))
+#define DAT_0046a444 (*(int*)GIMG(0x0046a444))
+#define DAT_0046a570 (*(int*)GIMG(0x0046a570))
+#define DAT_0046a534 (*(int*)GIMG(0x0046a534))
+#define DAT_0046a572 (*(int*)GIMG(0x0046a572))
+#define DAT_0046a571 (*(int*)GIMG(0x0046a571))
+#define DAT_0046a573 (*(int*)GIMG(0x0046a573))
 #define PTR_FUN_0046a540 (*(int*)GIMG(0x0046a540))
+#define PTR_DAT_0046a508 (*(undefined4*)GIMG(0x0046a508))
+#define PTR_DAT_0046a51c (*(undefined4*)GIMG(0x0046a51c))
+#define DAT_0046a720 (*(int*)GIMG(0x0046a720))
+#define DAT_0046a722 (*(int*)GIMG(0x0046a722))
 #define PTR_FUN_0046a724 (*(int*)GIMG(0x0046a724))
+#define DAT_0046a6b8 (*(int*)GIMG(0x0046a6b8))
+#define DAT_0046a672 (*(int*)GIMG(0x0046a672))
+#define DAT_0046a76e (*(int*)GIMG(0x0046a76e))
+#define DAT_0046a76c (*(int*)GIMG(0x0046a76c))
+#define PTR_DAT_0046a6f0 (*(undefined4*)GIMG(0x0046a6f0))
+#define PTR_DAT_0046a704 (*(undefined4*)GIMG(0x0046a704))
+#define DAT_0046a7f8 (*(undefined1*)GIMG(0x0046a7f8))
+#define DAT_0046a7fa (*(undefined1*)GIMG(0x0046a7fa))
+#define PTR_FUN_0046a7fc (*(undefined4*)GIMG(0x0046a7fc))
+#define DAT_0046a81e (*(undefined1*)GIMG(0x0046a81e))
+#define DAT_0046a81c (*(undefined1*)GIMG(0x0046a81c))
+#define PTR_DAT_0046a8f4 (*(undefined4*)GIMG(0x0046a8f4))
+#define DAT_0046f020 (*(int*)GIMG(0x0046f020))
+#define PTR_DAT_0046a908 (*(undefined4*)GIMG(0x0046a908))
+#define DAT_0046a8bc (*(undefined1*)GIMG(0x0046a8bc))
+#define DAT_0046a86c (*(undefined1*)GIMG(0x0046a86c))
+#define DAT_0046a920 (*(int*)GIMG(0x0046a920))
+#define DAT_0046aacc (*(int*)GIMG(0x0046aacc))
+#define DAT_0046aaa4 (*(int*)GIMG(0x0046aaa4))
+#define DAT_0046aaa6 (*(int*)GIMG(0x0046aaa6))
 #define PTR_FUN_0046aaa8 (*(int*)GIMG(0x0046aaa8))
+#define DAT_0046aa3c (*(int*)GIMG(0x0046aa3c))
+#define DAT_0046a9b8 (*(int*)GIMG(0x0046a9b8))
+#define PTR_DAT_0046aa74 (*(undefined4*)GIMG(0x0046aa74))
+#define PTR_DAT_0046aa88 (*(undefined4*)GIMG(0x0046aa88))
+#define DAT_0046ad00 (*(int*)GIMG(0x0046ad00))
+#define PTR_DAT_0046ab80 (*(undefined4*)GIMG(0x0046ab80))
+#define DAT_0046f2ac (*(int*)GIMG(0x0046f2ac))
+#define DAT_0046f2b4 (*(int*)GIMG(0x0046f2b4))
+#define PTR_LAB_0046af90 (*(undefined4*)GIMG(0x0046af90))
+#define DAT_0046af74 (*(int*)GIMG(0x0046af74))
+#define DAT_0046af76 (*(int*)GIMG(0x0046af76))
 #define PTR_FUN_0046af78 (*(int*)GIMG(0x0046af78))
+#define DAT_0046aef8 (*(int*)GIMG(0x0046aef8))
+#define DAT_0046ae20 (*(int*)GIMG(0x0046ae20))
+#define DAT_0046b002 (*(int*)GIMG(0x0046b002))
+#define DAT_0046afea (*(int*)GIMG(0x0046afea))
+#define DAT_0046b001 (*(int*)GIMG(0x0046b001))
+#define DAT_0046afe9 (*(int*)GIMG(0x0046afe9))
+#define DAT_0046b003 (*(int*)GIMG(0x0046b003))
+#define DAT_0046afeb (*(int*)GIMG(0x0046afeb))
+#define DAT_0046b000 (*(int*)GIMG(0x0046b000))
+#define DAT_0046afe8 (*(int*)GIMG(0x0046afe8))
+#define DAT_0046af70 (*(int*)GIMG(0x0046af70))
 #define PTR_FUN_0046af7c (*(int*)GIMG(0x0046af7c))
+#define PTR_DAT_0046af30 (*(undefined4*)GIMG(0x0046af30))
+#define PTR_DAT_0046af44 (*(undefined4*)GIMG(0x0046af44))
+#define DAT_00453e90 (*(undefined1*)GIMG(0x00453e90))
+#define DAT_00453ea8 (*(undefined1*)GIMG(0x00453ea8))
+#define DAT_00453ec0 (*(undefined1*)GIMG(0x00453ec0))
+#define DAT_00453ed8 (*(undefined1*)GIMG(0x00453ed8))
+#define DAT_00453ef0 (*(undefined1*)GIMG(0x00453ef0))
+#define PTR_DAT_0046af58 (*(undefined4*)GIMG(0x0046af58))
+#define DAT_0046af4d (*(int*)GIMG(0x0046af4d))
+#define DAT_0046af4c (*(int*)GIMG(0x0046af4c))
+#define DAT_0046af4e (*(int*)GIMG(0x0046af4e))
+#define DAT_0046f33c (*(int*)GIMG(0x0046f33c))
+#define PTR_DAT_0046af08 (*(undefined4*)GIMG(0x0046af08))
+#define PTR_DAT_0046af1c (*(undefined4*)GIMG(0x0046af1c))
+#define DAT_0046b0b4 (*(undefined1*)GIMG(0x0046b0b4))
+#define DAT_0046b030 (*(undefined1*)GIMG(0x0046b030))
+#define DAT_0046b616 (*(undefined1*)GIMG(0x0046b616))
+#define DAT_0046f658 (*(int*)GIMG(0x0046f658))
+#define DAT_0046f660 (*(int*)GIMG(0x0046f660))
+#define DAT_0046b7c8 (*(int*)GIMG(0x0046b7c8))
+#define DAT_0046b7ca (*(int*)GIMG(0x0046b7ca))
 #define PTR_FUN_0046b7cc (*(int*)GIMG(0x0046b7cc))
+#define DAT_0046b74c (*(int*)GIMG(0x0046b74c))
+#define DAT_0046b6c0 (*(int*)GIMG(0x0046b6c0))
+#define DAT_0046b800 (*(int*)GIMG(0x0046b800))
+#define DAT_0046b7c4 (*(int*)GIMG(0x0046b7c4))
+#define DAT_0046b802 (*(int*)GIMG(0x0046b802))
+#define DAT_0046b801 (*(int*)GIMG(0x0046b801))
+#define DAT_0046b803 (*(int*)GIMG(0x0046b803))
 #define PTR_FUN_0046b7d0 (*(int*)GIMG(0x0046b7d0))
+#define PTR_DAT_0046b784 (*(undefined4*)GIMG(0x0046b784))
+#define PTR_DAT_0046b798 (*(undefined4*)GIMG(0x0046b798))
+#define DAT_00454cb0 (*(undefined1*)GIMG(0x00454cb0))
+#define DAT_00454cc8 (*(undefined1*)GIMG(0x00454cc8))
+#define DAT_00454ce0 (*(undefined1*)GIMG(0x00454ce0))
+#define DAT_00454cf8 (*(undefined1*)GIMG(0x00454cf8))
+#define DAT_00454d10 (*(undefined1*)GIMG(0x00454d10))
+#define PTR_DAT_0046b7ac (*(undefined4*)GIMG(0x0046b7ac))
+#define DAT_0046b7a1 (*(int*)GIMG(0x0046b7a1))
+#define DAT_0046b7a0 (*(int*)GIMG(0x0046b7a0))
+#define DAT_0046b7a2 (*(int*)GIMG(0x0046b7a2))
+#define DAT_0046f6c4 (*(int*)GIMG(0x0046f6c4))
+#define DAT_0046b8a8 (*(int*)GIMG(0x0046b8a8))
+#define DAT_0046b824 (*(int*)GIMG(0x0046b824))
+#define DAT_0046be0a (*(undefined1*)GIMG(0x0046be0a))
+#define DAT_0046f88c (*(int*)GIMG(0x0046f88c))
+#define DAT_0046f894 (*(int*)GIMG(0x0046f894))
+#define PTR_LAB_0046c07c (*(undefined4*)GIMG(0x0046c07c))
+#define DAT_0046c060 (*(int*)GIMG(0x0046c060))
+#define DAT_0046c062 (*(int*)GIMG(0x0046c062))
 #define PTR_FUN_0046c064 (*(int*)GIMG(0x0046c064))
+#define DAT_0046bfe4 (*(int*)GIMG(0x0046bfe4))
+#define DAT_0046bf14 (*(int*)GIMG(0x0046bf14))
+#define DAT_0046c0ec (*(int*)GIMG(0x0046c0ec))
+#define DAT_0046c0d4 (*(int*)GIMG(0x0046c0d4))
+#define DAT_0046c05c (*(int*)GIMG(0x0046c05c))
+#define DAT_0046c0ee (*(int*)GIMG(0x0046c0ee))
+#define DAT_0046c0d6 (*(int*)GIMG(0x0046c0d6))
+#define DAT_0046c0ed (*(int*)GIMG(0x0046c0ed))
+#define DAT_0046c0d5 (*(int*)GIMG(0x0046c0d5))
+#define DAT_0046c0ef (*(int*)GIMG(0x0046c0ef))
+#define DAT_0046c0d7 (*(int*)GIMG(0x0046c0d7))
 #define PTR_FUN_0046c068 (*(int*)GIMG(0x0046c068))
-#define PTR_FUN_0046c344 (*(int*)GIMG(0x0046c344))
-#define PTR_FUN_0046c4f8 (*(int*)GIMG(0x0046c4f8))
-#define PTR_FUN_0046c50c (*(int*)GIMG(0x0046c50c))
-#define PTR_FUN_0046c524 (*(int*)GIMG(0x0046c524))
-#define PTR_FUN_0046c528 (*(int*)GIMG(0x0046c528))
-#define PTR_LAB_00462ef4 (*(int*)GIMG(0x00462ef4))
-#define PTR_FUN_00462ef4 (*(int*)GIMG(0x00462ef4))  /* re-export relabeled PTR_LAB->PTR_FUN after poly-handler recovery */
-#define PTR_LAB_00467084 (*(int*)GIMG(0x00467084))
-#define PTR_LAB_0046af90 (*(int*)GIMG(0x0046af90))
-#define PTR_LAB_0046c07c (*(int*)GIMG(0x0046c07c))
-#define PTR_LAB_0046c4f0 (*(int*)GIMG(0x0046c4f0))
-#define PTR_Select_Champ_0046a728 (*(int*)GIMG(0x0046a728))
-#define PTR___CBeginThread_0046c520 (*(int*)GIMG(0x0046c520))
-#define PTR___matherr_0046c598 (*(int*)GIMG(0x0046c598))
-#define PTR_draw_face_3pt_flat_00462d94 (*(int*)GIMG(0x00462d94))
-#define PTR_draw_face_3pt_flat_00462e44 (*(int*)GIMG(0x00462e44))
-#define PTR_hlf_transparency_table_00460014 (*(int*)GIMG(0x00460014))
-#define PTR_s_CHAMPP_0046a6a8 (*(int*)GIMG(0x0046a6a8))
-#define PTR_s_CHAMP_0046a626 (*(int*)GIMG(0x0046a626))
-#define PTR_s_CHAMP_0046a698 (*(int*)GIMG(0x0046a698))
-#define PTR_s_DUMB1_004650dc (*(int*)GIMG(0x004650dc))
-#define PTR_s_DUMB2_00465100 (*(int*)GIMG(0x00465100))
-#define PTR_s_DUMB3_00465124 (*(int*)GIMG(0x00465124))
-#define PTR_s_KEYBOARD_0046a136 (*(int*)GIMG(0x0046a136))
-#define PTR_s_KEYBOARD_0046a16c (*(int*)GIMG(0x0046a16c))
-#define PTR_s_KEYBOARP_0046a174 (*(int*)GIMG(0x0046a174))
-#define PTR_s_MEMLOADP_004672e4 (*(int*)GIMG(0x004672e4))
-#define PTR_s_MEMLOAD_004671ee (*(int*)GIMG(0x004671ee))
-#define PTR_s_MEMLOAD_004672d8 (*(int*)GIMG(0x004672d8))
-#define PTR_s_MEMSAVE_004672dc (*(int*)GIMG(0x004672dc))
-#define PTR_s_RACETYPE_004696b2 (*(int*)GIMG(0x004696b2))
-#define PTR_s_RACETYPE_00469864 (*(int*)GIMG(0x00469864))
-#define PTR_s_RACTYPEP_00469884 (*(int*)GIMG(0x00469884))
-#define PTR_s_RESULTSP_0046aee0 (*(int*)GIMG(0x0046aee0))
-#define PTR_s_RESULTSP_0046bfcc (*(int*)GIMG(0x0046bfcc))
-#define PTR_s_RESULTS_0046ae46 (*(int*)GIMG(0x0046ae46))
-#define PTR_s_RESULTS_0046aec8 (*(int*)GIMG(0x0046aec8))
-#define PTR_s_RESULTS_0046bf3a (*(int*)GIMG(0x0046bf3a))
-#define PTR_s_RESULTS_0046bfb4 (*(int*)GIMG(0x0046bfb4))
-#define PTR_s_VIEWREPP_0046a4c4 (*(int*)GIMG(0x0046a4c4))
-#define PTR_s_VIEWREPP_0046b740 (*(int*)GIMG(0x0046b740))
-#define PTR_s_VIEWREP_0046a46a (*(int*)GIMG(0x0046a46a))
-#define PTR_s_VIEWREP_0046a4b8 (*(int*)GIMG(0x0046a4b8))
-#define PTR_s_VIEWREP_0046b6e6 (*(int*)GIMG(0x0046b6e6))
-#define PTR_s_VIEWREP_0046b734 (*(int*)GIMG(0x0046b734))
-#define PTR_s_WRECKINP_0046a2fc (*(int*)GIMG(0x0046a2fc))
-#define PTR_s_WRECKIN_0046a28a (*(int*)GIMG(0x0046a28a))
-#define PTR_s_WRECKIN_0046a2f0 (*(int*)GIMG(0x0046a2f0))
-#define PTR_s__R_JC_T_Practice_004698d0 (*(int*)GIMG(0x004698d0))
-#define PTR_s__R_JC_T_Wrecking_Racing_004698c4 (*(int*)GIMG(0x004698c4))
-#define PTR_s__R_JL_T_Jug_00469df0 (*(int*)GIMG(0x00469df0))
-#define PTR_s__R_JL_T_Liberty_City_00469dc8 (*(int*)GIMG(0x00469dc8))
-#define PTR_s__R_JL_T_Pine_Hills_Raceway_004682f8 (*(int*)GIMG(0x004682f8))
-#define PTR_s__R_JL_T_Pine_Hills_Raceway_00469314 (*(int*)GIMG(0x00469314))
-#define PTR_s__R_JL_T_Pine_Hills_Raceway_00469bc4 (*(int*)GIMG(0x00469bc4))
-#define PTR_s__R_JL_T_Pork_Sword_00469ddc (*(int*)GIMG(0x00469ddc))
-#define PTR_s__R_JL_T_Slapshot_00469c0c (*(int*)GIMG(0x00469c0c))
-#define ParticleAvailabilityList (*(int*)GIMG(0x0078a458))
-#define ParticlePositionList (*(int*)GIMG(0x0078a390))
-#define Pause (*(int*)GIMG(0x004686c4))
-#define Pit_Timer (*(int*)GIMG(0x0046705c))
-#define Pit_Timing_Delay (*(int*)GIMG(0x004653c4))
-#define PointyBits (*(int*)GIMG(0x0078a270))
-#define RacePoly (*(int*)GIMG(0x00782db0))
-#define Race_Personality (*(int*)GIMG(0x00465c50))
-#define Replay_Action_Repeat (*(int*)GIMG(0x0046707c))
-#define Replay_Invalid (*(int*)GIMG(0x009392c0))
-#define Replay_Level (*(int*)GIMG(0x009392bc))
-#define Replay_Script (*(int*)GIMG(0x009376b0))
-#define Replay_Script_Ptr (*(int*)GIMG(0x009392b4))
-#define SCA_Corner_Data" (*(int*)GIMG(0x00465cf8))
-#define SCA_Data (*(int*)GIMG(0x00466da0))
-#define SCA_Track_Type (*(int*)GIMG(0x00465db8))
-#define Smoke_Animation1 (*(int*)GIMG(0x00466294))
-#define Speedway_Corner_Data (*(int*)GIMG(0x00465ca0))
-#define Speedway_Track_Type" (*(int*)GIMG(0x00465d60))
-#define Speedway_Wheel_Locking_Speed (*(int*)GIMG(0x00465d00))
-#define SpinTable (*(int*)GIMG(0x00465e90))
-#define Stunt_Corner_Data (*(int*)GIMG(0x00465cf0))
-#define Stunt_Wheel_Locking_Speed (*(int*)GIMG(0x00465d50))
-#define Template (*(int*)GIMG(0x00774708))
-#define Timing_Delay (*(int*)GIMG(0x00795df8))
-#define TopHandicaps (*(int*)GIMG(0x00465ac0))
-#define Track_Records (*(int*)GIMG(0x00466e3c))
-#define Ultimate_Wheel_Locking_Speed (*(int*)GIMG(0x00465d28))
-#define ZValue (*(int*)GIMG(0x00465250))
-#define Z_DISTANCE (*(int*)GIMG(0x004604c2))
-#define Zoom (*(int*)GIMG(0x0046524c))
-#define _AccessFHeap (*(int*)GIMG(0x0046c34c))
-#define _AccessFList (*(int*)GIMG(0x0046c360))
-#define _AccessFileH (*(int*)GIMG(0x0046c330))
-#define _AccessIOB (*(int*)GIMG(0x0046c340))
-#define _AccessNHeap (*(int*)GIMG(0x0046c348))
-#define _AccessTDList (*(int*)GIMG(0x0046c358))
-#define _BigPow10Table (*(int*)GIMG(0x0046fedc))
+#define PTR_DAT_0046c01c (*(undefined4*)GIMG(0x0046c01c))
+#define PTR_DAT_0046c030 (*(undefined4*)GIMG(0x0046c030))
+#define DAT_004554a0 (*(undefined1*)GIMG(0x004554a0))
+#define DAT_004554b8 (*(undefined1*)GIMG(0x004554b8))
+#define DAT_004554d0 (*(undefined1*)GIMG(0x004554d0))
+#define DAT_004554e8 (*(undefined1*)GIMG(0x004554e8))
+#define DAT_00455500 (*(undefined1*)GIMG(0x00455500))
+#define PTR_DAT_0046c044 (*(undefined4*)GIMG(0x0046c044))
+#define DAT_0046c039 (*(int*)GIMG(0x0046c039))
+#define DAT_0046c038 (*(int*)GIMG(0x0046c038))
+#define DAT_0046c03a (*(int*)GIMG(0x0046c03a))
+#define DAT_0046f930 (*(int*)GIMG(0x0046f930))
+#define DAT_0046c404 (*(int*)GIMG(0x0046c404))
+#define DAT_0046fa08 (*(int*)GIMG(0x0046fa08))
+#define PTR_FUN_0046c344 (*(undefined4*)GIMG(0x0046c344))
+#define DAT_0046c380 (*(int(**)())GIMG(0x0046c380))
+#define PTR_FUN_0046c4f8 (*(undefined4*)GIMG(0x0046c4f8))
+#define DAT_0046c3d8 (*(int*)GIMG(0x0046c3d8))
+#define UNK_00458a55 (*(undefined1*)GIMG(0x00458a55))
+#define DAT_0046c40c (*(int*)GIMG(0x0046c40c))
+#define PTR_DAT_0046c47c (*(int**)GIMG(0x0046c47c))
+#define PTR_FUN_0046c50c (*(undefined4*)GIMG(0x0046c50c))
+
+/* underscore-alias symbols (Ghidra dword-overlap convention; types = access width from the dd2h compile pass) */
+#define _DAT_00716c18 (*(int*)GIMG(0x0074f018))
 #define _DAT_00460430 (*(int*)GIMG(0x00460430))
 #define _DAT_00460450 (*(int*)GIMG(0x00460450))
 #define _DAT_00462d7c (*(int*)GIMG(0x00462d7c))
@@ -1523,380 +2710,507 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define _DAT_009086fc (*(int*)GIMG(0x00940afc))
 #define _DAT_00908700 (*(int*)GIMG(0x00940b00))
 #define _DAT_00908704 (*(int*)GIMG(0x00940b04))
-#define _Extender (*(int*)GIMG(0x0046c3ee))
-#define _ExtenderSubtype (*(int*)GIMG(0x0046c3ef))
-#define _FiniAccessH (*(int*)GIMG(0x0046c33c))
-#define _HugeValue (*(int*)GIMG(0x0046fed4))
-#define _InitAccessH (*(int*)GIMG(0x0046c338))
-#define _IsTable (*(int*)GIMG(0x0046fdb0))
-#define _LpCmdLine (*(int*)GIMG(0x0046c3c0))
-#define _LpDllName (*(int*)GIMG(0x0046c3c8))
-#define _LpPgmName (*(int*)GIMG(0x0046c3c4))
-#define _ReleaseFHeap (*(int*)GIMG(0x0046c354))
-#define _ReleaseFList (*(int*)GIMG(0x0046c364))
-#define _ReleaseFileH (*(int*)GIMG(0x0046c334))
-#define _ReleaseNHeap (*(int*)GIMG(0x0046c350))
-#define _ReleaseTDList (*(int*)GIMG(0x0046c35c))
-#define _STACKLOW (*(int*)GIMG(0x0046c3d0))
-#define _STACKTOP (*(int*)GIMG(0x0046c3d4))
-#define _ThreadExitRtn (*(int*)GIMG(0x0046c368))
-#define _WinMainProc (*(int*)GIMG(0x00940988))
-#define _WindowExitRtn (*(code**)GIMG(0x0046c3b4))
-#define _WindowsDestroyOnClose (*(int*)GIMG(0x0046c390))
-#define _WindowsGetch (*(code**)GIMG(0x0046c3a8))
-#define _WindowsGetche (*(int*)GIMG(0x0046c3ac))
-#define _WindowsIsWindowedHandle (*(code**)GIMG(0x0046c374))
-#define _WindowsKbhit (*(int*)GIMG(0x0046c3a4))
-#define _WindowsNewWindow (*(code**)GIMG(0x0046c37c))
-#define _WindowsPutch (*(code**)GIMG(0x0046c3b0))
-#define _WindowsRemoveWindowedHandle (*(code**)GIMG(0x0046c378))
-#define _WindowsSetAbout (*(int*)GIMG(0x0046c384))
-#define _WindowsShutDown (*(int*)GIMG(0x0046c398))
-#define _WindowsStdin (*(code**)GIMG(0x0046c39c))
-#define _WindowsStdout (*(code**)GIMG(0x0046c3a0))
-#define _WindowsYieldControl (*(int*)GIMG(0x0046c394))
-#define __8087 (*(int*)GIMG(0x0046c104))
-#define __8087cw (*(int*)GIMG(0x0046c504))
-#define __ASTACKPTR& (*(int*)GIMG(0x0046c3dc))
-#define __AccessSema4 (*(int*)GIMG(0x0046c4e8))
-#define __AccessSema4Fini (*(int*)GIMG(0x0046ff66))
-#define __EFG_printf (*(int*)GIMG(0x0046c4f4))
-#define __ExceptionHandled (*(int*)GIMG(0x00940994))
-#define __FPE_handler (*(int*)GIMG(0x0046c3fb))
-#define __FPE_handler_exit (*(int*)GIMG(0x0046c110))
-#define __FirstThreadData (*(int*)GIMG(0x0094097c))
-#define __GetThreadPtr (*(int*)GIMG(0x0046c32c))
-#define __Is_DLL (*(int*)GIMG(0x00940978))
-#define __LargestSizeB4MiniHeapRover (*(int*)GIMG(0x0046c408))
-#define __NFiles (*(int*)GIMG(0x0046c428))
-#define __OpenStreams (*(int*)GIMG(0x00940980))
-#define __ReleaseSema4 (*(int*)GIMG(0x0046c4ec))
-#define __Rest8087 (*(int*)GIMG(0x0046c500))
-#define __Save8087 (*(int*)GIMG(0x0046c4fc))
-#define __ThreadDataSize (*(int*)GIMG(0x0046c508))
-#define __WD_Present (*(int*)GIMG(0x0046c52c))
-#define ___FPE_handler (*(int*)GIMG(0x0046c3fb))
-#define ___chipbug (*(int*)GIMG(0x0046c538))
-#define __atexit (*(int*)GIMG(0x0046c108))
-#define __chipbug (*(int*)GIMG(0x0046c538))
-#define __fheap_clean (*(int*)GIMG(0x00940985))
-#define __heap_enabled (*(int*)GIMG(0x0046c518))
-#define __int23_exit (*(int*)GIMG(0x0046c10c))
-#define __iob (*(int*)GIMG(0x0046c114))
-#define __nheap_clean (*(int*)GIMG(0x00940984))
-#define __nheapbeg (*(int*)GIMG(0x0046c400))
-#define __no87 (*(int*)GIMG(0x0046c3ec))
-#define __nullarea (*(int*)GIMG(0x00460000))
-#define __real87 (*(int*)GIMG(0x0046c105))
-#define __sig_fini_rtn (*(code**)GIMG(0x0046c370))
-#define __sig_init_rtn (*(int*)GIMG(0x0046c36c))
-#define __tmpfnext (*(int*)GIMG(0x0046c31c))
-#define __umaskval (*(int*)GIMG(0x0046c410))
-#define _amblksiz (*(int*)GIMG(0x0046c51c))
-#define _bcrgb (*(int*)GIMG(0x0074c6c4))
-#define _cbyte (*(int*)GIMG(0x0046c3e0))
-#define _child (*(int*)GIMG(0x0046c3e8))
-#define _clutspace (*(int*)GIMG(0x0074c4d4))
-#define _cmptr (*(int*)GIMG(0x0074c6c0))
-#define _far_fog (*(int*)GIMG(0x00462cd0))
-#define _fcrgb (*(int*)GIMG(0x0074c6ec))
-#define _flg (*(int*)GIMG(0x0074c6dc))
-#define _fmode (*(int*)GIMG(0x0046c31d))
-#define _globmat (*(short*)GIMG(0x0074c6f0))
-#define _lmptr (*(int*)GIMG(0x0074c6d8))
-#define _near_fog (*(int*)GIMG(0x00462ccc))
-#define _op0 (*(int*)GIMG(0x0074c580))
-#define _opvr0 (*(int*)GIMG(0x0074c570))
-#define _opvr1 (*(int*)GIMG(0x0074c560))
-#define _opz (*(int*)GIMG(0x0074c6c8))
-#define _osbuild (*(int*)GIMG(0x0046c3f9))
-#define _osmajor (*(int*)GIMG(0x0046c3f7))
-#define _osminor (*(int*)GIMG(0x0046c3f8))
-#define _otz (*(int*)GIMG(0x0074c6bc))
-#define _pad_i (*(unsigned char*)GIMG(0x00463041))
-#define _pad_j (*(unsigned char*)GIMG(0x00463042))
-#define _pad_ldown (*(unsigned char*)GIMG(0x00463044))
-#define _pad_lleft (*(unsigned char*)GIMG(0x00463045))
-#define _pad_lup (*(unsigned char*)GIMG(0x00463043))
-#define _pad_rdown (*(unsigned char*)GIMG(0x0046304c))
-#define _pad_rleft (*(unsigned char*)GIMG(0x0046304d))
-#define _pad_rup (*(unsigned char*)GIMG(0x0046304b))
-#define _pad_start (*(unsigned char*)GIMG(0x00463040))
-#define _primfuncs (*(int*)GIMG(0x0046002c))
-#define _psp (*(int*)GIMG(0x0046c3cc))
-#define _rgb0 (*(int*)GIMG(0x0074c6e0))
-#define _rgb1 (*(int*)GIMG(0x0074c6e4))
-#define _rgb2 (*(int*)GIMG(0x0074c6e8))
-#define _screenbuffer (*(unsigned char*)GIMG(0x00700450))  /* BYTE framebuffer (320x240 @0x700450). Was *(int*)* -> `(&_screenbuffer)[byteoff]` array-index users (draw_half, FUN_00411 fillers) scaled the offset by 4 -> wrote 4x past the buffer into the MPE free-list head @0x73c290 (frame-408 crash) + scattered corruption. `(int)&_screenbuffer + off` users are unaffected (cast = address). */
-#define _scrx (*(int*)GIMG(0x0074c6d0))
-#define _scry (*(int*)GIMG(0x0074c6cc))
-#define _start_TI (*(int*)GIMG(0x0046ff6c))
-#define _texturespace (*(int*)GIMG(0x0074c4cc))
-#define _vr0 (*(int*)GIMG(0x0074c500))
-#define _vr1 (*(int*)GIMG(0x0074c510))
-#define _vr2 (*(int*)GIMG(0x0074c4e0))
-#define _vr3 (*(int*)GIMG(0x0074c4f0))
-#define active_block_numbers (*(int*)GIMG(0x007892a0))
-#define active_object_blocks (*(int*)GIMG(0x00789310))
-#define actual_season_number (*(int*)GIMG(0x004682f4))
-#define add_transparency_table (*(int*)GIMG(0x0074c4c8))
-#define adjusted_music (*(int*)GIMG(0x009376a4))
-#define adjusted_sfx (*(int*)GIMG(0x009376a0))
-#define applause (*(int*)GIMG(0x00939b14))
-#define applause_up" (*(int*)GIMG(0x00939b18))
-#define audible_distance (*(int*)GIMG(0x009393c0))
-#define bonnet_quad_list (*(int*)GIMG(0x00466a48))
-#define bonnet_quads (*(int*)GIMG(0x00466a60))
-#define bonnetoff_object (*(int*)GIMG(0x0077c660))
-#define boot_objects_count (*(int*)GIMG(0x0077c748))
-#define boot_quad_list (*(int*)GIMG(0x00466a80))
-#define boot_quads (*(int*)GIMG(0x00466a88))
-#define bootoff_index (*(int*)GIMG(0x0077c754))
-#define bootoff_object (*(int*)GIMG(0x0077c580))
-#define bowl_cars (*(int*)GIMG(0x0078a364))
-#define buffer_num (*(int*)GIMG(0x00462fec))
-#define cam_angles (*(int*)GIMG(0x00464a98))
-#define camera_car (*(int*)GIMG(0x00463eec))
-#define camera_collision (*(int*)GIMG(0x0077cf68))
-#define camera_fd (*(int*)GIMG(0x0077cf10))
-#define camera_fd_pt (*(int*)GIMG(0x0077cf70))
-#define camera_offset (*(int*)GIMG(0x00464a88))
-#define camera_section (*(int*)GIMG(0x00464a84))
-#define camera_switch (*(int*)GIMG(0x00464a94))
-#define car0_being_obstructed (*(int*)GIMG(0x0078a380))
-#define car_colour_matrix (*(int*)GIMG(0x0077d200))
-#define car_edge_pos (*(int*)GIMG(0x00464cd2))
-#define car_fd (*(int*)GIMG(0x00792690))
-#define car_handling (*(int*)GIMG(0x00792a00))
-#define car_info (*(int*)GIMG(0x00795c40))
-#define car_light_matrix (*(int*)GIMG(0x00464cb4))
-#define car_lookup (*(int*)GIMG(0x00466a0c))
-#define car_object (*(int*)GIMG(0x00781418))
-#define car_order (*(int*)GIMG(0x00795c28))
-#define car_position (*(int*)GIMG(0x0078427c))
-#define car_speed (*(int*)GIMG(0x00784288))
-#define car_vertices (*(int*)GIMG(0x0077d458))
-#define car_wheel_fd (*(int*)GIMG(0x00794be8))
-#define card_data (*(int*)GIMG(0x00774464))
-#define cars_in_crash (*(int*)GIMG(0x00939b1c))
-#define carselect_object (*(int*)GIMG(0x0094006c))
-#define casino_frame_count (*(int*)GIMG(0x004651b8))
-#define cdb" (*(int*)GIMG(0x00754380))
-#define champ_info (*(int*)GIMG(0x0093dee0))
-#define cheese (*(int*)GIMG(0x0074f1b0))
-#define cigar_angles (*(int*)GIMG(0x00464e54))
-#define cigar_object (*(int*)GIMG(0x00781f50))
-#define cigar_position (*(int*)GIMG(0x00464e5c))
-#define coaster_car_object (*(int*)GIMG(0x00781d00))
-#define commentating (*(int*)GIMG(0x00939b64))
-#define cont_game (*(int*)GIMG(0x009373c0))
-#define corner_fd (*(int*)GIMG(0x007924e0))
-#define counter_thing (*(int*)GIMG(0x0046706c))
-#define crowd_volume (*(int*)GIMG(0x00939b6c))
-#define current_frame (*(int*)GIMG(0x00462ff0))
-#define current_level (*(int*)GIMG(0x00936ff4))
-#define current_player (*(int*)GIMG(0x0093decc))
-#define current_player_car (*(int*)GIMG(0x0093ded0))
-#define current_race (*(int*)GIMG(0x0093dec8))
-#define current_season (*(int*)GIMG(0x0093dec0))
-#define d1 (*(int*)GIMG(0x004638cc))
-#define d2 (*(int*)GIMG(0x00463904))
-#define d3 (*(int*)GIMG(0x0046394c))
-#define d4 (*(int*)GIMG(0x00463984))
-#define d5 (*(int*)GIMG(0x004639cc))
-#define d6 (*(int*)GIMG(0x004639e4))
-#define d7 (*(int*)GIMG(0x00463a24))
-#define d8 (*(int*)GIMG(0x00463a6c))
-#define d9 (*(int*)GIMG(0x00463aac))
-#define damage (*(int*)GIMG(0x007836d0))
-#define damage_car (*(int*)GIMG(0x0077cf80))
-#define data (*(int*)GIMG(0x00791c10))
-#define db (*(int*)GIMG(0x00754264))
-#define debris_cluts (*(int*)GIMG(0x007746d0))
-#define dec_info (*(int*)GIMG(0x00789348))
-#define decrunch_block (*(int*)GIMG(0x0078a160))
-#define decrunch_flag (*(int*)GIMG(0x0078a158))
-#define demo_flash (*(int*)GIMG(0x004652a0))
-#define demo_mode (*(int*)GIMG(0x0046385c))
-#define dent_area (*(int*)GIMG(0x00463d3c))
-#define dent_area_lookup (*(int*)GIMG(0x00463d94))
-#define depth_cue_far (*(int*)GIMG(0x00462fdc))
-#define depth_cue_near (*(int*)GIMG(0x00462fd8))
-#define dirbuf (*(int*)GIMG(0x0074c710))
-#define disable_save_game (*(int*)GIMG(0x0046a924))
-#define dollar_frame_count (*(int*)GIMG(0x00465170))
-#define dpadbuttons_object (*(int*)GIMG(0x009400c0))
-#define dpadlabels_object (*(int*)GIMG(0x00940050))
-#define dr_modes (*(int*)GIMG(0x00463004))
-#define draw_frame (*(int*)GIMG(0x007746bc))
-#define drive_anim_frames (*(int*)GIMG(0x00781930))
-#define drive_frame_count (*(int*)GIMG(0x00465074))
-#define drive_textures (*(int*)GIMG(0x00465064))
-#define dth_clip (*(int*)GIMG(0x00480010))
-#define dth_clut (*(int*)GIMG(0x00480014))
-#define dth_delta1 (*(int*)GIMG(0x00480040))
-#define dth_delta2 (*(int*)GIMG(0x0048003c))
-#define dth_shade (*(int*)GIMG(0x00480030))
-#define dth_tpage (*(int*)GIMG(0x00480044))
-#define dth_u1 (*(int*)GIMG(0x0048004c))
-#define dth_v1 (*(int*)GIMG(0x00480048))
-#define dth_x1 (*(int*)GIMG(0x0048002c))
-#define dth_x2 (*(int*)GIMG(0x00480028))
-#define dth_y1 (*(int*)GIMG(0x00480024))
-#define dth_y2 (*(int*)GIMG(0x00480020))
-#define euphoria (*(int*)GIMG(0x00939b30))
-#define exit_game (*(int*)GIMG(0x009374b0))
-#define far_z_clip (*(int*)GIMG(0x00462fc8))
-#define fastest_laps (*(int*)GIMG(0x004680c0))
-#define fi_clut" (*(int*)GIMG(0x00796f68))
-#define fi_levdat (*(int*)GIMG(0x00796f60))
-#define fi_texture (*(int*)GIMG(0x00796f70))
-#define final_places (*(int*)GIMG(0x00795dfc))
-#define flag (*(int*)GIMG(0x00464a8c))
-#define flag1_textures (*(int*)GIMG(0x004650a4))
-#define flag1_wave_count (*(int*)GIMG(0x004650d4))
-#define flag1_wave_frames (*(int*)GIMG(0x00781900))
-#define flag2_textures (*(int*)GIMG(0x004650bc))
-#define flag2_wave_count (*(int*)GIMG(0x004650d8))
-#define flag2_wave_frames (*(int*)GIMG(0x00781918))
-#define flame_anim_frames (*(int*)GIMG(0x007818c0))
-#define flame_frame_count (*(int*)GIMG(0x00781efc))
-#define flame_textures (*(int*)GIMG(0x00465148))
-#define flare_images (*(int*)GIMG(0x00782e60))
-#define flare_info (*(int*)GIMG(0x00465254))
-#define flash1_anim_frames (*(int*)GIMG(0x00781eb4))
-#define flash1_frame_count (*(int*)GIMG(0x00781f00))
-#define flash2_anim_frames (*(int*)GIMG(0x00781e90))
-#define flash2_frame_count (*(int*)GIMG(0x00781f08))
-#define flash3_anim_frames (*(int*)GIMG(0x00781ed8))
-#define flash3_frame_count (*(int*)GIMG(0x00781f04))
-#define floaty_camera_caprio (*(int*)GIMG(0x00464438))
-#define floaty_camera_fd (*(int*)GIMG(0x0077cf3c))
-#define floaty_camera_forest (*(int*)GIMG(0x00464288))
-#define floaty_camera_liberty (*(int*)GIMG(0x00464558))
-#define floaty_camera_sca (*(int*)GIMG(0x00464678))
-#define floaty_camera_speedway (*(int*)GIMG(0x00463f4c))
-#define floaty_camera_ultimate (*(int*)GIMG(0x0046484c))
-#define fog_col" (*(int*)GIMG(0x0046589e))
-#define frame_rate (*(int*)GIMG(0x007746c4))
-#define frame_skip (*(int*)GIMG(0x007746b8))
-#define frame_wait (*(int*)GIMG(0x007746a4))
-#define frames_per_sec (*(int*)GIMG(0x00462ffc))
-#define free_mem (*(int*)GIMG(0x0075439c))
-#define fx (*(int*)GIMG(0x00939b34))
-#define fx_1 (*(int*)GIMG(0x00939b4c))
-#define fx_10 (*(int*)GIMG(0x00939b2c))
-#define fx_11 (*(int*)GIMG(0x00939b28))
-#define fx_15 (*(int*)GIMG(0x00939b24))
-#define fx_17 (*(int*)GIMG(0x00939b58))
-#define fx_18 (*(int*)GIMG(0x00939b74))
-#define fx_2 (*(int*)GIMG(0x00939b54))
-#define fx_21 (*(int*)GIMG(0x00939b5c))
-#define fx_22 (*(int*)GIMG(0x00939b10))
-#define fx_3 (*(int*)GIMG(0x00939b50))
-#define fx_4 (*(int*)GIMG(0x00939b44))
-#define fx_5 (*(int*)GIMG(0x00939b40))
-#define fx_6 (*(int*)GIMG(0x00939b48))
-#define fx_7 (*(int*)GIMG(0x00939b70))
-#define fx_8 (*(int*)GIMG(0x00939b20))
-#define fx_9 (*(int*)GIMG(0x00939b3c))
-#define g_sprite_info (*(int*)GIMG(0x0074f1a0))
-#define gnormals (*(int*)GIMG(0x007541d4))
-#define goose_anim_frames (*(int*)GIMG(0x007818d8))
-#define goose_frame_count (*(int*)GIMG(0x004650a0))
-#define goose_textures (*(int*)GIMG(0x00465078))
-#define gpoly (*(int*)GIMG(0x007541c8))
-#define gprim1 (*(int*)GIMG(0x007541d0))
-#define gprim2 (*(int*)GIMG(0x007541cc))
-#define grounded_count (*(int*)GIMG(0x00792640))
-#define gtexture (*(int*)GIMG(0x007541dc))
-#define gtexture_def (*(int*)GIMG(0x007541f8))
-#define h_norm (*(short*)GIMG(0x007541e8))
-#define hanging_x (*(int*)GIMG(0x00796c28))
-#define hanging_y (*(int*)GIMG(0x00796a90))
-#define hanging_z (*(int*)GIMG(0x00796dc0))
-#define high_car_vertices (*(int*)GIMG(0x0077c760))
-#define highlight_colour (*(int*)GIMG(0x004699c8))
-#define hlf_transparency_table (*(int*)GIMG(0x0074c450))
-#define hold (*(int*)GIMG(0x00791c28))
-#define image_info (*(int*)GIMG(0x00782e00))
-#define in_640 (*(int*)GIMG(0x00460480))
-#define info_dmode (*(int*)GIMG(0x00937370))
-#define info_screen_dire_stats (*(int*)GIMG(0x00469bb8))
-#define info_screen_directions (*(int*)GIMG(0x00469bac))
-#define info_screen_text (*(int*)GIMG(0x00469b0c))
-#define info_tile (*(int*)GIMG(0x009375a0))
-#define j_anim (*(int*)GIMG(0x00781890))
-#define j_frame_count (*(int*)GIMG(0x004651cc))
-#define landing_data (*(int*)GIMG(0x00466b50))
-#define lap_name_entry (*(int*)GIMG(0x0093e7b0))
-#define lap_num" (*(int*)GIMG(0x00784280))
-#define last_time (*(int*)GIMG(0x007746a0))
-#define left_collision_offsets (*(int*)GIMG(0x00465e30))
-#define level_data (*(int*)GIMG(0x00936ff0))
-#define level_data_buffer (*(int*)GIMG(0x00796ff0))
-#define light_matrix (*(int*)GIMG(0x007541d8))
-#define madbase_object (*(int*)GIMG(0x009400f8))
-#define madbut_object (*(int*)GIMG(0x00940034))
-#define madjoy_object (*(int*)GIMG(0x00940184))
-#define mem_size (*(int*)GIMG(0x00774694))
-#define memory_card_clut (*(int*)GIMG(0x00467370))
-#define memory_card_icon (*(int*)GIMG(0x004672f0))
-#define mid_car_vertices (*(int*)GIMG(0x0077cba8))
-#define move_key (*(int*)GIMG(0x00937230))
-#define move_txt (*(int*)GIMG(0x00937050))
-#define music_vol (*(int*)GIMG(0x00937600))
-#define music_volume (*(int*)GIMG(0x0046740c))
-#define negbut1_object (*(int*)GIMG(0x009400dc))
-#define negbut2_object (*(int*)GIMG(0x00940114))
-#define negbut3_object (*(int*)GIMG(0x00940088))
-#define negleft_object (*(int*)GIMG(0x009401a0))
-#define no_txt (*(int*)GIMG(0x009372d0))
-#define notches_music (*(int*)GIMG(0x00937550))
-#define num_cars (*(int*)GIMG(0x0046765c))
-#define num_of_ranks (*(int*)GIMG(0x00795dd0))
-#define num_races (*(int*)GIMG(0x00467654))
-#define num_scene_objects (*(int*)GIMG(0x007892d8))
-#define num_spies (*(int*)GIMG(0x0074f1a4))
-#define num_strips (*(int*)GIMG(0x0077cef0))
-#define num_textures (*(int*)GIMG(0x00462ce0))
-#define offset_table (*(int*)GIMG(0x00464a6c))
-#define old_flying_index (*(int*)GIMG(0x0077c750))
-#define old_index (*(int*)GIMG(0x0077c75c))
-#define otsize (*(int*)GIMG(0x00754260))
-#define pad_option (*(int*)GIMG(0x00467414))
-#define padmap (*(int*)GIMG(0x0046302c))
-#define pal_flag (*(int*)GIMG(0x00462fe8))
-#define particle (*(int*)GIMG(0x0078d740))
-#define pause_tile (*(int*)GIMG(0x009375d0))
-#define pause_txt (*(int*)GIMG(0x00937410))
-#define permission (*(int*)GIMG(0x00796f58))
-#define playable_bowls (*(int*)GIMG(0x00467408))
-#define playable_tracks" (*(int*)GIMG(0x00467404))
-#define player_names (*(int*)GIMG(0x0093e318))
-#define point (*(int*)GIMG(0x004670a0))
-#define poly_clipx (*(int*)GIMG(0x00460024))
-#define poly_clipy (*(int*)GIMG(0x00460028))
-#define polygon_angles (*(int*)GIMG(0x007746f8))
-#define prim_buf (*(int*)GIMG(0x00754390))
-#define prim_buf_size (*(int*)GIMG(0x00463014))
-#define quick_racetype_offset (*(int*)GIMG(0x00467418))
-#define quit_flag (*(int*)GIMG(0x007746ac))
-#define race_car (*(int*)GIMG(0x00467400))
-#define race_finished (*(int*)GIMG(0x00795df4))
-#define race_mode (*(int*)GIMG(0x004673f8))
-#define race_points" (*(int*)GIMG(0x00784278))
-#define race_track (*(int*)GIMG(0x004673fc))
-#define race_type (*(int*)GIMG(0x004673f4))
-#define recorded_pad_type (*(int*)GIMG(0x007746a8))
-#define recorded_strips" (*(int*)GIMG(0x007842a0))
-#define restart_cd_audio (*(int*)GIMG(0x00467420))
-#define rgb_lookup (*(unsigned char*)GIMG(0x0074b450))
-#define roller (*(int*)GIMG(0x00781940))
-#define rot_flags (*(int*)GIMG(0x007531c0))
-#define rot_points (*(int*)GIMG(0x0074f1c0))
+#define _DummyPoly DummyPoly
+#define _Z_DISTANCE (*(int*)GIMG(0x004604c2))
+#define ___ASTACKPTR_ (*(int*)GIMG(0x0046c3dc))
+#define __globmat (*(short*)GIMG(0x0074c6f0))
+#define _active_block_numbers (*(int*)GIMG(0x007892a0))
+#define _add_transparency_table (*(int*)GIMG(0x0074c4c8))  /* dual-symbol: setter wrote C-global, draw_text_half reads image slot (=add_transparency_table) */
+#define _applause_up_ (*(int*)GIMG(0x00939b18))
+#define _camera_fd (*(int*)GIMG(0x0077cf10))
+#define _cdb_ (*(int*)GIMG(0x00754380))
+#define _corner_fd (*(int*)GIMG(0x007924e0))
+#define _fi_levdat (*(int**)GIMG(0x00796f60))
+#define _h_norm (*(short*)GIMG(0x007541e8))
+#define _highlight_colour (*(int*)GIMG(0x004699c8))
+#define _hlf_transparency_table (*(int*)GIMG(0x0074c450))  /* dual-symbol: =hlf_transparency_table; was 0 -> draw_text_half DAT_00460010=0 -> crash */
+#define _num_races (*(int*)GIMG(0x00467654))
+#define _playable_bowls (*(int*)GIMG(0x00467408))
+#define _playable_tracks_ (*(int*)GIMG(0x00467404))
+#define _scene_colour_matrix_ (*(int*)GIMG(0x00465834))
+#define _screen_centre_x_ (*(int*)GIMG(0x00462fd0))
+#define _sound_volume (*(int*)GIMG(0x00467410))
+#define _sub_transparency_table (*(int*)GIMG(0x0074c4d0))  /* dual-symbol: =sub_transparency_table */
+#define _DAT_007747c8 (*(int*)GIMG(0x007747c8))
+#define _DAT_00795de0 (*(int*)GIMG(0x00795de0))
+#define _DAT_0093deb4 (*(int*)GIMG(0x0093deb4))
+#define _DAT_0077d1e4 (*(int*)GIMG(0x0077d1e4))
+#define _DAT_0093def2 (*(int*)GIMG(0x0093def2))
+#define _DAT_0074c4f8 (*(int*)GIMG(0x0074c4f8))
+#define _DAT_0079246c (*(int*)GIMG(0x0079246c))
+#define _DAT_007543a0 (*(int*)GIMG(0x007543a0))
+#define _DAT_00791c00 (*(int*)GIMG(0x00791c00))
+#define _DAT_00754430 (*(int*)GIMG(0x00754430))
+#define _DAT_007747c6 (*(int*)GIMG(0x007747c6))
+#define _DAT_0079244c (*(int*)GIMG(0x0079244c))
+#define _DAT_007541ea (*(int*)GIMG(0x007541ea))
+#define _DAT_0077475a (*(int*)GIMG(0x0077475a))
+#define _DAT_0093dec4 (*(int*)GIMG(0x0093dec4))
+#define _DAT_00792440 (*(int*)GIMG(0x00792440))
+#define _DAT_0093a3c4 (*(int*)GIMG(0x0093a3c4))
+#define _DAT_0093fc68 (*(int*)GIMG(0x0093fc68))
+#define _DAT_0078a378 (*(undefined4*)GIMG(0x0078a378))
+#define _DAT_009392c4 (*(undefined4*)GIMG(0x009392c4))
+#define _DAT_007925f4 (*(int*)GIMG(0x007925f4))
+#define _DAT_00791bec (*(int*)GIMG(0x00791bec))
+#define _DAT_0074f174 (*(int*)GIMG(0x0074f174))
+#define _DAT_0074c454 (*(int*)GIMG(0x0074c454))
+#define _DAT_007924e8 (*(int*)GIMG(0x007924e8))
+#define _DAT_0074c506 (*(int*)GIMG(0x0074c506))
+#define _DAT_00469a6a (*(undefined1*)GIMG(0x00469a6a))
+#define _DAT_0077cf0c (*(int*)GIMG(0x0077cf0c))
+#define _DAT_00774758 (*(int*)GIMG(0x00774758))
+#define _DAT_007543fc (*(int*)GIMG(0x007543fc))
+#define _DAT_007925e8 (*(int*)GIMG(0x007925e8))
+#define _DAT_007543b0 (*(int*)GIMG(0x007543b0))
+#define _DAT_00781ed4 (*(int*)GIMG(0x00781ed4))
+#define _DAT_00774748 (*(int*)GIMG(0x00774748))
+#define _DAT_0074c528 (*(int*)GIMG(0x0074c528))
+#define _DAT_007926b0 (*(int*)GIMG(0x007926b0))
+#define _DAT_0078934c (*(int*)GIMG(0x0078934c))
+#define _DAT_0077cf1c (*(int*)GIMG(0x0077cf1c))
+#define _DAT_00792514 (*(int*)GIMG(0x00792514))
+#define _DAT_00754206 (*(int*)GIMG(0x00754206))
+#define _DAT_00792490 (*(int*)GIMG(0x00792490))
+#define _DAT_0074f018 (*(int*)GIMG(0x0074f018))
+#define _DAT_00789356 (*(int*)GIMG(0x00789356))
+#define _DAT_00792606 (*(int*)GIMG(0x00792606))
+#define _DAT_0093a494 (*(int*)GIMG(0x0093a494))
+#define _DAT_0074c538 (*(int*)GIMG(0x0074c538))
+#define _DAT_0077cf44 (*(int*)GIMG(0x0077cf44))
+#define _DAT_0093def4 (*(int*)GIMG(0x0093def4))
+#define _DAT_0093fd20 (*(int*)GIMG(0x0093fd20))
+#define _DAT_00469a38 (*(undefined1*)GIMG(0x00469a38))
+#define _DAT_0074c700 (*(int*)GIMG(0x0074c700))
+#define _DAT_00792594 (*(int*)GIMG(0x00792594))
+#define _DAT_007541fe (*(int*)GIMG(0x007541fe))
+#define _DAT_0074c6f4 (*(int*)GIMG(0x0074c6f4))
+#define _DAT_007542ca (*(undefined1*)GIMG(0x007542ca))
+#define _DAT_00792488 (*(int*)GIMG(0x00792488))
+#define _DAT_0077cf08 (*(int*)GIMG(0x0077cf08))
+#define _DAT_00754400 (*(int*)GIMG(0x00754400))
+#define _DAT_00792a38 (*(int*)GIMG(0x00792a38))
+#define _DAT_00791c26 (*(int*)GIMG(0x00791c26))
+#define _DAT_0077cf74 (*(int*)GIMG(0x0077cf74))
+#define _DAT_007541c4 (*(int*)GIMG(0x007541c4))
+#define _DAT_0074c584 (*(int*)GIMG(0x0074c584))
+#define _DAT_0074f19c (*(int*)GIMG(0x0074f19c))
+#define _DAT_007924bc (*(int*)GIMG(0x007924bc))
+#define _DAT_00792454 (*(int*)GIMG(0x00792454))
+#define _DAT_00781e60 (*(int*)GIMG(0x00781e60))
+#define _DAT_00754224 (*(int*)GIMG(0x00754224))
+#define _DAT_00940004 (*(int*)GIMG(0x00940004))
+#define _DAT_007542ee (*(int*)GIMG(0x007542ee))
+#define _DAT_0093fd48 (*(int*)GIMG(0x0093fd48))
+#define _DAT_0074c578 (*(int*)GIMG(0x0074c578))
+#define _DAT_00791ba4 (*(int*)GIMG(0x00791ba4))
+#define _DAT_0074c54c (*(int*)GIMG(0x0074c54c))
+#define _DAT_0093de88 (*(int*)GIMG(0x0093de88))
+#define _DAT_007541ec (*(int*)GIMG(0x007541ec))
+#define _DAT_007925ae (*(int*)GIMG(0x007925ae))
+#define _DAT_00792464 (*(int*)GIMG(0x00792464))
+#define _DAT_00792484 (*(int*)GIMG(0x00792484))
+#define _DAT_00791bf8 (*(int*)GIMG(0x00791bf8))
+#define _DAT_0074c524 (*(int*)GIMG(0x0074c524))
+#define _DAT_0074c534 (*(int*)GIMG(0x0074c534))
+#define _DAT_00791bc4 (*(int*)GIMG(0x00791bc4))
+#define _DAT_0079245c (*(int*)GIMG(0x0079245c))
+#define _DAT_0075421e (*(int*)GIMG(0x0075421e))
+#define _DAT_00795dec (*(int*)GIMG(0x00795dec))
+#define _DAT_0074c4fe (*(int*)GIMG(0x0074c4fe))
+#define _DAT_00792618 (*(int*)GIMG(0x00792618))
+#define _DAT_0075437c (*(int*)GIMG(0x0075437c))
+#define _DAT_0077ced8 (*(int*)GIMG(0x0077ced8))
+#define _DAT_0093a49e (*(int*)GIMG(0x0093a49e))
+#define _DAT_0074c4c0 (*(int*)GIMG(0x0074c4c0))
+#define _DAT_00781914 (*(int*)GIMG(0x00781914))
+#define _DAT_0077cf24 (*(int*)GIMG(0x0077cf24))
+#define _DAT_007818bc (*(int*)GIMG(0x007818bc))
+#define _DAT_007925c8 (*(int*)GIMG(0x007925c8))
+#define _DAT_0093a414 (*(int*)GIMG(0x0093a414))
+#define _DAT_00467c2a (*(undefined1*)GIMG(0x00467c2a))
+#define _DAT_007747d4 (*(int*)GIMG(0x007747d4))
+#define _DAT_00754434 (*(int*)GIMG(0x00754434))
+#define _DAT_0093fc50 (*(int*)GIMG(0x0093fc50))
+#define _DAT_007746fc (*(int*)GIMG(0x007746fc))
+#define _DAT_0077cf14 (*(int*)GIMG(0x0077cf14))
+#define _DAT_00754408 (*(int*)GIMG(0x00754408))
+#define _DAT_0093fc00 (*(int*)GIMG(0x0093fc00))
+#define _DAT_007924f4 (*(int*)GIMG(0x007924f4))
+#define _DAT_00781e8c (*(int*)GIMG(0x00781e8c))
+#define _DAT_00791bdc (*(int*)GIMG(0x00791bdc))
+#define _DAT_00792a86 (*(int*)GIMG(0x00792a86))
+#define _DAT_0093de14 (*(int*)GIMG(0x0093de14))
+#define _DAT_00784290 (*(int*)GIMG(0x00784290))
+#define _DAT_00781f4c (*(int*)GIMG(0x00781f4c))
+#define _DAT_0093fc28 (*(int*)GIMG(0x0093fc28))
+#define _DAT_0046833e (*(undefined1*)GIMG(0x0046833e))
+#define _DAT_00781ef8 (*(int*)GIMG(0x00781ef8))
+#define _DAT_00792632 (*(int*)GIMG(0x00792632))
+#define _DAT_0074c4c4 (*(int*)GIMG(0x0074c4c4))
+#define _DAT_0093a314 (*(int*)GIMG(0x0093a314))
+#define _DAT_007925da (*(int*)GIMG(0x007925da))
+#define _DAT_0093de9e (*(int*)GIMG(0x0093de9e))
+#define _DAT_0093de92 (*(int*)GIMG(0x0093de92))
+#define _DAT_0093deb6 (*(int*)GIMG(0x0093deb6))
+#define _DAT_0093a490 (*(int*)GIMG(0x0093a490))
+#define _DAT_0075422c (*(int*)GIMG(0x0075422c))
+#define _DAT_0077c758 (*(int*)GIMG(0x0077c758))
+#define _DAT_0074c6d4 (*(int*)GIMG(0x0074c6d4))
+#define _DAT_0074c6fc (*(int*)GIMG(0x0074c6fc))
+#define _DAT_0074c55c (*(int*)GIMG(0x0074c55c))
+#define _DAT_0093fd4c (*(undefined1*)GIMG(0x0093fd4c))
+#define _DAT_0079256c (*(int*)GIMG(0x0079256c))
+#define _DAT_00774702 (*(int*)GIMG(0x00774702))
+#define _DAT_007924b0 (*(int*)GIMG(0x007924b0))
+#define _DAT_00792ac6 (*(int*)GIMG(0x00792ac6))
+#define _DAT_007747ce (*(int*)GIMG(0x007747ce))
+#define _DAT_007924a8 (*(int*)GIMG(0x007924a8))
+#define _DAT_00792520 (*(int*)GIMG(0x00792520))
+#define _DAT_007747d6 (*(int*)GIMG(0x007747d6))
+#define _DAT_00462fba (*(int*)GIMG(0x00462fba))
+#define _DAT_007925c0 (*(int*)GIMG(0x007925c0))
+#define _DAT_00791bc6 (*(int*)GIMG(0x00791bc6))
+#define _DAT_0046b61a (*(undefined1*)GIMG(0x0046b61a))
+#define _DAT_0077c744 (*(int*)GIMG(0x0077c744))
+#define _DAT_007818d4 (*(int*)GIMG(0x007818d4))
+#define _DAT_0078a744 (*(int*)GIMG(0x0078a744))
+#define _DAT_00754398 (*(int*)GIMG(0x00754398))
+#define _DAT_00792b1a (*(int*)GIMG(0x00792b1a))
+#define _DAT_00791bcc (*(int*)GIMG(0x00791bcc))
+#define _DAT_0079253c (*(int*)GIMG(0x0079253c))
+#define _DAT_007541c0 (*(int*)GIMG(0x007541c0))
+#define _DAT_0074c6f2 (*(int*)GIMG(0x0074c6f2))
+#define _DAT_0074f178 (*(int*)GIMG(0x0074f178))
+#define _DAT_0075444a (*(int*)GIMG(0x0075444a))
+#define _DAT_00795df0 (*(int*)GIMG(0x00795df0))
+#define _DAT_0077474a (*(int*)GIMG(0x0077474a))
+#define _DAT_0093a308 (*(int*)GIMG(0x0093a308))
+#define _DAT_00940220 (*(int*)GIMG(0x00940220))
+#define _DAT_0074c530 (*(int*)GIMG(0x0074c530))
+#define _DAT_0074c458 (*(int*)GIMG(0x0074c458))
+#define _DAT_00792480 (*(int*)GIMG(0x00792480))
+#define _DAT_009409ac (*(int*)GIMG(0x009409ac))
+#define _DAT_007747d0 (*(int*)GIMG(0x007747d0))
+#define _DAT_00791bd4 (*(int*)GIMG(0x00791bd4))
+#define _DAT_0074c45c (*(int*)GIMG(0x0074c45c))
+#define _DAT_00792450 (*(int*)GIMG(0x00792450))
+#define _DAT_0074c518 (*(int*)GIMG(0x0074c518))
+#define _DAT_00754394 (*(int*)GIMG(0x00754394))
+#define _DAT_00791bbc (*(int*)GIMG(0x00791bbc))
+#define _DAT_00774704 (*(int*)GIMG(0x00774704))
+#define _DAT_00781eb0 (*(int*)GIMG(0x00781eb0))
+#define _DAT_00792a7a (*(int*)GIMG(0x00792a7a))
+#define _DAT_00469072 (*(undefined1*)GIMG(0x00469072))
+#define _DAT_0074c520 (*(int*)GIMG(0x0074c520))
+#define _DAT_00792510 (*(int*)GIMG(0x00792510))
+#define _DAT_0075444c (*(int*)GIMG(0x0075444c))
+#define _DAT_00792a10 (*(int*)GIMG(0x00792a10))
+#define _DAT_00754226 (*(int*)GIMG(0x00754226))
+#define _DAT_00782ae0 (*(int*)GIMG(0x00782ae0))
+#define _DAT_0075443c (*(int*)GIMG(0x0075443c))
+#define _DAT_007543a4 (*(int*)GIMG(0x007543a4))
+#define _DAT_00782ae2 (*(int*)GIMG(0x00782ae2))
+#define _DAT_0093dea6 (*(int*)GIMG(0x0093dea6))
+#define _DAT_007925bc (*(int*)GIMG(0x007925bc))
+#define _DAT_0093a30c (*(int*)GIMG(0x0093a30c))
+#define _DAT_0079261c (*(int*)GIMG(0x0079261c))
+#define _DAT_0074c6f6 (*(int*)GIMG(0x0074c6f6))
+#define _DAT_00791bd6 (*(int*)GIMG(0x00791bd6))
+#define _DAT_00754404 (*(int*)GIMG(0x00754404))
+#define _DAT_00791bce (*(int*)GIMG(0x00791bce))
+#define _DAT_0074c588 (*(int*)GIMG(0x0074c588))
+#define _DAT_00940af8 (*(int*)GIMG(0x00940af8))
+#define _DAT_007925d0 (*(int*)GIMG(0x007925d0))
+#define _DAT_0075444e (*(int*)GIMG(0x0075444e))
+#define _DAT_00784294 (*(int*)GIMG(0x00784294))
+#define _DAT_0074c6f8 (*(int*)GIMG(0x0074c6f8))
+#define _DAT_0074c46c (*(int*)GIMG(0x0074c46c))
+#define _DAT_00792a92 (*(int*)GIMG(0x00792a92))
+#define _DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
+#define _DAT_0074c70a (*(int*)GIMG(0x0074c70a))
+#define _DAT_009409a8 (*(int*)GIMG(0x009409a8))
+#define _DAT_0074f194 (*(int*)GIMG(0x0074f194))
+#define _DAT_00792538 (*(int*)GIMG(0x00792538))
+#define _DAT_00774700 (*(int*)GIMG(0x00774700))
+#define _DAT_0093fbf0 (*(int*)GIMG(0x0093fbf0))
+#define _DAT_0074f180 (*(int*)GIMG(0x0074f180))
+#define _DAT_0077d1e0 (*(int*)GIMG(0x0077d1e0))
+#define _DAT_007543f8 (*(int*)GIMG(0x007543f8))
+#define _DAT_00792be2 (*(int*)GIMG(0x00792be2))
+#define _DAT_0093a39c (*(int*)GIMG(0x0093a39c))
+#define _DAT_0078a748 (*(int*)GIMG(0x0078a748))
+#define _DAT_00791be6 (*(int*)GIMG(0x00791be6))
+#define _DAT_00792474 (*(int*)GIMG(0x00792474))
+#define _DAT_00792590 (*(int*)GIMG(0x00792590))
+#define _DAT_0078a15c (*(int*)GIMG(0x0078a15c))
+#define _DAT_00791bf0 (*(int*)GIMG(0x00791bf0))
+#define _DAT_00792a18 (*(int*)GIMG(0x00792a18))
+#define _DAT_004677c2 (*(undefined1*)GIMG(0x004677c2))
+#define _DAT_00792478 (*(int*)GIMG(0x00792478))
+#define _DAT_0093a4a0 (*(int*)GIMG(0x0093a4a0))
+#define _DAT_00792ccc (*(int*)GIMG(0x00792ccc))
+#define _DAT_0074c4ec (*(int*)GIMG(0x0074c4ec))
+#define _DAT_00774690 (*(undefined4*)GIMG(0x00774690))
+#define _DAT_007924b8 (*(int*)GIMG(0x007924b8))
+#define _DAT_0074c564 (*(int*)GIMG(0x0074c564))
+#define _DAT_00792518 (*(int*)GIMG(0x00792518))
+#define _DAT_0077cf40 (*(int*)GIMG(0x0077cf40))
+#define _DAT_0093a49c (*(int*)GIMG(0x0093a49c))
+#define _DAT_0078a74c (*(int*)GIMG(0x0078a74c))
+#define _DAT_007924ac (*(int*)GIMG(0x007924ac))
+#define _DAT_0074c52c (*(int*)GIMG(0x0074c52c))
+#define _DAT_00792570 (*(int*)GIMG(0x00792570))
+#define _DAT_00774750 (*(int*)GIMG(0x00774750))
+#define _DAT_00792448 (*(int*)GIMG(0x00792448))
+#define _DAT_0075420c (*(int*)GIMG(0x0075420c))
+#define _DAT_00754256 (*(int*)GIMG(0x00754256))
+#define _DAT_0074c502 (*(int*)GIMG(0x0074c502))
+#define _DAT_0074c544 (*(int*)GIMG(0x0074c544))
+#define _DAT_0074c508 (*(int*)GIMG(0x0074c508))
+#define _DAT_007925fc (*(int*)GIMG(0x007925fc))
+#define _DAT_00791ba8 (*(int*)GIMG(0x00791ba8))
+#define _DAT_0093a318 (*(int*)GIMG(0x0093a318))
+#define _DAT_0079252a (*(int*)GIMG(0x0079252a))
+#define _DAT_0074c504 (*(int*)GIMG(0x0074c504))
+#define _DAT_0078a790 (*(int*)GIMG(0x0078a790))
+#define _DAT_0093a49a (*(int*)GIMG(0x0093a49a))
+#define _DAT_00754356 (*(undefined1*)GIMG(0x00754356))
+#define _DAT_00782ad8 (*(int*)GIMG(0x00782ad8))
+#define _DAT_00791c08 (*(int*)GIMG(0x00791c08))
+#define _DAT_0093de8a (*(int*)GIMG(0x0093de8a))
+#define _DAT_00792556 (*(int*)GIMG(0x00792556))
+#define _DAT_007746c0 (*(int*)GIMG(0x007746c0))
+#define _DAT_00792a76 (*(int*)GIMG(0x00792a76))
+#define _DAT_00792544 (*(int*)GIMG(0x00792544))
+#define _DAT_0074c4f4 (*(int*)GIMG(0x0074c4f4))
+#define _DAT_0077cf34 (*(int*)GIMG(0x0077cf34))
+#define _DAT_0074c568 (*(int*)GIMG(0x0074c568))
+#define _DAT_0093de90 (*(int*)GIMG(0x0093de90))
+#define _DAT_00791bae (*(int*)GIMG(0x00791bae))
+#define _DAT_0093a310 (*(int*)GIMG(0x0093a310))
+#define _DAT_00792628 (*(int*)GIMG(0x00792628))
+#define _DAT_0077474c (*(int*)GIMG(0x0077474c))
+#define _DAT_0074c550 (*(int*)GIMG(0x0074c550))
+#define _DAT_0078192c (*(int*)GIMG(0x0078192c))
+#define _DAT_00939b80 (*(int*)GIMG(0x00939b80))
+#define _DAT_0074c514 (*(int*)GIMG(0x0074c514))
+#define _DAT_007747c4 (*(int*)GIMG(0x007747c4))
+#define _DAT_00469a3a (*(undefined1*)GIMG(0x00469a3a))
+#define _DAT_0074c51c (*(int*)GIMG(0x0074c51c))
+#define _DAT_0075424e (*(int*)GIMG(0x0075424e))
+#define _DAT_007818ac (*(int*)GIMG(0x007818ac))
+#define _DAT_00792598 (*(int*)GIMG(0x00792598))
+#define _DAT_0093a492 (*(int*)GIMG(0x0093a492))
+#define _DAT_00792a30 (*(int*)GIMG(0x00792a30))
+#define _DAT_0093a498 (*(int*)GIMG(0x0093a498))
+#define _DAT_00792438 (*(int*)GIMG(0x00792438))
+#define _DAT_0078193c (*(int*)GIMG(0x0078193c))
+#define _DAT_0079248c (*(int*)GIMG(0x0079248c))
+#define _DAT_0077cedc (*(int*)GIMG(0x0077cedc))
+#define _DAT_0077d1f0 (*(int*)GIMG(0x0077d1f0))
+#define _DAT_00792d9c (*(int*)GIMG(0x00792d9c))
+#define _DAT_0077cf18 (*(int*)GIMG(0x0077cf18))
+#define _DAT_00754444 (*(int*)GIMG(0x00754444))
+#define _DAT_00792578 (*(int*)GIMG(0x00792578))
+#define _DAT_00754450 (*(int*)GIMG(0x00754450))
+#define _DAT_007924fe (*(int*)GIMG(0x007924fe))
+#define _DAT_00940b04 (*(int*)GIMG(0x00940b04))
+#define _DAT_0093dea4 (*(int*)GIMG(0x0093dea4))
+#define _DAT_0078a792 (*(int*)GIMG(0x0078a792))
+#define _DAT_0093a496 (*(int*)GIMG(0x0093a496))
+#define _DAT_0079240e (*(int*)GIMG(0x0079240e))
+#define _DAT_00754358 (*(undefined1*)GIMG(0x00754358))
+#define _DAT_00468340 (*(undefined1*)GIMG(0x00468340))
+#define _DAT_007924a0 (*(int*)GIMG(0x007924a0))
+#define _DAT_0077c74c (*(int*)GIMG(0x0077c74c))
+#define _DAT_00791b98 (*(int*)GIMG(0x00791b98))
+#define _DAT_007541f2 (*(short*)GIMG(0x007541f2))
+#define _DAT_0074f184 (*(int*)GIMG(0x0074f184))
+#define _DAT_007542f2 (*(undefined1*)GIMG(0x007542f2))
+#define _DAT_00774754 (*(int*)GIMG(0x00774754))
+#define _DAT_00467c2c (*(undefined1*)GIMG(0x00467c2c))
+#define _DAT_0078189c (*(int*)GIMG(0x0078189c))
+#define _DAT_00792470 (*(int*)GIMG(0x00792470))
+#define _DAT_007925a4 (*(int*)GIMG(0x007925a4))
+#define _DAT_00774752 (*(int*)GIMG(0x00774752))
+#define _DAT_0094098c (*(int*)GIMG(0x0094098c))
+#define _DAT_00792568 (*(int*)GIMG(0x00792568))
+#define _DAT_00791bb6 (*(int*)GIMG(0x00791bb6))
+#define _DAT_007924b4 (*(int*)GIMG(0x007924b4))
+#define _DAT_00939b84 (*(int*)GIMG(0x00939b84))
+#define _DAT_00792460 (*(int*)GIMG(0x00792460))
+#define _DAT_0046b61c (*(undefined1*)GIMG(0x0046b61c))
+#define _DAT_0093fd44 (*(int*)GIMG(0x0093fd44))
+#define _DAT_0074c558 (*(int*)GIMG(0x0074c558))
+#define _DAT_007818fc (*(int*)GIMG(0x007818fc))
+#define _DAT_00795c52 (*(int*)GIMG(0x00795c52))
+#define _DAT_0093de7a (*(int*)GIMG(0x0093de7a))
+#define _DAT_007925f0 (*(int*)GIMG(0x007925f0))
+#define _DAT_007925c4 (*(int*)GIMG(0x007925c4))
+#define _DAT_0074c574 (*(int*)GIMG(0x0074c574))
+#define _DAT_00792494 (*(int*)GIMG(0x00792494))
+#define _DAT_00754440 (*(int*)GIMG(0x00754440))
+#define _DAT_0093de78 (*(int*)GIMG(0x0093de78))
+#define _DAT_00784298 (*(int*)GIMG(0x00784298))
+#define _DAT_00792458 (*(int*)GIMG(0x00792458))
+#define _DAT_00754208 (*(int*)GIMG(0x00754208))
+#define _DAT_00940990 (*(undefined1*)GIMG(0x00940990))
+#define _DAT_0074c47c (*(int*)GIMG(0x0074c47c))
+#define _DAT_0093de80 (*(int*)GIMG(0x0093de80))
+#define _DAT_00754438 (*(int*)GIMG(0x00754438))
+#define _DAT_0074c53c (*(int*)GIMG(0x0074c53c))
+#define _DAT_00754202 (*(int*)GIMG(0x00754202))
+#define _DAT_007746fa (*(int*)GIMG(0x007746fa))
+#define _DAT_00940974 (*(int*)GIMG(0x00940974))
+#define _DAT_00795de4 (*(int*)GIMG(0x00795de4))
+#define _DAT_007924a4 (*(int*)GIMG(0x007924a4))
+#define _DAT_00792582 (*(int*)GIMG(0x00792582))
+#define _DAT_0074c6fe (*(int*)GIMG(0x0074c6fe))
+#define _DAT_0093deae (*(int*)GIMG(0x0093deae))
+#define _DAT_0074c706 (*(int*)GIMG(0x0074c706))
+#define _DAT_0078188c (*(int*)GIMG(0x0078188c))
+#define _DAT_0077cf00 (*(int*)GIMG(0x0077cf00))
+#define _DAT_00792ba2 (*(int*)GIMG(0x00792ba2))
+#define _DAT_00791bbe (*(int*)GIMG(0x00791bbe))
+#define _DAT_00791be4 (*(int*)GIMG(0x00791be4))
+#define _DAT_0079250c (*(int*)GIMG(0x0079250c))
+#define _DAT_00792614 (*(int*)GIMG(0x00792614))
+#define _DAT_00940970 (*(int*)GIMG(0x00940970))
+#define _DAT_0093de18 (*(int*)GIMG(0x0093de18))
+#define _DAT_0077cf04 (*(int*)GIMG(0x0077cf04))
+#define _DAT_0077d1f4 (*(int*)GIMG(0x0077d1f4))
+#define _DAT_007747d8 (*(int*)GIMG(0x007747d8))
+#define _DAT_0074c702 (*(int*)GIMG(0x0074c702))
+#define _DAT_00789354 (*(int*)GIMG(0x00789354))
+#define _DAT_00939b68 (*(int*)GIMG(0x00939b68))
+#define _DAT_007925ec (*(int*)GIMG(0x007925ec))
+#define _DAT_0093de10 (*(int*)GIMG(0x0093de10))
+#define _DAT_0093de9c (*(int*)GIMG(0x0093de9c))
+#define _DAT_0074c4e4 (*(int*)GIMG(0x0074c4e4))
+#define _DAT_00792a14 (*(int*)GIMG(0x00792a14))
+#define _DAT_0074c548 (*(int*)GIMG(0x0074c548))
+#define _DAT_00754252 (*(int*)GIMG(0x00754252))
+#define _DAT_0075440c (*(int*)GIMG(0x0075440c))
+#define _DAT_0093fc40 (*(int*)GIMG(0x0093fc40))
+#define _DAT_0078a37c (*(int*)GIMG(0x0078a37c))
+#define _DAT_0078a51c (*(int*)GIMG(0x0078a51c))
+#define _DAT_007541f4 (*(short*)GIMG(0x007541f4))
+#define _DAT_0093de82 (*(int*)GIMG(0x0093de82))
+#define _DAT_00940224 (*(undefined1*)GIMG(0x00940224))
+#define _DAT_004677c4 (*(undefined1*)GIMG(0x004677c4))
+#define _DAT_0074c4e8 (*(int*)GIMG(0x0074c4e8))
+#define _DAT_00792564 (*(int*)GIMG(0x00792564))
+#define _DAT_0079247c (*(int*)GIMG(0x0079247c))
+#define _DAT_0074c554 (*(int*)GIMG(0x0074c554))
+#define _DAT_0079249c (*(int*)GIMG(0x0079249c))
+#define _DAT_00754448 (*(int*)GIMG(0x00754448))
+#define _DAT_00782ae8 (*(int*)GIMG(0x00782ae8))
+#define _DAT_00940000 (*(int*)GIMG(0x00940000))
+#define _DAT_00795c46 (*(int*)GIMG(0x00795c46))
+#define _DAT_0074c50c (*(int*)GIMG(0x0074c50c))
+#define _DAT_007747cc (*(int*)GIMG(0x007747cc))
+#define _DAT_0075420a (*(int*)GIMG(0x0075420a))
+#define _DAT_00782ae6 (*(int*)GIMG(0x00782ae6))
+#define _DAT_0074c6fa (*(int*)GIMG(0x0074c6fa))
+#define _DAT_0093fc78 (*(int*)GIMG(0x0093fc78))
+#define _DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
+#define _DAT_0077475c (*(int*)GIMG(0x0077475c))
+#define _DAT_0074c540 (*(int*)GIMG(0x0074c540))
+#define _DAT_00754228 (*(int*)GIMG(0x00754228))
+#define _DAT_00782ada (*(int*)GIMG(0x00782ada))
+#define _DAT_007543ac (*(int*)GIMG(0x007543ac))
+#define _DAT_00754220 (*(int*)GIMG(0x00754220))
+#define _DAT_00791b94 (*(int*)GIMG(0x00791b94))
+#define _DAT_009392e4 (*(int*)GIMG(0x009392e4))
+#define _DAT_0079259c (*(int*)GIMG(0x0079259c))
+#define _DAT_00782aea (*(int*)GIMG(0x00782aea))
+#define _DAT_0074c4fc (*(int*)GIMG(0x0074c4fc))
+#define _DAT_00791bde (*(int*)GIMG(0x00791bde))
+#define _DAT_0093a3ec (*(int*)GIMG(0x0093a3ec))
+#define _DAT_0093de1c (*(int*)GIMG(0x0093de1c))
+#define _DAT_00940b00 (*(int*)GIMG(0x00940b00))
+#define _DAT_00469070 (*(undefined1*)GIMG(0x00469070))
+#define _DAT_007542c8 (*(undefined1*)GIMG(0x007542c8))
+#define _DAT_00940afc (*(int*)GIMG(0x00940afc))
+#define _DAT_009392b8 (*(int*)GIMG(0x009392b8))
+#define _DAT_00792498 (*(int*)GIMG(0x00792498))
+#define _DAT_00774680 (*(int*)GIMG(0x00774680))
+#define _DAT_00792444 (*(int*)GIMG(0x00792444))
+#define _DAT_007542f6 (*(undefined1*)GIMG(0x007542f6))
+#define _DAT_00754268 (*(undefined1*)GIMG(0x00754268))
+#define _DAT_0077d1e8 (*(int*)GIMG(0x0077d1e8))
+#define _DAT_0079254c (*(int*)GIMG(0x0079254c))
+#define _DAT_00792468 (*(int*)GIMG(0x00792468))
+#define _DAT_00791bb4 (*(int*)GIMG(0x00791bb4))
+#define _DAT_0078a360 (*(int*)GIMG(0x0078a360))
+#define _DAT_0093deac (*(int*)GIMG(0x0093deac))
+#define _DAT_00754222 (*(int*)GIMG(0x00754222))
+#define _DAT_0075422a (*(int*)GIMG(0x0075422a))
+#define _DAT_00469a68 (*(undefined1*)GIMG(0x00469a68))
+#define _DAT_007541e6 (*(int*)GIMG(0x007541e6))
+#define _DAT_0093fc18 (*(int*)GIMG(0x0093fc18))
+#define _DAT_00754204 (*(int*)GIMG(0x00754204))
+#define _DAT_0077d1ec (*(int*)GIMG(0x0077d1ec))
+#define _DAT_00792620 (*(int*)GIMG(0x00792620))
+#define _DAT_007924ec (*(int*)GIMG(0x007924ec))
+#define _DAT_007924e4 (*(int*)GIMG(0x007924e4))
+#define _DAT_007926a4 (*(int*)GIMG(0x007926a4))
+#define _DAT_00774460 (*(int*)GIMG(0x00774460))
+#define _DAT_00792540 (*(int*)GIMG(0x00792540))
+#define _DAT_00467658 (*(int*)GIMG(0x00467658))
+#define _DAT_00754200 (*(int*)GIMG(0x00754200))
+#define _db db
+
+/* symbols referenced by the decompile but absent from the dd2h data export (types from the compile pass) */
+#define s__R_JL_T__0046ad0c ((char*)GIMG(0x0046ad0c))
+#define s__R_JL_T__0046be14 ((char*)GIMG(0x0046be14))
+#define s__R_JL_T__0046b620 ((char*)GIMG(0x0046b620))
+#define PTR_Select_Champ_0046a728 (*(int*)GIMG(0x0046a728))
+#define PTR_draw_face_3pt_flat_00462d94 (*(int*)GIMG(0x00462d94))
+#define PTR_draw_face_3pt_flat_00462e44 (*(int*)GIMG(0x00462e44))
+#define PTR_hlf_transparency_table_00460014 (*(undefined1*)GIMG(0x00460014))
+#define PTR_s_CHAMPP_0046a6a8 (*(int*)GIMG(0x0046a6a8))
+#define PTR_s_CHAMP_0046a626 (*(undefined1*)GIMG(0x0046a626))
+#define PTR_s_CHAMP_0046a698 (*(int*)GIMG(0x0046a698))
+#define PTR_s_DUMB1_004650dc (*(undefined1*)GIMG(0x004650dc))
+#define PTR_s_DUMB2_00465100 (*(undefined1*)GIMG(0x00465100))
+#define PTR_s_DUMB3_00465124 (*(undefined1*)GIMG(0x00465124))
+#define PTR_s_KEYBOARD_0046a136 (*(undefined1*)GIMG(0x0046a136))
+#define PTR_s_KEYBOARD_0046a16c (*(int*)GIMG(0x0046a16c))
+#define PTR_s_KEYBOARP_0046a174 (*(int*)GIMG(0x0046a174))
+#define PTR_s_MEMLOADP_004672e4 (*(int*)GIMG(0x004672e4))
+#define PTR_s_MEMLOAD_004671ee (*(undefined1*)GIMG(0x004671ee))
+#define PTR_s_MEMLOAD_004672d8 (*(int*)GIMG(0x004672d8))
+#define PTR_s_MEMSAVE_004672dc (*(int*)GIMG(0x004672dc))
+#define PTR_s_RACETYPE_004696b2 (*(undefined1*)GIMG(0x004696b2))
+#define PTR_s_RACETYPE_00469864 (*(int*)GIMG(0x00469864))
+#define PTR_s_RACTYPEP_00469884 (*(int*)GIMG(0x00469884))
+#define PTR_s_RESULTSP_0046aee0 (*(int*)GIMG(0x0046aee0))
+#define PTR_s_RESULTSP_0046bfcc (*(int*)GIMG(0x0046bfcc))
+#define PTR_s_RESULTS_0046ae46 (*(undefined1*)GIMG(0x0046ae46))
+#define PTR_s_RESULTS_0046aec8 (*(int*)GIMG(0x0046aec8))
+#define PTR_s_RESULTS_0046bf3a (*(undefined1*)GIMG(0x0046bf3a))
+#define PTR_s_RESULTS_0046bfb4 (*(int*)GIMG(0x0046bfb4))
+#define PTR_s_VIEWREPP_0046a4c4 (*(int*)GIMG(0x0046a4c4))
+#define PTR_s_VIEWREPP_0046b740 (*(int*)GIMG(0x0046b740))
+#define PTR_s_VIEWREP_0046a46a (*(undefined1*)GIMG(0x0046a46a))
+#define PTR_s_VIEWREP_0046a4b8 (*(int*)GIMG(0x0046a4b8))
+#define PTR_s_VIEWREP_0046b6e6 (*(undefined1*)GIMG(0x0046b6e6))
+#define PTR_s_VIEWREP_0046b734 (*(int*)GIMG(0x0046b734))
+#define PTR_s_WRECKINP_0046a2fc (*(int*)GIMG(0x0046a2fc))
+#define PTR_s_WRECKIN_0046a28a (*(undefined1*)GIMG(0x0046a28a))
+#define PTR_s_WRECKIN_0046a2f0 (*(int*)GIMG(0x0046a2f0))
+#define PTR_s__R_JC_T_Practice_004698d0 (*(int*)GIMG(0x004698d0))
+#define PTR_s__R_JC_T_Wrecking_Racing_004698c4 (*(int*)GIMG(0x004698c4))
+#define PTR_s__R_JL_T_Jug_00469df0 (*(int*)GIMG(0x00469df0))
+#define PTR_s__R_JL_T_Liberty_City_00469dc8 (*(int*)GIMG(0x00469dc8))
+#define PTR_s__R_JL_T_Pine_Hills_Raceway_004682f8 (*(int*)GIMG(0x004682f8))
+#define PTR_s__R_JL_T_Pine_Hills_Raceway_00469314 (*(int*)GIMG(0x00469314))
+#define PTR_s__R_JL_T_Pine_Hills_Raceway_00469bc4 (*(int*)GIMG(0x00469bc4))
+#define PTR_s__R_JL_T_Pork_Sword_00469ddc (*(int*)GIMG(0x00469ddc))
+#define PTR_s__R_JL_T_Slapshot_00469c0c (*(int*)GIMG(0x00469c0c))
 #define s_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345_004692ec (*(int**)GIMG(0x004692ec))
-#define s_ABNORMAL_TERMINATION_0046fc3c ((char*)GIMG(0x0046fc3c))
 #define s_AIDAN_0046da74 ((char*)GIMG(0x0046da74))
 #define s_AIDCRED_0046daec ((char*)GIMG(0x0046daec))
 #define s_Add_Buffer_Load__0046c77c ((char*)GIMG(0x0046c77c))
@@ -2007,7 +3321,6 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define s_FRWN88C_0046cf30 ((char*)GIMG(0x0046cf30))
 #define s_FRWN88D_0046cf38 ((char*)GIMG(0x0046cf38))
 #define s_FRWN88E_0046cf40 ((char*)GIMG(0x0046cf40))
-#define s_Floating_point_support_not_loade_0046fc18 ((char*)GIMG(0x0046fc18))
 #define s_GREENDIM_0046ccc0 ((char*)GIMG(0x0046ccc0))
 #define s_GRNLIGHT_0046ccb4 ((char*)GIMG(0x0046ccb4))
 #define s_HELMET_0046d0d0 ((char*)GIMG(0x0046d0d0))
@@ -2097,7 +3410,6 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define s_TRACK_02d_0046f024 ((char*)GIMG(0x0046f024))
 #define s_TSELECT_0046d058 ((char*)GIMG(0x0046d058))
 #define s_Text_functions__0046c8d8 ((char*)GIMG(0x0046c8d8))
-#define s_Thread_has_no_thread_specific_da_0046fc54 ((char*)GIMG(0x0046fc54))
 #define s_VAGS_BANK1_SBK_0046d070 ((char*)GIMG(0x0046d070))
 #define s_WHEEL2_0046cd38 ((char*)GIMG(0x0046cd38))
 #define s_WHEEL3_0046cd40 ((char*)GIMG(0x0046cd40))
@@ -2201,1488 +3513,51 @@ void draw_text_half(void);  /* draw_text_half@0x410010 = OPAQUE gouraud-textured
 #define s__s_player__d_0046ece0 ((char*)GIMG(0x0046ece0))
 #define s_avivideo_0046c74c ((char*)GIMG(0x0046c74c))
 #define s_cdaudio_0046c844 ((char*)GIMG(0x0046c844))
-#define s_conin__0046fc84 ((char*)GIMG(0x0046fc84))
-#define s_conout__0046fc8b ((char*)GIMG(0x0046fc8b))
-#define safe_anim (*(int*)GIMG(0x00781e50))
-#define safe_frame_count (*(int*)GIMG(0x00465188))
-#define sca_frame_count" (*(int*)GIMG(0x00465060))
-#define sca_textures (*(int*)GIMG(0x0046501c))
-#define scene_colour_matrix" (*(int*)GIMG(0x00465834))
-#define scene_colour_vectors (*(int*)GIMG(0x00465922))
-#define scene_light_matrix (*(int*)GIMG(0x00465854))
-#define scene_objects (*(int*)GIMG(0x007845a0))
-#define scene_position (*(int*)GIMG(0x007876a0))
-#define screen_centre_x. (*(int*)GIMG(0x00462fd0))
-#define screen_height (*(int*)GIMG(0x00462ff8))
-#define screen_line_list (*(int*)GIMG(0x00940008))
-#define screen_poly_list (*(int*)GIMG(0x00940010))
-#define screen_text_list (*(int*)GIMG(0x00940014))
-#define screen_width (*(int*)GIMG(0x00462ff4))
-#define sdOverdata (*(int*)GIMG(0x0046522e))
-#define sdRacedata (*(int*)GIMG(0x00465216))
-#define sd_damage_botl (*(int*)GIMG(0x00464c84))
-#define sd_damage_botr (*(int*)GIMG(0x00464c9c))
-#define sd_damage_car (*(int*)GIMG(0x00464c0c))
-#define sd_damage_midl (*(int*)GIMG(0x00464c54))
-#define sd_damage_midr (*(int*)GIMG(0x00464c6c))
-#define sd_damage_topl (*(int*)GIMG(0x00464c24))
-#define sd_damage_topr (*(int*)GIMG(0x00464c3c))
-#define sd_music_vol (*(int*)GIMG(0x00466efc))
-#define sd_no_txt (*(int*)GIMG(0x00466fbc))
-#define sd_notches_music (*(int*)GIMG(0x00466f14))
-#define sd_notches_sfx (*(int*)GIMG(0x00466f44))
-#define sd_pause_txt (*(int*)GIMG(0x00466ecc))
-#define sd_select_txt (*(int*)GIMG(0x00467034))
-#define sd_sfx_vol (*(int*)GIMG(0x00466f2c))
-#define sd_shadow (*(int*)GIMG(0x00466e94))
-#define sd_smoke (*(int*)GIMG(0x00466364))
-#define sd_spark (*(int*)GIMG(0x004664e4))
-#define sd_sure2_txt (*(int*)GIMG(0x00466fd4))
-#define sd_totitle_txt (*(int*)GIMG(0x00466f74))
-#define sd_x_key (*(int*)GIMG(0x0046701c))
-#define season_statistics (*(int*)GIMG(0x0093e7c0))
-#define shadow (*(int*)GIMG(0x00795e10))
-#define sky_object (*(int*)GIMG(0x0078a170))
-#define sky_shape1 (*(int*)GIMG(0x0078a260))
-#define sky_shape2 (*(int*)GIMG(0x0078a264))
-#define sky_shape3 (*(int*)GIMG(0x0078a268))
-#define sky_shape4 (*(int*)GIMG(0x0078a250))
-#define sky_shape5 (*(int*)GIMG(0x0078a254))
-#define sky_shape6 (*(int*)GIMG(0x0078a258))
-#define sky_shape7 (*(int*)GIMG(0x0078a25c))
-#define sky_shape8 (*(int*)GIMG(0x0078a26c))
-#define slab_background& (*(int*)GIMG(0x0093fff0))
-#define slab_background_colour (*(int*)GIMG(0x004699c4))
-#define slab_bounce_table (*(int*)GIMG(0x004699d0))
-#define slab_light_matrix (*(int*)GIMG(0x00469994))
-#define slab_position (*(int*)GIMG(0x0046995c))
-#define sound_volume (*(int*)GIMG(0x00467410))
-#define sprite_matrix (*(int*)GIMG(0x007541fc))
-#define stats_recorded (*(int*)GIMG(0x0046741c))
-#define still_running (*(int*)GIMG(0x00784284))
-#define strip_data (*(int*)GIMG(0x0077cef8))
-#define strip_data_fi (*(int*)GIMG(0x0077cee8))
-#define strip_postincrements (*(int*)GIMG(0x00463ebc))
-#define strip_vertex (*(int*)GIMG(0x0077cef4))
-#define sub_transparency_table (*(int*)GIMG(0x0074c4d0))
-#define sun_images (*(int*)GIMG(0x007830e0))
-#define sun_position (*(int*)GIMG(0x0046526c))
-#define sure2_txt (*(int*)GIMG(0x009370a0))
-#define sure_txt (*(int*)GIMG(0x00937460))
-#define surface_friction_coeff (*(int*)GIMG(0x00466d90))
-#define surface_traction_coeff (*(int*)GIMG(0x00466d98))
-#define surfai (*(int*)GIMG(0x0078a388))
-#define tilt_sprite_matrix (*(int*)GIMG(0x0075421c))
-#define time_phase_shift (*(int*)GIMG(0x00465248))
-#define timing (*(int*)GIMG(0x00463858))
-#define tot_time (*(int*)GIMG(0x007746b4))
-#define total_collisions (*(int*)GIMG(0x00939b60))
-#define total_dest_timer (*(int*)GIMG(0x0078428c))
-#define total_time (*(int*)GIMG(0x007746b0))
-#define track_height (*(int*)GIMG(0x0077cf6c))
-#define track_info (*(int*)GIMG(0x00466df0))
-#define track_lookup (*(int*)GIMG(0x00467424))
-#define track_object (*(int*)GIMG(0x00940168))
-#define track_position (*(int*)GIMG(0x00464e7c))
-#define twist1_frame_count (*(int*)GIMG(0x004651e0))
-#define twist2_frame_count (*(int*)GIMG(0x004651f4))
-#define u (*(int*)GIMG(0x00939b38))
-#define use_joystick (*(int*)GIMG(0x00463028))
-#define v_norm (*(int*)GIMG(0x007541f0))
-#define value (*(int*)GIMG(0x007543a8))
-#define wheel_object (*(int*)GIMG(0x0078d6d0))
-#define wheeloff_index (*(int*)GIMG(0x0077c740))
-#define wheeloff_object& (*(int*)GIMG(0x00774800))
-#define whllck (*(int*)GIMG(0x0078a384))
-#define wild_bill_angles (*(int*)GIMG(0x00464e4c))
-#define wild_bill_position (*(int*)GIMG(0x00464e6c))
-#define world_angles (*(int*)GIMG(0x007541e0))
-#define world_matrix (*(int*)GIMG(0x00462fa4))
-#define x_key (*(int*)GIMG(0x00937190))
-#define yes_quit (*(int*)GIMG(0x009376ac))
-#define yes_retire (*(int*)GIMG(0x009376a8))
-extern int DAT_00000186;
-extern int DAT_00415644;
-extern int DAT_00415648;
-extern int DAT_0041564c;
-extern int DAT_00415650;
-extern int DAT_00415654;
-extern int DAT_0042a380;
-extern int DAT_0042a7e0;
-#define DAT_0042da30 (*(int*)GIMG(0x0042da30))  /* dual-symbol: lens-flare init template in image (read by Init_LensFlare copy loop), not an empty C-global */
-#define DAT_0042daf0 (*(int*)GIMG(0x0042daf0))
-extern int DAT_0042e004;
-extern int DAT_0042e00c;
-extern int DAT_0042e010;
-extern int DAT_0042e014;
-extern int DAT_0042e018;
-extern int DAT_0042e01c;
-extern int DAT_00430de0;
-extern int DAT_00443f70;
-extern int DAT_00444860;
-extern int DAT_004448a0;
-extern int DAT_00449370;
-extern int DAT_00449388;
-#define DAT_0044b130 (*(int*)GIMG(0x0044b130))
-#define DAT_0044b134 (*(int*)GIMG(0x0044b134))
-#define DAT_0044b138 (*(int*)GIMG(0x0044b138))
-#define DAT_0044b13c (*(int*)GIMG(0x0044b13c))
-#define DAT_0044b140 (*(int*)GIMG(0x0044b140))
-#define DAT_0044b144 (*(int*)GIMG(0x0044b144))
-extern int DAT_0044c8d0;
-extern int DAT_0044c8d4;
-#define DAT_0044c8d8 (*(int*)GIMG(0x0044c8d8))
-#define DAT_0044c8dc (*(int*)GIMG(0x0044c8dc))
-#define DAT_0044c8e0 (*(int*)GIMG(0x0044c8e0))
-#define DAT_0044c8e4 (*(int*)GIMG(0x0044c8e4))
-extern int DAT_00450070;
-extern int DAT_00450088;
-extern int DAT_004500a0;
-extern int DAT_004500b8;
-extern int DAT_004500d0;
-extern int DAT_00450c20;
-extern int DAT_00450c40;
-extern int DAT_00450c5e;
-extern int DAT_00450c62;
-extern int DAT_00450c66;
-extern int DAT_00453cd0;
-extern int DAT_00453ce8;
-extern int DAT_00453d00;
-extern int DAT_00453d18;
-extern int DAT_00453d30;
-extern int DAT_00454af0;
-extern int DAT_00454b08;
-extern int DAT_00454b20;
-extern int DAT_00454b38;
-extern int DAT_00454b50;
-extern int DAT_004552e0;
-extern int DAT_004552f8;
-extern int DAT_00455310;
-extern int DAT_00455328;
-extern int DAT_00455340;
-extern int DAT_00459339;
-extern int DAT_004593d6;
-extern int DAT_004593ea;
-extern int DAT_0045953b;
-extern int DAT_009063b4_1;
-extern int DAT_009063b8_1;
-extern int DAT_5af34e72;
-extern int LAB_0041341c;
-extern int LAB_004239b0;
-extern int LAB_00445670;
-extern int LAB_00453a40;
-extern int LAB_00456bd3;
-extern int LAB_004576de;
-extern int LAB_004576e7;
-extern int PTR_DAT_0044e200;
-extern int PTR_DAT_0044e204;
-extern int PTR_DAT_0044e208;
-extern int PTR_DAT_0044e20c;
-extern int PTR_DAT_0044e210;
-extern int PTR_DAT_0044e214;
-extern int PTR_DAT_0044e218;
-extern int PTR_DAT_0044e21c;
-extern int PTR_DAT_0044e220;
-extern int PTR_DAT_0044e224;
-extern int PTR_DAT_0044e228;
-extern int PTR_DAT_0044e22c;
-extern int PTR_DAT_0044e230;
-extern int PTR_DAT_0044e234;
-extern int PTR_DAT_0044e238;
-extern int PTR_LAB_00426740;
-extern int PTR_LAB_00426764;
-extern int PTR_LAB_0042a4c0;
 #define SCA_Corner_Data_ (*(int*)GIMG(0x00465cf8))
 #define Speedway_Track_Type_ (*(int*)GIMG(0x00465d60))
-extern int UNK_00458895;
-/* FIX DUMMYPOLY-ALIAS: the decompiler split DummyPoly into the GIMG cell `DummyPoly`@0x74a6d0
- * AND a bare `extern int _DummyPoly` (allocated in dead BSS by dd2_data.c). DrawFlagObject does
- * `_DummyPoly = old_OT_head; OT_head = &DummyPoly` to chain DummyPoly into the OT — but writing
- * _DummyPoly into BSS left the REAL link at 0x74a6d0 = 0, so DrawOTag walked off the bottom of
- * the OT bucket array into the malloc heap (the f145 underflow crash). Alias them to one cell. */
-#define _DummyPoly DummyPoly
-extern int _FirstTime;
-extern int _Lap_Timer;
-extern int _Last_Lap_Timer;
-extern int _Now_Timing_Lap;
-extern int _Old_Cam_Mode;
-extern int _Replay_Invalid;
-extern int _Replay_Level;
-extern int _Replay_Script;
-extern int* _Replay_Script_Ptr;
-extern int _Timing_Delay;
-#define _Z_DISTANCE (*(int*)GIMG(0x004604c2))
-extern int __AccessFHeap;
-extern int __AccessFList;
-extern int __AccessFileH;
-extern int __AccessNHeap;
-extern int __AccessTDList;
-extern int __FiniAccessH;
-extern int __InitAccessH;
-extern int* __LpCmdLine;
-extern int __LpDllName;
-extern int __LpPgmName;
-extern int __MultipleThread;
-extern int __ReleaseFHeap;
-extern int __ReleaseFileH;
-extern int __ReleaseIOB;
-extern int __ReleaseNHeap;
-extern code* __WinMainProc;
-#define ___ASTACKPTR_ (*(int*)GIMG(0x0046c3dc))
-extern int ___ExceptionFilter;
-extern int ___FirstThreadData;
-extern int ___Is_DLL;
-extern int ___OpenStreams;
-extern int __bcrgb;
-extern unsigned char* __clutspace;
-extern int __cmptr;
-extern int __fcrgb;
-extern int __flg;
-#define __globmat (*(short*)GIMG(0x0074c6f0))
-extern int* __lmptr;
-extern int __op0;
-extern int __opvr0;
-extern int __opvr1;
-extern int __opz;
-extern int __otz;
-extern int __rgb0;
-extern int __scrx;
-extern int __scry;
-extern int __sigabort;
-extern unsigned char* __texturespace;
-extern int __vr0;
-extern int __vr1;
-extern int __vr2;
-extern int __vr3;
-#define _active_block_numbers (*(int*)GIMG(0x007892a0))
-extern int _actual_season_number;
-#define _add_transparency_table (*(int*)GIMG(0x0074c4c8))  /* dual-symbol: setter wrote C-global, draw_text_half reads image slot (=add_transparency_table) */
-extern int _adjusted_music;
-extern int _adjusted_sfx;
-extern int _applause;
-#define _applause_up_ (*(int*)GIMG(0x00939b18))
-extern int _boot_objects_count;
-extern int _bootoff_index;
-extern int _camera_collision;
-#define _camera_fd (*(int*)GIMG(0x0077cf10))
-extern int _camera_fd_pt;
-extern int _car0_being_obstructed;
-extern int _car_info;
-extern int _cars_in_crash;
-#define _cdb_ (*(int*)GIMG(0x00754380))
-extern int _commentating;
-#define _corner_fd (*(int*)GIMG(0x007924e0))
-extern int _crowd_volume;
-extern int _current_level;
-extern int _current_player;
-extern int _current_player_car;
-extern int _current_race;
-extern int _current_season;
-extern int _dec_info;
-extern int _decrunch_block;
-extern int _decrunch_flag;
-extern int _draw_frame;
-extern int _dth_shade;
-extern int _euphoria;
-#define _fi_levdat (*(int**)GIMG(0x00796f60))
-extern int _flag;
-extern int _flame_frame_count;
-extern int _flash1_frame_count;
-extern int _flash2_frame_count;
-extern int _flash3_frame_count;
-extern int _floaty_camera_fd;
-extern int _frame_skip;
-extern int _frame_wait;
-extern int _frames_per_sec;
-extern int _free_mem;
-extern int _fx;
-extern int _fx_1;
-extern int _fx_10;
-extern int _fx_11;
-extern int _fx_15;
-extern int _fx_17;
-extern int _fx_18;
-extern int _fx_2;
-extern int _fx_21;
-extern int _fx_22;
-extern int _fx_3;
-extern int _fx_4;
-extern int _fx_5;
-extern int _fx_6;
-extern int _fx_7;
-extern int _fx_8;
-extern int _fx_9;
-extern int _g_sprite_info;
-extern int _gnormals;
-extern short* _gpoly;
-extern int* _gprim1;
-extern int _gprim2;
-extern int _grounded_count;
-extern int _gtexture;
-extern int _gtexture_def;
-#define _h_norm (*(short*)GIMG(0x007541e8))
-#define _highlight_colour (*(int*)GIMG(0x004699c8))
-#define _hlf_transparency_table (*(int*)GIMG(0x0074c450))  /* dual-symbol: =hlf_transparency_table; was 0 -> draw_text_half DAT_00460010=0 -> crash */
-extern int _last_time;
-extern int* _level_data;
-extern int _light_matrix;
-extern int _local_1e;
-extern int _local_24;
-extern int _local_26;
-extern int _mem_size;
-#define _num_races (*(int*)GIMG(0x00467654))
-extern int _num_spies;
-extern int _num_strips;
-extern int _old_flying_index;
-extern int _otsize;
-extern int _pad_option;
-extern int _permission;
-#define _playable_bowls (*(int*)GIMG(0x00467408))
-#define _playable_tracks_ (*(int*)GIMG(0x00467404))
-extern int _polygon_angles;
-extern int* _prim_buf;
-extern int _quit_flag;
-extern int _race_finished;
-extern int _recorded_pad_type;
-#define _scene_colour_matrix_ (*(int*)GIMG(0x00465834))
-#define _screen_centre_x_ (*(int*)GIMG(0x00462fd0))
-extern int* _screen_line_list;
-extern int _screen_poly_list;
-extern int _sky_shape1;
-extern int _sky_shape2;
-extern int _sky_shape3;
-extern int _sky_shape4;
-extern int _sky_shape5;
-extern int _sky_shape6;
-extern int _sky_shape7;
-extern int _sky_shape8;
-#define _sound_volume (*(int*)GIMG(0x00467410))
-extern int _sprite_matrix;
-extern int _stats_recorded;
-extern int _strip_data;
-extern int _strip_vertex;
-#define _sub_transparency_table (*(int*)GIMG(0x0074c4d0))  /* dual-symbol: =sub_transparency_table */
-extern int _surfai;
-extern int _tilt_sprite_matrix;
-extern int _tot_time;
-extern int _total_collisions;
-extern int _total_dest_timer;
-extern int _track_height;
-extern int _u;
-extern int _v_norm;
-extern int _value;
-extern int _wheeloff_index;
-extern int _whllck;
-extern int _yes_quit;
-extern int _yes_retire;
-#define fog_col_ (*(int*)GIMG(0x0046589e))
-#define iRam00749038 0x749038  /* Ghidra named car-0's per-car-array entry (param*0x38+0x749038, stride 0x38) as a C-global; it's the image ADDRESS 0x749038 (all uses are iRam+0x20 then deref). */
-extern int pHVar1;
-extern int pHVar6;
+#define fog_col_ (*(undefined1*)GIMG(0x0046589e))
 #define playable_tracks_ (*(int*)GIMG(0x00467404))
-#define recorded_strips_ (*(int*)GIMG(0x007842a0))
-extern int sRam00465932;
-extern int sRam00465934;
-extern int sRam00465936;
-extern int sRam00465942;
-extern int sRam00465944;
-extern int sRam00465946;
-extern int sRam0046956a;
-extern int sRam0046be12;
-extern int sRam0071410a;
-extern int sRam007597b8;
-extern int sRam007597c0;
-extern int sRam007597c8;
-extern int sRam007597d0;
-extern int sRam007597d8;
-extern int sRam007597e0;
-extern int sRam007597e8;
+#define recorded_strips_ (*(undefined1*)GIMG(0x007842a0))
 #define sca_frame_count_ (*(int*)GIMG(0x00465060))
 #define scene_colour_matrix_ (*(int*)GIMG(0x00465834))
 #define slab_background_ (*(int*)GIMG(0x0093fff0))
-extern int stack0x00000008;
-extern int stack0x0000000c;
-extern int stack0xfffffbd4;
-extern int stack0xfffffbd5;
-extern int stack0xfffffbd6;
-extern int stack0xffffff78;
-extern int stack0xffffffa0;
-extern int stack0xffffffbf;
-extern int stack0xfffffff4;
-extern int stack0xfffffffc;
-extern int uRam00464e52;
-extern int uRam00464e5a;
-extern int uRam0073c2f4;
-extern int uRam00744b36;
-extern int uRam007598a0;
-extern int uRam007598a2;
-extern int uRam007598a4;
-extern int uRam007598a6;
-extern int uRam007598a8;
-extern int uRam007598ae;
-extern int uVar1;
-#define wheeloff_object_ (*(int*)GIMG(0x00774800))
-void __cdecl FUN_004128a6(undefined4 *param_1,uint param_2,int param_3);
-void FUN_00412e8c(void);
-void __cdecl FUN_00412e9c(int param_1);
-void FUN_00413014(void);
-undefined4 FUN_00413070(void);
-LRESULT FUN_004132b0(HWND param_1,uint param_2,uint param_3,uint param_4);
-void __cdecl FUN_00413448(int param_1);
-void FUN_00413b4e(void);
-void FUN_00413dc8(short *param_1,short *unaff_ESI,short *unaff_EDI);
-void FUN_00413f45(void);
-void FUN_00413fd2(void);
-void FUN_00414055(void);
-uint __cdecl FUN_00414360(int *param_1,int *param_2);
-void __cdecl FUN_004148d0(int param_1,int param_2,int param_3,int param_4);
-void __cdecl FUN_00415160(void *param_1,undefined *param_2);
-void __cdecl FUN_004153d4(undefined4 *param_1);
-undefined4 __cdecl FUN_00415404(char *param_1);
-void __cdecl FUN_00415448(char *param_1,uint *param_2);
-undefined4 __cdecl FUN_004154b8(int param_1,int param_2);
-undefined4 __cdecl FUN_0041574c(int *param_1,HGLOBAL param_2);
-undefined4 __cdecl FUN_004157e8(int *param_1,undefined4 *param_2,int param_3);
-undefined4 __cdecl Parse_RIFF_Wave(int *param_1,int *param_2,int *param_3,uint *param_4);
-void __cdecl Init_DirectSound(undefined4 param_1);
-void FUN_00415a94(void);
-void __cdecl FUN_00415b50(uint param_1);
-void __cdecl FUN_00415f64(int param_1,int param_2);
-undefined4 FUN_00416044(void);
-void FUN_0041611c(void);
-void __cdecl FUN_0041612c(char param_1,undefined4 param_2);
-void FUN_00416264(void);
-int __cdecl Parse_Sound_Bank(int param_1);
-void FUN_0041643c(void);
-int FUN_00416494(void);
-undefined4 __cdecl FUN_004164d4(int param_1,int param_2);
-int __cdecl Sound_Volume_To_dB(uint param_1);
-void __cdecl FUN_004166c4(int param_1,char *param_2,ushort *param_3);
-undefined4 __cdecl FUN_00416a10(int param_1);
-void __cdecl FUN_0041a2f4(int param_1);
-void __cdecl FUN_0041f6a0(int param_1);
-int __cdecl FUN_0041fb7c(undefined4 *param_1);
-void __cdecl Draw_Object_Polys(undefined4 *param_1,int param_2);
-void __cdecl FUN_0041ff50(undefined4 param_1);
-void __cdecl FUN_0042003c(undefined4 param_1,undefined4 param_2);
-void __cdecl FUN_00420060(undefined4 param_1);
-void __cdecl FUN_004202ac(short *param_1,int *param_2);
-void __cdecl FUN_004203a0(short *param_1,int *param_2);
-void __cdecl FUN_004205d8(undefined4 param_1,int *param_2,uint param_3);
-void FUN_00420b1c(void);
-void __cdecl FUN_00420cf0(int param_1,ushort param_2,undefined2 param_3,undefined1 *param_4,undefined4 param_5);
-int __cdecl FUN_00420e6c(int param_1);
-void __cdecl FUN_00420ee8(uint param_1);
-void FUN_00422064(void);
-int __cdecl FUN_004220cc(undefined1 *param_1,int param_2,int param_3);
-int __cdecl FUN_00422128(int *param_1,int param_2,int param_3);
-int __cdecl FUN_00422184(int *param_1,int param_2,int param_3);
-void FUN_004221ec(void);
-void __cdecl FUN_00422358(int param_1,int param_2,int param_3);
-void __cdecl FUN_00422548(int param_1,int param_2,int param_3);
-void __cdecl FUN_0042293c(int param_1,int param_2,int param_3);
-void FUN_00422c74(void);
-void __cdecl FUN_0042304c(byte *param_1);
-void FUN_00423210(void);
-int FUN_0042353c(void);
-int __cdecl FUN_004237c0(int param_1);
-int __cdecl FUN_00423804(int param_1,int param_2);
-void FUN_00424930(void);
-void __cdecl FUN_00425314(int param_1);
-void __cdecl FUN_00425a98(int param_1);
-undefined4 __cdecl FUN_00425b88(int param_1);
-void __cdecl FUN_00425e74(int param_1,int param_2,undefined4 param_3,int param_4,int param_5);
-void Compute_Bowl_Cell_Normals(void);
-void __cdecl FUN_00428548(int param_1,int *param_2,int param_3);
-void __cdecl FUN_004287c0(int param_1,int param_2);
-void __cdecl FUN_004288d0(int param_1);
-void __cdecl Play_Race_Start_Sounds(int param_1);
-void __cdecl FUN_004295e4(int param_1);
-void FUN_00429994(void);
-void __cdecl FUN_0042a4d8(int param_1);
-void __cdecl FUN_0042b5f0(int param_1);
-void __cdecl FUN_0042c1a4(int param_1);
-void FUN_0042fa4c(void);
-void FUN_0042fd58(void);
-void Draw_Scene_Object_Blocks(void);
-void FUN_004308b8(void);
-void __cdecl FUN_00430a30(int param_1);
-void __fastcall FUN_00430bde(int param_1);
-void __cdecl FUN_00430efc(int param_1,short param_2,short param_3,short param_4,int param_5);
-undefined4 __cdecl FUN_00432f98(int param_1);
-void FUN_00433a70(void);
-void FUN_004351d0(void);
-void __cdecl FUN_00435254(int param_1);
-int FUN_00436c04(void);
-void Update_Particles(void);
-void __cdecl FUN_00436dd0(int param_1);
-void __cdecl FUN_0043709c(int param_1,int param_2,int param_3);
-void __cdecl FUN_004371fc(int param_1,int param_2,int param_3,int param_4,short param_5,int param_6,uint param_7, undefined4 param_8);
-void __cdecl FUN_0043b26c(int param_1,int param_2,int param_3);
-void __cdecl FUN_0043b7bc(int param_1,int param_2,int param_3,int param_4,int param_5);
-void __cdecl FUN_0043c4e8(int param_1,int param_2,int *param_3,int param_4);
-void __cdecl FUN_0043c55c(int param_1,int param_2,int *param_3,int param_4);
-void __cdecl FUN_0043c5d0(int param_1,int param_2,char *param_3,int param_4,int param_5);
-void __cdecl FUN_0043c738(int param_1,int param_2,char *param_3,int param_4,int param_5);
-void __cdecl FUN_0043dbd8(int param_1);
-void __cdecl FUN_0043dd00(int param_1);
-void FUN_00440980(void);
-void __cdecl FUN_00440ac4(int param_1);
-void __cdecl FUN_00440f60(int param_1);
-void __cdecl FUN_00441394(int param_1,int param_2);
-void __cdecl FUN_0044282c(int param_1);
-void __cdecl Compute_Car_Screen_Pos(int param_1);
-void FUN_004430b8(void);
-void FUN_00443b10(void);
-void FUN_00443f90(void);
-void __cdecl FUN_00444048(int param_1);
-void __cdecl FUN_004448e0(int param_1);
-void __cdecl FUN_00444a60(int param_1);
-void __cdecl FUN_00444e3c(int param_1);
-void __cdecl FUN_00444fcc(int param_1,int param_2);
-void __cdecl FUN_00445030(int param_1,int param_2);
-void __cdecl FUN_004450dc(int param_1,uint param_2);
-void FUN_00445b40(void);
-void FUN_00445b78(void);
-void FUN_00446c10(void);
-void __cdecl FUN_004471c0(int param_1);
-void FUN_004477a0(void);
-void FUN_00447960(void);
-void Update_Engine_Sound(void);
-int __cdecl FUN_004480bc(int param_1);
-void Update_Commentary(void);
-void FUN_004496d8(void);
-undefined4 __cdecl FUN_00449728(uint param_1);
-void FUN_00449928(void);
-void FUN_00449958(void);
-void __cdecl FUN_00449c54(undefined4 param_1);
-void __cdecl FUN_00449dd8(undefined4 param_1);
-undefined4 __cdecl FUN_00449ee0(uint param_1);
-void __cdecl FUN_0044a1a4(undefined4 param_1,int param_2);
-void __cdecl FUN_0044a2b0(undefined4 param_1,int param_2);
-undefined4 __cdecl FUN_0044a32c(undefined4 param_1,int param_2,undefined4 *param_3);
-undefined4 __cdecl FUN_0044a3a0(undefined4 param_1,int param_2,undefined4 *param_3);
-undefined4 __cdecl FUN_0044a4e4(char *param_1);
-void __cdecl FUN_0044a904(int param_1);
-void FUN_0044aa28(void);
-void FUN_0044aaf0(void);
-void __cdecl FUN_0044ac9c(undefined2 *param_1,undefined2 param_2);
-void __cdecl FUN_0044aec8(int *param_1);
-void FUN_0044b5c0(void);
-void FUN_0044b684(void);
-void FUN_0044b970(void);
-void __cdecl FUN_0044b9c0(char *param_1);
-void FUN_0044bb88(void);
-void __cdecl FUN_0044c418(int param_1,int param_2);
-void __cdecl FUN_0044c538(int param_1,int param_2);
-void __cdecl FUN_0044c800(int *param_1,int param_2);
-void FUN_0044c8e8(void);
-void FUN_0044cb48(void);
-void FUN_0044ccb8(void);
-void FUN_0044ced4(void);
-void FUN_0044cef0(void);
-void FUN_0044d0e4(void);
-void FUN_0044d3d4(void);
-void FUN_0044d538(void);
-int FUN_0044d630(void);
-void FUN_0044d650(void);
-void FUN_0044d974(void);
-void FUN_0044db70(void);
-void FUN_0044e148(void);
-int FUN_0044e170(void);
-void __cdecl FUN_0044e440(int *param_1);
-void FUN_0044e618(void);
-void FUN_0044e6a0(void);
-void FUN_0044eb1c(void);
-undefined4 __cdecl FUN_0044ecac(undefined4 param_1);
-void __cdecl FUN_0044f5c8(int param_1,int param_2,int param_3);
-void __cdecl FUN_0044f65c(undefined4 param_1,undefined4 param_2,int param_3);
-undefined4 FUN_0044f6b0(void);
-void __cdecl FUN_0044f814(undefined4 param_1);
-undefined4 __cdecl FUN_0044fbc0(undefined4 param_1,uint param_2);
-uint FUN_0044fca4(void);
-void __cdecl FUN_0044fce8(undefined1 *param_1,int param_2);
-void __cdecl FUN_0044fdb4(undefined4 param_1,undefined4 param_2,int param_3);
-void FUN_0044ff48(void);
-void FUN_00450640(void);
-undefined4 FUN_0045099c(void);
-void __cdecl FUN_00450c7c(short *param_1);
-void __cdecl FUN_00450e20(int param_1);
-void FUN_004518ac(void);
-void FUN_00451a80(void);
-void FUN_00451ac0(void);
-void FUN_00451ae0(void);
-void FUN_00451d4c(void);
-void FUN_00451d6c(void);
-void FUN_00451fdc(void);
-void FUN_00451ff0(void);
-undefined4 FUN_0045202c(void);
-void FUN_00452090(void);
-undefined4 FUN_004525a0(void);
-void FUN_00452790(void);
-undefined4 FUN_004527f0(void);
-void FUN_004529d4(void);
-bool FUN_00452a34(void);
-void FUN_00452d30(void);
-undefined4 FUN_00452da0(void);
-undefined4 FUN_00452dc0(void);
-void FUN_00452fa4(void);
-void FUN_00452fc4(void);
-void FUN_00453580(void);
-void __cdecl FUN_004535c0(int param_1);
-void FUN_004539d0(void);
-void FUN_004539f0(void);
-undefined4 FUN_00453a18(void);
-undefined4 FUN_00453a20(void);
-void FUN_00453b98(void);
-void FUN_00454158(void);
-void FUN_004541e8(void);
-void FUN_00454278(void);
-void FUN_00454308(void);
-void FUN_00454398(void);
-undefined4 FUN_00454550(void);
-void FUN_00454804(void);
-void FUN_00454a70(void);
-void FUN_00454e9c(void);
-undefined4 FUN_00454f0c(void);
-undefined4 FUN_004551b0(void);
-void FUN_00455260(void);
-void FUN_0045572c(void);
-undefined4 FUN_004559d4(void);
-int * __cdecl FUN_00455de4(char *param_1,byte param_2,uint param_3,int param_4,int *param_5);
-int * __cdecl FUN_00455edb(char *param_1,byte *param_2,int param_3);
-FILE * __cdecl FUN_00455f3b(FILE *param_1);
-int * __cdecl FUN_00455fb0(char *param_1,byte *param_2,FILE *param_3);
-undefined4 __cdecl FUN_00456034(int param_1,int *param_2);
-undefined4 __cdecl FUN_0045607b(int *param_1,LONG param_2,uint param_3);
-int __cdecl FUN_0045644e(int param_1);
-void __cdecl FUN_0045645e(undefined1 *param_1,uint param_2);
-void __cdecl FUN_00456717(int *param_1,undefined1 param_2);
-int FUN_0045672e(char* buf, const char* fmt, ...);
-int FUN_00456af2(void);
-void __fastcall FUN_00456b30(uint param_1,uint param_2);
-void __fastcall FUN_00456b67(uint param_1,undefined4 param_2);
-undefined4 __cdecl FUN_00456bf3(undefined4 *param_1,byte *param_2,int *param_3);
-int __cdecl FUN_00456cae(int param_1);
-void __cdecl FUN_00456cdf(undefined4 param_1);
-undefined4 FUN_0045703b(void);
-void FUN_00457040(void);
-void __cdecl FUN_00457041(int param_1);
-void __cdecl FUN_0045704f(int param_1);
-int __cdecl FUN_004571e4(undefined4 *param_1);
-DWORD __cdecl FUN_004572f8(int param_1,LONG param_2,DWORD param_3);
-DWORD __cdecl FUN_00457408(int param_1,LPVOID param_2,DWORD param_3);
-undefined4 __cdecl FUN_00457571(undefined4 *param_1);
-undefined4 __cdecl FUN_00457631(int param_1);
-void FUN_004576c5(void);
-byte * __cdecl FUN_00457d39(char *param_1,int *param_2,int param_3);
-char * __cdecl FUN_00457e84(char *param_1,int param_2);
-int __cdecl FUN_00457ee9(char *param_1,undefined4 param_2,int param_3);
-int __cdecl FUN_00457f0f(short *param_1,undefined4 param_2,int param_3);
-void __cdecl FUN_00457f40(int param_1,char *param_2,int param_3);
-void __cdecl FUN_00457f9f(char *param_1,uint param_2,int param_3);
-int __cdecl FUN_0045809c(undefined4 param_1,undefined4 param_2,undefined4 param_3);
-undefined8 __thiscall FUN_004580b7(void *this,ushort *param_1,int *param_2,int param_3,ushort *param_4);
-void __cdecl FUN_004585e8(byte *param_1);
-void __cdecl FUN_00458964(HANDLE param_1,uint param_2);
-void FUN_00458a31(void);
-int __cdecl FUN_00458b45(byte *param_1,byte *param_2);
-undefined4 __cdecl FUN_00458bc7(uint param_1);
-void __cdecl FUN_00458cc5(int param_1,uint param_2);
-undefined2 FUN_00458e2f(void);
-int __cdecl FUN_0045987f(int param_1);
-undefined8 __cdecl FUN_00459968(char *param_1,int *param_2,int param_3);
-void __cdecl FUN_00459a88(char *param_1,int param_2);
-void FUN_00459b19(void);
-int * __cdecl FUN_00459b51(int *param_1);
-undefined4 __cdecl FUN_00459bc5(uint param_1);
-bool __cdecl FUN_00459c68(uint *param_1);
-int __cdecl FUN_00459e4a(int param_1);
-undefined1 * FUN_00459e6e(void);
-void __cdecl FUN_00459ea8(uint *param_1,uint param_2);
-void FUN_00459f57(void);
-LPVOID FUN_00459fc0(void);
-undefined4 __cdecl FUN_00459ff5(undefined4 param_1,int param_2);
-void FUN_0045a10b(char *param_1);
-uint __cdecl FUN_0045a174(HANDLE param_1);
-int __cdecl FUN_0045a3b0(char *param_1,int param_2,int param_3,int param_4);
-char * __cdecl FUN_0045a453(char *param_1,char *param_2,int param_3,int param_4);
-void __cdecl FUN_0045a4c6(undefined1 *param_1,size_t param_2,size_t param_3);
-undefined4 __cdecl FUN_0045a9f1(HLOCAL param_1);
-void __cdecl FUN_0045aa4a(HLOCAL param_1);
-int __cdecl FUN_0045aa9f(int param_1);
-void __cdecl FUN_0045aaac(uint param_1,uint param_2);
-undefined4 FUN_0045acb6(void);
-undefined4 __cdecl FUN_0045ad67(short *param_1);
-void FUN_0045ad94(void);
-undefined4 FUN_0045ae0c(void);
-undefined8 __fastcall FUN_0045aeaa(undefined4 param_1,undefined4 param_2);
-void __fastcall FUN_0045b3d9(undefined4 param_1,uint param_2);
-void FUN_0045b5ae(void);
-undefined8 __cdecl FUN_0045b5d4(int param_1,uint param_2,uint param_3);
-void __fastcall FUN_0045b688(undefined4 param_1,uint *param_2);
-uint __fastcall FUN_0045b6f3(undefined4 param_1,int param_2);
-int FUN_0045b75d(void);
-void FUN_0045b812(void);
-uint __cdecl FUN_0045b814(int param_1,uint param_2,ushort param_3,undefined4 param_4,uint param_5,uint param_6);
-void FUN_0045bdda(void);
-undefined4 FUN_0045be98(uint param_1);
-undefined4 FUN_0045c2ab(void);
-extern int extraout_DL;
-extern int extraout_DL_00;
-extern int extraout_EAX;
-extern int extraout_ECX;
-extern int extraout_ECX_00;
-extern int extraout_ECX_01;
-extern int extraout_EDX;
-extern int extraout_ST0;
-extern int extraout_ST0_00;
-extern int extraout_ST1;
-extern int extraout_var;
-extern int in_AF;
-extern int in_AL;
-extern int in_DS;
-extern int in_EAX;
-extern int in_ECX;
-extern int in_EDX;
-extern int in_FPUControlWord;
-extern int in_FPUStatusWord;
-extern int in_ST0;
-extern int in_ST1;
-extern int unaff_BH;
-extern int unaff_EBP;
-extern int unaff_EBX;
-extern int unaff_EDI;
-extern int unaff_ESI;
-extern int unaff_FS_OFFSET;
-extern int unaff_retaddr;
-#define DAT_0046049a (*(undefined1*)GIMG(0x0046049a))
-#define _DAT_007747c8 (*(int*)GIMG(0x007747c8))
-#define _DAT_00795de0 (*(int*)GIMG(0x00795de0))
-#define DAT_0046a81c (*(undefined1*)GIMG(0x0046a81c))
-#define _DAT_0093deb4 (*(int*)GIMG(0x0093deb4))
-#define DAT_0093fd99 (*(int*)GIMG(0x0093fd99))
-#define DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
-#define DAT_00784298 (*(int*)GIMG(0x00784298))
-#define _DAT_0077d1e4 (*(int*)GIMG(0x0077d1e4))
-#define _DAT_0093def2 (*(int*)GIMG(0x0093def2))
-#define DAT_0078a790 (*(int*)GIMG(0x0078a790))
-#define DAT_00459596 (*(undefined1*)GIMG(0x00459596))
-#define DAT_0093eb6c (*(int*)GIMG(0x0093eb6c))
-#define _DAT_0074c4f8 (*(int*)GIMG(0x0074c4f8))
-#define DAT_007924f4 (*(int*)GIMG(0x007924f4))
-#define DAT_007926a4 (*(int*)GIMG(0x007926a4))
-#define _DAT_0079246c (*(int*)GIMG(0x0079246c))
-#define _DAT_007543a0 (*(int*)GIMG(0x007543a0))
-#define DAT_0093a490 (*(int*)GIMG(0x0093a490))
-#define DAT_00460496 (*(undefined1*)GIMG(0x00460496))
-#define DAT_0077d45c (*(int*)GIMG(0x0077d45c))
-#define DAT_0078a792 (*(int*)GIMG(0x0078a792))
-#define _DAT_00791c00 (*(int*)GIMG(0x00791c00))
-#define _DAT_00754430 (*(int*)GIMG(0x00754430))
-#define DAT_00450e26 (*(undefined1*)GIMG(0x00450e26))
-#define DAT_0046a7fa (*(undefined1*)GIMG(0x0046a7fa))
-#define _DAT_007747c6 (*(int*)GIMG(0x007747c6))
-#define _DAT_0079244c (*(int*)GIMG(0x0079244c))
-#define DAT_00467ca8 (*(undefined1*)GIMG(0x00467ca8))
-#define DAT_004595aa (*(undefined1*)GIMG(0x004595aa))
-#define _DAT_007541ea (*(int*)GIMG(0x007541ea))
-#define DAT_00454cc8 (*(undefined1*)GIMG(0x00454cc8))
-#define DAT_007925bc (*(int*)GIMG(0x007925bc))
-#define _DAT_0077475a (*(int*)GIMG(0x0077475a))
-#define _DAT_0093dec4 (*(int*)GIMG(0x0093dec4))
-#define _DAT_00792440 (*(int*)GIMG(0x00792440))
-#define DAT_0093a39c (*(int*)GIMG(0x0093a39c))
-#define _DAT_0093a3c4 (*(int*)GIMG(0x0093a3c4))
-#define _DAT_0093fc68 (*(int*)GIMG(0x0093fc68))
-#define _DAT_0078a378 (*(undefined4*)GIMG(0x0078a378))
-#define DAT_0093fd93 (*(int*)GIMG(0x0093fd93))
-#define _DAT_009392c4 (*(undefined4*)GIMG(0x009392c4))
-#define _DAT_007925f4 (*(int*)GIMG(0x007925f4))
-#define _DAT_00791bec (*(int*)GIMG(0x00791bec))
-#define _DAT_0074f174 (*(int*)GIMG(0x0074f174))
-#define _DAT_0074c454 (*(int*)GIMG(0x0074c454))
-#define _DAT_007924e8 (*(int*)GIMG(0x007924e8))
-#define _DAT_0074c506 (*(int*)GIMG(0x0074c506))
-#define _DAT_00469a6a (*(undefined1*)GIMG(0x00469a6a))
-#define _DAT_0077cf0c (*(int*)GIMG(0x0077cf0c))
-#define _DAT_00774758 (*(int*)GIMG(0x00774758))
-#define _DAT_007543fc (*(int*)GIMG(0x007543fc))
-#define _DAT_007925e8 (*(int*)GIMG(0x007925e8))
-#define DAT_00940000 (*(int*)GIMG(0x00940000))
-#define _DAT_007543b0 (*(int*)GIMG(0x007543b0))
-#define DAT_0044ca90 (*(undefined1*)GIMG(0x0044ca90))
-#define _DAT_00781ed4 (*(int*)GIMG(0x00781ed4))
-#define _DAT_00774748 (*(int*)GIMG(0x00774748))
-#define _DAT_0074c528 (*(int*)GIMG(0x0074c528))
-#define _DAT_007926b0 (*(int*)GIMG(0x007926b0))
-#define _DAT_0078934c (*(int*)GIMG(0x0078934c))
-#define _DAT_0077cf1c (*(int*)GIMG(0x0077cf1c))
-#define DAT_0077cf3a (*(int*)GIMG(0x0077cf3a))
-#define _DAT_00792514 (*(int*)GIMG(0x00792514))
-#define DAT_0074ef18 (*(int*)GIMG(0x0074ef18))
-#define DAT_00795c52 (*(int*)GIMG(0x00795c52))
-#define _DAT_00754206 (*(int*)GIMG(0x00754206))
-#define _DAT_00792490 (*(int*)GIMG(0x00792490))
-#define _DAT_0074f018 (*(int*)GIMG(0x0074f018))
-#define _DAT_00789356 (*(int*)GIMG(0x00789356))
-#define DAT_007746fc (*(int*)GIMG(0x007746fc))
-#define _DAT_00792606 (*(int*)GIMG(0x00792606))
-#define DAT_004677c8 (*(undefined1*)GIMG(0x004677c8))
-#define _DAT_0093a494 (*(int*)GIMG(0x0093a494))
-#define DAT_004554e8 (*(undefined1*)GIMG(0x004554e8))
-#define _DAT_0074c538 (*(int*)GIMG(0x0074c538))
-#define _DAT_0077cf44 (*(int*)GIMG(0x0077cf44))
-#define _DAT_0093def4 (*(int*)GIMG(0x0093def4))
-#define _DAT_0093fd20 (*(int*)GIMG(0x0093fd20))
-#define DAT_007926b0 (*(int*)GIMG(0x007926b0))
-#define DAT_004683b0 (*(undefined1*)GIMG(0x004683b0))
-#define DAT_009409a8 (*(int*)GIMG(0x009409a8))
-#define _DAT_00469a38 (*(undefined1*)GIMG(0x00469a38))
-#define _DAT_0074c700 (*(int*)GIMG(0x0074c700))
-#define _DAT_00792594 (*(int*)GIMG(0x00792594))
-#define _DAT_007541fe (*(int*)GIMG(0x007541fe))
-#define _DAT_0074c6f4 (*(int*)GIMG(0x0074c6f4))
-#define DAT_00469188 (*(undefined1*)GIMG(0x00469188))
-#define _DAT_007542ca (*(undefined1*)GIMG(0x007542ca))
-#define _DAT_00792488 (*(int*)GIMG(0x00792488))
-#define DAT_004449d0 (*(undefined1*)GIMG(0x004449d0))
-#define DAT_004440a0 (*(undefined1*)GIMG(0x004440a0))
-#define _DAT_0077cf08 (*(int*)GIMG(0x0077cf08))
-#define _DAT_00754400 (*(int*)GIMG(0x00754400))
-#define _DAT_00792a38 (*(int*)GIMG(0x00792a38))
-#define DAT_007543d0 (*(int*)GIMG(0x007543d0))
-#define _DAT_00791c26 (*(int*)GIMG(0x00791c26))
-#define _DAT_0077cf74 (*(int*)GIMG(0x0077cf74))
-#define DAT_0044ca94 (*(undefined1*)GIMG(0x0044ca94))
-#define DAT_0042e13c (*(undefined1*)GIMG(0x0042e13c))
-#define _DAT_007541c4 (*(int*)GIMG(0x007541c4))
-#define DAT_007892a4 (*(int*)GIMG(0x007892a4))
-#define DAT_0079250c (*(int*)GIMG(0x0079250c))
-#define _DAT_0074c584 (*(int*)GIMG(0x0074c584))
-#define _DAT_0074f19c (*(int*)GIMG(0x0074f19c))
-#define _DAT_007924bc (*(int*)GIMG(0x007924bc))
-#define _DAT_00792454 (*(int*)GIMG(0x00792454))
-#define _DAT_00781e60 (*(int*)GIMG(0x00781e60))
-#define _DAT_00754224 (*(int*)GIMG(0x00754224))
-#define DAT_0077cf37 (*(int*)GIMG(0x0077cf37))
-#define DAT_0046a7f8 (*(undefined1*)GIMG(0x0046a7f8))
-#define _DAT_00940004 (*(int*)GIMG(0x00940004))
-#define _DAT_007542ee (*(int*)GIMG(0x007542ee))
-#define DAT_0044b2a8 (*(undefined1*)GIMG(0x0044b2a8))
-#define _DAT_0093fd48 (*(int*)GIMG(0x0093fd48))
-#define DAT_0093a314 (*(int*)GIMG(0x0093a314))
-#define _DAT_0074c578 (*(int*)GIMG(0x0074c578))
-#define _DAT_00791ba4 (*(int*)GIMG(0x00791ba4))
-#define _DAT_0074c54c (*(int*)GIMG(0x0074c54c))
-#define _DAT_0093de88 (*(int*)GIMG(0x0093de88))
-#define DAT_0078a750 (*(int*)GIMG(0x0078a750))
-#define _DAT_007541ec (*(int*)GIMG(0x007541ec))
-#define _DAT_007925ae (*(int*)GIMG(0x007925ae))
-#define DAT_0074f12e (*(int*)GIMG(0x0074f12e))
-#define _DAT_00792464 (*(int*)GIMG(0x00792464))
-#define _DAT_00792484 (*(int*)GIMG(0x00792484))
-#define DAT_0044b2b4 (*(undefined1*)GIMG(0x0044b2b4))
-#define _DAT_00791bf8 (*(int*)GIMG(0x00791bf8))
-#define _DAT_0074c524 (*(int*)GIMG(0x0074c524))
-#define _DAT_0074c534 (*(int*)GIMG(0x0074c534))
-#define _DAT_00791bc4 (*(int*)GIMG(0x00791bc4))
-#define DAT_0093e7b3 (*(int*)GIMG(0x0093e7b3))
-#define DAT_007924e4 (*(int*)GIMG(0x007924e4))
-#define DAT_00774748 (*(int*)GIMG(0x00774748))
-#define _DAT_0079245c (*(int*)GIMG(0x0079245c))
-#define _DAT_0075421e (*(int*)GIMG(0x0075421e))
-#define _DAT_00795dec (*(int*)GIMG(0x00795dec))
-#define DAT_007925e8 (*(int*)GIMG(0x007925e8))
-#define _DAT_0074c4fe (*(int*)GIMG(0x0074c4fe))
-#define _DAT_00792618 (*(int*)GIMG(0x00792618))
-#define _DAT_0075437c (*(int*)GIMG(0x0075437c))
-#define _DAT_0077ced8 (*(int*)GIMG(0x0077ced8))
-#define DAT_00754451 (*(int*)GIMG(0x00754451))
-#define _DAT_0093a49e (*(int*)GIMG(0x0093a49e))
-#define _DAT_0074c4c0 (*(int*)GIMG(0x0074c4c0))
-#define _DAT_00781914 (*(int*)GIMG(0x00781914))
-#define DAT_00454ce0 (*(undefined1*)GIMG(0x00454ce0))
-#define _DAT_0077cf24 (*(int*)GIMG(0x0077cf24))
-#define DAT_00444990 (*(undefined1*)GIMG(0x00444990))
-#define DAT_00455500 (*(undefined1*)GIMG(0x00455500))
-#define _DAT_007818bc (*(int*)GIMG(0x007818bc))
-#define _DAT_007925c8 (*(int*)GIMG(0x007925c8))
-#define DAT_0044ca98 (*(undefined1*)GIMG(0x0044ca98))
-#define _DAT_0093a414 (*(int*)GIMG(0x0093a414))
-#define DAT_00450278 (*(undefined1*)GIMG(0x00450278))
-#define _DAT_00467c2a (*(undefined1*)GIMG(0x00467c2a))
-#define _DAT_007747d4 (*(int*)GIMG(0x007747d4))
-#define DAT_00792562 (*(int*)GIMG(0x00792562))
-#define DAT_00450e22 (*(undefined1*)GIMG(0x00450e22))
-#define _DAT_00754434 (*(int*)GIMG(0x00754434))
-#define _DAT_0093fc50 (*(int*)GIMG(0x0093fc50))
-#define _DAT_007746fc (*(int*)GIMG(0x007746fc))
-#define DAT_00792bae (*(int*)GIMG(0x00792bae))
-#define _DAT_0077cf14 (*(int*)GIMG(0x0077cf14))
-#define DAT_0074f120 (*(int*)GIMG(0x0074f120))
-#define _DAT_00754408 (*(int*)GIMG(0x00754408))
-#define _DAT_0093fc00 (*(int*)GIMG(0x0093fc00))
-#define DAT_00782ad7 (*(int*)GIMG(0x00782ad7))
-#define _DAT_007924f4 (*(int*)GIMG(0x007924f4))
-#define DAT_007924e8 (*(int*)GIMG(0x007924e8))
-#define _DAT_00781e8c (*(int*)GIMG(0x00781e8c))
-#define _DAT_00791bdc (*(int*)GIMG(0x00791bdc))
-#define _DAT_00792a86 (*(int*)GIMG(0x00792a86))
-#define _DAT_0093de14 (*(int*)GIMG(0x0093de14))
-#define _DAT_00784290 (*(int*)GIMG(0x00784290))
-#define DAT_004554d0 (*(undefined1*)GIMG(0x004554d0))
-#define _DAT_00781f4c (*(int*)GIMG(0x00781f4c))
-#define _DAT_0093fc28 (*(int*)GIMG(0x0093fc28))
-#define _DAT_0046833e (*(undefined1*)GIMG(0x0046833e))
-#define _DAT_00781ef8 (*(int*)GIMG(0x00781ef8))
-#define DAT_00468da4 (*(undefined1*)GIMG(0x00468da4))
-#define DAT_0046b616 (*(undefined1*)GIMG(0x0046b616))
-#define DAT_0075424e (*(int*)GIMG(0x0075424e))
-#define _DAT_00792632 (*(int*)GIMG(0x00792632))
-#define DAT_0046833a (*(undefined1*)GIMG(0x0046833a))
-#define _DAT_0074c4c4 (*(int*)GIMG(0x0074c4c4))
-#define _DAT_0093a314 (*(int*)GIMG(0x0093a314))
-#define _DAT_007925da (*(int*)GIMG(0x007925da))
-#define _DAT_0093de9e (*(int*)GIMG(0x0093de9e))
-#define _DAT_0093de92 (*(int*)GIMG(0x0093de92))
-#define DAT_0042dc20 (*(undefined1*)GIMG(0x0042dc20))
-#define DAT_00460498 (*(undefined1*)GIMG(0x00460498))
-#define DAT_00797000 (*(int*)GIMG(0x00797000))
-#define _DAT_0093deb6 (*(int*)GIMG(0x0093deb6))
-#define _DAT_0093a490 (*(int*)GIMG(0x0093a490))
-#define _DAT_0075422c (*(int*)GIMG(0x0075422c))
-#define _DAT_0077c758 (*(int*)GIMG(0x0077c758))
-#define DAT_0077cf00 (*(int*)GIMG(0x0077cf00))
-#define _DAT_0074c6d4 (*(int*)GIMG(0x0074c6d4))
-#define _DAT_0074c6fc (*(int*)GIMG(0x0074c6fc))
-#define DAT_00792ac6 (*(int*)GIMG(0x00792ac6))
-#define _DAT_0074c55c (*(int*)GIMG(0x0074c55c))
-#define _DAT_0093fd4c (*(undefined1*)GIMG(0x0093fd4c))
-#define _DAT_0079256c (*(int*)GIMG(0x0079256c))
-#define _DAT_00774702 (*(int*)GIMG(0x00774702))
-#define _DAT_007924b0 (*(int*)GIMG(0x007924b0))
-#define _DAT_00792ac6 (*(int*)GIMG(0x00792ac6))
-#define DAT_00791b94 (*(int*)GIMG(0x00791b94))
-#define DAT_0093fd9d (*(int*)GIMG(0x0093fd9d))
-#define _DAT_007747ce (*(int*)GIMG(0x007747ce))
-#define DAT_0042e140 (*(undefined1*)GIMG(0x0042e140))
-#define _DAT_007924a8 (*(int*)GIMG(0x007924a8))
-#define DAT_00450230 (*(undefined1*)GIMG(0x00450230))
-#define DAT_00454cf8 (*(undefined1*)GIMG(0x00454cf8))
-#define DAT_004596fb (*(undefined1*)GIMG(0x004596fb))
-#define _DAT_00792520 (*(int*)GIMG(0x00792520))
-#define DAT_0046049e (*(undefined1*)GIMG(0x0046049e))
-#define _DAT_007747d6 (*(int*)GIMG(0x007747d6))
-#define DAT_0093de77 (*(int*)GIMG(0x0093de77))
-#define DAT_0074f124 (*(int*)GIMG(0x0074f124))
-#define DAT_0074f12c (*(int*)GIMG(0x0074f12c))
-#define DAT_0093fd90 (*(int*)GIMG(0x0093fd90))
-#define _DAT_00462fba (*(int*)GIMG(0x00462fba))
-#define DAT_004677be (*(undefined1*)GIMG(0x004677be))
-#define _DAT_007925c0 (*(int*)GIMG(0x007925c0))
-#define _DAT_00791bc6 (*(int*)GIMG(0x00791bc6))
-#define _DAT_0046b61a (*(undefined1*)GIMG(0x0046b61a))
-#define _DAT_0077c744 (*(int*)GIMG(0x0077c744))
-#define _DAT_007818d4 (*(int*)GIMG(0x007818d4))
-#define _DAT_0078a744 (*(int*)GIMG(0x0078a744))
-#define _DAT_00754398 (*(int*)GIMG(0x00754398))
-#define _DAT_00792b1a (*(int*)GIMG(0x00792b1a))
-#define _DAT_00791bcc (*(int*)GIMG(0x00791bcc))
-#define _DAT_0079253c (*(int*)GIMG(0x0079253c))
-#define DAT_0093fd9c (*(int*)GIMG(0x0093fd9c))
-#define _DAT_007541c0 (*(int*)GIMG(0x007541c0))
-#define DAT_0093def2 (*(int*)GIMG(0x0093def2))
-#define DAT_004156a0 (*(undefined1*)GIMG(0x004156a0))
-#define DAT_007925ba (*(int*)GIMG(0x007925ba))
-#define _DAT_0074c6f2 (*(int*)GIMG(0x0074c6f2))
-#define _DAT_0074f178 (*(int*)GIMG(0x0074f178))
-#define _DAT_0075444a (*(int*)GIMG(0x0075444a))
-#define _DAT_00795df0 (*(int*)GIMG(0x00795df0))
-#define DAT_00467c26 (*(undefined1*)GIMG(0x00467c26))
-#define DAT_00469b76 (*(undefined1*)GIMG(0x00469b76))
-#define _DAT_0077474a (*(int*)GIMG(0x0077474a))
-#define DAT_0044caa0 (*(undefined1*)GIMG(0x0044caa0))
-#define _DAT_0093a308 (*(int*)GIMG(0x0093a308))
-#define DAT_00453ed8 (*(undefined1*)GIMG(0x00453ed8))
-#define DAT_0093a3ec (*(int*)GIMG(0x0093a3ec))
-#define DAT_00792a14 (*(int*)GIMG(0x00792a14))
-#define DAT_0042e148 (*(undefined1*)GIMG(0x0042e148))
-#define _DAT_00940220 (*(int*)GIMG(0x00940220))
-#define _DAT_0074c530 (*(int*)GIMG(0x0074c530))
-#define DAT_00792a92 (*(int*)GIMG(0x00792a92))
-#define DAT_00453e90 (*(undefined1*)GIMG(0x00453e90))
-#define DAT_0093fd95 (*(int*)GIMG(0x0093fd95))
-#define _DAT_0074c458 (*(int*)GIMG(0x0074c458))
-#define _DAT_00792480 (*(int*)GIMG(0x00792480))
-#define DAT_004554b8 (*(undefined1*)GIMG(0x004554b8))
-#define _DAT_009409ac (*(int*)GIMG(0x009409ac))
-#define DAT_0093de9b (*(int*)GIMG(0x0093de9b))
-#define _DAT_007747d0 (*(int*)GIMG(0x007747d0))
-#define DAT_00460494 (*(undefined1*)GIMG(0x00460494))
-#define _DAT_00791bd4 (*(int*)GIMG(0x00791bd4))
-#define DAT_0078a51c (*(int*)GIMG(0x0078a51c))
-#define DAT_0074b71d (*(int*)GIMG(0x0074b71d))
-#define DAT_004156a4 (*(undefined1*)GIMG(0x004156a4))
-#define _DAT_0074c45c (*(int*)GIMG(0x0074c45c))
-#define _DAT_00792450 (*(int*)GIMG(0x00792450))
-#define _DAT_0074c518 (*(int*)GIMG(0x0074c518))
-#define DAT_00454d10 (*(undefined1*)GIMG(0x00454d10))
-#define DAT_0044b2b0 (*(undefined1*)GIMG(0x0044b2b0))
-#define _DAT_00754394 (*(int*)GIMG(0x00754394))
-#define _DAT_00791bbc (*(int*)GIMG(0x00791bbc))
-#define _DAT_00774704 (*(int*)GIMG(0x00774704))
-#define DAT_00454cb0 (*(undefined1*)GIMG(0x00454cb0))
-#define DAT_0093fd98 (*(int*)GIMG(0x0093fd98))
-#define DAT_00792a7a (*(int*)GIMG(0x00792a7a))
-#define DAT_0042db60 (*(undefined1*)GIMG(0x0042db60))
-#define DAT_0042a4b0 (*(undefined1*)GIMG(0x0042a4b0))
-#define _DAT_00781eb0 (*(int*)GIMG(0x00781eb0))
-#define _DAT_00792a7a (*(int*)GIMG(0x00792a7a))
-#define DAT_0074f132 (*(int*)GIMG(0x0074f132))
-#define DAT_00792a86 (*(int*)GIMG(0x00792a86))
-#define _DAT_00469072 (*(undefined1*)GIMG(0x00469072))
-#define _DAT_0074c520 (*(int*)GIMG(0x0074c520))
-#define _DAT_00792510 (*(int*)GIMG(0x00792510))
-#define _DAT_0075444c (*(int*)GIMG(0x0075444c))
-#define _DAT_00792a10 (*(int*)GIMG(0x00792a10))
-#define _DAT_00754226 (*(int*)GIMG(0x00754226))
-#define DAT_0044b2a4 (*(undefined1*)GIMG(0x0044b2a4))
-#define _DAT_00782ae0 (*(int*)GIMG(0x00782ae0))
-#define _DAT_0075443c (*(int*)GIMG(0x0075443c))
-#define _DAT_007543a4 (*(int*)GIMG(0x007543a4))
-#define DAT_0074f128 (*(int*)GIMG(0x0074f128))
-#define _DAT_00782ae2 (*(int*)GIMG(0x00782ae2))
-#define _DAT_0093dea6 (*(int*)GIMG(0x0093dea6))
-#define _DAT_007925bc (*(int*)GIMG(0x007925bc))
-#define DAT_00792a76 (*(int*)GIMG(0x00792a76))
-#define _DAT_0093a30c (*(int*)GIMG(0x0093a30c))
-#define _DAT_0079261c (*(int*)GIMG(0x0079261c))
-#define _DAT_0074c6f6 (*(int*)GIMG(0x0074c6f6))
-#define _DAT_00791bd6 (*(int*)GIMG(0x00791bd6))
-#define _DAT_00754404 (*(int*)GIMG(0x00754404))
-#define _DAT_00791bce (*(int*)GIMG(0x00791bce))
-#define DAT_0079263e (*(int*)GIMG(0x0079263e))
-#define DAT_00792b1a (*(int*)GIMG(0x00792b1a))
-#define _DAT_0074c588 (*(int*)GIMG(0x0074c588))
-#define DAT_00939410 (*(int*)GIMG(0x00939410))
-#define _DAT_00940af8 (*(int*)GIMG(0x00940af8))
-#define _DAT_007925d0 (*(int*)GIMG(0x007925d0))
-#define DAT_0079258e (*(int*)GIMG(0x0079258e))
-#define _DAT_0075444e (*(int*)GIMG(0x0075444e))
-#define DAT_00468cc4 (*(undefined1*)GIMG(0x00468cc4))
-#define DAT_00430f10 (*(undefined1*)GIMG(0x00430f10))
-#define _DAT_00784294 (*(int*)GIMG(0x00784294))
-#define DAT_00468e80 (*(undefined1*)GIMG(0x00468e80))
-#define _DAT_0074c6f8 (*(int*)GIMG(0x0074c6f8))
-#define _DAT_0074c46c (*(int*)GIMG(0x0074c46c))
-#define _DAT_00792a92 (*(int*)GIMG(0x00792a92))
-#define _DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
-#define DAT_00774484 (*(int*)GIMG(0x00774484))
-#define DAT_0074f19c (*(int*)GIMG(0x0074f19c))
-#define _DAT_0074c70a (*(int*)GIMG(0x0074c70a))
-#define _DAT_009409a8 (*(int*)GIMG(0x009409a8))
-#define _DAT_0074f194 (*(int*)GIMG(0x0074f194))
-#define _DAT_00792538 (*(int*)GIMG(0x00792538))
-#define _DAT_00774700 (*(int*)GIMG(0x00774700))
-#define DAT_00468344 (*(undefined1*)GIMG(0x00468344))
-#define DAT_0074b561 (*(int*)GIMG(0x0074b561))
-#define _DAT_0093fbf0 (*(int*)GIMG(0x0093fbf0))
-#define _DAT_0074f180 (*(int*)GIMG(0x0074f180))
-#define DAT_0077cf38 (*(unsigned char*)GIMG(0x0077cf38))
-#define DAT_0093a3c8 (*(int*)GIMG(0x0093a3c8))
-#define _DAT_0077d1e0 (*(int*)GIMG(0x0077d1e0))
-#define DAT_007746c0 (*(int*)GIMG(0x007746c0))
-#define _DAT_007543f8 (*(int*)GIMG(0x007543f8))
-#define _DAT_00792be2 (*(int*)GIMG(0x00792be2))
-#define _DAT_0093a39c (*(int*)GIMG(0x0093a39c))
-#define DAT_004691c0 (*(undefined1*)GIMG(0x004691c0))
-#define UNK_00458a55 (*(undefined1*)GIMG(0x00458a55))
-#define _DAT_0078a748 (*(int*)GIMG(0x0078a748))
-#define _DAT_00791be6 (*(int*)GIMG(0x00791be6))
-#define _DAT_00792474 (*(int*)GIMG(0x00792474))
-#define _DAT_00792590 (*(int*)GIMG(0x00792590))
-#define DAT_00940af8 (*(int*)GIMG(0x00940af8))
-#define _DAT_0078a15c (*(int*)GIMG(0x0078a15c))
-#define _DAT_00791bf0 (*(int*)GIMG(0x00791bf0))
-#define _DAT_00792a18 (*(int*)GIMG(0x00792a18))
-#define _DAT_004677c2 (*(undefined1*)GIMG(0x004677c2))
-#define _DAT_00792478 (*(int*)GIMG(0x00792478))
-#define _DAT_0093a4a0 (*(int*)GIMG(0x0093a4a0))
-#define _DAT_00792ccc (*(int*)GIMG(0x00792ccc))
-#define _DAT_0074c4ec (*(int*)GIMG(0x0074c4ec))
-#define DAT_0046c8fc (*(undefined1*)GIMG(0x0046c8fc))
-#define DAT_0093e7b4 (*(int*)GIMG(0x0093e7b4))
-#define DAT_007924fe (*(int*)GIMG(0x007924fe))
-#define _DAT_00774690 (*(undefined4*)GIMG(0x00774690))
-#define DAT_00792538 (*(int*)GIMG(0x00792538))
-#define _DAT_007924b8 (*(int*)GIMG(0x007924b8))
-#define DAT_0074f130 (*(int*)GIMG(0x0074f130))
-#define _DAT_0074c564 (*(int*)GIMG(0x0074c564))
-#define DAT_0093a3c9 (*(int*)GIMG(0x0093a3c9))
-#define _DAT_00792518 (*(int*)GIMG(0x00792518))
-#define DAT_0093e7b8 (*(int*)GIMG(0x0093e7b8))
-#define _DAT_0077cf40 (*(int*)GIMG(0x0077cf40))
-#define DAT_0046a81e (*(undefined1*)GIMG(0x0046a81e))
-#define DAT_004691c2 (*(undefined1*)GIMG(0x004691c2))
-#define DAT_00468f74 (*(undefined1*)GIMG(0x00468f74))
-#define DAT_0078a520 (*(int*)GIMG(0x0078a520))
-#define _DAT_0093a49c (*(int*)GIMG(0x0093a49c))
-#define _DAT_0078a74c (*(int*)GIMG(0x0078a74c))
-#define _DAT_007924ac (*(int*)GIMG(0x007924ac))
-#define _DAT_0074c52c (*(int*)GIMG(0x0074c52c))
-#define _DAT_00792570 (*(int*)GIMG(0x00792570))
-#define _DAT_00774750 (*(int*)GIMG(0x00774750))
-#define DAT_004494b0 (*(undefined1*)GIMG(0x004494b0))
-#define _DAT_00792448 (*(int*)GIMG(0x00792448))
-#define _DAT_0075420c (*(int*)GIMG(0x0075420c))
-#define DAT_0093e7b2 (*(int*)GIMG(0x0093e7b2))
-#define _DAT_00754256 (*(int*)GIMG(0x00754256))
-#define _DAT_0074c502 (*(int*)GIMG(0x0074c502))
-#define _DAT_0074c544 (*(int*)GIMG(0x0074c544))
-#define DAT_0093de98 (*(int*)GIMG(0x0093de98))
-#define DAT_0046a8bc (*(undefined1*)GIMG(0x0046a8bc))
-#define _DAT_0074c508 (*(int*)GIMG(0x0074c508))
-#define _DAT_007925fc (*(int*)GIMG(0x007925fc))
-#define _DAT_00791ba8 (*(int*)GIMG(0x00791ba8))
-#define DAT_00791bf8 (*(int*)GIMG(0x00791bf8))
-#define DAT_0042e144 (*(undefined1*)GIMG(0x0042e144))
-#define DAT_0074f12a (*(int*)GIMG(0x0074f12a))
-#define _DAT_0093a318 (*(int*)GIMG(0x0093a318))
-#define _DAT_0079252a (*(int*)GIMG(0x0079252a))
-#define _DAT_0074c504 (*(int*)GIMG(0x0074c504))
-#define _DAT_0078a790 (*(int*)GIMG(0x0078a790))
-#define _DAT_0093a49a (*(int*)GIMG(0x0093a49a))
-#define _DAT_00754356 (*(undefined1*)GIMG(0x00754356))
-#define _DAT_00782ad8 (*(int*)GIMG(0x00782ad8))
-#define _DAT_00791c08 (*(int*)GIMG(0x00791c08))
-#define _DAT_0093de8a (*(int*)GIMG(0x0093de8a))
-#define _DAT_00792556 (*(int*)GIMG(0x00792556))
-#define _DAT_007746c0 (*(int*)GIMG(0x007746c0))
-#define DAT_00415694 (*(undefined1*)GIMG(0x00415694))
-#define _DAT_00792a76 (*(int*)GIMG(0x00792a76))
-#define _DAT_00792544 (*(int*)GIMG(0x00792544))
-#define _DAT_0074c4f4 (*(int*)GIMG(0x0074c4f4))
-#define DAT_004494c8 (*(undefined1*)GIMG(0x004494c8))
-#define DAT_00450290 (*(undefined1*)GIMG(0x00450290))
-#define DAT_0093a3c4 (*(int*)GIMG(0x0093a3c4))
-#define DAT_0046918a (*(undefined1*)GIMG(0x0046918a))
-#define DAT_00453ea8 (*(undefined1*)GIMG(0x00453ea8))
-#define _DAT_0077cf34 (*(int*)GIMG(0x0077cf34))
-#define _DAT_0074c568 (*(int*)GIMG(0x0074c568))
-#define _DAT_0093de90 (*(int*)GIMG(0x0093de90))
-#define _DAT_00791bae (*(int*)GIMG(0x00791bae))
-#define DAT_00792ba2 (*(int*)GIMG(0x00792ba2))
-#define _DAT_0093a310 (*(int*)GIMG(0x0093a310))
-#define DAT_00795c46 (*(int*)GIMG(0x00795c46))
-#define _DAT_00792628 (*(int*)GIMG(0x00792628))
-#define _DAT_0077474c (*(int*)GIMG(0x0077474c))
-#define _DAT_0074c550 (*(int*)GIMG(0x0074c550))
-#define DAT_0078a74c (*(int*)GIMG(0x0078a74c))
-#define DAT_0044b2a0 (*(undefined1*)GIMG(0x0044b2a0))
-#define _DAT_0078192c (*(int*)GIMG(0x0078192c))
-#define _DAT_00939b80 (*(int*)GIMG(0x00939b80))
-#define DAT_00463ef4 (*(int*)GIMG(0x00463ef4))
-#define DAT_00450e00 (*(undefined1*)GIMG(0x00450e00))
-#define _DAT_0074c514 (*(int*)GIMG(0x0074c514))
-#define DAT_00453ec0 (*(undefined1*)GIMG(0x00453ec0))
-#define _DAT_007747c4 (*(int*)GIMG(0x007747c4))
-#define _DAT_00469a3a (*(undefined1*)GIMG(0x00469a3a))
-#define _DAT_0074c51c (*(int*)GIMG(0x0074c51c))
-#define _DAT_0075424e (*(int*)GIMG(0x0075424e))
-#define _DAT_007818ac (*(int*)GIMG(0x007818ac))
-#define DAT_0044b2ac (*(undefined1*)GIMG(0x0044b2ac))
-#define _DAT_00792598 (*(int*)GIMG(0x00792598))
-#define _DAT_0093a492 (*(int*)GIMG(0x0093a492))
-#define _DAT_00792a30 (*(int*)GIMG(0x00792a30))
-#define _DAT_0093a498 (*(int*)GIMG(0x0093a498))
-#define DAT_00754450 (*(int*)GIMG(0x00754450))
-#define _DAT_00792438 (*(int*)GIMG(0x00792438))
-#define DAT_00450248 (*(undefined1*)GIMG(0x00450248))
-#define _DAT_0078193c (*(int*)GIMG(0x0078193c))
-#define _DAT_0079248c (*(int*)GIMG(0x0079248c))
-#define DAT_009392e4 (*(int*)GIMG(0x009392e4))
-#define _DAT_0077cedc (*(int*)GIMG(0x0077cedc))
-#define _DAT_0077d1f0 (*(int*)GIMG(0x0077d1f0))
-#define _DAT_00792d9c (*(int*)GIMG(0x00792d9c))
-#define _DAT_0077cf18 (*(int*)GIMG(0x0077cf18))
-#define DAT_0044caa4 (*(undefined1*)GIMG(0x0044caa4))
-#define _DAT_00754444 (*(int*)GIMG(0x00754444))
-#define _DAT_00792578 (*(int*)GIMG(0x00792578))
-#define _DAT_00754450 (*(int*)GIMG(0x00754450))
-#define DAT_004690a0 (*(undefined1*)GIMG(0x004690a0))
-#define DAT_00468fdc (*(undefined1*)GIMG(0x00468fdc))
-#define _DAT_007924fe (*(int*)GIMG(0x007924fe))
-#define DAT_0093a3ca (*(int*)GIMG(0x0093a3ca))
-#define DAT_0077447a (*(int*)GIMG(0x0077447a))
-#define _DAT_00940b04 (*(int*)GIMG(0x00940b04))
-#define _DAT_0093dea4 (*(int*)GIMG(0x0093dea4))
-#define DAT_0078a51e (*(int*)GIMG(0x0078a51e))
-#define _DAT_0078a792 (*(int*)GIMG(0x0078a792))
-#define DAT_00774486 (*(int*)GIMG(0x00774486))
-#define _DAT_0093a496 (*(int*)GIMG(0x0093a496))
-#define DAT_004691e4 (*(undefined1*)GIMG(0x004691e4))
-#define _DAT_0079240e (*(int*)GIMG(0x0079240e))
-#define DAT_00000186 (*(undefined1*)GIMG(0x00000186))
-#define _DAT_00754358 (*(undefined1*)GIMG(0x00754358))
-#define _DAT_00468340 (*(undefined1*)GIMG(0x00468340))
-#define DAT_0074bc50 (*(int*)GIMG(0x0074bc50))
-#define _DAT_007924a0 (*(int*)GIMG(0x007924a0))
-#define _DAT_0077c74c (*(int*)GIMG(0x0077c74c))
-#define _DAT_00791b98 (*(int*)GIMG(0x00791b98))
-#define DAT_00415698 (*(undefined1*)GIMG(0x00415698))
-#define _DAT_007541f2 (*(short*)GIMG(0x007541f2))
-#define DAT_00792a38 (*(int*)GIMG(0x00792a38))
-#define DAT_00792a30 (*(int*)GIMG(0x00792a30))
-#define DAT_00792536 (*(int*)GIMG(0x00792536))
-#define _DAT_0074f184 (*(int*)GIMG(0x0074f184))
-#define DAT_007542ee (*(int*)GIMG(0x007542ee))
-#define _DAT_007542f2 (*(undefined1*)GIMG(0x007542f2))
-#define _DAT_00774754 (*(int*)GIMG(0x00774754))
-#define _DAT_00467c2c (*(undefined1*)GIMG(0x00467c2c))
-#define _DAT_0078189c (*(int*)GIMG(0x0078189c))
-#define _DAT_00792470 (*(int*)GIMG(0x00792470))
-#define _DAT_007925a4 (*(int*)GIMG(0x007925a4))
-#define DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
-#define _DAT_00774752 (*(int*)GIMG(0x00774752))
-#define _DAT_0094098c (*(int*)GIMG(0x0094098c))
-#define _DAT_00792568 (*(int*)GIMG(0x00792568))
-#define _DAT_00791bb6 (*(int*)GIMG(0x00791bb6))
-#define _DAT_007924b4 (*(int*)GIMG(0x007924b4))
-#define _DAT_00939b84 (*(int*)GIMG(0x00939b84))
-#define _DAT_00792460 (*(int*)GIMG(0x00792460))
-#define DAT_0078a744 (*(int*)GIMG(0x0078a744))
-#define DAT_00792612 (*(int*)GIMG(0x00792612))
-#define _DAT_0046b61c (*(undefined1*)GIMG(0x0046b61c))
-#define DAT_0093de74 (*(int*)GIMG(0x0093de74))
-#define _DAT_0093fd44 (*(int*)GIMG(0x0093fd44))
-#define _DAT_0074c558 (*(int*)GIMG(0x0074c558))
-#define DAT_0041569c (*(undefined1*)GIMG(0x0041569c))
-#define DAT_0078a748 (*(int*)GIMG(0x0078a748))
-#define _DAT_007818fc (*(int*)GIMG(0x007818fc))
-#define DAT_0093a464 (*(int*)GIMG(0x0093a464))
-#define _DAT_00795c52 (*(int*)GIMG(0x00795c52))
-#define DAT_0046a86c (*(undefined1*)GIMG(0x0046a86c))
-#define _DAT_0093de7a (*(int*)GIMG(0x0093de7a))
-#define _DAT_007925f0 (*(int*)GIMG(0x007925f0))
-#define _DAT_007925c4 (*(int*)GIMG(0x007925c4))
-#define _DAT_0074c574 (*(int*)GIMG(0x0074c574))
-#define _DAT_00792494 (*(int*)GIMG(0x00792494))
-#define _DAT_00754440 (*(int*)GIMG(0x00754440))
-#define _DAT_0093de78 (*(int*)GIMG(0x0093de78))
-#define _DAT_00784298 (*(int*)GIMG(0x00784298))
-#define _DAT_00792458 (*(int*)GIMG(0x00792458))
-#define DAT_0046049c (*(undefined1*)GIMG(0x0046049c))
-#define DAT_5af34e72 (*(undefined1*)GIMG(0x5af34e72))
-#define _DAT_00754208 (*(int*)GIMG(0x00754208))
-#define _DAT_00940990 (*(undefined1*)GIMG(0x00940990))
-#define DAT_0046b030 (*(undefined1*)GIMG(0x0046b030))
-#define _DAT_0074c47c (*(int*)GIMG(0x0074c47c))
-#define DAT_00453ef0 (*(undefined1*)GIMG(0x00453ef0))
-#define _DAT_0093de80 (*(int*)GIMG(0x0093de80))
-#define _DAT_00754438 (*(int*)GIMG(0x00754438))
-#define _DAT_0074c53c (*(int*)GIMG(0x0074c53c))
-#define DAT_0074bd1d (*(int*)GIMG(0x0074bd1d))
-#define _DAT_00754202 (*(int*)GIMG(0x00754202))
-#define _DAT_007746fa (*(int*)GIMG(0x007746fa))
-#define DAT_00469a80 (*(undefined1*)GIMG(0x00469a80))
-#define _DAT_00940974 (*(int*)GIMG(0x00940974))
-#define DAT_00792a10 (*(int*)GIMG(0x00792a10))
-#define _DAT_00795de4 (*(int*)GIMG(0x00795de4))
-#define _DAT_007924a4 (*(int*)GIMG(0x007924a4))
-#define DAT_00792590 (*(int*)GIMG(0x00792590))
-#define _DAT_00792582 (*(int*)GIMG(0x00792582))
-#define _DAT_0074c6fe (*(int*)GIMG(0x0074c6fe))
-#define DAT_0093a310 (*(int*)GIMG(0x0093a310))
-#define _DAT_0093deae (*(int*)GIMG(0x0093deae))
-#define _DAT_0074c706 (*(int*)GIMG(0x0074c706))
-#define _DAT_0078188c (*(int*)GIMG(0x0078188c))
-#define DAT_00940974 (*(int*)GIMG(0x00940974))
-#define _DAT_0077cf00 (*(int*)GIMG(0x0077cf00))
-#define _DAT_00792ba2 (*(int*)GIMG(0x00792ba2))
-#define _DAT_00791bbe (*(int*)GIMG(0x00791bbe))
-#define _DAT_00791be4 (*(int*)GIMG(0x00791be4))
-#define DAT_004594f9 (*(undefined1*)GIMG(0x004594f9))
-#define _DAT_0079250c (*(int*)GIMG(0x0079250c))
-#define _DAT_00792614 (*(int*)GIMG(0x00792614))
-#define _DAT_00940970 (*(int*)GIMG(0x00940970))
-#define _DAT_0093de18 (*(int*)GIMG(0x0093de18))
-#define _DAT_0077cf04 (*(int*)GIMG(0x0077cf04))
-#define _DAT_0077d1f4 (*(int*)GIMG(0x0077d1f4))
-#define _DAT_007747d8 (*(int*)GIMG(0x007747d8))
-#define _DAT_0074c702 (*(int*)GIMG(0x0074c702))
-#define DAT_0042e14c (*(undefined1*)GIMG(0x0042e14c))
-#define _DAT_00789354 (*(int*)GIMG(0x00789354))
-#define _DAT_00939b68 (*(int*)GIMG(0x00939b68))
-#define _DAT_007925ec (*(int*)GIMG(0x007925ec))
-#define _DAT_0093de10 (*(int*)GIMG(0x0093de10))
-#define _DAT_0093de9c (*(int*)GIMG(0x0093de9c))
-#define _DAT_0074c4e4 (*(int*)GIMG(0x0074c4e4))
-#define DAT_0042e134 (*(undefined1*)GIMG(0x0042e134))
-#define _DAT_00792a14 (*(int*)GIMG(0x00792a14))
-#define _DAT_0074c548 (*(int*)GIMG(0x0074c548))
-#define _DAT_00754252 (*(int*)GIMG(0x00754252))
-#define _DAT_0075440c (*(int*)GIMG(0x0075440c))
-#define DAT_007925e6 (*(int*)GIMG(0x007925e6))
-#define DAT_0093a414 (*(int*)GIMG(0x0093a414))
-#define _DAT_0093fc40 (*(int*)GIMG(0x0093fc40))
-#define DAT_00450260 (*(undefined1*)GIMG(0x00450260))
-#define _DAT_0078a37c (*(int*)GIMG(0x0078a37c))
-#define _DAT_0078a51c (*(int*)GIMG(0x0078a51c))
-#define _DAT_007541f4 (*(short*)GIMG(0x007541f4))
-#define DAT_0093c0a2 (*(int*)GIMG(0x0093c0a2))
-#define DAT_00792444 (*(int*)GIMG(0x00792444))
-#define _DAT_0093de82 (*(int*)GIMG(0x0093de82))
-#define _DAT_00940224 (*(undefined1*)GIMG(0x00940224))
-#define _DAT_004677c4 (*(undefined1*)GIMG(0x004677c4))
-#define DAT_0074f1c8 (*(int*)GIMG(0x0074f1c8))
-#define DAT_007746fa (*(int*)GIMG(0x007746fa))
-#define _DAT_0074c4e8 (*(int*)GIMG(0x0074c4e8))
-#define _DAT_00792564 (*(int*)GIMG(0x00792564))
-#define _DAT_0079247c (*(int*)GIMG(0x0079247c))
-#define _DAT_0074c554 (*(int*)GIMG(0x0074c554))
-#define DAT_0093a4a2 (*(int*)GIMG(0x0093a4a2))
-#define DAT_00792564 (*(int*)GIMG(0x00792564))
-#define DAT_00939374 (*(int*)GIMG(0x00939374))
-#define _DAT_0079249c (*(int*)GIMG(0x0079249c))
-#define DAT_007543a0 (*(int*)GIMG(0x007543a0))
-#define _DAT_00754448 (*(int*)GIMG(0x00754448))
-#define _DAT_00782ae8 (*(int*)GIMG(0x00782ae8))
-#define _DAT_00940000 (*(int*)GIMG(0x00940000))
-#define _DAT_00795c46 (*(int*)GIMG(0x00795c46))
-#define _DAT_0074c50c (*(int*)GIMG(0x0074c50c))
-#define _DAT_007747cc (*(int*)GIMG(0x007747cc))
-#define _DAT_0075420a (*(int*)GIMG(0x0075420a))
-#define _DAT_00782ae6 (*(int*)GIMG(0x00782ae6))
-#define _DAT_0074c6fa (*(int*)GIMG(0x0074c6fa))
-#define DAT_0093def4 (*(int*)GIMG(0x0093def4))
-#define DAT_00467c30 (*(undefined1*)GIMG(0x00467c30))
-#define DAT_0074f1c4 (*(int*)GIMG(0x0074f1c4))
-#define _DAT_0093fc78 (*(int*)GIMG(0x0093fc78))
-#define _DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
-#define _DAT_0077475c (*(int*)GIMG(0x0077475c))
-#define _DAT_0074c540 (*(int*)GIMG(0x0074c540))
-#define DAT_0074c458 (*(int*)GIMG(0x0074c458))
-#define DAT_004554a0 (*(undefined1*)GIMG(0x004554a0))
-#define DAT_00792614 (*(int*)GIMG(0x00792614))
-#define DAT_00792694 (*(int*)GIMG(0x00792694))
-#define _DAT_00754228 (*(int*)GIMG(0x00754228))
-#define _DAT_00782ada (*(int*)GIMG(0x00782ada))
-#define DAT_00469b74 (*(undefined1*)GIMG(0x00469b74))
-#define DAT_00450de0 (*(undefined1*)GIMG(0x00450de0))
-#define _DAT_007543ac (*(int*)GIMG(0x007543ac))
-#define _DAT_00754220 (*(int*)GIMG(0x00754220))
-#define _DAT_00791b94 (*(int*)GIMG(0x00791b94))
-#define _DAT_009392e4 (*(int*)GIMG(0x009392e4))
-#define _DAT_0079259c (*(int*)GIMG(0x0079259c))
-#define _DAT_00782aea (*(int*)GIMG(0x00782aea))
-#define _DAT_0074c4fc (*(int*)GIMG(0x0074c4fc))
-#define _DAT_00791bde (*(int*)GIMG(0x00791bde))
-#define _DAT_0093a3ec (*(int*)GIMG(0x0093a3ec))
-#define _DAT_0093de1c (*(int*)GIMG(0x0093de1c))
-#define _DAT_00940b00 (*(int*)GIMG(0x00940b00))
-#define _DAT_00469070 (*(undefined1*)GIMG(0x00469070))
-#define _DAT_007542c8 (*(undefined1*)GIMG(0x007542c8))
-#define _DAT_00940afc (*(int*)GIMG(0x00940afc))
-#define _DAT_009392b8 (*(int*)GIMG(0x009392b8))
-#define _DAT_00792498 (*(int*)GIMG(0x00792498))
-#define _DAT_00774680 (*(int*)GIMG(0x00774680))
-#define _DAT_00792444 (*(int*)GIMG(0x00792444))
-#define _DAT_007542f6 (*(undefined1*)GIMG(0x007542f6))
-#define _DAT_00754268 (*(undefined1*)GIMG(0x00754268))
-#define DAT_0044ca9c (*(undefined1*)GIMG(0x0044ca9c))
-#define _DAT_0077d1e8 (*(int*)GIMG(0x0077d1e8))
-#define _DAT_0079254c (*(int*)GIMG(0x0079254c))
-#define _DAT_00792468 (*(int*)GIMG(0x00792468))
-#define DAT_00450e1e (*(undefined1*)GIMG(0x00450e1e))
-#define _DAT_00791bb4 (*(int*)GIMG(0x00791bb4))
-#define DAT_0077d1e0 (*(int*)GIMG(0x0077d1e0))
-#define DAT_0042a910 (*(undefined1*)GIMG(0x0042a910))
-#define _DAT_0078a360 (*(int*)GIMG(0x0078a360))
-#define _DAT_0093deac (*(int*)GIMG(0x0093deac))
-#define _DAT_00754222 (*(int*)GIMG(0x00754222))
-#define _DAT_0075422a (*(int*)GIMG(0x0075422a))
-#define _DAT_00469a68 (*(undefined1*)GIMG(0x00469a68))
-#define DAT_0093a43c (*(int*)GIMG(0x0093a43c))
-#define _DAT_007541e6 (*(int*)GIMG(0x007541e6))
-#define _DAT_0093fc18 (*(int*)GIMG(0x0093fc18))
-#define _DAT_00754204 (*(int*)GIMG(0x00754204))
-#define DAT_0093e7b1 (*(int*)GIMG(0x0093e7b1))
-#define _DAT_0077d1ec (*(int*)GIMG(0x0077d1ec))
-#define _DAT_00792620 (*(int*)GIMG(0x00792620))
-#define _DAT_007924ec (*(int*)GIMG(0x007924ec))
-#define DAT_00791bf0 (*(int*)GIMG(0x00791bf0))
-#define DAT_0093fd30 (*(int*)GIMG(0x0093fd30))
-#define _DAT_007924e4 (*(int*)GIMG(0x007924e4))
-#define _DAT_007926a4 (*(int*)GIMG(0x007926a4))
-#define _DAT_00774460 (*(int*)GIMG(0x00774460))
-#define _DAT_00792540 (*(int*)GIMG(0x00792540))
-#define DAT_00467834 (*(undefined1*)GIMG(0x00467834))
-#define _DAT_00467658 (*(int*)GIMG(0x00467658))
-#define DAT_0046b0b4 (*(undefined1*)GIMG(0x0046b0b4))
-#define _DAT_00754200 (*(int*)GIMG(0x00754200))
-#define DAT_00792a18 (*(int*)GIMG(0x00792a18))
-#define DAT_0079250a (*(int*)GIMG(0x0079250a))
-#endif
-#define LAB_0045789e (*(undefined4*)GIMG(0x0045789e))
+#define wheeloff_object_ (*(undefined1*)GIMG(0x00774800))
 #define uRam00791ca0 (*(undefined2*)GIMG(0x00791ca0))
 #define uRam00791ca6 (*(undefined2*)GIMG(0x00791ca6))
-#define LAB_004457a0 (*(undefined4*)GIMG(0x004457a0))
-#define LAB_00423ae0 (*(undefined4*)GIMG(0x00423ae0))
-#define LAB_004578a7 (*(undefined4*)GIMG(0x004578a7))
-#define PTR_DAT_0044e3c4 (*(undefined4*)GIMG(0x0044e3c4))
 #define PTR_s_DDPRACTP_0046a7ec (*(undefined4*)GIMG(0x0046a7ec))
-#define PTR_DAT_0044e3d4 (*(undefined4*)GIMG(0x0044e3d4))
-#define PTR_FUN_00469190 (*(undefined4*)GIMG(0x00469190))
 #define sRam00791bc0 (*(short*)GIMG(0x00791bc0))
 #define sRam00791bb8 (*(short*)GIMG(0x00791bb8))
-#define PTR_DAT_0044e3e8 (*(undefined4*)GIMG(0x0044e3e8))
 #define PTR_s_STATSP_00469b00 (*(undefined4*)GIMG(0x00469b00))
-#define PTR_FUN_0046a7fc (*(undefined4*)GIMG(0x0046a7fc))
-#define PTR_LAB_00426894 (*(undefined4*)GIMG(0x00426894))
-#define PTR_DAT_0044e3f4 (*(undefined4*)GIMG(0x0044e3f4))
 #define PTR_s_DDPRACT_0046a7e4 (*(undefined4*)GIMG(0x0046a7e4))
-#define PTR_DAT_0044e3e4 (*(undefined4*)GIMG(0x0044e3e4))
 #define PTR_s_PADCNFGP_00469114 (*(undefined4*)GIMG(0x00469114))
 #define sRam0046b61e (*(short*)GIMG(0x0046b61e))
 #define sRam00467c2e (*(short*)GIMG(0x00467c2e))
-#define PTR_FUN_0046918c (*(undefined4*)GIMG(0x0046918c))
-#define PTR_DAT_0044e3cc (*(undefined4*)GIMG(0x0044e3cc))
 #define sRam00791be0 (*(short*)GIMG(0x00791be0))
-#define PTR_DAT_0044e3c8 (*(undefined4*)GIMG(0x0044e3c8))
-#define PTR_DAT_0044e3dc (*(undefined4*)GIMG(0x0044e3dc))
-#define PTR_FUN_00469b78 (*(undefined4*)GIMG(0x00469b78))
 #define uRam00791ca2 (*(undefined2*)GIMG(0x00791ca2))
 #define sRam00468342 (*(short*)GIMG(0x00468342))
 #define sRam00791bc8 (*(short*)GIMG(0x00791bc8))
-#define LAB_00456d93 (*(undefined4*)GIMG(0x00456d93))
-#define PTR_s_DDPRACT_0046a7ae (*(undefined4*)GIMG(0x0046a7ae))
+#define PTR_s_DDPRACT_0046a7ae (*(undefined1*)GIMG(0x0046a7ae))
 #define sRam0074c50a (*(short*)GIMG(0x0074c50a))
 #define sRam00791bd0 (*(short*)GIMG(0x00791bd0))
 #define uRam007746f4 (*(undefined2*)GIMG(0x007746f4))
-#define PTR_DAT_0044e3d0 (*(undefined4*)GIMG(0x0044e3d0))
-#define PTR_DAT_0044e3e0 (*(undefined4*)GIMG(0x0044e3e0))
-#define PTR_s_PADCONFG_004690c6 (*(undefined4*)GIMG(0x004690c6))
+#define PTR_s_PADCONFG_004690c6 (*(undefined1*)GIMG(0x004690c6))
 #define s_PC_Read_File_0046c900 (*(undefined4*)GIMG(0x0046c900))
-#define PTR_DAT_0044e3f8 (*(undefined4*)GIMG(0x0044e3f8))
-#define PTR_DAT_0044e3c0 (*(undefined4*)GIMG(0x0044e3c0))
-#define PTR_DAT_0044e3ec (*(undefined4*)GIMG(0x0044e3ec))
-#define LAB_00453c00 (*(undefined4*)GIMG(0x00453c00))
 #define uRam0077cf36 (*(undefined2*)GIMG(0x0077cf36))
 #define uRam00791ca8 (*(undefined2*)GIMG(0x00791ca8))
 #define iRam00781438 (*(int*)GIMG(0x00781438))
 #define PTR_Select_DDPract_0046a800 (*(undefined4*)GIMG(0x0046a800))
 #define sRam004677c6 (*(short*)GIMG(0x004677c6))
 #define sRam00791be8 (*(short*)GIMG(0x00791be8))
-#define LAB_0041345c (*(undefined4*)GIMG(0x0041345c))
 #define uRam00791ca4 (*(undefined2*)GIMG(0x00791ca4))
-#define PTR_DAT_0044e3f0 (*(undefined4*)GIMG(0x0044e3f0))
 #define PTR_s_PADCONFG_00469108 (*(undefined4*)GIMG(0x00469108))
 #define sRam00791bd8 (*(short*)GIMG(0x00791bd8))
-#define PTR_DAT_0044e3d8 (*(undefined4*)GIMG(0x0044e3d8))
-#define PTR_LAB_0042a5f0 (*(undefined4*)GIMG(0x0042a5f0))
-#define PTR_LAB_00426870 (*(undefined4*)GIMG(0x00426870))
 #define uRam00791cae (*(undefined2*)GIMG(0x00791cae))
-#define _db db
 #define DAT_0093e7b4_1 DAT_0093e7b4
 #define DAT_0093e7b8_1 DAT_0093e7b8
+#define LAB_0041345c (*(undefined4*)GIMG(0x0041345c))
+#define LAB_00423ae0 (*(undefined4*)GIMG(0x00423ae0))
+#define LAB_004457a0 (*(undefined4*)GIMG(0x004457a0))
+#define LAB_00453c00 (*(undefined4*)GIMG(0x00453c00))
+#define LAB_00456d93 (*(undefined4*)GIMG(0x00456d93))
+#define LAB_0045789e (*(undefined4*)GIMG(0x0045789e))
+#define LAB_004578a7 (*(undefined4*)GIMG(0x004578a7))

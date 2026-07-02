@@ -40,6 +40,10 @@ for line in open(syms_f, encoding='utf-8', errors='surrogateescape'):
     if len(p) < 2: continue
     name, addr = p[0], int(p[1], 16)
     size = int(p[2]) if len(p) > 2 and p[2] else 0
+    # Ghidra's LABEL export includes switch-case CODE labels (default/caseD_N/switchD*/joined_*)
+    # and C keywords -- they are jump targets, not data; #define'ing them breaks the C parse.
+    if name in ('default','case','switch','break','continue','else','goto','return') \
+       or re.match(r'^(caseD_|switchD|joined_|LAB_)', name): continue
     if name in seen or name in func_names or not re.match(r'^[A-Za-z_]\w*$', name): continue
     seen.add(name)
     t = type_by_name.get(name, deftype(size))
