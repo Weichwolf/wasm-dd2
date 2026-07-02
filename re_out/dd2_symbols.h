@@ -672,7 +672,7 @@ extern int unaff_retaddr;
 #define floaty_camera_sca (*(int*)GIMG(0x00464678))
 #define dirbuf (*(int*)GIMG(0x0074c710))
 #define dth_u1 (*(int*)GIMG(0x0048004c))
-#define screen_height (*(undefined4*)GIMG(0x00462ff8))
+#define screen_height (*(int*)GIMG(0x00462ff8))  /* SIGNED: FUN_00420080 frustum normals divide -(h/2)<<12 by sqrt len -- binary idiv @0x420152; unsigned type forced unsigned div -> garbage v-plane normal (sky quadrants wrongly culled = black wedges) */
 #define madbut_object (*(int*)GIMG(0x00940034))
 #define sd_damage_topr (*(int*)GIMG(0x00464c3c))
 #define sd_damage_topl (*(int*)GIMG(0x00464c24))
@@ -877,7 +877,7 @@ extern int unaff_retaddr;
 #define __GetNTCreateAttr (*(undefined1*)GIMG(0x00458c40))
 #define music_vol (*(undefined1*)GIMG(0x00937600))
 #define light_matrix (*(int*)GIMG(0x007541d8))
-#define screen_width (*(undefined4*)GIMG(0x00462ff4))
+#define screen_width (*(int*)GIMG(0x00462ff4))  /* SIGNED: see screen_height -- FUN_00420080 idiv @0x4200ee on -(w/2)<<12 */
 #define _LpCmdLine (*(int*)GIMG(0x0046c3c0))
 #define exit_game (*(undefined1*)GIMG(0x009374b0))
 #define dent_area_lookup (*(undefined1*)GIMG(0x00463d94))
@@ -3691,7 +3691,7 @@ extern int unaff_retaddr;
 #define _total_dest_timer (*(int*)GIMG(0x0078428c))
 #define _track_height (*(int*)GIMG(0x0077cf6c))
 #define _u (*(int*)GIMG(0x00939b38))
-#define _v_norm (*(int*)GIMG(0x007541f0))
+#define _v_norm (*(short*)GIMG(0x007541f0))  /* WORD, not dword: binary writes 2 bytes (mov WORD ds:0x7541f0,cx @0x420159); int-typed store `_v_norm = 0` clobbered the v-plane normal short @0x7541f2 just written by FUN_00420080 */
 #define _value (*(int*)GIMG(0x007543a8))
 #define _wheeloff_index (*(int*)GIMG(0x0077c740))
 #define _whllck (*(int*)GIMG(0x0078a384))

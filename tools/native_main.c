@@ -223,6 +223,16 @@ int main(void){
                    fprintf(stderr, "[native] menu: injected key 0x%lx\n", strtol(h,0,0)); } }
         CK("Front_End()");      Front_End();
     } else if (getenv("DD2_LEVEL")) {
+        /* The original boots through Init_Front_End (LEV0: LEVEL.TX0/TX1.., LEVEL.SPR, FONT.BNK)
+         * before any DemoMode: those front-end textures fill texturespace pages the race levels
+         * never overwrite (pages 20-25 + parts of 6-19 @0x5d0000+). Skipping it left them zero ->
+         * black sky-panorama wedges / missing backdrop texels vs the reference. Run the REAL FE
+         * init, then re-apply the ref-captured FE exit state on top (it IS the post-FE state). */
+        W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */
+        W32(0x4673f8, 0);   /* race_mode = 0 */
+        CK("Init_Front_End()"); Init_Front_End();
+        *(int*)(uintptr_t)0x462fe8 = 0;  /* pal_flag: FE init must not undo the ddmain default */
+        { extern void dd2_apply_frontend_state(void); dd2_apply_frontend_state(); }
         CK("DemoModeLevel()");
         DemoModeLevel(atoi(getenv("DD2_LEVEL")));
     } else {

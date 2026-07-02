@@ -1,4 +1,5 @@
 /* dd2h re-base: Win32 stubs + _ot_dispatch */
+#include <stdio.h>
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
 int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c; if(b)*b=0; return 1; /* DSERR: no sound device */ }
@@ -25,6 +26,17 @@ int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; r
 void _ot_dispatch(int* piVar1,int* b,int* c){
   (void)b;(void)c;
   unsigned _v=((unsigned*)&_primfuncs)[*(unsigned char*)((int)piVar1+7)];  /* dword fn-ptr table (explicit: _primfuncs is byte-typed in dd2_symbols.h) */
+  /* DD2_HIST=<cf>: per-frame prim-type histogram of the real OT walk (compare vs tools/refhist.sh). */
+  { static int _want=-2; if(_want==-2){ extern char* getenv(const char*); char* e=getenv("DD2_HIST"); extern int atoi(const char*); _want=e?atoi(e):-1; }
+    if(_want>=0){ static unsigned _h[256]; static int _n=0,_last=-1; int _cf=*(int*)(uintptr_t)0x462ff0;
+      if(_cf==_want){ unsigned char _t=*(unsigned char*)((int)piVar1+7); _h[_t]++; _n++; _last=_cf;
+        if(_t==0x2c){ static FILE* _f;
+          if(!_f) _f=fopen("/tmp/our_ft4.txt","w");
+          if(_f) fprintf(_f,"%d %d %u %u %#x %#x\n",*(short*)((int)piVar1+8),*(short*)((int)piVar1+10),
+            *(unsigned char*)((int)piVar1+12),*(unsigned char*)((int)piVar1+13),
+            (unsigned)*(unsigned short*)((int)piVar1+14),(unsigned)*(unsigned short*)((int)piVar1+22)); } }
+      else if(_last==_want){ extern int printf(const char*,...); int _i; printf("[HIST] cf%d n=%d:",_want,_n);
+        for(_i=0;_i<256;_i++) if(_h[_i]) printf(" %02x:%u",_i,_h[_i]); printf("\n"); _last=-1; } } }
   if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int,int,int))(unsigned long)_v)((int)(uintptr_t)piVar1,(int)(uintptr_t)b,(int)(uintptr_t)c);
 }
 int SetStdHandle(int a,int b){ (void)a;(void)b; return 0; }
