@@ -1,6 +1,7 @@
 #ifndef DD2_SYMBOLS_H
 #include "ghidra_compat.h"
 #define GIMG(va) ((unsigned char*)(uintptr_t)(va))
+int FUN_004568ee(char*, const char*, ...);  /* varargs sprintf wrapper: prototype REQUIRED so wasm call signatures match the definition */
 extern unsigned char* g_image;
 extern int dd2_asset_off;
 extern int dd2_asset_size;

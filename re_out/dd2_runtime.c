@@ -23,7 +23,7 @@ int dd2_crt_lock(int a){ return a; }   /* CRT lock no-op (single-threaded) */
 /* CRT BYPASS: the user-WinMain that inits the game + runs the menu is buried in the CRT's alloca region
    (x86 stack manip can't run in WASM). Call the game's __InitRtns (C++ global ctors) + Init_Application
    (window) + Play_Game (race state machine, which does Init_Game) directly to reach the GAME LOGIC. */
-extern void __InitRtns(void);
+extern int __InitRtns();  /* signature must MATCH dd2.c definition exactly (wasm call_indirect type-check) */
 extern int Init_Application(void* hInst);
 extern int Play_Game(void);
 extern void Set_Draw_Mode(int);

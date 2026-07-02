@@ -24,15 +24,3 @@ frontier). Provide the no-op in dd2h_stubs.c and map it in the dispatch table.
  {0x00448e58,(void*)&PitOut},
  {0x00448e88,(void*)&PitIn},
  {0x00448f4c,(void*)&Pit_Stop1},
---- a/dd2h_stubs.c
-+++ b/dd2h_stubs.c
-@@ -2,7 +2,8 @@
- #include "ghidra_compat.h"
- int _control87(){ return 0; }
- int DirectSoundCreate(){ return 0; }
--int _DZ(int x){ return x; }  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)`; faithful = plain divisor */
-+int _DZ(int x){ return x; }
-+int FUN_00448e50(){ return 0; }  /* @0x448e50: empty no-op handler (push ebp;mov ebp,esp;pop ebp;ret) Ghidra did not export; slot 0x467084/88/8c race-event table */  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)`; faithful = plain divisor */
- int ExitProcess(){ return 0; }
- int GetCommandLineA(){ return 0; }
- int GetCurrentProcessId(){ return 0; }
