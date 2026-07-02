@@ -1,1624 +1,1744 @@
+#include <stdio.h>
 /* indirect-call dispatch: VA->C-function map + startup relocation of fn-pointers in the image */
 #include "ghidra_compat.h"
 extern unsigned char* g_image;
-extern int AI_Com_Server();
-extern int Add_Computer_Info();
-extern int Allocate_Font_Buffers();
-extern int Allocate_Sound_Effect();
-extern int Amplitude();
-extern int ApplyMatrixLV();
-extern int ApplyWheelOverlay();
-extern int Barrier_Collision();
-extern int Barrier_Corner_Collision();
-extern int Bonnet_Smoke();
-extern int Boot_Lost_Geometry();
-extern int Button_Pressed();
-extern int CD_Check();
-extern int CD_Close();
-extern int CD_Pause();
-extern int CD_Restart();
-extern int CLUT_Animation();
-extern int Calc_Car_Angles_Square();
-extern int Calc_Car_Tilt();
-extern int Calc_Head_On_Clsn_Dynamics();
-extern int Calc_Null_Suspension();
-extern int Calc_Object_Angles();
-extern int Calc_Object_MatrixYZX();
-extern int Calc_Suspension_Right_Wheels();
-extern int Calc_Track_Positions();
-extern int Calculate_Finish();
-extern int Calculate_Results();
-extern int Call_Loaded_Game();
-extern int Camera_Pad_Control();
-extern int Car_1pt_Motion_3D();
-extern int Car_2pt_Motion_3D();
-extern int Car_Camera();
-extern int Car_Drive_2pt_Motion();
-extern int Car_Drive_Motion();
-extern int Car_Fly_Motion();
-extern int Car_Fly_Motion_3D();
-extern int Car_Grounded_Motion_3D();
-extern int Car_Landed();
-extern int Car_Landed_On_Corner();
-extern int Car_Movement();
-extern int Championship();
-extern int Change_Bonnet_Clut();
-extern int Change_Boot_Clut();
-extern int CheckPointScoring();
-extern int Check_2D_Car_Collision();
-extern int Check_Bonnet_Removal();
-extern int Check_Boot_Removal();
-extern int Check_For_CD_Loop();
-extern int Check_Ground_Car_Collision();
-extern int Check_League_Standing();
-extern int Check_Space_Car_Collision();
-extern int ClearOTagR();
-extern int CloseHandle();
-extern int Close_Application();
-extern int Control_Car_Replay();
-extern int CreateEventA();
-extern int CreateFileA();
-extern int CreateMutexA();
-extern int CreateThread();
-extern int Create_Object();
-extern int DDRelease();
-extern int DSGetWaveResource();
-extern int DSLoadSoundBuffer();
-extern int Debug_Stub();
-extern int Decompress();
-extern int Decrunch_Object_Block();
-extern int DeleteFileA();
-extern int DeleteFileMC();
-extern int DemoMode();
-extern int Determine_AI();
-extern int DirectDrawCreate();
-extern int DirectSoundCreate();
-extern int Display_Position_Pointers();
-extern int Display_Season_Status();
-extern int Do_Car_Collisions();
-extern int Do_End_Of_Season_Stuff();
-extern int Do_The_Floaty_Camera_Thing();
-extern int DopplerFrequency();
-extern int DrawFlagObject();
-extern int DrawLensFlare();
-extern int DrawOTag();
-extern int DrawParticles();
-extern int DrawPrim();
-extern int Draw_All();
-extern int Draw_Car();
-extern int Draw_Dynamic_Objects();
-extern int Draw_Font_Poly();
-extern int Draw_Other_Objects();
-extern int Draw_Overlays();
-extern int Draw_Scene_Object();
-extern int Draw_Screen_Lines();
-extern int Draw_Screen_Polys();
-extern int Draw_Semi_Trans_Poly();
-extern int Draw_Sky();
-extern int Draw_Slab();
-extern int Draw_Subdiv_Object();
-extern int Draw_Tile();
-extern int DupFileCheck();
-extern int Duplicate_Font();
-extern int End_Of_Season();
-extern int Enter_Driver_Names();
-extern int ExitProcess();
-extern int ExitThread();
+extern int draw_text_half();
 extern int FUN_0041033a();
+extern int draw_half();
 extern int FUN_0041080d();
+extern int draw_text_half_trans();
+extern int sub_410d50();
+extern int sub_410d58();
+extern int sub_410e44();
 extern int FUN_00410f74();
 extern int FUN_004110a4();
 extern int FUN_004111e8();
 extern int FUN_0041132c();
+extern int sub_4114c0();
+extern int sub_411654();
+extern int sub_4117e8();
+extern int sub_4118d4();
 extern int FUN_00411a04();
 extern int FUN_00411b34();
 extern int FUN_00411c78();
 extern int FUN_00411ebc();
 extern int FUN_0041243c();
 extern int FUN_00412694();
-extern int FUN_004128a6();
-extern int FUN_00412e8c();
-extern int FUN_00412e9c();
-extern int FUN_00413014();
-extern int FUN_00413070();
+extern int ClearOTagR();
+extern int DrawOTag();
+extern int DrawPrim();
+extern int FUN_004128e6();
+extern int Init_Application();
+extern int Close_Application();
+extern int SetVideoMode();
+extern int VSync();
+extern int PutDrawEnv();
+extern int PutDispEnv();
+extern int SetPalette();
+extern int VSyncCallback();
+extern int FUN_00412ecc();
+extern int FUN_00412edc();
+extern int MoveImage();
+extern int LoadImage();
+extern int MoveImageClut();
+extern int LoadImageClut();
+extern int StoreImage();
+extern int FUN_00413054();
 extern int FUN_004130b0();
-extern int FUN_004132b0();
-extern int FUN_00413448();
-extern int FUN_00413b4e();
-extern int FUN_00413dc8();
-extern int FUN_00413f45();
-extern int FUN_00413fd2();
-extern int FUN_00414055();
-extern int FUN_00414360();
-extern int FUN_004148d0();
-extern int FUN_00415160();
-extern int FUN_004153d4();
-extern int FUN_00415404();
-extern int FUN_00415448();
-extern int FUN_004154b8();
-extern int FUN_0041574c();
-extern int FUN_004157e8();
-extern int Parse_RIFF_Wave();
-extern int Init_DirectSound();
-extern int FUN_00415a94();
-extern int FUN_00415b50();
-extern int FUN_00415f64();
-extern int FUN_00416044();
-extern int FUN_0041611c();
-extern int FUN_0041612c();
-extern int FUN_00416264();
-extern int Parse_Sound_Bank();
-extern int FUN_0041643c();
-extern int FUN_00416494();
-extern int FUN_004164d4();
-extern int Sound_Volume_To_dB();
-extern int FUN_004166c4();
-extern int FUN_00416714();
-extern int FUN_00416a10();
-extern int FUN_0041a2f4();
-extern int FUN_0041f6a0();
-extern int FUN_0041fb7c();
-extern int Draw_Object_Polys();
-extern int FUN_0041ff50();
-extern int FUN_0042003c();
-extern int FUN_00420060();
-extern int FUN_004202ac();
-extern int FUN_004203a0();
-extern int FUN_004205d8();
-extern int FUN_00420b1c();
-extern int FUN_00420cf0();
-extern int FUN_00420e6c();
-extern int FUN_00420ee8();
-extern int FUN_00422064();
-extern int FUN_004220cc();
-extern int FUN_00422128();
-extern int FUN_00422184();
-extern int FUN_004221ec();
-extern int FUN_00422358();
-extern int FUN_00422548();
-extern int FUN_0042293c();
-extern int FUN_00422c74();
-extern int FUN_00423210();
-extern int FUN_0042353c();
-extern int FUN_004237c0();
-extern int FUN_00423804();
-extern int FUN_00424930();
-extern int FUN_00425314();
-extern int FUN_00425a98();
-extern int FUN_00425b88();
-extern int FUN_00425e74();
-extern int Compute_Bowl_Cell_Normals();
-extern int FUN_00428548();
-extern int FUN_004287c0();
-extern int FUN_004288d0();
-extern int Play_Race_Start_Sounds();
-extern int FUN_004295e4();
-extern int FUN_00429994();
-extern int FUN_0042a4d8();
-extern int FUN_0042b5f0();
-extern int FUN_0042c1a4();
-extern int FUN_0042fa4c();
-extern int FUN_0042fd58();
-extern int Draw_Scene_Object_Blocks();
-extern int FUN_004308b8();
-extern int FUN_00430a30();
-extern int FUN_00430bde();
-extern int FUN_00430efc();
-extern int FUN_00432f98();
-extern int FUN_00433a70();
-extern int FUN_004351d0();
-extern int FUN_00435254();
-extern int FUN_00436c04();
-extern int Update_Particles();
-extern int FUN_00436dd0();
-extern int FUN_0043709c();
-extern int FUN_004371fc();
-extern int FUN_0043b26c();
-extern int FUN_0043b7bc();
-extern int FUN_0043c4e8();
-extern int FUN_0043c55c();
-extern int FUN_0043c5d0();
-extern int FUN_0043c738();
-extern int FUN_0043dbd8();
-extern int FUN_0043dd00();
-extern int FUN_00440980();
-extern int FUN_00440ac4();
-extern int FUN_00440f60();
-extern int FUN_00441394();
-extern int FUN_0044282c();
-extern int Compute_Car_Screen_Pos();
-extern int FUN_004430b8();
-extern int FUN_00443b10();
-extern int FUN_00443f90();
-extern int FUN_00444048();
-extern int FUN_004448e0();
-extern int FUN_00444a60();
-extern int FUN_00444e3c();
-extern int FUN_00444fcc();
-extern int FUN_00445030();
-extern int FUN_004450dc();
-extern int FUN_00445b40();
-extern int FUN_00445b78();
-extern int FUN_00446c10();
-extern int FUN_004471c0();
-extern int FUN_004477a0();
-extern int FUN_00447960();
-extern int Update_Engine_Sound();
-extern int FUN_004480bc();
-extern int Update_Commentary();
-extern int FUN_004496d8();
-extern int FUN_00449728();
-extern int FUN_00449928();
-extern int FUN_00449958();
-extern int FUN_00449c54();
-extern int FUN_00449dd8();
-extern int FUN_00449ee0();
-extern int FUN_0044a1a4();
-extern int FUN_0044a2b0();
-extern int FUN_0044a32c();
-extern int FUN_0044a3a0();
-extern int FUN_0044a4e4();
-extern int FUN_0044a904();
-extern int FUN_0044aa28();
-extern int FUN_0044aaf0();
-extern int FUN_0044ac9c();
-extern int FUN_0044aec8();
-extern int FUN_0044b5c0();
-extern int FUN_0044b684();
-extern int FUN_0044b970();
-extern int FUN_0044b9c0();
-extern int FUN_0044bb88();
-extern int FUN_0044c418();
-extern int FUN_0044c538();
-extern int FUN_0044c800();
-extern int FUN_0044c8e8();
-extern int FUN_0044cb48();
-extern int FUN_0044ccb8();
-extern int FUN_0044ced4();
-extern int FUN_0044cef0();
-extern int FUN_0044d0e4();
-extern int FUN_0044d3d4();
-extern int FUN_0044d538();
-extern int FUN_0044d630();
-extern int FUN_0044d650();
-extern int FUN_0044d974();
-extern int FUN_0044db70();
-extern int FUN_0044e148();
-extern int FUN_0044e170();
-extern int FUN_0044e440();
-extern int FUN_0044e618();
-extern int FUN_0044e6a0();
-extern int FUN_0044eb1c();
-extern int FUN_0044ecac();
-extern int FUN_0044f5c8();
-extern int FUN_0044f65c();
-extern int FUN_0044f6b0();
-extern int FUN_0044f814();
-extern int FUN_0044fbc0();
-extern int FUN_0044fca4();
-extern int FUN_0044fce8();
-extern int FUN_0044fdb4();
-extern int FUN_0044ff48();
-extern int FUN_00450640();
-extern int FUN_0045099c();
-extern int FUN_00450c7c();
-extern int FUN_00450e20();
-extern int FUN_004518ac();
-extern int FUN_00451a80();
-extern int FUN_00451ac0();
-extern int FUN_00451ae0();
-extern int FUN_00451d4c();
-extern int FUN_00451d6c();
-extern int FUN_00451fdc();
-extern int FUN_00451ff0();
-extern int FUN_0045202c();
-extern int FUN_00452090();
-extern int FUN_004525a0();
-extern int FUN_00452790();
-extern int FUN_004527f0();
-extern int FUN_004529d4();
-extern int FUN_00452a34();
-extern int FUN_00452d30();
-extern int FUN_00452da0();
-extern int FUN_00452dc0();
-extern int FUN_00452fa4();
-extern int FUN_00452fc4();
-extern int FUN_00453580();
-extern int FUN_004535c0();
-extern int FUN_004539d0();
-extern int FUN_004539f0();
-extern int FUN_00453a18();
-extern int FUN_00453a20();
-extern int FUN_00453b98();
-extern int FUN_00454158();
-extern int FUN_004541e8();
-extern int FUN_00454278();
-extern int FUN_00454308();
-extern int FUN_00454398();
-extern int FUN_00454550();
-extern int FUN_00454804();
-extern int FUN_00454a70();
-extern int FUN_00454e9c();
-extern int FUN_00454f0c();
-extern int FUN_004551b0();
-extern int FUN_00455260();
-extern int FUN_0045572c();
-extern int FUN_004559d4();
-extern int FUN_00455de4();
-extern int FUN_00455edb();
-extern int FUN_00456034();
-extern int FUN_0045607b();
-extern int FUN_0045644e();
-extern int FUN_0045645e();
-extern int FUN_00456717();
-extern int FUN_0045672e();
-extern int FUN_00456af2();
-extern int FUN_00456b67();
-extern int FUN_00456bf3();
-extern int FUN_00456cae();
-extern int FUN_00456cdf();
-extern int FUN_0045703b();
-extern int FUN_00457040();
-extern int FUN_00457041();
-extern int FUN_0045704f();
-extern int FUN_004571e4();
-extern int FUN_004572f8();
-extern int FUN_00457408();
-extern int FUN_00457571();
-extern int FUN_00457631();
-extern int FUN_004576c5();
-extern int FUN_00457d39();
-extern int FUN_00457e84();
-extern int FUN_00457ee9();
-extern int FUN_00457f0f();
-extern int FUN_00457f40();
-extern int FUN_00457f9f();
-extern int FUN_0045809c();
-extern int FUN_004580b7();
-extern int FUN_004585e8();
-extern int FUN_00458a31();
-extern int FUN_00458b45();
-extern int FUN_00458bc7();
-extern int FUN_00458cc5();
-extern int FUN_00458e2f();
-extern int FUN_00459968();
-extern int FUN_00459a88();
-extern int FUN_00459b19();
-extern int FUN_00459b51();
-extern int FUN_00459bc5();
-extern int FUN_00459c68();
-extern int FUN_00459e4a();
-extern int FUN_00459e6e();
-extern int FUN_00459ea8();
-extern int FUN_00459f57();
-extern int FUN_00459fc0();
-extern int FUN_00459ff5();
-extern int FUN_0045a10b();
-extern int FUN_0045a3b0();
-extern int FUN_0045a453();
-extern int FUN_0045a4c6();
-extern int FUN_0045a9f1();
-extern int FUN_0045aa4a();
-extern int FUN_0045aa9f();
-extern int FUN_0045aaac();
-extern int FUN_0045acb6();
-extern int FUN_0045ad67();
-extern int FUN_0045ad94();
-extern int FUN_0045ae0c();
-extern int FUN_0045aeaa();
-extern int FUN_0045b3d9();
-extern int FUN_0045b5ae();
-extern int FUN_0045b5d4();
-extern int FUN_0045b688();
-extern int FUN_0045b6f3();
-extern int FUN_0045b812();
-extern int FUN_0045b814();
-extern int FUN_0045bdda();
-extern int FUN_0045be98();
-extern int FUN_0045c2ab();
-extern int File_Load();
-extern int Find_Lowest_Corner();
-extern int Fire();
-extern int FirstSavedGame();
-extern int Flying_Objects_Pos_Ang();
-extern int FreeParticle();
-extern int Front_End();
+extern int FUN_004130f0();
+extern int DDRelease();
+extern int FUN_004132f0();
+extern int FUN_00413488();
+extern int Generate_Transparency_Tables();
+extern int MulMatrix();
+extern int gte_MulMatrix0();
+extern int MulMatrix2();
+extern int rsin();
+extern int rcos();
+extern int SquareRoot0_();
+extern int GTERT();
 extern int GTERPS();
 extern int GTERPT();
-extern int GTERT();
-extern int Generate_Surface_Normals();
-extern int Generate_Transparency_Tables();
-extern int GetCommandLineA();
-extern int GetConsoleMode();
-extern int GetCurrentProcessId();
-extern int GetCurrentThread();
-extern int GetCurrentThreadId();
-extern int GetEnvironmentStrings();
-extern int GetFileType();
-extern int GetLastError();
-extern int GetModuleFileNameA();
-extern int GetModuleHandleA();
-extern int GetStdHandle();
-extern int GetVersion();
-extern int Get_Car_Angle();
-extern int Get_Corner_Positions();
-extern int Get_Current_Recording_Season();
-extern int Get_Direction_Cosines();
-extern int Get_Race_Positions();
-extern int Ground_Collision();
-extern int Highlight_Area();
-extern int InitCardBlocks();
-extern int InitCardSystem();
-extern int Init_Application();
-extern int Init_Car_Cluts();
-extern int Init_Car_Doors();
-extern int Init_Car_Graphics();
-extern int Init_Damage_Indicator();
-extern int Init_End_Race();
-extern int Init_Flag();
-extern int Init_Front_End();
-extern int Init_Game();
-extern int Init_Graphics();
-extern int Init_League_Info();
-extern int Init_LensFlare();
-extern int Init_Main();
-extern int Init_MultiLeague_Info();
-extern int Init_Overlays();
-extern int Init_Primitive_Buffer();
-extern int Init_Rollercoaster();
-extern int Init_Scene();
-extern int Init_Scene_Objects();
-extern int Init_Sky();
-extern int Init_StockCar_Championship();
-extern int Init_StockCar_MultiChamp();
-extern int Init_Texture_Animation();
-extern int Init_The_Floaty_Camera();
-extern int Init_Track_Strip_Numbers();
-extern int Init_Wild_Bill();
-extern int Init_Wrecking_Championship();
-extern int InitialiseAI();
-extern int InitialiseDenting();
-extern int InitialiseParticleSystem();
-extern int Initialise_Pause_Mode();
-extern int Interpolate_Direction_Vectors_Left();
-extern int Kill_Sound();
-extern int LoadCardFile();
-extern int LoadCardFiles();
-extern int LoadImage();
-extern int LoadSave();
-extern int Load_Card_File();
-extern int Load_Cluts();
-extern int Load_Completion_Status();
-extern int Load_First_Config();
-extern int Load_Game_Vags();
-extern int Load_Sprite_Info();
-extern int Load_Textures();
-extern int Loading_Screen_From_Slab();
-extern int LocalAlloc();
-extern int LocalFree();
-extern int MPE_InitHeap();
-extern int MPE_free();
-extern int MPE_malloc();
-extern int Make_Car_Fly();
-extern int Map_Height();
-extern int Mask_Point_In_Quad();
-extern int Modify_Sound();
-extern int Modify_Sprite();
-extern int Modify_TDF();
-extern int MoveImageClut();
-extern int Move_Forward_Strip();
-extern int MulMatrix2();
-extern int MultiChamp();
-extern int Obstacle_Ahead();
-extern int Order_Cars();
-extern int OuterProduct12();
-extern int PC_Write_File();
-extern int Pause_Mode();
-extern int Pit_Camera_Control();
-extern int Play_Click_FX();
-extern int Play_Game();
-extern int Play_Intro();
-extern int Play_Movie();
-extern int Play_Sound();
-extern int Play_Xtro();
-extern int Point_Camera();
+extern int GTERPT4_();
+extern int FUN_00413b8e();
+extern int RotMatrix();
+extern int ApplyMatrixLV();
+extern int FUN_00413e08();
+extern int FUN_00413f85();
+extern int FUN_00414016();
+extern int FUN_00414099();
+extern int gte_dpcs();
+extern int gte_ncds();
+extern int SetFogNearFar();
+extern int gte_SetFogFar();
+extern int gte_SetFogNear();
+extern int PushMatrix();
 extern int PopMatrix();
-extern int Practice_Over();
+extern int FUN_004143b0();
+extern int VectorNormalS();
+extern int VectorNormalSS();
+extern int RotMatrixYXZ();
+extern int RotMatrixX();
+extern int RotMatrixY();
+extern int RotMatrixZ();
+extern int FUN_00414920();
+extern int gte_SetRotMatrix();
+extern int RotTrans();
+extern int RotTransPers();
+extern int RotAverageNclip4();
+extern int OuterProduct0();
+extern int OuterProduct12();
+extern int Play_Movie();
+extern int Load_Null();
+extern int Load_Textures();
+extern int sub_415000();
+extern int Load_Texture2();
+extern int Load_Cluts();
+extern int Add_Buffer_Load_();
+extern int FUN_004151b0();
+extern int Read_Directory();
+extern int File_Load();
+extern int FUN_00415424();
+extern int FUN_00415454();
+extern int FUN_00415498();
+extern int FUN_00415508();
+extern int Decompress();
+extern int DSLoadSoundBuffer();
+extern int FUN_0041579c();
+extern int DSGetWaveResource();
+extern int FUN_00415838();
+extern int FUN_004158e4();
+extern int FUN_004159f8();
+extern int Sound_Init();
+extern int FUN_00415ae4();
+extern int Sound_Remove();
+extern int Master_CD_Volume();
+extern int FUN_00415ba0();
+extern int Sound_Stop();
+extern int Sound_Pause_();
+extern int Sound_Restart();
+extern int Kill_Sound();
+extern int Play_Sound();
+extern int Modify_Sound();
+extern int FUN_00415fb4();
+extern int Unlock_Channel();
+extern int Echo_Free();
+extern int Set_Echo_Mode();
+extern int Set_Echo_Depth();
+extern int FUN_00416094();
+extern int CD_Close();
+extern int FUN_0041616c();
+extern int Read_CD_Toc_();
+extern int FUN_0041617c();
+extern int Start_CD_Audio();
+extern int Check_For_CD_Loop();
+extern int FUN_004162b4();
+extern int CD_Pause();
+extern int CD_Restart();
+extern int Sound_Timer_();
+extern int FUN_00416404();
+extern int FUN_0041648c();
+extern int FUN_004164e4();
+extern int FUN_00416524();
+extern int FUN_004165f4();
+extern int CD_Check();
+extern int Load_Sprite_Info();
+extern int Search_For_Sprite();
+extern int FUN_00416714();
+extern int Setup_Sprite();
+extern int FUN_00416764();
+extern int Modify_Sprite();
+extern int FUN_00416a70();
+extern int draw_face_3pt_flat();
+extern int draw_face_3pt_flat_lit();
+extern int draw_face_3pt_flat_dpq();
+extern int draw_face_3pt_flat_dpq_lit();
+extern int draw_face_4pt_flat();
+extern int draw_face_4pt_flat_lit();
+extern int draw_face_4pt_flat_dpq();
+extern int draw_face_4pt_flat_dpq_lit();
+extern int draw_face_3pt_text();
+extern int draw_face_3pt_text_squash();
+extern int draw_face_3pt_text_lit();
+extern int draw_face_3pt_text_dpq();
+extern int draw_face_3pt_text_dpq_squash();
+extern int draw_face_3pt_text_dpq_lit();
+extern int FUN_0041a3b4();
+extern int draw_face_4pt_text();
+extern int draw_face_4pt_text_squash();
+extern int draw_face_4pt_text_lit();
+extern int draw_face_4pt_text_dpq();
+extern int draw_face_4pt_text_dpq_squash();
+extern int draw_face_4pt_text_dpq_lit();
+extern int draw_face_3pt_gour();
+extern int draw_face_3pt_gour_lit();
+extern int draw_face_3pt_gour_dpq();
+extern int draw_face_3pt_gour_dpq_lit();
+extern int draw_face_4pt_gour();
+extern int draw_face_4pt_gour_lit();
+extern int draw_face_4pt_gour_dpq();
+extern int draw_face_4pt_gour_dpq_lit();
+extern int draw_face_3pt_pict();
+extern int draw_face_3pt_pict_lit();
+extern int draw_face_3pt_pict_dpq();
+extern int draw_face_3pt_pict_dpq_lit();
+extern int draw_face_4pt_pict();
+extern int draw_face_4pt_pict_lit();
+extern int draw_face_4pt_pict_dpq();
+extern int draw_face_4pt_pict_dpq_lit();
+extern int setup_face_sprite();
+extern int draw_face_sprite();
+extern int draw_face_sprite_dpq();
+extern int draw_face_tilt_sprite_dpq();
+extern int FUN_0041f7d0();
+extern int FUN_0041fcac();
+extern int Create_Object();
+extern int Set_Object();
+extern int Remove_Object();
 extern int Pre_Rotate();
-extern int Print();
-extern int Print_Draw();
+extern int Draw_Subdiv_Object();
+extern int FUN_0041ff98();
+extern int Update_Object();
+extern int FUN_00420080();
+extern int FUN_0042016c();
+extern int FUN_00420190();
+extern int Set_Zclip();
+extern int Set_Clip();
+extern int Set_World_Position();
+extern int Set_World_Matrix();
+extern int Set_World_View();
+extern int Set_Ambient_Light();
+extern int Set_Depth_Cue();
+extern int FUN_004203dc();
+extern int FUN_004204d0();
+extern int Calc_Object_MatrixYZX();
+extern int Calc_Object_Angles();
+extern int Calc_Object_AnglesYZX();
+extern int FUN_00420708();
+extern int Point_Camera();
+extern int Set_Draw_Mode();
+extern int FUN_00420c4c();
+extern int Draw_All();
+extern int Draw_Tile();
+extern int Draw_Line();
+extern int Allocate_OT_();
+extern int Swap_Buffers();
+extern int FUN_00420e20();
+extern int Draw_Font_Poly();
+extern int Init_Primitive_Buffer();
+extern int Reset_Primitive_Buffer();
+extern int Free_Primitive_Buffer();
+extern int FUN_00420f9c();
+extern int FUN_00421018();
+extern int Allocate_Font_Buffers();
+extern int Setup_Font();
+extern int Duplicate_Font();
+extern int Print_Locate();
 extern int Print_Font();
 extern int Print_Ink();
 extern int Print_InkRGB();
-extern int Print_Locate();
-extern int Profile_Init();
-extern int Promote_And_Relegate();
-extern int PushMatrix();
-extern int PutDispEnv();
-extern int PutDrawEnv();
-extern int Race_Over();
-extern int ReadConsoleInputA();
-extern int ReadFile();
-extern int Read_Directory();
-extern int Recommended_Acceleration();
-extern int Record_Event();
-extern int ReleaseMutex();
-extern int Remove_Object();
-extern int Remove_Scene_Objects();
-extern int Request_Flying_Object();
-extern int Reset_League_Info();
-extern int Reset_Primitive_Buffer();
-extern int RotMatrixX();
-extern int RotMatrixY();
-extern int RotMatrixYXZ();
-extern int RotMatrixZ();
-extern int RotTrans();
-extern int RotTransPers();
-extern int Rotate_Slab_On();
+extern int Print();
+extern int Print_Draw();
+extern int FUN_00422194();
+extern int FUN_004221fc();
+extern int FUN_00422258();
+extern int FUN_004222b4();
+extern int FUN_0042231c();
+extern int FUN_00422488();
+extern int FUN_00422678();
+extern int FUN_00422a6c();
+extern int Init_Controller_();
+extern int Setup_Controller();
+extern int Setup_Joystick();
+extern int FUN_00422da4();
+extern int Translate_Keypress();
+extern int FUN_0042317c();
+extern int InitCardSystem();
+extern int FUN_00423340();
 extern int SaveCardFile();
-extern int Save_Game();
-extern int Search_For_Sprite();
+extern int DeleteFileMC();
+extern int LoadCardFiles();
+extern int LoadCardFile();
+extern int FirstSavedGame();
+extern int InitCardBlocks();
+extern int DupFileCheck();
+extern int FUN_0042366c();
+extern int MPE_InitHeap();
+extern int MPE_malloc();
+extern int MPE_free();
+extern int Debug_Stub();
+extern int PC_Read_File();
+extern int PC_Write_File();
+extern int System_Error();
+extern int FUN_004238f0();
+extern int FUN_00423934();
+extern int Profile_Init();
+extern int Profile_Start();
+extern int Profile_Stop();
+extern int ddmain();
+extern int Play_Game();
+extern int Init_Debris_();
+extern int Setup_Debris();
+extern int Update_Debris();
+extern int FUN_00424a60();
+extern int Setup_Flying_Objects();
+extern int Update_Flying_Objects();
+extern int Zero_Flying_Object();
+extern int Request_Flying_Object();
+extern int FUN_00425444();
+extern int Flying_Objects_Pos_Ang();
+extern int FUN_00425bc8();
+extern int FUN_00425cb8();
+extern int InitialiseDenting();
+extern int FUN_00425fa4();
+extern int Generate_Surface_Normals();
+extern int Mask_Point_In_Quad();
+extern int FUN_00426be4();
+extern int Track_Follow();
+extern int Map_Height();
+extern int FUN_00428678();
+extern int Move_Forward_Strip();
+extern int FUN_004288f0();
 extern int Search_For_Strip();
+extern int FUN_00428a00();
+extern int FUN_00428a8c();
+extern int FUN_00429714();
+extern int Car_Camera();
+extern int Camera_Pad_Control();
+extern int Init_Pit_Camera_();
+extern int FUN_00429ac4();
+extern int Pit_Camera_Control();
+extern int Init_The_Floaty_Camera();
+extern int Do_The_Floaty_Camera_Thing();
+extern int Init_Damage_Indicator();
+extern int FUN_0042a608();
+extern int Bonnet_Smoke();
+extern int FUN_0042b720();
+extern int Draw_Car();
+extern int FUN_0042c2d4();
+extern int Init_Car_Graphics();
+extern int Init_Wild_Bill();
+extern int Init_Rollercoaster();
+extern int Init_CLUT_Animation_();
+extern int Init_Texture_Animation();
+extern int Update_Texture_Animation();
+extern int Texture_Animation();
+extern int Update_CLUT_Animation();
+extern int CLUT_Animation();
+extern int Update_Other_Objects();
+extern int Draw_Other_Objects();
+extern int Draw_Dynamic_Objects();
+extern int Init_Flag();
+extern int DrawFlagObject();
+extern int UpdateFlag();
+extern int ZoomFlag();
+extern int Init_LensFlare();
+extern int DrawLensFlare();
+extern int Init_Overlays();
+extern int Draw_Overlays();
+extern int FUN_0042fb7c();
+extern int Update_Race_CountDown();
+extern int FUN_0042fe88();
+extern int Display_Position_Pointers();
+extern int Init_Scene();
+extern int VVDraw_Object();
+extern int Draw_Scene_Object();
+extern int FUN_004307c8();
+extern int Setup_Object_Block();
+extern int FUN_004309e8();
+extern int Decrunch_Object_Block();
+extern int Object_Decompression();
+extern int FUN_00430b60();
+extern int Update_Scene_Objects();
+extern int FUN_00430d0e();
+extern int Init_Bowl_Objects();
+extern int Init_Scene_Objects();
+extern int Init_Track_Objects();
+extern int Remove_Scene_Objects();
+extern int Init_Sky();
+extern int FUN_0043102c();
+extern int Draw_Sky();
+extern int AI_Com_Server();
+extern int Determine_AI();
+extern int Recommended_Acceleration();
+extern int FUN_004330c8();
+extern int Get_Car_Angle();
+extern int Get_Direction_Cosines();
+extern int Interpolate_Direction_Vectors_Left();
+extern int Interpolate_Direction_Vectors_Right_();
+extern int InitialiseAI();
+extern int Obstacle_Ahead();
+extern int Strip_Distance();
+extern int FUN_00433ba0();
+extern int CheckPointScoring();
+extern int Barrier_Collision();
+extern int Barrier_Corner_Collision();
+extern int FUN_00435300();
+extern int FUN_00435384();
+extern int TransformWheels_();
+extern int TransformEnemyWheels();
+extern int ApplyWheelOverlay();
+extern int InitialiseParticleSystem();
+extern int Smoke();
+extern int SmokeCtrl();
+extern int FireCtrl();
+extern int Fire();
+extern int Sparks();
+extern int SparksCtrl();
+extern int Steam();
+extern int SteamCtrl();
+extern int FUN_00436d34();
+extern int FreeParticle();
+extern int DrawParticles();
+extern int FUN_00436e2c();
+extern int FUN_00436f00();
+extern int Start_Roll();
+extern int FUN_004371cc();
+extern int FUN_0043732c();
+extern int Calc_Head_On_Clsn_Dynamics();
+extern int Check_2D_Car_Collision();
+extern int Check_Ground_Car_Collision();
+extern int Check_Space_Car_Collision();
+extern int Do_Car_Collisions();
+extern int Init_Car_Cluts();
+extern int Init_Car_Doors();
+extern int FUN_0043b39c();
+extern int Change_Bonnet_Clut();
+extern int Change_Boot_Clut();
+extern int Highlight_Area();
+extern int FUN_0043b8ec();
+extern int TextureDentHiCar();
+extern int TextureDentMidCar();
+extern int FUN_0043c618();
+extern int FUN_0043c68c();
+extern int FUN_0043c700();
+extern int FUN_0043c868();
+extern int Get_Corner_Positions();
+extern int Ground_Collision();
+extern int Find_Lowest_Corner();
+extern int Make_Car_Fly();
+extern int Car_Landed();
+extern int Car_Landed_On_Corner();
+extern int Car_Fly_Motion_3D();
+extern int Car_Grounded_Motion_3D();
+extern int Car_Rolled_Edge_Onto_Wheels_();
+extern int FUN_0043dd08();
+extern int Check_Quadrant();
+extern int FUN_0043de30();
+extern int Car_2pt_Motion_3D();
+extern int Car_1pt_Motion_3D();
+extern int Car_Drive_Motion_3D_();
+extern int Sticky_Car_Motion_3D();
+extern int FUN_00440ab0();
+extern int FUN_00440bf4();
+extern int FUN_00441090();
+extern int Calc_Car_Tilt();
+extern int Calc_Car_Angles_Square();
+extern int FUN_004414c4();
+extern int Car_Drive_Motion();
+extern int Car_Drive_2pt_Motion();
+extern int Car_Fly_Motion();
+extern int FUN_0044295c();
+extern int FUN_00442c38();
+extern int Car_Movement();
+extern int FUN_004431e8();
+extern int Init_End_Race();
+extern int Calc_Track_Positions();
+extern int FUN_00443c40();
+extern int Get_Race_Positions();
+extern int Init_Track_Strip_Numbers();
+extern int FUN_004440c0();
+extern int FUN_00444178();
+extern int FUN_00444a10();
+extern int FUN_00444b90();
+extern int Calc_Suspension_Right_Wheels();
+extern int Calc_Null_Suspension();
+extern int FUN_00444f6c();
+extern int Boot_Lost_Geometry();
+extern int FUN_004450fc();
+extern int FUN_00445160();
+extern int FUN_0044520c();
+extern int Check_Bonnet_Removal();
+extern int Check_Boot_Removal();
+extern int Init_Sys();
+extern int Init_Main();
+extern int Set_Load_Textures();
+extern int Modify_TDF();
+extern int Init_Graphics();
+extern int FUN_00445c70();
+extern int FUN_00445ca8();
+extern int Init_Game();
+extern int Play_Intro();
+extern int Play_Xtro();
+extern int Initialise_Pause_Mode();
+extern int Pause_Mode();
+extern int FUN_00446d50();
+extern int UndentCar();
+extern int SetHighLight();
+extern int FUN_00447300();
+extern int Control_Car_Replay();
+extern int FUN_004478e0();
+extern int Record_Event();
+extern int Terminate_Replay();
+extern int Terminate_Replay_Bodge();
+extern int FUN_00447aa0();
+extern int FUN_00447bdc();
+extern int Amplitude();
+extern int DopplerFrequency();
+extern int Allocate_Sound_Effect();
+extern int FUN_004481fc();
+extern int Load_Game_Vags();
+extern int Clear_SoundFx();
+extern int FUN_00448368();
+extern int PitOut();
+extern int PitIn();
+extern int Pit_Stop1();
+extern int Pit_Stop2();
+extern int Strip_Trigger_Handler();
+extern int Sparking();
+extern int LoadSave();
+extern int FUN_00449818();
+extern int FUN_00449868();
+extern int FUN_00449a68();
+extern int FUN_00449a98();
+extern int FUN_00449dc4();
+extern int FUN_00449f48();
+extern int FUN_0044a050();
+extern int FUN_0044a314();
+extern int FUN_0044a420();
+extern int FUN_0044a49c();
+extern int FUN_0044a510();
+extern int FUN_0044a654();
+extern int FUN_0044aa74();
+extern int FUN_0044ab98();
+extern int FUN_0044ac60();
+extern int Duplicate_Results();
+extern int Load_First_Config();
+extern int Load_Card_File();
+extern int FUN_0044ae0c();
+extern int FUN_0044b038();
+extern int Init_Front_End();
+extern int View_Frontend_Replay();
+extern int DemoMode();
+extern int FUN_0044b730();
+extern int Loading_Screen_From_Slab();
+extern int FUN_0044b7f4();
+extern int Load_Completion_Status();
+extern int Run_Selection();
+extern int Call_Loaded_Game();
+extern int FUN_0044baec();
+extern int FUN_0044bb3c();
+extern int Setup_Pad();
+extern int Init_Wrecking_Championship();
+extern int Init_StockCar_Championship();
+extern int FUN_0044bd48();
+extern int Init_StockCar_MultiChamp();
+extern int Championship();
+extern int MultiChamp();
+extern int Calculate_Finish();
+extern int Calculate_Results();
+extern int End_Of_Game_Sequence();
+extern int Do_End_Of_Season_Stuff();
+extern int Init_League_Info();
+extern int Reset_League_Info();
+extern int Sort_Leagues();
+extern int Init_MultiLeague_Info();
+extern int Setup_Driver_Names();
+extern int FUN_0044c5d8();
+extern int Add_Computer_Info();
+extern int Update_League_Info();
+extern int FUN_0044c6f8();
+extern int Sort_MultiLeague();
+extern int Sort_RacePos();
+extern int Promote_And_Relegate();
+extern int Check_League_Standing();
+extern int Order_Cars();
+extern int FUN_0044c9c0();
+extern int FUN_0044caa8();
+extern int View_Results_Replay_();
+extern int FUN_0044cd08();
+extern int View_Champ_Stats();
+extern int FUN_0044ce78();
+extern int View_Driver_Stats();
+extern int FUN_0044d094();
+extern int FUN_0044d0b0();
+extern int FUN_0044d2a4();
+extern int Start_New_Season_Stats();
+extern int FUN_0044d594();
+extern int Update_Track_Stats();
+extern int FUN_0044d6f8();
+extern int Update_Championship_Stats();
+extern int FUN_0044d7f0();
+extern int Get_Current_Recording_Season();
+extern int FUN_0044d810();
+extern int Update_Jimmy_Spunk_Times();
+extern int View_Track_Stats();
+extern int FUN_0044db34();
+extern int FUN_0044dd30();
 extern int Secret();
+extern int FUN_0044e308();
+extern int FUN_0044e330();
+extern int Select_Car();
+extern int FUN_0044e600();
+extern int FUN_0044e7d8();
+extern int FUN_0044e860();
+extern int Select_ScreenPos();
+extern int Configuration();
+extern int FUN_0044ecdc();
+extern int View_Credits();
+extern int FUN_0044ee6c();
+extern int FUN_0044f788();
+extern int FUN_0044f81c();
+extern int FUN_0044f870();
+extern int FUN_0044f9d4();
+extern int FUN_0044fd80();
+extern int FUN_0044fe64();
+extern int FUN_0044fea8();
+extern int FUN_0044ff74();
+extern int View_BestLaps();
+extern int FUN_00450108();
+extern int Front_End();
+extern int FUN_00450800();
+extern int Toggle_Track();
+extern int Toggle_Car();
+extern int FUN_00450b5c();
+extern int FUN_00450e3c();
+extern int Rotate_Slab_On();
+extern int FUN_00450fe0();
+extern int Draw_Screen_Polys();
+extern int Setup_Screen_Text();
+extern int Setup_Screen_Lines();
+extern int Draw_Screen_Lines();
+extern int Button_Pressed();
+extern int Glow_Selector();
+extern int Draw_Slab();
+extern int Null_Routine();
+extern int FUN_00451a6c();
+extern int Draw_Semi_Trans_Poly();
+extern int FUN_00451c40();
+extern int Play_Click_FX();
+extern int FUN_00451c80();
+extern int FUN_00451ca0();
+extern int Show_Information();
+extern int FUN_00451f0c();
+extern int FUN_00451f2c();
+extern int FUN_0045219c();
+extern int FUN_004521b0();
+extern int FUN_004521ec();
+extern int FUN_00452250();
+extern int Enter_Driver_Names();
+extern int FUN_00452760();
+extern int FUN_00452950();
+extern int FUN_004529b0();
+extern int FUN_00452b94();
+extern int FUN_00452bf4();
+extern int Practice_Over();
+extern int FUN_00452ef0();
+extern int FUN_00452f60();
+extern int FUN_00452f80();
+extern int FUN_00453164();
+extern int FUN_00453184();
 extern int Select_Champ();
+extern int Select_Multi();
 extern int Select_ChampQS();
-extern int Select_DDPract();
 extern int Select_Pract();
 extern int Select_TimeT();
 extern int Select_Total();
-extern int SetConsoleMode();
-extern int SetEvent();
-extern int SetFilePointer();
-extern int SetFogNearFar();
-extern int SetHighLight();
-extern int SetPalette();
-extern int SetStdHandle();
-extern int SetVideoMode();
-extern int Set_Ambient_Light();
-extern int Set_Depth_Cue();
-extern int Set_Draw_Mode();
-extern int Set_Load_Textures();
-extern int Set_Object();
-extern int Set_World_Matrix();
-extern int Set_World_Position();
-extern int Set_World_View();
-extern int Set_Zclip();
-extern int Setup_Controller();
-extern int Setup_Debris();
-extern int Setup_Driver_Names();
-extern int Setup_Flying_Objects();
-extern int Setup_Font();
-extern int Setup_Joystick();
-extern int Setup_Object_Block();
-extern int Setup_Pad();
-extern int Setup_Screen_Lines();
-extern int Setup_Screen_Text();
-extern int Setup_Sprite();
-extern int Smoke();
-extern int Sort_Leagues();
-extern int Sort_MultiLeague();
-extern int Sort_RacePos();
-extern int Sound_Init();
-extern int Sound_Remove();
-extern int Sound_Restart();
-extern int Sound_Stop();
-extern int Sparking();
-extern int Sparks();
-extern int Start_CD_Audio();
-extern int Start_New_Season_Stats();
-extern int Start_Roll();
-extern int Steam();
-extern int Strip_Distance();
-extern int Strip_Trigger_Handler();
-extern int Swap_Buffers();
-extern int System_Error();
-extern int Terminate_Replay();
-extern int Terminate_Replay_Bodge();
-extern int TextureDentHiCar();
-extern int TextureDentMidCar();
-extern int Texture_Animation();
-extern int TlsAlloc();
-extern int TlsFree();
-extern int TlsGetValue();
-extern int TlsSetValue();
-extern int Toggle_Car();
-extern int Toggle_Track();
-extern int Track_Follow();
-extern int TransformEnemyWheels();
-extern int Translate_Keypress();
-extern int UndentCar();
-extern int Unlock_Channel();
-extern int UpdateFlag();
-extern int Update_Championship_Stats();
-extern int Update_Debris();
-extern int Update_Flying_Objects();
-extern int Update_Jimmy_Spunk_Times();
-extern int Update_League_Info();
-extern int Update_Object();
-extern int Update_Other_Objects();
-extern int Update_Race_CountDown();
-extern int Update_Scene_Objects();
-extern int Update_Track_Stats();
-extern int VSync();
-extern int VSyncCallback();
-extern int VVDraw_Object();
-extern int VectorNormalS();
-extern int VectorNormalSS();
-extern int View_BestLaps();
-extern int View_Frontend_Replay();
-extern int WaitForSingleObject();
-extern int WriteConsoleA();
-extern int WriteFile();
-extern int Zero_Flying_Object();
-extern int _FtoS();
-extern int _Scale();
-extern int _Scale10V();
-extern int __AccessSemaphore();
-extern int __CHP();
-extern int __CloseSemaphore();
-extern int __CommonInit();
-extern int __DoneExceptionHandler();
-extern int __EnterWVIDEO();
-extern int __ExpandDGROUP();
-extern int __FiniRtns();
-extern int __GetNTAccessAttr();
-extern int __GetNTShareAttr();
-extern int __HasLeadingZero();
-extern int __HeapManager_expand();
-extern int __IOMode();
-extern int __InitMultipleThread();
-extern int __InitRtns();
-extern int __InitThreadData();
-extern int __MemAllocator();
-extern int __MemFree();
-extern int __NTAddThread();
-extern int __NTAtMaxFiles();
-extern int __NTConsoleInput();
-extern int __NTGetFakeHandle();
-extern int __NTInit();
-extern int __NTMainInit();
-extern int __NTRemoveFileHandle();
-extern int __NTRemoveThread();
-extern int __NTThreadInit();
-extern int __Nan_Inf();
-extern int __NewExceptionHandler();
-extern int __ReleaseSemaphore();
-extern int __RemoveThreadData();
-extern int __SigFini();
-extern int __WinMain();
-extern int __allocfp();
-extern int __chktty();
-extern int __cnvs2d();
-extern int __exit();
-extern int __fatal_runtime_error();
-extern int __fdiv_m32();
-extern int __fdiv_m64();
-extern int __fdivp_sti_st();
-extern int __flushall();
-extern int __freefp();
-extern int __full_io_exit();
-extern int __get_std_stream();
-extern int __init_80x87();
-extern int __initthread();
-extern int __ioalloc();
-extern int __math1err();
-extern int __matherr();
-extern int __nmemneed();
-extern int __null_int23_exit();
+extern int Select_DDPract();
+extern int Select_RaceType_DD();
+extern int Select_Track();
+extern int FUN_00453740();
+extern int FUN_00453780();
+extern int Save_Game();
+extern int FUN_00453b90();
+extern int FUN_00453bb0();
+extern int FUN_00453bd8();
+extern int FUN_00453be0();
+extern int FUN_00453d58();
+extern int End_Of_Season();
+extern int FUN_00454318();
+extern int FUN_004543a8();
+extern int FUN_00454438();
+extern int FUN_004544c8();
+extern int FUN_00454558();
+extern int FUN_00454710();
+extern int FUN_004549c4();
+extern int View_MultiLeague();
+extern int FUN_00454c30();
+extern int Race_Over();
+extern int FUN_0045505c();
+extern int FUN_004550cc();
+extern int FUN_00455370();
+extern int FUN_00455420();
+extern int Display_Season_Status();
+extern int FUN_004558ec();
+extern int FUN_00455b94();
 extern int __open_flags();
-extern int __prtf();
-extern int __purgefp();
-extern int __qwrite();
-extern int __rterrmsg();
+extern int FUN_00455fa4();
+extern int FUN_0045609b();
+extern int FUN_004560fb();
+extern int FUN_00456170();
+extern int FUN_004561f4();
+extern int __shutdown_stream();
+extern int FUN_0045660e();
+extern int FUN_0045661e();
+extern int __CHP();
+extern int nfree();
+extern int __null_int23_exit();
+extern int _exit();
+extern int wstart2_();
+extern int FUN_00456cb2();
+extern int FUN_00456cf0();
+extern int FUN_00456d27();
+extern int FUN_00456db3();
+extern int _tolower();
+extern int FUN_00456e6e();
 extern int __set_EDOM();
 extern int __set_ERANGE();
+extern int FUN_00456e9f();
 extern int __set_doserrno();
-extern int __set_errno_nt();
-extern int __shutdown_stream();
-extern int __sigfpe_handler();
-extern int __threadid();
-extern int _beginthread();
-extern int _control87();
-extern int _endthread();
-extern int _fpreset();
-extern int _itoa();
-extern int _lseek();
-extern int _ltoa();
-extern int _matherr();
-extern int _nheapshrink();
-extern int _stricmp();
-extern int _tolower();
-extern int _toupper();
-extern int dosretax();
-extern int draw_face_3pt_flat_dpq();
-extern int draw_face_3pt_gour_dpq();
-extern int draw_face_3pt_pict_dpq();
-extern int draw_face_3pt_pict_dpq_lit();
-extern int draw_face_3pt_text_dpq();
-extern int draw_face_3pt_text_dpq_squash();
-extern int draw_face_4pt_pict_dpq();
-extern int draw_face_4pt_pict_dpq_lit();
-extern int draw_face_sprite();
-extern int draw_face_sprite_dpq();
-extern int draw_half();
-extern int draw_text_half_trans();
-extern int flushall();
-extern int getch();
-extern int getche();
-extern int getpid();
-extern int gte_MulMatrix0();
-extern int gte_SetRotMatrix();
-extern int gte_dpcs();
-extern int gte_ncds();
-extern int isatty();
-extern int itoa();
-extern int joyGetDevCapsA();
-extern int joyGetPos();
-extern int ltoa();
-extern int mciSendCommandA();
-extern int nexpand();
-extern int nfree();
-extern int nmalloc();
-extern int nrealloc();
 extern int open();
-extern int putch();
-extern int rcos();
-extern int rsin();
 extern int sopen();
+extern int __allocfp();
+extern int __freefp();
+extern int __purgefp();
+extern int __chktty();
+extern int __threadid();
+extern int FUN_004571fb();
+extern int FUN_00457200();
+extern int FUN_00457201();
+extern int FUN_0045720f();
+extern int __NTInit();
+extern int __NTMainInit();
+extern int __exit();
+extern int FUN_004573a4();
+extern int _lseek();
+extern int FUN_004574b8();
 extern int tell();
-extern int timeBeginPeriod();
-extern int timeEndPeriod();
-extern int timeKillEvent();
-extern int timeSetEvent();
-extern int ultoa();
+extern int __ioalloc();
+extern int FUN_004575c8();
+extern int FUN_00457731();
+extern int getpid();
+extern int FUN_004577f1();
+extern int FUN_00457885();
+extern int __init_8087_();
+extern int _fpreset();
+extern int nmalloc();
+extern int __MemAllocator();
+extern int __MemFree();
+extern int FUN_00457ef9();
+extern int FUN_00458044();
+extern int FUN_004580a9();
+extern int FUN_004580cf();
+extern int FUN_00458100();
+extern int FUN_0045815f();
+extern int FUN_0045825c();
+extern int FUN_00458277();
+extern int FUN_004587a8();
+extern int __qwrite();
+extern int __WinMain();
+extern int __NTAtMaxFiles();
+extern int FUN_00458b24();
+extern int __NTRemoveFileHandle();
+extern int FUN_00458bf1();
+extern int __NTGetFakeHandle();
+extern int __GetNTAccessAttr();
+extern int __GetNTShareAttr();
+extern int _stricmp();
+extern int FUN_00458d05();
+extern int _dosret0();
+extern int dosretax();
+extern int FUN_00458d87();
+extern int __set_errno_nt();
+extern int isatty();
+extern int __IOMode();
+extern int FUN_00458e85();
+extern int __sigfpe_handler();
+extern int signal();
+extern int raise();
+extern int FUN_00458fef();
+extern int __SigFini();
+extern int __NewExceptionHandler();
+extern int __DoneExceptionHandler();
+extern int __CloseSemaphore();
+extern int __AccessSemaphore();
+extern int __ReleaseSemaphore();
+extern int __InitThreadData();
+extern int __NTThreadInit();
+extern int __NTAddThread();
+extern int __NTRemoveThread();
+extern int __InitMultipleThread();
+extern int __InitRtns();
+extern int __FiniRtns();
+extern int __full_io_exit();
+extern int FUN_00459a3f();
+extern int flushall();
+extern int __flushall();
+extern int getche();
 extern int unlink();
+extern int FUN_00459b28();
+extern int FUN_00459c48();
+extern int __cnvs2d();
+extern int FUN_00459cd9();
+extern int __init_80x87();
+extern int FUN_00459d11();
+extern int FUN_00459d85();
+extern int __ExpandDGROUP();
+extern int FUN_00459e28();
+extern int __nmemneed();
 extern int utoa();
-extern int wstart2_();
-extern int Load_Null();
-extern int FUN_00414fb0();
-extern int Load_Texture2();
-extern void draw_face_3pt_flat(int);
-extern void draw_face_3pt_flat_dpq_lit(int);
-extern void draw_face_3pt_flat_lit(int);
-extern void draw_face_3pt_gour(int);
-extern void draw_face_3pt_gour_dpq_lit(int);
-extern void draw_face_3pt_gour_lit(int);
-extern void draw_face_3pt_pict(int);
-extern void draw_face_3pt_pict_lit(int);
-extern void draw_face_3pt_text_dpq_lit(int);
-extern void draw_face_3pt_text_lit(int);
-extern void draw_face_3pt_text_squash(int);
-extern void draw_face_3pt_tilt_sprite_dpq(int);
-extern void draw_face_4pt_flat(int);
-extern void draw_face_4pt_flat_dpq(int);
-extern void draw_face_4pt_flat_dpq_lit(int);
-extern void draw_face_4pt_flat_lit(int);
-extern void draw_face_4pt_gour(int);
-extern void draw_face_4pt_gour_dpq(int);
-extern void draw_face_4pt_gour_dpq_lit(int);
-extern void draw_face_4pt_gour_lit(int);
-extern void draw_face_4pt_pict(int);
-extern void draw_face_4pt_pict_lit(int);
-extern void draw_face_4pt_text_dpq_lit(int);
-extern void draw_face_4pt_text_dpq_squash(int);
-extern void draw_face_4pt_text_lit(int);
-extern void draw_face_4pt_text_squash(int);
-extern void draw_face_4pt_tilt_sprite(int);
-extern void draw_face_tilt_sprite_dpq(int);
+extern int _itoa();
+extern int itoa();
+extern int ultoa();
+extern int ltoa();
+extern int _ltoa();
+extern int _toupper();
+extern int FUN_0045a00a();
+extern int FUN_0045a02e();
+extern int __CommonInit();
+extern int FUN_0045a068();
+extern int nrealloc();
+extern int FUN_0045a117();
+extern int FUN_0045a180();
+extern int FUN_0045a1b5();
+extern int __RemoveThreadData();
+extern int FUN_0045a2cb();
+extern int __fatal_runtime_error();
+extern int FUN_0045a334();
+extern int __HasLeadingZero();
+extern int FUN_0045a570();
+extern int FUN_0045a613();
+extern int FUN_0045a686();
+extern int _FtoS();
+extern int _nheapshrink();
+extern int FUN_0045abb1();
+extern int FUN_0045ac0a();
+extern int FUN_0045ac5f();
+extern int FUN_0045ac6c();
+extern int __HeapManager_expand();
+extern int nexpand();
+extern int FUN_0045ae76();
+extern int __initthread();
+extern int __EnterWVIDEO();
+extern int FUN_0045af27();
+extern int FUN_0045af54();
+extern int __NTConsoleInput();
+extern int FUN_0045afcc();
+extern int __Nan_Inf();
+extern int FUN_0045b06a();
+extern int IF_DLOG2();
+extern int IF_DLOG10();
+extern int log10();
+extern int log2();
+extern int floor();
+extern int _Scale();
+extern int __ZBuf2F();
+extern int FUN_0045b599();
+extern int __CBeginThread();
+extern int FUN_0045b76e();
+extern int FUN_0045b794();
+extern int modf();
+extern int __CmpBigInt_();
+extern int FUN_0045b848();
+extern int FUN_0045b8b3();
+extern int FUN_0045b91d();
+extern int FUN_0045b9d2();
+extern int FUN_0045b9d4();
+extern int FUN_0045bf9a();
+extern int FUN_0045c058();
+extern int frexp();
+extern int __math1err();
+extern int _set_matherr();
+extern int __rterrmsg();
+extern int _matherr();
+extern int __matherr();
+extern int __get_std_stream();
+extern int FUN_0045c46b();
 typedef struct{unsigned va;void*fn;}dd2_fnent;
+extern int FUN_00417f00();
+extern int FUN_0041867c();
+extern int FUN_00418f30();
+extern int FUN_0041bd3c();
+extern int FUN_0041bd98();
+extern int FUN_0041c514();
+extern int FUN_0041c570();
+extern int FUN_0041ce28();
+extern int FUN_0041cf00();
+extern int FUN_0041d964();
+extern int FUN_0041da48();
 dd2_fnent dd2_fnmap[]={
-{0x00414f30,(void*)&Load_Null},
-{0x00414fb0,(void*)&FUN_00414fb0},
-{0x00414ff4,(void*)&Load_Texture2},
-{0x431374,(void*)&AI_Com_Server},
-{0x44c48c,(void*)&Add_Computer_Info},
-{0x420fc0,(void*)&Allocate_Font_Buffers},
-{0x44801c,(void*)&Allocate_Sound_Effect},
-{0x447dfc,(void*)&Amplitude},
-{0x413d0b,(void*)&ApplyMatrixLV},
-{0x435860,(void*)&ApplyWheelOverlay},
-{0x433e40,(void*)&Barrier_Collision},
-{0x434b4c,(void*)&Barrier_Corner_Collision},
-{0x42a9b0,(void*)&Bonnet_Smoke},
-{0x444e9c,(void*)&Boot_Lost_Geometry},
-{0x4516ac,(void*)&Button_Pressed},
-{0x416620,(void*)&CD_Check},
-{0x4160ec,(void*)&CD_Close},
-{0x416294,(void*)&CD_Pause},
-{0x4162c4,(void*)&CD_Restart},
-{0x42ca3c,(void*)&CLUT_Animation},
-{0x441270,(void*)&Calc_Car_Angles_Square},
-{0x4410f4,(void*)&Calc_Car_Tilt},
-{0x43840c,(void*)&Calc_Head_On_Clsn_Dynamics},
-{0x444ddc,(void*)&Calc_Null_Suspension},
-{0x420488,(void*)&Calc_Object_Angles},
-{0x420414,(void*)&Calc_Object_MatrixYZX},
-{0x444c1c,(void*)&Calc_Suspension_Right_Wheels},
-{0x443860,(void*)&Calc_Track_Positions},
-{0x44be58,(void*)&Calculate_Finish},
-{0x44c090,(void*)&Calculate_Results},
-{0x44b938,(void*)&Call_Loaded_Game},
-{0x429738,(void*)&Camera_Pad_Control},
-{0x43fb24,(void*)&Car_1pt_Motion_3D},
-{0x43e504,(void*)&Car_2pt_Motion_3D},
-{0x42968c,(void*)&Car_Camera},
-{0x44216c,(void*)&Car_Drive_2pt_Motion},
-{0x4413ac,(void*)&Car_Drive_Motion},
-{0x4427cc,(void*)&Car_Fly_Motion},
-{0x43d68c,(void*)&Car_Fly_Motion_3D},
-{0x43d8e4,(void*)&Car_Grounded_Motion_3D},
-{0x43d418,(void*)&Car_Landed},
-{0x43d5d4,(void*)&Car_Landed_On_Corner},
-{0x442cdc,(void*)&Car_Movement},
-{0x44bc08,(void*)&Championship},
-{0x43b380,(void*)&Change_Bonnet_Clut},
-{0x43b4b8,(void*)&Change_Boot_Clut},
-{0x433c04,(void*)&CheckPointScoring},
-{0x43978c,(void*)&Check_2D_Car_Collision},
-{0x445554,(void*)&Check_Bonnet_Removal},
-{0x4455e0,(void*)&Check_Boot_Removal},
-{0x4161d8,(void*)&Check_For_CD_Loop},
-{0x439a04,(void*)&Check_Ground_Car_Collision},
-{0x44c76c,(void*)&Check_League_Standing},
-{0x43a100,(void*)&Check_Space_Car_Collision},
-{0x41281c,(void*)&ClearOTagR},
-{0x45c3dc,(void*)&CloseHandle},
-{0x412a94,(void*)&Close_Application},
-{0x447360,(void*)&Control_Car_Replay},
-{0x45c33a,(void*)&CreateEventA},
-{0x45c418,(void*)&CreateFileA},
-{0x45c39a,(void*)&CreateMutexA},
-{0x45c334,(void*)&CreateThread},
-{0x41fc00,(void*)&Create_Object},
-{0x413208,(void*)&DDRelease},
-{0x4157b0,(void*)&DSGetWaveResource},
-{0x415658,(void*)&DSLoadSoundBuffer},
-{0x4236c0,(void*)&Debug_Stub},
-{0x415550,(void*)&Decompress},
-{0x430908,(void*)&Decrunch_Object_Block},
-{0x45c370,(void*)&DeleteFileA},
-{0x4232f8,(void*)&DeleteFileMC},
-{0x44b4e0,(void*)&DemoMode},
-{0x432c4c,(void*)&Determine_AI},
-{0x45c436,(void*)&DirectDrawCreate},
-{0x45c42a,(void*)&DirectSoundCreate},
-{0x42ff7c,(void*)&Display_Position_Pointers},
-{0x455358,(void*)&Display_Season_Status},
-{0x43a400,(void*)&Do_Car_Collisions},
-{0x44c1d4,(void*)&Do_End_Of_Season_Stuff},
-{0x429f10,(void*)&Do_The_Floaty_Camera_Thing},
-{0x447ea8,(void*)&DopplerFrequency},
-{0x42d628,(void*)&DrawFlagObject},
-{0x42dca8,(void*)&DrawLensFlare},
-{0x412843,(void*)&DrawOTag},
-{0x436ca4,(void*)&DrawParticles},
-{0x412885,(void*)&DrawPrim},
-{0x420b6c,(void*)&Draw_All},
-{0x42c02c,(void*)&Draw_Car},
-{0x42d468,(void*)&Draw_Dynamic_Objects},
-{0x420d44,(void*)&Draw_Font_Poly},
-{0x42ced8,(void*)&Draw_Other_Objects},
-{0x42e784,(void*)&Draw_Overlays},
-{0x430464,(void*)&Draw_Scene_Object},
-{0x451308,(void*)&Draw_Screen_Lines},
-{0x450ed4,(void*)&Draw_Screen_Polys},
-{0x4518f8,(void*)&Draw_Semi_Trans_Poly},
-{0x431200,(void*)&Draw_Sky},
-{0x4517b8,(void*)&Draw_Slab},
-{0x41fdbc,(void*)&Draw_Subdiv_Object},
-{0x420bb8,(void*)&Draw_Tile},
-{0x4234f0,(void*)&DupFileCheck},
-{0x4210c4,(void*)&Duplicate_Font},
-{0x453d48,(void*)&End_Of_Season},
-{0x4520f0,(void*)&Enter_Driver_Names},
-{0x45c412,(void*)&ExitProcess},
-{0x45c32e,(void*)&ExitThread},
-{0x41033a,(void*)&FUN_0041033a},
-{0x41080d,(void*)&FUN_0041080d},
-{0x410f74,(void*)&FUN_00410f74},
-{0x4110a4,(void*)&FUN_004110a4},
-{0x4111e8,(void*)&FUN_004111e8},
-{0x41132c,(void*)&FUN_0041132c},
-{0x411a04,(void*)&FUN_00411a04},
-{0x411b34,(void*)&FUN_00411b34},
-{0x411c78,(void*)&FUN_00411c78},
-{0x411ebc,(void*)&FUN_00411ebc},
-{0x41243c,(void*)&FUN_0041243c},
-{0x412694,(void*)&FUN_00412694},
-{0x4128a6,(void*)&FUN_004128a6},
-{0x412e8c,(void*)&FUN_00412e8c},
-{0x412e9c,(void*)&FUN_00412e9c},
-{0x413014,(void*)&FUN_00413014},
-{0x413070,(void*)&FUN_00413070},
-{0x4130b0,(void*)&FUN_004130b0},
-{0x4132b0,(void*)&FUN_004132b0},
-{0x413448,(void*)&FUN_00413448},
-{0x413b4e,(void*)&FUN_00413b4e},
-{0x413dc8,(void*)&FUN_00413dc8},
-{0x413f45,(void*)&FUN_00413f45},
-{0x413fd2,(void*)&FUN_00413fd2},
-{0x414055,(void*)&FUN_00414055},
-{0x414360,(void*)&FUN_00414360},
-{0x4148d0,(void*)&FUN_004148d0},
-{0x415160,(void*)&FUN_00415160},
-{0x4153d4,(void*)&FUN_004153d4},
-{0x415404,(void*)&FUN_00415404},
-{0x415448,(void*)&FUN_00415448},
-{0x4154b8,(void*)&FUN_004154b8},
-{0x41574c,(void*)&FUN_0041574c},
-{0x4157e8,(void*)&FUN_004157e8},
-{0x415894,(void*)&Parse_RIFF_Wave},
-{0x4159a8,(void*)&Init_DirectSound},
-{0x415a94,(void*)&FUN_00415a94},
-{0x415b50,(void*)&FUN_00415b50},
-{0x415f64,(void*)&FUN_00415f64},
-{0x416044,(void*)&FUN_00416044},
-{0x41611c,(void*)&FUN_0041611c},
-{0x41612c,(void*)&FUN_0041612c},
-{0x416264,(void*)&FUN_00416264},
-{0x4163b4,(void*)&Parse_Sound_Bank},
-{0x41643c,(void*)&FUN_0041643c},
-{0x416494,(void*)&FUN_00416494},
-{0x4164d4,(void*)&FUN_004164d4},
-{0x4165a4,(void*)&Sound_Volume_To_dB},
-{0x4166c4,(void*)&FUN_004166c4},
-{0x416714,(void*)&FUN_00416714},
-{0x416a10,(void*)&FUN_00416a10},
-{0x41a2f4,(void*)&FUN_0041a2f4},
-{0x41f6a0,(void*)&FUN_0041f6a0},
-{0x41fb7c,(void*)&FUN_0041fb7c},
-{0x41fe68,(void*)&Draw_Object_Polys},
-{0x41ff50,(void*)&FUN_0041ff50},
-{0x42003c,(void*)&FUN_0042003c},
-{0x420060,(void*)&FUN_00420060},
-{0x4202ac,(void*)&FUN_004202ac},
-{0x4203a0,(void*)&FUN_004203a0},
-{0x4205d8,(void*)&FUN_004205d8},
-{0x420b1c,(void*)&FUN_00420b1c},
-{0x420cf0,(void*)&FUN_00420cf0},
-{0x420e6c,(void*)&FUN_00420e6c},
-{0x420ee8,(void*)&FUN_00420ee8},
-{0x422064,(void*)&FUN_00422064},
-{0x4220cc,(void*)&FUN_004220cc},
-{0x422128,(void*)&FUN_00422128},
-{0x422184,(void*)&FUN_00422184},
-{0x4221ec,(void*)&FUN_004221ec},
-{0x422358,(void*)&FUN_00422358},
-{0x422548,(void*)&FUN_00422548},
-{0x42293c,(void*)&FUN_0042293c},
-{0x422c74,(void*)&FUN_00422c74},
-{0x423210,(void*)&FUN_00423210},
-{0x42353c,(void*)&FUN_0042353c},
-{0x4237c0,(void*)&FUN_004237c0},
-{0x423804,(void*)&FUN_00423804},
-{0x424930,(void*)&FUN_00424930},
-{0x425314,(void*)&FUN_00425314},
-{0x425a98,(void*)&FUN_00425a98},
-{0x425b88,(void*)&FUN_00425b88},
-{0x425e74,(void*)&FUN_00425e74},
-{0x426ab4,(void*)&Compute_Bowl_Cell_Normals},
-{0x428548,(void*)&FUN_00428548},
-{0x4287c0,(void*)&FUN_004287c0},
-{0x4288d0,(void*)&FUN_004288d0},
-{0x42895c,(void*)&Play_Race_Start_Sounds},
-{0x4295e4,(void*)&FUN_004295e4},
-{0x429994,(void*)&FUN_00429994},
-{0x42a4d8,(void*)&FUN_0042a4d8},
-{0x42b5f0,(void*)&FUN_0042b5f0},
-{0x42c1a4,(void*)&FUN_0042c1a4},
-{0x42fa4c,(void*)&FUN_0042fa4c},
-{0x42fd58,(void*)&FUN_0042fd58},
-{0x430698,(void*)&Draw_Scene_Object_Blocks},
-{0x4308b8,(void*)&FUN_004308b8},
-{0x430a30,(void*)&FUN_00430a30},
-{0x430bde,(void*)&FUN_00430bde},
-{0x430efc,(void*)&FUN_00430efc},
-{0x432f98,(void*)&FUN_00432f98},
-{0x433a70,(void*)&FUN_00433a70},
-{0x4351d0,(void*)&FUN_004351d0},
-{0x435254,(void*)&FUN_00435254},
-{0x436c04,(void*)&FUN_00436c04},
-{0x436cfc,(void*)&Update_Particles},
-{0x436dd0,(void*)&FUN_00436dd0},
-{0x43709c,(void*)&FUN_0043709c},
-{0x4371fc,(void*)&FUN_004371fc},
-{0x43b26c,(void*)&FUN_0043b26c},
-{0x43b7bc,(void*)&FUN_0043b7bc},
-{0x43c4e8,(void*)&FUN_0043c4e8},
-{0x43c55c,(void*)&FUN_0043c55c},
-{0x43c5d0,(void*)&FUN_0043c5d0},
-{0x43c738,(void*)&FUN_0043c738},
-{0x43dbd8,(void*)&FUN_0043dbd8},
-{0x43dd00,(void*)&FUN_0043dd00},
-{0x440980,(void*)&FUN_00440980},
-{0x440ac4,(void*)&FUN_00440ac4},
-{0x440f60,(void*)&FUN_00440f60},
-{0x441394,(void*)&FUN_00441394},
-{0x44282c,(void*)&FUN_0044282c},
-{0x442b08,(void*)&Compute_Car_Screen_Pos},
-{0x4430b8,(void*)&FUN_004430b8},
-{0x443b10,(void*)&FUN_00443b10},
-{0x443f90,(void*)&FUN_00443f90},
-{0x444048,(void*)&FUN_00444048},
-{0x4448e0,(void*)&FUN_004448e0},
-{0x444a60,(void*)&FUN_00444a60},
-{0x444e3c,(void*)&FUN_00444e3c},
-{0x444fcc,(void*)&FUN_00444fcc},
-{0x445030,(void*)&FUN_00445030},
-{0x4450dc,(void*)&FUN_004450dc},
-{0x445b40,(void*)&FUN_00445b40},
-{0x445b78,(void*)&FUN_00445b78},
-{0x446c10,(void*)&FUN_00446c10},
-{0x4471c0,(void*)&FUN_004471c0},
-{0x4477a0,(void*)&FUN_004477a0},
-{0x447960,(void*)&FUN_00447960},
-{0x447a9c,(void*)&Update_Engine_Sound},
-{0x4480bc,(void*)&FUN_004480bc},
-{0x448228,(void*)&Update_Commentary},
-{0x4496d8,(void*)&FUN_004496d8},
-{0x449728,(void*)&FUN_00449728},
-{0x449928,(void*)&FUN_00449928},
-{0x449958,(void*)&FUN_00449958},
-{0x449c54,(void*)&FUN_00449c54},
-{0x449dd8,(void*)&FUN_00449dd8},
-{0x449ee0,(void*)&FUN_00449ee0},
-{0x44a1a4,(void*)&FUN_0044a1a4},
-{0x44a2b0,(void*)&FUN_0044a2b0},
-{0x44a32c,(void*)&FUN_0044a32c},
-{0x44a3a0,(void*)&FUN_0044a3a0},
-{0x44a4e4,(void*)&FUN_0044a4e4},
-{0x44a904,(void*)&FUN_0044a904},
-{0x44aa28,(void*)&FUN_0044aa28},
-{0x44aaf0,(void*)&FUN_0044aaf0},
-{0x44ac9c,(void*)&FUN_0044ac9c},
-{0x44aec8,(void*)&FUN_0044aec8},
-{0x44b5c0,(void*)&FUN_0044b5c0},
-{0x44b684,(void*)&FUN_0044b684},
-{0x44b970,(void*)&FUN_0044b970},
-{0x44b9c0,(void*)&FUN_0044b9c0},
-{0x44bb88,(void*)&FUN_0044bb88},
-{0x44c418,(void*)&FUN_0044c418},
-{0x44c538,(void*)&FUN_0044c538},
-{0x44c800,(void*)&FUN_0044c800},
-{0x44c8e8,(void*)&FUN_0044c8e8},
-{0x44cb48,(void*)&FUN_0044cb48},
-{0x44ccb8,(void*)&FUN_0044ccb8},
-{0x44ced4,(void*)&FUN_0044ced4},
-{0x44cef0,(void*)&FUN_0044cef0},
-{0x44d0e4,(void*)&FUN_0044d0e4},
-{0x44d3d4,(void*)&FUN_0044d3d4},
-{0x44d538,(void*)&FUN_0044d538},
-{0x44d630,(void*)&FUN_0044d630},
-{0x44d650,(void*)&FUN_0044d650},
-{0x44d974,(void*)&FUN_0044d974},
-{0x44db70,(void*)&FUN_0044db70},
-{0x44e148,(void*)&FUN_0044e148},
-{0x44e170,(void*)&FUN_0044e170},
-{0x44e440,(void*)&FUN_0044e440},
-{0x44e618,(void*)&FUN_0044e618},
-{0x44e6a0,(void*)&FUN_0044e6a0},
-{0x44eb1c,(void*)&FUN_0044eb1c},
-{0x44ecac,(void*)&FUN_0044ecac},
-{0x44f5c8,(void*)&FUN_0044f5c8},
-{0x44f65c,(void*)&FUN_0044f65c},
-{0x44f6b0,(void*)&FUN_0044f6b0},
-{0x44f814,(void*)&FUN_0044f814},
-{0x44fbc0,(void*)&FUN_0044fbc0},
-{0x44fca4,(void*)&FUN_0044fca4},
-{0x44fce8,(void*)&FUN_0044fce8},
-{0x44fdb4,(void*)&FUN_0044fdb4},
-{0x44ff48,(void*)&FUN_0044ff48},
-{0x450640,(void*)&FUN_00450640},
-{0x45099c,(void*)&FUN_0045099c},
-{0x450c7c,(void*)&FUN_00450c7c},
-{0x450e20,(void*)&FUN_00450e20},
-{0x4518ac,(void*)&FUN_004518ac},
-{0x451a80,(void*)&FUN_00451a80},
-{0x451ac0,(void*)&FUN_00451ac0},
-{0x451ae0,(void*)&FUN_00451ae0},
-{0x451d4c,(void*)&FUN_00451d4c},
-{0x451d6c,(void*)&FUN_00451d6c},
-{0x451fdc,(void*)&FUN_00451fdc},
-{0x451ff0,(void*)&FUN_00451ff0},
-{0x45202c,(void*)&FUN_0045202c},
-{0x452090,(void*)&FUN_00452090},
-{0x4525a0,(void*)&FUN_004525a0},
-{0x452790,(void*)&FUN_00452790},
-{0x4527f0,(void*)&FUN_004527f0},
-{0x4529d4,(void*)&FUN_004529d4},
-{0x452a34,(void*)&FUN_00452a34},
-{0x452d30,(void*)&FUN_00452d30},
-{0x452da0,(void*)&FUN_00452da0},
-{0x452dc0,(void*)&FUN_00452dc0},
-{0x452fa4,(void*)&FUN_00452fa4},
-{0x452fc4,(void*)&FUN_00452fc4},
-{0x453580,(void*)&FUN_00453580},
-{0x4535c0,(void*)&FUN_004535c0},
-{0x4539d0,(void*)&FUN_004539d0},
-{0x4539f0,(void*)&FUN_004539f0},
-{0x453a18,(void*)&FUN_00453a18},
-{0x453a20,(void*)&FUN_00453a20},
-{0x453b98,(void*)&FUN_00453b98},
-{0x454158,(void*)&FUN_00454158},
-{0x4541e8,(void*)&FUN_004541e8},
-{0x454278,(void*)&FUN_00454278},
-{0x454308,(void*)&FUN_00454308},
-{0x454398,(void*)&FUN_00454398},
-{0x454550,(void*)&FUN_00454550},
-{0x454804,(void*)&FUN_00454804},
-{0x454a70,(void*)&FUN_00454a70},
-{0x454e9c,(void*)&FUN_00454e9c},
-{0x454f0c,(void*)&FUN_00454f0c},
-{0x4551b0,(void*)&FUN_004551b0},
-{0x455260,(void*)&FUN_00455260},
-{0x45572c,(void*)&FUN_0045572c},
-{0x4559d4,(void*)&FUN_004559d4},
-{0x455de4,(void*)&FUN_00455de4},
-{0x455edb,(void*)&FUN_00455edb},
-{0x456034,(void*)&FUN_00456034},
-{0x45607b,(void*)&FUN_0045607b},
-{0x45644e,(void*)&FUN_0045644e},
-{0x45645e,(void*)&FUN_0045645e},
-{0x456717,(void*)&FUN_00456717},
-{0x45672e,(void*)&FUN_0045672e},
-{0x456af2,(void*)&FUN_00456af2},
-{0x456b67,(void*)&FUN_00456b67},
-{0x456bf3,(void*)&FUN_00456bf3},
-{0x456cae,(void*)&FUN_00456cae},
-{0x456cdf,(void*)&FUN_00456cdf},
-{0x45703b,(void*)&FUN_0045703b},
-{0x457040,(void*)&FUN_00457040},
-{0x457041,(void*)&FUN_00457041},
-{0x45704f,(void*)&FUN_0045704f},
-{0x4571e4,(void*)&FUN_004571e4},
-{0x4572f8,(void*)&FUN_004572f8},
-{0x457408,(void*)&FUN_00457408},
-{0x457571,(void*)&FUN_00457571},
-{0x457631,(void*)&FUN_00457631},
-{0x4576c5,(void*)&FUN_004576c5},
-{0x457d39,(void*)&FUN_00457d39},
-{0x457e84,(void*)&FUN_00457e84},
-{0x457ee9,(void*)&FUN_00457ee9},
-{0x457f0f,(void*)&FUN_00457f0f},
-{0x457f40,(void*)&FUN_00457f40},
-{0x457f9f,(void*)&FUN_00457f9f},
-{0x45809c,(void*)&FUN_0045809c},
-{0x4580b7,(void*)&FUN_004580b7},
-{0x4585e8,(void*)&FUN_004585e8},
-{0x458a31,(void*)&FUN_00458a31},
-{0x458b45,(void*)&FUN_00458b45},
-{0x458bc7,(void*)&FUN_00458bc7},
-{0x458cc5,(void*)&FUN_00458cc5},
-{0x458e2f,(void*)&FUN_00458e2f},
-{0x459968,(void*)&FUN_00459968},
-{0x459a88,(void*)&FUN_00459a88},
-{0x459b19,(void*)&FUN_00459b19},
-{0x459b51,(void*)&FUN_00459b51},
-{0x459bc5,(void*)&FUN_00459bc5},
-{0x459c68,(void*)&FUN_00459c68},
-{0x459e4a,(void*)&FUN_00459e4a},
-{0x459e6e,(void*)&FUN_00459e6e},
-{0x459ea8,(void*)&FUN_00459ea8},
-{0x459f57,(void*)&FUN_00459f57},
-{0x459fc0,(void*)&FUN_00459fc0},
-{0x459ff5,(void*)&FUN_00459ff5},
-{0x45a10b,(void*)&FUN_0045a10b},
-{0x45a3b0,(void*)&FUN_0045a3b0},
-{0x45a453,(void*)&FUN_0045a453},
-{0x45a4c6,(void*)&FUN_0045a4c6},
-{0x45a9f1,(void*)&FUN_0045a9f1},
-{0x45aa4a,(void*)&FUN_0045aa4a},
-{0x45aa9f,(void*)&FUN_0045aa9f},
-{0x45aaac,(void*)&FUN_0045aaac},
-{0x45acb6,(void*)&FUN_0045acb6},
-{0x45ad67,(void*)&FUN_0045ad67},
-{0x45ad94,(void*)&FUN_0045ad94},
-{0x45ae0c,(void*)&FUN_0045ae0c},
-{0x45aeaa,(void*)&FUN_0045aeaa},
-{0x45b3d9,(void*)&FUN_0045b3d9},
-{0x45b5ae,(void*)&FUN_0045b5ae},
-{0x45b5d4,(void*)&FUN_0045b5d4},
-{0x45b688,(void*)&FUN_0045b688},
-{0x45b6f3,(void*)&FUN_0045b6f3},
-{0x45b812,(void*)&FUN_0045b812},
-{0x45b814,(void*)&FUN_0045b814},
-{0x45bdda,(void*)&FUN_0045bdda},
-{0x45be98,(void*)&FUN_0045be98},
-{0x45c2ab,(void*)&FUN_0045c2ab},
-{0x415354,(void*)&File_Load},
-{0x43d194,(void*)&Find_Lowest_Corner},
-{0x4365cc,(void*)&Fire},
-{0x4234c0,(void*)&FirstSavedGame},
-{0x4259e8,(void*)&Flying_Objects_Pos_Ang},
-{0x436c34,(void*)&FreeParticle},
-{0x4500e8,(void*)&Front_End},
-{0x4139a7,(void*)&GTERPS},
-{0x4139e9,(void*)&GTERPT},
-{0x41397e,(void*)&GTERT},
-{0x426788,(void*)&Generate_Surface_Normals},
-{0x413544,(void*)&Generate_Transparency_Tables},
-{0x45c400,(void*)&GetCommandLineA},
-{0x45c35e,(void*)&GetConsoleMode},
-{0x45c3e2,(void*)&GetCurrentProcessId},
-{0x45c340,(void*)&GetCurrentThread},
-{0x45c3a0,(void*)&GetCurrentThreadId},
-{0x45c40c,(void*)&GetEnvironmentStrings},
-{0x45c3be,(void*)&GetFileType},
-{0x45c3c4,(void*)&GetLastError},
-{0x45c406,(void*)&GetModuleFileNameA},
-{0x45c3f4,(void*)&GetModuleHandleA},
-{0x45c3ca,(void*)&GetStdHandle},
-{0x45c3fa,(void*)&GetVersion},
-{0x432fd8,(void*)&Get_Car_Angle},
-{0x43c910,(void*)&Get_Corner_Positions},
-{0x44d648,(void*)&Get_Current_Recording_Season},
-{0x433004,(void*)&Get_Direction_Cosines},
-{0x443b8c,(void*)&Get_Race_Positions},
-{0x43cf10,(void*)&Ground_Collision},
-{0x43b5c0,(void*)&Highlight_Area},
-{0x4234dc,(void*)&InitCardBlocks},
-{0x4230f0,(void*)&InitCardSystem},
-{0x412910,(void*)&Init_Application},
-{0x43a684,(void*)&Init_Car_Cluts},
-{0x43af34,(void*)&Init_Car_Doors},
-{0x42c2d8,(void*)&Init_Car_Graphics},
-{0x42a398,(void*)&Init_Damage_Indicator},
-{0x443840,(void*)&Init_End_Race},
-{0x42d4d0,(void*)&Init_Flag},
-{0x44b148,(void*)&Init_Front_End},
-{0x445c74,(void*)&Init_Game},
-{0x445a70,(void*)&Init_Graphics},
-{0x44c270,(void*)&Init_League_Info},
-{0x42db08,(void*)&Init_LensFlare},
-{0x4456e4,(void*)&Init_Main},
-{0x44c344,(void*)&Init_MultiLeague_Info},
-{0x42e024,(void*)&Init_Overlays},
-{0x420d70,(void*)&Init_Primitive_Buffer},
-{0x42c540,(void*)&Init_Rollercoaster},
-{0x43023c,(void*)&Init_Scene},
-{0x430cac,(void*)&Init_Scene_Objects},
-{0x430e08,(void*)&Init_Sky},
-{0x44bb44,(void*)&Init_StockCar_Championship},
-{0x44bbc8,(void*)&Init_StockCar_MultiChamp},
-{0x42c774,(void*)&Init_Texture_Animation},
-{0x429ec0,(void*)&Init_The_Floaty_Camera},
-{0x443da4,(void*)&Init_Track_Strip_Numbers},
-{0x42c510,(void*)&Init_Wild_Bill},
-{0x44bb00,(void*)&Init_Wrecking_Championship},
-{0x433188,(void*)&InitialiseAI},
-{0x425d70,(void*)&InitialiseDenting},
-{0x43604c,(void*)&InitialiseParticleSystem},
-{0x445e40,(void*)&Initialise_Pause_Mode},
-{0x433074,(void*)&Interpolate_Direction_Vectors_Left},
-{0x415c0c,(void*)&Kill_Sound},
-{0x423464,(void*)&LoadCardFile},
-{0x423390,(void*)&LoadCardFiles},
-{0x412f3c,(void*)&LoadImage},
-{0x4493a0,(void*)&LoadSave},
-{0x44ac68,(void*)&Load_Card_File},
-{0x41501c,(void*)&Load_Cluts},
-{0x44b6b4,(void*)&Load_Completion_Status},
-{0x44ac28,(void*)&Load_First_Config},
-{0x4481d0,(void*)&Load_Game_Vags},
-{0x416670,(void*)&Load_Sprite_Info},
-{0x414f38,(void*)&Load_Textures},
-{0x44b5d4,(void*)&Loading_Screen_From_Slab},
-{0x45c36a,(void*)&LocalAlloc},
-{0x45c34c,(void*)&LocalFree},
-{0x4235c0,(void*)&MPE_InitHeap},
-{0x42364c,(void*)&MPE_free},
-{0x4235e4,(void*)&MPE_malloc},
-{0x43d1f0,(void*)&Make_Car_Fly},
-{0x427e40,(void*)&Map_Height},
-{0x426964,(void*)&Mask_Point_In_Quad},
-{0x415ec0,(void*)&Modify_Sound},
-{0x416934,(void*)&Modify_Sprite},
-{0x4457e8,(void*)&Modify_TDF},
-{0x412fa8,(void*)&MoveImageClut},
-{0x42872c,(void*)&Move_Forward_Strip},
-{0x4137de,(void*)&MulMatrix2},
-{0x44bd08,(void*)&MultiChamp},
-{0x4334ec,(void*)&Obstacle_Ahead},
-{0x44c7b0,(void*)&Order_Cars},
-{0x414d68,(void*)&OuterProduct12},
-{0x423744,(void*)&PC_Write_File},
-{0x446260,(void*)&Pause_Mode},
-{0x429a18,(void*)&Pit_Camera_Control},
-{0x451aa0,(void*)&Play_Click_FX},
-{0x423a20,(void*)&Play_Game},
-{0x445dc0,(void*)&Play_Intro},
-{0x414e30,(void*)&Play_Movie},
-{0x415cd8,(void*)&Play_Sound},
-{0x445dfc,(void*)&Play_Xtro},
-{0x4207ac,(void*)&Point_Camera},
-{0x414304,(void*)&PopMatrix},
-{0x452a80,(void*)&Practice_Over},
-{0x41fcfc,(void*)&Pre_Rotate},
-{0x4212d4,(void*)&Print},
-{0x421fb0,(void*)&Print_Draw},
-{0x421204,(void*)&Print_Font},
-{0x42125c,(void*)&Print_Ink},
-{0x42129c,(void*)&Print_InkRGB},
-{0x4211b8,(void*)&Print_Locate},
-{0x423990,(void*)&Profile_Init},
-{0x44c6c4,(void*)&Promote_And_Relegate},
-{0x4142a8,(void*)&PushMatrix},
-{0x412c60,(void*)&PutDispEnv},
-{0x412bb4,(void*)&PutDrawEnv},
-{0x454b68,(void*)&Race_Over},
-{0x45c364,(void*)&ReadConsoleInputA},
-{0x45c3e8,(void*)&ReadFile},
-{0x4152f4,(void*)&Read_Directory},
-{0x432f58,(void*)&Recommended_Acceleration},
-{0x447800,(void*)&Record_Event},
-{0x45c38e,(void*)&ReleaseMutex},
-{0x41fcac,(void*)&Remove_Object},
-{0x430da8,(void*)&Remove_Scene_Objects},
-{0x4252d0,(void*)&Request_Flying_Object},
-{0x44c2d8,(void*)&Reset_League_Info},
-{0x420de4,(void*)&Reset_Primitive_Buffer},
-{0x414540,(void*)&RotMatrixX},
-{0x414670,(void*)&RotMatrixY},
-{0x4144a0,(void*)&RotMatrixYXZ},
-{0x4147a0,(void*)&RotMatrixZ},
-{0x4149bc,(void*)&RotTrans},
-{0x414a40,(void*)&RotTransPers},
-{0x450d0c,(void*)&Rotate_Slab_On},
-{0x42322c,(void*)&SaveCardFile},
-{0x4536f0,(void*)&Save_Game},
-{0x416688,(void*)&Search_For_Sprite},
-{0x428850,(void*)&Search_For_Strip},
-{0x44dcfc,(void*)&Secret},
-{0x453044,(void*)&Select_Champ},
-{0x4530bc,(void*)&Select_ChampQS},
-{0x4531b0,(void*)&Select_DDPract},
-{0x453100,(void*)&Select_Pract},
-{0x45313c,(void*)&Select_TimeT},
-{0x453170,(void*)&Select_Total},
-{0x45c358,(void*)&SetConsoleMode},
-{0x45c346,(void*)&SetEvent},
-{0x45c3ee,(void*)&SetFilePointer},
-{0x41424c,(void*)&SetFogNearFar},
-{0x446fe0,(void*)&SetHighLight},
-{0x412cb0,(void*)&SetPalette},
-{0x45c3d0,(void*)&SetStdHandle},
-{0x412b2c,(void*)&SetVideoMode},
-{0x420268,(void*)&Set_Ambient_Light},
-{0x42027c,(void*)&Set_Depth_Cue},
-{0x420aa0,(void*)&Set_Draw_Mode},
-{0x445764,(void*)&Set_Load_Textures},
-{0x41fc5c,(void*)&Set_Object},
-{0x4200dc,(void*)&Set_World_Matrix},
-{0x4200bc,(void*)&Set_World_Position},
-{0x42011c,(void*)&Set_World_View},
-{0x420074,(void*)&Set_Zclip},
-{0x422ba8,(void*)&Setup_Controller},
-{0x42440c,(void*)&Setup_Debris},
-{0x44c390,(void*)&Setup_Driver_Names},
-{0x424a58,(void*)&Setup_Flying_Objects},
-{0x421078,(void*)&Setup_Font},
-{0x422bc0,(void*)&Setup_Joystick},
-{0x430778,(void*)&Setup_Object_Block},
-{0x44ba20,(void*)&Setup_Pad},
-{0x4512f8,(void*)&Setup_Screen_Lines},
-{0x451288,(void*)&Setup_Screen_Text},
-{0x4166ec,(void*)&Setup_Sprite},
-{0x4361e8,(void*)&Smoke},
-{0x44c2f0,(void*)&Sort_Leagues},
-{0x44c5a8,(void*)&Sort_MultiLeague},
-{0x44c5e0,(void*)&Sort_RacePos},
-{0x415a88,(void*)&Sound_Init},
-{0x415b08,(void*)&Sound_Remove},
-{0x415bc8,(void*)&Sound_Restart},
-{0x415b70,(void*)&Sound_Stop},
-{0x448eb0,(void*)&Sparking},
-{0x4366bc,(void*)&Sparks},
-{0x41619c,(void*)&Start_CD_Audio},
-{0x44d390,(void*)&Start_New_Season_Stats},
-{0x436f60,(void*)&Start_Roll},
-{0x436980,(void*)&Steam},
-{0x433a50,(void*)&Strip_Distance},
-{0x448e4c,(void*)&Strip_Trigger_Handler},
-{0x420cc4,(void*)&Swap_Buffers},
-{0x42379c,(void*)&System_Error},
-{0x4478ec,(void*)&Terminate_Replay},
-{0x447920,(void*)&Terminate_Replay_Bodge},
-{0x43b940,(void*)&TextureDentHiCar},
-{0x43bf2c,(void*)&TextureDentMidCar},
-{0x42c934,(void*)&Texture_Animation},
-{0x45c382,(void*)&TlsAlloc},
-{0x45c376,(void*)&TlsFree},
-{0x45c388,(void*)&TlsGetValue},
-{0x45c37c,(void*)&TlsSetValue},
-{0x450944,(void*)&Toggle_Car},
-{0x4508bc,(void*)&Toggle_Track},
-{0x426ec4,(void*)&Track_Follow},
-{0x435740,(void*)&TransformEnemyWheels},
-{0x422f20,(void*)&Translate_Keypress},
-{0x446c5c,(void*)&UndentCar},
-{0x415fc4,(void*)&Unlock_Channel},
-{0x42d998,(void*)&UpdateFlag},
-{0x44d5d8,(void*)&Update_Championship_Stats},
-{0x424510,(void*)&Update_Debris},
-{0x425150,(void*)&Update_Flying_Objects},
-{0x44d69c,(void*)&Update_Jimmy_Spunk_Times},
-{0x44c508,(void*)&Update_League_Info},
-{0x41ff24,(void*)&Update_Object},
-{0x42cac8,(void*)&Update_Other_Objects},
-{0x42fc70,(void*)&Update_Race_CountDown},
-{0x430a90,(void*)&Update_Scene_Objects},
-{0x44d478,(void*)&Update_Track_Stats},
-{0x412bac,(void*)&VSync},
-{0x412e7c,(void*)&VSyncCallback},
-{0x43038c,(void*)&VVDraw_Object},
-{0x4143c4,(void*)&VectorNormalS},
-{0x41442c,(void*)&VectorNormalSS},
-{0x44fe00,(void*)&View_BestLaps},
-{0x44b4bc,(void*)&View_Frontend_Replay},
-{0x45c394,(void*)&WaitForSingleObject},
-{0x45c352,(void*)&WriteConsoleA},
-{0x45c3d6,(void*)&WriteFile},
-{0x42528c,(void*)&Zero_Flying_Object},
-{0x45a53c,(void*)&_FtoS},
-{0x45af7a,(void*)&_Scale},
-{0x45afd2,(void*)&_Scale10V},
-{0x4592b1,(void*)&__AccessSemaphore},
-{0x45665c,(void*)&__CHP},
-{0x459287,(void*)&__CloseSemaphore},
-{0x459e9d,(void*)&__CommonInit},
-{0x459268,(void*)&__DoneExceptionHandler},
-{0x45ad3c,(void*)&__EnterWVIDEO},
-{0x459c55,(void*)&__ExpandDGROUP},
-{0x4597a1,(void*)&__FiniRtns},
-{0x458abe,(void*)&__GetNTAccessAttr},
-{0x458af9,(void*)&__GetNTShareAttr},
-{0x45a368,(void*)&__HasLeadingZero},
-{0x45aac1,(void*)&__HeapManager_expand},
-{0x458c6f,(void*)&__IOMode},
-{0x459561,(void*)&__InitMultipleThread},
-{0x459756,(void*)&__InitRtns},
-{0x459410,(void*)&__InitThreadData},
-{0x45787e,(void*)&__MemAllocator},
-{0x457926,(void*)&__MemFree},
-{0x459496,(void*)&__NTAddThread},
-{0x45889e,(void*)&__NTAtMaxFiles},
-{0x45ae01,(void*)&__NTConsoleInput},
-{0x458a70,(void*)&__NTGetFakeHandle},
-{0x45705d,(void*)&__NTInit},
-{0x457180,(void*)&__NTMainInit},
-{0x458a0b,(void*)&__NTRemoveFileHandle},
-{0x4594ed,(void*)&__NTRemoveThread},
-{0x45944e,(void*)&__NTThreadInit},
-{0x45ae17,(void*)&__Nan_Inf},
-{0x459228,(void*)&__NewExceptionHandler},
-{0x459314,(void*)&__ReleaseSemaphore},
-{0x45a061,(void*)&__RemoveThreadData},
-{0x458e5c,(void*)&__SigFini},
-{0x4587c0,(void*)&__WinMain},
-{0x456ef2,(void*)&__allocfp},
-{0x456ffc,(void*)&__chktty},
-{0x459aed,(void*)&__cnvs2d},
-{0x4571c3,(void*)&__exit},
-{0x45a146,(void*)&__fatal_runtime_error},
-{0x45be00,(void*)&__fdiv_m32},
-{0x45be4c,(void*)&__fdiv_m64},
-{0x45bdc7,(void*)&__fdivp_sti_st},
-{0x4598ea,(void*)&__flushall},
-{0x456fa7,(void*)&__freefp},
-{0x459865,(void*)&__full_io_exit},
-{0x45c1e1,(void*)&__get_std_stream},
-{0x459b2a,(void*)&__init_80x87},
-{0x45ace2,(void*)&__initthread},
-{0x457388,(void*)&__ioalloc},
-{0x45bfab,(void*)&__math1err},
-{0x45c1dc,(void*)&__matherr},
-{0x459caf,(void*)&__nmemneed},
-{0x456a32,(void*)&__null_int23_exit},
-{0x455d15,(void*)&__open_flags},
-{0x457a31,(void*)&__prtf},
-{0x456fde,(void*)&__purgefp},
-{0x458608,(void*)&__qwrite},
-{0x45c13b,(void*)&__rterrmsg},
-{0x456cc0,(void*)&__set_EDOM},
-{0x456ccb,(void*)&__set_ERANGE},
-{0x456ced,(void*)&__set_doserrno},
-{0x458c19,(void*)&__set_errno_nt},
-{0x456428,(void*)&__shutdown_stream},
-{0x458ce6,(void*)&__sigfpe_handler},
-{0x45702f,(void*)&__threadid},
-{0x45acb9,(void*)&_beginthread},
-{0x459f6a,(void*)&_control87},
-{0x45acdb,(void*)&_endthread},
-{0x45771e,(void*)&_fpreset},
-{0x459d29,(void*)&_itoa},
-{0x4572de,(void*)&_lseek},
-{0x459e22,(void*)&_ltoa},
-{0x45c188,(void*)&_matherr},
-{0x45a9e5,(void*)&_nheapshrink},
-{0x458b30,(void*)&_stricmp},
-{0x456ca0,(void*)&_tolower},
-{0x459e3c,(void*)&_toupper},
-{0x458baa,(void*)&dosretax},
-{0x41828c,(void*)&draw_face_3pt_flat_dpq},
-{0x41c054,(void*)&draw_face_3pt_gour_dpq},
-{0x41d360,(void*)&draw_face_3pt_pict_dpq},
-{0x41d5e8,(void*)&draw_face_3pt_pict_dpq_lit},
-{0x4199b0,(void*)&draw_face_3pt_text_dpq},
-{0x419b94,(void*)&draw_face_3pt_text_dpq_squash},
-{0x41df54,(void*)&draw_face_4pt_pict_dpq},
-{0x41e184,(void*)&draw_face_4pt_pict_dpq_lit},
-{0x41e4f4,(void*)&draw_face_sprite},
-{0x41e948,(void*)&draw_face_sprite_dpq},
-{0x41066a,(void*)&draw_half},
-{0x4109e8,(void*)&draw_text_half_trans},
-{0x4598df,(void*)&flushall},
-{0x45a281,(void*)&getch},
-{0x45992d,(void*)&getche},
-{0x45762c,(void*)&getpid},
-{0x4137af,(void*)&gte_MulMatrix0},
-{0x414950,(void*)&gte_SetRotMatrix},
-{0x4140c4,(void*)&gte_dpcs},
-{0x414128,(void*)&gte_ncds},
-{0x458c28,(void*)&isatty},
-{0x459d43,(void*)&itoa},
-{0x45c41e,(void*)&joyGetDevCapsA},
-{0x45c424,(void*)&joyGetPos},
-{0x459ded,(void*)&ltoa},
-{0x45c430,(void*)&mciSendCommandA},
-{0x45ac6c,(void*)&nexpand},
-{0x456688,(void*)&nfree},
-{0x45777d,(void*)&nmalloc},
-{0x459ebd,(void*)&nrealloc},
-{0x456cfb,(void*)&open},
-{0x45a304,(void*)&putch},
-{0x4138f9,(void*)&rcos},
-{0x4138e0,(void*)&rsin},
-{0x456d1d,(void*)&sopen},
-{0x457346,(void*)&tell},
-{0x45c44e,(void*)&timeBeginPeriod},
-{0x45c442,(void*)&timeEndPeriod},
-{0x45c43c,(void*)&timeKillEvent},
-{0x45c448,(void*)&timeSetEvent},
-{0x459d9d,(void*)&ultoa},
-{0x459953,(void*)&unlink},
-{0x459cd7,(void*)&utoa},
-{0x456a74,(void*)&wstart2_},
-{0x417efc,(void*)&draw_face_3pt_flat},
-{0x4180c8,(void*)&draw_face_3pt_flat_lit},
-{0x418458,(void*)&draw_face_3pt_flat_dpq_lit},
-{0x418678,(void*)&draw_face_4pt_flat},
-{0x41888c,(void*)&draw_face_4pt_flat_lit},
-{0x418aa4,(void*)&draw_face_4pt_flat_dpq},
-{0x418cb8,(void*)&draw_face_4pt_flat_dpq_lit},
-{0x4191ac,(void*)&draw_face_3pt_text_squash},
-{0x4196a8,(void*)&draw_face_3pt_text_lit},
-{0x41a0ac,(void*)&draw_face_3pt_text_dpq_lit},
-{0x41a66c,(void*)&draw_face_4pt_text_squash},
-{0x41acf4,(void*)&draw_face_4pt_text_lit},
-{0x41b2d8,(void*)&draw_face_4pt_text_dpq_squash},
-{0x41b97c,(void*)&draw_face_4pt_text_dpq_lit},
-{0x41bcc4,(void*)&draw_face_3pt_gour},
-{0x41be90,(void*)&draw_face_3pt_gour_lit},
-{0x41c220,(void*)&draw_face_3pt_gour_dpq_lit},
-{0x41c49c,(void*)&draw_face_4pt_gour},
-{0x41c6b0,(void*)&draw_face_4pt_gour_lit},
-{0x41c8c8,(void*)&draw_face_4pt_gour_dpq},
-{0x41cae0,(void*)&draw_face_4pt_gour_dpq_lit},
-{0x41ce8c,(void*)&draw_face_3pt_pict},
-{0x41d058,(void*)&draw_face_3pt_pict_lit},
-{0x41d9e0,(void*)&draw_face_4pt_pict},
-{0x41dbf4,(void*)&draw_face_4pt_pict_lit},
-{0x41edbc,(void*)&draw_face_4pt_tilt_sprite},
-{0x41f220,(void*)&draw_face_tilt_sprite_dpq},
-{0x41f900,(void*)&draw_face_3pt_tilt_sprite_dpq},
+{0x00410010,(void*)&draw_text_half},
+{0x0041033a,(void*)&FUN_0041033a},
+{0x0041066a,(void*)&draw_half},
+{0x0041080d,(void*)&FUN_0041080d},
+{0x004109e8,(void*)&draw_text_half_trans},
+{0x00410d50,(void*)&sub_410d50},
+{0x00410d58,(void*)&sub_410d58},
+{0x00410e44,(void*)&sub_410e44},
+{0x00410f74,(void*)&FUN_00410f74},
+{0x004110a4,(void*)&FUN_004110a4},
+{0x004111e8,(void*)&FUN_004111e8},
+{0x0041132c,(void*)&FUN_0041132c},
+{0x004114c0,(void*)&sub_4114c0},
+{0x00411654,(void*)&sub_411654},
+{0x004117e8,(void*)&sub_4117e8},
+{0x004118d4,(void*)&sub_4118d4},
+{0x00411a04,(void*)&FUN_00411a04},
+{0x00411b34,(void*)&FUN_00411b34},
+{0x00411c78,(void*)&FUN_00411c78},
+{0x00411ebc,(void*)&FUN_00411ebc},
+{0x0041243c,(void*)&FUN_0041243c},
+{0x00412694,(void*)&FUN_00412694},
+{0x0041285c,(void*)&ClearOTagR},
+{0x00412883,(void*)&DrawOTag},
+{0x004128c5,(void*)&DrawPrim},
+{0x004128e6,(void*)&FUN_004128e6},
+{0x00412950,(void*)&Init_Application},
+{0x00412ad4,(void*)&Close_Application},
+{0x00412b6c,(void*)&SetVideoMode},
+{0x00412bec,(void*)&VSync},
+{0x00412bf4,(void*)&PutDrawEnv},
+{0x00412ca0,(void*)&PutDispEnv},
+{0x00412cf0,(void*)&SetPalette},
+{0x00412ebc,(void*)&VSyncCallback},
+{0x00412ecc,(void*)&FUN_00412ecc},
+{0x00412edc,(void*)&FUN_00412edc},
+{0x00412f1c,(void*)&MoveImage},
+{0x00412f7c,(void*)&LoadImage},
+{0x00412fe8,(void*)&MoveImageClut},
+{0x00413044,(void*)&LoadImageClut},
+{0x0041304c,(void*)&StoreImage},
+{0x00413054,(void*)&FUN_00413054},
+{0x004130b0,(void*)&FUN_004130b0},
+{0x004130f0,(void*)&FUN_004130f0},
+{0x00413248,(void*)&DDRelease},
+{0x004132f0,(void*)&FUN_004132f0},
+{0x00413488,(void*)&FUN_00413488},
+{0x00413584,(void*)&Generate_Transparency_Tables},
+{0x004137c0,(void*)&MulMatrix},
+{0x004137ef,(void*)&gte_MulMatrix0},
+{0x0041381e,(void*)&MulMatrix2},
+{0x00413920,(void*)&rsin},
+{0x00413939,(void*)&rcos},
+{0x00413952,(void*)&SquareRoot0_},
+{0x004139be,(void*)&GTERT},
+{0x004139e7,(void*)&GTERPS},
+{0x00413a29,(void*)&GTERPT},
+{0x00413ac5,(void*)&GTERPT4_},
+{0x00413b8e,(void*)&FUN_00413b8e},
+{0x00413bc6,(void*)&RotMatrix},
+{0x00413d4b,(void*)&ApplyMatrixLV},
+{0x00413e08,(void*)&FUN_00413e08},
+{0x00413f85,(void*)&FUN_00413f85},
+{0x00414016,(void*)&FUN_00414016},
+{0x00414099,(void*)&FUN_00414099},
+{0x00414114,(void*)&gte_dpcs},
+{0x00414178,(void*)&gte_ncds},
+{0x0041429c,(void*)&SetFogNearFar},
+{0x004142b4,(void*)&gte_SetFogFar},
+{0x004142dc,(void*)&gte_SetFogNear},
+{0x004142f8,(void*)&PushMatrix},
+{0x00414354,(void*)&PopMatrix},
+{0x004143b0,(void*)&FUN_004143b0},
+{0x00414414,(void*)&VectorNormalS},
+{0x0041447c,(void*)&VectorNormalSS},
+{0x004144f0,(void*)&RotMatrixYXZ},
+{0x00414590,(void*)&RotMatrixX},
+{0x004146c0,(void*)&RotMatrixY},
+{0x004147f0,(void*)&RotMatrixZ},
+{0x00414920,(void*)&FUN_00414920},
+{0x004149a0,(void*)&gte_SetRotMatrix},
+{0x00414a0c,(void*)&RotTrans},
+{0x00414a90,(void*)&RotTransPers},
+{0x00414b1c,(void*)&RotAverageNclip4},
+{0x00414d00,(void*)&OuterProduct0},
+{0x00414db8,(void*)&OuterProduct12},
+{0x00414e80,(void*)&Play_Movie},
+{0x00414f80,(void*)&Load_Null},
+{0x00414f88,(void*)&Load_Textures},
+{0x00415000,(void*)&sub_415000},
+{0x00415044,(void*)&Load_Texture2},
+{0x0041506c,(void*)&Load_Cluts},
+{0x004150f8,(void*)&Add_Buffer_Load_},
+{0x004151b0,(void*)&FUN_004151b0},
+{0x00415344,(void*)&Read_Directory},
+{0x004153a4,(void*)&File_Load},
+{0x00415424,(void*)&FUN_00415424},
+{0x00415454,(void*)&FUN_00415454},
+{0x00415498,(void*)&FUN_00415498},
+{0x00415508,(void*)&FUN_00415508},
+{0x004155a0,(void*)&Decompress},
+{0x004156a8,(void*)&DSLoadSoundBuffer},
+{0x0041579c,(void*)&FUN_0041579c},
+{0x00415800,(void*)&DSGetWaveResource},
+{0x00415838,(void*)&FUN_00415838},
+{0x004158e4,(void*)&FUN_004158e4},
+{0x004159f8,(void*)&FUN_004159f8},
+{0x00415ad8,(void*)&Sound_Init},
+{0x00415ae4,(void*)&FUN_00415ae4},
+{0x00415b58,(void*)&Sound_Remove},
+{0x00415b98,(void*)&Master_CD_Volume},
+{0x00415ba0,(void*)&FUN_00415ba0},
+{0x00415bc0,(void*)&Sound_Stop},
+{0x00415bdc,(void*)&Sound_Pause_},
+{0x00415c18,(void*)&Sound_Restart},
+{0x00415c5c,(void*)&Kill_Sound},
+{0x00415d28,(void*)&Play_Sound},
+{0x00415f10,(void*)&Modify_Sound},
+{0x00415fb4,(void*)&FUN_00415fb4},
+{0x00416014,(void*)&Unlock_Channel},
+{0x0041607c,(void*)&Echo_Free},
+{0x00416084,(void*)&Set_Echo_Mode},
+{0x0041608c,(void*)&Set_Echo_Depth},
+{0x00416094,(void*)&FUN_00416094},
+{0x0041613c,(void*)&CD_Close},
+{0x0041616c,(void*)&FUN_0041616c},
+{0x00416174,(void*)&Read_CD_Toc_},
+{0x0041617c,(void*)&FUN_0041617c},
+{0x004161ec,(void*)&Start_CD_Audio},
+{0x00416228,(void*)&Check_For_CD_Loop},
+{0x004162b4,(void*)&FUN_004162b4},
+{0x004162e4,(void*)&CD_Pause},
+{0x00416314,(void*)&CD_Restart},
+{0x00416358,(void*)&Sound_Timer_},
+{0x00416404,(void*)&FUN_00416404},
+{0x0041648c,(void*)&FUN_0041648c},
+{0x004164e4,(void*)&FUN_004164e4},
+{0x00416524,(void*)&FUN_00416524},
+{0x004165f4,(void*)&FUN_004165f4},
+{0x00416670,(void*)&CD_Check},
+{0x004166c0,(void*)&Load_Sprite_Info},
+{0x004166d8,(void*)&Search_For_Sprite},
+{0x00416714,(void*)&FUN_00416714},
+{0x0041673c,(void*)&Setup_Sprite},
+{0x00416764,(void*)&FUN_00416764},
+{0x00416988,(void*)&Modify_Sprite},
+{0x00416a70,(void*)&FUN_00416a70},
+{0x00417f5c,(void*)&draw_face_3pt_flat},
+{0x00418128,(void*)&draw_face_3pt_flat_lit},
+{0x004182ec,(void*)&draw_face_3pt_flat_dpq},
+{0x004184b8,(void*)&draw_face_3pt_flat_dpq_lit},
+{0x004186d8,(void*)&draw_face_4pt_flat},
+{0x004188ec,(void*)&draw_face_4pt_flat_lit},
+{0x00418b04,(void*)&draw_face_4pt_flat_dpq},
+{0x00418d18,(void*)&draw_face_4pt_flat_dpq_lit},
+{0x00419040,(void*)&draw_face_3pt_text},
+{0x0041920c,(void*)&draw_face_3pt_text_squash},
+{0x00419738,(void*)&draw_face_3pt_text_lit},
+{0x00419a40,(void*)&draw_face_3pt_text_dpq},
+{0x00419c24,(void*)&draw_face_3pt_text_dpq_squash},
+{0x0041a16c,(void*)&draw_face_3pt_text_dpq_lit},
+{0x0041a3b4,(void*)&FUN_0041a3b4},
+{0x0041a4cc,(void*)&draw_face_4pt_text},
+{0x0041a72c,(void*)&draw_face_4pt_text_squash},
+{0x0041adec,(void*)&draw_face_4pt_text_lit},
+{0x0041b14c,(void*)&draw_face_4pt_text_dpq},
+{0x0041b3d0,(void*)&draw_face_4pt_text_dpq_squash},
+{0x0041baac,(void*)&draw_face_4pt_text_dpq_lit},
+{0x0041bdf4,(void*)&draw_face_3pt_gour},
+{0x0041bfc0,(void*)&draw_face_3pt_gour_lit},
+{0x0041c184,(void*)&draw_face_3pt_gour_dpq},
+{0x0041c350,(void*)&draw_face_3pt_gour_dpq_lit},
+{0x0041c5cc,(void*)&draw_face_4pt_gour},
+{0x0041c7e0,(void*)&draw_face_4pt_gour_lit},
+{0x0041c9f8,(void*)&draw_face_4pt_gour_dpq},
+{0x0041cc10,(void*)&draw_face_4pt_gour_dpq_lit},
+{0x0041cfbc,(void*)&draw_face_3pt_pict},
+{0x0041d188,(void*)&draw_face_3pt_pict_lit},
+{0x0041d490,(void*)&draw_face_3pt_pict_dpq},
+{0x0041d718,(void*)&draw_face_3pt_pict_dpq_lit},
+{0x0041db10,(void*)&draw_face_4pt_pict},
+{0x0041dd24,(void*)&draw_face_4pt_pict_lit},
+{0x0041e084,(void*)&draw_face_4pt_pict_dpq},
+{0x0041e2b4,(void*)&draw_face_4pt_pict_dpq_lit},
+{0x0041e548,(void*)&setup_face_sprite},
+{0x0041e624,(void*)&draw_face_sprite},
+{0x0041ea78,(void*)&draw_face_sprite_dpq},
+{0x0041f350,(void*)&draw_face_tilt_sprite_dpq},
+{0x0041f7d0,(void*)&FUN_0041f7d0},
+{0x0041fcac,(void*)&FUN_0041fcac},
+{0x0041fd30,(void*)&Create_Object},
+{0x0041fd8c,(void*)&Set_Object},
+{0x0041fddc,(void*)&Remove_Object},
+{0x0041fe2c,(void*)&Pre_Rotate},
+{0x0041feec,(void*)&Draw_Subdiv_Object},
+{0x0041ff98,(void*)&FUN_0041ff98},
+{0x00420054,(void*)&Update_Object},
+{0x00420080,(void*)&FUN_00420080},
+{0x0042016c,(void*)&FUN_0042016c},
+{0x00420190,(void*)&FUN_00420190},
+{0x004201a4,(void*)&Set_Zclip},
+{0x004201bc,(void*)&Set_Clip},
+{0x004201ec,(void*)&Set_World_Position},
+{0x0042020c,(void*)&Set_World_Matrix},
+{0x0042024c,(void*)&Set_World_View},
+{0x00420398,(void*)&Set_Ambient_Light},
+{0x004203ac,(void*)&Set_Depth_Cue},
+{0x004203dc,(void*)&FUN_004203dc},
+{0x004204d0,(void*)&FUN_004204d0},
+{0x00420544,(void*)&Calc_Object_MatrixYZX},
+{0x004205b8,(void*)&Calc_Object_Angles},
+{0x00420668,(void*)&Calc_Object_AnglesYZX},
+{0x00420708,(void*)&FUN_00420708},
+{0x004208dc,(void*)&Point_Camera},
+{0x00420bd0,(void*)&Set_Draw_Mode},
+{0x00420c4c,(void*)&FUN_00420c4c},
+{0x00420c9c,(void*)&Draw_All},
+{0x00420ce8,(void*)&Draw_Tile},
+{0x00420d54,(void*)&Draw_Line},
+{0x00420dc0,(void*)&Allocate_OT_},
+{0x00420df4,(void*)&Swap_Buffers},
+{0x00420e20,(void*)&FUN_00420e20},
+{0x00420e74,(void*)&Draw_Font_Poly},
+{0x00420ea0,(void*)&Init_Primitive_Buffer},
+{0x00420f14,(void*)&Reset_Primitive_Buffer},
+{0x00420f3c,(void*)&Free_Primitive_Buffer},
+{0x00420f9c,(void*)&FUN_00420f9c},
+{0x00421018,(void*)&FUN_00421018},
+{0x004210f0,(void*)&Allocate_Font_Buffers},
+{0x004211a8,(void*)&Setup_Font},
+{0x004211f4,(void*)&Duplicate_Font},
+{0x004212e8,(void*)&Print_Locate},
+{0x00421334,(void*)&Print_Font},
+{0x0042138c,(void*)&Print_Ink},
+{0x004213cc,(void*)&Print_InkRGB},
+{0x00421404,(void*)&Print},
+{0x004220e0,(void*)&Print_Draw},
+{0x00422194,(void*)&FUN_00422194},
+{0x004221fc,(void*)&FUN_004221fc},
+{0x00422258,(void*)&FUN_00422258},
+{0x004222b4,(void*)&FUN_004222b4},
+{0x0042231c,(void*)&FUN_0042231c},
+{0x00422488,(void*)&FUN_00422488},
+{0x00422678,(void*)&FUN_00422678},
+{0x00422a6c,(void*)&FUN_00422a6c},
+{0x00422cc0,(void*)&Init_Controller_},
+{0x00422cd8,(void*)&Setup_Controller},
+{0x00422cf0,(void*)&Setup_Joystick},
+{0x00422da4,(void*)&FUN_00422da4},
+{0x00423050,(void*)&Translate_Keypress},
+{0x0042317c,(void*)&FUN_0042317c},
+{0x00423220,(void*)&InitCardSystem},
+{0x00423340,(void*)&FUN_00423340},
+{0x0042335c,(void*)&SaveCardFile},
+{0x00423428,(void*)&DeleteFileMC},
+{0x004234c0,(void*)&LoadCardFiles},
+{0x00423594,(void*)&LoadCardFile},
+{0x004235f0,(void*)&FirstSavedGame},
+{0x0042360c,(void*)&InitCardBlocks},
+{0x00423620,(void*)&DupFileCheck},
+{0x0042366c,(void*)&FUN_0042366c},
+{0x004236f0,(void*)&MPE_InitHeap},
+{0x00423714,(void*)&MPE_malloc},
+{0x0042377c,(void*)&MPE_free},
+{0x004237f0,(void*)&Debug_Stub},
+{0x004237f8,(void*)&PC_Read_File},
+{0x00423874,(void*)&PC_Write_File},
+{0x004238cc,(void*)&System_Error},
+{0x004238f0,(void*)&FUN_004238f0},
+{0x00423934,(void*)&FUN_00423934},
+{0x00423ac0,(void*)&Profile_Init},
+{0x00423ac8,(void*)&Profile_Start},
+{0x00423ad0,(void*)&Profile_Stop},
+{0x00423b28,(void*)&ddmain},
+{0x00423b50,(void*)&Play_Game},
+{0x00424090,(void*)&Init_Debris_},
+{0x0042453c,(void*)&Setup_Debris},
+{0x00424640,(void*)&Update_Debris},
+{0x00424a60,(void*)&FUN_00424a60},
+{0x00424b88,(void*)&Setup_Flying_Objects},
+{0x00425280,(void*)&Update_Flying_Objects},
+{0x004253bc,(void*)&Zero_Flying_Object},
+{0x00425400,(void*)&Request_Flying_Object},
+{0x00425444,(void*)&FUN_00425444},
+{0x00425b18,(void*)&Flying_Objects_Pos_Ang},
+{0x00425bc8,(void*)&FUN_00425bc8},
+{0x00425cb8,(void*)&FUN_00425cb8},
+{0x00425ea0,(void*)&InitialiseDenting},
+{0x00425fa4,(void*)&FUN_00425fa4},
+{0x004268b8,(void*)&Generate_Surface_Normals},
+{0x00426a94,(void*)&Mask_Point_In_Quad},
+{0x00426be4,(void*)&FUN_00426be4},
+{0x00426ff4,(void*)&Track_Follow},
+{0x00427f70,(void*)&Map_Height},
+{0x00428678,(void*)&FUN_00428678},
+{0x0042885c,(void*)&Move_Forward_Strip},
+{0x004288f0,(void*)&FUN_004288f0},
+{0x00428980,(void*)&Search_For_Strip},
+{0x00428a00,(void*)&FUN_00428a00},
+{0x00428a8c,(void*)&FUN_00428a8c},
+{0x00429714,(void*)&FUN_00429714},
+{0x004297bc,(void*)&Car_Camera},
+{0x00429868,(void*)&Camera_Pad_Control},
+{0x00429a68,(void*)&Init_Pit_Camera_},
+{0x00429ac4,(void*)&FUN_00429ac4},
+{0x00429b48,(void*)&Pit_Camera_Control},
+{0x00429ff0,(void*)&Init_The_Floaty_Camera},
+{0x0042a040,(void*)&Do_The_Floaty_Camera_Thing},
+{0x0042a4c8,(void*)&Init_Damage_Indicator},
+{0x0042a608,(void*)&FUN_0042a608},
+{0x0042aae0,(void*)&Bonnet_Smoke},
+{0x0042b720,(void*)&FUN_0042b720},
+{0x0042c15c,(void*)&Draw_Car},
+{0x0042c2d4,(void*)&FUN_0042c2d4},
+{0x0042c408,(void*)&Init_Car_Graphics},
+{0x0042c640,(void*)&Init_Wild_Bill},
+{0x0042c670,(void*)&Init_Rollercoaster},
+{0x0042c77c,(void*)&Init_CLUT_Animation_},
+{0x0042c8a4,(void*)&Init_Texture_Animation},
+{0x0042ca20,(void*)&Update_Texture_Animation},
+{0x0042ca64,(void*)&Texture_Animation},
+{0x0042cb28,(void*)&Update_CLUT_Animation},
+{0x0042cb6c,(void*)&CLUT_Animation},
+{0x0042cbf8,(void*)&Update_Other_Objects},
+{0x0042d008,(void*)&Draw_Other_Objects},
+{0x0042d598,(void*)&Draw_Dynamic_Objects},
+{0x0042d600,(void*)&Init_Flag},
+{0x0042d758,(void*)&DrawFlagObject},
+{0x0042dac8,(void*)&UpdateFlag},
+{0x0042db28,(void*)&ZoomFlag},
+{0x0042dc38,(void*)&Init_LensFlare},
+{0x0042ddd8,(void*)&DrawLensFlare},
+{0x0042e154,(void*)&Init_Overlays},
+{0x0042e8b4,(void*)&Draw_Overlays},
+{0x0042fb7c,(void*)&FUN_0042fb7c},
+{0x0042fda0,(void*)&Update_Race_CountDown},
+{0x0042fe88,(void*)&FUN_0042fe88},
+{0x004300ac,(void*)&Display_Position_Pointers},
+{0x0043036c,(void*)&Init_Scene},
+{0x004304bc,(void*)&VVDraw_Object},
+{0x00430594,(void*)&Draw_Scene_Object},
+{0x004307c8,(void*)&FUN_004307c8},
+{0x004308a8,(void*)&Setup_Object_Block},
+{0x004309e8,(void*)&FUN_004309e8},
+{0x00430a38,(void*)&Decrunch_Object_Block},
+{0x00430aec,(void*)&Object_Decompression},
+{0x00430b60,(void*)&FUN_00430b60},
+{0x00430bc0,(void*)&Update_Scene_Objects},
+{0x00430d0e,(void*)&FUN_00430d0e},
+{0x00430d94,(void*)&Init_Bowl_Objects},
+{0x00430ddc,(void*)&Init_Scene_Objects},
+{0x00430de8,(void*)&Init_Track_Objects},
+{0x00430ed8,(void*)&Remove_Scene_Objects},
+{0x00430f38,(void*)&Init_Sky},
+{0x0043102c,(void*)&FUN_0043102c},
+{0x00431330,(void*)&Draw_Sky},
+{0x004314a4,(void*)&AI_Com_Server},
+{0x00432d7c,(void*)&Determine_AI},
+{0x00433088,(void*)&Recommended_Acceleration},
+{0x004330c8,(void*)&FUN_004330c8},
+{0x00433108,(void*)&Get_Car_Angle},
+{0x00433134,(void*)&Get_Direction_Cosines},
+{0x004331a4,(void*)&Interpolate_Direction_Vectors_Left},
+{0x0043321c,(void*)&Interpolate_Direction_Vectors_Right_},
+{0x004332b8,(void*)&InitialiseAI},
+{0x0043361c,(void*)&Obstacle_Ahead},
+{0x00433b80,(void*)&Strip_Distance},
+{0x00433ba0,(void*)&FUN_00433ba0},
+{0x00433d34,(void*)&CheckPointScoring},
+{0x00433f70,(void*)&Barrier_Collision},
+{0x00434c7c,(void*)&Barrier_Corner_Collision},
+{0x00435300,(void*)&FUN_00435300},
+{0x00435384,(void*)&FUN_00435384},
+{0x00435598,(void*)&TransformWheels_},
+{0x00435870,(void*)&TransformEnemyWheels},
+{0x00435990,(void*)&ApplyWheelOverlay},
+{0x0043617c,(void*)&InitialiseParticleSystem},
+{0x00436318,(void*)&Smoke},
+{0x004363e0,(void*)&SmokeCtrl},
+{0x00436578,(void*)&FireCtrl},
+{0x004366fc,(void*)&Fire},
+{0x004367ec,(void*)&Sparks},
+{0x00436934,(void*)&SparksCtrl},
+{0x00436ab0,(void*)&Steam},
+{0x00436b9c,(void*)&SteamCtrl},
+{0x00436d34,(void*)&FUN_00436d34},
+{0x00436d64,(void*)&FreeParticle},
+{0x00436dd4,(void*)&DrawParticles},
+{0x00436e2c,(void*)&FUN_00436e2c},
+{0x00436f00,(void*)&FUN_00436f00},
+{0x00437090,(void*)&Start_Roll},
+{0x004371cc,(void*)&FUN_004371cc},
+{0x0043732c,(void*)&FUN_0043732c},
+{0x0043853c,(void*)&Calc_Head_On_Clsn_Dynamics},
+{0x004398bc,(void*)&Check_2D_Car_Collision},
+{0x00439b34,(void*)&Check_Ground_Car_Collision},
+{0x0043a230,(void*)&Check_Space_Car_Collision},
+{0x0043a530,(void*)&Do_Car_Collisions},
+{0x0043a7b4,(void*)&Init_Car_Cluts},
+{0x0043b064,(void*)&Init_Car_Doors},
+{0x0043b39c,(void*)&FUN_0043b39c},
+{0x0043b4b0,(void*)&Change_Bonnet_Clut},
+{0x0043b5e8,(void*)&Change_Boot_Clut},
+{0x0043b6f0,(void*)&Highlight_Area},
+{0x0043b8ec,(void*)&FUN_0043b8ec},
+{0x0043ba70,(void*)&TextureDentHiCar},
+{0x0043c05c,(void*)&TextureDentMidCar},
+{0x0043c618,(void*)&FUN_0043c618},
+{0x0043c68c,(void*)&FUN_0043c68c},
+{0x0043c700,(void*)&FUN_0043c700},
+{0x0043c868,(void*)&FUN_0043c868},
+{0x0043ca40,(void*)&Get_Corner_Positions},
+{0x0043d040,(void*)&Ground_Collision},
+{0x0043d2c4,(void*)&Find_Lowest_Corner},
+{0x0043d320,(void*)&Make_Car_Fly},
+{0x0043d548,(void*)&Car_Landed},
+{0x0043d704,(void*)&Car_Landed_On_Corner},
+{0x0043d7bc,(void*)&Car_Fly_Motion_3D},
+{0x0043da14,(void*)&Car_Grounded_Motion_3D},
+{0x0043dc00,(void*)&Car_Rolled_Edge_Onto_Wheels_},
+{0x0043dd08,(void*)&FUN_0043dd08},
+{0x0043de10,(void*)&Check_Quadrant},
+{0x0043de30,(void*)&FUN_0043de30},
+{0x0043e634,(void*)&Car_2pt_Motion_3D},
+{0x0043fc54,(void*)&Car_1pt_Motion_3D},
+{0x004405bc,(void*)&Car_Drive_Motion_3D_},
+{0x0044088c,(void*)&Sticky_Car_Motion_3D},
+{0x00440ab0,(void*)&FUN_00440ab0},
+{0x00440bf4,(void*)&FUN_00440bf4},
+{0x00441090,(void*)&FUN_00441090},
+{0x00441224,(void*)&Calc_Car_Tilt},
+{0x004413a0,(void*)&Calc_Car_Angles_Square},
+{0x004414c4,(void*)&FUN_004414c4},
+{0x004414dc,(void*)&Car_Drive_Motion},
+{0x0044229c,(void*)&Car_Drive_2pt_Motion},
+{0x004428fc,(void*)&Car_Fly_Motion},
+{0x0044295c,(void*)&FUN_0044295c},
+{0x00442c38,(void*)&FUN_00442c38},
+{0x00442e0c,(void*)&Car_Movement},
+{0x004431e8,(void*)&FUN_004431e8},
+{0x00443970,(void*)&Init_End_Race},
+{0x00443990,(void*)&Calc_Track_Positions},
+{0x00443c40,(void*)&FUN_00443c40},
+{0x00443cbc,(void*)&Get_Race_Positions},
+{0x00443ed4,(void*)&Init_Track_Strip_Numbers},
+{0x004440c0,(void*)&FUN_004440c0},
+{0x00444178,(void*)&FUN_00444178},
+{0x00444a10,(void*)&FUN_00444a10},
+{0x00444b90,(void*)&FUN_00444b90},
+{0x00444d4c,(void*)&Calc_Suspension_Right_Wheels},
+{0x00444f0c,(void*)&Calc_Null_Suspension},
+{0x00444f6c,(void*)&FUN_00444f6c},
+{0x00444fcc,(void*)&Boot_Lost_Geometry},
+{0x004450fc,(void*)&FUN_004450fc},
+{0x00445160,(void*)&FUN_00445160},
+{0x0044520c,(void*)&FUN_0044520c},
+{0x00445684,(void*)&Check_Bonnet_Removal},
+{0x00445710,(void*)&Check_Boot_Removal},
+{0x004457a8,(void*)&Init_Sys},
+{0x00445814,(void*)&Init_Main},
+{0x00445894,(void*)&Set_Load_Textures},
+{0x00445918,(void*)&Modify_TDF},
+{0x00445ba0,(void*)&Init_Graphics},
+{0x00445c70,(void*)&FUN_00445c70},
+{0x00445ca8,(void*)&FUN_00445ca8},
+{0x00445da4,(void*)&Init_Game},
+{0x00445ef0,(void*)&Play_Intro},
+{0x00445f2c,(void*)&Play_Xtro},
+{0x00445f70,(void*)&Initialise_Pause_Mode},
+{0x00446390,(void*)&Pause_Mode},
+{0x00446d50,(void*)&FUN_00446d50},
+{0x00446d9c,(void*)&UndentCar},
+{0x00447120,(void*)&SetHighLight},
+{0x00447300,(void*)&FUN_00447300},
+{0x004474a0,(void*)&Control_Car_Replay},
+{0x004478e0,(void*)&FUN_004478e0},
+{0x00447940,(void*)&Record_Event},
+{0x00447a2c,(void*)&Terminate_Replay},
+{0x00447a60,(void*)&Terminate_Replay_Bodge},
+{0x00447aa0,(void*)&FUN_00447aa0},
+{0x00447bdc,(void*)&FUN_00447bdc},
+{0x00447f3c,(void*)&Amplitude},
+{0x00447fe8,(void*)&DopplerFrequency},
+{0x0044815c,(void*)&Allocate_Sound_Effect},
+{0x004481fc,(void*)&FUN_004481fc},
+{0x00448310,(void*)&Load_Game_Vags},
+{0x00448364,(void*)&Clear_SoundFx},
+{0x00448368,(void*)&FUN_00448368},
+{0x00448e58,(void*)&PitOut},
+{0x00448e88,(void*)&PitIn},
+{0x00448f4c,(void*)&Pit_Stop1},
+{0x00448f88,(void*)&Pit_Stop2},
+{0x00448f8c,(void*)&Strip_Trigger_Handler},
+{0x00448ff0,(void*)&Sparking},
+{0x004494e0,(void*)&LoadSave},
+{0x00449818,(void*)&FUN_00449818},
+{0x00449868,(void*)&FUN_00449868},
+{0x00449a68,(void*)&FUN_00449a68},
+{0x00449a98,(void*)&FUN_00449a98},
+{0x00449dc4,(void*)&FUN_00449dc4},
+{0x00449f48,(void*)&FUN_00449f48},
+{0x0044a050,(void*)&FUN_0044a050},
+{0x0044a314,(void*)&FUN_0044a314},
+{0x0044a420,(void*)&FUN_0044a420},
+{0x0044a49c,(void*)&FUN_0044a49c},
+{0x0044a510,(void*)&FUN_0044a510},
+{0x0044a654,(void*)&FUN_0044a654},
+{0x0044aa74,(void*)&FUN_0044aa74},
+{0x0044ab98,(void*)&FUN_0044ab98},
+{0x0044ac60,(void*)&FUN_0044ac60},
+{0x0044ad74,(void*)&Duplicate_Results},
+{0x0044ad98,(void*)&Load_First_Config},
+{0x0044add8,(void*)&Load_Card_File},
+{0x0044ae0c,(void*)&FUN_0044ae0c},
+{0x0044b038,(void*)&FUN_0044b038},
+{0x0044b2b8,(void*)&Init_Front_End},
+{0x0044b62c,(void*)&View_Frontend_Replay},
+{0x0044b650,(void*)&DemoMode},
+{0x0044b730,(void*)&FUN_0044b730},
+{0x0044b744,(void*)&Loading_Screen_From_Slab},
+{0x0044b7f4,(void*)&FUN_0044b7f4},
+{0x0044b824,(void*)&Load_Completion_Status},
+{0x0044b978,(void*)&Run_Selection},
+{0x0044bab4,(void*)&Call_Loaded_Game},
+{0x0044baec,(void*)&FUN_0044baec},
+{0x0044bb3c,(void*)&FUN_0044bb3c},
+{0x0044bbe0,(void*)&Setup_Pad},
+{0x0044bcc0,(void*)&Init_Wrecking_Championship},
+{0x0044bd04,(void*)&Init_StockCar_Championship},
+{0x0044bd48,(void*)&FUN_0044bd48},
+{0x0044bd88,(void*)&Init_StockCar_MultiChamp},
+{0x0044bdc8,(void*)&Championship},
+{0x0044bec8,(void*)&MultiChamp},
+{0x0044c018,(void*)&Calculate_Finish},
+{0x0044c250,(void*)&Calculate_Results},
+{0x0044c378,(void*)&End_Of_Game_Sequence},
+{0x0044c394,(void*)&Do_End_Of_Season_Stuff},
+{0x0044c430,(void*)&Init_League_Info},
+{0x0044c498,(void*)&Reset_League_Info},
+{0x0044c4b0,(void*)&Sort_Leagues},
+{0x0044c504,(void*)&Init_MultiLeague_Info},
+{0x0044c550,(void*)&Setup_Driver_Names},
+{0x0044c5d8,(void*)&FUN_0044c5d8},
+{0x0044c64c,(void*)&Add_Computer_Info},
+{0x0044c6c8,(void*)&Update_League_Info},
+{0x0044c6f8,(void*)&FUN_0044c6f8},
+{0x0044c768,(void*)&Sort_MultiLeague},
+{0x0044c7a0,(void*)&Sort_RacePos},
+{0x0044c884,(void*)&Promote_And_Relegate},
+{0x0044c92c,(void*)&Check_League_Standing},
+{0x0044c970,(void*)&Order_Cars},
+{0x0044c9c0,(void*)&FUN_0044c9c0},
+{0x0044caa8,(void*)&FUN_0044caa8},
+{0x0044ccd0,(void*)&View_Results_Replay_},
+{0x0044cd08,(void*)&FUN_0044cd08},
+{0x0044cd30,(void*)&View_Champ_Stats},
+{0x0044ce78,(void*)&FUN_0044ce78},
+{0x0044cf20,(void*)&View_Driver_Stats},
+{0x0044d094,(void*)&FUN_0044d094},
+{0x0044d0b0,(void*)&FUN_0044d0b0},
+{0x0044d2a4,(void*)&FUN_0044d2a4},
+{0x0044d550,(void*)&Start_New_Season_Stats},
+{0x0044d594,(void*)&FUN_0044d594},
+{0x0044d638,(void*)&Update_Track_Stats},
+{0x0044d6f8,(void*)&FUN_0044d6f8},
+{0x0044d798,(void*)&Update_Championship_Stats},
+{0x0044d7f0,(void*)&FUN_0044d7f0},
+{0x0044d808,(void*)&Get_Current_Recording_Season},
+{0x0044d810,(void*)&FUN_0044d810},
+{0x0044d85c,(void*)&Update_Jimmy_Spunk_Times},
+{0x0044d9d0,(void*)&View_Track_Stats},
+{0x0044db34,(void*)&FUN_0044db34},
+{0x0044dd30,(void*)&FUN_0044dd30},
+{0x0044debc,(void*)&Secret},
+{0x0044e308,(void*)&FUN_0044e308},
+{0x0044e330,(void*)&FUN_0044e330},
+{0x0044e3fc,(void*)&Select_Car},
+{0x0044e600,(void*)&FUN_0044e600},
+{0x0044e7d8,(void*)&FUN_0044e7d8},
+{0x0044e860,(void*)&FUN_0044e860},
+{0x0044e950,(void*)&Select_ScreenPos},
+{0x0044eae0,(void*)&Configuration},
+{0x0044ecdc,(void*)&FUN_0044ecdc},
+{0x0044ed50,(void*)&View_Credits},
+{0x0044ee6c,(void*)&FUN_0044ee6c},
+{0x0044f788,(void*)&FUN_0044f788},
+{0x0044f81c,(void*)&FUN_0044f81c},
+{0x0044f870,(void*)&FUN_0044f870},
+{0x0044f9d4,(void*)&FUN_0044f9d4},
+{0x0044fd80,(void*)&FUN_0044fd80},
+{0x0044fe64,(void*)&FUN_0044fe64},
+{0x0044fea8,(void*)&FUN_0044fea8},
+{0x0044ff74,(void*)&FUN_0044ff74},
+{0x0044ffc0,(void*)&View_BestLaps},
+{0x00450108,(void*)&FUN_00450108},
+{0x004502a8,(void*)&Front_End},
+{0x00450800,(void*)&FUN_00450800},
+{0x00450a7c,(void*)&Toggle_Track},
+{0x00450b04,(void*)&Toggle_Car},
+{0x00450b5c,(void*)&FUN_00450b5c},
+{0x00450e3c,(void*)&FUN_00450e3c},
+{0x00450ecc,(void*)&Rotate_Slab_On},
+{0x00450fe0,(void*)&FUN_00450fe0},
+{0x00451094,(void*)&Draw_Screen_Polys},
+{0x00451448,(void*)&Setup_Screen_Text},
+{0x004514b8,(void*)&Setup_Screen_Lines},
+{0x004514c8,(void*)&Draw_Screen_Lines},
+{0x0045186c,(void*)&Button_Pressed},
+{0x00451900,(void*)&Glow_Selector},
+{0x00451978,(void*)&Draw_Slab},
+{0x00451a68,(void*)&Null_Routine},
+{0x00451a6c,(void*)&FUN_00451a6c},
+{0x00451ab8,(void*)&Draw_Semi_Trans_Poly},
+{0x00451c40,(void*)&FUN_00451c40},
+{0x00451c60,(void*)&Play_Click_FX},
+{0x00451c80,(void*)&FUN_00451c80},
+{0x00451ca0,(void*)&FUN_00451ca0},
+{0x00451cc0,(void*)&Show_Information},
+{0x00451f0c,(void*)&FUN_00451f0c},
+{0x00451f2c,(void*)&FUN_00451f2c},
+{0x0045219c,(void*)&FUN_0045219c},
+{0x004521b0,(void*)&FUN_004521b0},
+{0x004521ec,(void*)&FUN_004521ec},
+{0x00452250,(void*)&FUN_00452250},
+{0x004522b0,(void*)&Enter_Driver_Names},
+{0x00452760,(void*)&FUN_00452760},
+{0x00452950,(void*)&FUN_00452950},
+{0x004529b0,(void*)&FUN_004529b0},
+{0x00452b94,(void*)&FUN_00452b94},
+{0x00452bf4,(void*)&FUN_00452bf4},
+{0x00452c40,(void*)&Practice_Over},
+{0x00452ef0,(void*)&FUN_00452ef0},
+{0x00452f60,(void*)&FUN_00452f60},
+{0x00452f80,(void*)&FUN_00452f80},
+{0x00453164,(void*)&FUN_00453164},
+{0x00453184,(void*)&FUN_00453184},
+{0x00453204,(void*)&Select_Champ},
+{0x00453240,(void*)&Select_Multi},
+{0x0045327c,(void*)&Select_ChampQS},
+{0x004532c0,(void*)&Select_Pract},
+{0x004532fc,(void*)&Select_TimeT},
+{0x00453330,(void*)&Select_Total},
+{0x00453370,(void*)&Select_DDPract},
+{0x004533b0,(void*)&Select_RaceType_DD},
+{0x004535c0,(void*)&Select_Track},
+{0x00453740,(void*)&FUN_00453740},
+{0x00453780,(void*)&FUN_00453780},
+{0x004538b0,(void*)&Save_Game},
+{0x00453b90,(void*)&FUN_00453b90},
+{0x00453bb0,(void*)&FUN_00453bb0},
+{0x00453bd8,(void*)&FUN_00453bd8},
+{0x00453be0,(void*)&FUN_00453be0},
+{0x00453d58,(void*)&FUN_00453d58},
+{0x00453f08,(void*)&End_Of_Season},
+{0x00454318,(void*)&FUN_00454318},
+{0x004543a8,(void*)&FUN_004543a8},
+{0x00454438,(void*)&FUN_00454438},
+{0x004544c8,(void*)&FUN_004544c8},
+{0x00454558,(void*)&FUN_00454558},
+{0x00454710,(void*)&FUN_00454710},
+{0x004549c4,(void*)&FUN_004549c4},
+{0x00454b80,(void*)&View_MultiLeague},
+{0x00454c30,(void*)&FUN_00454c30},
+{0x00454d28,(void*)&Race_Over},
+{0x0045505c,(void*)&FUN_0045505c},
+{0x004550cc,(void*)&FUN_004550cc},
+{0x00455370,(void*)&FUN_00455370},
+{0x00455420,(void*)&FUN_00455420},
+{0x00455518,(void*)&Display_Season_Status},
+{0x004558ec,(void*)&FUN_004558ec},
+{0x00455b94,(void*)&FUN_00455b94},
+{0x00455ed5,(void*)&__open_flags},
+{0x00455fa4,(void*)&FUN_00455fa4},
+{0x0045609b,(void*)&FUN_0045609b},
+{0x004560fb,(void*)&FUN_004560fb},
+{0x00456170,(void*)&FUN_00456170},
+{0x004561f4,(void*)&FUN_004561f4},
+{0x004565e8,(void*)&__shutdown_stream},
+{0x0045660e,(void*)&FUN_0045660e},
+{0x0045661e,(void*)&FUN_0045661e},
+{0x0045681c,(void*)&__CHP},
+{0x00456848,(void*)&nfree},
+{0x00456bf2,(void*)&__null_int23_exit},
+{0x00456c0d,(void*)&_exit},
+{0x00456c34,(void*)&wstart2_},
+{0x00456cb2,(void*)&FUN_00456cb2},
+{0x00456cf0,(void*)&FUN_00456cf0},
+{0x00456d27,(void*)&FUN_00456d27},
+{0x00456db3,(void*)&FUN_00456db3},
+{0x00456e60,(void*)&_tolower},
+{0x00456e6e,(void*)&FUN_00456e6e},
+{0x00456e80,(void*)&__set_EDOM},
+{0x00456e8b,(void*)&__set_ERANGE},
+{0x00456e9f,(void*)&FUN_00456e9f},
+{0x00456ead,(void*)&__set_doserrno},
+{0x00456ebb,(void*)&open},
+{0x00456edd,(void*)&sopen},
+{0x004570b2,(void*)&__allocfp},
+{0x00457167,(void*)&__freefp},
+{0x0045719e,(void*)&__purgefp},
+{0x004571bc,(void*)&__chktty},
+{0x004571ef,(void*)&__threadid},
+{0x004571fb,(void*)&FUN_004571fb},
+{0x00457200,(void*)&FUN_00457200},
+{0x00457201,(void*)&FUN_00457201},
+{0x0045720f,(void*)&FUN_0045720f},
+{0x0045721d,(void*)&__NTInit},
+{0x00457340,(void*)&__NTMainInit},
+{0x00457383,(void*)&__exit},
+{0x004573a4,(void*)&FUN_004573a4},
+{0x0045749e,(void*)&_lseek},
+{0x004574b8,(void*)&FUN_004574b8},
+{0x00457506,(void*)&tell},
+{0x00457548,(void*)&__ioalloc},
+{0x004575c8,(void*)&FUN_004575c8},
+{0x00457731,(void*)&FUN_00457731},
+{0x004577ec,(void*)&getpid},
+{0x004577f1,(void*)&FUN_004577f1},
+{0x00457885,(void*)&FUN_00457885},
+{0x004578af,(void*)&__init_8087_},
+{0x004578de,(void*)&_fpreset},
+{0x0045793d,(void*)&nmalloc},
+{0x00457a3e,(void*)&__MemAllocator},
+{0x00457ae6,(void*)&__MemFree},
+{0x00457ef9,(void*)&FUN_00457ef9},
+{0x00458044,(void*)&FUN_00458044},
+{0x004580a9,(void*)&FUN_004580a9},
+{0x004580cf,(void*)&FUN_004580cf},
+{0x00458100,(void*)&FUN_00458100},
+{0x0045815f,(void*)&FUN_0045815f},
+{0x0045825c,(void*)&FUN_0045825c},
+{0x00458277,(void*)&FUN_00458277},
+{0x004587a8,(void*)&FUN_004587a8},
+{0x004587c8,(void*)&__qwrite},
+{0x00458980,(void*)&__WinMain},
+{0x00458a5e,(void*)&__NTAtMaxFiles},
+{0x00458b24,(void*)&FUN_00458b24},
+{0x00458bcb,(void*)&__NTRemoveFileHandle},
+{0x00458bf1,(void*)&FUN_00458bf1},
+{0x00458c30,(void*)&__NTGetFakeHandle},
+{0x00458c7e,(void*)&__GetNTAccessAttr},
+{0x00458cb9,(void*)&__GetNTShareAttr},
+{0x00458cf0,(void*)&_stricmp},
+{0x00458d05,(void*)&FUN_00458d05},
+{0x00458d50,(void*)&_dosret0},
+{0x00458d6a,(void*)&dosretax},
+{0x00458d87,(void*)&FUN_00458d87},
+{0x00458dd9,(void*)&__set_errno_nt},
+{0x00458de8,(void*)&isatty},
+{0x00458e2f,(void*)&__IOMode},
+{0x00458e85,(void*)&FUN_00458e85},
+{0x00458ea6,(void*)&__sigfpe_handler},
+{0x00458ef1,(void*)&signal},
+{0x00458f70,(void*)&raise},
+{0x00458fef,(void*)&FUN_00458fef},
+{0x0045901c,(void*)&__SigFini},
+{0x004593e8,(void*)&__NewExceptionHandler},
+{0x00459428,(void*)&__DoneExceptionHandler},
+{0x00459447,(void*)&__CloseSemaphore},
+{0x00459471,(void*)&__AccessSemaphore},
+{0x004594d4,(void*)&__ReleaseSemaphore},
+{0x004595d0,(void*)&__InitThreadData},
+{0x0045960e,(void*)&__NTThreadInit},
+{0x00459656,(void*)&__NTAddThread},
+{0x004596ad,(void*)&__NTRemoveThread},
+{0x00459721,(void*)&__InitMultipleThread},
+{0x00459916,(void*)&__InitRtns},
+{0x00459961,(void*)&__FiniRtns},
+{0x00459a25,(void*)&__full_io_exit},
+{0x00459a3f,(void*)&FUN_00459a3f},
+{0x00459a9f,(void*)&flushall},
+{0x00459aaa,(void*)&__flushall},
+{0x00459aed,(void*)&getche},
+{0x00459b13,(void*)&unlink},
+{0x00459b28,(void*)&FUN_00459b28},
+{0x00459c48,(void*)&FUN_00459c48},
+{0x00459cad,(void*)&__cnvs2d},
+{0x00459cd9,(void*)&FUN_00459cd9},
+{0x00459cea,(void*)&__init_80x87},
+{0x00459d11,(void*)&FUN_00459d11},
+{0x00459d85,(void*)&FUN_00459d85},
+{0x00459e15,(void*)&__ExpandDGROUP},
+{0x00459e28,(void*)&FUN_00459e28},
+{0x00459e6f,(void*)&__nmemneed},
+{0x00459e97,(void*)&utoa},
+{0x00459ee9,(void*)&_itoa},
+{0x00459f03,(void*)&itoa},
+{0x00459f5d,(void*)&ultoa},
+{0x00459fad,(void*)&ltoa},
+{0x00459fe2,(void*)&_ltoa},
+{0x00459ffc,(void*)&_toupper},
+{0x0045a00a,(void*)&FUN_0045a00a},
+{0x0045a02e,(void*)&FUN_0045a02e},
+{0x0045a05d,(void*)&__CommonInit},
+{0x0045a068,(void*)&FUN_0045a068},
+{0x0045a07d,(void*)&nrealloc},
+{0x0045a117,(void*)&FUN_0045a117},
+{0x0045a180,(void*)&FUN_0045a180},
+{0x0045a1b5,(void*)&FUN_0045a1b5},
+{0x0045a221,(void*)&__RemoveThreadData},
+{0x0045a2cb,(void*)&FUN_0045a2cb},
+{0x0045a306,(void*)&__fatal_runtime_error},
+{0x0045a334,(void*)&FUN_0045a334},
+{0x0045a528,(void*)&__HasLeadingZero},
+{0x0045a570,(void*)&FUN_0045a570},
+{0x0045a613,(void*)&FUN_0045a613},
+{0x0045a686,(void*)&FUN_0045a686},
+{0x0045a6fc,(void*)&_FtoS},
+{0x0045aba5,(void*)&_nheapshrink},
+{0x0045abb1,(void*)&FUN_0045abb1},
+{0x0045ac0a,(void*)&FUN_0045ac0a},
+{0x0045ac5f,(void*)&FUN_0045ac5f},
+{0x0045ac6c,(void*)&FUN_0045ac6c},
+{0x0045ac81,(void*)&__HeapManager_expand},
+{0x0045ae2c,(void*)&nexpand},
+{0x0045ae76,(void*)&FUN_0045ae76},
+{0x0045aea2,(void*)&__initthread},
+{0x0045aefc,(void*)&__EnterWVIDEO},
+{0x0045af27,(void*)&FUN_0045af27},
+{0x0045af54,(void*)&FUN_0045af54},
+{0x0045afc1,(void*)&__NTConsoleInput},
+{0x0045afcc,(void*)&FUN_0045afcc},
+{0x0045afd7,(void*)&__Nan_Inf},
+{0x0045b06a,(void*)&FUN_0045b06a},
+{0x0045b0b4,(void*)&IF_DLOG2},
+{0x0045b0b8,(void*)&IF_DLOG10},
+{0x0045b0cf,(void*)&log10},
+{0x0045b0e2,(void*)&log2},
+{0x0045b0f5,(void*)&floor},
+{0x0045b13a,(void*)&_Scale},
+{0x0045b54e,(void*)&__ZBuf2F},
+{0x0045b599,(void*)&FUN_0045b599},
+{0x0045b68a,(void*)&__CBeginThread},
+{0x0045b76e,(void*)&FUN_0045b76e},
+{0x0045b794,(void*)&FUN_0045b794},
+{0x0045b7ee,(void*)&modf},
+{0x0045b80e,(void*)&__CmpBigInt_},
+{0x0045b848,(void*)&FUN_0045b848},
+{0x0045b8b3,(void*)&FUN_0045b8b3},
+{0x0045b91d,(void*)&FUN_0045b91d},
+{0x0045b9d2,(void*)&FUN_0045b9d2},
+{0x0045b9d4,(void*)&FUN_0045b9d4},
+{0x0045bf9a,(void*)&FUN_0045bf9a},
+{0x0045c058,(void*)&FUN_0045c058},
+{0x0045c0f0,(void*)&frexp},
+{0x0045c16b,(void*)&__math1err},
+{0x0045c2f1,(void*)&_set_matherr},
+{0x0045c2fb,(void*)&__rterrmsg},
+{0x0045c348,(void*)&_matherr},
+{0x0045c39c,(void*)&__matherr},
+{0x0045c3a1,(void*)&__get_std_stream},
+{0x0045c46b,(void*)&FUN_0045c46b},
+{0x00417f00,(void*)&FUN_00417f00},
+{0x0041867c,(void*)&FUN_0041867c},
+{0x00418f30,(void*)&FUN_00418f30},
+{0x0041bd3c,(void*)&FUN_0041bd3c},
+{0x0041bd98,(void*)&FUN_0041bd98},
+{0x0041c514,(void*)&FUN_0041c514},
+{0x0041c570,(void*)&FUN_0041c570},
+{0x0041ce28,(void*)&FUN_0041ce28},
+{0x0041cf00,(void*)&FUN_0041cf00},
+{0x0041d964,(void*)&FUN_0041d964},
+{0x0041da48,(void*)&FUN_0041da48},
 };
 int dd2_fnmap_n=sizeof(dd2_fnmap)/sizeof(dd2_fnmap[0]);
 static void* g_lut[0x50000];
 void dd2_relocate(void){
   int i; unsigned off;
   for(i=0;i<dd2_fnmap_n;i++){unsigned v=dd2_fnmap[i].va; if(v>=0x410000&&v<0x460000) g_lut[v-0x410000]=dd2_fnmap[i].fn;}
-  for(off=0x60000; off+4<=0x540000; off+=4){
-    unsigned w=*(unsigned*)(g_image+off);
-    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void**)(g_image+off)=fn;}
+  for(off=0x60000; off+4<=0x578800; off+=4){
+    volatile unsigned* p = (volatile unsigned*)(g_image+off);
+    unsigned w=*p;
+    if(w>=0x410000&&w<0x460000){void*fn=g_lut[w-0x410000]; if(fn)*(void* volatile*)p=fn;}
   }
 }
