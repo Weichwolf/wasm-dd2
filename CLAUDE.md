@@ -40,15 +40,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   vertex arrays for the edge sorter, Setup_Sprite info blocks, camera vectors), dropped registers,
   paired 16-bit loads, unsigned/signed shifts+compares (dth_* span blitters need `sar` semantics),
   mid-function entries, wasm call_indirect signature normalization.
-- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm race state (cars/physics/heap/debris) is
-  bit-identical through at least engine frame 150 after the PADTYPE-SEED + INITDEBRIS + CARCAMERA
-  fixes; residual native↔wasm diffs: host-pointer slots (0x74c47c, 0x74c6d8), cdb draw-env
-  0x75420e-0x754219, and an init-time delta (recorded_strips_ @0x7842a0 camera start strip +2 on
-  wasm; strip byte +0x29 = 6 vs 0; 0x77cf39) — re-measure post-792bae-fix before chasing. Compare
-  tools: `DD2_STATECF=<frame> DD2_FRAMEDIR=<dir>` (wasm one-shot full-image dump keyed by engine
-  frame 0x462ff0); native equivalent via gdb `break Draw_All if *(int*)0x462ff0 == N` + `dump binary
-  memory`. Next: bit-verify vs the dd2h reference (`make refcapture`; framebuffer @0x700450, palette
-  bit-exact already).
+- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm on the L2 demo is **fully bit-identical through
+  engine frame 182 INCLUDING the 640x480 framebuffer (100.00%)** after the scattered-locals sweep
+  (patches 495-565; 565 = the Calc_Object_Angles wrong-buffer fix, asm 0x4403d9). Only inherent
+  host-pointer slots differ (whitelist: 0x74c47c, 0x74c6d8, cdb 0x75420e-0x7543a0, GTE regfile
+  0x74c4e0-0x74c70c transients, rot_points/prim phase-noise 0x74f1c0-0x754220, unaligned particle
+  callback slots). Compare tools: `DD2_STATECF=<frame> DD2_FRAMEDIR=<dir>` (wasm full-image dump
+  keyed by engine frame 0x462ff0); native via gdb `break Draw_All if *(int*)0x462ff0 == N` + `dump
+  binary memory`. NEXT: ours-vs-REFERENCE (ref L2@182 capture: fb 3.5%, trackstate 69% — needs
+  tick-precise ref alignment + front-end-equivalent demo settings before byte-chasing; known
+  faithfulness suspects: unsigned `>>0x10` paired-load reads, e.g. Car_1pt local_22, asm likely sar).
+  Audio PCM staging [0x803160,0x816ff0) is zero in ours (DirectSound stubbed) — Stage 3.
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
