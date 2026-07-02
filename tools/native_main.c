@@ -74,12 +74,12 @@ extern int  dd2_input_selftest(void);   /* dd2_input.c: verify key->Translate_Ke
 #define R32(va)     (*(int*)(uintptr_t)(va))
 static int DemoModeLevel(int lvl){
     Setup_Pad(1);
-    W32(0x905a1c, R32(0x4673f4));            /* save race_type */
-    W32(0x905a18, R32(0x4673f8));            /* save race_mode */
+    W32(0x93de1c, R32(0x4673f4));            /* save race_type */
+    W32(0x93de18, R32(0x4673f8));            /* save race_mode */
     W32(0x46385c, 1);                        /* demo_mode = 1 */
-    W32(0x905a14, R32(0x467400));            /* save race_car */
+    W32(0x93de14, R32(0x467400));            /* save race_car */
     W32(0x467400, 2);                        /* race_car = 2 */
-    W32(0x905a10, R32(0x46765c));            /* save num_cars */
+    W32(0x93de10, R32(0x46765c));            /* save num_cars */
     W32(0x46765c, 0x14);                     /* num_cars = 0x14 */
     W32(0x4673f8, 0);                        /* race_mode = 0 */
     W32(0x4673f4, 0);                        /* race_type = 0 */
@@ -94,12 +94,12 @@ static int DemoModeLevel(int lvl){
  * the rest. Tests whether the Stage-1 crash fixes made real gameplay (not just the attract demo) run. */
 static int PlayModeLevel(int lvl){
     Setup_Pad(1);
-    W32(0x905a1c, R32(0x4673f4));
-    W32(0x905a18, R32(0x4673f8));
+    W32(0x93de1c, R32(0x4673f4));
+    W32(0x93de18, R32(0x4673f8));
     W32(0x46385c, 0);                        /* demo_mode = 0 -> LIVE input */
-    W32(0x905a14, R32(0x467400));
+    W32(0x93de14, R32(0x467400));
     W32(0x467400, 2);
-    W32(0x905a10, R32(0x46765c));
+    W32(0x93de10, R32(0x46765c));
     W32(0x46765c, 0x14);
     W32(0x4673f8, 0);
     W32(0x4673f4, 0);
