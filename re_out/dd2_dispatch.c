@@ -616,7 +616,7 @@ extern int Draw_Screen_Lines();
 extern int Button_Pressed();
 extern int Glow_Selector();
 extern int Draw_Slab();
-extern int Null_Routine();
+extern int Null_Routine(int);
 extern int FUN_00451a6c();
 extern int Draw_Semi_Trans_Poly();
 extern int FUN_00451c40();
