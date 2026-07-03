@@ -1508,8 +1508,12 @@ extern int unaff_retaddr;
 #define DAT_0042dc20 (*(undefined1*)GIMG(0x0042dc20))
 #define DAT_0046cc90 (*(int*)GIMG(0x0046cc90))
 #define DAT_0046526a (*(int*)GIMG(0x0046526a))
-#define DAT_00465255 (*(int*)GIMG(0x00465255))
-#define DAT_00465256 (*(int*)GIMG(0x00465256))
+/* DAT_00465255/56: BYTE tables (lens-flare intensity/size, 3-byte stride records) —
+   DrawLensFlare @0x42df1a/0x42df5c loads are `mov 0x465255(%edi),%cl` with edi=i*3 (byte
+   stride). int typing made (&DAT_00465255)[iVar3] scale the index x4 -> flare quads got
+   wrong sizes/spacing (mask rectangles in the cf245-310 attract sun-pan window). */
+#define DAT_00465255 (*(unsigned char*)GIMG(0x00465255))
+#define DAT_00465256 (*(unsigned char*)GIMG(0x00465256))
 #define DAT_00465800 (*(int*)GIMG(0x00465800))
 #define DAT_0046548a (*(int*)GIMG(0x0046548a))
 #define DAT_004654a2 (*(int*)GIMG(0x004654a2))
