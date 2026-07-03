@@ -69,8 +69,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   cf-gate → target fn); sys.setrecursionlimit MANDATORY in every gdb-python on_stop script (ours
   AND wine — dies after ~50 hits otherwise); refmulti.sh rotates old reffb dumps — save first;
   fb-vs-ref compares only at the same Draw_All-entry phase; prim compares only for prims that
-  WIN pixels. Remaining Stage-2 work: verify later attract cycles (patch-685 remnants), audio
-  mixer (DirectSound mixdown; staging already byte-identical).
+  WIN pixels. **AUDIO = DONE for the L9 attract:** DirectSound COM shim (DD2_SOUND=1) + deterministic
+  PCM mixdown (dd2h_stubs.c; engine-frame clock, fixed-point centi-dB, Q16 point-sampler;
+  DD2_SNDPCM/<path>, DD2_SNDLOG): PCM stream bit-identical across native runs AND native<->wasm;
+  game-side DS call stream matches the SOUND-ENABLED wine reference EXACTLY (59/59 race sound-start
+  groups incl. every volume/pan/frequency value; Modify_Sound streams exact in every clean
+  measurement window — heavier gdb captures distort wine's wallclock channel timing/frame-skip,
+  only ~10cf windows with few breakpoints are valid). Audio roots: patches 700-735 (boot order,
+  2x scattered DSBUFFERDESC, dropped reg-args, volume-curve log10 reconstruction + CRT log10 body,
+  mm-timer callback 0x41345c reconstruction + deterministic 10-cf/phase-5 driver, commentator gate
+  = BYTE test of demo counter [0x7746c0] opening every 128 cf). Sound-enabled refs need the ALSA
+  null device (~/.asoundrc `pcm.!default { type null }`) — headless wine otherwise has NO audio
+  device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). Remaining Stage-2
+  work: verify later attract cycles (patch-685 remnants).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
