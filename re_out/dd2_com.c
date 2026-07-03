@@ -74,6 +74,8 @@ EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
 });
 #endif
 static int ids_flip(int t,int a,int b){
+    /* deterministic audio mixdown clock (dd2h_stubs.c): advance by engine frames, once per flip */
+    { extern void dd2_snd_mix_flip(void); dd2_snd_mix_flip(); }
 #ifdef DD2_BROWSER
     dd2_present((const unsigned char*)(unsigned long)0x700450u, g_palette);
     emscripten_sleep(0);   /* yield each presented frame so the browser paints + processes key events */

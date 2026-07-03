@@ -114,11 +114,14 @@ typedef struct DSBuf {
     unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
     int freq;                                 /* current sample rate (SetFrequency) */
     int nAvgBytesPerSec;                      /* from WAVEFORMATEX at create time */
+    int channels, bits, blockalign;           /* from WAVEFORMATEX at create time */
     int vol, pan;
     int playing, looping;
     int play_cf;                              /* cf @ Play() */
+    long long pos_fp;                         /* source position, FRAMES in Q16 (mixer clock) */
     struct DSBuf* master;                     /* dup source (shares data) */
 } DSBuf;
+static DSBuf* g_dsbufs[256]; static int g_ndsbufs;
 static void* g_dsnd_vtbl[32];
 static void* g_dsnd_obj = g_dsnd_vtbl;
 static void* g_dsb_vtbl[32];
@@ -133,11 +136,14 @@ static int dsb_dur_cf(DSBuf* b){ /* whole cf-ticks a one-shot stays PLAYING */
     return n<1 ? 1 : (int)n; }
 /* --- IDirectSoundBuffer methods --- */
 static int dsb_release(DSBuf* b){ SLOG("DSB %p Release",(void*)b);
+    { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
     if(!b->master && b->pcm) free(b->pcm);
     free(b); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
+    /* playing-state is owned by the mixer clock (dd2_snd_mix_flip advances pos_fp per engine
+       frame and clears playing at end-of-data); dur_cf is only the pre-first-flip fallback */
     if(b->playing){ if(b->looping) s=0x5; /* PLAYING|LOOPING */
-        else if(SND_CF - b->play_cf < dsb_dur_cf(b)) s=0x1; else b->playing=0; }
+        else if(SND_CF - b->play_cf < dsb_dur_cf(b) || b->pos_fp>0) s=0x1; else b->playing=0; }
     if(st)*st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
 static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,void** p2,unsigned* s2,int fl){
     (void)fl; if(off>b->size) off=b->size; if(bytes>b->size) bytes=b->size;
@@ -148,7 +154,7 @@ static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,
 static int dsb_unlock(DSBuf* b,void* p1,unsigned s1,void* p2,unsigned s2){
     (void)p1;(void)p2; SLOG("DSB %p Unlock %u/%u",(void*)b,s1,s2); return 0; }
 static int dsb_play(DSBuf* b,int r1,int r2,int flags){ (void)r1;(void)r2;
-    b->playing=1; b->looping=(flags&1); b->play_cf=SND_CF;
+    b->playing=1; b->looping=(flags&1); b->play_cf=SND_CF; b->pos_fp=0;
     SLOG("DSB %p Play flags=%d freq=%d vol=%d pan=%d",(void*)b,flags,b->freq,b->vol,b->pan); return 0; }
 static int dsb_stop(DSBuf* b){ b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
 static int dsb_setpos(DSBuf* b,unsigned pos){ SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
@@ -156,22 +162,31 @@ static int dsb_setvolume(DSBuf* b,int v){ b->vol=v; SLOG("DSB %p SetVolume %d",(
 static int dsb_setpan(DSBuf* b,int p){ b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
 static int dsb_setfreq(DSBuf* b,int f){ b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
 static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
-static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl; return b; }
+static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;
+    if(g_ndsbufs<256) g_dsbufs[g_ndsbufs++]=b; return b; }
 /* --- IDirectSound methods --- */
 static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(void)outer;
     /* DSBUFFERDESC: +0 dwSize, +4 dwFlags, +8 dwBufferBytes, +0x10 lpwfxFormat */
     DSBuf* b=dsb_new();
     b->size = desc? (unsigned)desc[2] : 0;
     if(b->size){ b->pcm=(unsigned char*)calloc(1,b->size); }
-    if(desc && desc[4]){ /* WAVEFORMATEX: +4 nSamplesPerSec, +8 nAvgBytesPerSec */
-        int* wfx=(int*)(unsigned long)(unsigned)desc[4];
-        b->freq=wfx[1]; b->nAvgBytesPerSec=wfx[2]; }
+    if(desc && desc[4]){ /* WAVEFORMATEX: wFormatTag+nChannels, nSamplesPerSec, nAvgBytesPerSec,
+                             nBlockAlign+wBitsPerSample */
+        unsigned char* wfx=(unsigned char*)(unsigned long)(unsigned)desc[4];
+        b->channels  = *(unsigned short*)(wfx+2);
+        b->freq      = *(int*)(wfx+4);
+        b->nAvgBytesPerSec = *(int*)(wfx+8);
+        b->blockalign= *(unsigned short*)(wfx+12);
+        b->bits      = *(unsigned short*)(wfx+14); }
+    if(b->channels<1) b->channels=1; if(b->blockalign<1) b->blockalign=(b->bits==16?2:1)*b->channels;
+    if(b->bits!=16) b->bits=8;
     if(pp)*pp=b;
     SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d -> %p",desc?desc[1]:0,b->size,b->freq,(void*)b);
     return 0; }
 static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
     DSBuf* b=dsb_new(); DSBuf* m=src->master? src->master:src;
     b->pcm=m->pcm; b->size=m->size; b->freq=m->freq; b->nAvgBytesPerSec=m->nAvgBytesPerSec;
+    b->channels=m->channels; b->bits=m->bits; b->blockalign=m->blockalign;
     b->master=m; if(pp)*pp=b;
     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
 static int ds_setcooplevel(void* t,int hwnd,int level){ (void)t;(void)hwnd;
@@ -199,3 +214,66 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     if(b)*b=&g_dsnd_obj;
     SLOG("DirectSoundCreate -> OK");
     return 0; }
+
+/* ---------------- deterministic PCM mixdown ----------------
+   dd2_snd_mix_flip() is called once per presented frame (ids_flip, dd2_com.c). It advances the
+   mixer clock by the engine frame counter @0x462ff0 (25 engine fps -> 882 output frames per cf
+   at 22050 Hz), never by wallclock, so the produced stream is a pure function of the DS call
+   stream (which is bit-deterministic). Output: s16le stereo 22050 Hz raw to $DD2_SNDPCM.
+   Volume/pan use the DirectSound centi-dB model (amp = 10^(centidb/2000), volumes add in dB;
+   pan attenuates the far channel) computed in FIXED POINT (hardcoded 2^(i/16) table, no libm --
+   glibc/musl pow() differ, this must be bit-identical native vs wasm). Resampling is a Q16
+   phase-accumulator point-sampler (classic pre-Vista dsound behavior). These semantics are the
+   DEFINITION of the rebuild's audio stream; wine/Windows mixer equivalence is verified against
+   captures separately. */
+static const unsigned short exp2_q15[17]={
+    32768,34219,35734,37316,38968,40693,42495,44376,
+    46341,48393,50535,52773,55109,57549,60097,62757,0 /*[16] handled as <<1 of [0]*/};
+static int dd2_amp_q15(int centidb){ /* 10^(centidb/2000) in Q15 for centidb<=0 */
+    long long e_q16; int n,f,hi,lo; unsigned a,b2;
+    if(centidb>=0) return 32768;
+    if(centidb<=-10000) return 0;
+    e_q16=(long long)centidb*108853/1000;      /* * log2(10)/20/100 in Q16 */
+    n=(int)(e_q16>>16); f=(int)(e_q16-((long long)n<<16));   /* n<=0, 0<=f<65536 */
+    hi=f>>12; lo=f&0xfff;
+    a=exp2_q15[hi]; b2=(hi==15)?65536u:exp2_q15[hi+1];
+    a=a+(unsigned)(((b2-a)*(unsigned)lo)>>12);               /* linear interp, Q15 (32768..65536) */
+    n=-n; if(n>=16) return 0;
+    return (int)(a>>n); }
+void dd2_snd_mix_flip(void){
+    static int last_cf=-1; static FILE* pf; static int pf_init;
+    int cf,dt,i,t;
+    if(!getenv("DD2_SOUND")) return;
+    cf=SND_CF;
+    if(last_cf<0){ last_cf=cf; return; }
+    dt=cf-last_cf; last_cf=cf;
+    if(dt<=0||dt>250) return;
+    if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p) pf=fopen(p,"wb"); } }
+    for(t=0;t<dt;t++){
+        static short out[882*2];
+        if(pf){ int k; for(k=0;k<882*2;k++) out[k]=0; }
+        for(i=0;i<g_ndsbufs;i++){
+            DSBuf* b=g_dsbufs[i];
+            long long step,end_fp; int al,gl,gr,k;
+            if(!b->playing||!b->pcm||!b->size||b->freq<=0) continue;
+            al=b->blockalign; if(al<1) al=1;
+            step=((long long)b->freq<<16)/22050;
+            end_fp=(long long)(b->size/al)<<16;
+            gl=dd2_amp_q15(b->vol-(b->pan>0?b->pan:0));
+            gr=dd2_amp_q15(b->vol+(b->pan<0?b->pan:0));
+            for(k=0;k<882;k++){
+                unsigned fr; int sl,sr; const unsigned char* sp;
+                if(b->pos_fp>=end_fp){ if(b->looping) b->pos_fp-=end_fp; else { b->playing=0; break; } }
+                fr=(unsigned)(b->pos_fp>>16); sp=b->pcm+(long long)fr*al;
+                if(b->bits==16){ sl=*(short*)sp; sr=(b->channels>1)?*(short*)(sp+2):sl; }
+                else { sl=((int)sp[0]-128)<<8; sr=(b->channels>1)?(((int)sp[1]-128)<<8):sl; }
+                b->pos_fp+=step;
+                if(pf){ int vl=out[k*2]+((sl*gl)>>15), vr=out[k*2+1]+((sr*gr)>>15);
+                    out[k*2]  =(short)(vl>32767?32767:vl<-32768?-32768:vl);
+                    out[k*2+1]=(short)(vr>32767?32767:vr<-32768?-32768:vr); }
+            }
+        }
+        if(pf) fwrite(out,2,882*2,pf);
+    }
+    if(pf) fflush(pf);
+}
