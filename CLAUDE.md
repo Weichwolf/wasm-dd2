@@ -52,8 +52,12 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   SetTransVector path transformed with x off by n*65536: skidmark decals Δx=54, bushes mis-culled),
   and **draw_text_half_trans u/v one-pixel LAG** (650 — the original's unclipped trans loop
   refreshes al/ah BEFORE the u/v adds; sampling without the lag checkerboarded the LED dither).
-  Native↔wasm bit-identical (L2 cf182 fb 100%; L9 cf3 full image identical modulo relocated
-  fn-ptr tables). Both launchers boot the REAL Init_Main @0x445814 → **audio sample staging
+  **Native↔wasm: fb bit-identical for ALL 701 cf-frames of the L9 attract run** (patch 655 —
+  TextureDentHi/MidCar's 20-byte dent-uv stack blocks are read as structs (+0xc/+0x12/+0x13) by
+  FUN_0043c700/c868; Ghidra scattered them, gcc/clang ordered them differently → car-damage uv
+  rewrite diverged at the first collision, cf56). Divergence-hunt tooling in dd2_com.c/dd2h_stubs.c:
+  DD2_IMGDUMP=<cfs> (full image per flip), DD2_FLIPLOG (cf+rand count/flip), DD2_BYTEWATCH=<addr>
+  (wasm-compatible poll-watchpoint in _ot_dispatch), DD2_NOPATCH=1 (build.sh, tracer builds). Both launchers boot the REAL Init_Main @0x445814 → **audio sample staging
   0x7fa164-0x816ff0 100% byte-identical** (mixer output = remaining audio work). Non-whitelisted
   full-image state diff ~4.3KB (card region re-capture noise, debris 2-byte fields, 0x7959a8
   array, invisible sky-dome prim phase). NEXT: multi-frame fb streak (cf1..cf16), L1/L8 spot
