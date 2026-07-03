@@ -65,10 +65,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Draw_All-entry phase). Divergence starts cf49 (race start): diff mask = car-SHADOW quads +
   wheel overlays only (geometry aligned, pixel values differ → blend/shade path). Falsified roots
   (measured, do not re-chase): heap +0x60 shift (stale frozen-dump noise — SaveGames drift between
-  capture days; today's ref alloc/free sequence incl. addresses is byte-identical to ours), wheel
-  shade stale bytes (patched to ref values at cf48 → cf49 diff unchanged), timing/frame_skip/rand
-  (identical; rand idle until cf54). Next lead: shadow blitter draw_half @0x41066a / FUN_0041080d
-  FLAT-blend CONCAT decompile (never asm-verified). _car_info WORD store fixed (car-0 race position). Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
+  capture days), timing/frame_skip/rand (identical; rand idle until cf54). SOLVED roots: heap-rover
+  _DAT_00774690 must be pointer-typed (K&R MPE_free prev-coalesce `rover+size*2` = uint* element
+  arithmetic; scalar typing killed coalescing → the historic "+0x60 heap shift" — now byte-identical
+  to ref), DAT_00466340/DAT_00463896 are BYTE loads (`xor eax,eax; mov al` — int typing fed
+  0x2cc0c0c0 into gte_ncds/gte_dpcs → wheel/debris shades), _car_info WORD store (car-0 race
+  position). cf48 car-state residue = 18 bytes (sound-channel host ptrs, whitelist). Remaining cf49
+  diff: car-shadow quads only, 12911 px — winner prims byte-identical in both full dumps, state
+  reconverges ⇒ INTRA-TICK transient in the paint path (FIFO-leftover / OT-order / dth-input class);
+  next: DD2_DBGPRIM+[SPAN] vs tools/refdth.sh on the shadow prim. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
   re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
   0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
   that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
