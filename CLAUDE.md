@@ -82,8 +82,20 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   null device (~/.asoundrc `pcm.!default { type null }`) — headless wine otherwise has NO audio
   device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). Remaining Stage-2
   work: verify later attract cycles (patch-685 remnants).
-- **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
-  (`re_out/dd2_input.c`); browser renders.
+- **Stage 3 — playable: RACE = DONE on both targets; FE menus = in progress.** Live race
+  (DD2_PLAY=9 native / DD2_LIVE=1 wasm; browser interactive build `make web` -> web/dd2):
+  keyboard AND gamepad drive the car on both targets; scripted runs (DD2_SCRIPT/DD2_PADSCRIPT,
+  cf-keyed — flip counts are NOT target-invariant, the engine counter is) are BIT-IDENTICAL
+  native<->wasm (full live races, cmp-exact audio streams). Controls matrix (measured,
+  cf600-differential + Pause_Mode-break + fb-diff): arrows=steer, A=accel, Z=brake/reverse,
+  ESC/ENTER=pause (exact-cf), F1/F2=camera view, W/S/SPACE/UP/DOWN=no race effect; pad axes=
+  analog steer, button1=accel, button2=brake. Browser: realtime 25fps via DD2_REALTIME
+  (GetTickCount = real ms; engine's own frame limiter), WebAudio sink (mixer ticks scheduled
+  on a time cursor), Gamepad API polling -> dd2_pad_update (synthetic-pad E2E validated; the
+  pad must be connected at load = faithful Windows detect-at-boot). Roots fixed on the way:
+  pad-state block int-typing (perma-pause), JOYCAPS scattered locals (745), _pad_option
+  semantics (750). Remaining: FE menus/track-select (menu machine runs but draws black —
+  under investigation), then menu-nav controls tests end-to-end.
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
