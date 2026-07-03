@@ -203,7 +203,7 @@ int __sigabort;
 /* _fx_9 -> image slot 0x00939b3c (dual-symbol fix, define in dd2_symbols.h) */
 /* _g_sprite_info -> image slot 0x0074f1a0 (dual-symbol fix, define in dd2_symbols.h) */
 /* _gnormals -> image slot 0x007541d4 (dual-symbol fix, define in dd2_symbols.h) */
-short* _gpoly;
+/* _gpoly -> image slot 0x007541c8 (dual-symbol fix, define in dd2_symbols.h): the poly-list cursor the draw_face handlers (e.g. FUN_0041f7d0 @0x41f803) read from the image slot; the C global left it NULL -> tilt-billboard objects walked a stale list (skid decals 54px off) */
 /* _gprim1 -> image slot 0x007541d0 (dual-symbol fix, define in dd2_symbols.h) */
 /* _gprim2 -> image slot 0x007541cc (dual-symbol fix, define in dd2_symbols.h) */
 /* _grounded_count -> image slot 0x00792640 (dual-symbol fix, define in dd2_symbols.h) */

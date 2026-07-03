@@ -195,7 +195,7 @@ extern int _fx_8;
 extern int _fx_9;
 extern int _g_sprite_info;
 extern int _gnormals;
-extern short* _gpoly;
+#define _gpoly (*(short**)GIMG(0x007541c8))  /* dual-symbol fix: image slot (gpoly); FUN_0041f7d0 reads 0x7541c8 directly */
 extern int* _gprim1;
 extern int _gprim2;
 extern int _grounded_count;
@@ -2208,10 +2208,10 @@ extern int unaff_retaddr;
 #define _DAT_00460450 (*(int*)GIMG(0x00460450))
 #define _DAT_00462d7c (*(int*)GIMG(0x00462d7c))
 #define _DAT_00462fa8 (*(int*)GIMG(0x00462fa8))
-#define _DAT_00462fac (*(int*)GIMG(0x00462fac))
+#define _DAT_00462fac (*(short*)GIMG(0x00462fac))  /* WORD world-matrix element (asm 0x420a44/0x420a4b word stores) */
 #define _DAT_00462fae (*(int*)GIMG(0x00462fae))
 #define _DAT_00462fb0 (*(int*)GIMG(0x00462fb0))
-#define _DAT_00462fb2 (*(int*)GIMG(0x00462fb2))
+#define _DAT_00462fb2 (*(short*)GIMG(0x00462fb2))  /* WORD world-matrix element (asm 0x420a44/0x420a4b word stores) */
 #define _DAT_00462fb4 (*(int*)GIMG(0x00462fb4))
 #define _DAT_00462fd4 (*(int*)GIMG(0x00462fd4))
 #define _DAT_00463000 (*(int*)GIMG(0x00463000))
@@ -2800,7 +2800,7 @@ extern int unaff_retaddr;
 #define _DAT_007924bc (*(int*)GIMG(0x007924bc))
 #define _DAT_00792454 (*(int*)GIMG(0x00792454))
 #define _DAT_00781e60 (*(int*)GIMG(0x00781e60))
-#define _DAT_00754224 (*(int*)GIMG(0x00754224))
+#define _DAT_00754224 (*(short*)GIMG(0x00754224))
 #define _DAT_00940004 (*(int*)GIMG(0x00940004))
 #define _DAT_007542ee (*(int*)GIMG(0x007542ee))
 #define _DAT_0093fd48 (*(int*)GIMG(0x0093fd48))
@@ -2817,7 +2817,7 @@ extern int unaff_retaddr;
 #define _DAT_0074c534 (*(int*)GIMG(0x0074c534))
 #define _DAT_00791bc4 (*(int*)GIMG(0x00791bc4))
 #define _DAT_0079245c (*(int*)GIMG(0x0079245c))
-#define _DAT_0075421e (*(int*)GIMG(0x0075421e))
+#define _DAT_0075421e (*(short*)GIMG(0x0075421e))  /* WORD, not dword: Set_World_View/Point_Camera write the tilt_sprite_matrix and world-matrix elements with 16-bit stores (66-prefixed, e.g. 0x420a60/0x420ab2/0x4202e0); int typing made every store clobber the NEXT short -> tilt matrix m5/m6 corrupted -> billboard sprites (skid decals, LED bars) drawn ~54px off */
 #define _DAT_00795dec (*(int*)GIMG(0x00795dec))
 #define _DAT_0074c4fe (*(int*)GIMG(0x0074c4fe))
 #define _DAT_00792618 (*(int*)GIMG(0x00792618))
@@ -2856,7 +2856,7 @@ extern int unaff_retaddr;
 #define _DAT_0093de92 (*(int*)GIMG(0x0093de92))
 #define _DAT_0093deb6 (*(int*)GIMG(0x0093deb6))
 #define _DAT_0093a490 (*(int*)GIMG(0x0093a490))
-#define _DAT_0075422c (*(int*)GIMG(0x0075422c))
+#define _DAT_0075422c (*(short*)GIMG(0x0075422c))
 #define _DAT_0077c758 (*(int*)GIMG(0x0077c758))
 #define _DAT_0074c6d4 (*(int*)GIMG(0x0074c6d4))
 #define _DAT_0074c6fc (*(int*)GIMG(0x0074c6fc))
@@ -2908,7 +2908,7 @@ extern int unaff_retaddr;
 #define _DAT_00792510 (*(int*)GIMG(0x00792510))
 #define _DAT_0075444c (*(int*)GIMG(0x0075444c))
 #define _DAT_00792a10 (*(int*)GIMG(0x00792a10))
-#define _DAT_00754226 (*(int*)GIMG(0x00754226))
+#define _DAT_00754226 (*(short*)GIMG(0x00754226))
 #define _DAT_00782ae0 (*(int*)GIMG(0x00782ae0))
 #define _DAT_0075443c (*(int*)GIMG(0x0075443c))
 #define _DAT_007543a4 (*(int*)GIMG(0x007543a4))
@@ -3119,10 +3119,10 @@ extern int unaff_retaddr;
 #define _DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
 #define _DAT_0077475c (*(int*)GIMG(0x0077475c))
 #define _DAT_0074c540 (*(int*)GIMG(0x0074c540))
-#define _DAT_00754228 (*(int*)GIMG(0x00754228))
+#define _DAT_00754228 (*(short*)GIMG(0x00754228))
 #define _DAT_00782ada (*(int*)GIMG(0x00782ada))
 #define _DAT_007543ac (*(int*)GIMG(0x007543ac))
-#define _DAT_00754220 (*(int*)GIMG(0x00754220))
+#define _DAT_00754220 (*(short*)GIMG(0x00754220))
 #define _DAT_00791b94 (*(int*)GIMG(0x00791b94))
 #define _DAT_009392e4 (*(int*)GIMG(0x009392e4))
 #define _DAT_0079259c (*(int*)GIMG(0x0079259c))
@@ -3147,8 +3147,8 @@ extern int unaff_retaddr;
 #define _DAT_00791bb4 (*(int*)GIMG(0x00791bb4))
 #define _DAT_0078a360 (*(int*)GIMG(0x0078a360))
 #define _DAT_0093deac (*(int*)GIMG(0x0093deac))
-#define _DAT_00754222 (*(int*)GIMG(0x00754222))
-#define _DAT_0075422a (*(int*)GIMG(0x0075422a))
+#define _DAT_00754222 (*(short*)GIMG(0x00754222))
+#define _DAT_0075422a (*(short*)GIMG(0x0075422a))
 #define _DAT_00469a68 (*(undefined1*)GIMG(0x00469a68))
 #define _DAT_007541e6 (*(int*)GIMG(0x007541e6))
 #define _DAT_0093fc18 (*(int*)GIMG(0x0093fc18))
@@ -3685,7 +3685,7 @@ extern int unaff_retaddr;
 #define _strip_data (*(int*)GIMG(0x0077cef8))
 #define _strip_vertex (*(int*)GIMG(0x0077cef4))
 #define _surfai (*(int*)GIMG(0x0078a388))
-#define _tilt_sprite_matrix (*(int*)GIMG(0x0075421c))
+#define _tilt_sprite_matrix (*(short*)GIMG(0x0075421c))  /* WORD (see _DAT_0075421e note) */
 #define _tot_time (*(int*)GIMG(0x007746b4))
 #define _total_collisions (*(int*)GIMG(0x00939b60))
 #define _total_dest_timer (*(int*)GIMG(0x0078428c))
