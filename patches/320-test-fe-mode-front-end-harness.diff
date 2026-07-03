@@ -7,14 +7,24 @@ call + input-sim work proceeds. [[dd2-frontend-nav-input]]
 
 --- a/dd2_runtime.c
 +++ b/dd2_runtime.c
-@@ -75,6 +75,10 @@
+@@ -75,6 +75,20 @@
      *(int*)0x463010 = -1;
      Set_Draw_Mode(0);
      *(int*)0x462d68 = 0;  /* before the race loop: sound funcs (Modify_Sound etc.) skip uninit DirectSound COM (audio = deferred WebAudio tier) */
 -    Play_Game();                  /* the race: Init_Game + physics/AI/GTE/render loop */
 +    if (argc>1 && argv[1][0]=='f' && argv[1][1]=='e') {
-+      extern void Init_Front_End(void); extern void Front_End(void);
-+      Init_Front_End(); Front_End(); return 0;
++      extern void Init_Front_End(void); extern void Front_End(void); extern void Setup_Pad(int);
++      /* Parity with tools/native_main.c's DD2_FE path: race_type/race_mode = 0 (valid string-
++         table indices; else FUN_00450640 OOB), Init_Front_End, then seed the keyboard pad type
++         (0x754451=1) + load the map via Setup_Pad(1) BEFORE Front_End. Without the pad setup the
++         FE menu -> Run_Selection -> Play_Game race launch left the car array unpopulated on wasm
++         (cars at 0x792a24 = (0,0), race restarting) while native ran it clean. */
++      *(int*)0x4673f4 = 0;
++      *(int*)0x4673f8 = 0;
++      Init_Front_End();
++      *(unsigned char*)0x754451 = 1;
++      Setup_Pad(1);
++      Front_End(); return 0;
 +    }
 +    DemoModeLevel((argc>1)?atoi(argv[1]):0);  /* attract demo path (was: direct Play_Game) */
      return 0;

@@ -12,9 +12,10 @@ const key=async(page,c)=>{await page.evaluate(cc=>window.dispatchEvent(new Keybo
   await page.goto(`http://localhost:${server.address().port}/index.html`,{waitUntil:'load'});
   for(let i=0;i<60;i++){const r=await page.evaluate(()=>typeof HEAP32!=='undefined').catch(()=>false);if(r)break;await page.waitForTimeout(1000);}
   await page.waitForTimeout(8000); await page.click('#canvas');
-  await key(page,'ArrowRight'); await key(page,'ArrowRight');   // -> Select Track
-  await key(page,'ArrowDown'); await key(page,'ArrowDown'); await key(page,'ArrowDown');  // -> Go!
-  await key(page,'Enter');                                     // launch
+  const L=async()=>{const p=await page.evaluate(()=>HEAP32[0x46975c>>2]); return await page.evaluate(x=>{const q=HEAP32[x>>2];if(!(q>0x400000&&q<0x980000))return'?';let s='';for(let i=0;i<44;i++){const c=HEAPU8[q+i];if(!c)break;s+=String.fromCharCode(c);}return s;},0x46975c);};
+  await key(page,'ArrowRight'); await key(page,'ArrowRight'); console.log('NAV1 '+await L());
+  await key(page,'ArrowDown'); await key(page,'ArrowDown'); await key(page,'ArrowDown'); console.log('NAV2 '+await L());
+  await key(page,'Enter'); console.log('after-Enter '+await L());
   await page.waitForTimeout(2000);
   for(let t=0;t<6;t++){
     await page.waitForTimeout(4000);

@@ -8,7 +8,7 @@ const key=async(page,c)=>{await page.evaluate(cc=>window.dispatchEvent(new Keybo
 (async()=>{
   await new Promise(r=>server.listen(0,r));
   const browser=await chromium.launch({args:['--no-sandbox']});
-  const page=await browser.newPage();
+  const page=await browser.newPage(); page.on('pageerror',e=>console.log('PAGEERR '+e.message.slice(0,140)));
   await page.goto(`http://localhost:${server.address().port}/index.html`,{waitUntil:'load'});
   for(let i=0;i<60;i++){const r=await page.evaluate(()=>typeof HEAP32!=='undefined').catch(()=>false);if(r)break;await page.waitForTimeout(1000);}
   await page.waitForTimeout(8000); await page.click('#canvas');
@@ -18,8 +18,10 @@ const key=async(page,c)=>{await page.evaluate(cc=>window.dispatchEvent(new Keybo
   console.log('track:',await lbl(page,0x469784),'race_track=',await page.evaluate(()=>HEAP32[0x4673fc>>2]));
   await key(page,'ArrowDown'); await key(page,'ArrowDown'); await key(page,'ArrowDown');
   console.log('at:',await lbl(page,0x46975c));
-  await key(page,'Enter'); await page.waitForTimeout(22000);
-  console.log('RACE:',JSON.stringify(await page.evaluate(()=>({level:HEAP32[0x936ff4>>2],demo:HEAP32[0x46385c>>2],cf:HEAP32[0x462ff0>>2]}))));
+  await key(page,'Enter');
+  for(let t=0;t<6;t++){ await page.waitForTimeout(4000);
+    console.log('RACE t'+t+': '+JSON.stringify(await page.evaluate(()=>({level:HEAP32[0x936ff4>>2],demo:HEAP32[0x46385c>>2],cf:HEAP32[0x462ff0>>2],car0:HEAP32[0x792a24>>2]+','+HEAP32[0x792a34>>2],ncars:HEAP32[0x46765c>>2],rcar:HEAP32[0x467400>>2],c2:HEAP32[(0x792a24+2*0x1b2)>>2]}))));
+  }
   await page.screenshot({path:'/tmp/btrack_race.png'});
   await browser.close(); server.close();
 })().catch(e=>{console.error('ERR',e);server.close();process.exit(1);});
