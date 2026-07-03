@@ -16,9 +16,9 @@ const synth=(page,c,t)=>page.evaluate(([cc,tt])=>window.dispatchEvent(new Keyboa
   const rt0=await page.evaluate(()=>HEAP32[0x4673fc>>2]);
   // hold the flag by re-poking every 15ms (defeats any single-frame clear), watch pad44a + race_track
   let maxbit=0;
-  for(let i=0;i<30;i++){ await page.evaluate(()=>{HEAPU8[0x46304e]=1;}); const v=await page.evaluate(()=>HEAPU16[0x75444a>>1]); if(v&0x2000)maxbit=1; await page.waitForTimeout(15);}
-  await page.evaluate(()=>{HEAPU8[0x46304e]=0;});
+  for(let i=0;i<30;i++){ await page.evaluate(()=>{HEAPU8[0x463046]=1;}); const v=await page.evaluate(()=>HEAPU16[0x75444a>>1]); if(v&0x20)maxbit=1; await page.waitForTimeout(15);}
+  await page.evaluate(()=>{HEAPU8[0x463046]=0;});
   const rt1=await page.evaluate(()=>HEAP32[0x4673fc>>2]);
-  console.log('POKE rt0='+rt0+' saw0x2000='+maxbit+' rt1='+rt1);
+  console.log('POKE-RIGHT saw0x20 rt0='+rt0+' saw0x2000='+maxbit+' rt1='+rt1);
   await browser.close(); server.close();
 })().catch(e=>{console.error('ERR',e);server.close();process.exit(1);});
