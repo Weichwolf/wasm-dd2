@@ -40,31 +40,28 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   vertex arrays for the edge sorter, Setup_Sprite info blocks, camera vectors), dropped registers,
   paired 16-bit loads, unsigned/signed shifts+compares (dth_* span blitters need `sar` semantics),
   mid-function entries, wasm call_indirect signature normalization.
-- **Stage 2 — bit-identical: ACTIVE.** Native↔wasm bit-identical (L2 cf182 fb 100%; L9 cf3 full image
-  identical modulo relocated fn-ptr tables). vs the REFERENCE (cold-boot L9 attract, PROVEN 100%
-  bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin): **fb 33.6% → 97.8%**
-  via eight asm-verified roots: num_cars/screen_w/h/far_z_clip signed (idiv/jg vs unsigned C types),
-  _v_norm word-store, car_lookup byte table, FE-boot in both harnesses (LEV0 textures fill pages
-  20-25 → texturespace/CLUT/palette/car-CLUT-tables 100% byte-identical; patches 585/600),
-  Init_LensFlare contiguous info blocks (595), GTE 18-byte matrix uploads (605 — __globmat short
-  truncation left odd matrix elements stale), subdiv dispatch signature (610). Camera EXACT
-  (0x3060,-0x103,-0xfa9), frustum normals EXACT, dth span inputs match, sky cull byte-identical.
-  Both launchers boot through the REAL
-  Init_Main @0x445814 (InitCardSystem/SaveGames, DIRINFO original-case + case-insensitive fopen
-  shim, Read_CD_Toc_, Load_Game_Vags) → **audio sample staging 0x7fa164-0x816ff0 is 100%
-  byte-identical** to the reference (mixer output = the remaining Stage-3 audio work). Total
-  non-whitelisted full-image state diff: ~4.3KB (card region re-capture noise, debris 2-byte
-  fields, 0x7959a8 array, invisible sky-dome prim phase). Remaining fb diff (~2.2%): the four
-  start-light LED inner circles (checkerboard-dither pattern -> suspect the FLAT-blend blitters
-  draw_half @0x41066a / FUN_0041080d, whose blend[(dst<<8)|dth_shade] CONCAT rendering is still
-  unverified), horizon bush billboards, trapezoid edges. Transparent blitters SOLVED (63807ef):
-  FUN_0041033a spans got the faithful packed walk + `test dl,0xf` guard (patch 625) and
-  draw_text_half_trans @0x4109e8 -- previously a TEMP return-stub! -- was reconstructed from asm
-  (patch 630: blend table by tpage ABR bits via ptr table @0x460014 double-deref, pixel =
-  table[(dst<<8)|clut[texel]]); sky band SOLVED (poly_clipx/y signed, ba6dfbd). Verification loop: DD2_HIST=<cf> prim histogram + FT4 dump (with prim addr) vs
-  tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 → 0x420c9c cf-gate →
-  target fn). Pitfall proven twice: prim-level compares must be restricted to prims that WIN
-  pixels (hidden sky-dome quads drift legitimately).
+- **Stage 2 — bit-identical: fb MILESTONE reached, extending.** vs the REFERENCE (cold-boot L9
+  attract, PROVEN 100% bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin):
+  **cf3 framebuffer 100.000% bit-identical (0/307200 px)**, from 33.6% via asm-verified roots
+  (each patch header has the details): signedness (num_cars/screen_w/h/far_z_clip/poly_clipx/y),
+  _v_norm word-store, car_lookup byte table, FE-boot in both harnesses → texturespace/CLUT/palettes
+  100% (585/600), Init_LensFlare info blocks (595), GTE 18-byte matrix uploads (605), subdiv
+  dispatch signature (610), packed-walk span blitters + draw_text_half_trans reconstruction
+  (625/630), GTE reg-args (645), **GTE rot-matrix WORD stores** (5501ccb — int-typed element
+  symbols made gte_SetRotMatrix clobber translation-x @0x74c702 → every SetRotMatrix-without-
+  SetTransVector path transformed with x off by n*65536: skidmark decals Δx=54, bushes mis-culled),
+  and **draw_text_half_trans u/v one-pixel LAG** (650 — the original's unclipped trans loop
+  refreshes al/ah BEFORE the u/v adds; sampling without the lag checkerboarded the LED dither).
+  Native↔wasm bit-identical (L2 cf182 fb 100%; L9 cf3 full image identical modulo relocated
+  fn-ptr tables). Both launchers boot the REAL Init_Main @0x445814 → **audio sample staging
+  0x7fa164-0x816ff0 100% byte-identical** (mixer output = remaining audio work). Non-whitelisted
+  full-image state diff ~4.3KB (card region re-capture noise, debris 2-byte fields, 0x7959a8
+  array, invisible sky-dome prim phase). NEXT: multi-frame fb streak (cf1..cf16), L1/L8 spot
+  checks, audio mixer, then Stage 3. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
+  re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
+  0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
+  that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
+  cycle 3 values per tick).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
