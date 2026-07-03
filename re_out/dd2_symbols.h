@@ -1499,7 +1499,12 @@ extern int unaff_retaddr;
 #define DAT_00465212 (*(int*)GIMG(0x00465212))
 #define DAT_004651f8 (*(int*)GIMG(0x004651f8))
 #define DAT_0042db60 (*(undefined1*)GIMG(0x0042db60))
-#define DAT_0046526e (*(undefined1*)GIMG(0x0046526e))
+/* DAT_0046526e: SIGNED WORD, not byte — DrawLensFlare @0x42de42 loads the sun-direction y
+   component as `mov eax,[0x46526c]; sar $0x10` = signed 16-bit @0x46526e (=0x08fc on L9).
+   Byte typing made `(int)(short)DAT_0046526e` = 0xfc -> sun-y lost its high byte -> the sun
+   projected ONSCREEN (y=212 vs ref -43) during the attract camera pan cf~245-310 -> lens
+   flare + sun glow drawn that the original culls (57k-px fb window). */
+#define DAT_0046526e (*(short*)GIMG(0x0046526e))
 #define DAT_0042dc20 (*(undefined1*)GIMG(0x0042dc20))
 #define DAT_0046cc90 (*(int*)GIMG(0x0046cc90))
 #define DAT_0046526a (*(int*)GIMG(0x0046526a))
