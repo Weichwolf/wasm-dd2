@@ -40,52 +40,37 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   vertex arrays for the edge sorter, Setup_Sprite info blocks, camera vectors), dropped registers,
   paired 16-bit loads, unsigned/signed shifts+compares (dth_* span blitters need `sar` semantics),
   mid-function entries, wasm call_indirect signature normalization.
-- **Stage 2 — bit-identical: fb MILESTONE reached, extending.** vs the REFERENCE (cold-boot L9
-  attract, PROVEN 100% bit-deterministic across ref boots; frozen full image /tmp/ref_full_cf3.bin):
-  **cf3 framebuffer 100.000% bit-identical (0/307200 px)**, from 33.6% via asm-verified roots
-  (each patch header has the details): signedness (num_cars/screen_w/h/far_z_clip/poly_clipx/y),
-  _v_norm word-store, car_lookup byte table, FE-boot in both harnesses → texturespace/CLUT/palettes
-  100% (585/600), Init_LensFlare info blocks (595), GTE 18-byte matrix uploads (605), subdiv
-  dispatch signature (610), packed-walk span blitters + draw_text_half_trans reconstruction
-  (625/630), GTE reg-args (645), **GTE rot-matrix WORD stores** (5501ccb — int-typed element
-  symbols made gte_SetRotMatrix clobber translation-x @0x74c702 → every SetRotMatrix-without-
-  SetTransVector path transformed with x off by n*65536: skidmark decals Δx=54, bushes mis-culled),
-  and **draw_text_half_trans u/v one-pixel LAG** (650 — the original's unclipped trans loop
-  refreshes al/ah BEFORE the u/v adds; sampling without the lag checkerboarded the LED dither).
-  **Native↔wasm: fb bit-identical for ALL 701 cf-frames of the L9 attract run** (patch 655 —
-  TextureDentHi/MidCar's 20-byte dent-uv stack blocks are read as structs (+0xc/+0x12/+0x13) by
-  FUN_0043c700/c868; Ghidra scattered them, gcc/clang ordered them differently → car-damage uv
-  rewrite diverged at the first collision, cf56). Divergence-hunt tooling in dd2_com.c/dd2h_stubs.c:
-  DD2_IMGDUMP=<cfs> (full image per flip), DD2_FLIPLOG (cf+rand count/flip), DD2_BYTEWATCH=<addr>
-  (wasm-compatible poll-watchpoint in _ot_dispatch), DD2_NOPATCH=1 (build.sh, tracer builds). Both launchers boot the REAL Init_Main @0x445814 → **audio sample staging
-  0x7fa164-0x816ff0 100% byte-identical** (mixer output = remaining audio work). Non-whitelisted
-  full-image state diff ~4.3KB (card region re-capture noise, debris 2-byte fields, 0x7959a8
-  array, invisible sky-dome prim phase). **Multi-frame streak vs ref: cf4–cf48 100% pixel-identical**
-  (multi-cf captures: one ref boot dumps many cfs — /tmp/refmulti.sh pattern; compare at the same
-  Draw_All-entry phase). Divergence starts cf49 (race start): diff mask = car-SHADOW quads +
-  wheel overlays only (geometry aligned, pixel values differ → blend/shade path). Falsified roots
-  (measured, do not re-chase): heap +0x60 shift (stale frozen-dump noise — SaveGames drift between
-  capture days), timing/frame_skip/rand (identical; rand idle until cf54). SOLVED roots: heap-rover
-  _DAT_00774690 must be pointer-typed (K&R MPE_free prev-coalesce `rover+size*2` = uint* element
-  arithmetic; scalar typing killed coalescing → the historic "+0x60 heap shift" — now byte-identical
-  to ref), DAT_00466340/DAT_00463896 are BYTE loads (`xor eax,eax; mov al` — int typing fed
-  0x2cc0c0c0 into gte_ncds/gte_dpcs → wheel/debris shades), _car_info WORD store (car-0 race
-  position). cf48 car-state residue = 18 bytes (sound-channel host ptrs, whitelist). cf49 SOLVED (streak now
-  **cf4–cf50 100%**): the int-typed dent-level byte table DAT_00466a20/21 made Init_Car_Doors'"'"'
-  clear loop scale x4 and wipe the GTE corner-offset constants @0x466a96+ (asm 0x43b086 = byte
-  stores, unscaled) → Get_Corner_Positions transformed zero vectors → skid quads degenerate; plus
-  patch 665 (44 GTE const hi-half loads are `sar` = signed; the patch-010 subpiece conversion had
-  zero-extended them). Streak now **cf4–cf55 = 100%**, state
-  non-whitelist-clean through cf56 (further roots: bowl_cars byte-push 670, replay movw 675,
-  corner-x INT array base DAT_00466a96 — byte typing made `(&DAT)[i*2]` read bytes at stride 2
-  instead of ints at stride 8 → corner-x always 0 in the 1pt fine-pos adjust). Remaining: cf56
-  fb blob (1041 px at the car-13 crash site; state reconverges ⇒ intra-tick rendering seed in
-  the collision tick — PIXWIN the blob pixels next). Capture pitfall: gdb-python on_stop
-  recurses per continue — sys.setrecursionlimit required or wine captures die after ~53 hits. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
-  re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
-  0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
-  that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
-  cycle 3 values per tick).
+- **Stage 2 — bit-identical: VIDEO for the L9 attract = DONE (fb).** vs the Windows REFERENCE
+  (cold-boot L9 attract, PROVEN 100% bit-deterministic across ref boots): **framebuffer 100.000%
+  bit-identical (0/307200 px) at all 29 sampled cfs across cf4–cf695** (4,20,40,50,56,60,70,85,
+  100,150,200,210,225,235,240,245,248,280,290,310,330,360,400,450,500,550,600,650,695), and
+  **native↔wasm bit-identical for ALL 701 cf-frames** (DD2_FRAMEDIR+DD2_CFDUMP on both targets).
+  Audio sample staging 0x7fa164-0x816ff0 100% byte-identical (mixer output = remaining audio
+  work). The route from 33.6%: ~20 asm-verified roots; each patch header / dd2_symbols.h comment
+  has the details. Recurring root classes to check FIRST on any new divergence: int-typed
+  byte/word symbols (store/load width vs asm: `66`-prefix, `xor eax,eax; mov al`, `sar $0x10`
+  hi-half loads — e.g. sun-y word DAT_0046526e, flare byte tables DAT_00465255/56 w/ 3-byte
+  records, dent table DAT_00466a20, corner INT array DAT_00466a96, shade bytes DAT_00466340/
+  DAT_00463896, _car_info word, heap rover _DAT_00774690 must be uint*); scattered locals read
+  as structs by callees (TextureDentHi dent-uv blocks, patch 655; Init_LensFlare info blocks);
+  GTE reg-args/18-byte matrix uploads/rot-matrix WORD stores (5501ccb); signed `sar` semantics
+  in span blitters and GTE const hi-half loads (665); deterministic uninitialized stack reads
+  (Setup_Sprite +9 ABR, patch 685 — boot-race values only, later attract cycles differ, open);
+  wrong-local args (Calc_Object_Angles local_a0 vs local_80, patches 660/690). Falsified
+  (measured, do not re-chase): heap +0x60 shift, timing/frame_skip/rand, draw_face_4pt "hoisted
+  opz". Whitelist (legit target-dependent): card region 0x774460–0x7748e0 ONLY, sound host-ptr
+  table 0x796f60–0x796fa0, particle ctrl fn-ptrs (+0x64, pool 0x78d740 stride 0xad), __lmptr
+  @0x74c6d8, PE header 0x400000–0x400400 — re-validate buckets periodically (too-broad card
+  bucket hid the debris divergence for days). Divergence-hunt tooling: DD2_IMGDUMP=<cfs>,
+  DD2_FLIPLOG, DD2_CFDUMP+DD2_FRAMEDIR (cf-keyed fb dumps, nat↔wasm), DD2_BYTEWATCH,
+  DD2_NOPATCH=1 tracer builds, DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM (dd2h_stubs.c); OT-walk-diff of
+  two full dumps (root [0x7542ee+buf*0x8e], otsize @0x754260, links tag&0xffffff, term 0xffffff)
+  finds diverging prims fast. Ref captures: wine+gdb 3-stage arming (hbreak 0x4431e8 → 0x420c9c
+  cf-gate → target fn); sys.setrecursionlimit MANDATORY in every gdb-python on_stop script (ours
+  AND wine — dies after ~50 hits otherwise); refmulti.sh rotates old reffb dumps — save first;
+  fb-vs-ref compares only at the same Draw_All-entry phase; prim compares only for prims that
+  WIN pixels. Remaining Stage-2 work: verify later attract cycles (patch-685 remnants), audio
+  mixer (DirectSound mixdown; staging already byte-identical).
 - **Stage 3 — playable: after Stage 2.** Menus/track-select/race on keyboard+pad. Keyboard input wired
   (`re_out/dd2_input.c`); browser renders.
 
