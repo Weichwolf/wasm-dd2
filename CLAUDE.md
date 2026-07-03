@@ -112,9 +112,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   root = patch-365 fragment call sites passing sentinel (0xe,-1) instead of the live free-slot
   index/block number — Init_Scene_Objects collected ZERO scenery blocks on every L1-7 entry
   (fix 800; companion CLUT-anim scattered-locals fix 795). L9 cf245/450/650 + verify 10/10
-  both targets re-confirmed after both. Remaining polish (non-blocking): physical Xbox pad on
-  real hardware (SW chain validated via synthetic pad), fb spot-check of demos #3+ (L5/L2/…)
-  in the FE cycle (same collector now feeds them).
+  both targets re-confirmed after both. FE-cycle demos #3-#5 (L5/L2/L3) fb-verified vs ref:
+  0/307200 at cf4+cf150 each (one attach-capture per side, lv-gated). Remaining polish
+  (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
