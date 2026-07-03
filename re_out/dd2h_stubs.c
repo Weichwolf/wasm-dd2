@@ -1,4 +1,5 @@
 /* dd2h re-base: Win32 stubs + _ot_dispatch */
+int dd2_dbg_prim=0;
 #include <stdio.h>
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
@@ -30,7 +31,7 @@ void _ot_dispatch(int* piVar1,int* b,int* c){
      the PREVIOUS prim painted it. Probes: (100,40),(500,60) cloud band; (320,150) box face; (320,430) ground. */
   { static int _pw=-2; if(_pw==-2){ extern char* getenv(const char*); char* e=getenv("DD2_PIXWIN"); extern int atoi(const char*); _pw=e?atoi(e):-1; }
     if(_pw>=0){
-      static const int PX[4][2]={{285,130},{350,130},{60,205},{240,415}};
+      static const int PX[4][2]={{262,120},{282,128},{350,146},{300,152}};
       static unsigned char _last[4]; static void* _prev; static int _init=0, _done=0;
       int _cf=*(int*)(uintptr_t)0x462ff0;
       if(_cf<=_pw && !_done){
@@ -50,14 +51,18 @@ void _ot_dispatch(int* piVar1,int* b,int* c){
   { static int _want=-2; if(_want==-2){ extern char* getenv(const char*); char* e=getenv("DD2_HIST"); extern int atoi(const char*); _want=e?atoi(e):-1; }
     if(_want>=0){ static unsigned _h[256]; static int _n=0,_last=-1; int _cf=*(int*)(uintptr_t)0x462ff0;
       if(_cf==_want){ unsigned char _t=*(unsigned char*)((int)piVar1+7); _h[_t]++; _n++; _last=_cf;
-        if(_t==0x2c){ static FILE* _f;
+        if(_t==0x2c||_t==0x1c){ static FILE* _f;
           if(!_f) _f=fopen("/tmp/our_ft4.txt","w");
           if(_f) fprintf(_f,"%d %d %u %u %#x %#x %p\n",*(short*)((int)piVar1+8),*(short*)((int)piVar1+10),
             *(unsigned char*)((int)piVar1+12),*(unsigned char*)((int)piVar1+13),
             (unsigned)*(unsigned short*)((int)piVar1+14),(unsigned)*(unsigned short*)((int)piVar1+22),(void*)piVar1); } }
       else if(_last==_want){ extern int printf(const char*,...); int _i; printf("[HIST] cf%d n=%d:",_want,_n);
         for(_i=0;_i<256;_i++) if(_h[_i]) printf(" %02x:%u",_i,_h[_i]); printf("\n"); _last=-1; } } }
+  { extern int dd2_dbg_prim; extern char* getenv(const char*);
+    static int _dbgp=-2; if(_dbgp==-2){ char* e=getenv("DD2_DBGPRIM"); extern long strtol(const char*,char**,int); _dbgp=e?(int)strtol(e,0,0):-1; }
+    if(_dbgp>0 && (int)(uintptr_t)piVar1==_dbgp && *(int*)(uintptr_t)0x462ff0==3) dd2_dbg_prim=1; }
   if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int,int,int))(unsigned long)_v)((int)(uintptr_t)piVar1,(int)(uintptr_t)b,(int)(uintptr_t)c);
+  { extern int dd2_dbg_prim; dd2_dbg_prim=0; }
 }
 int SetStdHandle(int a,int b){ (void)a;(void)b; return 0; }
 int timeBeginPeriod(int a){ (void)a; return 0; }
