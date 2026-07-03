@@ -80,8 +80,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   mm-timer callback 0x41345c reconstruction + deterministic 10-cf/phase-5 driver, commentator gate
   = BYTE test of demo counter [0x7746c0] opening every 128 cf). Sound-enabled refs need the ALSA
   null device (~/.asoundrc `pcm.!default { type null }`) — headless wine otherwise has NO audio
-  device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). Remaining Stage-2
-  work: verify later attract cycles (patch-685 remnants).
+  device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). FAITHFUL BOOT PATH
+  CONFIRMED: the real FE-driven attract (Front_End idle -> View_Frontend_Replay, a fixed recorded
+  replay — NOT the DemoModeLevel harness) is bit-identical to the Windows reference (cf200 AND
+  cf450 = 0/307200) and to the DemoModeLevel harness (cf200 = 0/307200); since it is a
+  deterministic fixed replay, every repeat is identical by construction. The old patch-685
+  "later attract cycles differ" concern was a HARNESS artifact (DemoMode's rand()%10+1 level pick
+  leaves different Setup_Sprite stack remnants across cycles) — the faithful FE attract has no
+  such variance. Stage-2 video = complete for the L9 attract on the real boot path.
 - **Stage 3 — playable: ALL FOUR categories DONE on both targets.** Demo (bit-identical),
   Race, Menus, Track-select each bridge to a playable populated race on native AND browser
   (interactive build `make web` -> web/dd2). Live race (DD2_PLAY=9 native / DD2_LIVE=1 wasm):
