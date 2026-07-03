@@ -178,8 +178,16 @@ int main(void){
     /* The original boots through Init_Main @0x445814: Init_Controller_, Profile_Init, Sound_Init,
      * VSync+VSyncCallback, InitCardSystem (loads/creates SaveGames -> card buffer 0x754460),
      * Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags. Run the real thing. */
+    /* DD2_SOUND=1: original boot order is ddmain: Play_Intro (-> FUN_004159f8 = DSInit) BEFORE
+     * Init_Main -- Load_Game_Vags' bank loader FUN_00416688 only creates the DS master buffers
+     * (table 0x74f020) when DAT_00462d68 is already 1, and Play_Sound derefs them unchecked.
+     * So run the real DSInit against the COM shim first. Default: proven no-sound path. */
+    if(getenv("DD2_SOUND")){ extern void FUN_004159f8(int); *(int*)(uintptr_t)0x462d68 = 0;
+        CK("DSInit FUN_004159f8()"); FUN_004159f8(1); }
     { extern void Init_Main(void); CK("Init_Main()"); Init_Main(); }
-    *(int*)(uintptr_t)0x462d68 = 1;          /* skip DirectSound COM during init */
+    /* default: force "skip DirectSound COM" in Init_Application; with DD2_SOUND the flag already
+     * holds the live init state (1) and Init_Application's own DSInit call skips itself. */
+    if(!getenv("DD2_SOUND")) *(int*)(uintptr_t)0x462d68 = 1;
     CK("Init_Application()");       Init_Application((void*)1);
     *(int*)(uintptr_t)0x463010 = -1;
     /* ddmain@0x423b28 sets pal_flag=0 before any init; our CRT bypass skips ddmain, and the image
@@ -190,7 +198,7 @@ int main(void){
      * params, track_lookup tables, player count, ...) captured from the original: dd2_festate.c. */
     { extern void dd2_apply_frontend_state(void); dd2_apply_frontend_state(); }
     CK("Set_Draw_Mode(0)");         Set_Draw_Mode(0);
-    *(int*)(uintptr_t)0x462d68 = 0;
+    if(!getenv("DD2_SOUND")) *(int*)(uintptr_t)0x462d68 = 0;   /* keep "initialized" state when the DS shim is live */
     /* Run the REAL attract demo (dd2h's path): DemoMode sets demo_mode=1, num_cars=0x14,
      * race_car=2, _current_level=rand()%10+1, Order_Cars(), then Play_Game() as a deterministic
      * replay. Calling Play_Game() directly (demo_mode=0, level=1) ran a live race expecting input

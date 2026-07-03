@@ -1,0 +1,38 @@
+FIX DSINIT-DESC-LOCALS: FUN_004159f8 DSBUFFERDESC is one contiguous stack block
+
+Scattered-locals artifact (same class as Init_LensFlare info blocks / TextureDent
+uv blocks): the original @0x415a31 memsets a contiguous 0x14-byte DSBUFFERDESC on
+its frame (dwSize @ebp-0x24, dwFlags @ebp-0x20, dwBufferBytes/dwReserved/lpwfxFormat
+zeroed). Ghidra emitted scalar locals local_24/local_20 and kept the 0x14-byte
+memset(&local_24,...): gcc reorders scalar locals, so the memset overran into the
+saved-ebx slot (i386 PIC GOT register) -> the caller's first GOT-relative load after
+FUN_004159f8 returned faulted (ebx=0). Only reachable with DD2_SOUND=1 (DirectSound
+COM shim boot); the default no-sound path skips this function body.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -5294,8 +5294,13 @@
+ 
+ {
+   int iVar1;
+-  undefined4 local_24;
+-  undefined4 local_20;
++  /* ONE contiguous 0x14-byte DSBUFFERDESC block (asm 0x415a31: memset(ebp-0x24,0,0x14) over a
++     contiguous stack struct; dwSize @-0x24, dwFlags @-0x20). Ghidra split it into scalar locals
++     local_24/local_20 -- gcc reorders those, so the 0x14-byte memset ran past local_24 into the
++     saved-ebx frame slot (PIC GOT register) -> caller's ebx=0 -> GOT loads crashed after return. */
++  undefined4 _dsbdesc[5];
++#define local_24 (_dsbdesc[0])
++#define local_20 (_dsbdesc[1])
+   int *local_10;
+   
+   if (DAT_00462d68 == 0) {
+@@ -5326,6 +5331,8 @@
+   }
+   return;
+ }
++#undef local_24
++#undef local_20
+ 
+ 
+ /* ===== Sound_Init @ 00415ad8 ===== */

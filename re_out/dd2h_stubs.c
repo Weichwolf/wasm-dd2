@@ -4,7 +4,7 @@ int dd2_dbg_prim=0;
 #include <stdlib.h>
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
-int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c; if(b)*b=0; return 1; /* DSERR: no sound device */ }
+int DirectSoundCreate(int a,void** b,int c); /* impl below (DD2_SOUND=1 -> real COM shim, else DSERR no-sound path) */
 int _DZ(int x){ return x; }  /* Watcom checked-divide helper: Ghidra renders `a / _DZ(b)` */
 void FUN_00448e50(int _car){ (void)_car; }  /* @0x448e50: empty no-op strip-trigger handler (Ghidra didn't
   export it). Typed void(int) to match the Strip_Trigger_Handler indirect call (car index arg) -- all
@@ -93,3 +93,109 @@ int __prtf(){ return 0; }
 
 /* dd2h MSVC CRT fseek shim (= dd2.exe FUN_0045607b) */
 int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,offset,whence); }
+
+/* ================= DirectSound COM shim =================
+   Same pattern as the DirectDraw shim in dd2_com.c: real vtable objects so the decompiled
+   sound path runs unmodified. The decompile calls (**(code**)(*iface+off))(iface,args).
+   Call sites (build/dd2.c): IDirectSound: CreateSoundBuffer +0xc (4 args, DSLoadSoundBuffer
+   @0x4156a8), DuplicateSoundBuffer +0x14 (3 args, @0x415f10 path), SetCooperativeLevel +0x18
+   (3 args, FUN_00415c8c), Release +8. IDirectSoundBuffer: Release +8, GetStatus +0x24 (2),
+   Lock +0x2c (8, FUN_00415838), Play +0x30 (4), SetCurrentPosition +0x34 (2), SetVolume +0x3c
+   (2), SetPan +0x40 (2), SetFrequency +0x44 (2), Stop +0x48 (1), Unlock +0x4c (5), Restore
+   +0x50 (1, DSFillSoundBuffer @0x415770).
+   Gated behind DD2_SOUND=1: without it DirectSoundCreate keeps returning DSERR (the proven
+   no-sound path all Stage-2 video verification ran on). DD2_SNDLOG=1 logs every call with the
+   engine frame counter @0x462ff0 (deterministic, wallclock-free) for ref alignment.
+   Playback lifetime is modelled on the cf counter, NOT wallclock: a non-looping buffer reports
+   DSBSTATUS_PLAYING for ceil(bytes * 25 / bytes_per_sec) cf-ticks after Play (attract runs at
+   25 engine fps). This keeps Sound_Timer's GetStatus->Release lifecycle deterministic. */
+typedef struct DSBuf {
+    void** vtbl;
+    unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
+    int freq;                                 /* current sample rate (SetFrequency) */
+    int nAvgBytesPerSec;                      /* from WAVEFORMATEX at create time */
+    int vol, pan;
+    int playing, looping;
+    int play_cf;                              /* cf @ Play() */
+    struct DSBuf* master;                     /* dup source (shares data) */
+} DSBuf;
+static void* g_dsnd_vtbl[32];
+static void* g_dsnd_obj = g_dsnd_vtbl;
+static void* g_dsb_vtbl[32];
+#define SND_CF (*(int*)(unsigned long)0x462ff0u)
+static FILE* snd_log(void){ static FILE* f; static int init;
+    if(!init){ init=1; if(getenv("DD2_SNDLOG")) f=fopen("/tmp/dd2_sndlog.txt","w"); }
+    return f; }
+#define SLOG(...) do{ FILE* _f=snd_log(); if(_f){ fprintf(_f,"cf%d ",SND_CF); fprintf(_f,__VA_ARGS__); fputc('\n',_f); fflush(_f);} }while(0)
+static int dsb_dur_cf(DSBuf* b){ /* whole cf-ticks a one-shot stays PLAYING */
+    int bps = b->nAvgBytesPerSec>0 ? b->nAvgBytesPerSec : 22050;
+    long n = ((long)b->size * 25 + bps - 1) / bps;
+    return n<1 ? 1 : (int)n; }
+/* --- IDirectSoundBuffer methods --- */
+static int dsb_release(DSBuf* b){ SLOG("DSB %p Release",(void*)b);
+    if(!b->master && b->pcm) free(b->pcm);
+    free(b); return 0; }
+static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
+    if(b->playing){ if(b->looping) s=0x5; /* PLAYING|LOOPING */
+        else if(SND_CF - b->play_cf < dsb_dur_cf(b)) s=0x1; else b->playing=0; }
+    if(st)*st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
+static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,void** p2,unsigned* s2,int fl){
+    (void)fl; if(off>b->size) off=b->size; if(bytes>b->size) bytes=b->size;
+    unsigned first = (off+bytes<=b->size)? bytes : b->size-off;
+    if(p1)*p1=b->pcm+off; if(s1)*s1=first;
+    if(p2)*p2=(bytes>first)? b->pcm:0; if(s2)*s2=(bytes>first)? bytes-first:0;
+    SLOG("DSB %p Lock off=%u bytes=%u",(void*)b,off,bytes); return 0; }
+static int dsb_unlock(DSBuf* b,void* p1,unsigned s1,void* p2,unsigned s2){
+    (void)p1;(void)p2; SLOG("DSB %p Unlock %u/%u",(void*)b,s1,s2); return 0; }
+static int dsb_play(DSBuf* b,int r1,int r2,int flags){ (void)r1;(void)r2;
+    b->playing=1; b->looping=(flags&1); b->play_cf=SND_CF;
+    SLOG("DSB %p Play flags=%d freq=%d vol=%d pan=%d",(void*)b,flags,b->freq,b->vol,b->pan); return 0; }
+static int dsb_stop(DSBuf* b){ b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
+static int dsb_setpos(DSBuf* b,unsigned pos){ SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
+static int dsb_setvolume(DSBuf* b,int v){ b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
+static int dsb_setpan(DSBuf* b,int p){ b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
+static int dsb_setfreq(DSBuf* b,int f){ b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
+static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
+static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl; return b; }
+/* --- IDirectSound methods --- */
+static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(void)outer;
+    /* DSBUFFERDESC: +0 dwSize, +4 dwFlags, +8 dwBufferBytes, +0x10 lpwfxFormat */
+    DSBuf* b=dsb_new();
+    b->size = desc? (unsigned)desc[2] : 0;
+    if(b->size){ b->pcm=(unsigned char*)calloc(1,b->size); }
+    if(desc && desc[4]){ /* WAVEFORMATEX: +4 nSamplesPerSec, +8 nAvgBytesPerSec */
+        int* wfx=(int*)(unsigned long)(unsigned)desc[4];
+        b->freq=wfx[1]; b->nAvgBytesPerSec=wfx[2]; }
+    if(pp)*pp=b;
+    SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d -> %p",desc?desc[1]:0,b->size,b->freq,(void*)b);
+    return 0; }
+static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
+    DSBuf* b=dsb_new(); DSBuf* m=src->master? src->master:src;
+    b->pcm=m->pcm; b->size=m->size; b->freq=m->freq; b->nAvgBytesPerSec=m->nAvgBytesPerSec;
+    b->master=m; if(pp)*pp=b;
+    SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
+static int ds_setcooplevel(void* t,int hwnd,int level){ (void)t;(void)hwnd;
+    SLOG("DS SetCooperativeLevel %d",level); return 0; }
+static int ds_release(void* t){ (void)t; SLOG("DS Release"); return 0; }
+static int ds_ok(void){ return 0; }
+int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
+    if(!getenv("DD2_SOUND")){ if(b)*b=0; return 1; /* DSERR: no sound device (proven default) */ }
+    { int i; for(i=0;i<32;i++){ g_dsnd_vtbl[i]=(void*)&ds_ok; g_dsb_vtbl[i]=(void*)&ds_ok; } }
+    g_dsnd_vtbl[0x08/4]=(void*)&ds_release;
+    g_dsnd_vtbl[0x0c/4]=(void*)&ds_createbuffer;
+    g_dsnd_vtbl[0x14/4]=(void*)&ds_dupbuffer;
+    g_dsnd_vtbl[0x18/4]=(void*)&ds_setcooplevel;
+    g_dsb_vtbl[0x08/4]=(void*)&dsb_release;
+    g_dsb_vtbl[0x24/4]=(void*)&dsb_getstatus;
+    g_dsb_vtbl[0x2c/4]=(void*)&dsb_lock;
+    g_dsb_vtbl[0x30/4]=(void*)&dsb_play;
+    g_dsb_vtbl[0x34/4]=(void*)&dsb_setpos;
+    g_dsb_vtbl[0x3c/4]=(void*)&dsb_setvolume;
+    g_dsb_vtbl[0x40/4]=(void*)&dsb_setpan;
+    g_dsb_vtbl[0x44/4]=(void*)&dsb_setfreq;
+    g_dsb_vtbl[0x48/4]=(void*)&dsb_stop;
+    g_dsb_vtbl[0x4c/4]=(void*)&dsb_unlock;
+    g_dsb_vtbl[0x50/4]=(void*)&dsb_restore;
+    if(b)*b=&g_dsnd_obj;
+    SLOG("DirectSoundCreate -> OK");
+    return 0; }

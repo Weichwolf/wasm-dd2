@@ -7,7 +7,9 @@ void FUN_00456b30(uint a,uint b){ }
 uint FUN_0045a174(void* h){ return 0; }
 short GetKeyState(int k){ return 0; }
 unsigned GetTickCount(void){ static unsigned t=0; t+=16; return t; }
-void* LockResource(void* h){ return (void*)1; }
+void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers (sound-bank blob
+    + offset, FUN_00416688 -> DSLoadSoundBuffer), never real HRSRC handles: identity is the
+    faithful Windows behavior for already-mapped memory */ }
 
 /* dd2h's exact CRT rand() LCG, shared by native+WASM so the rand()-seeded attract demo is
    bit-identical across builds (and dd2h.exe). The decompiled rand/srand (dd2.c @0x456afc/0x456b1f,
