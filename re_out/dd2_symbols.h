@@ -2733,7 +2733,7 @@ extern int unaff_retaddr;
 #define _screen_centre_x_ (*(int*)GIMG(0x00462fd0))
 #define _sound_volume (*(int*)GIMG(0x00467410))
 #define _sub_transparency_table (*(int*)GIMG(0x0074c4d0))  /* dual-symbol: =sub_transparency_table */
-#define _DAT_007747c8 (*(int*)GIMG(0x007747c8))
+#define _DAT_007747c8 (*(short*)GIMG(0x007747c8)) /* WORD, see 0x774748 note */
 #define _DAT_00795de0 (*(int*)GIMG(0x00795de0))
 #define _DAT_0093deb4 (*(int*)GIMG(0x0093deb4))
 #define _DAT_0077d1e4 (*(int*)GIMG(0x0077d1e4))
@@ -2743,10 +2743,10 @@ extern int unaff_retaddr;
 #define _DAT_007543a0 (*(int*)GIMG(0x007543a0))
 #define _DAT_00791c00 (*(int*)GIMG(0x00791c00))
 #define _DAT_00754430 (*(int*)GIMG(0x00754430))
-#define _DAT_007747c6 (*(int*)GIMG(0x007747c6))
+#define _DAT_007747c6 (*(short*)GIMG(0x007747c6)) /* WORD, see 0x774748 note */
 #define _DAT_0079244c (*(int*)GIMG(0x0079244c))
 #define _DAT_007541ea (*(int*)GIMG(0x007541ea))
-#define _DAT_0077475a (*(int*)GIMG(0x0077475a))
+#define _DAT_0077475a (*(short*)GIMG(0x0077475a)) /* WORD, see 0x774748 note */
 #define _DAT_0093dec4 (*(int*)GIMG(0x0093dec4))
 #define _DAT_00792440 (*(int*)GIMG(0x00792440))
 #define _DAT_0093a3c4 (*(int*)GIMG(0x0093a3c4))
@@ -2761,12 +2761,12 @@ extern int unaff_retaddr;
 #define _DAT_0074c506 (*(int*)GIMG(0x0074c506))
 #define _DAT_00469a6a (*(undefined1*)GIMG(0x00469a6a))
 #define _DAT_0077cf0c (*(int*)GIMG(0x0077cf0c))
-#define _DAT_00774758 (*(int*)GIMG(0x00774758))
+#define _DAT_00774758 (*(short*)GIMG(0x00774758)) /* WORD, see 0x774748 note */
 #define _DAT_007543fc (*(int*)GIMG(0x007543fc))
 #define _DAT_007925e8 (*(int*)GIMG(0x007925e8))
 #define _DAT_007543b0 (*(int*)GIMG(0x007543b0))
 #define _DAT_00781ed4 (*(int*)GIMG(0x00781ed4))
-#define _DAT_00774748 (*(int*)GIMG(0x00774748))
+#define _DAT_00774748 (*(short*)GIMG(0x00774748)) /* WORD: debris corner-constant slot (Init_Debris writes them 66-prefixed, asm 0x42424f-0x4242a0); int typing clobbered the neighbour short -> generated debris vertex table wrong */
 #define _DAT_0074c528 (*(int*)GIMG(0x0074c528))
 #define _DAT_007926b0 (*(int*)GIMG(0x007926b0))
 #define _DAT_0078934c (*(int*)GIMG(0x0078934c))
@@ -2831,10 +2831,10 @@ extern int unaff_retaddr;
 #define _DAT_007925c8 (*(int*)GIMG(0x007925c8))
 #define _DAT_0093a414 (*(int*)GIMG(0x0093a414))
 #define _DAT_00467c2a (*(undefined1*)GIMG(0x00467c2a))
-#define _DAT_007747d4 (*(int*)GIMG(0x007747d4))
+#define _DAT_007747d4 (*(short*)GIMG(0x007747d4)) /* WORD, see 0x774748 note */
 #define _DAT_00754434 (*(int*)GIMG(0x00754434))
 #define _DAT_0093fc50 (*(int*)GIMG(0x0093fc50))
-#define _DAT_007746fc (*(int*)GIMG(0x007746fc))
+#define _DAT_007746fc (*(short*)GIMG(0x007746fc)) /* WORD, see _polygon_angles note */
 #define _DAT_0077cf14 (*(int*)GIMG(0x0077cf14))
 #define _DAT_00754408 (*(int*)GIMG(0x00754408))
 #define _DAT_0093fc00 (*(int*)GIMG(0x0093fc00))
@@ -2863,13 +2863,13 @@ extern int unaff_retaddr;
 #define _DAT_0074c55c (*(int*)GIMG(0x0074c55c))
 #define _DAT_0093fd4c (*(undefined1*)GIMG(0x0093fd4c))
 #define _DAT_0079256c (*(int*)GIMG(0x0079256c))
-#define _DAT_00774702 (*(int*)GIMG(0x00774702))
+#define _DAT_00774702 (*(short*)GIMG(0x00774702)) /* WORD, see _polygon_angles note */
 #define _DAT_007924b0 (*(int*)GIMG(0x007924b0))
 #define _DAT_00792ac6 (*(int*)GIMG(0x00792ac6))
-#define _DAT_007747ce (*(int*)GIMG(0x007747ce))
+#define _DAT_007747ce (*(short*)GIMG(0x007747ce)) /* WORD, see 0x774748 note */
 #define _DAT_007924a8 (*(int*)GIMG(0x007924a8))
 #define _DAT_00792520 (*(int*)GIMG(0x00792520))
-#define _DAT_007747d6 (*(int*)GIMG(0x007747d6))
+#define _DAT_007747d6 (*(short*)GIMG(0x007747d6)) /* WORD, see 0x774748 note */
 #define _DAT_00462fba (*(int*)GIMG(0x00462fba))
 #define _DAT_007925c0 (*(int*)GIMG(0x007925c0))
 #define _DAT_00791bc6 (*(int*)GIMG(0x00791bc6))
@@ -2886,21 +2886,21 @@ extern int unaff_retaddr;
 #define _DAT_0074f178 (*(int*)GIMG(0x0074f178))
 #define _DAT_0075444a (*(int*)GIMG(0x0075444a))
 #define _DAT_00795df0 (*(int*)GIMG(0x00795df0))
-#define _DAT_0077474a (*(int*)GIMG(0x0077474a))
+#define _DAT_0077474a (*(short*)GIMG(0x0077474a)) /* WORD, see 0x774748 note */
 #define _DAT_0093a308 (*(int*)GIMG(0x0093a308))
 #define _DAT_00940220 (*(int*)GIMG(0x00940220))
 #define _DAT_0074c530 (*(int*)GIMG(0x0074c530))
 #define _DAT_0074c458 (*(int*)GIMG(0x0074c458))
 #define _DAT_00792480 (*(int*)GIMG(0x00792480))
 #define _DAT_009409ac (*(int*)GIMG(0x009409ac))
-#define _DAT_007747d0 (*(int*)GIMG(0x007747d0))
+#define _DAT_007747d0 (*(short*)GIMG(0x007747d0)) /* WORD, see 0x774748 note */
 #define _DAT_00791bd4 (*(int*)GIMG(0x00791bd4))
 #define _DAT_0074c45c (*(int*)GIMG(0x0074c45c))
 #define _DAT_00792450 (*(int*)GIMG(0x00792450))
 #define _DAT_0074c518 (*(int*)GIMG(0x0074c518))
 #define _DAT_00754394 (*(int*)GIMG(0x00754394))
 #define _DAT_00791bbc (*(int*)GIMG(0x00791bbc))
-#define _DAT_00774704 (*(int*)GIMG(0x00774704))
+#define _DAT_00774704 (*(short*)GIMG(0x00774704)) /* WORD, see _polygon_angles note */
 #define _DAT_00781eb0 (*(int*)GIMG(0x00781eb0))
 #define _DAT_00792a7a (*(int*)GIMG(0x00792a7a))
 #define _DAT_00469072 (*(undefined1*)GIMG(0x00469072))
@@ -2934,7 +2934,7 @@ extern int unaff_retaddr;
 #define _DAT_009409a8 (*(int*)GIMG(0x009409a8))
 #define _DAT_0074f194 (*(int*)GIMG(0x0074f194))
 #define _DAT_00792538 (*(int*)GIMG(0x00792538))
-#define _DAT_00774700 (*(int*)GIMG(0x00774700))
+#define _DAT_00774700 (*(short*)GIMG(0x00774700)) /* WORD, see _polygon_angles note */
 #define _DAT_0093fbf0 (*(int*)GIMG(0x0093fbf0))
 #define _DAT_0074f180 (*(int*)GIMG(0x0074f180))
 #define _DAT_0077d1e0 (*(int*)GIMG(0x0077d1e0))
@@ -2963,7 +2963,7 @@ extern int unaff_retaddr;
 #define _DAT_007924ac (*(int*)GIMG(0x007924ac))
 #define _DAT_0074c52c (*(int*)GIMG(0x0074c52c))
 #define _DAT_00792570 (*(int*)GIMG(0x00792570))
-#define _DAT_00774750 (*(int*)GIMG(0x00774750))
+#define _DAT_00774750 (*(short*)GIMG(0x00774750)) /* WORD, see 0x774748 note */
 #define _DAT_00792448 (*(int*)GIMG(0x00792448))
 #define _DAT_0075420c (*(int*)GIMG(0x0075420c))
 #define _DAT_00754256 (*(int*)GIMG(0x00754256))
@@ -2992,12 +2992,12 @@ extern int unaff_retaddr;
 #define _DAT_00791bae (*(int*)GIMG(0x00791bae))
 #define _DAT_0093a310 (*(int*)GIMG(0x0093a310))
 #define _DAT_00792628 (*(int*)GIMG(0x00792628))
-#define _DAT_0077474c (*(int*)GIMG(0x0077474c))
+#define _DAT_0077474c (*(short*)GIMG(0x0077474c)) /* WORD, see 0x774748 note */
 #define _DAT_0074c550 (*(int*)GIMG(0x0074c550))
 #define _DAT_0078192c (*(int*)GIMG(0x0078192c))
 #define _DAT_00939b80 (*(int*)GIMG(0x00939b80))
 #define _DAT_0074c514 (*(int*)GIMG(0x0074c514))
-#define _DAT_007747c4 (*(int*)GIMG(0x007747c4))
+#define _DAT_007747c4 (*(short*)GIMG(0x007747c4)) /* WORD, see 0x774748 note */
 #define _DAT_00469a3a (*(undefined1*)GIMG(0x00469a3a))
 #define _DAT_0074c51c (*(int*)GIMG(0x0074c51c))
 #define _DAT_0075424e (*(int*)GIMG(0x0075424e))
@@ -3030,12 +3030,12 @@ extern int unaff_retaddr;
 #define _DAT_007541f2 (*(short*)GIMG(0x007541f2))
 #define _DAT_0074f184 (*(int*)GIMG(0x0074f184))
 #define _DAT_007542f2 (*(undefined1*)GIMG(0x007542f2))
-#define _DAT_00774754 (*(int*)GIMG(0x00774754))
+#define _DAT_00774754 (*(short*)GIMG(0x00774754)) /* WORD, see 0x774748 note */
 #define _DAT_00467c2c (*(undefined1*)GIMG(0x00467c2c))
 #define _DAT_0078189c (*(int*)GIMG(0x0078189c))
 #define _DAT_00792470 (*(int*)GIMG(0x00792470))
 #define _DAT_007925a4 (*(int*)GIMG(0x007925a4))
-#define _DAT_00774752 (*(int*)GIMG(0x00774752))
+#define _DAT_00774752 (*(short*)GIMG(0x00774752)) /* WORD, see 0x774748 note */
 #define _DAT_0094098c (*(int*)GIMG(0x0094098c))
 #define _DAT_00792568 (*(int*)GIMG(0x00792568))
 #define _DAT_00791bb6 (*(int*)GIMG(0x00791bb6))
@@ -3063,7 +3063,7 @@ extern int unaff_retaddr;
 #define _DAT_00754438 (*(int*)GIMG(0x00754438))
 #define _DAT_0074c53c (*(int*)GIMG(0x0074c53c))
 #define _DAT_00754202 (*(int*)GIMG(0x00754202))
-#define _DAT_007746fa (*(int*)GIMG(0x007746fa))
+#define _DAT_007746fa (*(short*)GIMG(0x007746fa)) /* WORD, see _polygon_angles note */
 #define _DAT_00940974 (*(int*)GIMG(0x00940974))
 #define _DAT_00795de4 (*(int*)GIMG(0x00795de4))
 #define _DAT_007924a4 (*(int*)GIMG(0x007924a4))
@@ -3082,7 +3082,7 @@ extern int unaff_retaddr;
 #define _DAT_0093de18 (*(int*)GIMG(0x0093de18))
 #define _DAT_0077cf04 (*(int*)GIMG(0x0077cf04))
 #define _DAT_0077d1f4 (*(int*)GIMG(0x0077d1f4))
-#define _DAT_007747d8 (*(int*)GIMG(0x007747d8))
+#define _DAT_007747d8 (*(short*)GIMG(0x007747d8)) /* WORD, see 0x774748 note */
 #define _DAT_0074c702 (*(int*)GIMG(0x0074c702))
 #define _DAT_00789354 (*(int*)GIMG(0x00789354))
 #define _DAT_00939b68 (*(int*)GIMG(0x00939b68))
@@ -3111,13 +3111,13 @@ extern int unaff_retaddr;
 #define _DAT_00940000 (*(int*)GIMG(0x00940000))
 #define _DAT_00795c46 (*(int*)GIMG(0x00795c46))
 #define _DAT_0074c50c (*(int*)GIMG(0x0074c50c))
-#define _DAT_007747cc (*(int*)GIMG(0x007747cc))
+#define _DAT_007747cc (*(short*)GIMG(0x007747cc)) /* WORD, see 0x774748 note */
 #define _DAT_0075420a (*(int*)GIMG(0x0075420a))
 #define _DAT_00782ae6 (*(int*)GIMG(0x00782ae6))
 #define _DAT_0074c6fa (*(short*)GIMG(0x0074c6fa)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0093fc78 (*(int*)GIMG(0x0093fc78))
 #define _DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
-#define _DAT_0077475c (*(int*)GIMG(0x0077475c))
+#define _DAT_0077475c (*(short*)GIMG(0x0077475c)) /* WORD, see 0x774748 note */
 #define _DAT_0074c540 (*(int*)GIMG(0x0074c540))
 #define _DAT_00754228 (*(short*)GIMG(0x00754228))
 #define _DAT_00782ada (*(int*)GIMG(0x00782ada))
@@ -3666,7 +3666,7 @@ extern int unaff_retaddr;
 #define _otsize (*(int*)GIMG(0x00754260))
 #define _pad_option (*(int*)GIMG(0x00467414))
 #define _permission (*(int*)GIMG(0x00796f58))
-#define _polygon_angles (*(int*)GIMG(0x007746f8))
+#define _polygon_angles (*(short*)GIMG(0x007746f8)) /* WORD: debris-angle field (Init_Debris generator @0x424424-0x424489 does 16-bit loads/stores, add/sub $0x20 in registers); int typing made each += carry/borrow into the NEIGHBOUR short -> shape-1 angles accumulated 31/-31 instead of 32/-32 per step -> the generated debris vertex table @0x7786e4 diverged (2347 bytes) */
 #define _quit_flag (*(int*)GIMG(0x007746ac))
 #define _race_finished (*(int*)GIMG(0x00795df4))
 #define _recorded_pad_type (*(int*)GIMG(0x007746a8))
