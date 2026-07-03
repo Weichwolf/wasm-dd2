@@ -32,6 +32,11 @@
         ENV.DD2_REALTIME = '1';   // faithful 25fps pacing (engine frame limiter on real time)
         if (!q.has('demo')) ENV.DD2_LIVE = '1';
         ENV.DD2_LEVEL = q.get('level') || '9';
+        // Joystick play (the original's FE controls option): auto-picked when a gamepad is
+        // already connected at load, or forced via ?pad. Keyboard stays active alongside.
+        var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        var padHere = false; for (var i=0;i<pads.length;i++) if (pads[i] && pads[i].connected) padHere = true;
+        if (padHere || q.has('pad')) ENV.DD2_PAD = '1';
       }],
       onRuntimeInitialized: function(){
         // Route real keyboard events to the engine: keydown/keyup -> dd2_browser_key_event(code, down).
