@@ -1264,6 +1264,7 @@ extern int unaff_retaddr;
 #define DAT_00460438 (*(int**)GIMG(0x00460438))
 #define DAT_00700050 (*(int*)GIMG(0x00700050))
 #define DAT_00460478 (*(int*)GIMG(0x00460478))
+#define DAT_00460484 (*(int*)GIMG(0x00460484))   /* mm-timer fire counter (patch 730 callback) */
 #define DAT_00460434 (*(int*)GIMG(0x00460434))
 #define DAT_004604a0 (*(int*)GIMG(0x004604a0))
 #define DAT_004604a4 (*(int*)GIMG(0x004604a4))

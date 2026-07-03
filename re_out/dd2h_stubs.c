@@ -80,8 +80,14 @@ void _ot_dispatch(int* piVar1,int* b,int* c){
 int SetStdHandle(int a,int b){ (void)a;(void)b; return 0; }
 int timeBeginPeriod(int a){ (void)a; return 0; }
 int timeEndPeriod(int a){ (void)a; return 0; }
-int timeKillEvent(int a){ (void)a; return 0; }
-int timeSetEvent(int a,int b,void* c,int d,int e){ (void)a;(void)b;(void)c;(void)d;(void)e; return 0; }
+/* mm-timer: the game registers ONE periodic 400ms timer whose callback is the reconstructed
+   FUN_0041345c (patch 730, drives Sound_Timer_). Deterministic driver: dd2_snd_mix_flip fires
+   it every 10 engine frames (= 400ms at 25 engine fps) instead of wallclock. */
+int g_dd2_mmtimer_active = 0;
+int timeKillEvent(int a){ (void)a; g_dd2_mmtimer_active = 0; return 0; }
+int timeSetEvent(int a,int b,void* c,int d,int e){ (void)b;(void)c;(void)d;(void)e;
+    if(a==400) g_dd2_mmtimer_active = 1;
+    return 1; }
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -274,6 +280,15 @@ void dd2_snd_mix_flip(void){
             }
         }
         if(pf) fwrite(out,2,882*2,pf);
+        /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
+           Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
+           and sees playback positions of audio already played by the end of the tick. Phase 4:
+           the original's fire phase is wallclock (registration time) with inherent one-period
+           jitter; reconstructed from the sound-enabled reference (cf128/cf256 retriggers need
+           channel frees at cf124/cf254; blocking one-shots end at cf123.15/cf253.x). */
+        { extern int g_dd2_mmtimer_active; extern void FUN_0041345c(void);
+          int tick_cf = last_cf - dt + 1 + t;
+          if(g_dd2_mmtimer_active && tick_cf % 10 == 4) FUN_0041345c(); }
     }
     if(pf) fflush(pf);
 }
