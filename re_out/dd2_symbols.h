@@ -1672,8 +1672,8 @@ extern int unaff_retaddr;
 #define DAT_0046cde0 (*(int*)GIMG(0x0046cde0))
 #define DAT_0046cde4 (*(int*)GIMG(0x0046cde4))
 #define DAT_0046cef0 (*(int*)GIMG(0x0046cef0))
-#define DAT_00466a20 (*(int*)GIMG(0x00466a20))
-#define DAT_00466a21 (*(int*)GIMG(0x00466a21))
+#define DAT_00466a20 (*(unsigned char*)GIMG(0x00466a20)) /* BYTE dent-level table [num_cars*2] (Init_Car_Doors clear @0x43b086: mov %dl,0x466a1e(%eax) -- BYTE stores, unscaled index; int typing scaled the clear loop x4 and wiped 0x466a20..0x466abf, destroying the GTE corner-offset tables @0x466a96+ -> Get_Corner_Positions transformed zero vectors -> all four wheel anchors equal -> skidmark quads degenerate (cf49+ divergence)) */
+#define DAT_00466a21 (*(unsigned char*)GIMG(0x00466a21)) /* BYTE, see 0x466a20 */
 #define DAT_00466796 (*(int*)GIMG(0x00466796))
 #define DAT_0046679f (*(int*)GIMG(0x0046679f))
 #define DAT_00466734 (*(undefined1*)GIMG(0x00466734))
