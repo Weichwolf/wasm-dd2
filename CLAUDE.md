@@ -70,10 +70,13 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   arithmetic; scalar typing killed coalescing → the historic "+0x60 heap shift" — now byte-identical
   to ref), DAT_00466340/DAT_00463896 are BYTE loads (`xor eax,eax; mov al` — int typing fed
   0x2cc0c0c0 into gte_ncds/gte_dpcs → wheel/debris shades), _car_info WORD store (car-0 race
-  position). cf48 car-state residue = 18 bytes (sound-channel host ptrs, whitelist). Remaining cf49
-  diff: car-shadow quads only, 12911 px — winner prims byte-identical in both full dumps, state
-  reconverges ⇒ INTRA-TICK transient in the paint path (FIFO-leftover / OT-order / dth-input class);
-  next: DD2_DBGPRIM+[SPAN] vs tools/refdth.sh on the shadow prim. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
+  position). cf48 car-state residue = 18 bytes (sound-channel host ptrs, whitelist). cf49 SOLVED (streak now
+  **cf4–cf50 100%**): the int-typed dent-level byte table DAT_00466a20/21 made Init_Car_Doors'"'"'
+  clear loop scale x4 and wipe the GTE corner-offset constants @0x466a96+ (asm 0x43b086 = byte
+  stores, unscaled) → Get_Corner_Positions transformed zero vectors → skid quads degenerate; plus
+  patch 665 (44 GTE const hi-half loads are `sar` = signed; the patch-010 subpiece conversion had
+  zero-extended them). Divergence now starts cf56 = FIRST COLLISION (physics cascade; collision/
+  crush path vs ref is the next front). Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
   re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
   0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
   that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
