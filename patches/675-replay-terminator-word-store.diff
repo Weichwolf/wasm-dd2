@@ -1,0 +1,23 @@
+Terminate_Replay @0x447a2c writes the replay-script end marker with WORD
+stores (asm 0x447a43/0x447a4c: movw $0xa001 / movw $0x8080). The mechanical
+deref-cast pass (patch 005) rendered them as int stores through the
+undefined2* script cursor, writing two extra zero bytes past the marker
+into the replay buffer. Same patch-005 victim class as the bowl-cars push
+(670); the remaining 005 int-casts are genuine dword accesses (vtable and
+freelist links, verified).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -34686,10 +34686,10 @@
+ {
+   _DAT_009392c4 = (undefined2 *)((int)_Replay_Script_Ptr + 2);
+   if (*(char *)(param_1 + 9) == '\x01') {
+-    *(int*)_DAT_009392c4 = 0xa001;
++    *(short*)_DAT_009392c4 = 0xa001;  /* WORD store (asm 0x447a43: movw $0xa001) */
+   }
+   else {
+-    *(int*)_DAT_009392c4 = 0x8080;
++    *(short*)_DAT_009392c4 = (short)0x8080;  /* WORD store (asm 0x447a4c: movw $0x8080) */
+   }
+   _Replay_Script_Ptr = _DAT_009392c4;
+   return;
