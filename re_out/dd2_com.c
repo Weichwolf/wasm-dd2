@@ -76,6 +76,18 @@ EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
 static int ids_flip(int t,int a,int b){
     /* deterministic audio mixdown clock (dd2h_stubs.c): advance by engine frames, once per flip */
     { extern void dd2_snd_mix_flip(void); dd2_snd_mix_flip(); }
+    /* DD2_SCRIPT=<file>: deterministic scripted input. Lines "<flipno> <vk> <down>" (decimal/0x..),
+       sorted by flipno; at that presented-frame count the key event is injected through the same
+       dd2_key_event -> Translate_Keypress path a real key takes. Shared native+wasm, so scripted
+       menu/race flows are reproducible bit-exactly on both targets. */
+    { static FILE* sf; static int sinit, snext=-1; static unsigned svk; static int sdown;
+      if(!sinit){ sinit=1; const char* p=getenv("DD2_SCRIPT");
+          if(p){ sf=fopen(p,"r");
+              if(sf && fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; } }
+      while(sf && snext>=0 && g_frameno>=snext){
+          extern void dd2_key_event(unsigned int, int);
+          dd2_key_event(svk, sdown);
+          if(fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; } }
 #ifdef DD2_BROWSER
     dd2_present((const unsigned char*)(unsigned long)0x700450u, g_palette);
     emscripten_sleep(0);   /* yield each presented frame so the browser paints + processes key events */
