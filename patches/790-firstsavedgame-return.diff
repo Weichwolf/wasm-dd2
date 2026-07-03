@@ -1,0 +1,33 @@
+FIX FIRSTSAVEDGAME RETURN (790): dropped return value -> browser FE-race had 0 cars
+
+FirstSavedGame @0x4235f0 (asm 0x4235fe: call FUN_0042366c; ret with eax = its
+result) returns the card scan's first-saved-game slot index (flag@0x774484==1 &&
+magic@0x756460==0x1010) or -1. Ghidra lost the return value (bare `return;` in a
+non-void function). On native the compiler happened to leave eax holding
+FUN_0042366c's result (-1 = no save); on wasm the i32 return is undefined and
+came back 0xE0000 (!= -1), so Load_First_Config believed a saved game existed,
+LoadCardFile'd it and FUN_0044b038 set num_cars from the zeroed save data (field
++0x26 = 0). Result: the browser menu-launched race (Run_Selection->Order_Cars)
+spawned 0 opponent cars, cars stayed (0,0), Play_Game ended fast and the race
+restarted. Native was unaffected only because its garbage eax happened to be -1.
+Dropped-return-value class (like the FUN_004507f8/Go! handler). Fix: return
+FUN_0042366c() faithfully.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -14269,8 +14269,13 @@
+ 
+ {
+   LoadCardFiles();
+-  FUN_0042366c();
+-  return;
++  /* asm 0x4235fe: FirstSavedGame returns FUN_0042366c()'s value (the card scan: first slot index
++     with flag@0x774484==1 and magic@0x756460==0x1010, else -1). Ghidra dropped the return value
++     -> bare `return;`. On native the compiler happened to leave eax = FUN_0042366c's result; on
++     wasm the i32 return is undefined -> 0xE0000 garbage (!= -1) -> Load_First_Config believed a
++     saved game existed, loaded it, and FUN_0044b038 set num_cars from the (zeroed) save data ->
++     the browser FE-launched race spawned 0 cars. Return the scan result faithfully. */
++  return FUN_0042366c();
+ }
+ 
+ 
