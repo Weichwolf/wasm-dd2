@@ -603,6 +603,10 @@ extern int Toggle_Track();
 extern int Toggle_Car();
 extern int FUN_00450b5c();
 extern int FUN_00450e3c();
+extern int FUN_004507f8(); extern int FUN_004509d8();   /* patch 775: FE Go! + mode-cycle */
+extern int FUN_0045089c(); extern int FUN_00450840();
+extern int FUN_004508d4(); extern int FUN_00450904(); extern int FUN_00450934();
+extern int FUN_00450964(); extern int FUN_00450994();   /* patch 770: FE menu-screen handlers */
 extern int Rotate_Slab_On();
 extern int FUN_00450fe0();
 extern int Draw_Screen_Polys();
@@ -1468,6 +1472,10 @@ dd2_fnent dd2_fnmap[]={
 {0x00450b04,(void*)&Toggle_Car},
 {0x00450b5c,(void*)&FUN_00450b5c},
 {0x00450e3c,(void*)&FUN_00450e3c},
+{0x004507f8,(void*)&FUN_004507f8},{0x004509d8,(void*)&FUN_004509d8},
+{0x0045089c,(void*)&FUN_0045089c},{0x00450840,(void*)&FUN_00450840},
+{0x004508d4,(void*)&FUN_004508d4},{0x00450904,(void*)&FUN_00450904},{0x00450934,(void*)&FUN_00450934},
+{0x00450964,(void*)&FUN_00450964},{0x00450994,(void*)&FUN_00450994},
 {0x00450ecc,(void*)&Rotate_Slab_On},
 {0x00450fe0,(void*)&FUN_00450fe0},
 {0x00451094,(void*)&Draw_Screen_Polys},

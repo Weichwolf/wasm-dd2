@@ -1,0 +1,70 @@
+FIX MENU-SCREEN HANDLERS (770): reconstruct FUN_0045089c..0x450994 — track-select flow was dead
+
+The front-end screen dispatch (&PTR_FUN_004697cc)[screen*5]() jumps through a
+table of 8 tiny label-setup thunks @0x450800-0x4509c3; Ghidra exported only
+the first (FUN_00450800). The other seven stayed raw code VAs in the table
+(dd2_relocate only rewrites VAs present in dd2_fnmap), so selecting menu
+entries past the 4th jumped into non-executable image data: native SIGSEGV at
+0x450904, wasm call_indirect trap — the Practice/track-select menu path was
+dead. Each thunk points the four on-screen label slots (0x46975c/0x469770,
+0x469784/0x469798) at the screen's string tables (race_car indexed for screen
+1, race_type/0x4673fc for screen 2, constants for 3-7) and calls
+Setup_Screen_Text(&DAT_0046974c). Reconstructed 1:1 from asm; dispatch-map
+entries added in dd2_dispatch.c (hand-written).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -41278,6 +41278,53 @@
+ }
+ 
+ 
++/* ===== FUN_0045089c..FUN_00450994 @ 0045089c ===== */
++/* Seven of the eight front-end menu-SCREEN handlers from the dispatch table @0x4697cc
++   (called as (&PTR_FUN_004697cc)[screen*5]() from Front_End; Ghidra exported only the first,
++   FUN_00450800 -- same unexported-function class as FUN_00448e50 / the mm-timer callback).
++   Each is a tiny thunk pointing the 4 on-screen label slots (0x46975c/0x469770 top pair,
++   0x469784/0x469798 bottom pair) at the screen's string tables (race_car indexed for screen 1,
++   race_type/0x4673fc for screen 2, constants for 3-7) and calling Setup_Screen_Text.
++   Reconstructed 1:1 from asm 0x45089c-0x4509c3; registered in dd2_dispatch.c so dd2_relocate
++   rewrites the raw VAs in the table (without this, menu entries past the 4th jumped to raw
++   code VAs -> SEGV native / call_indirect trap wasm: the track-select flow was dead). */
++void FUN_0045089c(void)
++{
++  *(int *)GIMG(0x46975c) = 0x46e6c4;
++  *(int *)GIMG(0x469770) = 0x46e6c4;
++  *(int *)GIMG(0x469784) = *(int *)GIMG(0x4698e4 + *(int *)GIMG(0x467400) * 4);
++  *(int *)GIMG(0x469798) = *(int *)GIMG(0x469784);
++  Setup_Screen_Text((int *)&DAT_0046974c);
++}
++void FUN_00450840(void)
++{
++  *(int *)GIMG(0x469770) = 0x46e6ac;
++  *(int *)GIMG(0x46975c) = 0x46e6ac;
++  if ((unsigned)(*(int *)GIMG(0x4673f4) - 3) <= 1) {
++    *(int *)GIMG(0x469798) = 0x46e46c;
++    *(int *)GIMG(0x469784) = 0x46e46c;
++  }
++  else {
++    *(int *)GIMG(0x469784) = *(int *)GIMG(0x469930 + *(int *)GIMG(0x4673fc) * 4);
++    *(int *)GIMG(0x469798) = *(int *)GIMG(0x469784);
++  }
++  Setup_Screen_Text((int *)&DAT_0046974c);
++}
++static void dd2_menu_screen_static(int top, int bottom)
++{
++  *(int *)GIMG(0x46975c) = top;
++  *(int *)GIMG(0x469770) = top;
++  *(int *)GIMG(0x469784) = bottom;
++  *(int *)GIMG(0x469798) = bottom;
++  Setup_Screen_Text((int *)&DAT_0046974c);
++}
++void FUN_004508d4(void) { dd2_menu_screen_static(0x46e6d8, 0x46e46c); }
++void FUN_00450904(void) { dd2_menu_screen_static(0x46e6f0, 0x46e46c); }
++void FUN_00450934(void) { dd2_menu_screen_static(0x46e708, 0x46e46c); }
++void FUN_00450964(void) { dd2_menu_screen_static(0x46e71c, 0x46e46c); }
++void FUN_00450994(void) { dd2_menu_screen_static(0x46e734, 0x46e46c); }
++
++
+ /* ===== Setup_Screen_Text @ 00451448 ===== */
+ 
+ void __cdecl Setup_Screen_Text(int *param_1)
