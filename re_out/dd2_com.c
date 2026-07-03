@@ -81,15 +81,25 @@ static int ids_flip(int t,int a,int b){
        injected through the same dd2_key_event -> Translate_Keypress path a real key takes.
        cf-based (not flip-based): the presentation flip count differs across targets/paths, the
        engine counter is target-invariant -> scripted play is bit-reproducible native<->wasm. */
-    { static FILE* sf; static int sinit, snext=-1; static unsigned svk; static int sdown;
+    { static FILE* sf; static int sinit, snext=-1, sflip; static unsigned svk; static int sdown;
       int _cf = *(int*)(unsigned long)0x462ff0u;
+      /* line forms: "<cf> <vk> <down>" (engine-frame keyed, bit-reproducible across targets)
+         or "f<flip> <vk> <down>" (presented-frame keyed -- for the front end, where the engine
+         frame counter stays 0; flip counts are only per-target-reproducible). */
       if(!sinit){ sinit=1; const char* p=getenv("DD2_SCRIPT");
-          if(p){ sf=fopen(p,"r");
-              if(sf && fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; } }
-      while(sf && snext>=0 && _cf>=snext){
+          if(p){ sf=fopen(p,"r"); } }
+      if(sf && snext<0){ char pfx=0; long v;
+          if(fscanf(sf," %c",&pfx)==1){
+              if(pfx=='f'){ sflip=1; } else { sflip=0; ungetc(pfx,sf); }
+              if(fscanf(sf,"%li %i %i",&v,&svk,&sdown)==3) snext=(int)v; } }
+      while(sf && snext>=0 && (sflip ? g_frameno : _cf) >= snext){
           extern void dd2_key_event(unsigned int, int);
           dd2_key_event(svk, sdown);
-          if(fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; }
+          snext=-1;
+          { char pfx=0; long v;
+            if(fscanf(sf," %c",&pfx)==1){
+                if(pfx=='f'){ sflip=1; } else { sflip=0; ungetc(pfx,sf); }
+                if(fscanf(sf,"%li %i %i",&v,&svk,&sdown)==3) snext=(int)v; } } }
     /* DD2_PADSCRIPT=<file>: deterministic gamepad input, lines "<cf> <x> <y> <buttons>"
        (x/y 0..65535, center 32768) -> dd2_pad_update, polled by the engine's joyGetPos. */
       { static FILE* pfs; static int pinit, pnext=-1; static unsigned ppx,ppy,ppb;
