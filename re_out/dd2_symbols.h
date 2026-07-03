@@ -1336,10 +1336,20 @@ extern int unaff_retaddr;
 #define DAT_007543a0 (*(undefined1*)GIMG(0x007543a0))
 #define DAT_0046c89c (*(int*)GIMG(0x0046c89c))
 #define DAT_0046c898 (*(int*)GIMG(0x0046c898))
-#define DAT_0046303e (*(int*)GIMG(0x0046303e))
+/* DAT_0046303e/3f: BYTES (input mode 0=keyboard/1=joystick/2=none + analog flag) — the pad
+   poll FUN_00422da4 @0x422dad reads `mov 0x46303e,%al` and writes movb; int typing made the
+   mode read absorb the neighbor bytes (0x46303f + _pad_start @0x463040) -> mode!=0 -> pad
+   type 0x754451 forced 0 != _recorded_pad_type -> the live race (DD2_PLAY) opened the pause
+   menu on frame 2 and stayed there forever (auto-pause = "controller unplugged"). */
+#define DAT_0046303e (*(unsigned char*)GIMG(0x0046303e))
 #define DAT_00463024 (*(int*)GIMG(0x00463024))
-#define DAT_00754451 (*(int*)GIMG(0x00754451))
-#define DAT_0046303f (*(int*)GIMG(0x0046303f))
+/* pad-state block 0x754448-0x754451: WORD fields + 2 byte fields per asm 0x422ea0-0x422ee6
+   (66-prefix word stores to 448/44a/44c/44e, mov %ah->450 byte, movb->451 byte). int typing
+   made the pad-type compare @Play_Game read 4 bytes at 0x754451 (absorbing neighbors) and the
+   poll's stores clobber adjacent fields -> pad type never matched _recorded_pad_type -> the
+   live race (DD2_PLAY) auto-paused on frame 2 forever ("controller unplugged" semantics). */
+#define DAT_00754451 (*(unsigned char*)GIMG(0x00754451))
+#define DAT_0046303f (*(unsigned char*)GIMG(0x0046303f))
 #define DAT_00463046 (*(unsigned char*)GIMG(0x00463046))
 #define DAT_00463047 (*(unsigned char*)GIMG(0x00463047))
 #define DAT_00463048 (*(unsigned char*)GIMG(0x00463048))
@@ -1347,7 +1357,7 @@ extern int unaff_retaddr;
 #define DAT_0046304a (*(unsigned char*)GIMG(0x0046304a))
 #define DAT_0046304e (*(unsigned char*)GIMG(0x0046304e))
 #define DAT_00463050 (*(unsigned short*)GIMG(0x00463050))
-#define DAT_00754450 (*(int*)GIMG(0x00754450))
+#define DAT_00754450 (*(unsigned char*)GIMG(0x00754450))
 #define DAT_0046304f (*(unsigned char*)GIMG(0x0046304f))
 #define DAT_0046302d (*(int*)GIMG(0x0046302d))
 #define DAT_0046302e (*(int*)GIMG(0x0046302e))
@@ -2427,11 +2437,11 @@ extern int unaff_retaddr;
 #define _DAT_0071c03c (*(int*)GIMG(0x0075443c))
 #define _DAT_0071c040 (*(int*)GIMG(0x00754440))
 #define _DAT_0071c044 (*(int*)GIMG(0x00754444))
-#define _DAT_0071c048 (*(int*)GIMG(0x00754448))
-#define _DAT_0071c04a (*(int*)GIMG(0x0075444a))
-#define _DAT_0071c04c (*(int*)GIMG(0x0075444c))
-#define _DAT_0071c04e (*(int*)GIMG(0x0075444e))
-#define _DAT_0071c050 (*(int*)GIMG(0x00754450))
+#define _DAT_0071c048 (*(unsigned short*)GIMG(0x00754448))
+#define _DAT_0071c04a (*(unsigned short*)GIMG(0x0075444a))
+#define _DAT_0071c04c (*(unsigned short*)GIMG(0x0075444c))
+#define _DAT_0071c04e (*(unsigned short*)GIMG(0x0075444e))
+#define _DAT_0071c050 (*(unsigned char*)GIMG(0x00754450))
 #define _DAT_0073c060 (*(int*)GIMG(0x00774460))
 #define _DAT_0073c280 (*(int*)GIMG(0x00774680))
 #define _DAT_0073c290 (*(int**)GIMG(0x00774690))
@@ -2894,7 +2904,7 @@ extern int unaff_retaddr;
 #define _DAT_007541c0 (*(int*)GIMG(0x007541c0))
 #define _DAT_0074c6f2 (*(short*)GIMG(0x0074c6f2)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0074f178 (*(int*)GIMG(0x0074f178))
-#define _DAT_0075444a (*(int*)GIMG(0x0075444a))
+#define _DAT_0075444a (*(unsigned short*)GIMG(0x0075444a))
 #define _DAT_00795df0 (*(int*)GIMG(0x00795df0))
 #define _DAT_0077474a (*(short*)GIMG(0x0077474a)) /* WORD, see 0x774748 note */
 #define _DAT_0093a308 (*(int*)GIMG(0x0093a308))
@@ -2916,7 +2926,7 @@ extern int unaff_retaddr;
 #define _DAT_00469072 (*(undefined1*)GIMG(0x00469072))
 #define _DAT_0074c520 (*(int*)GIMG(0x0074c520))
 #define _DAT_00792510 (*(int*)GIMG(0x00792510))
-#define _DAT_0075444c (*(int*)GIMG(0x0075444c))
+#define _DAT_0075444c (*(unsigned short*)GIMG(0x0075444c))
 #define _DAT_00792a10 (*(int*)GIMG(0x00792a10))
 #define _DAT_00754226 (*(short*)GIMG(0x00754226))
 #define _DAT_00782ae0 (*(int*)GIMG(0x00782ae0))
@@ -2934,7 +2944,7 @@ extern int unaff_retaddr;
 #define _DAT_0074c588 (*(int*)GIMG(0x0074c588))
 #define _DAT_00940af8 (*(int*)GIMG(0x00940af8))
 #define _DAT_007925d0 (*(int*)GIMG(0x007925d0))
-#define _DAT_0075444e (*(int*)GIMG(0x0075444e))
+#define _DAT_0075444e (*(unsigned short*)GIMG(0x0075444e))
 #define _DAT_00784294 (*(int*)GIMG(0x00784294))
 #define _DAT_0074c6f8 (*(short*)GIMG(0x0074c6f8)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0074c46c (*(int*)GIMG(0x0074c46c))
@@ -3025,7 +3035,7 @@ extern int unaff_retaddr;
 #define _DAT_0077cf18 (*(int*)GIMG(0x0077cf18))
 #define _DAT_00754444 (*(int*)GIMG(0x00754444))
 #define _DAT_00792578 (*(int*)GIMG(0x00792578))
-#define _DAT_00754450 (*(int*)GIMG(0x00754450))
+#define _DAT_00754450 (*(unsigned char*)GIMG(0x00754450))
 #define _DAT_007924fe (*(int*)GIMG(0x007924fe))
 #define _DAT_00940b04 (*(int*)GIMG(0x00940b04))
 #define _DAT_0093dea4 (*(int*)GIMG(0x0093dea4))
@@ -3116,7 +3126,7 @@ extern int unaff_retaddr;
 #define _DAT_0079247c (*(int*)GIMG(0x0079247c))
 #define _DAT_0074c554 (*(int*)GIMG(0x0074c554))
 #define _DAT_0079249c (*(int*)GIMG(0x0079249c))
-#define _DAT_00754448 (*(int*)GIMG(0x00754448))
+#define _DAT_00754448 (*(unsigned short*)GIMG(0x00754448))
 #define _DAT_00782ae8 (*(int*)GIMG(0x00782ae8))
 #define _DAT_00940000 (*(int*)GIMG(0x00940000))
 #define _DAT_00795c46 (*(int*)GIMG(0x00795c46))
