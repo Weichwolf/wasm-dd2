@@ -112,8 +112,10 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   root = patch-365 fragment call sites passing sentinel (0xe,-1) instead of the live free-slot
   index/block number — Init_Scene_Objects collected ZERO scenery blocks on every L1-7 entry
   (fix 800; companion CLUT-anim scattered-locals fix 795). L9 cf245/450/650 + verify 10/10
-  both targets re-confirmed after both. FE-cycle demos #3-#5 (L5/L2/L3) fb-verified vs ref:
-  0/307200 at cf4+cf150 each (one attach-capture per side, lv-gated). FE-cycle nat<->wasm
+  both targets re-confirmed after both. FE-cycle demos #3-#7 (L5/L2/L3/L4 + the SECOND L9 =
+  full rotation wrap) fb-verified vs ref: 0/307200 at cf4+cf150 each (one attach-capture per
+  side, lv-gated) — the whole attract rotation 9,6,5,2,3,4,9,... is bit-identical incl. cycle
+  wrap (patch-685 "later attract cycles" concern definitively closed). FE-cycle nat<->wasm
   parity: fliplog (cf+rand_calls per flip) identical across the whole boot->FE->L9->FE->L6
   run (5724 flips) and demo#2 cf0-175 flip-phase fb dumps 176/176 bit-identical (node `fe`
   mode + DD2_CFONLY=1 DD2_CFDUMP; kill both runs INSIDE the same demo or cf-keyed files get
