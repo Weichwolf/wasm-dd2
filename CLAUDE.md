@@ -82,20 +82,28 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   null device (~/.asoundrc `pcm.!default { type null }`) — headless wine otherwise has NO audio
   device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). Remaining Stage-2
   work: verify later attract cycles (patch-685 remnants).
-- **Stage 3 — playable: RACE = DONE on both targets; FE menus = in progress.** Live race
-  (DD2_PLAY=9 native / DD2_LIVE=1 wasm; browser interactive build `make web` -> web/dd2):
-  keyboard AND gamepad drive the car on both targets; scripted runs (DD2_SCRIPT/DD2_PADSCRIPT,
-  cf-keyed — flip counts are NOT target-invariant, the engine counter is) are BIT-IDENTICAL
-  native<->wasm (full live races, cmp-exact audio streams). Controls matrix (measured,
-  cf600-differential + Pause_Mode-break + fb-diff): arrows=steer, A=accel, Z=brake/reverse,
-  ESC/ENTER=pause (exact-cf), F1/F2=camera view, W/S/SPACE/UP/DOWN=no race effect; pad axes=
-  analog steer, button1=accel, button2=brake. Browser: realtime 25fps via DD2_REALTIME
-  (GetTickCount = real ms; engine's own frame limiter), WebAudio sink (mixer ticks scheduled
-  on a time cursor), Gamepad API polling -> dd2_pad_update (synthetic-pad E2E validated; the
-  pad must be connected at load = faithful Windows detect-at-boot). Roots fixed on the way:
-  pad-state block int-typing (perma-pause), JOYCAPS scattered locals (745), _pad_option
-  semantics (750). Remaining: FE menus/track-select (menu machine runs but draws black —
-  under investigation), then menu-nav controls tests end-to-end.
+- **Stage 3 — playable: ALL FOUR categories DONE on both targets.** Demo (bit-identical),
+  Race, Menus, Track-select each bridge to a playable populated race on native AND browser
+  (interactive build `make web` -> web/dd2). Live race (DD2_PLAY=9 native / DD2_LIVE=1 wasm):
+  keyboard AND gamepad drive the car; scripted runs (DD2_SCRIPT/DD2_PADSCRIPT, cf-keyed — flip
+  counts are NOT target-invariant, the engine counter is) are BIT-IDENTICAL native<->wasm (full
+  live races, cmp-exact audio streams). Controls matrix (measured, cf600-differential +
+  Pause_Mode-break + fb-diff): arrows=steer, A=accel, Z=brake/reverse, ESC/ENTER=pause
+  (exact-cf), F1/F2=camera view, W/S/SPACE/UP/DOWN=no race effect; pad axes=analog steer,
+  button1=accel, button2=brake. Browser: realtime 25fps via DD2_REALTIME (GetTickCount=real ms;
+  engine's own frame limiter), WebAudio sink (mixer ticks scheduled on a time cursor), Gamepad
+  API polling -> dd2_pad_update (synthetic-pad E2E validated; pad must be connected at load =
+  faithful Windows detect-at-boot). FE MENUS: full main menu renders + navigable; measured E2E
+  (headless Chromium, tools/browser/trackselect.js): Select Track -> F2 cycles track (S.C.A.
+  Motorplex) -> Go! -> Enter launches a live level-7 race with num_cars=20, opponents populated
+  and AI driving. Roots fixed on the FE path: Print x/y/z phantom-locals (755), Set_World_Matrix
+  int-stride = the black-menu root (760), LINE-prim wasm signature (765), 9 unexported menu-screen
+  /action handlers (770/775), nav-table + track_lookup pointer-scaling (780), value-cycle
+  call_indirect signature (785 — F1/F2 wasm-only), FirstSavedGame dropped return = phantom-save
+  loaded num_cars=0 = browser-only 0-opponent race (790). Pre-race: pad-state block int-typing
+  (perma-pause), JOYCAPS scattered locals (745), _pad_option semantics (750). Remaining polish
+  (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad),
+  later attract cycles (patch-685 remnants).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
