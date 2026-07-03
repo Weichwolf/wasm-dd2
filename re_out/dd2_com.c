@@ -76,18 +76,30 @@ EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
 static int ids_flip(int t,int a,int b){
     /* deterministic audio mixdown clock (dd2h_stubs.c): advance by engine frames, once per flip */
     { extern void dd2_snd_mix_flip(void); dd2_snd_mix_flip(); }
-    /* DD2_SCRIPT=<file>: deterministic scripted input. Lines "<flipno> <vk> <down>" (decimal/0x..),
-       sorted by flipno; at that presented-frame count the key event is injected through the same
-       dd2_key_event -> Translate_Keypress path a real key takes. Shared native+wasm, so scripted
-       menu/race flows are reproducible bit-exactly on both targets. */
+    /* DD2_SCRIPT=<file>: deterministic scripted input. Lines "<cf> <vk> <down>" (decimal/0x..),
+       sorted by cf; when the ENGINE frame counter @0x462ff0 reaches that value the key event is
+       injected through the same dd2_key_event -> Translate_Keypress path a real key takes.
+       cf-based (not flip-based): the presentation flip count differs across targets/paths, the
+       engine counter is target-invariant -> scripted play is bit-reproducible native<->wasm. */
     { static FILE* sf; static int sinit, snext=-1; static unsigned svk; static int sdown;
+      int _cf = *(int*)(unsigned long)0x462ff0u;
       if(!sinit){ sinit=1; const char* p=getenv("DD2_SCRIPT");
           if(p){ sf=fopen(p,"r");
               if(sf && fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; } }
-      while(sf && snext>=0 && g_frameno>=snext){
+      while(sf && snext>=0 && _cf>=snext){
           extern void dd2_key_event(unsigned int, int);
           dd2_key_event(svk, sdown);
-          if(fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; } }
+          if(fscanf(sf,"%i %i %i",&snext,&svk,&sdown)!=3) snext=-1; }
+    /* DD2_PADSCRIPT=<file>: deterministic gamepad input, lines "<cf> <x> <y> <buttons>"
+       (x/y 0..65535, center 32768) -> dd2_pad_update, polled by the engine's joyGetPos. */
+      { static FILE* pfs; static int pinit, pnext=-1; static unsigned ppx,ppy,ppb;
+        if(!pinit){ pinit=1; const char* p=getenv("DD2_PADSCRIPT");
+            if(p){ pfs=fopen(p,"r");
+                if(pfs && fscanf(pfs,"%i %i %i %i",&pnext,&ppx,&ppy,&ppb)!=4) pnext=-1; } }
+        while(pfs && pnext>=0 && _cf>=pnext){
+            extern void dd2_pad_update(int,unsigned,unsigned,unsigned);
+            dd2_pad_update(1, ppx, ppy, ppb);
+            if(fscanf(pfs,"%i %i %i %i",&pnext,&ppx,&ppy,&ppb)!=4) pnext=-1; } } }
 #ifdef DD2_BROWSER
     dd2_present((const unsigned char*)(unsigned long)0x700450u, g_palette);
     emscripten_sleep(0);   /* yield each presented frame so the browser paints + processes key events */

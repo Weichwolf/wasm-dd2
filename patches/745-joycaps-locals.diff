@@ -1,0 +1,49 @@
+FIX JOYCAPS-LOCALS: Setup_Joystick JOYCAPSA is one contiguous stack block
+
+Scattered-locals artifact (class of 070/655/705/710): Setup_Joystick @0x422cf0
+passes a 0x48-byte JOYCAPSA stack block to joyGetDevCapsA and then reads the
+axis ranges from block offsets +0x24/+0x28/+0x2c/+0x30 (wXmin/wXmax/wYmin/
+wYmax; asm frame ebp-0x60 + ebp-0x3c..-0x30). Ghidra split the block base
+(&stack0xffffffa0) from four scalar UINT locals; the compiled locals read
+unrelated frame slots, so the joystick calibration (mins/maxes/centers at
+0x754430-0x754444) was garbage (xmax = a stale host pointer) and the analog
+steering thresholds in FUN_0042317c never triggered. Observable only on the
+joystick input path (_pad_option=1).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -13714,10 +13714,18 @@
+ 
+ {
+   MMRESULT MVar1;
+-  UINT local_3c;
+-  UINT local_38;
+-  UINT local_34;
+-  UINT local_30;
++  /* ONE contiguous 0x48-byte JOYCAPSA block (asm: joyGetDevCapsA(id, ebp-0x60, 0x48); the
++     range reads are ebp-0x3c/-0x38/-0x34/-0x30 = block offsets +0x24 (wXmin), +0x28 (wXmax),
++     +0x2c (wYmin), +0x30 (wYmax)). Ghidra split the block base (&stack0xffffffa0) from four
++     scalar locals; gcc places them unrelated -> the calibration ranges read frame garbage
++     (xmax = a leftover host pointer) -> analog steering thresholds broken. Same scattered-
++     locals class as patches 070/655/705/710. */
++  unsigned char _joycaps[0x48];
++#define stack0xffffffa0 (_joycaps[0])
++#define local_3c (*(UINT*)&_joycaps[0x24])
++#define local_38 (*(UINT*)&_joycaps[0x28])
++#define local_34 (*(UINT*)&_joycaps[0x2c])
++#define local_30 (*(UINT*)&_joycaps[0x30])
+   joyinfo_tag local_18;
+   
+   MVar1 = joyGetPos(0,&local_18);
+@@ -13750,6 +13758,11 @@
+   }
+   return;
+ }
++#undef stack0xffffffa0
++#undef local_3c
++#undef local_38
++#undef local_34
++#undef local_30
+ 
+ 
+ /* ===== FUN_00422da4 @ 00422da4 ===== */

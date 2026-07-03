@@ -18,8 +18,37 @@ int GetModuleFileNameA(void* a,char* b,int c){ (void)a; if(b&&c){b[0]=0;} return
 int GetModuleHandleA(const char* a){ (void)a; return 0; }
 int GetStdHandle(int a){ (void)a; return 0; }
 int GetVersion(){ return 0; }
-int joyGetDevCapsA(int a,void* b,int c){ (void)a;(void)b;(void)c; return 2; }
-int joyGetPos(int a,void* b){ (void)a;(void)b; return 2; /* JOYERR_NOCANDO: no pad */ }
+/* ---- gamepad backend (Stage 3) ----
+   The game detects a joystick ONCE at Init_Controller_ (joyGetPos(0/1) success ->
+   joyGetDevCapsA ranges -> input mode DAT_0046303e=1) and then polls joyGetPos per frame
+   (faithful Windows semantics: hot-plug after boot is ignored, like the original).
+   Backends fill dd2_pad_{present,x,y,buttons}:
+   - browser: the shell polls navigator.getGamepads() each frame and calls the exported
+     dd2_pad_update(present,x,y,buttons) (x/y 0..65535, center 32768).
+   - deterministic tests: DD2_PADSCRIPT=<file>, lines "<flipno> <x> <y> <buttons>", applied
+     in ids_flip like DD2_SCRIPT (so pad runs are bit-reproducible on both targets). */
+int dd2_pad_present = 0;
+unsigned dd2_pad_x = 32768, dd2_pad_y = 32768, dd2_pad_buttons = 0;
+void dd2_pad_update(int present, unsigned x, unsigned y, unsigned buttons){
+    dd2_pad_present = present; dd2_pad_x = x; dd2_pad_y = y; dd2_pad_buttons = buttons; }
+int joyGetDevCapsA(int a,void* b,int c){ (void)a;
+    if(!dd2_pad_present || c < 0x20) return 2; /* JOYERR */
+    /* JOYCAPSA: wMid+wPid @0, szPname @4 (32), wXmin @0x24, wXmax @0x28, wYmin @0x2c,
+       wYmax @0x30 (the game reads 4 UINTs from the stack block at those offsets) */
+    { unsigned char* p=(unsigned char*)b; int i; for(i=0;i<c;i++) p[i]=0;
+      *(unsigned*)(p+0x24)=0;      /* wXmin */
+      *(unsigned*)(p+0x28)=65535;  /* wXmax */
+      *(unsigned*)(p+0x2c)=0;      /* wYmin */
+      *(unsigned*)(p+0x30)=65535;  /* wYmax */ }
+    return 0; }
+int joyGetPos(int a,void* b){
+    /* DD2_PADSCRIPT implies a pad is plugged in from boot (detection runs in Init_Main) */
+    { static int init; if(!init){ init=1; if(getenv("DD2_PADSCRIPT")) dd2_pad_present=1; } }
+    if(!dd2_pad_present || a!=0) return 2; /* JOYERR: only pad id 0 */
+    /* JOYINFO: wXpos, wYpos, wZpos, wButtons (4 UINTs) */
+    { unsigned* ji=(unsigned*)b;
+      ji[0]=dd2_pad_x; ji[1]=dd2_pad_y; ji[2]=32768; ji[3]=dd2_pad_buttons; }
+    return 0; }
 int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; return 0; }
 #include "dd2_symbols.h"
 /* Real _ot_dispatch (= dd2.exe): call the primitive handler from _primfuncs[type] (dd2_relocate has

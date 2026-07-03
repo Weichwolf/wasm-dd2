@@ -102,7 +102,16 @@ static int PlayModeLevel(int lvl){
      * runtime (patch 315) and the reference (dd2h front-end sets 0x754451=1 for keyboard). Without
      * this, _recorded_pad_type=0 here vs 1 on wasm -> the demo replay decodes differently ->
      * native/wasm state divergence from the first pad-dependent frame. */
-    *(unsigned char*)0x754451 = 1;
+    /* DD2_PADSCRIPT/DD2_PAD: play on the joystick path -- set the FE options choice
+       _pad_option=1 (what the controls menu writes) so Setup_Pad runs Setup_Joystick's
+       detection (joyGetPos/joyGetDevCapsA against the shim backend) instead of keyboard.
+       Pad-type seed = 2 (joystick): the value the per-frame poll FUN_00422da4 reports in
+       mode 1, so _recorded_pad_type matches and Play_Game doesn't auto-pause. */
+    if (getenv("DD2_PADSCRIPT") || getenv("DD2_PAD")) {
+        *(int*)(uintptr_t)0x467414 = 1;          /* _pad_option */
+        *(unsigned char*)0x754451 = 2;
+    } else
+        *(unsigned char*)0x754451 = 1;
     Setup_Pad(1);
     W32(0x93de1c, R32(0x4673f4));
     W32(0x93de18, R32(0x4673f8));

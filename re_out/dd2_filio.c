@@ -13,6 +13,10 @@
 #include <ctype.h>
 FILE* dd2_fopen_ci(const char* name, const char* mode){
   FILE* f=fopen(name,mode);
+  /* DD2_FIOLOG=1: log every engine file open + result (Stage-3 asset-load debugging) */
+  { static int lg=-1; if(lg<0){ extern char* getenv(const char*); lg=getenv("DD2_FIOLOG")?1:0; }
+    if(lg){ extern int fprintf(FILE*,const char*,...);
+      fprintf(stderr,"[fio] open '%s' %s -> %s\n",name,mode,f?"OK":"miss(case-probe)"); } }
   if(f) return f;
   char buf[512];
   size_t len=strlen(name);
