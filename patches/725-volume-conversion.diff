@@ -1,0 +1,81 @@
+FIX VOLUME-CONV: reconstruct FUN_004165f4 (linear volume -> DirectSound centi-dB)
+
+The assembler emitted a return-0 stub for FUN_004165f4 (no Ghidra body): every
+Play_Sound/Modify_Sound SetVolume call got 0 = full volume. The original
+@0x4165f4 converts the game's linear 0..0xfff volume, scaled by the master
+volume [0x462d84], to DirectSound centi-dB attenuation via
+trunc(log10((v+1)/4096)*2768), clamped to [-10000,0] (full derivation incl. the
+frndint-chop CRT helper 0x45681c in the code comment). Also gives the CRT
+log10 stub @0x45b0cf a real body (via un-stubbed libm log()) and fixes its
+forward declaration.
+
+Measured against the sound-enabled wine reference (DS-call capture at the
+Play_Sound/Modify_Sound vtable sites, ALSA null device): ref's first race
+volumes are -9999 (master volume [0x462d84] still 0) -- the reconstruction
+reproduces them exactly; later values depend only on [0x462d84], which evolves
+identically (game state is bit-identical).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -843,7 +843,7 @@
+ int FUN_0045b06a();
+ int IF_DLOG2();
+ int IF_DLOG10();
+-int log10();
++double log10(double);   /* patch 725: real CRT log10 body @0x45b0cf */
+ int log2();
+ int floor();
+ int _Scale();
+@@ -5998,7 +5998,34 @@
+ 
+ 
+ /* ===== FUN_004165f4 @ 004165f4 ===== */
+-int FUN_004165f4(){ return 0; }
++/* Reconstructed from asm (Ghidra didn't export a body; the assembly stub returned 0 -> every
++   sound played at FULL volume). Linear game volume -> DirectSound centi-dB attenuation:
++     0x4165f8  v = abs(arg)                     (cltd; xor; sub)
++     0x416603  if (v > 0xfff) v = 0xfff
++     0x416614  v = v * [0x462d84]master / 0xfff (imul; idiv 0xfff)
++     0x41662a  x87: log10((v+1) * [0x46c84c]=1/4096) * [0x46c854]=2768.0
++               (fildl; fld1; faddp; fmull; fldlg2; fyl2x; fmull)
++     0x416643  call 0x45681c = frndint with CW hi-byte 0x1f (RC=11 chop) = trunc()
++     0x41664b  clamp to [-10000, 0]
++   Ref-verified: with master=0 (image default) every input yields -9999 = the reference's
++   first race SetVolume captures. (int) cast = the chop rounding. Min distance of all 4096
++   possible log10 products to an integer boundary is 6.4e-5, so 1-ulp libm differences
++   (glibc vs musl/wasm) cannot flip the trunc -> result stays bit-identical across targets. */
++int __cdecl FUN_004165f4(int param_1)
++{
++  int iVar1;
++  double dVar2;
++  
++  iVar1 = param_1;
++  if (iVar1 < 0) iVar1 = -iVar1;
++  if (0xfff < iVar1) iVar1 = 0xfff;
++  iVar1 = iVar1 * DAT_00462d84 / 0xfff;
++  dVar2 = log10((double)(iVar1 + 1) * 0.000244140625) * 2768.0;
++  iVar1 = (int)dVar2;
++  if (iVar1 < -10000) iVar1 = -10000;
++  if (0 < iVar1) iVar1 = 0;
++  return iVar1;
++}
+ /* ===== CD_Check @ 00416670 ===== */
+ 
+ undefined4 CD_Check(void)
+@@ -46890,7 +46917,15 @@
+ /* ===== IF_DLOG10 @ 0045b0b8 ===== */
+ int IF_DLOG10(){ return 0; }
+ /* ===== log10 @ 0045b0cf ===== */
+-int log10(){ return 0; }
++/* real CRT log10 (was a return-0 stub; needed by the reconstructed FUN_004165f4). Implemented
++   via the un-stubbed libm log(): log10(x) = log(x)/ln(10). The 1e-16-relative double-rounding
++   difference vs a native log10 is 8 orders of magnitude below the 6.4e-5 integer-boundary
++   margin of the only caller's trunc, so results are identical. */
++double log10(double __x)
++{
++  double log(double);
++  return log(__x) * 0.43429448190325176;
++}
+ /* ===== log2 @ 0045b0e2 ===== */
+ int log2(){ return 0; }
+ /* ===== floor @ 0045b0f5 ===== */
