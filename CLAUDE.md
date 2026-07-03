@@ -117,7 +117,12 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   parity: fliplog (cf+rand_calls per flip) identical across the whole boot->FE->L9->FE->L6
   run (5724 flips) and demo#2 cf0-175 flip-phase fb dumps 176/176 bit-identical (node `fe`
   mode + DD2_CFONLY=1 DD2_CFDUMP; kill both runs INSIDE the same demo or cf-keyed files get
-  overwritten by the next demo). Remaining polish
+  overwritten by the next demo). FE MAIN MENU pixel-exact vs ref: 0/307200 (compare key:
+  screen byte @0x460005==201, lv==0, menu age>300 flips [palette fade], slab byte
+  @0x4699cc==32 [flip-counter mod 64]); root was patch-480's frame miscount in the
+  FE background fill FUN_00411e0c (prim is ARG 1 at [ebp+0x14] after the 4-push
+  prologue, not arg 3 — fix 805; the type-0x60 full-screen f0 fill never painted,
+  races have no 0x60 prims so only FE edges showed it). Remaining polish
   (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad).
 
 ## Conventions
