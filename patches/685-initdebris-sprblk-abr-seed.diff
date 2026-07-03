@@ -1,0 +1,37 @@
+Init_Debris @0x424090: Setup_Sprite reads the destination block's ABR byte (+9)
+BEFORE initializing it (FUN_00416764 @0x41694f: mov 0x9(%esi),%bl; shl $5; or ->
+tpage blend bits).  Init_Debris passes two uninitialized stack blocks, so the
+ORIGINAL's debris tpage ABR bits come from deterministic stack leftovers: at
+entry (ret=0x445ebf, Init_Main), block A lies over the preceding
+InitialiseParticleSystem frame; A+9 = byte 1 of the leftover pushed argument
+s_SPARK_0046cdcc = 0xcd, B+9 = 0x00 (both measured in the reference via entry-
+stack snapshot; A[6] then = 0x19a3, matching the 66 debris prim fields that had
+diverged since cf3 -- our zero-initialized stack yielded 0x0683).  Effect chain
+proven: wrong ABR -> debris vertex-z/OT-bucket shifts -> the cf55_1 87-px fb
+split and the cf56+ cascade of the L9 attract.  Seed exactly the two bytes the
+original reads, reproducing its deterministic frame state (same principle as
+the FE-state replication); NOT a tuning constant.  Later attract cycles leave
+different remnants -- documented as open in the task notes.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -14727,6 +14727,19 @@
+   byte local_14;
+   
+   old_index = 0;
++  /* Setup_Sprite (FUN_00416764 @0x41694f: mov 0x9(%esi),%bl; shl $5; or) reads byte +9
++     of the DESTINATION block BEFORE writing it -- the ABR/blend bits of the sprite
++     tpage word come from whatever the caller frame holds.  Init_Debris does not
++     pre-write the blocks, so the original reads its own DETERMINISTIC stack leftovers:
++     at Init_Debris entry (called @0x445eba from Init_Main, measured in the reference)
++     block A sits at [entry_esp-0x70] on top of the previous InitialiseParticleSystem
++     call's remnants -- A+9 = byte 1 of the leftover Setup_Sprite argument
++     s_SPARK_0046cdcc (0x0046cdcc -> 0xcd), B+9 = 0x00.  gcc frames cannot reproduce
++     the original stack layout, so seed exactly the two bytes the original reads
++     (reference-measured AND derivable from the call sequence; valid for the boot
++     race init -- later attract cycles leave different remnants, see task notes). */
++  ((unsigned char*)local_70)[9] = 0xcd;
++  ((unsigned char*)local_58)[9] = 0x00;
+   Setup_Sprite(0,s_BON88A_0046c934,local_70);
+   Setup_Sprite(0,s_BON88B_0046c93c,local_58);
+   for (bVar7 = 0; (int)(uint)bVar7 < num_cars; bVar7 = bVar7 + 1) {
