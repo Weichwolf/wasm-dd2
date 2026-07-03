@@ -1380,7 +1380,7 @@ extern int unaff_retaddr;
 #define DAT_00463892 (*(int*)GIMG(0x00463892))
 #define DAT_00774748 (*(undefined1*)GIMG(0x00774748))
 #define DAT_00462fba (*(int*)GIMG(0x00462fba))
-#define DAT_00463896 (*(int*)GIMG(0x00463896))
+#define DAT_00463896 (*(unsigned char*)GIMG(0x00463896))  /* BYTE: Update_Debris @0x424a0a loads it `xor eax,eax; mov al,[0x463896]` into __rgb0; int typing fed 4 garbage bytes into gte_dpcs -> debris shade bytes diverged (the long-standing "debris 2-byte fields" full-image residue) */
 #define DAT_00463860 (*(int*)GIMG(0x00463860))
 #define DAT_00463864 (*(int*)GIMG(0x00463864))
 #define DAT_00463868 (*(int*)GIMG(0x00463868))
@@ -1621,7 +1621,7 @@ extern int unaff_retaddr;
 #define DAT_0046633b (*(int*)GIMG(0x0046633b))
 #define DAT_00466334 (*(int*)GIMG(0x00466334))
 #define DAT_00466336 (*(int*)GIMG(0x00466336))
-#define DAT_00466340 (*(int*)GIMG(0x00466340))
+#define DAT_00466340 (*(unsigned char*)GIMG(0x00466340))  /* BYTE: ApplyWheelOverlay @0x4360a0 loads it via `xor eax,eax; mov al,[0x466340]` (zero-extended wheel base shade 0xc0); int typing read 4 bytes = 0x2cc0c0c0 into __rgb0 -> gte_ncds computed garbage wheel/shadow shades (the cf49+ wheel+shadow fb divergence vs the reference) */
 #define DAT_00466344 (*(undefined1*)GIMG(0x00466344))
 #define DAT_00466346 (*(undefined1*)GIMG(0x00466346))
 #define DAT_00466342 (*(undefined1*)GIMG(0x00466342))
@@ -2953,7 +2953,7 @@ extern int unaff_retaddr;
 #define _DAT_0093a4a0 (*(int*)GIMG(0x0093a4a0))
 #define _DAT_00792ccc (*(int*)GIMG(0x00792ccc))
 #define _DAT_0074c4ec (*(int*)GIMG(0x0074c4ec))
-#define _DAT_00774690 (*(undefined4*)GIMG(0x00774690))
+#define _DAT_00774690 (*(unsigned int**)GIMG(0x00774690))  /* K&R heap freelist ROVER (header = {next,size}, 8-byte units; MPE_InitHeap/MPE_malloc/MPE_free @0x4236f0/0x423714/0x42377c). MUST be pointer-typed: MPE_free's prev-coalesce test `rover + rover[1]*2 == bp` needs uint* element arithmetic (= size*8 bytes, asm 0x4237c8: shl ebx,3; add eax,ebx); the scalar typing made it rover+size*2 BYTES -> the merge never fired -> freed 0x10-byte load-queue nodes stayed as a separate 0x60 fragment below the main block -> every later allocation sat 0x60 lower than the reference (the long-standing "heap +0x60 alloc shift") */
 #define _DAT_007924b8 (*(int*)GIMG(0x007924b8))
 #define _DAT_0074c564 (*(int*)GIMG(0x0074c564))
 #define _DAT_00792518 (*(int*)GIMG(0x00792518))
