@@ -1,0 +1,50 @@
+FIX FE NAV-TABLE SCALING (780): arrow navigation reached wrong menu screens
+
+The four front-end menu-navigation tables (DAT_004698a4/a5/a6/a7 = left/up/
+right/down neighbor of each screen, 4-byte stride) are int-typed symbols, so
+Ghidra's (&DAT_004698a4)[iVar3] with iVar3=screen*4 scaled the byte index x4
+(reading at screen*16). asm 0x45039b etc.: lea (,%ebx,4),%edi; mov
+0x4698a4(%edi),%al = a BYTE at screen*4. Effect: from screen 1 (Select Car) a
+RIGHT read offset 16 (screen 4's data) instead of 4 -> jumped to the wrong
+screen (Information instead of Select Track), so the arrow route to the
+track-select screen was unreachable. Cast the table base to (unsigned char*).
+Pointer-scaling class (DAT_00466a20/a96 table cases).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -40621,7 +40621,7 @@
+       if ((_DAT_0075444a & 0x80) == 0) break;
+       FUN_00451c40();
+       Play_Click_FX();
+-      uVar4 = (uint)(byte)(&DAT_004698a4)[iVar3];
++      uVar4 = (uint)((unsigned char*)&DAT_004698a4)[iVar3];
+       if ((uVar4 == 2) && ((race_type == 4 || (race_type == 3)))) {
+         uVar4 = 1;
+       }
+@@ -40700,7 +40700,7 @@
+     if ((_DAT_0075444a & 0x20) != 0) {
+       FUN_00451c40();
+       Play_Click_FX();
+-      uVar4 = (uint)(byte)(&DAT_004698a6)[iVar3];
++      uVar4 = (uint)((unsigned char*)&DAT_004698a6)[iVar3];
+       if ((uVar4 == 2) && ((race_type == 4 || (race_type == 3)))) {
+         uVar4 = 3;
+       }
+@@ -40710,7 +40710,7 @@
+     if ((_DAT_0075444a & 0x10) != 0) {
+       FUN_00451c40();
+       Play_Click_FX();
+-      uVar4 = (uint)(byte)(&DAT_004698a5)[iVar3];
++      uVar4 = (uint)((unsigned char*)&DAT_004698a5)[iVar3];
+       if ((uVar4 == 2) && ((race_type == 4 || (race_type == 3)))) {
+         uVar4 = 3;
+       }
+@@ -40721,7 +40721,7 @@
+       FUN_00451c40();
+       Play_Click_FX();
+       bVar1 = true;
+-      uVar4 = (uint)(byte)(&DAT_004698a7)[iVar3];
++      uVar4 = (uint)((unsigned char*)&DAT_004698a7)[iVar3];
+       goto LAB_004505f3;
+     }
+     if ((_DAT_0075444a & 0x8000) != 0) {

@@ -1088,7 +1088,11 @@ extern int unaff_retaddr;
 #define still_running (*(int*)GIMG(0x00784284))
 #define _WindowsStdin (*(int(**)())GIMG(0x0046c39c))
 #define BaseHandicaps (*(undefined1*)GIMG(0x00465a70))
-#define track_lookup (*(undefined1*)GIMG(0x00467424))
+/* track_lookup: INT array (race_track -> _current_level), asm 0x44b99f/0x44b9dd:
+   mov 0x467424(,%eax,4),%eax = int stride-4 read. Byte typing made (&track_lookup)[race_track]
+   read a byte at race_track -> S.C.A. Motorplex (track 2) launched level 0 (Pine Hills) instead
+   of 7. Pointer-scaling class (nav-table 780, corner INT array 655-era). */
+#define track_lookup (*(int*)GIMG(0x00467424))
 #define race_finished (*(int*)GIMG(0x00795df4))
 #define car0_being_obstructed (*(int*)GIMG(0x0078a380))
 #define scene_position (*(undefined1*)GIMG(0x007876a0))
