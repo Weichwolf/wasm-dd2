@@ -230,6 +230,14 @@ int main(void){
         extern void Init_Front_End(void); extern void Front_End(void);
         W32(0x4673f4, 0);   /* race_type = 0 (valid string-table index; else FUN_00450640 OOB) */
         W32(0x4673f8, 0);   /* race_mode = 0 */
+        /* dd2_apply_frontend_state is the FE-EXIT snapshot (race direct-start); it zeroes the
+         * copyright-once flag 0x467564 (already consumed in the captured reference). The FE
+         * CYCLE mode replays the FE from its start, where the original still has the image
+         * default 1: FUN_0044b7f4 shows LEV0\COPYRIGH.BMP on the FIRST loading screen and
+         * consumes the flag. With 0 our first loading screen showed LOADING.BMP instead ->
+         * one screen/frame off + different leftover fb border pixels -> the slab-zoom into
+         * demo #2 magnified them (the cf4..cf150 divergence vs the reference FE cycle). */
+        W32(0x467564, 1);
         CK("Init_Front_End()"); Init_Front_End();
         /* Seed keyboard pad type BEFORE Setup_Pad records _recorded_pad_type -- MUST match the WASM
      * runtime (patch 315) and the reference (dd2h front-end sets 0x754451=1 for keyboard). Without
