@@ -60,8 +60,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   (wasm-compatible poll-watchpoint in _ot_dispatch), DD2_NOPATCH=1 (build.sh, tracer builds). Both launchers boot the REAL Init_Main @0x445814 → **audio sample staging
   0x7fa164-0x816ff0 100% byte-identical** (mixer output = remaining audio work). Non-whitelisted
   full-image state diff ~4.3KB (card region re-capture noise, debris 2-byte fields, 0x7959a8
-  array, invisible sky-dome prim phase). NEXT: multi-frame fb streak (cf1..cf16), L1/L8 spot
-  checks, audio mixer, then Stage 3. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
+  array, invisible sky-dome prim phase). **Multi-frame streak vs ref: cf4–cf48 100% pixel-identical**
+  (multi-cf captures: one ref boot dumps many cfs — /tmp/refmulti.sh pattern; compare at the same
+  Draw_All-entry phase). Divergence starts cf49 (race start): diff mask = car-SHADOW quads +
+  wheel overlays only (geometry aligned, pixel values differ → blend/shade path). Falsified roots
+  (measured, do not re-chase): heap +0x60 shift (stale frozen-dump noise — SaveGames drift between
+  capture days; today's ref alloc/free sequence incl. addresses is byte-identical to ours), wheel
+  shade stale bytes (patched to ref values at cf48 → cf49 diff unchanged), timing/frame_skip/rand
+  (identical; rand idle until cf54). Next lead: shadow blitter draw_half @0x41066a / FUN_0041080d
+  FLAT-blend CONCAT decompile (never asm-verified). _car_info WORD store fixed (car-0 race position). Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
   re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
   0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
   that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
