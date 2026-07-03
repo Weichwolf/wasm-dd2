@@ -2024,9 +2024,15 @@ extern int unaff_retaddr;
 #define DAT_00450de0 (*(undefined1*)GIMG(0x00450de0))
 #define DAT_00450e00 (*(undefined1*)GIMG(0x00450e00))
 #define DAT_004699d2 (*(undefined1*)GIMG(0x004699d2))
-#define DAT_00450e1e (*(undefined1*)GIMG(0x00450e1e))
-#define DAT_00450e26 (*(undefined1*)GIMG(0x00450e26))
-#define DAT_00450e22 (*(undefined1*)GIMG(0x00450e22))
+/* DAT_00450e1e/22/26: DWORDS (FE screen-poly light block + colour template). Draw_Screen_Polys
+   @0x4510a8/0x4510ad loads [0x450e26] as a dword and block-copies 8 bytes from 0x450e1e
+   (movsl x2) into its frame; the lighting then uses (short)/hi-word views of the two dwords
+   (screen-normal vector, e.g. word@0x450e22=0xf000=-4096). Byte typing made
+   (short)DAT_00450e22 read one byte = 0 -> light dot = 0 -> shade 0 -> zero CLUT row ->
+   the whole FE menu rendered BLACK. */
+#define DAT_00450e1e (*(int*)GIMG(0x00450e1e))
+#define DAT_00450e26 (*(int*)GIMG(0x00450e26))
+#define DAT_00450e22 (*(int*)GIMG(0x00450e22))
 #define DAT_00940000 (*(undefined1*)GIMG(0x00940000))
 #define DAT_004699cc (*(int*)GIMG(0x004699cc))
 #define DAT_004699ca (*(int*)GIMG(0x004699ca))
