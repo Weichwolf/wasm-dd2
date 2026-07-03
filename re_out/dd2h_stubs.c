@@ -282,13 +282,15 @@ void dd2_snd_mix_flip(void){
         if(pf) fwrite(out,2,882*2,pf);
         /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
            Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
-           and sees playback positions of audio already played by the end of the tick. Phase 4:
+           and sees playback positions of audio already played by the end of the tick. Phase 5:
            the original's fire phase is wallclock (registration time) with inherent one-period
            jitter; reconstructed from the sound-enabled reference (cf128/cf256 retriggers need
-           channel frees at cf124/cf254; blocking one-shots end at cf123.15/cf253.x). */
+           their channel freed before cf128/cf256; the blocking one-shots exhaust at mixer
+           tick 125/255 under our flip-quantized Play starts -- sub-tick start offsets shift
+           end positions by <1 tick vs wallclock, so the phase absorbs that quantization). */
         { extern int g_dd2_mmtimer_active; extern void FUN_0041345c(void);
           int tick_cf = last_cf - dt + 1 + t;
-          if(g_dd2_mmtimer_active && tick_cf % 10 == 4) FUN_0041345c(); }
+          if(g_dd2_mmtimer_active && tick_cf % 10 == 5) FUN_0041345c(); }
     }
     if(pf) fflush(pf);
 }

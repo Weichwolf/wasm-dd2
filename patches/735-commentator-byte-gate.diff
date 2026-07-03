@@ -1,0 +1,30 @@
+FIX COMMENTATOR-GATE: byte test of the demo tick counter (asm testb 0x7746c0)
+
+FUN_00448368's crash-commentary block is gated by asm 0x448c42
+`testb $0xff,[0x7746c0]; jne skip` -- a LOW-BYTE test of the demo tick counter
+(zero every 256 sub-ticks = every 128 cf; the commentator can only speak on
+that grid). Ghidra rendered it as `DAT_007746c0 == '\0'` with the int-typed
+counter symbol (the same dword the demo loop increments and derives
+current_frame from, so the symbol itself must stay int): the compare saw the
+full counter, nonzero after cf0, making the whole commentator block
+unreachable. The sound-enabled wine reference plays commentary line 0x16
+("big crash") at cf128 and cf256; we never did -- the last 2 of 59 race
+sound-starts that didn't match. Same int-typed-byte class as the sun-y and
+flare-table fixes.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -35413,7 +35413,12 @@
+       }
+       iVar4 = iVar4 + 0x27c;
+     } while (iVar4 != 0x31b0);
+-    if (DAT_007746c0 == '\0') {
++    /* asm 0x448c42: `testb $0xff,0x7746c0` -- the gate tests only the LOW BYTE of the demo
++       tick counter (== 0 every 256 sub-ticks = every 128 cf: the commentator crash lines can
++       only trigger on that grid). The int-typed symbol made this compare the full counter
++       (nonzero after cf0) -> the whole commentator block was unreachable for the rest of the
++       race (ref plays crash commentary @cf128/cf256, we never did). */
++    if (*(unsigned char *)&DAT_007746c0 == '\0') {
+       if ((8 < _total_collisions) && (5 < _cars_in_crash)) {
+         _euphoria = 1;
+       }
