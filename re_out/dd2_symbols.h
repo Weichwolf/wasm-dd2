@@ -2783,10 +2783,10 @@ extern int unaff_retaddr;
 #define _DAT_0093def4 (*(int*)GIMG(0x0093def4))
 #define _DAT_0093fd20 (*(int*)GIMG(0x0093fd20))
 #define _DAT_00469a38 (*(undefined1*)GIMG(0x00469a38))
-#define _DAT_0074c700 (*(int*)GIMG(0x0074c700))
+#define _DAT_0074c700 (*(short*)GIMG(0x0074c700)) /* WORD slot: gte_SetRotMatrix @0x4149a0 stores all 9 matrix elements with 66-prefix word moves (asm 0x4149a9..0x414a01); int typing made each C store clobber the neighbour, and the last one (0x74c700=m[2][2]) zeroed the low half of translation-x @0x74c702 -> view-x off by n*65536 for every object drawn after a SetRotMatrix without a following SetTransVector (tilt-sprite path FUN_0041f7d0) */
 #define _DAT_00792594 (*(int*)GIMG(0x00792594))
 #define _DAT_007541fe (*(int*)GIMG(0x007541fe))
-#define _DAT_0074c6f4 (*(int*)GIMG(0x0074c6f4))
+#define _DAT_0074c6f4 (*(short*)GIMG(0x0074c6f4)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_007542ca (*(undefined1*)GIMG(0x007542ca))
 #define _DAT_00792488 (*(int*)GIMG(0x00792488))
 #define _DAT_0077cf08 (*(int*)GIMG(0x0077cf08))
@@ -2859,7 +2859,7 @@ extern int unaff_retaddr;
 #define _DAT_0075422c (*(short*)GIMG(0x0075422c))
 #define _DAT_0077c758 (*(int*)GIMG(0x0077c758))
 #define _DAT_0074c6d4 (*(int*)GIMG(0x0074c6d4))
-#define _DAT_0074c6fc (*(int*)GIMG(0x0074c6fc))
+#define _DAT_0074c6fc (*(short*)GIMG(0x0074c6fc)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0074c55c (*(int*)GIMG(0x0074c55c))
 #define _DAT_0093fd4c (*(undefined1*)GIMG(0x0093fd4c))
 #define _DAT_0079256c (*(int*)GIMG(0x0079256c))
@@ -2882,7 +2882,7 @@ extern int unaff_retaddr;
 #define _DAT_00791bcc (*(int*)GIMG(0x00791bcc))
 #define _DAT_0079253c (*(int*)GIMG(0x0079253c))
 #define _DAT_007541c0 (*(int*)GIMG(0x007541c0))
-#define _DAT_0074c6f2 (*(int*)GIMG(0x0074c6f2))
+#define _DAT_0074c6f2 (*(short*)GIMG(0x0074c6f2)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0074f178 (*(int*)GIMG(0x0074f178))
 #define _DAT_0075444a (*(int*)GIMG(0x0075444a))
 #define _DAT_00795df0 (*(int*)GIMG(0x00795df0))
@@ -2917,7 +2917,7 @@ extern int unaff_retaddr;
 #define _DAT_007925bc (*(int*)GIMG(0x007925bc))
 #define _DAT_0093a30c (*(int*)GIMG(0x0093a30c))
 #define _DAT_0079261c (*(int*)GIMG(0x0079261c))
-#define _DAT_0074c6f6 (*(int*)GIMG(0x0074c6f6))
+#define _DAT_0074c6f6 (*(short*)GIMG(0x0074c6f6)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_00791bd6 (*(int*)GIMG(0x00791bd6))
 #define _DAT_00754404 (*(int*)GIMG(0x00754404))
 #define _DAT_00791bce (*(int*)GIMG(0x00791bce))
@@ -2926,7 +2926,7 @@ extern int unaff_retaddr;
 #define _DAT_007925d0 (*(int*)GIMG(0x007925d0))
 #define _DAT_0075444e (*(int*)GIMG(0x0075444e))
 #define _DAT_00784294 (*(int*)GIMG(0x00784294))
-#define _DAT_0074c6f8 (*(int*)GIMG(0x0074c6f8))
+#define _DAT_0074c6f8 (*(short*)GIMG(0x0074c6f8)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0074c46c (*(int*)GIMG(0x0074c46c))
 #define _DAT_00792a92 (*(int*)GIMG(0x00792a92))
 #define _DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
@@ -3068,7 +3068,7 @@ extern int unaff_retaddr;
 #define _DAT_00795de4 (*(int*)GIMG(0x00795de4))
 #define _DAT_007924a4 (*(int*)GIMG(0x007924a4))
 #define _DAT_00792582 (*(int*)GIMG(0x00792582))
-#define _DAT_0074c6fe (*(int*)GIMG(0x0074c6fe))
+#define _DAT_0074c6fe (*(short*)GIMG(0x0074c6fe)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0093deae (*(int*)GIMG(0x0093deae))
 #define _DAT_0074c706 (*(int*)GIMG(0x0074c706))
 #define _DAT_0078188c (*(int*)GIMG(0x0078188c))
@@ -3114,7 +3114,7 @@ extern int unaff_retaddr;
 #define _DAT_007747cc (*(int*)GIMG(0x007747cc))
 #define _DAT_0075420a (*(int*)GIMG(0x0075420a))
 #define _DAT_00782ae6 (*(int*)GIMG(0x00782ae6))
-#define _DAT_0074c6fa (*(int*)GIMG(0x0074c6fa))
+#define _DAT_0074c6fa (*(short*)GIMG(0x0074c6fa)) /* WORD slot: GTE rot-matrix element, see 0x74c700 note */
 #define _DAT_0093fc78 (*(int*)GIMG(0x0093fc78))
 #define _DAT_0093fd40 (*(int*)GIMG(0x0093fd40))
 #define _DAT_0077475c (*(int*)GIMG(0x0077475c))
