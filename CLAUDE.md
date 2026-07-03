@@ -75,8 +75,13 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   clear loop scale x4 and wipe the GTE corner-offset constants @0x466a96+ (asm 0x43b086 = byte
   stores, unscaled) → Get_Corner_Positions transformed zero vectors → skid quads degenerate; plus
   patch 665 (44 GTE const hi-half loads are `sar` = signed; the patch-010 subpiece conversion had
-  zero-extended them). Divergence now starts cf56 = FIRST COLLISION (physics cascade; collision/
-  crush path vs ref is the next front). Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
+  zero-extended them). Streak now **cf4–cf55 = 100%**, state
+  non-whitelist-clean through cf56 (further roots: bowl_cars byte-push 670, replay movw 675,
+  corner-x INT array base DAT_00466a96 — byte typing made `(&DAT)[i*2]` read bytes at stride 2
+  instead of ints at stride 8 → corner-x always 0 in the 1pt fine-pos adjust). Remaining: cf56
+  fb blob (1041 px at the car-13 crash site; state reconverges ⇒ intra-tick rendering seed in
+  the collision tick — PIXWIN the blob pixels next). Capture pitfall: gdb-python on_stop
+  recurses per continue — sys.setrecursionlimit required or wine captures die after ~53 hits. Verification loop: DD2_HIST/DD2_PIXWIN/DD2_DBGPRIM in
   re_out/dd2h_stubs.c + tools/refhist.sh; ref captures via 3-stage gdb arming (hbreak 0x4431e8 →
   0x420c9c cf-gate → target fn). Pitfalls proven: prim-level compares must be restricted to prims
   that WIN pixels; fb-vs-ref compares only at the same Draw_All-entry phase (start-light pixels
