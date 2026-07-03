@@ -1,0 +1,25 @@
+FUN_00433ba0 @0x433ba0: the bowl-cars target list push is a BYTE store.
+
+The surfai/bowl target queue @bowl_cars (0x78a364, popped bytewise by
+AI_Com_Server -- patch 495 fixed the POP side) is FILLED with byte pushes:
+  433be2: 40         inc %eax
+  433bea: 88 50 ff   mov %dl,-0x1(%eax)     ; BYTE store, pointer stepped +1
+The mechanical deref-cast pass (patch 005) rendered the push as
+`*(int*)_DAT_0078a378 = ...` -- a 4-byte store advancing by 1: every push
+zeroed the next three queue entries, so the list ended up mostly zeros
+(ref holds packed car indices 13..19).  The AI then targeted car 0/garbage
+instead of the intended bowl opponents -> physics diverged from the
+reference at cf51 and cascaded into the first collision (cf55/56 fb split
+of the L9 attract).  Fix: byte store, matching the asm.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -23419,7 +23419,7 @@
+       do {
+         if ((*(int *)(&DAT_00792a92 + iVar6) == 0) && (*(int *)(&DAT_00792ac6 + iVar6) == 0)) {
+           pcVar1 = _DAT_0078a378 + 1;
+-          *(int*)_DAT_0078a378 = (char)iVar2 + '\x01';
++          *(char*)_DAT_0078a378 = (char)iVar2 + '\x01';  /* BYTE push (asm 0x433bea: mov %dl,-0x1(%eax)) */
+           _DAT_0078a378 = pcVar1;
+         }
+         iVar2 = iVar2 + 1;
