@@ -17,13 +17,22 @@
 <body>
   <h1>Destruction Derby 2 — dd2h.exe decompiled → WASM (interactive)</h1>
   <canvas id="canvas" width="320" height="240" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
-  <p class="hint"><b>Arrows</b> steer/accel/brake &nbsp;·&nbsp; <b>Enter</b> accept &nbsp;·&nbsp; <b>Esc</b> back &nbsp;·&nbsp; click canvas to focus</p>
+  <p class="hint"><b>A</b> accelerate &nbsp;·&nbsp; <b>Z</b> brake/reverse &nbsp;·&nbsp; <b>Arrows</b> steer &nbsp;·&nbsp; <b>Enter</b> accept &nbsp;·&nbsp; <b>Esc</b> back/pause &nbsp;·&nbsp; gamepad supported &nbsp;·&nbsp; click canvas to focus</p>
   <script>
     var canvas = document.getElementById('canvas');
     var Module = {
       canvas: canvas,
       print: (...a)=>console.log(...a),
       printErr: (...a)=>console.error(...a),
+      preRun: [function(){
+        // Interactive browser defaults: live race with sound. (URL ?demo runs the attract,
+        // ?level=N picks the track; the FE menu flow replaces this once its rendering lands.)
+        var q = new URLSearchParams(location.search);
+        ENV.DD2_SOUND = '1';
+        ENV.DD2_REALTIME = '1';   // faithful 25fps pacing (engine frame limiter on real time)
+        if (!q.has('demo')) ENV.DD2_LIVE = '1';
+        ENV.DD2_LEVEL = q.get('level') || '9';
+      }],
       onRuntimeInitialized: function(){
         // Route real keyboard events to the engine: keydown/keyup -> dd2_browser_key_event(code, down).
         var send = function(code, down){
@@ -34,6 +43,25 @@
                        KeyA:1,KeyS:1,KeyW:1,KeyZ:1,F1:1,F2:1};
         window.addEventListener('keydown', function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 1); } });
         window.addEventListener('keyup',   function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 0); } });
+        // Gamepad API -> engine joystick backend (dd2_pad_update in dd2h_stubs.c).
+        // Axes 0/1 -> 0..65535 (center 32768), buttons -> bitmask (A=1, B=2, X=4, Y=8, ...).
+        // The engine detects the pad ONCE at boot (faithful Windows joyGetPos semantics), so a
+        // pad connected before/while the page loads is picked up; DD2 uses buttons 1+2 = accel/brake.
+        var padPoll = function(){
+          var gps = navigator.getGamepads ? navigator.getGamepads() : [];
+          var gp = null;
+          for (var i=0;i<gps.length;i++) if (gps[i] && gps[i].connected){ gp = gps[i]; break; }
+          if (gp) {
+            var x = Math.max(0, Math.min(65535, Math.round((gp.axes[0]+1)*32767.5)));
+            var y = Math.max(0, Math.min(65535, Math.round((gp.axes[1]+1)*32767.5)));
+            var b = 0;
+            for (var j=0;j<gp.buttons.length && j<16;j++) if (gp.buttons[j].pressed) b |= (1<<j);
+            try { Module.ccall('dd2_pad_update', null, ['number','number','number','number'], [1, x, y, b]); }
+            catch(e){}
+          }
+          requestAnimationFrame(padPoll);
+        };
+        requestAnimationFrame(padPoll);
         canvas.focus();
       }
     };

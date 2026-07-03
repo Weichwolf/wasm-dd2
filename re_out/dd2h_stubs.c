@@ -2,6 +2,10 @@
 int dd2_dbg_prim=0;
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef DD2_BROWSER
+#include <emscripten.h>   /* MUST precede dd2_symbols.h: its symbol #defines (e.g. `data`)
+                             would otherwise mangle emscripten header parameter names */
+#endif
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
 int DirectSoundCreate(int a,void** b,int c); /* impl below (DD2_SOUND=1 -> real COM shim, else DSERR no-sound path) */
@@ -275,10 +279,37 @@ static int dd2_amp_q15(int centidb){ /* 10^(centidb/2000) in Q15 for centidb<=0 
     a=a+(unsigned)(((b2-a)*(unsigned)lo)>>12);               /* linear interp, Q15 (32768..65536) */
     n=-n; if(n>=16) return 0;
     return (int)(a>>n); }
+#ifdef DD2_BROWSER
+/* WebAudio sink: schedule each mixed 882-frame tick (22050 Hz s16 stereo) on a running time
+   cursor. Lazy AudioContext (browsers require a user gesture before audio can start). */
+EM_JS(void, dd2_audio_push, (const short* pcm, int frames), {
+    if (!Module._dd2ac) {
+        try { Module._dd2ac = new AudioContext({sampleRate:22050}); } catch(e){ return; }
+        Module._dd2t = 0;
+        var resume = function(){ if (Module._dd2ac.state==='suspended') Module._dd2ac.resume(); };
+        window.addEventListener('keydown', resume); window.addEventListener('click', resume);
+    }
+    var ac = Module._dd2ac;
+    if (ac.state==='suspended') return;   /* drop ticks until the user gesture */
+    var buf = ac.createBuffer(2, frames, 22050);
+    var l = buf.getChannelData(0), r = buf.getChannelData(1);
+    for (var i=0;i<frames;i++){
+        l[i] = HEAP16[(pcm>>1)+i*2]   / 32768;
+        r[i] = HEAP16[(pcm>>1)+i*2+1] / 32768;
+    }
+    var src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination);
+    if (Module._dd2t < ac.currentTime) Module._dd2t = ac.currentTime + 0.04;
+    src.start(Module._dd2t); Module._dd2t += frames/22050;
+});
+#endif
 void dd2_snd_mix_flip(void){
     static int last_cf=-1; static FILE* pf; static int pf_init;
     int cf,dt,i,t;
+    static int mix_out = -1;
     if(!getenv("DD2_SOUND")) return;
+#ifdef DD2_BROWSER
+    if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
+#endif
     cf=SND_CF;
     if(last_cf<0){ last_cf=cf; return; }
     dt=cf-last_cf; last_cf=cf;
@@ -286,7 +317,7 @@ void dd2_snd_mix_flip(void){
     if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p) pf=fopen(p,"wb"); } }
     for(t=0;t<dt;t++){
         static short out[882*2];
-        if(pf){ int k; for(k=0;k<882*2;k++) out[k]=0; }
+        if(pf||mix_out>0){ int k; for(k=0;k<882*2;k++) out[k]=0; }
         for(i=0;i<g_ndsbufs;i++){
             DSBuf* b=g_dsbufs[i];
             long long step,end_fp; int al,gl,gr,k;
@@ -303,12 +334,15 @@ void dd2_snd_mix_flip(void){
                 if(b->bits==16){ sl=*(short*)sp; sr=(b->channels>1)?*(short*)(sp+2):sl; }
                 else { sl=((int)sp[0]-128)<<8; sr=(b->channels>1)?(((int)sp[1]-128)<<8):sl; }
                 b->pos_fp+=step;
-                if(pf){ int vl=out[k*2]+((sl*gl)>>15), vr=out[k*2+1]+((sr*gr)>>15);
+                if(pf||mix_out>0){ int vl=out[k*2]+((sl*gl)>>15), vr=out[k*2+1]+((sr*gr)>>15);
                     out[k*2]  =(short)(vl>32767?32767:vl<-32768?-32768:vl);
                     out[k*2+1]=(short)(vr>32767?32767:vr<-32768?-32768:vr); }
             }
         }
         if(pf) fwrite(out,2,882*2,pf);
+#ifdef DD2_BROWSER
+        dd2_audio_push(out, 882);
+#endif
         /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
            Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
            and sees playback positions of audio already played by the end of the tick. Phase 5:

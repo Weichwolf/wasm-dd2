@@ -6,7 +6,26 @@ void FUN_0042304c(byte* p){ }
 void FUN_00456b30(uint a,uint b){ }
 uint FUN_0045a174(void* h){ return 0; }
 short GetKeyState(int k){ return 0; }
-unsigned GetTickCount(void){ static unsigned t=0; t+=16; return t; }
+/* GetTickCount: the engine paces itself to 25fps with this (frame limiter in Play_Game).
+   Deterministic default: a fake +16ms/call ticker (proven for all bit-exact runs).
+   DD2_REALTIME=1 (interactive browser/native play): real milliseconds, so the game runs at
+   its faithful realtime speed instead of as-fast-as-possible. */
+unsigned GetTickCount(void){
+    static int mode=-1;
+    if(mode<0){ extern char* getenv(const char*); mode = getenv("DD2_REALTIME") ? 1 : 0; }
+    if(mode){
+#ifdef DD2_BROWSER
+        double emscripten_get_now(void);
+        return (unsigned)emscripten_get_now();
+#else
+        extern int clock_gettime(int, void*);
+        struct { long s; long ns; } ts;
+        clock_gettime(1 /*CLOCK_MONOTONIC*/, &ts);
+        return (unsigned)(ts.s*1000u + ts.ns/1000000u);
+#endif
+    }
+    { static unsigned t=0; t+=16; return t; }
+}
 void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers (sound-bank blob
     + offset, FUN_00416688 -> DSLoadSoundBuffer), never real HRSRC handles: identity is the
     faithful Windows behavior for already-mapped memory */ }
