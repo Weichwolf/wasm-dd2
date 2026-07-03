@@ -3607,7 +3607,7 @@ extern int unaff_retaddr;
 #define _camera_collision (*(int*)GIMG(0x0077cf68))
 #define _camera_fd_pt (*(int*)GIMG(0x0077cf70))
 #define _car0_being_obstructed (*(int*)GIMG(0x0078a380))
-#define _car_info (*(int*)GIMG(0x00795c40))
+#define _car_info (*(short*)GIMG(0x00795c40))  /* WORD slot: Calc_Track_Positions @0x4439b9 does `mov ax,[0x795c40]` (66-prefix); int typing made the store zero the adjacent car-0 RACE POSITION short @0x795c42 every tick -> leader position stuck at 0 -> AI/attract race diverged from the reference at green light (cf49) */
 #define _cars_in_crash (*(int*)GIMG(0x00939b1c))
 #define _commentating (*(int*)GIMG(0x00939b64))
 #define _crowd_volume (*(int*)GIMG(0x00939b6c))
