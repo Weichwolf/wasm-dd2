@@ -107,9 +107,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   /action handlers (770/775), nav-table + track_lookup pointer-scaling (780), value-cycle
   call_indirect signature (785 — F1/F2 wasm-only), FirstSavedGame dropped return = phantom-save
   loaded num_cars=0 = browser-only 0-opponent race (790). Pre-race: pad-state block int-typing
-  (perma-pause), JOYCAPS scattered locals (745), _pad_option semantics (750). Remaining polish
-  (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad),
-  later attract cycles (patch-685 remnants).
+  (perma-pause), JOYCAPS scattered locals (745), _pad_option semantics (750). Attract-cycle
+  demo #2 (L6, FE cycle) is bit-identical vs ref from cf4 on (was 253013/307200 px at cf4):
+  root = patch-365 fragment call sites passing sentinel (0xe,-1) instead of the live free-slot
+  index/block number — Init_Scene_Objects collected ZERO scenery blocks on every L1-7 entry
+  (fix 800; companion CLUT-anim scattered-locals fix 795). L9 cf245/450/650 + verify 10/10
+  both targets re-confirmed after both. Remaining polish (non-blocking): physical Xbox pad on
+  real hardware (SW chain validated via synthetic pad), fb spot-check of demos #3+ (L5/L2/…)
+  in the FE cycle (same collector now feeds them).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
