@@ -1724,7 +1724,7 @@ extern int unaff_retaddr;
 #define DAT_00792612 (*(int*)GIMG(0x00792612))
 #define DAT_0079263e (*(int*)GIMG(0x0079263e))
 #define DAT_00466a9a (*(int*)GIMG(0x00466a9a))
-#define DAT_00466a96 (*(undefined1*)GIMG(0x00466a96))
+#define DAT_00466a96 (*(int*)GIMG(0x00466a96))  /* INT array base: Car_1pt_Motion_3D corner-x load `mov 0x466a96(,%eax,8),%edx; sar $0x10` (asm 0x43fce5/0x43fcf7-family) -- Ghidra indexes (&DAT_00466a96)[i*2] assuming int elements (stride 8); the byte typing made it read BYTES at stride 2 -> corner-x always 0 -> the 1pt fine-pos adjust used a zero-x corner -> car 13 drifted +-1 world unit from cf52 (the last attract physics divergence vs the reference) */
 #define DAT_00466aa2 (*(int*)GIMG(0x00466aa2))
 #define DAT_00466a9e (*(int*)GIMG(0x00466a9e))
 #define DAT_0079250c (*(int*)GIMG(0x0079250c))
