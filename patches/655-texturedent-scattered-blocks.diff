@@ -1,0 +1,106 @@
+TextureDentHiCar @0x43ba70 / TextureDentMidCar @0x43c05c: the two 20-byte dent-uv
+parameter blocks live at ebp-0x58 and ebp-0x40 in the original frame and are passed
+BY ADDRESS to FUN_0043c700/FUN_0043c868, which read them as structs:
+  +0x0c  new/old tpage   (asm 0x43bac1: mov %ax,-0x34(%ebp) = -0x40+0xc)
+  +0x12  u               (asm 0x43bacb: mov %al,-0x2e(%ebp) = -0x40+0x12)
+  +0x13  v
+Ghidra split each block into scattered locals (local_5c[12]+local_50+local_4a+local_49
+and local_44[12]+local_38+local_32+local_31).  gcc and clang order the reconstructed
+stack slots differently, so the callees' +0x12/+0x13 reads hit the WRONG local on both
+targets -- and DIFFERENT wrong bytes per target: the applied dent-uv delta measured
+-66 on native and +116 on wasm instead of the dent-table value.  Effect: the car
+damage-texture uv rewrite diverged native vs wasm at the first collision of the L9
+attract race (cf56), the first nat<->wasm framebuffer split (cf59+, blob x=473..500
+y=251..311).  Scattered-locals class (cf. patches 585/595).  Fix: one contiguous
+20-byte array per block, field access via offsets, register-for-register with the asm.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -27641,14 +27641,21 @@
+   int iVar3;
+   int iVar4;
+   short *psVar5;
+-  undefined1 local_5c [12];
+-  undefined2 local_50;
+-  undefined1 local_4a;
+-  undefined1 local_49;
+-  undefined1 local_44 [12];
+-  undefined2 local_38;
+-  undefined1 local_32;
+-  undefined1 local_31;
++  /* contiguous 20-byte dent-uv blocks @ebp-0x58 / @ebp-0x40 (asm 0x43bac1: mov %ax,-0x34(%ebp)
++     = block+0xc, 0x43bacb: mov %al,-0x2e(%ebp) = block+0x12, ...): FUN_0043c700/FUN_0043c868
++     receive the block ADDRESSES and read them as structs (+0xc tpage, +0x12 u, +0x13 v).
++     Ghidra split the blocks into scattered locals; gcc and clang order stack slots
++     differently, so the callees read the WRONG bytes on both targets (and different ones
++     per target): the dent uv delta came out -66 (native) / +116 (wasm) instead of the
++     table value -> car damage texture uv diverged native vs wasm at the first collision. */
++  undefined1 local_5c [20];
++  undefined1 local_44 [20];
++#define local_50 (*(undefined2*)(local_5c+0xc))
++#define local_4a (*(undefined1*)(local_5c+0x12))
++#define local_49 (*(undefined1*)(local_5c+0x13))
++#define local_38 (*(undefined2*)(local_44+0xc))
++#define local_32 (*(undefined1*)(local_44+0x12))
++#define local_31 (*(undefined1*)(local_44+0x13))
+   uint local_2c;
+   int local_28;
+   uint local_24;
+@@ -27837,6 +27844,13 @@
+ }
+ 
+ 
++#undef local_50
++#undef local_4a
++#undef local_49
++#undef local_38
++#undef local_32
++#undef local_31
++
+ /* ===== TextureDentMidCar @ 0043c05c ===== */
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+@@ -27849,14 +27863,21 @@
+   int iVar3;
+   int iVar4;
+   short *psVar5;
+-  undefined1 local_5c [12];
+-  undefined2 local_50;
+-  undefined1 local_4a;
+-  undefined1 local_49;
+-  undefined1 local_44 [12];
+-  undefined2 local_38;
+-  undefined1 local_32;
+-  undefined1 local_31;
++  /* contiguous 20-byte dent-uv blocks @ebp-0x58 / @ebp-0x40 (asm 0x43bac1: mov %ax,-0x34(%ebp)
++     = block+0xc, 0x43bacb: mov %al,-0x2e(%ebp) = block+0x12, ...): FUN_0043c700/FUN_0043c868
++     receive the block ADDRESSES and read them as structs (+0xc tpage, +0x12 u, +0x13 v).
++     Ghidra split the blocks into scattered locals; gcc and clang order stack slots
++     differently, so the callees read the WRONG bytes on both targets (and different ones
++     per target): the dent uv delta came out -66 (native) / +116 (wasm) instead of the
++     table value -> car damage texture uv diverged native vs wasm at the first collision. */
++  undefined1 local_5c [20];
++  undefined1 local_44 [20];
++#define local_50 (*(undefined2*)(local_5c+0xc))
++#define local_4a (*(undefined1*)(local_5c+0x12))
++#define local_49 (*(undefined1*)(local_5c+0x13))
++#define local_38 (*(undefined2*)(local_44+0xc))
++#define local_32 (*(undefined1*)(local_44+0x12))
++#define local_31 (*(undefined1*)(local_44+0x13))
+   int local_2c;
+   uint local_28;
+   uint local_24;
+@@ -28196,6 +28217,13 @@
+ }
+ 
+ 
++#undef local_50
++#undef local_4a
++#undef local_49
++#undef local_38
++#undef local_32
++#undef local_31
++
+ /* ===== Get_Corner_Positions @ 0043ca40 ===== */
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */

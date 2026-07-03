@@ -1,6 +1,7 @@
 /* dd2h re-base: Win32 stubs + _ot_dispatch */
 int dd2_dbg_prim=0;
 #include <stdio.h>
+#include <stdlib.h>
 #include "ghidra_compat.h"
 int _control87(){ return 0; }
 int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c; if(b)*b=0; return 1; /* DSERR: no sound device */ }
@@ -27,6 +28,18 @@ int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; r
 void _ot_dispatch(int* piVar1,int* b,int* c){
   (void)b;(void)c;
   unsigned _v=((unsigned*)&_primfuncs)[*(unsigned char*)((int)piVar1+7)];  /* dword fn-ptr table (explicit: _primfuncs is byte-typed in dd2_symbols.h) */
+  /* DD2_BYTEWATCH: poll a byte each dispatch; report the OT-walk position where it changed
+     (wasm-compatible "watchpoint" -- gdb can't attach to the wasm target). */
+  { static int _bw=-2; extern char* getenv(const char*); extern int atoi(const char*);
+    if(_bw==-2){ char* e=getenv("DD2_BYTEWATCH"); _bw=e?(int)strtoul(e,0,0):-1; }
+    if(_bw>0){ static unsigned char _last; static int _init=0; static void* _bwprev;
+      unsigned char _c=*(unsigned char*)(uintptr_t)_bw;
+      if(!_init){ _init=1; _last=_c; }
+      if(_c!=_last){ extern int printf(const char*,...);
+        printf("[BW] %#x %02x->%02x cf=%d by prev-prim=%p type=%02x (next=%p)\n",_bw,_last,_c,
+          *(int*)(uintptr_t)0x462ff0,_bwprev,_bwprev?*(unsigned char*)((int)(uintptr_t)_bwprev+7):0,(void*)piVar1);
+        _last=_c; }
+      _bwprev=(void*)piVar1; } }
   /* DD2_PIXWIN=<cf>: winner-prim probe -- before each prim, sample probe pixels; when one changed,
      the PREVIOUS prim painted it. Probes: (100,40),(500,60) cloud band; (320,150) box face; (320,430) ground. */
   { static int _pw=-2; if(_pw==-2){ extern char* getenv(const char*); char* e=getenv("DD2_PIXWIN"); extern int atoi(const char*); _pw=e?atoi(e):-1; }

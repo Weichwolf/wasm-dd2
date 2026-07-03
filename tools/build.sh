@@ -8,7 +8,7 @@ mkdir -p "$(dirname "$OUTJS")"
 source "$HOME/Git/emsdk/emsdk_env.sh" >/dev/null 2>&1
 
 # 1) patch: pristine decompile + patches/*.diff -> build/
-bash "$ROOT/tools/patch.sh"
+if [ -z "$DD2_NOPATCH" ]; then bash "$ROOT/tools/patch.sh"; fi
 
 # 2) compile the linked units (re_out/ also holds unlinked Ghidra copies — sprite_handlers.c etc. — skip them)
 F="-std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"

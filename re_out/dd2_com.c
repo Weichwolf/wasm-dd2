@@ -90,6 +90,23 @@ static int ids_flip(int t,int a,int b){
         if(getenv("DD2_CFDUMP")){ int cf=*(int*)(unsigned long)0x462ff0u;
             char nm2[256]; sprintf(nm2,"%s/cf%05d.bin", dir, cf);
             FILE* g2=fopen(nm2,"wb"); if(g2){ fwrite((void*)(unsigned long)0x700450u,1,640*480,g2); fclose(g2); } }
+        /* DD2_FLIPLOG: append the engine frame counter @0x462ff0 once per flip -- flip-per-cf
+           phase comparison across targets (cf-keyed fb dumps only line up if BOTH targets flip
+           the same number of times before each cf increment). */
+        if(getenv("DD2_FLIPLOG")){ static FILE* fl; char nm4[256];
+            if(!fl){ sprintf(nm4,"%s/fliplog.txt", dir); fl=fopen(nm4,"w"); }
+            if(fl){ extern unsigned g_rand_calls;
+                fprintf(fl,"%d %u\n",*(int*)(unsigned long)0x462ff0u,g_rand_calls); fflush(fl); } }
+        /* DD2_IMGDUMP=<cf-list "a,b,c">: full memory image @0x400000 (0x580400 bytes) per listed cf,
+           written once per cf at flip time -- platform-neutral state-divergence bisect (nat vs wasm). */
+        { const char* il=getenv("DD2_IMGDUMP");
+          if(il){ int cf=*(int*)(unsigned long)0x462ff0u; static int lastcf=-1, flipno=0;
+            if(cf!=lastcf){ lastcf=cf; flipno=0; } else flipno++;
+            { int m=0; const char* p=il;
+              while(*p){ int v=0,seen=0; while(*p>='0'&&*p<='9'){v=v*10+(*p-'0');p++;seen=1;}
+                if(seen&&v==cf) m=1; while(*p&&*p!=','&&(*p<'0'||*p>'9')) p++; if(*p==',')p++; }
+              if(m){ char nm3[256]; sprintf(nm3,"%s/img%05d_%d.bin", dir, cf, flipno);
+                FILE* h=fopen(nm3,"wb"); if(h){ fwrite((void*)(unsigned long)0x400000u,1,0x580400,h); fclose(h);} } } } }
         /* secondary: the DDraw primary (HUD-only until the _screenbuffer->primary Blt is wired) */
         if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);
             FILE* g=fopen(nm,"wb"); if(g){ fwrite(g_pixels,1,640*512,g); fclose(g); } }
