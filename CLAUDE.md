@@ -113,7 +113,11 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   index/block number — Init_Scene_Objects collected ZERO scenery blocks on every L1-7 entry
   (fix 800; companion CLUT-anim scattered-locals fix 795). L9 cf245/450/650 + verify 10/10
   both targets re-confirmed after both. FE-cycle demos #3-#5 (L5/L2/L3) fb-verified vs ref:
-  0/307200 at cf4+cf150 each (one attach-capture per side, lv-gated). Remaining polish
+  0/307200 at cf4+cf150 each (one attach-capture per side, lv-gated). FE-cycle nat<->wasm
+  parity: fliplog (cf+rand_calls per flip) identical across the whole boot->FE->L9->FE->L6
+  run (5724 flips) and demo#2 cf0-175 flip-phase fb dumps 176/176 bit-identical (node `fe`
+  mode + DD2_CFONLY=1 DD2_CFDUMP; kill both runs INSIDE the same demo or cf-keyed files get
+  overwritten by the next demo). Remaining polish
   (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad).
 
 ## Conventions

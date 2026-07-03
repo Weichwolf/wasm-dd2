@@ -119,8 +119,12 @@ static int ids_flip(int t,int a,int b){
         /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 640x480 8-bit framebuffer (dd2h)
            (where ALL decompiled rasterizers draw; this is the faithful bit-exact comparison
            surface — identical buffer in reference dd2h.exe). */
-        char nm[256]; sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
-        FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,640*480,f); fclose(f); }
+        /* DD2_CFONLY=1: suppress the per-flip f%05d dumps (27GB+ for a full FE cycle) and keep
+           only the cf-keyed overwriting dumps below -- compact (demo,cf) spot compares. */
+        char nm[256];
+        if(!getenv("DD2_CFONLY")){
+            sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
+            FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,640*480,f); fclose(f); } }
         /* current_frame-keyed dump for ref alignment: name by engine frame counter @0x462ff0
            (same counter tools/refcap.c polls in the reference) so frames line up across builds. */
         if(getenv("DD2_CFDUMP")){ int cf=*(int*)(unsigned long)0x462ff0u;
