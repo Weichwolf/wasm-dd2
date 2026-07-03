@@ -1,0 +1,23 @@
+Car_1pt_Motion_3D @0x43fc54, landing case 0: Calc_Object_Angles must read the
+matrix gte_MulMatrix0 just produced:
+  44022a: 8d 45 84  lea -0x7c(%ebp),%eax   ; MulMatrix0 output block
+  440242: 8d 45 84  lea -0x7c(%ebp),%eax   ; Calc_Object_Angles input = SAME block
+Ghidra passed the never-written sibling local (local_a0) instead, so the
+landing angle came from stack garbage, |angle| exceeded 0x1ff and was clamped
+to 0 -> the landed car's post-impact vel.x @0x792a04 became 0 instead of the
+reference's 40960 (hbreak-measured at the second cars-3/4 collision of the
+cf58 tick: impact params (9,-185) vs (13,-181)) -> the whole cf58-tick1
+collision cascade divergence (fb split at cf59, 81k px).  Twin of the
+already-fixed case-2 instance @0x4403d9 (which had the reverse swap).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -29898,7 +29898,7 @@
+       iVar7 = param_1 * 0x27c;
+       Calc_Object_Angles((short *)(iVar7 + 0x78a754),(short *)(&DAT_0078a790 + iVar7));
+       gte_MulMatrix0((undefined4 *)(local_34 + 0x50),(short *)(iVar7 + 0x78a754),(undefined4 *)local_80);  /* asm 0x44022a: lea eax,[ebp-0x7c] */
+-      Calc_Object_Angles(local_a0,(short *)local_58);
++      Calc_Object_Angles(local_80,(short *)local_58);  /* asm 0x440242: lea eax,[ebp-0x7c] -- reads the SAME buffer gte_MulMatrix0 just wrote (local_80); Ghidra passed the never-written local_a0 -> landing angle from stack garbage -> clamped to 0 -> car-4 post-landing vel.x = 0 instead of 40960 (ref-measured) -> second 3-4 collision impact off by 4 -> cf58-tick1 physics cascade (fb split cf59). Twin of the case-2 fix at 0x4403d9. */
+       uVar5 = (local_58[0] >> 0x10) - (*(int *)(&DAT_0078a790 + iVar7) >> 0x10);
+       if (0x7ff < (int)uVar5) {
+         uVar5 = uVar5 - 0x1000;
