@@ -20,8 +20,10 @@
   <p class="hint"><b>A</b> accelerate &nbsp;·&nbsp; <b>Z</b> brake/reverse &nbsp;·&nbsp; <b>Arrows</b> steer &nbsp;·&nbsp; <b>Enter</b> accept &nbsp;·&nbsp; <b>Esc</b> back/pause &nbsp;·&nbsp; gamepad supported &nbsp;·&nbsp; click canvas to focus</p>
   <script>
     var canvas = document.getElementById('canvas');
+    var _q = new URLSearchParams(location.search);
     var Module = {
       canvas: canvas,
+      arguments: (!_q.has('race') && !_q.has('demo')) ? ['fe'] : [],
       print: (...a)=>console.log(...a),
       printErr: (...a)=>console.error(...a),
       preRun: [function(){
@@ -30,8 +32,11 @@
         var q = new URLSearchParams(location.search);
         ENV.DD2_SOUND = '1';
         ENV.DD2_REALTIME = '1';   // faithful 25fps pacing (engine frame limiter on real time)
-        if (!q.has('demo')) ENV.DD2_LIVE = '1';
-        ENV.DD2_LEVEL = q.get('level') || '9';
+        // Default boot = the REAL front end (title -> menus -> track select -> race), like the
+        // original ddmain. ?race=N boots straight into a live race, ?demo runs the attract.
+        if (q.has('race')) { ENV.DD2_LIVE = '1'; ENV.DD2_LEVEL = q.get('race') || '9'; }
+        else if (q.has('demo')) { ENV.DD2_LEVEL = q.get('level') || '9'; }
+        // default: Module.arguments=['fe'] (set below) boots the real front end
         // Joystick play (the original's FE controls option): auto-picked when a gamepad is
         // already connected at load, or forced via ?pad. Keyboard stays active alongside.
         var pads = navigator.getGamepads ? navigator.getGamepads() : [];

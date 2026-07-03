@@ -1,0 +1,40 @@
+FIX LINE-PRIM SIGNATURE (wasm): FE menu line prims trapped call_indirect
+
+FUN_00412694 (LINE-prim rasterizer, _primfuncs type 0x42) is declared with one
+parameter; _ot_dispatch calls every prim handler as (prim,b,c). Native cdecl
+ignores the extra args; wasm's call_indirect type check traps ("function
+signature mismatch"). The front end is the first path that draws line prims
+(menu underlines via Draw_Screen_Lines), so the browser/node 'fe' boot died on
+its first menu frame (localized with the new DD2_OTLOG: last dispatch t=42
+fn=table-index-31). Normalized to the dispatch shape with unused extra params,
+like the strip-trigger table (FUN_00448e50) and subdiv dispatch (610) cases.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -26,7 +26,7 @@
+ void FUN_00411e0c(int _p1,int _p2,int param_1);
+ void __cdecl FUN_00411ebc(int *param_1,undefined *param_2);
+ void __cdecl FUN_0041243c(int *param_1,undefined *param_2);
+-void __cdecl FUN_00412694(int param_1);
++void __cdecl FUN_00412694(int param_1,int _ot_b,int _ot_c);  /* patch 765: call_indirect signature normalization */
+ void __cdecl ClearOTagR(undefined4 *param_1,int param_2);
+ void __cdecl DrawOTag(int *param_1);
+ void __cdecl DrawPrim(int param_1);
+@@ -2584,9 +2584,16 @@
+ 
+ /* ===== FUN_00412694 @ 00412694 ===== */
+ 
+-void __cdecl FUN_00412694(int param_1)
++/* LINE-prim rasterizer (OT type 0x40-0x42 family; the FE menu's Draw_Screen_Lines prims).
++   Signature normalized to the _ot_dispatch call shape (prim,b,c) for the wasm call_indirect
++   type check -- cdecl ignores extra args natively, wasm traps on the mismatch. The extra
++   params are unused (asm only reads ebp+8). Same class as the strip-trigger-table case
++   (FUN_00448e50) and the subdiv dispatch (patch 610). First reachable in wasm since the FE
++   renders (patch 760): the front end trapped on its first menu line prim. */
++void __cdecl FUN_00412694(int param_1,int _ot_b,int _ot_c)
+ 
+ {
++  (void)_ot_b; (void)_ot_c;
+   undefined1 uVar1;
+   int iVar2;
+   int iVar3;

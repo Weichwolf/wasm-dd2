@@ -107,6 +107,11 @@ void _ot_dispatch(int* piVar1,int* b,int* c){
   { extern int dd2_dbg_prim; extern char* getenv(const char*);
     static int _dbgp=-2; if(_dbgp==-2){ char* e=getenv("DD2_DBGPRIM"); extern long strtol(const char*,char**,int); _dbgp=e?(int)strtol(e,0,0):-1; }
     if(_dbgp>0 && (int)(uintptr_t)piVar1==_dbgp && *(int*)(uintptr_t)0x462ff0==3) dd2_dbg_prim=1; }
+  /* DD2_OTLOG=1: print every dispatch (type + resolved handler) -- for localizing wasm
+     call_indirect signature traps (the trap message has no wasm-side context). */
+  { static int _ol=-1; if(_ol<0){ extern char* getenv(const char*); _ol=getenv("DD2_OTLOG")?1:0; }
+    if(_ol){ extern int fprintf(FILE*,const char*,...);
+      fprintf(stderr,"[OT] t=%02x fn=%p prim=%p\n",*(unsigned char*)((int)piVar1+7),(void*)(unsigned long)_v,(void*)piVar1); } }
   if(_v!=0 && (_v<0x410000u || _v>=0x460000u)) (*(void(*)(int,int,int))(unsigned long)_v)((int)(uintptr_t)piVar1,(int)(uintptr_t)b,(int)(uintptr_t)c);
   { extern int dd2_dbg_prim; dd2_dbg_prim=0; }
 }
