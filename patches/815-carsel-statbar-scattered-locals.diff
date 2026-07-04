@@ -1,0 +1,60 @@
+FIX CAR-SELECT CRASH (815): scattered-locals wild write in FUN_0044e600 (stat bars)
+
+FUN_0044e600 @0x44e600 rebuilds the three car-select stat-bar sprite-pointer arrays
+(Acceleration / Top Speed / Grip, 5 bar-segment sprites each) whenever race_car changes
+(Toggle_Car in Select_Car's cycle path). Each array is a 5-POINTER contiguous stack block
+-- asm offsets -0x24..-0x10 (accel), -0x38..-0x24 (top speed), -0x4c..-0x38 (grip) -- but
+Ghidra split the 5th element of each into a SEPARATE local (puStack_14 / puStack_28 /
+puStack_3c) beside a `[4]` array. The body then walks each block CONTIGUOUSLY:
+`**(short **)((int)local_24 + iVar4)` with iVar4 = 0,4,8,12,16 (the `iVar2 < 0x14` loops
+touch all 5 slots). At iVar4=16 that dereferences element [4] -- which in C is NOT the
+split-off puStack_XX (gcc places it wherever it likes, not necessarily adjacent), so it
+reads a garbage stack pointer and writes 0xfa/0x7c/0xfc18 THROUGH it -> wild write ->
+browser tab crash / native heap corruption the instant you cycle cars in Car Select.
+This is the reported car-select crash.
+
+Faithful fix: coalesce each split [4]+puStack pair into the true 5-element array the asm
+uses (local_24[5]/local_38[5]/local_4c[5]); the 5th assignment goes to local_XX[4]. An
+array is always contiguous, so `(int)local_24 + iVar4` now spans exactly the intended 5
+slots and never touches an unrelated variable. No access crosses a 5-block boundary, so
+three separate [5] arrays reproduce the original 15-pointer stack region exactly.
+Scattered-locals class (edge-sorter vertex arrays, Setup_Sprite info blocks, TextureDentHi
+dent-uv blocks patch 655).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -39208,28 +39208,25 @@
+   int iVar4;
+   undefined4 *puVar5;
+   undefined4 *puVar6;
+-  undefined *local_4c [4];
+-  undefined *puStack_3c;
+-  undefined *local_38 [4];
+-  undefined *puStack_28;
+-  undefined *local_24 [4];
+-  undefined *puStack_14;
++  undefined *local_4c [5];
++  undefined *local_38 [5];
++  undefined *local_24 [5];
+   
+   local_24[0] = PTR_DAT_0044e3c0;
+   local_24[1] = PTR_DAT_0044e3c4;
+   local_24[2] = PTR_DAT_0044e3c8;
+   local_24[3] = PTR_DAT_0044e3cc;
+-  puStack_14 = PTR_DAT_0044e3d0;
++  local_24[4] = PTR_DAT_0044e3d0;
+   local_38[0] = PTR_DAT_0044e3d4;
+   local_38[1] = PTR_DAT_0044e3d8;
+   local_38[2] = PTR_DAT_0044e3dc;
+   local_38[3] = PTR_DAT_0044e3e0;
+-  puStack_28 = PTR_DAT_0044e3e4;
++  local_38[4] = PTR_DAT_0044e3e4;
+   local_4c[0] = PTR_DAT_0044e3e8;
+   local_4c[1] = PTR_DAT_0044e3ec;
+   local_4c[2] = PTR_DAT_0044e3f0;
+   local_4c[3] = PTR_DAT_0044e3f4;
+-  puStack_3c = PTR_DAT_0044e3f8;
++  local_4c[4] = PTR_DAT_0044e3f8;
+   iVar2 = 0;
+   if (0 < *param_1) {
+     iVar4 = 0;
