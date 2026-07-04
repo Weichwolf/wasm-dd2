@@ -2,6 +2,7 @@
 /* indirect-call dispatch: VA->C-function map + startup relocation of fn-pointers in the image */
 #include "ghidra_compat.h"
 extern unsigned char* g_image;
+extern int FUN_0044ed04(); extern int FUN_0044ed24(); extern int FUN_00451f4c();  /* patch 818 config/info setups */
 extern int draw_text_half();
 extern int FUN_0041033a();
 extern int draw_half();
@@ -1455,6 +1456,9 @@ dd2_fnent dd2_fnmap[]={
 {0x0044e950,(void*)&Select_ScreenPos},
 {0x0044eae0,(void*)&Configuration},
 {0x0044ecdc,(void*)&FUN_0044ecdc},
+{0x0044ed04,(void*)&FUN_0044ed04},
+{0x0044ed24,(void*)&FUN_0044ed24},
+{0x00451f4c,(void*)&FUN_00451f4c},
 {0x0044ed50,(void*)&View_Credits},
 {0x0044ee6c,(void*)&FUN_0044ee6c},
 {0x0044f788,(void*)&FUN_0044f788},
