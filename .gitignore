@@ -15,3 +15,7 @@ dd2_image.bin
 web/dd2/
 third_party/
 .wine-dd2/
+
+# copyrighted DD2 game data — user provides their own dd2h.exe; the rest is derived
+DestructionDerby2/
+/Dirinfo
