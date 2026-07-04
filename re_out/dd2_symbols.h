@@ -3474,6 +3474,8 @@ extern int unaff_retaddr;
 #define s__R_JC_T_Not_a_DD2_file_0046d240 ((char*)GIMG(0x0046d240))
 #define s__R_JC_T_Please_Wait___0046d278 ((char*)GIMG(0x0046d278))
 #define s__R_JC_T_Practice_0046efa0 ((char*)GIMG(0x0046efa0))
+#define s__R_JC_T_Time_Trials_0046efb4 ((char*)GIMG(0x0046efb4))
+#define s__R_JC_T_Multiplayer_0046efc8 ((char*)GIMG(0x0046efc8))
 #define s__R_JC_T_Reach_division_1_to_unlo_0046f0dc ((char*)GIMG(0x0046f0dc))
 #define s__R_JC_T_Reach_division_1_to_unlo_0046f104 ((char*)GIMG(0x0046f104))
 #define s__R_JC_T_Reach_division_2_to_unlo_0046f08c ((char*)GIMG(0x0046f08c))

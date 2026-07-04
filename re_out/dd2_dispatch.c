@@ -641,7 +641,7 @@ extern int Practice_Over();
 extern int FUN_00452ef0();
 extern int FUN_00452f60();
 extern int FUN_00452f80();
-extern int FUN_00453164();
+extern int FUN_00453164(); extern int FUN_004531a4(); extern int FUN_004531c4();  /* patch 817 */
 extern int FUN_00453184();
 extern int Select_Champ();
 extern int Select_Multi();
@@ -1515,6 +1515,8 @@ dd2_fnent dd2_fnmap[]={
 {0x00452f60,(void*)&FUN_00452f60},
 {0x00452f80,(void*)&FUN_00452f80},
 {0x00453164,(void*)&FUN_00453164},
+{0x004531a4,(void*)&FUN_004531a4},
+{0x004531c4,(void*)&FUN_004531c4},
 {0x00453184,(void*)&FUN_00453184},
 {0x00453204,(void*)&Select_Champ},
 {0x00453240,(void*)&Select_Multi},
