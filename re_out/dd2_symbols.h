@@ -3142,6 +3142,12 @@ extern int unaff_retaddr;
 #define _DAT_0074c554 (*(int*)GIMG(0x0074c554))
 #define _DAT_0079249c (*(int*)GIMG(0x0079249c))
 #define _DAT_00754448 (*(unsigned short*)GIMG(0x00754448))
+/* 32-bit combined pad dword: low16 @0x754448 = current buttons, high16 @0x75444a =
+   newly-pressed EDGE bits (image-contiguous). Pause_Mode (patch 810) reads/writes this
+   whole dword (asm mov eax,[0x754448] / mov dword [0x754448]); its menu-nav edge tests
+   (& 0x100000 etc = bits16-23) need the 32-bit view -- a u16 mask there is always 0
+   (pause-menu hang). The poll FUN_00422da4 keeps writing the two u16 halves separately. */
+#define _pad_dword (*(unsigned int*)GIMG(0x00754448))
 #define _DAT_00782ae8 (*(int*)GIMG(0x00782ae8))
 #define _DAT_00940000 (*(int*)GIMG(0x00940000))
 #define _DAT_00795c46 (*(int*)GIMG(0x00795c46))
