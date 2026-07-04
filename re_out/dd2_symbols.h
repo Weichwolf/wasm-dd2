@@ -3497,6 +3497,8 @@ extern int unaff_retaddr;
 #define s__R_JC_T_View_Statistics_0046e814 ((char*)GIMG(0x0046e814))
 #define s__R_JC_T_View_Statistics_0046f398 ((char*)GIMG(0x0046f398))
 #define s__R_JC_T_Wrecking_Racing_0046ee00 ((char*)GIMG(0x0046ee00))
+#define s__R_JC_T_Stock_Car_0046ee18 ((char*)GIMG(0x0046ee18))
+#define s__R_JC_T_Destruction_Derby_0046ee2c ((char*)GIMG(0x0046ee2c))
 #define s__R_JL_T_Amateur_0046dca8 ((char*)GIMG(0x0046dca8))
 #define s__R_JL_T_Delete_File_0046d3c0 ((char*)GIMG(0x0046d3c0))
 #define s__R_JL_T_Delete_File__0046d308 ((char*)GIMG(0x0046d308))

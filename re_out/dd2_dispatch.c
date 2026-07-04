@@ -636,6 +636,7 @@ extern int FUN_00452950();
 extern int FUN_004529b0();
 extern int FUN_00452b94();
 extern int FUN_00452bf4();
+extern int FUN_00452bb4(); extern int FUN_00452bd4(); extern int FUN_00452c0c(); extern int FUN_00452c24();  /* patch 816: race-mode dialog */
 extern int Practice_Over();
 extern int FUN_00452ef0();
 extern int FUN_00452f60();
@@ -1505,6 +1506,10 @@ dd2_fnent dd2_fnmap[]={
 {0x004529b0,(void*)&FUN_004529b0},
 {0x00452b94,(void*)&FUN_00452b94},
 {0x00452bf4,(void*)&FUN_00452bf4},
+{0x00452bb4,(void*)&FUN_00452bb4},
+{0x00452bd4,(void*)&FUN_00452bd4},
+{0x00452c0c,(void*)&FUN_00452c0c},
+{0x00452c24,(void*)&FUN_00452c24},
 {0x00452c40,(void*)&Practice_Over},
 {0x00452ef0,(void*)&FUN_00452ef0},
 {0x00452f60,(void*)&FUN_00452f60},
