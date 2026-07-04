@@ -2008,8 +2008,11 @@ extern int unaff_retaddr;
 #define DAT_004698a4 (*(int*)GIMG(0x004698a4))
 #define DAT_004697d4 (*(undefined1*)GIMG(0x004697d4))
 #define DAT_004697c4 (*(int*)GIMG(0x004697c4))
-#define DAT_004697c8 (*(int*)GIMG(0x004697c8))
-#define DAT_004697ca (*(int*)GIMG(0x004697ca))
+/* ring x in the menu-screen record (stride 20; asm 0x4506c1 mov 0x4697c8(%edi),%ax = WORD read,
+   edi=screen*20). int typing made (&DAT_004697c8)[screen*10] read at screen*40 (double stride) ->
+   selection ring mis-positioned on screens 1+. Paired short x@0x4697c8 / y@0x4697ca. */
+#define DAT_004697c8 (*(short*)GIMG(0x004697c8))
+#define DAT_004697ca (*(short*)GIMG(0x004697ca))
 #define DAT_004698a6 (*(int*)GIMG(0x004698a6))
 #define DAT_004698a5 (*(int*)GIMG(0x004698a5))
 #define DAT_004698a7 (*(int*)GIMG(0x004698a7))
@@ -2284,10 +2287,12 @@ extern int unaff_retaddr;
 #define _DAT_00467660 (*(int*)GIMG(0x00467660))
 #define _DAT_004682f0 (*(int*)GIMG(0x004682f0))
 #define _DAT_00469568 (*(int*)GIMG(0x00469568))
-#define _DAT_0046965c (*(int*)GIMG(0x0046965c))
-#define _DAT_0046965e (*(int*)GIMG(0x0046965e))
-#define _DAT_00469674 (*(int*)GIMG(0x00469674))
-#define _DAT_00469676 (*(int*)GIMG(0x00469676))
+/* top-row ring position x/y — WORD stores (asm 0x4506cd mov %ax,0x46965c); int typing overlapped
+   the adjacent y@0x46965e and stored 0xfc18(-1000 hide) as a dword. */
+#define _DAT_0046965c (*(short*)GIMG(0x0046965c))
+#define _DAT_0046965e (*(short*)GIMG(0x0046965e))
+#define _DAT_00469674 (*(short*)GIMG(0x00469674))
+#define _DAT_00469676 (*(short*)GIMG(0x00469676))
 #define _DAT_0046968c (*(int*)GIMG(0x0046968c))
 #define _DAT_0046968e (*(int*)GIMG(0x0046968e))
 #define _DAT_0046996e (*(int*)GIMG(0x0046996e))
