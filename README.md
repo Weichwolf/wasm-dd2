@@ -10,7 +10,7 @@ See **CLAUDE.md** for build commands, current status, and conventions.
 
 ## Contributors
 
-- **Weichwolf** (56591353+Weichwolf@users.noreply.github.com) — project owner, direction, and hands-on testing
+- **Weichwolf** — project owner, direction, and hands-on testing
   (keyboard + gamepad, native + browser).
 - **Claude** (Anthropic) — decompile-to-C reconstruction, patch authoring, and build/verify tooling.
 
