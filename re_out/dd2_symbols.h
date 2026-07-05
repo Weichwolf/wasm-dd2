@@ -3467,6 +3467,7 @@ extern int unaff_retaddr;
 #define s__R_JC_T_File_already_exists_0046d224 ((char*)GIMG(0x0046d224))
 #define s__R_JC_T_Formatting_0046d290 ((char*)GIMG(0x0046d290))
 #define s__R_JC_T_Keyboard_0046ed80 ((char*)GIMG(0x0046ed80))
+#define s__R_JC_T_Joystick_0046ed94 ((char*)GIMG(0x0046ed94))
 #define s__R_JC_T_Loading_0046d2b4 ((char*)GIMG(0x0046d2b4))
 #define s__R_JC_T_Memory_card_full_0046d1f0 ((char*)GIMG(0x0046d1f0))
 #define s__R_JC_T_Memory_card_unformatted_0046d258 ((char*)GIMG(0x0046d258))

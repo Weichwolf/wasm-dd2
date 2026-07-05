@@ -1,0 +1,52 @@
+FIX FE CONTROL-METHOD DIALOG (820): int-type + reconstruct nested-table handlers @0x46a1e8
+
+The Configuration -> Control Method sub-dialog (FUN_00452760 dispatches nested table @0x46a1e8:
+Keyboard / Joystick) trapped: (1) setup FUN_00452950 was void(void) but the nested dispatch types
+setups code=int() -> "function signature mismatch"; (2) rec-1 setup 0x452970 (Joystick label) +
+action 0x452990 (select joystick: [0x467414]=1, Setup_Pad(0)) were unexported raw VAs -> "table
+index out of bounds". Widened FUN_00452950 to int(void); reconstructed the two rec-1 siblings 1:1
+from asm + registered. rec-0 action FUN_0044f870 (Keyboard) already exists+int. Same class as
+patches 816/817/818.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -645,3 +645,5 @@
+ undefined4 FUN_00452760(void);
+-void FUN_00452950(void);
++int FUN_00452950(void);
++int FUN_00452970(void);
++int FUN_00452990(void);
+ undefined4 FUN_004529b0(void);
+@@ -41744,3 +41746,3 @@
+ 
+-void FUN_00452950(void)
++int FUN_00452950(void)
+ 
+@@ -41750,3 +41752,26 @@
+   Setup_Screen_Text((int *)&DAT_0046a17c);
+-  return;
++  return 0;
++}
++
++
++/* ===== FUN_00452970 @ 00452970 (Control-Method dialog rec-1 SETUP: "Joystick" label) ===== */
++/* Sibling of FUN_00452950, unexported; nested table @0x46a1e8 dispatches setups as code=int(). */
++int FUN_00452970(void)
++
++{
++  PTR_DAT_0046a1b4 = s__R_JC_T_Joystick_0046ed94;
++  PTR_DAT_0046a1c8 = s__R_JC_T_Joystick_0046ed94;
++  Setup_Screen_Text((int *)&DAT_0046a17c);
++  return 0;
++}
++
++
++/* ===== FUN_00452990 @ 00452990 (Control-Method dialog rec-1 ACTION: select Joystick) ===== */
++/* asm 0x452990: [0x467414]=1 (pad-option = joystick); Setup_Pad(0); return 1. */
++int FUN_00452990(void)
++
++{
++  *(int *)GIMG(0x00467414) = 1;
++  Setup_Pad(0);
++  return 1;
+ }
