@@ -1,0 +1,162 @@
+FIX FE VIEW-STATISTICS SCREEN (821): reconstruct View_Statistics @0x44d300 + 3 setup thunks
+
+The Information button's "View Statistics" record (Info nested table @0x469b78 rec-0 ACTION
+0x44d300) drilled into an interactive stats-category viewer that was never decompiled by
+Ghidra (below the game-code selection threshold) -> its VA sat in the dispatch as a raw
+address and trapped on wasm (call_indirect to an unregistered VA). The screen dispatches a
+category descriptor table @0x468050 (stride 0x14: +0 pos.word, +4 setup-fn, +8 render-fn)
+whose SETUP slots hold three trivial label-thunks (0x44d4e8 Driver / 0x44d508 Track /
+0x44d528 Championship) that were likewise unregistered raw VAs -> even after the main fn was
+callable, `call [0x468054]` (cat-0 setup) would call_indirect an unrelocated VA.
+
+Reconstructed 1:1 from objdump of dd2h.exe:
+- View_Statistics @0x44d300..0x44d4e6: the category loop. Pad-nav bits match the other FE
+  viewers (0x80/0x20 = prev/next category via byte tables 0x468088/0x46808a, 0x4000 =
+  drill-in, 0x1000 = exit). Renders (View_Driver/Track/Champ_Stats) + all helpers
+  (Rotate_Slab_On, Draw_All flip, Setup_Screen_Text/Lines, Button_Pressed, ...) already
+  exist+registered. Typed int(void) to match the nested `code`=int() dispatch.
+- Setup thunks 0x44d4e8/0x44d508/0x44d528: label-setters (write the category's string VA to
+  slots 0x468020 + 0x468034, then Setup_Screen_Text(0x467fe8)). cat-2 uses two distinct
+  strings (0x46d88c title / 0x46d8ac body) per the asm.
+
+All 4 registered in dd2_dispatch.c so dd2_relocate rewrites the descriptor + nested-table VAs
+to real table indices. This DISPROVES the prior "toolchain call_indirect bug" hypothesis: the
+screen trapped only because its handlers were unregistered raw VAs, not a binaryen anomaly.
+Unreconstructed-thunk + int-typing class (patches 770/816/817/818).
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -617,6 +617,10 @@
+ void __cdecl FUN_0044fea8(undefined1 *param_1,int param_2);
+ void __cdecl FUN_0044ff74(undefined4 param_1,undefined4 param_2,int param_3);
+ undefined4 View_BestLaps(void);
++int View_Statistics(void);
++int Stats_Setup_Driver(void);
++int Stats_Setup_Track(void);
++int Stats_Setup_Champ(void);
+ void FUN_00450108(void);
+ void Front_End(void);
+ void FUN_00450800(void);
+@@ -39262,6 +39266,122 @@
+ }
+ 
+ 
++/* ===== View_Statistics @ 0044d300 ===== */
++/* Info-screen rec-0 ACTION: interactive stats-category viewer (Driver/Track/Championship).
++   Descriptor table @0x468050 stride 0x14 (+0 pos, +4 setup, +8 render). Reconstructed 1:1
++   from objdump; int(void) to match the nested `code`=int() dispatch (patch 818 family). */
++int View_Statistics(void)
++
++{
++  int cat;      /* ebx: category index */
++  int changed;  /* edi: category-changed flag */
++  int ret;      /* local_14 */
++  int esi14;
++  unsigned short pad;
++
++  /* entry: show category 0 */
++  *(unsigned short *)GIMG(0x467f38) = *(unsigned short *)GIMG(0x468050);
++  *(unsigned short *)GIMG(0x467f3a) = *(unsigned short *)GIMG(0x468052);
++  (*(code *)(uintptr_t)*(unsigned *)GIMG(0x468054))();          /* cat-0 setup */
++  FUN_00450fe0((int)GIMG(0x467f8c));
++  Setup_Screen_Text((int *)GIMG(0x467fe8));
++  Setup_Screen_Lines((int)GIMG(0x467f68));
++  cat = 0; changed = 0; ret = 0;
++  Rotate_Slab_On((short *)0);
++  for (;;) {                                                    /* loop top @0x44d35b */
++    Debug_Stub();
++    FUN_00420c4c();
++    FUN_00422da4();
++    pad = *(unsigned short *)GIMG(0x75444a);
++    if (pad & 0x80) {                                           /* LEFT: prev category */
++      FUN_00451c40();
++      Play_Click_FX();
++      changed = 1;
++      cat = *(unsigned char *)GIMG(0x468088 + cat * 4);
++      goto changed_check;
++    }
++    pad = *(unsigned short *)GIMG(0x75444a);
++    if (pad & 0x20) {                                           /* RIGHT: next category */
++      FUN_00451c40();
++      Play_Click_FX();
++      changed = 1;
++      cat = *(unsigned char *)GIMG(0x46808a + cat * 4);
++      goto changed_check;
++    }
++    pad = *(unsigned short *)GIMG(0x75444a);
++    if (pad & 0x4000) {                                         /* ACCEPT: drill in */
++      *(int *)GIMG(0x467f8e + cat * 0xb) = *(int *)GIMG(0x467fdc + cat * 4);
++      FUN_00450fe0((int)GIMG(0x467f8c));
++      Button_Pressed(7, (short *)0);
++      *(int *)GIMG(0x467f8e + cat * 0xb) = *(int *)GIMG(0x467fd0 + cat * 4);
++      esi14 = cat * 0x14;
++      FUN_00450fe0((int)GIMG(0x467f8c));
++      Button_Pressed(2, (short *)0);
++      FUN_00450e3c((short *)0);
++      (*(code *)(uintptr_t)*(unsigned *)GIMG(0x468058 + esi14))();   /* render */
++      (*(code *)(uintptr_t)*(unsigned *)GIMG(0x468054 + esi14))();   /* setup */
++      FUN_00450fe0((int)GIMG(0x467f8c));
++      Setup_Screen_Text((int *)GIMG(0x467fe8));
++      Setup_Screen_Lines((int)GIMG(0x467f68));
++      Rotate_Slab_On((short *)0);                               /* @0x44d469 push 0; jmp 0x44d356 */
++      continue;
++    }
++    pad = *(unsigned short *)GIMG(0x75444a);
++    if (pad & 0x1000) {                                         /* EXIT */
++      FUN_00450e3c((short *)0);
++      return ret;
++    }
++  changed_check:                                                /* @0x44d47c */
++    if (changed != 0) {
++      esi14 = cat * 0x14;
++      *(unsigned short *)GIMG(0x467f38) = *(unsigned short *)GIMG(0x468050 + esi14);
++      *(unsigned short *)GIMG(0x467f3a) = *(unsigned short *)GIMG(0x468052 + esi14);
++      FUN_00450fe0((int)GIMG(0x467f8c));
++      changed = 0;
++      (*(code *)(uintptr_t)*(unsigned *)GIMG(0x468054 + esi14))();   /* new-cat setup */
++    }
++    Draw_Slab();
++    Print_Draw();
++    Draw_Screen_Polys();
++    Draw_Screen_Lines();
++    Draw_All(1);                                                /* flip (asyncify suspend) */
++  }
++}
++
++
++/* ===== Stats_Setup_Driver @ 0044d4e8 ===== */
++/* Descriptor cat-0 SETUP thunk: "View Driver Stats" label (0x46d854). */
++int Stats_Setup_Driver(void)
++{
++  *(unsigned *)GIMG(0x468020) = 0x46d854;
++  *(unsigned *)GIMG(0x468034) = 0x46d854;
++  Setup_Screen_Text((int *)GIMG(0x467fe8));
++  return 0;
++}
++
++
++/* ===== Stats_Setup_Track @ 0044d508 ===== */
++/* Descriptor cat-1 SETUP thunk: "View Track Stats" label (0x46d870). */
++int Stats_Setup_Track(void)
++{
++  *(unsigned *)GIMG(0x468020) = 0x46d870;
++  *(unsigned *)GIMG(0x468034) = 0x46d870;
++  Setup_Screen_Text((int *)GIMG(0x467fe8));
++  return 0;
++}
++
++
++/* ===== Stats_Setup_Champ @ 0044d528 ===== */
++/* Descriptor cat-2 SETUP thunk: "View Championship" (title 0x46d88c / body 0x46d8ac). */
++int Stats_Setup_Champ(void)
++{
++  *(unsigned *)GIMG(0x468020) = 0x46d88c;
++  *(unsigned *)GIMG(0x468034) = 0x46d8ac;
++  Setup_Screen_Text((int *)GIMG(0x467fe8));
++  return 0;
++}
++
++
+ /* ===== View_Track_Stats @ 0044d9d0 ===== */
+ 
+ /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */

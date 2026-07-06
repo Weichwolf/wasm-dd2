@@ -925,7 +925,7 @@ extern int unaff_retaddr;
 #define cars_in_crash (*(int*)GIMG(0x00939b1c))
 #define sure2_txt (*(undefined1*)GIMG(0x009370a0))
 #define fx_22 (*(int*)GIMG(0x00939b10))
-#define info_screen_dire_stats (*(int*)GIMG(0x00469bb8))
+#define info_screen_dire_stats (*(unsigned char*)GIMG(0x00469bb8))  /* BYTE table (Info-screen LEFT-nav next-record, stats==0): Show_Information @0x451dab loads `mov bl,BYTE [esi+0x469bb8]` with esi=rec*4; int typing made (&info_screen_dire_stats)[rec*4] scale the byte offset by 4 -> read byte[0x469bc8]=120 -> setup dispatch (&PTR_FUN_00469b78)[120*5] read a garbage VA -> call_indirect OOB on ArrowLeft */
 #define negleft_object (*(int*)GIMG(0x009401a0))
 #define __OpenStreams (*(int*)GIMG(0x00940980))
 #define car_wheel_fd (*(undefined1*)GIMG(0x00794be8))
@@ -1165,7 +1165,7 @@ extern int unaff_retaddr;
 #define __AccessSema4Fini (*(int*)GIMG(0x0046ff66))
 #define gpoly (*(int*)GIMG(0x007541c8))
 #define total_time (*(int*)GIMG(0x007746b0))
-#define info_screen_directions (*(int*)GIMG(0x00469bac))
+#define info_screen_directions (*(unsigned char*)GIMG(0x00469bac))  /* BYTE table (Info-screen LEFT-nav next-record, stats==1): Show_Information @0x451da1 loads `mov bl,BYTE [esi+0x469bac]` with esi=rec*4; int typing scaled the byte offset by 4 (same class as info_screen_dire_stats / nav-table 780) */
 #define j_anim (*(undefined1*)GIMG(0x00781890))
 #define _pad_rdown (*(unsigned char*)GIMG(0x0046304c))
 #define _pad_ldown (*(unsigned char*)GIMG(0x00463044))

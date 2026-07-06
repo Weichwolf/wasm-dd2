@@ -5,6 +5,7 @@ extern unsigned char* g_image;
 extern int FUN_0044ed04(); extern int FUN_0044ed24(); extern int FUN_00451f4c();  /* patch 818 config/info setups */
 extern int FUN_0044aae0(); extern int FUN_0044ed44();  /* patch 819 */
 extern int FUN_00452970(); extern int FUN_00452990();  /* patch 820 */
+extern int View_Statistics(); extern int Stats_Setup_Driver(); extern int Stats_Setup_Track(); extern int Stats_Setup_Champ();  /* patch 821 */
 extern int draw_text_half();
 extern int FUN_0041033a();
 extern int draw_half();
@@ -1464,6 +1465,10 @@ dd2_fnent dd2_fnmap[]={
 {0x0044aae0,(void*)&FUN_0044aae0},
 {0x0044ed44,(void*)&FUN_0044ed44},
 {0x00452970,(void*)&FUN_00452970},
+{0x0044d300,(void*)&View_Statistics},
+{0x0044d4e8,(void*)&Stats_Setup_Driver},
+{0x0044d508,(void*)&Stats_Setup_Track},
+{0x0044d528,(void*)&Stats_Setup_Champ},
 {0x00452990,(void*)&FUN_00452990},
 {0x0044ed50,(void*)&View_Credits},
 {0x0044ee6c,(void*)&FUN_0044ee6c},
