@@ -58,6 +58,16 @@ async function check(page,name,fn){
   // Race-opts dialog
   await check(page,'raceopts',async()=>{ await boot(page,server); if(!await gotoButton(page,'Wrecking'))return'FAIL reach';
     await key(page,'Enter',900); await key(page,'F2',700); await key(page,'Escape',700); await key(page,'Escape',700); return'ok'; });
+  // Race MODE dialog: navigate all icons (int-typed-byte nav-table regression guard, patch 825)
+  await check(page,'racemode_nav',async()=>{ await boot(page,server); if(!await gotoButton(page,'Wrecking'))return'FAIL reach';
+    await key(page,'Enter',900);
+    for(const k of ['ArrowRight','ArrowRight','ArrowLeft','ArrowLeft']) await key(page,k,650);
+    await key(page,'Escape',700); await key(page,'Escape',700); return'nav ok'; });
+  // Race TYPE dialog: all 4 icons (Championship/Single/TimeTrials/2P) — the agent's hard-hang, patch 825
+  await check(page,'racetype_nav',async()=>{ await boot(page,server); if(!await gotoButton(page,'Wrecking'))return'FAIL reach';
+    await key(page,'Enter',900); await key(page,'Enter',900);  // -> Race Type
+    for(const k of ['ArrowRight','ArrowRight','ArrowRight','ArrowLeft','ArrowLeft','ArrowLeft']) await key(page,k,650);
+    await key(page,'Escape',700); await key(page,'Escape',700); await key(page,'Escape',700); return'4 icons ok'; });
   // Go! -> launch race (verify we leave the FE menu: screen byte @0x460005 != 201)
   await check(page,'go_race',async()=>{ await boot(page,server); if(!await gotoButton(page,'Go!'))return'FAIL reach';
     await key(page,'Enter',1500); await page.waitForTimeout(6000);

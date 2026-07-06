@@ -1901,7 +1901,7 @@ extern int unaff_retaddr;
 #define DAT_00467568 (*(int*)GIMG(0x00467568))
 #define DAT_0046758c (*(undefined1*)GIMG(0x0046758c))
 #define DAT_0093def2 (*(undefined1*)GIMG(0x0093def2))
-#define DAT_00467794 (*(int*)GIMG(0x00467794))
+#define DAT_00467794 (*(unsigned char*)GIMG(0x00467794))  /* BYTE table (Init_League_Info @0x44c430 team-order byte table (idx*0x36 stats stride)): asm `mov bl,BYTE [idx+0x00467794]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define DAT_0093def4 (*(undefined1*)GIMG(0x0093def4))
 #define DAT_0046d594 (*(int*)GIMG(0x0046d594))
 #define DAT_0044ca90 (*(undefined1*)GIMG(0x0044ca90))
@@ -2093,11 +2093,11 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046a53c (*(int*)GIMG(0x0046a53c))
 #define DAT_0046a4d0 (*(int*)GIMG(0x0046a4d0))
 #define DAT_0046a444 (*(int*)GIMG(0x0046a444))
-#define DAT_0046a570 (*(int*)GIMG(0x0046a570))
+#define DAT_0046a570 (*(unsigned char*)GIMG(0x0046a570))  /* BYTE table (Practice_Over @0x452c40 nav-table (next/prev record per direction)): asm `mov bl,BYTE [idx+0x0046a570]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define DAT_0046a534 (*(int*)GIMG(0x0046a534))
-#define DAT_0046a572 (*(int*)GIMG(0x0046a572))
-#define DAT_0046a571 (*(int*)GIMG(0x0046a571))
-#define DAT_0046a573 (*(int*)GIMG(0x0046a573))
+#define DAT_0046a572 (*(unsigned char*)GIMG(0x0046a572))  /* BYTE table (Practice_Over @0x452c40 nav-table (next/prev record per direction)): asm `mov bl,BYTE [idx+0x0046a572]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046a571 (*(unsigned char*)GIMG(0x0046a571))  /* BYTE table (Practice_Over @0x452c40 nav-table (next/prev record per direction)): asm `mov bl,BYTE [idx+0x0046a571]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046a573 (*(unsigned char*)GIMG(0x0046a573))  /* BYTE table (Practice_Over @0x452c40 nav-table (next/prev record per direction)): asm `mov bl,BYTE [idx+0x0046a573]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define PTR_FUN_0046a540 (*(int*)GIMG(0x0046a540))
 #define PTR_DAT_0046a508 (*(undefined4*)GIMG(0x0046a508))
 #define PTR_DAT_0046a51c (*(undefined4*)GIMG(0x0046a51c))
@@ -2139,14 +2139,14 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046af78 (*(int*)GIMG(0x0046af78))
 #define DAT_0046aef8 (*(int*)GIMG(0x0046aef8))
 #define DAT_0046ae20 (*(int*)GIMG(0x0046ae20))
-#define DAT_0046b002 (*(int*)GIMG(0x0046b002))
-#define DAT_0046afea (*(int*)GIMG(0x0046afea))
-#define DAT_0046b001 (*(int*)GIMG(0x0046b001))
-#define DAT_0046afe9 (*(int*)GIMG(0x0046afe9))
-#define DAT_0046b003 (*(int*)GIMG(0x0046b003))
-#define DAT_0046afeb (*(int*)GIMG(0x0046afeb))
-#define DAT_0046b000 (*(int*)GIMG(0x0046b000))
-#define DAT_0046afe8 (*(int*)GIMG(0x0046afe8))
+#define DAT_0046b002 (*(unsigned char*)GIMG(0x0046b002))  /* BYTE table (results menu @0x46af78 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046b002]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046afea (*(unsigned char*)GIMG(0x0046afea))  /* BYTE table (results menu @0x46af78 nav-table): asm `mov bl,BYTE [idx+0x0046afea]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046b001 (*(unsigned char*)GIMG(0x0046b001))  /* BYTE table (results menu @0x46af78 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046b001]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046afe9 (*(unsigned char*)GIMG(0x0046afe9))  /* BYTE table (results menu @0x46af78 nav-table): asm `mov bl,BYTE [idx+0x0046afe9]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046b003 (*(unsigned char*)GIMG(0x0046b003))  /* BYTE table (results menu @0x46af78 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046b003]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046afeb (*(unsigned char*)GIMG(0x0046afeb))  /* BYTE table (results menu @0x46af78 nav-table): asm `mov bl,BYTE [idx+0x0046afeb]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046b000 (*(unsigned char*)GIMG(0x0046b000))  /* BYTE table (results menu @0x46af78 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046b000]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046afe8 (*(unsigned char*)GIMG(0x0046afe8))  /* BYTE table (results menu @0x46af78 nav-table): asm `mov bl,BYTE [idx+0x0046afe8]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define DAT_0046af70 (*(int*)GIMG(0x0046af70))
 #define PTR_FUN_0046af7c (*(int*)GIMG(0x0046af7c))
 #define PTR_DAT_0046af30 (*(undefined4*)GIMG(0x0046af30))
@@ -2173,11 +2173,11 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046b7cc (*(int*)GIMG(0x0046b7cc))
 #define DAT_0046b74c (*(int*)GIMG(0x0046b74c))
 #define DAT_0046b6c0 (*(int*)GIMG(0x0046b6c0))
-#define DAT_0046b800 (*(int*)GIMG(0x0046b800))
+#define DAT_0046b800 (*(unsigned char*)GIMG(0x0046b800))  /* BYTE table (Race_Over @0x46b7cc nav-table): asm `mov bl,BYTE [idx+0x0046b800]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define DAT_0046b7c4 (*(int*)GIMG(0x0046b7c4))
-#define DAT_0046b802 (*(int*)GIMG(0x0046b802))
-#define DAT_0046b801 (*(int*)GIMG(0x0046b801))
-#define DAT_0046b803 (*(int*)GIMG(0x0046b803))
+#define DAT_0046b802 (*(unsigned char*)GIMG(0x0046b802))  /* BYTE table (Race_Over @0x46b7cc nav-table): asm `mov bl,BYTE [idx+0x0046b802]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046b801 (*(unsigned char*)GIMG(0x0046b801))  /* BYTE table (Race_Over @0x46b7cc nav-table): asm `mov bl,BYTE [idx+0x0046b801]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046b803 (*(unsigned char*)GIMG(0x0046b803))  /* BYTE table (Race_Over @0x46b7cc nav-table): asm `mov bl,BYTE [idx+0x0046b803]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define PTR_FUN_0046b7d0 (*(int*)GIMG(0x0046b7d0))
 #define PTR_DAT_0046b784 (*(undefined4*)GIMG(0x0046b784))
 #define PTR_DAT_0046b798 (*(undefined4*)GIMG(0x0046b798))
@@ -2202,15 +2202,15 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046c064 (*(int*)GIMG(0x0046c064))
 #define DAT_0046bfe4 (*(int*)GIMG(0x0046bfe4))
 #define DAT_0046bf14 (*(int*)GIMG(0x0046bf14))
-#define DAT_0046c0ec (*(int*)GIMG(0x0046c0ec))
-#define DAT_0046c0d4 (*(int*)GIMG(0x0046c0d4))
+#define DAT_0046c0ec (*(unsigned char*)GIMG(0x0046c0ec))  /* BYTE table (season menu @0x46c064 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046c0ec]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0d4 (*(unsigned char*)GIMG(0x0046c0d4))  /* BYTE table (season menu @0x46c064 nav-table): asm `mov bl,BYTE [idx+0x0046c0d4]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define DAT_0046c05c (*(int*)GIMG(0x0046c05c))
-#define DAT_0046c0ee (*(int*)GIMG(0x0046c0ee))
-#define DAT_0046c0d6 (*(int*)GIMG(0x0046c0d6))
-#define DAT_0046c0ed (*(int*)GIMG(0x0046c0ed))
-#define DAT_0046c0d5 (*(int*)GIMG(0x0046c0d5))
-#define DAT_0046c0ef (*(int*)GIMG(0x0046c0ef))
-#define DAT_0046c0d7 (*(int*)GIMG(0x0046c0d7))
+#define DAT_0046c0ee (*(unsigned char*)GIMG(0x0046c0ee))  /* BYTE table (season menu @0x46c064 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046c0ee]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0d6 (*(unsigned char*)GIMG(0x0046c0d6))  /* BYTE table (season menu @0x46c064 nav-table): asm `mov bl,BYTE [idx+0x0046c0d6]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0ed (*(unsigned char*)GIMG(0x0046c0ed))  /* BYTE table (season menu @0x46c064 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046c0ed]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0d5 (*(unsigned char*)GIMG(0x0046c0d5))  /* BYTE table (season menu @0x46c064 nav-table): asm `mov bl,BYTE [idx+0x0046c0d5]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0ef (*(unsigned char*)GIMG(0x0046c0ef))  /* BYTE table (season menu @0x46c064 nav-table (2nd)): asm `mov bl,BYTE [idx+0x0046c0ef]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
+#define DAT_0046c0d7 (*(unsigned char*)GIMG(0x0046c0d7))  /* BYTE table (season menu @0x46c064 nav-table): asm `mov bl,BYTE [idx+0x0046c0d7]`; int typing scaled the byte index by 4 -> wrong/OOB entry (Info-nav / patch-825 class) */
 #define PTR_FUN_0046c068 (*(int*)GIMG(0x0046c068))
 #define PTR_DAT_0046c01c (*(undefined4*)GIMG(0x0046c01c))
 #define PTR_DAT_0046c030 (*(undefined4*)GIMG(0x0046c030))
