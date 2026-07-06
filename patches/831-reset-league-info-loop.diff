@@ -1,0 +1,30 @@
+FIX CHAMPIONSHIP crash sibling (831): Reset_League_Info same Sort_Leagues loop-bound artifact
+
+Proactive sweep after patch 830 (grep '&stack0x' + huge phantom stack arrays) found the IDENTICAL
+Ghidra decompile artifact in Reset_League_Info @0x44c498, which FALLS THROUGH into Sort_Leagues
+in the binary (no ret; nop-pad 0x44c4ad -> Sort_Leagues 0x44c4b0), so its decompiled body inlines
+the same standings-sort loop with the bogus bound `(int*)&stack0xfffffff4` (+ phantom
+int[196606]). Reset_League_Info IS called (Start_New_Season_Stats, championship season reset) ->
+same wild deref in FUN_0044c9c0 from reading past aiStack_5c[20]. Fixed the bound to
+`aiStack_5c + 20` (4 leagues x5=20 cars) + dropped the phantom array, matching patch 830.
+
+verify + verify-wasm 10/10 both; native<->wasm L9 702/702 bit-identical (championship-only).
+--- a/dd2.c
++++ b/dd2.c
+@@ -38186,7 +38186,6 @@
+   int iVar1;
+   int iVar2;
+   int *piVar3;
+-  int aiStackY_c005c [196606];
+   int aiStack_5c [20];
+   
+   iVar2 = 0;
+@@ -38207,7 +38206,7 @@
+   do {
+     FUN_0044c9c0(piVar3,5);
+     piVar3 = piVar3 + 5;
+-  } while (piVar3 != (int *)&stack0xfffffff4);
++  } while (piVar3 != aiStack_5c + 20);   /* same Ghidra artifact as Sort_Leagues (patch 830): &stack0xfffffff4 -> aiStack_5c+20 (4 leagues x5=20) */
+   return;
+ }
+ 
