@@ -241,6 +241,13 @@ int main(void){
         DISP(0x468054, "View_Statistics setup");   /* Stats_Setup_Driver via relocated descriptor */
         DISP(0x468b34, "Sound_Volume handler");     /* FUN_0044e308 */
         DISP(0x469ea4, "CD_Player setup");          /* FUN_0045219c */
+        /* results/season menus (patch 824): dispatch each table's rec1 setup+action slots */
+        DISP(0x46a550, "Practice_Over rec1 setup"); /* FUN_00452f10 Save Replay label */
+        DISP(0x46a810, "@0x46a7fc rec1 setup");     /* FUN_004531e4 */
+        DISP(0x46afdc, "@0x46af78 rec5 setup");     /* FUN_004545e8 (race_type-branched) */
+        DISP(0x46b7e0, "Race_Over rec1 setup");     /* FUN_0045507c Save Replay label */
+        DISP(0x46c078, "season rec1 setup");        /* FUN_0045595c View League */
+        /* (actions do real work -- save-replay file I/O etc. -- so only setups are dispatch-tested) */
         #undef DISP
         /* direct calls to the newly-reconstructed non-looping handlers */
         Stats_Setup_Driver(); Stats_Setup_Track(); Stats_Setup_Champ();

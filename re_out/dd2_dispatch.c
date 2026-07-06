@@ -8,6 +8,8 @@ extern int FUN_00452970(); extern int FUN_00452990();  /* patch 820 */
 extern int View_Statistics(); extern int Stats_Setup_Driver(); extern int Stats_Setup_Track(); extern int Stats_Setup_Champ();  /* patch 821 */
 extern int View_Sound_Volume(); extern int FUN_0044e308();  /* patch 822 */
 extern int View_CD_Player(); extern int FUN_004521c4(); extern int FUN_004521d8(); extern int FUN_0045220c(); extern int FUN_00452228(); extern int FUN_00452230();  /* patch 823 */
+extern int FUN_00452f10();extern int FUN_00452f30();extern int FUN_00452f50();extern int FUN_00452f58();extern int FUN_004531e4();extern int FUN_00453bd0();extern int FUN_00453c00();extern int FUN_004545e8();extern int FUN_004546f0();extern int FUN_004546f8();extern int FUN_0045507c();extern int FUN_0045509c();extern int FUN_004550bc();extern int FUN_004550c4();extern int FUN_0045595c();extern int FUN_004559cc();extern int FUN_00455a3c();extern int FUN_00455aac();extern int FUN_00455b1c();extern int FUN_00455b8c();  /* patch 824 */
+
 extern int draw_text_half();
 extern int FUN_0041033a();
 extern int draw_half();
@@ -1459,6 +1461,26 @@ dd2_fnent dd2_fnmap[]={
 {0x0045220c,(void*)&FUN_0045220c},
 {0x00452228,(void*)&FUN_00452228},
 {0x00452230,(void*)&FUN_00452230},
+{0x00452f10,(void*)&FUN_00452f10},
+{0x00452f30,(void*)&FUN_00452f30},
+{0x00452f50,(void*)&FUN_00452f50},
+{0x00452f58,(void*)&FUN_00452f58},
+{0x004531e4,(void*)&FUN_004531e4},
+{0x00453bd0,(void*)&FUN_00453bd0},
+{0x00453c00,(void*)&FUN_00453c00},
+{0x004545e8,(void*)&FUN_004545e8},
+{0x004546f0,(void*)&FUN_004546f0},
+{0x004546f8,(void*)&FUN_004546f8},
+{0x0045507c,(void*)&FUN_0045507c},
+{0x0045509c,(void*)&FUN_0045509c},
+{0x004550bc,(void*)&FUN_004550bc},
+{0x004550c4,(void*)&FUN_004550c4},
+{0x0045595c,(void*)&FUN_0045595c},
+{0x004559cc,(void*)&FUN_004559cc},
+{0x00455a3c,(void*)&FUN_00455a3c},
+{0x00455aac,(void*)&FUN_00455aac},
+{0x00455b1c,(void*)&FUN_00455b1c},
+{0x00455b8c,(void*)&FUN_00455b8c},
 {0x0044e330,(void*)&FUN_0044e330},
 {0x0044e3fc,(void*)&Select_Car},
 {0x0044e600,(void*)&FUN_0044e600},
