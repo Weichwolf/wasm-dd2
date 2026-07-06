@@ -124,8 +124,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   @0x4699cc==32 [flip-counter mod 64]); root was patch-480's frame miscount in the
   FE background fill FUN_00411e0c (prim is ARG 1 at [ebp+0x14] after the 4-push
   prologue, not arg 3 — fix 805; the type-0x60 full-screen f0 fill never painted,
-  races have no 0x60 prims so only FE edges showed it). Remaining polish
-  (non-blocking): physical Xbox pad on real hardware (SW chain validated via synthetic pad).
+  races have no 0x60 prims so only FE edges showed it). ALL deep FE sub-screens now OPEN +
+  render + navigate on BOTH targets: View Statistics (821), Sound Volume (822), CD Player
+  (823) — reconstructed 1:1 from objdump + registered. The prior sessions' "binaryen/
+  emscripten call_indirect table-index-OOB toolchain bug" that blocked these for days is
+  DISPROVEN (misdiagnosis): each screen trapped ONLY because its setup/action handlers sat in
+  the dispatch tables as UNREGISTERED raw VAs (dd2_relocate never rewrote them to real table
+  indices) — once reconstructed+registered they work with zero wasm errors. Isolation proof:
+  tools/browser/shifttest.js (shifting the whole wasm table by adding N address-taken
+  suspending fns changes nothing). Companion fix: info_screen_directions/_dire_stats int-typed
+  byte tables (Info LEFT-nav OOB). Test infra: tools/browser/fepass.js (11/11 label-verified FE
+  full pass incl. Go!->live 3D race) + native DD2_FETEST (descriptor-slot dispatch proof).
+  Remaining polish (non-blocking): physical Xbox pad on real hardware (SW chain validated via
+  synthetic pad).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
