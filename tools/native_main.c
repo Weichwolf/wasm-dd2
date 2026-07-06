@@ -121,9 +121,14 @@ static int PlayModeLevel(int lvl){
     W32(0x93de10, R32(0x46765c));
     W32(0x46765c, 0x14);
     W32(0x4673f8, 0);
-    W32(0x4673f4, 0);
+    /* DD2_RACETYPE: override race_type (0=single, 4=Championship). The browser QA found a
+     * reliable renderer crash driving in a race_type=4 (Championship) race; this reproduces it
+     * under native ASan. Championship also sets the race-index flag @0x467658=1. */
+    { const char* rt = getenv("DD2_RACETYPE"); int rtv = rt ? atoi(rt) : 0;
+      W32(0x4673f4, rtv);
+      if (rtv == 4) W32(0x467658, 1); }
     { int iVar1 = rand(); _current_level = lvl ? lvl : (iVar1 % 10 + 1); }
-    fprintf(stderr, "[native] PlayModeLevel (LIVE, demo_mode=0): _current_level=%d\n", _current_level);
+    fprintf(stderr, "[native] PlayModeLevel (LIVE, demo_mode=0): _current_level=%d race_type=%d\n", _current_level, R32(0x4673f4));
     Order_Cars();
     /* DD2_HOLD=<vk>: hold a key down for the whole race (no key-up) to prove input controls the car.
      * e.g. DD2_HOLD=0x25 (LEFT) makes the player car steer left every frame it's read. */
@@ -271,6 +276,29 @@ int main(void){
         { unsigned r = FUN_0044fe64(); fprintf(stderr, " ok (ret=%u)\n", r); }
         (void)FUN_0044f870;   /* the full action loops on live input (would spin headless) */
         fprintf(stderr, "[native] KBTEST entry helpers done (no SIGSEGV -- string-symbol fix OK)\n");
+        return 0;
+    }
+    if (getenv("DD2_CHAMP")) {
+        /* Reproduce the browser QA crash: a Championship (race_type=4) race crashes when the
+         * player DRIVES (~1s in). Run the REAL championship launcher (Init_Wrecking_Championship
+         * = Init_League_Info + Start_New_Season_Stats + Setup_Driver_Names + Championship()) under
+         * ASan with DD2_HOLD driving, so ASan pinpoints the corruption my PlayModeLevel override
+         * (which skips the championship setup) could not. */
+        extern void Init_Wrecking_Championship(void);
+        W32(0x4673f8, 0);            /* race_mode = Wrecking */
+        W32(0x467564, 1);
+        CK("Init_Front_End()"); Init_Front_End();
+        *(unsigned char*)0x754451 = 1; Setup_Pad(1);
+        W32(0x46385c, 0);            /* demo_mode = 0 (live input) */
+        W32(0x467400, 2);            /* race_car = 2 (player) */
+        W32(0x46765c, 0x14);         /* num_cars = 20 */
+        W32(0x4673f4, 4);            /* race_type = Championship */
+        { const char* h = getenv("DD2_HOLD");
+          if (h) { extern void dd2_key_event(unsigned int,int);
+                   dd2_key_event((unsigned)strtol(h,0,0),1);
+                   fprintf(stderr,"[native] holding VK 0x%lx\n", strtol(h,0,0)); } }
+        CK("Init_Wrecking_Championship()"); Init_Wrecking_Championship();
+        fprintf(stderr, "[native] championship returned (no crash)\n");
         return 0;
     }
     if (getenv("DD2_PLAY")) {
