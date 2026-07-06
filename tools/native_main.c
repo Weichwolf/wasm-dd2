@@ -301,6 +301,26 @@ int main(void){
         fprintf(stderr, "[native] championship returned (no crash)\n");
         return 0;
     }
+    if (getenv("DD2_SEASONEND")) {
+        /* Repro the retire-all-races season-end crash (patch 834 clamp): put the player in the
+         * BOTTOM division (_current_season==0) and force Check_League_Standing()==3 (relegated:
+         * DAT_0093def4==4 && DAT_0093def2!=3), then run Do_End_Of_Season_Stuff. Original decremented
+         * season to -1 -> next Play_Game read an OOB level -> crash. With 834 season stays >= 0. */
+        extern int Do_End_Of_Season_Stuff(void);
+        extern void Init_Front_End(void);
+        W32(0x4673f8, 0); W32(0x467564, 1);
+        CK("Init_Front_End()"); Init_Front_End();
+        W32(0x46765c, 0x14);                 /* num_cars = 20 */
+        W32(0x4673f4, 4);                    /* race_type = Championship */
+        *(int*)(uintptr_t)0x93dec0 = 0;      /* _current_season = 0 (bottom division) */
+        *(int*)(uintptr_t)0x93def4 = 4;      /* -> Check_League_Standing branch ... */
+        *(int*)(uintptr_t)0x93def2 = 0;      /* ... != 3  => returns 3 (relegated) */
+        CK("Do_End_Of_Season_Stuff()"); (void)Do_End_Of_Season_Stuff();
+        { int s = *(int*)(uintptr_t)0x93dec0;
+          fprintf(stderr, "[native] season-end from division 0: _current_season=%d %s\n",
+                  s, s >= 0 ? "(clamped OK)" : "(UNDERFLOW BUG!)");
+          return s >= 0 ? 0 : 1; }
+    }
     if (getenv("DD2_PLAY")) {
         CK("PlayModeLevel() [LIVE demo_mode=0]");
         PlayModeLevel(atoi(getenv("DD2_PLAY")));

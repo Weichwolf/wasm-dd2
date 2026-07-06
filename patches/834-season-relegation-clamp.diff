@@ -1,0 +1,43 @@
+DELIBERATE PLAYABILITY DEVIATION (834): clamp championship season >= 0 on relegation
+
+*** THIS IS AN INTENTIONAL DEVIATION FROM dd2h.exe, NOT A FAITHFUL RECONSTRUCTION. ***
+It is the ONLY sanctioned deviation in the tree and is applied on explicit user request
+("fixen") after the alternative (leave-faithful) was considered.
+
+Root of the ORIGINAL behavior (confirmed against dd2h.exe, objdump):
+  Do_End_Of_Season_Stuff @0x44c394, case 3 (Check_League_Standing returns 3 = relegated):
+      44c3aa:  ff 0d c0 de 93 00   decl 0x93dec0        ; _current_season--   (NO CLAMP)
+  The original decrements _current_season unconditionally. If the player is already in the
+  bottom division (_current_season == 0) and gets relegated, it goes to -1. The next
+  Play_Game then reads
+      _current_level = *(int*)(&DAT_0046758c + _current_race*4 + _current_season*0x14)
+  at season == -1 -> reads @0x467578 (before the level table) = deterministic IMAGE data
+  (453836800) -> Play_Game(garbage level) -> WASM `unreachable` / native OOB. dd2h.exe has
+  the SAME latent bug (the asm has no guard); it is normally unreachable because ordinary
+  play never relegates out of division 0 -- it is only hit via the abnormal "retire all 5
+  races of the bottom division" path a QA agent exercised.
+
+Deviation applied: only decrement when _current_season > 0, so a bottom-division relegation
+keeps season 0 (stays in the bottom division) instead of underflowing. This makes the
+championship robust against every race-outcome path (including retire-all-races) at the cost
+of exact bit-parity ONLY on that one abnormal, previously-crashing path -- which produced no
+valid output to be parity-checked anyway. All normal-play paths are byte-unchanged (season is
+never 0-and-relegated in normal completion), so verify / verify-wasm / L9 bit-identity are
+unaffected.
+
+Verified: full retire-all-5-races championship season now returns to the FE with no crash
+(was WASM `unreachable`); verify + verify-wasm 10/10 both targets; L9 702/702 native<->wasm
+bit-identical (this path is not on the attract).
+--- a/dd2.c
++++ b/dd2.c
+@@ -38141,7 +38141,9 @@
+     }
+     break;
+   case 3:
+-    _current_season = _current_season + -1;
++    if (0 < _current_season) {  /* 834 DELIBERATE DEVIATION: original `decl 0x93dec0` has no clamp; relegating out of division 0 underflows season to -1 -> OOB level read -> crash. Clamp keeps the player in the bottom division. */
++      _current_season = _current_season + -1;
++    }
+     break;
+   case 4:
+     return 1;
