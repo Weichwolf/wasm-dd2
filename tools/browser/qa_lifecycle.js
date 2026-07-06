@@ -15,8 +15,16 @@ async function configMode(page,modeIdx,typeIdx){ // from main menu
   return true;
 }
 async function launch(page){ if(!await gotoButton(page,'Go!'))return false; await key(page,'Enter',1500); await page.waitForTimeout(7000); return (await cur(page)).scr!==201; }
-async function retire(page){ await key(page,'Escape',700); for(let i=0;i<3;i++) await key(page,'ArrowDown',450);
-  await key(page,'Enter',600); await key(page,'ArrowUp',500); await key(page,'Enter',1600); }
+// Retire a running race back to the FE. Race Over screen (View Replay / Save Replay / Proceed>>)
+// requires navigating to the Proceed>> icon (Down,Right,Down,Enter) -- pressing Enter on the
+// default View Replay just loops replay<->RaceOver and never returns (proven correct path:
+// qa_proceed.js reaches scr=201 via this exact sequence; ArrowUp+Enter alone left scr=41).
+async function retire(page){
+  await key(page,'Escape',900); for(let i=0;i<3;i++) await key(page,'ArrowDown',450);  // pause -> Retire
+  await key(page,'Enter',700); await key(page,'ArrowUp',450); await key(page,'Enter',1600);  // confirm retire
+  await page.waitForTimeout(1500);
+  await key(page,'ArrowDown',500); await key(page,'ArrowRight',500); await key(page,'ArrowDown',500); await key(page,'Enter',1800);  // Race Over -> Proceed>>
+}
 (async()=>{
   const server=serve(process.argv[2]||'../../web/dd2'); await new Promise(r=>server.listen(0,r));
   const b=await chromium.launch({args:['--no-sandbox']}); const page=await b.newPage({viewport:{width:700,height:520}});
@@ -27,6 +35,12 @@ async function retire(page){ await key(page,'Escape',700); for(let i=0;i<3;i++) 
   for(const [mi,mn] of modes){
     if(crashed)break;
     errs.length=0;
+    // Fresh boot per mode: felib's spatial gotoButton assumes the fresh-boot cursor home (Wrecking
+    // top-left); after a completed race the cursor sits at Go!, so a same-session re-config can't
+    // re-find Wrecking. Rebooting per mode (as modes.js does) keeps the nav deterministic while
+    // still exercising each mode's FULL lifecycle (config->launch->drive->pause->retire->menu).
+    // (Single-session retire->relaunch is separately proven by qa_proceed.js.)
+    if(mi>0) await boot(page,server);
     await toMenu(page);
     if(!await configMode(page,mi,1)){console.log(`${mn}: FAIL config`);continue;}
     if(!await launch(page)){console.log(`${mn}: FAIL launch ${JSON.stringify(await cur(page))}`);await toMenu(page);continue;}
