@@ -3253,11 +3253,11 @@ extern int unaff_retaddr;
 #define PTR_s__R_JL_T_Pine_Hills_Raceway_00469bc4 (*(int*)GIMG(0x00469bc4))
 #define PTR_s__R_JL_T_Pork_Sword_00469ddc (*(int*)GIMG(0x00469ddc))
 #define PTR_s__R_JL_T_Slapshot_00469c0c (*(int*)GIMG(0x00469c0c))
-#define s_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345_004692ec (*(int**)GIMG(0x004692ec))
+#define s_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345_004692ec ((unsigned char*)GIMG(0x004692ec))  /* STRING array base, NOT a pointer: bindable-VK-code string (A-Z0-9): FUN_0044fe64 iterates (byte)s_...[i] as VK codes for key-rebind GetKeyState polling. Ghidra mistyped it int** -> s_...[i] dereferenced the string bytes ("ABCD"=0x44434241) as an address -> SIGSEGV (renderer crash on the Control Method Keyboard action) */
 #define s_AIDAN_0046da74 ((char*)GIMG(0x0046da74))
 #define s_AIDCRED_0046daec ((char*)GIMG(0x0046daec))
 #define s_Add_Buffer_Load__0046c77c ((char*)GIMG(0x0046c77c))
-#define s_Anonymous_0046ecf0 (*(int**)GIMG(0x0046ecf0))
+#define s_Anonymous_0046ecf0 ((unsigned char*)GIMG(0x0046ecf0))  /* STRING array base, NOT a pointer: default-name string "Anonymous": copied byte-by-byte s_...[0..N] into lap_name_entry. Ghidra mistyped it int** -> s_...[i] dereferenced the string bytes ("ABCD"=0x44434241) as an address -> SIGSEGV (renderer crash on the Control Method Keyboard action) */
 #define s_BACKD1_0046db94 ((char*)GIMG(0x0046db94))
 #define s_BACKD2_0046db9c ((char*)GIMG(0x0046db9c))
 #define s_BACKSPCE_0046d42c ((char*)GIMG(0x0046d42c))

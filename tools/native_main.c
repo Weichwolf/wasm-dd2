@@ -255,6 +255,24 @@ int main(void){
         fprintf(stderr, "[native] FETEST all dispatches + handlers returned (no crash)\n");
         return 0;
     }
+    if (getenv("DD2_KBTEST")) {
+        /* Repro the browser Finding-1 crash (Control Method -> Keyboard action FUN_0044f870)
+         * under native ASan to get the exact faulting address/backtrace. Call the ENTRY helpers
+         * directly (FUN_0044f9d4 redraw + FUN_0044fe64 key-poll) -- the crash hits within ~1s of
+         * entering, before any key-bind, so it's in entry not the loop. */
+        extern void FUN_0044f9d4(int); extern unsigned FUN_0044fe64(void);
+        extern int FUN_0044f870(void);
+        W32(0x4673f4, 0); W32(0x4673f8, 0); W32(0x467564, 1);
+        CK("Init_Front_End()"); Init_Front_End();
+        *(unsigned char*)0x754451 = 1; Setup_Pad(1);
+        fprintf(stderr, "[native] KBTEST FUN_0044f9d4(0) ..."); fflush(stderr);
+        FUN_0044f9d4(0);
+        fprintf(stderr, " ok\n[native] KBTEST FUN_0044fe64() ..."); fflush(stderr);
+        { unsigned r = FUN_0044fe64(); fprintf(stderr, " ok (ret=%u)\n", r); }
+        (void)FUN_0044f870;   /* the full action loops on live input (would spin headless) */
+        fprintf(stderr, "[native] KBTEST entry helpers done (no SIGSEGV -- string-symbol fix OK)\n");
+        return 0;
+    }
     if (getenv("DD2_PLAY")) {
         CK("PlayModeLevel() [LIVE demo_mode=0]");
         PlayModeLevel(atoi(getenv("DD2_PLAY")));
