@@ -141,11 +141,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   fully working (830 driving crash = Sort_Leagues loop-bound artifact; 831 season-end sibling
   Reset_League_Info; 832 "View League" between-race trap = raw &LAB_00453c00 fn-ptr store; 833
   season-end wild-write = Reset_League_Info uninitialized aiStack_5c -> FUN_0044c9c0 OOB). Full
-  5-race season + standings + View League + season end all work.
+  5-race season + standings + View League + season end all work. 834 = the retire-ALL-5-races
+  edge (relegate out of division 0 -> Do_End_Of_Season_Stuff case 3 `_current_season--` from 0
+  to -1 -> OOB level read @&DAT_0046758c[-1] -> crash): the ORIGINAL dd2h.exe has this same
+  latent bug (asm `decl 0x93dec0`, NO clamp; only reachable via the abnormal all-retired path).
+  Fixed on explicit user request as the ONE SANCTIONED DELIBERATE DEVIATION in the tree (patch
+  834 header flags it): clamp `if (0 < _current_season)` so a bottom-division relegation keeps
+  season 0. Off the attract, so verify/verify-wasm 10/10 + L9 702/702 nat<->wasm unaffected;
+  native repro DD2_SEASONEND (forces division-0 relegation -> season stays 0). [Supersedes the
+  prior "leave faithful / do-not-fix" note for this path.]
   Test infra: tools/browser/fepass.js (17/17 label-verified full pass: every FE screen + race
   lifecycle + championship, with page.on('crash') detection) + native DD2_FETEST/DD2_KBTEST/
-  DD2_CHAMP repro modes. Remaining polish (non-blocking): physical Xbox pad on real hardware (SW
-  chain validated via synthetic pad).
+  DD2_CHAMP/DD2_SEASONEND repro modes. Remaining polish (non-blocking): physical Xbox pad on real
+  hardware (SW chain validated via synthetic pad).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
