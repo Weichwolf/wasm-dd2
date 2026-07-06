@@ -2073,8 +2073,8 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046a1e8 (*(int*)GIMG(0x0046a1e8))
 #define DAT_0046a17c (*(int*)GIMG(0x0046a17c))
 #define DAT_0046a110 (*(int*)GIMG(0x0046a110))
-#define DAT_0046a20a (*(int*)GIMG(0x0046a20a))
-#define DAT_0046a208 (*(int*)GIMG(0x0046a208))
+#define DAT_0046a20a (*(unsigned char*)GIMG(0x0046a20a))  /* BYTE nav-table (Control Method @0x46a1e8 LEFT-nav): dispatcher reads (byte)(&DAT_0046a20a)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
+#define DAT_0046a208 (*(unsigned char*)GIMG(0x0046a208))  /* BYTE nav-table (Control Method @0x46a1e8 RIGHT-nav): dispatcher reads (byte)(&DAT_0046a208)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
 #define PTR_FUN_0046a1ec (*(int*)GIMG(0x0046a1ec))
 #define PTR_DAT_0046a1b4 (*(undefined4*)GIMG(0x0046a1b4))
 #define PTR_DAT_0046a1c8 (*(undefined4*)GIMG(0x0046a1c8))
@@ -2083,8 +2083,8 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046a374 (*(int*)GIMG(0x0046a374))
 #define DAT_0046a308 (*(int*)GIMG(0x0046a308))
 #define DAT_0046a2ca (*(int*)GIMG(0x0046a2ca))
-#define DAT_0046a3aa (*(int*)GIMG(0x0046a3aa))
-#define DAT_0046a3a8 (*(int*)GIMG(0x0046a3a8))
+#define DAT_0046a3aa (*(unsigned char*)GIMG(0x0046a3aa))  /* BYTE nav-table (Race Mode @0x46a374 LEFT-nav): dispatcher reads (byte)(&DAT_0046a3aa)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
+#define DAT_0046a3a8 (*(unsigned char*)GIMG(0x0046a3a8))  /* BYTE nav-table (Race Mode @0x46a374 RIGHT-nav): dispatcher reads (byte)(&DAT_0046a3a8)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
 #define PTR_FUN_0046a378 (*(int*)GIMG(0x0046a378))
 #define PTR_DAT_0046a340 (*(undefined4*)GIMG(0x0046a340))
 #define PTR_DAT_0046a354 (*(undefined4*)GIMG(0x0046a354))
@@ -2106,8 +2106,8 @@ extern int unaff_retaddr;
 #define PTR_FUN_0046a724 (*(int*)GIMG(0x0046a724))
 #define DAT_0046a6b8 (*(int*)GIMG(0x0046a6b8))
 #define DAT_0046a672 (*(int*)GIMG(0x0046a672))
-#define DAT_0046a76e (*(int*)GIMG(0x0046a76e))
-#define DAT_0046a76c (*(int*)GIMG(0x0046a76c))
+#define DAT_0046a76e (*(unsigned char*)GIMG(0x0046a76e))  /* BYTE nav-table (Race Type @0x46a724 RIGHT-nav): dispatcher reads (byte)(&DAT_0046a76e)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
+#define DAT_0046a76c (*(unsigned char*)GIMG(0x0046a76c))  /* BYTE nav-table (Race Type @0x46a724 LEFT-nav): dispatcher reads (byte)(&DAT_0046a76c)[rec*4]; int typing scaled the byte offset by 4 -> OOB record index -> setup call_indirect "table index is out of bounds" (Info-nav / patch-780 class) */
 #define PTR_DAT_0046a6f0 (*(undefined4*)GIMG(0x0046a6f0))
 #define PTR_DAT_0046a704 (*(undefined4*)GIMG(0x0046a704))
 #define DAT_0046a7f8 (*(undefined1*)GIMG(0x0046a7f8))
