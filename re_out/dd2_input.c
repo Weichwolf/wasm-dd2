@@ -26,9 +26,15 @@ enum {
     VK_A=0x41, VK_S=0x53, VK_W=0x57, VK_Z=0x5a
 };
 
+/* win32 GetKeyState backing store (dd2_stubs.c reads it): 1 = key currently down, indexed by VK.
+ * The original polls GetKeyState() in the keyboard-rebind screen (FUN_0044fe64) to detect which
+ * key the user pressed to bind; our GetKeyState was stubbed to 0 so rebinding never advanced. */
+unsigned char dd2_keystate[256];
+
 /* Core bridge: feed one key transition to the engine. down!=0 = press, down==0 = release. */
 void dd2_key_event(unsigned int vk, int down)
 {
+    if (vk < 256) dd2_keystate[vk] = down ? 1 : 0;
     /* lparam bit 31 set == key-up (WM_KEYUP semantics the engine checks). */
     Translate_Keypress(vk, down ? 0u : 0x80000000u);
 }
@@ -47,10 +53,11 @@ unsigned int dd2_browser_key_to_vk(const char* code)
     if (!strcmp(code,"Space"))      return VK_SPACE;
     if (!strcmp(code,"F1"))         return VK_F1;
     if (!strcmp(code,"F2"))         return VK_F2;
-    if (!strcmp(code,"KeyA"))       return VK_A;
-    if (!strcmp(code,"KeyS"))       return VK_S;
-    if (!strcmp(code,"KeyW"))       return VK_W;
-    if (!strcmp(code,"KeyZ"))       return VK_Z;
+    /* Generic letter/digit physical keys (VK_A..VK_Z = 0x41.., VK_0..VK_9 = 0x30..). Needed so the
+     * keyboard-rebind screen can bind ANY key -- and harmless for gameplay (unbound VKs are ignored
+     * by Translate_Keypress; only keymap-matched keys set _pad_* bits). Covers KeyA/S/W/Z too. */
+    if (!strncmp(code,"Key",3)   && code[3]>='A' && code[3]<='Z' && code[4]==0) return 0x41u + (unsigned)(code[3]-'A');
+    if (!strncmp(code,"Digit",5) && code[5]>='0' && code[5]<='9' && code[6]==0) return 0x30u + (unsigned)(code[5]-'0');
     return 0;
 }
 

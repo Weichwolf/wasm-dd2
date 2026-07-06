@@ -5,7 +5,11 @@ char* __cvt(double v,int n,void* d,void* s){ if(d)*(int*)d=0; if(s)*(int*)s=0; r
 void FUN_0042304c(byte* p){ }
 void FUN_00456b30(uint a,uint b){ }
 uint FUN_0045a174(void* h){ return 0; }
-short GetKeyState(int k){ return 0; }
+/* GetKeyState: only caller is the keyboard-rebind poller (FUN_0044fe64), which tests bit 0x8000
+   for "key down". Back it with the live key-state array dd2_input.c maintains (0 stub = rebind
+   never detected a key). Not on any bit-exact path (demo/race never call it). */
+extern unsigned char dd2_keystate[256];
+short GetKeyState(int k){ return (k>=0 && k<256 && dd2_keystate[k]) ? (short)0x8000 : 0; }
 /* GetTickCount: the engine paces itself to 25fps with this (frame limiter in Play_Game).
    Deterministic default: a fake +16ms/call ticker (proven for all bit-exact runs).
    DD2_REALTIME=1 (interactive browser/native play): real milliseconds, so the game runs at
