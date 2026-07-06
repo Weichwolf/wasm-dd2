@@ -1,6 +1,6 @@
 // Rigorous repeatable FE full-pass: reach each button BY LABEL, verify the sub-screen it opens,
 // crash+error-free. Race launch verified by leaving the FE. Exit 0 = all pass, 2 = failure.
-const {serve,key,alive,rd,menuLabel,boot,gotoButton,chromium}=require('./felib.js');
+const {serve,key,alive,rd,menuLabel,boot,gotoButton,waitRace,chromium}=require('./felib.js');
 const fs=require('fs'); const OUT='/tmp/fepass'; fs.mkdirSync(OUT,{recursive:true});
 const buildDir=process.argv[2]||'../../web/dd2';
 let errs=[]; const results=[]; let pageCrashed=false;
@@ -84,21 +84,22 @@ async function check(page,name,fn){
     for(let i=0;i<3;i++) await key(page,'Enter',600);           // add 3 letters
     const nm=await nb(); if(nm.length<3)return'FAIL name="'+nm+'" (letters not registered)';
     await key(page,'Escape',700); await key(page,'Escape',700); return'name="'+nm+'"'; });
-  // Go! -> launch race (verify we leave the FE menu: screen byte @0x460005 != 201)
+  // Go! -> launch race. Robust launch proof: poll for the in-race screen sb==89 with the engine
+  // frame counter advancing (qa_ttmp: single-sample sb!=201 false-passes on transient dialog/
+  // loading frames). A stall at a dialog (sb=41, cf frozen) now correctly FAILS.
   await check(page,'go_race',async()=>{ await boot(page,server); if(!await gotoButton(page,'Go!'))return'FAIL reach';
-    await key(page,'Enter',1500); await page.waitForTimeout(6000);
-    const sb=await page.evaluate(()=>HEAPU8[0x460005]).catch(()=>-1);
-    await page.waitForTimeout(1000);
-    if(sb===201)return'FAIL still-in-menu sb='+sb;
+    await key(page,'Enter',1500);
+    const r=await waitRace(page,25000);
+    if(!r.launched)return'FAIL not-launched sb='+r.sb+' cf='+r.cf+' lvl='+r.lvl;
     // drive a few frames
     for(const k of ['ArrowUp','ArrowUp','ArrowLeft']) await key(page,k,400);
-    return 'race launched sb='+sb; });
+    return 'race launched sb='+r.sb+' cf='+r.cf; });
 
   // Race launch + pause (Escape) + resume (Continue) — crash/error-free through the pause path
   await check(page,'pause_resume',async()=>{ await boot(page,server); if(!await gotoButton(page,'Go!'))return'FAIL reach';
-    await key(page,'Enter',1500); await page.waitForTimeout(5000);
-    const sb1=await page.evaluate(()=>HEAPU8[0x460005]).catch(()=>-1);
-    if(sb1===201)return'FAIL race-not-launched';
+    await key(page,'Enter',1500);
+    const r=await waitRace(page,25000);
+    if(!r.launched)return'FAIL race-not-launched sb='+r.sb+' cf='+r.cf;
     await key(page,'Escape',1200);                      // pause -> "PAUSED!" menu
     await page.waitForTimeout(600);
     await key(page,'Enter',1200);                        // Continue -> resume
@@ -116,9 +117,10 @@ async function check(page,name,fn){
     for(let i=0;i<40;i++){if((await gc()).col===13)break;await tap('ArrowRight');}              // -> col 13 (EX)
     await key(page,'Enter',1800);                                                              // commit -> menu
     if(!await gotoButton(page,'Go!'))return'FAIL Go!';
-    await key(page,'Enter',1500); await page.waitForTimeout(7000);
-    const sb=await page.evaluate(()=>HEAPU8[0x460005]).catch(()=>-1);
-    if(sb===201)return'FAIL race-not-launched';
+    await key(page,'Enter',1500);
+    const r=await waitRace(page,25000);
+    if(!r.launched)return'FAIL race-not-launched sb='+r.sb+' cf='+r.cf;
+    const sb=r.sb;
     await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyA'})));  // DRIVE (was crash)
     await page.waitForTimeout(6000);
     await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyA'})));

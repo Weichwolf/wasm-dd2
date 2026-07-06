@@ -1,5 +1,5 @@
 // Verify each race MODE (Wrecking/StockCar/DestDerby) + Single Race type launches + drives clean.
-const {serve,key,alive,rd,menuLabel,boot,gotoButton,chromium}=require('./felib.js');
+const {serve,key,alive,rd,menuLabel,boot,gotoButton,waitRace,chromium}=require('./felib.js');
 const fs=require('fs'); const OUT='/tmp/modes'; fs.mkdirSync(OUT,{recursive:true});
 const buildDir=process.argv[2]||'../../web/dd2';
 let crashed=false,errs=[];
@@ -21,10 +21,11 @@ const st=(page)=>page.evaluate(()=>({scr:HEAPU8[0x460005],mode:HEAP32[0x4673f8>>
     await key(page,'Enter',1400);                                 // confirm Single (no name entry) -> menu
     const s1=await st(page);
     if(!await gotoButton(page,'Go!')){console.log(`${name}: FAIL Go! (after type; st=${JSON.stringify(s1)})`);continue;}
-    await key(page,'Enter',1500); await page.waitForTimeout(7000);
-    const s2=await st(page);
+    await key(page,'Enter',1500);
+    const r=await waitRace(page,25000);
     await page.screenshot({path:`${OUT}/${name}_race.png`});
-    if(s2==='DEAD'||s2.scr===201){console.log(`${name}: FAIL race-not-launched st=${JSON.stringify(s2)}`);continue;}
+    if(!r.launched){console.log(`${name}: FAIL race-not-launched (sb=${r.sb} cf=${r.cf} lvl=${r.lvl})`);continue;}
+    const s2=await st(page);
     // drive
     await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyA'})));
     await page.waitForTimeout(5000);
