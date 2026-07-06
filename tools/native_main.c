@@ -220,6 +220,34 @@ int main(void){
         fprintf(stderr, "[native] input selftest: %s (%d failures)\n", rc==0?"PASS":"FAIL", rc);
         return rc;
     }
+    if (getenv("DD2_FETEST")) {
+        /* Native proof for the reconstructed deep FE screens (patches 821/822/823). Drives the real
+         * FE init, then invokes the exact function-pointer dispatch that traps on wasm when a handler
+         * is unregistered -- calling each screen's descriptor SETUP slot AFTER relocation (an
+         * unregistered raw VA here would segfault on native), plus the reconstructed thunks/actions
+         * directly. The full category loops are input-driven (they'd spin headless), so this tests
+         * the dispatch + handler bodies, not the loop. */
+        typedef int codefn(void);
+        extern void Init_Front_End(void);
+        extern int Stats_Setup_Driver(void), Stats_Setup_Track(void), Stats_Setup_Champ(void);
+        extern int FUN_004521c4(void), FUN_004521d8(void), FUN_00452230(void);
+        W32(0x4673f4, 0); W32(0x4673f8, 0); W32(0x467564, 1);
+        CK("Init_Front_End()"); Init_Front_End();
+        *(unsigned char*)0x754451 = 1; Setup_Pad(1);
+        W32(0x46741c, 1);
+        #define DISP(slot,name) do { codefn* f=(codefn*)(uintptr_t)*(unsigned*)(uintptr_t)(slot); \
+            fprintf(stderr, "[native] FETEST dispatch %-22s slot=0x%x fnptr=%p ...", name, (unsigned)(slot), (void*)f); fflush(stderr); \
+            int r=f(); fprintf(stderr, " returned %d\n", r); } while(0)
+        DISP(0x468054, "View_Statistics setup");   /* Stats_Setup_Driver via relocated descriptor */
+        DISP(0x468b34, "Sound_Volume handler");     /* FUN_0044e308 */
+        DISP(0x469ea4, "CD_Player setup");          /* FUN_0045219c */
+        #undef DISP
+        /* direct calls to the newly-reconstructed non-looping handlers */
+        Stats_Setup_Driver(); Stats_Setup_Track(); Stats_Setup_Champ();
+        FUN_004521c4(); FUN_004521d8(); FUN_00452230();
+        fprintf(stderr, "[native] FETEST all dispatches + handlers returned (no crash)\n");
+        return 0;
+    }
     if (getenv("DD2_PLAY")) {
         CK("PlayModeLevel() [LIVE demo_mode=0]");
         PlayModeLevel(atoi(getenv("DD2_PLAY")));
