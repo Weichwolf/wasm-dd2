@@ -7,6 +7,7 @@ extern int FUN_0044aae0(); extern int FUN_0044ed44();  /* patch 819 */
 extern int FUN_00452970(); extern int FUN_00452990();  /* patch 820 */
 extern int View_Statistics(); extern int Stats_Setup_Driver(); extern int Stats_Setup_Track(); extern int Stats_Setup_Champ();  /* patch 821 */
 extern int View_Sound_Volume(); extern int FUN_0044e308();  /* patch 822 */
+extern int View_CD_Player(); extern int FUN_004521c4(); extern int FUN_004521d8(); extern int FUN_0045220c(); extern int FUN_00452228(); extern int FUN_00452230();  /* patch 823 */
 extern int draw_text_half();
 extern int FUN_0041033a();
 extern int draw_half();
@@ -1452,6 +1453,12 @@ dd2_fnent dd2_fnmap[]={
 {0x0044dd30,(void*)&FUN_0044dd30},
 {0x0044debc,(void*)&Secret},
 {0x0044e308,(void*)&FUN_0044e308},
+{0x00451f70,(void*)&View_CD_Player},
+{0x004521c4,(void*)&FUN_004521c4},
+{0x004521d8,(void*)&FUN_004521d8},
+{0x0045220c,(void*)&FUN_0045220c},
+{0x00452228,(void*)&FUN_00452228},
+{0x00452230,(void*)&FUN_00452230},
 {0x0044e330,(void*)&FUN_0044e330},
 {0x0044e3fc,(void*)&Select_Car},
 {0x0044e600,(void*)&FUN_0044e600},

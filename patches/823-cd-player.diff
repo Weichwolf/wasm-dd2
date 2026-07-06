@@ -1,0 +1,211 @@
+FIX FE CD-PLAYER SCREEN (823): reconstruct View_CD_Player @0x451f70 + int-type handlers
+
+Main-screen "CD Player" (main table @0x4697cc screen 4 ACTION 0x451f70) is a 4-category track
+controller (Prev.Track / Play / Stop / Next Track; descriptor @0x469ea0 stride 0x14, setup @+4,
+action @+8). The main fn + 5 of the 9 category handlers were never decompiled / were void-typed
+and unregistered -> raw VAs in the descriptor -> trapped on wasm (same unreconstructed-handler +
+int-typing class as View Statistics 821 / Sound Volume 822 / patches 816-818).
+
+Reconstructed 1:1 from objdump of dd2h.exe:
+- View_CD_Player @0x451f70: the category loop (LEFT/RIGHT nav via byte tables 0x469eec/0x469eee,
+  0x4000 accept, 0x1000 exit; action result != 0 exits). int(void).
+- Missing setups 0x4521c4 ("Stop") / 0x4521d8 ("Next Track") + actions 0x45220c (Play ->
+  Start_CD_Audio) / 0x452228 (Stop) / 0x452230 (Next Track, track idx @0x469efc cap 0x10)
+  reconstructed. Existing void setups 0x45219c/0x4521b0 widened void->int.
+- All 9 handlers + the main fn registered so dd2_relocate rewrites the descriptor VAs.
+
+Disproves the "toolchain call_indirect bug" for the last blocked deep screen: unregistered
+raw-VA handlers, not a binaryen anomaly.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -649,9 +649,15 @@
+ int FUN_00451f0c(void);
+ int FUN_00451f2c(void);
+ int FUN_00451f4c(void);
+-void FUN_0045219c(void);
+-void FUN_004521b0(void);
++int FUN_0045219c(void);
++int FUN_004521b0(void);
++int FUN_004521c4(void);
++int FUN_004521d8(void);
+ undefined4 FUN_004521ec(void);
++int FUN_0045220c(void);
++int FUN_00452228(void);
++int FUN_00452230(void);
++int View_CD_Player(void);
+ void FUN_00452250(void);
+ int __cdecl Enter_Driver_Names(int param_1,int param_2);
+ undefined4 FUN_00452760(void);
+@@ -42219,25 +42225,167 @@
+ }
+ 
+ 
++/* ===== View_CD_Player @ 0044... (0x451f70) ===== */
++/* Main-screen "CD Player" ACTION (main table @0x4697cc screen 4): 4-category track controller
++   (Prev.Track / Play / Stop / Next Track). Descriptor @0x469ea0 stride 0x14 (+4 setup, +8
++   action). Reconstructed 1:1 from objdump; int(void) to match the code=int() dispatch. The
++   category setup/action fn-ptrs (0x45219c.. / 0x4521ec..) were unregistered raw VAs -> the
++   screen trapped on wasm (same unreconstructed-handler class as View Statistics 821). */
++int View_CD_Player(void)
++
++{
++  int cat;       /* ebx */
++  int changed;   /* edi */
++  int ret;       /* local_14 */
++  int esi4, esi14, l10;
++
++  *(unsigned short *)GIMG(0x469d14) = *(unsigned short *)GIMG(0x469ea0);
++  *(unsigned short *)GIMG(0x469d16) = *(unsigned short *)GIMG(0x469ea2);
++  (*(code *)(uintptr_t)*(unsigned *)GIMG(0x469ea4))();      /* cat-0 setup */
++  FUN_00452250();                                           /* track-name display update */
++  FUN_00450fe0((int)GIMG(0x469e2c));
++  Setup_Screen_Text((int *)GIMG(0x469d2c));
++  Setup_Screen_Lines((int)GIMG(0x469e08));
++  cat = 0; changed = 0;
++  Rotate_Slab_On((short *)0);
++  for (;;) {
++    Debug_Stub();
++    FUN_00420c4c();
++    FUN_00422da4();
++    if (*(unsigned short *)GIMG(0x75444a) & 0x80) {          /* LEFT: prev category */
++      FUN_00451c40(); Play_Click_FX();
++      changed = 1;
++      cat = *(unsigned char *)GIMG(0x469eec + cat * 4);
++      goto changed_check;
++    }
++    if (*(unsigned short *)GIMG(0x75444a) & 0x20) {          /* RIGHT: next category */
++      FUN_00451c40(); Play_Click_FX();
++      changed = 1;
++      cat = *(unsigned char *)GIMG(0x469eee + cat * 4);
++      goto changed_check;
++    }
++    if (*(unsigned short *)GIMG(0x75444a) & 0x1000) {        /* EXIT */
++      ret = 0;
++      goto do_exit;
++    }
++    if (*(unsigned short *)GIMG(0x75444a) & 0x4000) {        /* ACCEPT: activate category */
++      esi4 = cat * 4;
++      l10 = cat * 0xb;
++      *(int *)GIMG(0x469e2e + l10) = *(int *)GIMG(0x469e8c + esi4);
++      FUN_00450fe0((int)GIMG(0x469e2c));
++      Button_Pressed(7, (short *)0);
++      *(int *)GIMG(0x469e2e + l10) = *(int *)GIMG(0x469e7c + esi4);
++      esi14 = cat * 0x14;
++      FUN_00450fe0((int)GIMG(0x469e2c));
++      Button_Pressed(2, (short *)0);
++      ret = (*(code *)(uintptr_t)*(unsigned *)GIMG(0x469ea8 + esi14))();   /* category action */
++      if (ret != 0) goto do_exit;
++      *(unsigned short *)GIMG(0x469d14) = *(unsigned short *)GIMG(0x469ea0 + esi14);
++      *(unsigned short *)GIMG(0x469d16) = *(unsigned short *)GIMG(0x469ea2 + esi14);
++      (*(code *)(uintptr_t)*(unsigned *)GIMG(0x469ea4 + esi14))();         /* re-setup */
++      FUN_00450fe0((int)GIMG(0x469e2c));
++      Setup_Screen_Text((int *)GIMG(0x469d2c));
++      Setup_Screen_Lines((int)GIMG(0x469e08));
++      FUN_00451c40();
++      continue;
++    }
++  changed_check:
++    if (changed != 0) {
++      esi14 = cat * 0x14;
++      *(unsigned short *)GIMG(0x469d14) = *(unsigned short *)GIMG(0x469ea0 + esi14);
++      *(unsigned short *)GIMG(0x469d16) = *(unsigned short *)GIMG(0x469ea2 + esi14);
++      (*(code *)(uintptr_t)*(unsigned *)GIMG(0x469ea4 + esi14))();         /* setup */
++      Setup_Screen_Text((int *)GIMG(0x469d2c));
++      FUN_00450fe0((int)GIMG(0x469e2c));
++      changed = 0;
++    }
++    Draw_Slab();
++    Print_Draw();
++    Draw_Screen_Polys();
++    Draw_Screen_Lines();
++    Draw_All(1);
++  }
++do_exit:
++  *(int *)GIMG(0x467420) = 1;
++  FUN_00450e3c((short *)0);
++  return ret;
++}
++
++
++/* ===== FUN_004521c4 @ 004521c4 ===== */
++/* CD-player cat-2 setup ("Stop" label 0x46ec50). int(void) (patch 823). */
++int FUN_004521c4(void)
++{
++  *(unsigned *)GIMG(0x469d78) = 0x46ec50;
++  *(unsigned *)GIMG(0x469d64) = 0x46ec50;
++  return 0;
++}
++
++
++/* ===== FUN_004521d8 @ 004521d8 ===== */
++/* CD-player cat-3 setup ("Next Track" label 0x46ec60). int(void) (patch 823). */
++int FUN_004521d8(void)
++{
++  *(unsigned *)GIMG(0x469d78) = 0x46ec60;
++  *(unsigned *)GIMG(0x469d64) = 0x46ec60;
++  return 0;
++}
++
++
++/* ===== FUN_0045220c @ 0045220c ===== */
++/* CD-player cat-1 action ("Play"): start CD audio for track (0x469efc)+1. */
++int FUN_0045220c(void)
++{
++  FUN_0041617c((char)(*(int *)GIMG(0x469efc) + 1), 1);
++  Start_CD_Audio();
++  return 0;
++}
++
++
++/* ===== FUN_00452228 @ 00452228 ===== */
++/* CD-player cat-2 action ("Stop"): stop CD audio. */
++int FUN_00452228(void)
++{
++  FUN_004162b4();
++  return 0;
++}
++
++
++/* ===== FUN_00452230 @ 00452230 ===== */
++/* CD-player cat-3 action ("Next Track"): advance track index (cap 0x10), refresh name. */
++int FUN_00452230(void)
++{
++  int t = *(int *)GIMG(0x469efc);
++  if (t < 0x10) {
++    *(int *)GIMG(0x469efc) = t + 1;
++    FUN_00452250();
++  }
++  return 0;
++}
++
++
+ /* ===== FUN_0045219c @ 0045219c ===== */
+ 
+-void FUN_0045219c(void)
++int FUN_0045219c(void)
+ 
+ {
++  /* CD-player descriptor cat-0 setup ("Prev. Track"). int(void): called via the [0x469ea4]
++     call_indirect (code=int()) from View_CD_Player -> void return traps on wasm (patch 823). */
+   PTR_DAT_00469d78 = s__R_JL_T_Prev__Track_0046ec2c;
+   PTR_DAT_00469d64 = s__R_JL_T_Prev__Track_0046ec2c;
+-  return;
++  return 0;
+ }
+ 
+ 
+ /* ===== FUN_004521b0 @ 004521b0 ===== */
+ 
+-void FUN_004521b0(void)
++int FUN_004521b0(void)
+ 
+ {
++  /* CD-player descriptor cat-1 setup ("Play"). int(void) (patch 823). */
+   PTR_DAT_00469d78 = s__R_JL_T_Play_0046ec40;
+   PTR_DAT_00469d64 = s__R_JL_T_Play_0046ec40;
+-  return;
++  return 0;
+ }
+ 
+ 
