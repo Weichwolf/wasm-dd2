@@ -1,0 +1,91 @@
+FIX FE "View League" trap (832): season/standings setups stored raw &LAB_00453c00 as a fn-ptr
+
+QA agent Finding: on the between-race Championship standings screen ("Relegated", scr168),
+pressing Enter on the "View League" icon threw `table index is out of bounds` (and once escalated
+to a renderer crash). Root = the same runtime-fn-ptr-store class as patch 824, but a form 824
+missed: End_Of_Season / the @0x46af78 standings-menu setups (FUN_00454318/4543a8/454438/4544c8/
+454558) / Display_Season_Status / FUN_004558ec store `PTR_LAB_0046af90 = &LAB_00453c00` (and
+`PTR_LAB_0046c07c = &LAB_00453c00`). LAB_00453c00 = `(*(undefined4*)GIMG(0x453c00))`, so
+`&LAB_00453c00` = the RAW VA 0x453c00 -- not the relocated table index. dd2_relocate rewrites the
+STATIC slot at boot, but these setups RE-STORE the raw VA at runtime, so the later call_indirect
+of [0x46af90]/[0x46c07c] (the "View League" viewer FUN_00453c00) traps OOB. In championship
+(race_type!=3) the else-branch always takes this path. Patch 824 only fixed the LITERAL
+`= 0x453c00` store in the reconstructed FUN_004545e8; these 8 pre-existing `&LAB_` stores were
+missed. Fixed all 8 to store the relocated `FUN_00453c00` (matching the working `= View_MultiLeague`
+sibling line). The View_MultiLeague (race_type==3) branch was already correct.
+
+verify + verify-wasm 10/10 both; native<->wasm L9 702/702 bit-identical.
+--- a/dd2.c
++++ b/dd2.c
+@@ -44083,7 +44083,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   FUN_004549c4();
+   FUN_0044baec();
+@@ -44242,7 +44242,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   PTR_DAT_0046af30 = s__R_JC_T_View_Results_0046f340;
+   PTR_DAT_0046af44 = s__R_JC_T_View_Results_0046f340;
+@@ -44270,7 +44270,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   PTR_DAT_0046af30 = s__R_JC_T_View_League_0046f358;
+   PTR_DAT_0046af44 = s__R_JC_T_View_League_0046f358;
+@@ -44298,7 +44298,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   PTR_DAT_0046af30 = s__R_JC_T_View_Replay_0046f36c;
+   PTR_DAT_0046af44 = s__R_JC_T_View_Replay_0046f36c;
+@@ -44326,7 +44326,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   PTR_DAT_0046af30 = s__R_JC_T_File_Options_0046f380;
+   PTR_DAT_0046af44 = s__R_JC_T_File_Options_0046f380;
+@@ -44354,7 +44354,7 @@
+     _DAT_0046adf2 = 0xfc18;
+     _DAT_0046ae08 = 0xfc18;
+     _DAT_0046ae0a = 0xfc18;
+-    PTR_LAB_0046af90 = &LAB_00453c00;
++    PTR_LAB_0046af90 = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) -> was call_indirect OOB on View League */
+   }
+   PTR_DAT_0046af30 = s__R_JC_T_View_Statistics_0046f398;
+   PTR_DAT_0046af44 = s__R_JC_T_View_Statistics_0046f398;
+@@ -44953,7 +44953,7 @@
+   else {
+     _DAT_0046befc = 0xfc18;
+     _DAT_0046befe = 0xfc18;
+-    PTR_LAB_0046c07c = &LAB_00453c00;
++    PTR_LAB_0046c07c = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) */
+   }
+   FUN_0044baec();
+   _DAT_0046beb4 = 0xfc18;
+@@ -45102,7 +45102,7 @@
+   else {
+     _DAT_0046befc = 0xfc18;
+     _DAT_0046befe = 0xfc18;
+-    PTR_LAB_0046c07c = &LAB_00453c00;
++    PTR_LAB_0046c07c = (undefined4)(uintptr_t)FUN_00453c00;  /* relocated fn-ptr, not raw &LAB (0x453c00) */
+   }
+   PTR_DAT_0046c01c = s__R_JC_T_View_Results_0046f934;
+   PTR_DAT_0046c030 = s__R_JC_T_View_Results_0046f934;
