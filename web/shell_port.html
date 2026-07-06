@@ -42,8 +42,33 @@
         var pads = navigator.getGamepads ? navigator.getGamepads() : [];
         var padHere = false; for (var i=0;i<pads.length;i++) if (pads[i] && pads[i].connected) padHere = true;
         if (padHere || q.has('pad')) ENV.DD2_PAD = '1';
+      },
+      // Persist the memory card (SaveGames) across page reloads via IndexedDB. The engine opens
+      // "SaveGames" at the FS root; we back that path with an IDBFS mount at /persist and load its
+      // contents BEFORE main() runs (addRunDependency gates the boot on the async syncfs). On a
+      // first-ever run /persist/SaveGames is absent -> InitCardSystem recreates a fresh 128KB card
+      // (byte-identical to the shipped file). Writes land in /persist and are flushed back to
+      // IndexedDB on tab-hide / unload (syncfs(false)). No engine change; native/node use real disk.
+      function(){
+        try {
+          FS.mkdir('/persist');
+          FS.mount(IDBFS, {}, '/persist');
+          Module.addRunDependency('idbfs-load');
+          FS.syncfs(true, function(err){
+            if (err) console.error('IDBFS load failed', err);
+            try { FS.unlink('/SaveGames'); } catch(e){}          // drop any stale root node
+            try { FS.symlink('/persist/SaveGames', '/SaveGames'); } catch(e){ console.error('symlink SaveGames', e); }
+            Module.removeRunDependency('idbfs-load');
+          });
+        } catch(e){ console.error('IDBFS mount failed', e); }
       }],
       onRuntimeInitialized: function(){
+        // Flush the memory card to IndexedDB when the tab is hidden or closing (the engine has no
+        // save-completion callback, so persist opportunistically on the way out).
+        var _persist = function(){ try { FS.syncfs(false, function(){}); } catch(e){} };
+        document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='hidden') _persist(); });
+        window.addEventListener('pagehide', _persist);
+        window.addEventListener('beforeunload', _persist);
         // Route real keyboard events to the engine: keydown/keyup -> dd2_browser_key_event(code, down).
         var send = function(code, down){
           try { Module.ccall('dd2_browser_key_event', 'number', ['string','number'], [code, down]); }

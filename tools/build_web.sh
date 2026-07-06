@@ -31,10 +31,14 @@ emcc $OBJS -o "$OUTDIR/index.html" \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=0 -sERROR_ON_UNDEFINED_SYMBOLS=0 \
   -sASYNCIFY -sASYNCIFY_STACK_SIZE=131072 \
   -sEXPORTED_FUNCTIONS='["_main","_dd2_browser_key_event","_dd2_pad_update","_malloc","_free"]' \
-  -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","stringToUTF8","lengthBytesUTF8","ENV"]' \
+  -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","stringToUTF8","lengthBytesUTF8","ENV","FS"]' \
+  -lidbfs.js \
   --shell-file "$ROOT/web/shell_port.html" \
   --preload-file "$GAME/Dirinfo@Dirinfo" \
   --preload-file "$GAME/dd2_image.bin@dd2_image.bin" \
-  --preload-file "$GAME/SaveGames@SaveGames" \
   2>/tmp/wlink_err.txt || { echo "LINK FAILED:"; tail -20 /tmp/wlink_err.txt; exit 1; }
+# SaveGames is NOT preloaded: it is IDBFS-backed (shell_port.html mounts /persist and symlinks
+# /SaveGames -> /persist/SaveGames). On a first-ever run the file is absent, so the engine's
+# InitCardSystem @0x423220 recreates a fresh 128KB card from the image baseline (proven native:
+# the recreated file is byte-identical to the shipped SaveGames) -- then it persists to IndexedDB.
 echo "built browser port -> $OUTDIR/index.html"
