@@ -77,6 +77,13 @@ async function check(page,name,fn){
     await key(page,'Enter',900); await key(page,'Enter',900);  // -> Race Type
     for(const k of ['ArrowRight','ArrowRight','ArrowRight','ArrowLeft','ArrowLeft','ArrowLeft']) await key(page,k,650);
     await key(page,'Escape',700); await key(page,'Escape',700); await key(page,'Escape',700); return'4 icons ok'; });
+  // Name Entry (Championship): must accept letters (patch 828 pointer-scaling regression guard)
+  await check(page,'name_entry',async()=>{ await boot(page,server); if(!await gotoButton(page,'Wrecking'))return'FAIL reach';
+    await key(page,'Enter',900); await key(page,'Enter',900); await key(page,'Enter',1200);  // Championship -> Name Entry
+    const nb=()=>page.evaluate(()=>{const p=HEAPU32[0x469fd4>>2];let s='';for(let i=0;i<12;i++){const c=HEAPU8[p+8+i];if(!c)break;s+=String.fromCharCode(c);}return s;}).catch(()=>'ERR');
+    for(let i=0;i<3;i++) await key(page,'Enter',600);           // add 3 letters
+    const nm=await nb(); if(nm.length<3)return'FAIL name="'+nm+'" (letters not registered)';
+    await key(page,'Escape',700); await key(page,'Escape',700); return'name="'+nm+'"'; });
   // Go! -> launch race (verify we leave the FE menu: screen byte @0x460005 != 201)
   await check(page,'go_race',async()=>{ await boot(page,server); if(!await gotoButton(page,'Go!'))return'FAIL reach';
     await key(page,'Enter',1500); await page.waitForTimeout(6000);
