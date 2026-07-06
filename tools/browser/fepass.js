@@ -106,6 +106,25 @@ async function check(page,name,fn){
     for(const k of ['ArrowUp','KeyA']) await key(page,k,400);  // still drivable after resume
     return 'pause+resume ok'; });
 
+  // Championship race + driving (patch 830 crash regression guard). Needs grid taps for Name Entry.
+  await check(page,'championship',async()=>{ await boot(page,server); if(!await gotoButton(page,'Wrecking'))return'FAIL reach';
+    const tap=async(c)=>{await page.evaluate(cc=>window.dispatchEvent(new KeyboardEvent('keydown',{code:cc})),c);await page.waitForTimeout(45);await page.evaluate(cc=>window.dispatchEvent(new KeyboardEvent('keyup',{code:cc})),c);await page.waitForTimeout(850);};
+    const gc=()=>page.evaluate(()=>({col:(HEAPU16[0x469f34>>1]-0x30)>>4,row:Math.round((HEAPU16[0x469f36>>1]-123)/17)})).catch(()=>({col:-9,row:-9}));
+    await key(page,'Enter',700); await key(page,'Enter',700); await key(page,'Enter',1400);  // Championship -> Name Entry
+    for(let i=0;i<3;i++) await key(page,'Enter',450);                                          // 3 letters
+    for(let i=0;i<40;i++){if((await gc()).row===4)break;await tap('ArrowDown');}                // -> row 4 (DEL/EX)
+    for(let i=0;i<40;i++){if((await gc()).col===13)break;await tap('ArrowRight');}              // -> col 13 (EX)
+    await key(page,'Enter',1800);                                                              // commit -> menu
+    if(!await gotoButton(page,'Go!'))return'FAIL Go!';
+    await key(page,'Enter',1500); await page.waitForTimeout(7000);
+    const sb=await page.evaluate(()=>HEAPU8[0x460005]).catch(()=>-1);
+    if(sb===201)return'FAIL race-not-launched';
+    await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyA'})));  // DRIVE (was crash)
+    await page.waitForTimeout(6000);
+    await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyA'})));
+    if(pageCrashed || !await alive(page))return'FAIL crashed-while-driving';
+    return 'champ race drove clean sb='+sb; });
+
   const fails=results.filter(r=>!r.pass);
   console.log(`\n=== ${results.length-fails.length}/${results.length} PASS ===`);
   await browser.close(); server.close();
