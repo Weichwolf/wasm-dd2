@@ -2059,8 +2059,8 @@ extern int unaff_retaddr;
 #define DAT_0046ecdc (*(int*)GIMG(0x0046ecdc))
 #define PTR_DAT_0046a010 (*(undefined4*)GIMG(0x0046a010))
 #define PTR_DAT_00469ffc (*(undefined4*)GIMG(0x00469ffc))
-#define PTR_DAT_00469fd4 (*(int**)GIMG(0x00469fd4))
-#define PTR_DAT_00469fe8 (*(int**)GIMG(0x00469fe8))
+#define PTR_DAT_00469fd4 (*(char**)GIMG(0x00469fd4))  /* CHAR* name-buffer pointer, NOT int*: Enter_Driver_Names writes the name byte-by-byte `mov BYTE [ptr+8+i],al` (asm 0x452539); int typing made PTR_DAT_00469fd4[i] scale the byte index by 4 -> chars written 4 bytes apart -> the display (contiguous chars) showed the name field permanently blank (Name Entry accepted no letters) */
+#define PTR_DAT_00469fe8 (*(char**)GIMG(0x00469fe8))  /* CHAR* name-buffer pointer, NOT int*: Enter_Driver_Names writes the name byte-by-byte `mov BYTE [ptr+8+i],al` (asm 0x452539); int typing made PTR_DAT_00469fe8[i] scale the byte index by 4 -> chars written 4 bytes apart -> the display (contiguous chars) showed the name field permanently blank (Name Entry accepted no letters) */
 #define DAT_00469f9c (*(int*)GIMG(0x00469f9c))
 #define DAT_00469f4c (*(int*)GIMG(0x00469f4c))
 #define DAT_0093e7b1 (*(int*)GIMG(0x0093e7b1))
