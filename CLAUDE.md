@@ -133,10 +133,16 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   indices) — once reconstructed+registered they work with zero wasm errors. Isolation proof:
   tools/browser/shifttest.js (shifting the whole wasm table by adding N address-taken
   suspending fns changes nothing). Companion fix: info_screen_directions/_dire_stats int-typed
-  byte tables (Info LEFT-nav OOB). Test infra: tools/browser/fepass.js (11/11 label-verified FE
-  full pass incl. Go!->live 3D race) + native DD2_FETEST (descriptor-slot dispatch proof).
-  Remaining polish (non-blocking): physical Xbox pad on real hardware (SW chain validated via
-  synthetic pad).
+  byte tables (Info LEFT-nav OOB). An agent-driven test->fix loop then closed 4 more DEEP-feature
+  bugs (non-dispatch; found via QA agents + native ASan/interactive repro): 827 Keyboard-config
+  renderer crash (string symbol typed int** deref'd as pointer), 828 Name Entry accepted no
+  letters (name buffers int** not char** -> chars 4 bytes apart), 829 Keyboard rebind never
+  advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830 CHAMPIONSHIP crash on driving
+  (Sort_Leagues loop-bound Ghidra artifact -> wild deref; restored all of Championship mode).
+  Test infra: tools/browser/fepass.js (17/17 label-verified full pass: every FE screen + race
+  lifecycle + championship, with page.on('crash') detection) + native DD2_FETEST/DD2_KBTEST/
+  DD2_CHAMP repro modes. Remaining polish (non-blocking): physical Xbox pad on real hardware (SW
+  chain validated via synthetic pad).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
