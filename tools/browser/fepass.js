@@ -78,6 +78,18 @@ async function check(page,name,fn){
     for(const k of ['ArrowUp','ArrowUp','ArrowLeft']) await key(page,k,400);
     return 'race launched sb='+sb; });
 
+  // Race launch + pause (Escape) + resume (Continue) — crash/error-free through the pause path
+  await check(page,'pause_resume',async()=>{ await boot(page,server); if(!await gotoButton(page,'Go!'))return'FAIL reach';
+    await key(page,'Enter',1500); await page.waitForTimeout(5000);
+    const sb1=await page.evaluate(()=>HEAPU8[0x460005]).catch(()=>-1);
+    if(sb1===201)return'FAIL race-not-launched';
+    await key(page,'Escape',1200);                      // pause -> "PAUSED!" menu
+    await page.waitForTimeout(600);
+    await key(page,'Enter',1200);                        // Continue -> resume
+    await page.waitForTimeout(800);
+    for(const k of ['ArrowUp','KeyA']) await key(page,k,400);  // still drivable after resume
+    return 'pause+resume ok'; });
+
   const fails=results.filter(r=>!r.pass);
   console.log(`\n=== ${results.length-fails.length}/${results.length} PASS ===`);
   await browser.close(); server.close();
