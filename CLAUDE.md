@@ -152,8 +152,30 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   prior "leave faithful / do-not-fix" note for this path.]
   Test infra: tools/browser/fepass.js (17/17 label-verified full pass: every FE screen + race
   lifecycle + championship, with page.on('crash') detection) + native DD2_FETEST/DD2_KBTEST/
-  DD2_CHAMP/DD2_SEASONEND repro modes. Remaining polish (non-blocking): physical Xbox pad on real
-  hardware (SW chain validated via synthetic pad).
+  DD2_CHAMP/DD2_SEASONEND/DD2_KBREBIND2 repro modes. A 3-agent QA sweep (qa_ttmp/qa_fetree/qa_edge)
+  + a 10-pass consecutive-clean loop (tools/browser/passrun.sh + consecutive.sh = fepass + 5min
+  adversarial fuzz + rotating deep probe) then closed the last items:
+  - KEYBOARD REBIND (real bug, BOTH targets): (a) dd2_symbols.h typed the rebind working-keymap
+    sub-bytes DAT_0093fd93/95/98/99/9c/9d as int, but the original does BYTE store/load
+    (FUN_0044fd80 `a2 XX fd 93 00`=mov moffs8,AL; FUN_0044f9d4 `a0 XX fd 93 00`; `8a 15` cmp-load)
+    -> each 32-bit store zeroed 3 adjacent keymap bytes -> rebind never committed. Retyped to
+    unsigned char* (fd90 stays int = &copy-base). (b) BROWSER-only: web/shell_port.html forwarded
+    a 13-key allowlist (arrows/Enter/Esc/Space/F1/F2 + KeyA/S/W/Z) -> D/Q/E/etc. never reached
+    dd2_key_event so the rebind screen couldn't bind them; now forwards all KeyA-Z + Digit0-9.
+    Proof: native DD2_KBREBIND2 (deterministic 5-prompt bind+commit) + browser per-key detection.
+  - BROWSER SAVE PERSISTENCE (IDBFS): the interactive build used MEMFS (--preload-file) so saves
+    didn't survive a reload (engine card-save path IS faithful + persists on native+node/real disk;
+    InitCardSystem recreates a byte-identical 128KB SaveGames when absent). Web-only fix: build_web.sh
+    links -lidbfs.js, drops the SaveGames preload; shell_port.html mounts IDBFS at /persist, gates
+    boot on FS.syncfs(true), symlinks /SaveGames->/persist/SaveGames, flushes on tab-hide/unload.
+    Proof qa_persist_idbfs.js: marker survives reload in file AND engine reads it back @0x754460.
+  - TEST-VALIDITY: the shared launch check `screen@0x460005 != 201` false-passes on transient
+    sb=41 loading frames -> felib.waitRace() now polls for sb==89 with engine frame @0x462ff0
+    advancing (a dialog stall = frozen cf FAILS). Coverage closed: Time-Trial (race_type=1) +
+    2-Player (race_type=3, Select_Multi via Enter_Driver_Names EMPTY-commit exit) both browser-
+    launch+drive clean; patch 834 retire-all confirmed (native DD2_SEASONEND + browser retire loop).
+  Remaining polish (non-blocking): physical Xbox pad on real hardware (SW chain validated via
+  synthetic pad).
 
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
