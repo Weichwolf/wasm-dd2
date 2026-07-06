@@ -137,8 +137,11 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   bugs (non-dispatch; found via QA agents + native ASan/interactive repro): 827 Keyboard-config
   renderer crash (string symbol typed int** deref'd as pointer), 828 Name Entry accepted no
   letters (name buffers int** not char** -> chars 4 bytes apart), 829 Keyboard rebind never
-  advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830 CHAMPIONSHIP crash on driving
-  (Sort_Leagues loop-bound Ghidra artifact -> wild deref; restored all of Championship mode).
+  advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830-833 CHAMPIONSHIP
+  fully working (830 driving crash = Sort_Leagues loop-bound artifact; 831 season-end sibling
+  Reset_League_Info; 832 "View League" between-race trap = raw &LAB_00453c00 fn-ptr store; 833
+  season-end wild-write = Reset_League_Info uninitialized aiStack_5c -> FUN_0044c9c0 OOB). Full
+  5-race season + standings + View League + season end all work.
   Test infra: tools/browser/fepass.js (17/17 label-verified full pass: every FE screen + race
   lifecycle + championship, with page.on('crash') detection) + native DD2_FETEST/DD2_KBTEST/
   DD2_CHAMP repro modes. Remaining polish (non-blocking): physical Xbox pad on real hardware (SW
