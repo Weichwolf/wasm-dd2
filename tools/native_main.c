@@ -301,6 +301,37 @@ int main(void){
         fprintf(stderr, "[native] championship returned (no crash)\n");
         return 0;
     }
+    if (getenv("DD2_KBREBIND2")) {
+        /* Deterministic keyboard-rebind driver (isolates the byte-store fix from browser input
+         * timing). Mirrors the rebind action loop FUN_0044f9d4: copy active map @0x46757a ->
+         * working @0x93fd90, then for each of 5 prompts feed ONE key via dd2_keystate + the real
+         * poller FUN_0044fe64, store via FUN_0044fd80, advance on non-(-1). Then commit copy. */
+        extern unsigned char dd2_keystate[256];
+        extern unsigned FUN_0044fe64(void);
+        extern unsigned FUN_0044fd80(unsigned,unsigned);
+        unsigned char* work=(unsigned char*)(uintptr_t)0x93fd90;
+        unsigned char* act =(unsigned char*)(uintptr_t)0x46757a;
+        memcpy(work, act, 18);
+        memset((void*)(uintptr_t)0x93fda2, 0, 0x60);   /* debounce array */
+        unsigned keys[5]={87,83,65,68,81};             /* W S A D Q */
+        int prompt=0; int i;
+        for (i=0;i<5;i++){
+            unsigned vk=keys[i];
+            dd2_keystate[vk]=1;
+            unsigned got=FUN_0044fe64();               /* edge-detect: returns vk */
+            int r=(int)FUN_0044fd80((unsigned)prompt, got);
+            fprintf(stderr,"[kbrebind2] prompt%d key%u poll=%u store_ret=%d  work=[+5:%d +3:%d +8:%d +9:%d +12:%d +13:%d]\n",
+                    prompt, vk, got, r, work[5],work[3],work[8],work[9],work[12],work[13]);
+            if (r!=-1) prompt++;
+            dd2_keystate[vk]=0; FUN_0044fe64();        /* release + reset debounce */
+        }
+        memcpy(act, work, 18);                          /* commit */
+        int ok = act[5]==87 && act[3]==83 && act[8]==65 && act[12]==68 && act[13]==81
+               && act[6]==112 && act[7]==113;           /* bindings applied + adjacent preserved */
+        fprintf(stderr,"[kbrebind2] active AFTER commit +5:%d +3:%d +8:%d +12:%d +13:%d  adj[6,7]:%d,%d  => %s\n",
+                act[5],act[3],act[8],act[12],act[13],act[6],act[7], ok?"PASS":"FAIL");
+        return ok?0:1;
+    }
     if (getenv("DD2_SEASONEND")) {
         /* Repro the retire-all-races season-end crash (patch 834 clamp): put the player in the
          * BOTTOM division (_current_season==0) and force Check_League_Standing()==3 (relegated:

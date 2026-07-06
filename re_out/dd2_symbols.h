@@ -1991,12 +1991,17 @@ extern int unaff_retaddr;
 #define DAT_004692b0 (*(int*)GIMG(0x004692b0))
 #define DAT_00469274 (*(int*)GIMG(0x00469274))
 #define DAT_0093fd90 (*(int*)GIMG(0x0093fd90))
-#define DAT_0093fd9d (*(int*)GIMG(0x0093fd9d))
-#define DAT_0093fd9c (*(int*)GIMG(0x0093fd9c))
-#define DAT_0093fd98 (*(int*)GIMG(0x0093fd98))
-#define DAT_0093fd93 (*(int*)GIMG(0x0093fd93))
-#define DAT_0093fd95 (*(int*)GIMG(0x0093fd95))
-#define DAT_0093fd99 (*(int*)GIMG(0x0093fd99))
+/* Keyboard-rebind working keymap sub-bytes: the original does BYTE store/load on each
+   (FUN_0044fd80 store `a2 XX fd 93 00` = mov moffs8,AL; FUN_0044f9d4 read `a0 XX fd 93 00`
+   = mov AL,moffs8; compare loads `8a 15 XX fd 93 00`). Ghidra typed them `int` -> each 32-bit
+   store zeroed the 3 adjacent keymap bytes, corrupting the map so a rebind never committed
+   (int-typed byte-symbol class). fd90 stays int: only used as `&DAT_0093fd90` int-copy base. */
+#define DAT_0093fd9d (*(unsigned char*)GIMG(0x0093fd9d))
+#define DAT_0093fd9c (*(unsigned char*)GIMG(0x0093fd9c))
+#define DAT_0093fd98 (*(unsigned char*)GIMG(0x0093fd98))
+#define DAT_0093fd93 (*(unsigned char*)GIMG(0x0093fd93))
+#define DAT_0093fd95 (*(unsigned char*)GIMG(0x0093fd95))
+#define DAT_0093fd99 (*(unsigned char*)GIMG(0x0093fd99))
 #define DAT_004693a8 (*(int*)GIMG(0x004693a8))
 #define DAT_00469348 (*(int*)GIMG(0x00469348))
 #define DAT_00469564 (*(int*)GIMG(0x00469564))
