@@ -3,7 +3,7 @@
 const {serve,key,alive,rd,menuLabel,boot,gotoButton,chromium}=require('./felib.js');
 const fs=require('fs'); const OUT='/tmp/fepass'; fs.mkdirSync(OUT,{recursive:true});
 const buildDir=process.argv[2]||'../../web/dd2';
-let errs=[]; const results=[];
+let errs=[]; const results=[]; let pageCrashed=false;
 const uniqErrs=()=>[...new Set(errs)];
 async function check(page,name,fn){
   errs=[]; let detail='';
@@ -20,6 +20,7 @@ async function check(page,name,fn){
   const browser=await chromium.launch({args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:700,height:520}});
   page.on('pageerror',e=>errs.push(e.message.replace(/\n/g,' ').slice(0,120)));
+  page.on('crash',()=>{pageCrashed=true;errs.push('RENDERER CRASH (page.on crash)');});
 
   // Car
   await check(page,'car',async()=>{ await boot(page,server); if(!await gotoButton(page,'Select Car'))return'FAIL reach';
@@ -47,6 +48,14 @@ async function check(page,name,fn){
   await check(page,'config_ctrl',async()=>{ await boot(page,server); if(!await gotoButton(page,'Configuration'))return'FAIL reach';
     await key(page,'Enter',900); let l=await rd(page,0x469158); if(!l.includes('Control'))return'FAIL label="'+l+'"';
     await key(page,'Enter',900); await key(page,'ArrowDown',700); await key(page,'ArrowUp',700); await key(page,'Escape',700); await key(page,'Escape',700); return'ctrl ok'; });
+  // Config -> Control Method -> SELECT KEYBOARD (patch 827 crash regression guard; watch page.on('crash'))
+  await check(page,'config_keyboard',async()=>{ await boot(page,server); if(!await gotoButton(page,'Configuration'))return'FAIL reach';
+    await key(page,'Enter',900); await key(page,'Enter',900);           // Control Method (Keyboard default-selected)
+    await key(page,'Enter',1200);                                        // select Keyboard -> rebind screen (was a hard crash)
+    if(pageCrashed)return'FAIL renderer-crashed';
+    for(const k of ['KeyA','KeyS','KeyD']) await key(page,k,500);        // rebind a few keys
+    await key(page,'Escape',800); await key(page,'Escape',700);
+    return pageCrashed?'FAIL renderer-crashed':'keyboard rebind ok'; });
   // Config -> Sound Volume
   await check(page,'config_sound',async()=>{ await boot(page,server); if(!await gotoButton(page,'Configuration'))return'FAIL reach';
     await key(page,'Enter',900); await key(page,'ArrowRight',700); let l=await rd(page,0x469158); if(!l.includes('Sound'))return'FAIL label="'+l+'"';
