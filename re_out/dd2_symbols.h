@@ -1978,12 +1978,14 @@ extern int unaff_retaddr;
 #define DAT_00468f74 (*(undefined1*)GIMG(0x00468f74))
 /* FE SUB-SCREEN selection-ring x/y (WORD) — same class as the main-menu ring (0x4697c8/ca).
    Each value-cycle sub-screen (Configuration/Race Mode/Race Type/Control Method/Info/results/
-   season dialogs) copies its ring position `_DAT_dest = (&DAT_src)[sel*10]` as a WORD (asm
-   `66 a1 .. mov ..,%ax` / `66 a3 .. mov %ax,..`; paired x/y are 2 bytes apart). Ghidra typed
-   these src/dest symbols int or undefined1 -> wrong store width (stale high byte / overlapping
-   y) + wrong index stride (byte:halved, int:doubled) -> the selection ring landed off its icon
-   in most sub-menus. Retyped all 32 (src+dest across every sub-screen) to short. dest 0x469070/
-   72,0x469a38/3a,0x46a0e0/e2,0x46a258/5a,0x46a3e4/e6+3fc/fe,0x46a5dc/de,0x46a958/5a. */
+   season/results dialogs) copies its ring position `_DAT_dest = (&DAT_src)[sel*10]` as a WORD
+   (asm `66 a1 .. mov ..,%ax` / `66 a3 .. mov %ax,..`; indexed `66 8b 86 ..(%esi),%ax` = record*20
+   stride; paired x/y are 2 bytes apart). Ghidra typed these src/dest symbols int or undefined1 ->
+   wrong store width (stale high byte / overlapping y) + wrong index stride (byte:halved,
+   int:doubled) -> the selection ring landed off its icon in most sub-menus. Retyped ALL 52
+   (src+dest across every sub-screen) to short: Config 0x469070/188, Info 0x469a38/b74, dialogs
+   0x46a0e0/1e4 0x46a258/370 0x46a3e4+3fc/538 0x46a5dc/720+7f8 0x46a958/aaa4, results/season
+   0x46a970 0x46ad90/da8 0x46af74 0x46b660/678 0x46b7c8 0x46be9c/eb4 0x46c060 (+ paired y at +2). */
 #define DAT_00469188 (*(short*)GIMG(0x00469188))
 #define DAT_0046918a (*(short*)GIMG(0x0046918a))
 #define PTR_FUN_0046918c (*(undefined4*)GIMG(0x0046918c))
@@ -2147,8 +2149,8 @@ extern int unaff_retaddr;
 #define DAT_0046f2ac (*(int*)GIMG(0x0046f2ac))
 #define DAT_0046f2b4 (*(int*)GIMG(0x0046f2b4))
 #define PTR_LAB_0046af90 (*(undefined4*)GIMG(0x0046af90))
-#define DAT_0046af74 (*(int*)GIMG(0x0046af74))
-#define DAT_0046af76 (*(int*)GIMG(0x0046af76))
+#define DAT_0046af74 (*(short*)GIMG(0x0046af74))
+#define DAT_0046af76 (*(short*)GIMG(0x0046af76))
 #define PTR_FUN_0046af78 (*(int*)GIMG(0x0046af78))
 #define DAT_0046aef8 (*(int*)GIMG(0x0046aef8))
 #define DAT_0046ae20 (*(int*)GIMG(0x0046ae20))
@@ -2181,8 +2183,8 @@ extern int unaff_retaddr;
 #define DAT_0046b616 (*(undefined1*)GIMG(0x0046b616))
 #define DAT_0046f658 (*(int*)GIMG(0x0046f658))
 #define DAT_0046f660 (*(int*)GIMG(0x0046f660))
-#define DAT_0046b7c8 (*(int*)GIMG(0x0046b7c8))
-#define DAT_0046b7ca (*(int*)GIMG(0x0046b7ca))
+#define DAT_0046b7c8 (*(short*)GIMG(0x0046b7c8))
+#define DAT_0046b7ca (*(short*)GIMG(0x0046b7ca))
 #define PTR_FUN_0046b7cc (*(int*)GIMG(0x0046b7cc))
 #define DAT_0046b74c (*(int*)GIMG(0x0046b74c))
 #define DAT_0046b6c0 (*(int*)GIMG(0x0046b6c0))
@@ -2210,8 +2212,8 @@ extern int unaff_retaddr;
 #define DAT_0046f88c (*(int*)GIMG(0x0046f88c))
 #define DAT_0046f894 (*(int*)GIMG(0x0046f894))
 #define PTR_LAB_0046c07c (*(undefined4*)GIMG(0x0046c07c))
-#define DAT_0046c060 (*(int*)GIMG(0x0046c060))
-#define DAT_0046c062 (*(int*)GIMG(0x0046c062))
+#define DAT_0046c060 (*(short*)GIMG(0x0046c060))
+#define DAT_0046c062 (*(short*)GIMG(0x0046c062))
 #define PTR_FUN_0046c064 (*(int*)GIMG(0x0046c064))
 #define DAT_0046bfe4 (*(int*)GIMG(0x0046bfe4))
 #define DAT_0046bf14 (*(int*)GIMG(0x0046bf14))
@@ -2324,30 +2326,30 @@ extern int unaff_retaddr;
 #define _DAT_0046a5de (*(short*)GIMG(0x0046a5de))
 #define _DAT_0046a958 (*(short*)GIMG(0x0046a958))
 #define _DAT_0046a95a (*(short*)GIMG(0x0046a95a))
-#define _DAT_0046a970 (*(int*)GIMG(0x0046a970))
-#define _DAT_0046a972 (*(int*)GIMG(0x0046a972))
+#define _DAT_0046a970 (*(short*)GIMG(0x0046a970))
+#define _DAT_0046a972 (*(short*)GIMG(0x0046a972))
 #define _DAT_0046a9a0 (*(int*)GIMG(0x0046a9a0))
 #define _DAT_0046a9a2 (*(int*)GIMG(0x0046a9a2))
-#define _DAT_0046ad90 (*(int*)GIMG(0x0046ad90))
-#define _DAT_0046ad92 (*(int*)GIMG(0x0046ad92))
-#define _DAT_0046ada8 (*(int*)GIMG(0x0046ada8))
-#define _DAT_0046adaa (*(int*)GIMG(0x0046adaa))
+#define _DAT_0046ad90 (*(short*)GIMG(0x0046ad90))
+#define _DAT_0046ad92 (*(short*)GIMG(0x0046ad92))
+#define _DAT_0046ada8 (*(short*)GIMG(0x0046ada8))
+#define _DAT_0046adaa (*(short*)GIMG(0x0046adaa))
 #define _DAT_0046adf0 (*(int*)GIMG(0x0046adf0))
 #define _DAT_0046adf2 (*(int*)GIMG(0x0046adf2))
 #define _DAT_0046ae08 (*(int*)GIMG(0x0046ae08))
 #define _DAT_0046ae0a (*(int*)GIMG(0x0046ae0a))
 #define _DAT_0046ae26 (*(int*)GIMG(0x0046ae26))
 #define _DAT_0046ae32 (*(int*)GIMG(0x0046ae32))
-#define _DAT_0046b660 (*(int*)GIMG(0x0046b660))
-#define _DAT_0046b662 (*(int*)GIMG(0x0046b662))
-#define _DAT_0046b678 (*(int*)GIMG(0x0046b678))
-#define _DAT_0046b67a (*(int*)GIMG(0x0046b67a))
+#define _DAT_0046b660 (*(short*)GIMG(0x0046b660))
+#define _DAT_0046b662 (*(short*)GIMG(0x0046b662))
+#define _DAT_0046b678 (*(short*)GIMG(0x0046b678))
+#define _DAT_0046b67a (*(short*)GIMG(0x0046b67a))
 #define _DAT_0046be0e (*(int*)GIMG(0x0046be0e))
 #define _DAT_0046be10 (*(int*)GIMG(0x0046be10))
-#define _DAT_0046be9c (*(int*)GIMG(0x0046be9c))
-#define _DAT_0046be9e (*(int*)GIMG(0x0046be9e))
-#define _DAT_0046beb4 (*(int*)GIMG(0x0046beb4))
-#define _DAT_0046beb6 (*(int*)GIMG(0x0046beb6))
+#define _DAT_0046be9c (*(short*)GIMG(0x0046be9c))
+#define _DAT_0046be9e (*(short*)GIMG(0x0046be9e))
+#define _DAT_0046beb4 (*(short*)GIMG(0x0046beb4))
+#define _DAT_0046beb6 (*(short*)GIMG(0x0046beb6))
 #define _DAT_0046befc (*(int*)GIMG(0x0046befc))
 #define _DAT_0046befe (*(int*)GIMG(0x0046befe))
 #define _DAT_0046c3f1 (*(int*)GIMG(0x0046c3f1))
