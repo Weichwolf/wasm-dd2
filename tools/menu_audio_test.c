@@ -19,7 +19,7 @@ int main(int argc,char **argv) {
     void *device,*buffer,**vtable,*part1,*part2;
     unsigned len1,len2,status;
     unsigned char wave[18]={1,0,1,0,0x22,0x56,0,0,0x22,0x56,0,0,1,0,8,0,0,0};
-    uint32_t descriptor[5]={20,0,4,0,(uint32_t)(uintptr_t)wave};
+    uint32_t descriptor[5]={20,0x20,4,0,(uint32_t)(uintptr_t)wave};
     const unsigned char source[4]={128,192,255,0};
 #ifndef __EMSCRIPTEN__
     require(mmap((void*)0x400000,0x580400,PROT_READ|PROT_WRITE,

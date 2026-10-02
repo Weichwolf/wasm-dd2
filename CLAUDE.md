@@ -35,6 +35,39 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Effects output now uses Float32 LE stereo at 22050Hz (DD2_SNDPCM plus a format
+  .json sidecar), preserving Wine's observed quantized gain and unclipped sums.
+  The prior Q15/16-bit implementation produced 0.2505798340 at volume -600 for
+  a constant 0.5 source; actual Wine PCM is 0.2499961853. Table generation uses
+  high-precision Decimal to reproduce all 9600 integer attenuation steps; gain
+  -9600 and below quantizes to zero. Products are rounded to f32 before summing
+  so x87 and WASM agree. re_out/dd2_sound_gain.h is generated platform code;
+  no pristine engine source was changed. make verify-sound-gain checks all
+  10001 volume values, six pans and a three-buffer sum above 1.0. Optional
+  SOUND_GAIN_ARGS='--wine --mingw <32-bit compiler> --output <fresh-dir>' captures
+  actual Wine PCM through the clocked ALSA device, scoped to gain.exe. Default
+  original capture scope remains dd2h.exe. /tmp/dd2-gain-wine-float-reviewed/report.json
+  passes 13 gain/pan cases, unsigned mono8 normalization and a real three-source
+  mixed plateau, with matching
+  source/device rates (22050Hz; no resampler). It also exercises settings queries,
+  caps/errors, DSBFREQUENCY_ORIGINAL and configured duplicate properties. The
+  reference validators reject an altered bit, all-silent audible tone and clipped
+  sum (automatically checked in the reviewed --wine run).
+  This proves amplitudes and exercised controls, not stream-start alignment,
+  full original game PCM, FIR resampling, combined CD/effects or Windows hardware
+  equality. The Q16 point sampler and separate CD/sound scheduling remain open.
+  Rebuilt all three targets. All ten complete sound-enabled native/WASM demos
+  match: 15255 presented frames/palettes, RNG/flip logs, 5277888 Float32 effects
+  PCM bytes and 4939200 CD source PCM bytes per demo
+  (/tmp/dd2-parity-float-gain/results.json). The new standalone Float32 menu and
+  cursor tests check 9696 and 2992 bytes respectively (older sizes below describe
+  the previous s16 output). L9/cf150 still matches the original on both targets.
+  Fresh Configuration/Audio Volume cycles match 448 original framebuffer/palette
+  pairs per target (/tmp/dd2-config-float-gain-comparison.json). Browser real menu
+  audio compares actual WebAudio channel data bit-for-bit with the C Float32
+  buffer through a read-only WASM import observer: 1050 buffers, zero mismatches,
+  nonzero effects, cf=0, shared device 44100Hz
+  (/tmp/dd2-gain-float-browser-exact-audio.log).
 - System Emscripten 3.1.69 / LLVM 19 requires `-mllvm -fast-isel=false`: its FastISel
   folded load offsets trap on valid wrapping 32-bit addresses in AI_Com_Server on L10.
   Both build scripts now use SelectionDAG; native and WASM demos return on all 10 levels.

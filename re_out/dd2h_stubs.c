@@ -171,7 +171,8 @@ int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,of
 typedef struct DSBuf {
     void** vtbl;
     unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
-    int freq;                                 /* current sample rate (SetFrequency) */
+    int freq, original_freq;                  /* current and WAVEFORMATEX rates */
+    unsigned flags;                           /* advertised DSBCAPS controls */
     int nAvgBytesPerSec;                      /* from WAVEFORMATEX at create time */
     int channels, bits, blockalign;           /* from WAVEFORMATEX at create time */
     int vol, pan;
@@ -245,9 +246,30 @@ static int dsb_setpos(DSBuf* b,unsigned pos){
     if(pos>=b->size)return (int)0x80070057u;
     b->pos_fp=(long long)(pos/(unsigned)b->blockalign)<<16;
     SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
-static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump(); b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
-static int dsb_setpan(DSBuf* b,int p){ ds_realtime_pump(); b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
-static int dsb_setfreq(DSBuf* b,int f){ ds_realtime_pump(); b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
+static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump();
+    if(!(b->flags&0x80))return (int)0x8878001eu;
+    if(v>0 || v<-10000)return (int)0x80070057u;
+    b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
+static int dsb_setpan(DSBuf* b,int p){ ds_realtime_pump();
+    if(p<-10000 || p>10000)return (int)0x80070057u;
+    if(!(b->flags&0x40))return (int)0x8878001eu;
+    b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
+static int dsb_setfreq(DSBuf* b,int f){ ds_realtime_pump();
+    if((b->flags&1) || !(b->flags&0x20))return (int)0x8878001eu;
+    if(f==0)f=b->original_freq; /* DSBFREQUENCY_ORIGINAL */
+    if(f<100 || f>200000)return (int)0x80070057u;
+    b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
+static int dsb_getvolume(DSBuf* b,int* result_value){
+    if(!(b->flags&0x80))return (int)0x8878001eu;
+    if(!result_value)return (int)0x80070057u;
+    *result_value=b->vol;return 0; }
+static int dsb_getpan(DSBuf* b,int* result_value){
+    if(!(b->flags&0x40))return (int)0x8878001eu;
+    if(!result_value)return (int)0x80070057u;
+    *result_value=b->pan;return 0; }
+static int dsb_getfreq(DSBuf* b,unsigned* result_value){
+    if(!result_value)return (int)0x80070057u;
+    *result_value=(unsigned)b->freq;return 0; }
 static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
 static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;
     if(g_ndsbufs<256) g_dsbufs[g_ndsbufs++]=b; return b; }
@@ -256,6 +278,7 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
     /* DSBUFFERDESC: +0 dwSize, +4 dwFlags, +8 dwBufferBytes, +0x10 lpwfxFormat */
     DSBuf* b=dsb_new();
     b->size = desc? (unsigned)desc[2] : 0;
+    b->flags = desc? (unsigned)desc[1] : 0;
     if(b->size){ b->pcm=(unsigned char*)calloc(1,b->size); }
     if(desc && desc[4]){ /* WAVEFORMATEX: wFormatTag+nChannels, nSamplesPerSec, nAvgBytesPerSec,
                              nBlockAlign+wBitsPerSample */
@@ -265,6 +288,7 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
         b->nAvgBytesPerSec = *(int*)(wfx+8);
         b->blockalign= *(unsigned short*)(wfx+12);
         b->bits      = *(unsigned short*)(wfx+14); }
+    b->original_freq=b->freq;
     if(b->channels<1) b->channels=1; if(b->blockalign<1) b->blockalign=(b->bits==16?2:1)*b->channels;
     if(b->bits!=16) b->bits=8;
     if(pp)*pp=b;
@@ -272,7 +296,8 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
     return 0; }
 static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
     DSBuf* b=dsb_new(); DSBuf* m=src->master? src->master:src;
-    b->pcm=m->pcm; b->size=m->size; b->freq=m->freq; b->nAvgBytesPerSec=m->nAvgBytesPerSec;
+    b->pcm=m->pcm; b->size=m->size; b->freq=src->freq; b->nAvgBytesPerSec=m->nAvgBytesPerSec;
+    b->original_freq=src->original_freq;b->flags=src->flags;b->vol=src->vol;b->pan=src->pan;
     b->channels=m->channels; b->bits=m->bits; b->blockalign=m->blockalign;
     b->master=m; if(pp)*pp=b;
     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
@@ -289,6 +314,9 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     g_dsnd_vtbl[0x18/4]=(void*)&ds_setcooplevel;
     g_dsb_vtbl[0x08/4]=(void*)&dsb_release;
     g_dsb_vtbl[0x10/4]=(void*)&dsb_getpos;
+    g_dsb_vtbl[0x18/4]=(void*)&dsb_getvolume;
+    g_dsb_vtbl[0x1c/4]=(void*)&dsb_getpan;
+    g_dsb_vtbl[0x20/4]=(void*)&dsb_getfreq;
     g_dsb_vtbl[0x24/4]=(void*)&dsb_getstatus;
     g_dsb_vtbl[0x2c/4]=(void*)&dsb_lock;
     g_dsb_vtbl[0x30/4]=(void*)&dsb_play;
@@ -308,31 +336,24 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
    mixer clock by the engine frame counter @0x462ff0 (25 engine fps -> 882 output frames per cf
    at 22050 Hz) in deterministic runs. DD2_REALTIME uses elapsed milliseconds and
    carries fractional samples across calls; it also flushes before DS controls.
-   Output: s16le stereo 22050 Hz raw to $DD2_SNDPCM.
-   Volume/pan use the DirectSound centi-dB model (amp = 10^(centidb/2000), volumes add in dB;
-   pan attenuates the far channel) computed in FIXED POINT (hardcoded 2^(i/16) table, no libm --
-   glibc/musl pow() differ, this must be bit-identical native vs wasm). Resampling is a Q16
-   phase-accumulator point-sampler. The Q15 gain approximation and point resampler are the
-   current implementation, not an original-output oracle. Cross-port equality alone does
-   not establish DirectSound equivalence; compare with the original's captured mixed PCM. */
-static const unsigned short exp2_q15[17]={
-    32768,34219,35734,37316,38968,40693,42495,44376,
-    46341,48393,50535,52773,55109,57549,60097,62757,0 /*[16] handled as <<1 of [0]*/};
-static int dd2_amp_q15(int centidb){ /* 10^(centidb/2000) in Q15 for centidb<=0 */
-    long long e_q16; int n,f,hi,lo; unsigned a,b2;
-    if(centidb>=0) return 32768;
-    if(centidb<=-10000) return 0;
-    e_q16=(long long)centidb*108853/1000;      /* * log2(10)/20/100 in Q16 */
-    n=(int)(e_q16>>16); f=(int)(e_q16-((long long)n<<16));   /* n<=0, 0<=f<65536 */
-    hi=f>>12; lo=f&0xfff;
-    a=exp2_q15[hi]; b2=(hi==15)?65536u:exp2_q15[hi+1];
-    a=a+(unsigned)(((b2-a)*(unsigned)lo)>>12);               /* linear interp, Q15 (32768..65536) */
-    n=-n; if(n>=16) return 0;
-    return (int)(a>>n); }
+   Output: Float32 little-endian stereo 22050 Hz raw to $DD2_SNDPCM, with a
+   .json format sidecar. Match Wine's observed quantized gain and Float32 mix:
+   floor(65535 * 2^(centidb/600)) / 65535, no per-buffer 16-bit clipping.
+   The generated integer table avoids libm differences between native/WASM.
+   Source-rate changes still use the current Q16 point resampler; original FIR
+   resampling, combined CD/effect output and start/stop timing remain unverified.
+   https://raw.githubusercontent.com/wine-mirror/wine/wine-10.0/dlls/dsound/mixer.c */
+#include "dd2_sound_gain.h"
+static float dd2_amp_float(int centidb){
+    volatile float gain;
+    if(centidb>=0)return 1.0f;
+    if(centidb<=-9600)return 0.0f;
+    gain=(float)dd2_sound_gain[-centidb]/65535.0f;
+    return gain; }
 #ifdef DD2_BROWSER
-/* WebAudio sink: schedule each mixed 882-frame tick (22050 Hz s16 stereo) on a running time
+/* WebAudio sink: schedule each mixed 882-frame tick (22050 Hz Float32 stereo) on a running time
    cursor. Lazy AudioContext (browsers require a user gesture before audio can start). */
-EM_JS(void, dd2_audio_push, (const short* pcm, int frames), {
+EM_JS(void, dd2_audio_push, (const float* pcm, int frames), {
     if (!Module._dd2ac) {
         /* Keep the shared device at CD rate even when effects start first.
            Effects retain their original 22050Hz source buffers. */
@@ -346,8 +367,8 @@ EM_JS(void, dd2_audio_push, (const short* pcm, int frames), {
     var buf = ac.createBuffer(2, frames, 22050);
     var l = buf.getChannelData(0), r = buf.getChannelData(1);
     for (var i=0;i<frames;i++){
-        l[i] = HEAP16[(pcm>>1)+i*2]   / 32768;
-        r[i] = HEAP16[(pcm>>1)+i*2+1] / 32768;
+        l[i] = HEAPF32[(pcm>>2)+i*2];
+        r[i] = HEAPF32[(pcm>>2)+i*2+1];
     }
     var src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination);
     if (Module._dd2t < ac.currentTime) Module._dd2t = ac.currentTime + 0.04;
@@ -388,20 +409,27 @@ void dd2_snd_mix_flip(void){
         if(!getenv("DD2_SOUND")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
         pending=(uint64_t)dt*882;
     }
-    if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p) pf=fopen(p,"wb"); } }
+    if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p){
+        pf=fopen(p,"wb");
+        if(pf){
+            char* path=(char*)malloc(strlen(p)+6);FILE* metadata;
+            sprintf(path,"%s.json",p);metadata=fopen(path,"w");free(path);
+            if(metadata){fputs("{\"format\":\"FLOAT_LE\",\"rate\":22050,\"channels\":2}\n",metadata);fclose(metadata);}
+        }
+    } } }
     for(t=0;t<dt;t++){
-        static short out[882*2];
+        static float out[882*2];
         int frames=pending>882 ? 882 : (int)pending;
         if(pf||mix_out>0){ int k; for(k=0;k<frames*2;k++) out[k]=0; }
         for(i=0;i<g_ndsbufs;i++){
             DSBuf* b=g_dsbufs[i];
-            long long step,end_fp; int al,gl,gr,k;
+            long long step,end_fp; int al,k;float gl,gr;
             if(!b->playing||!b->pcm||!b->size||b->freq<=0) continue;
             al=b->blockalign; if(al<1) al=1;
             step=((long long)b->freq<<16)/22050;
             end_fp=(long long)(b->size/al)<<16;
-            gl=dd2_amp_q15(b->vol-(b->pan>0?b->pan:0));
-            gr=dd2_amp_q15(b->vol+(b->pan<0?b->pan:0));
+            gl=dd2_amp_float(b->vol-(b->pan>0?b->pan:0));
+            gr=dd2_amp_float(b->vol+(b->pan<0?b->pan:0));
             for(k=0;k<frames;k++){
                 unsigned fr; int sl,sr; const unsigned char* sp;
                 fr=(unsigned)(b->pos_fp>>16); sp=b->pcm+(long long)fr*al;
@@ -412,13 +440,16 @@ void dd2_snd_mix_flip(void){
                     if(b->looping)b->pos_fp%=end_fp; /* A step can span several loops. */
                     else { b->playing=0; b->pos_fp=0; }
                 }
-                if(pf||mix_out>0){ int vl=out[k*2]+((sl*gl)>>15), vr=out[k*2+1]+((sr*gr)>>15);
-                    out[k*2]  =(short)(vl>32767?32767:vl<-32768?-32768:vl);
-                    out[k*2+1]=(short)(vr>32767?32767:vr<-32768?-32768:vr); }
+                if(pf||mix_out>0){
+                    /* Round each product to f32 before adding. x87 extended
+                       temporaries must not fuse a product and sum differently
+                       from the WASM f32.mul/f32.add sequence. */
+                    volatile float vl=((float)sl/32768.0f)*gl, vr=((float)sr/32768.0f)*gr;
+                    out[k*2]+=vl;out[k*2+1]+=vr; }
                 if(!b->playing)break;
             }
         }
-        if(pf) fwrite(out,2,frames*2,pf);
+        if(pf) fwrite(out,sizeof(float),frames*2,pf);
 #ifdef DD2_BROWSER
         dd2_audio_push(out, frames);
 #endif

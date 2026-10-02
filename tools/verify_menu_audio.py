@@ -32,7 +32,7 @@ def main():
         samples = [source[i % 4] for i in range(441)] + [0]*727
         samples += source + [0]*18
         samples += [source[(i//2) % 4] for i in range(22)]
-        expected = b"".join(struct.pack("<hh", value, value) for value in samples)
+        expected = b"".join(struct.pack("<ff", value/32768, value/32768) for value in samples)
         env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
         for target, command in (("native", [str(native)]), ("wasm", [args.node, str(wasm)])):
             output = directory / f"{target}.pcm"

@@ -16,10 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/sound_cursor_test.c"
 
 
-def wine_probe(executable, directory, env):
+def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type null }\n", arguments=()):
     prefix = directory / "wine-prefix"
     config = directory / "asound.conf"
-    config.write_text("pcm.!default { type null }\n")
+    config.write_text(alsa_config)
     env = {**env, "WINEPREFIX": str(prefix), "WINEARCH": "win32", "WINEDEBUG": "-all",
            "ALSA_CONFIG_PATH": str(config)}
     with (directory / "wine.log").open("wb") as log:
@@ -37,7 +37,7 @@ def wine_probe(executable, directory, env):
                            env=env, stdout=log, stderr=log, check=True, timeout=30)
             subprocess.run(["wineserver", "-k"], env=env, check=True, timeout=10)
             subprocess.run(["wineserver", "-w"], env=env, check=True, timeout=10)
-            result = subprocess.run(["wine", str(executable)], env=env, stdout=subprocess.PIPE,
+            result = subprocess.run(["wine", str(executable), *arguments], env=env, stdout=subprocess.PIPE,
                                     stderr=log, text=True, check=True, timeout=30)
             return json.loads(result.stdout)
         finally:
@@ -75,7 +75,7 @@ def main():
     samples = source[17:39] + source[39:61] + [0]*220 + source[61:83]
     samples += source[250:] + source[:16] + source[255:] + [0]*21 + source[:22]
     samples += [32512]*22
-    pcm = b"".join(struct.pack("<hh", sample, sample) for sample in samples)
+    pcm = b"".join(struct.pack("<ff", sample/32768, sample/32768) for sample in samples)
     report = {"scope": "stopped DirectSound API fixture and controlled port PCM; full original mix parity pending",
               "positions": expected, "controlled_pcm_bytes": len(pcm), "targets": [], "wine": False}
     with tempfile.TemporaryDirectory(prefix="dd2-sound-cursor-") as tmp:

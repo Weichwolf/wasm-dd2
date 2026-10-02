@@ -10,7 +10,23 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
   const page=await browser.newPage();const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
-   window.__menuAudio={buffers:0,frames:0,nonzero:0};
+   window.__menuAudio={buffers:0,frames:0,nonzero:0,exactBuffers:0,mismatches:0};
+   let expected;
+   const observeImports=imports=>{
+    if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__observed)return;
+    const original=imports.env.dd2_audio_push;
+    const observed=function(pointer,frames){
+     expected={pointer,frames};
+     try{return original.call(this,pointer,frames);}finally{expected=undefined;}
+    };
+    observed.__observed=true;imports.env.dd2_audio_push=observed;
+   };
+   for(const name of ['instantiate','instantiateStreaming']){
+    const original=WebAssembly[name];
+    if(original)WebAssembly[name]=function(bytes,imports,...rest){
+     observeImports(imports);return original.call(this,bytes,imports,...rest);
+    };
+   }
    const create=AudioContext.prototype.createBufferSource;
    AudioContext.prototype.createBufferSource=function(...args){
     const source=create.apply(this,args),start=source.start;
@@ -18,8 +34,16 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
      const buffer=source.buffer,state=window.__menuAudio;
      if(buffer && buffer.sampleRate===22050){
       state.buffers++;state.frames+=buffer.length;
-      for(let channel=0;channel<buffer.numberOfChannels;channel++)
-       for(const sample of buffer.getChannelData(channel)) if(sample!==0)state.nonzero++;
+      let exact=expected && expected.frames===buffer.length && buffer.numberOfChannels===2;
+      for(let channel=0;channel<buffer.numberOfChannels;channel++){
+       const samples=buffer.getChannelData(channel);
+       const bits=new Uint32Array(samples.buffer,samples.byteOffset,samples.length);
+       for(let i=0;i<samples.length;i++){
+        if(samples[i]!==0)state.nonzero++;
+        if(!expected || bits[i]!==HEAPU32[(expected.pointer>>2)+i*2+channel])exact=false;
+       }
+      }
+      if(exact)state.exactBuffers++;else state.mismatches++;
      }
      return start.apply(this,args);
     };
@@ -36,6 +60,7 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
   console.log('Menu audio:',JSON.stringify(result));
   assert(initial.level===0 && result.level===0 && result.cf===initial.cf,'test left the menu or advanced the race counter');
   assert(result.buffers>0 && result.nonzero>0,'navigation produces no audible effect buffers');
+  assert(result.exactBuffers===result.buffers && result.mismatches===0,'WebAudio samples differ from the C Float32 mixer');
   assert(result.rate===44100,'shared audio device must preserve CD rate');
   assert.deepEqual(errors,[],'browser runtime errors');
   console.log('PASS menu navigation effects with fixed race counter');

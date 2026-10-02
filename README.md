@@ -49,7 +49,7 @@ This target does not compare with `dd2h.exe` or validate menu actions.
 
 Current Debian validation: all ten sound-enabled demos return on both ports.
 Every presented frame and palette, flip/RNG log and generated PCM byte matches
-across native and WASM (1525-1527 frames, 2638944 effects PCM bytes and 4939200
+across native and WASM (1525-1527 frames, 5277888 effects PCM bytes and 4939200
 CD PCM bytes per demo). Patch
 835 restores the original contiguous angle vector for the animated L1 objects;
 its split stack locals caused the previous 137-frame discrepancy. Menu behavior,
@@ -62,7 +62,8 @@ parameter blocks and mandatory CD check. The backend reads the original stereo
 s16le CDDA at 44100Hz; browser builds serve the tracks separately and load one
 track at a time into a shared 44100Hz WebAudio device. Effects retain their
 22050Hz source buffers. CD source capture uses `DD2_CDPCM=<file>`; effects
-use `DD2_SNDPCM=<file>`. Deterministic runs share a 25Hz audio clock. Interactive
+use `DD2_SNDPCM=<file>` (Float32 little-endian stereo at 22050Hz, with a `.json`
+format sidecar). Deterministic runs share a 25Hz audio clock. Interactive
 CD playback and the 400ms multimedia timer use elapsed real time, including menus.
 
 `make verify-redbook` compares native/WASM playback directly with all 18 track
@@ -76,9 +77,10 @@ establish mixed hardware-output parity or original pause/resume timing.
 Menu effects now keep playing with the race counter fixed: interactive DirectSound
 mixing uses elapsed real time and flushes samples before buffer controls/queries.
 `make verify-menu-audio` checks looping, Stop, one-shot exhaustion and frequency
-changes on both backends against 4848 known PCM bytes with `cf=0`.
+changes on both backends against 9696 known Float32 PCM bytes with `cf=0`.
 `node tools/browser/qa_menu_audio.js web/dd2` verifies real menu navigation submits
-nonzero effect buffers without advancing the race counter. The complete original
+nonzero effect buffers without advancing the race counter, and compares every
+submitted WebAudio sample bit with its C mixer source. The complete original
 mixed stream and its timing remain unverified.
 
 DirectSound buffer controls now preserve the source cursor: `SetCurrentPosition`
@@ -97,9 +99,37 @@ make verify-sound-cursor SOUND_CURSOR_ARGS='--wine --mingw i686-w64-mingw32-gcc'
 
 Both ports match all 14 stopped-buffer cursor/error records from real Wine
 DirectSound, including stereo frame alignment and invalid offsets. Controlled
-seek/repeated Play/Stop/resume/end/short-loop sequences match 1496 known PCM bytes
+seek/repeated Play/Stop/resume/end/short-loop sequences match 2992 known Float32 PCM bytes
 exactly on both ports. The Wine check uses a separate API fixture, not the game
 EXE, and does not establish original mixed PCM or timing equality.
+
+Effects now retain Float32 precision through mixing and WebAudio delivery. The
+old Q15 gain and per-buffer 16-bit clipping differed from actual Wine output:
+at volume -600 a constant 0.5 source produced 0.2505798340 instead of
+0.2499961853. A reproducible integer table now supplies the observed backend's
+quantized gain; products and sums round to Float32 consistently on x87 and WASM.
+Volume, pan and frequency queries, invalid parameters, control capabilities,
+original-frequency restoration and configured duplicate-buffer settings are
+also exercised against real DirectSound.
+
+```sh
+make verify-sound-gain
+# Actual Wine PCM calibration, captured under a clocked virtual device:
+make verify-sound-gain SOUND_GAIN_ARGS='--wine --mingw i686-w64-mingw32-gcc --output /tmp/fresh-gain-calibration'
+```
+
+The port test checks all 10001 volume values, six pan steps and a three-source
+mix above 1.0 against exact Float32 bytes. The Wine calibration checks 13 gain/pan
+cases, unsigned mono8 normalization and the same mixed amplitude with source
+and device both at 22050Hz.
+Every reference sample must be an exact expected value, silence, or an exact
+source combination during multi-source start/stop; no amplitude tolerance is
+allowed. Tone extents and startup/trailing silence are reported separately.
+One-bit corruption, a lost tone and a clipped mix are rejected. These isolated
+fixtures establish gain/mix amplitudes and exercised API controls; resampling,
+full original stream timing, combined CD/effects output and Windows hardware
+equivalence remain open. The observer uses `DD2_AUDIO_PROCESS=gain.exe` for the
+fixture; original game captures still default to `dd2h.exe`.
 
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu

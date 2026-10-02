@@ -1,5 +1,6 @@
 /* Observe Wine's actual ALSA output without replacing its DirectSound mixer.
- * DD2_AUDIO_CAPTURE enables this only in the dd2h.exe process. Optional
+ * DD2_AUDIO_CAPTURE enables this only in the dd2h.exe process by default.
+ * DD2_AUDIO_PROCESS selects a named API fixture instead. Optional
  * DD2_AUDIO_RATE restricts the virtual ALSA device's advertised sample rate.
  * Record accepted writes plus transport events; accepted/queued PCM is not
  * proof that every frame reached a DAC, or proof of original/port parity.
@@ -45,8 +46,11 @@ static uint64_t now_ns(void) {
 static const char *active_root(void) {
     char name[32]; FILE *file;
     const char *root = getenv("DD2_AUDIO_CAPTURE");
+    const char *process = getenv("DD2_AUDIO_PROCESS");
+    if(!process)process="dd2h.exe";
     if (!root || !(file=fopen("/proc/self/comm","r"))) return NULL;
-    int valid = fgets(name,sizeof(name),file) && !strcmp(name,"dd2h.exe\n");
+    int valid = fgets(name,sizeof(name),file)!=NULL;
+    if(valid){ name[strcspn(name,"\n")]=0;valid=!strcmp(name,process); }
     fclose(file);
     return valid ? root : NULL;
 }

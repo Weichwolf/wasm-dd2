@@ -72,7 +72,7 @@ def summarize_audio(directory):
                         "accepted_seconds":total/info["rate"],
                         "observed_seconds":(last_time-info["time_ns"])/1e9})
     if not streams or not any(stream["accepted_frames"] for stream in streams):
-        raise ValueError("Original produced no captured ALSA frames")
+        raise ValueError("Selected process produced no captured ALSA frames")
     report={"scope":"actual Wine ALSA accepted PCM; transport/timing alignment and port comparison pending",
             "streams":streams}
     (directory/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
