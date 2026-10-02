@@ -30,6 +30,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - Reference capture (Stage-2 bit-verify): `make refcapture` (private prefix in
   `third_party/wine-reference/`; needs xvfb; polls /proc/PID/mem, then captures at
   Draw_All entry using a GDB hardware breakpoint).
+- Original accepted PCM: `python3 tools/reference/capture.py --mode audio --audio
+  --audio-tail 3 --output /tmp/fresh-original-audio` (no debugger). Observer/clock
+  calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
 - System Emscripten 3.1.69 / LLVM 19 requires `-mllvm -fast-isel=false`: its FastISel
@@ -145,6 +148,29 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   TO-only MCI_PLAY reads that position, even after digital playback; current Wine
   reference pause/restart therefore cannot establish original cursor fidelity.
   Historical claims below are investigation context, not full acceptance evidence.
+- Original mixed PCM can now be observed at Wine's actual `snd_pcm_writei`, with
+  accepted-write extents, format, SHA256, monotonic call bounds and transport
+  journals. `tools/reference/wine_audio.c` forwards the real ALSA functions and
+  captures only the dd2h.exe process. `alsa_clock.c` supplies a private stereo
+  device with a CLOCK_MONOTONIC sample clock; it discards device output and leaves
+  Wine's DirectSound mixer intact. Both libraries build for 32/64-bit Wine.
+  `make verify-audio-observer` passes real ALSA tests for exact 512-byte payloads,
+  failed-write exclusion, two fresh streams, out-of-scope passthrough, six damaged
+  capture cases, and reused-output rejection. Clock tests check exact timestamp
+  bounds, polling, pause/resume, rewind, prepare reset and genuine underrun state.
+  /tmp/dd2-original-audio-clock-timeline captures the unmodified EXE without GDB:
+  stereo 44100Hz FLOAT_LE, 136701 accepted frames (3.099795918s) over 3.060396919s
+  observed wall time. The former ALSA null device accepted 9.2625s in 2.5728s and
+  cannot establish timing fidelity. Live state observations record the menu-to-L9
+  transition; they are non-atomic, not a complete frame trace. Accepted/queued PCM
+  is not a played-output timeline: apply drops/rewinds and align actual inputs,
+  source cursors and clock before port comparison. Full original mixed PCM parity,
+  Windows hardware equivalence and complete A/V timing remain unverified.
+  Regression with audio enabled: /tmp/dd2-original-config-audio-clock records
+  all seven Configuration/Audio Volume checkpoints and their 64 presented
+  highlight phases. /tmp/dd2-config-audio-clock-comparison.json reports zero
+  framebuffer/palette mismatches for all 448 comparisons on each of native and
+  browser. Debugger pauses in this video regression do not prove audio timing.
 
 ## Status (3 sequential stages, each gates the next)
 - Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).

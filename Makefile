@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-redbook verify-menu-audio verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -94,6 +94,9 @@ verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHA
 
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
+
+verify-audio-observer: ## check 32/64-bit ALSA sample clocks and exact accepted-write capture; no port parity claim
+	python3 $(ROOT)/tools/reference/test_audio.py
 
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture unmodified dd2h.exe at Draw_All entry using a private Wine CD device.
+"""Capture unmodified dd2h.exe video or ALSA audio with a private Wine CD device.
 
 Requires 32-bit Wine, gcc multilib, GDB, Xvfb and xdotool. Captures contain
 copyrighted original data and belong outside Git. A capture alone does not
@@ -17,6 +17,7 @@ import struct
 import subprocess
 import time
 from cdrom import build_cdrom
+from audio import build_audio, summarize_audio
 
 ROOT = Path(__file__).resolve().parents[2]
 WORK = ROOT / "third_party" / "wine-reference"
@@ -91,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-dir", type=Path, default=ROOT / "DestructionDerby2")
     parser.add_argument("--output", type=Path, default=Path("/tmp/dd2-reference"))
-    parser.add_argument("--mode", choices=("menu", "attract"), default="attract")
+    parser.add_argument("--mode", choices=("menu", "attract", "audio"), default="attract")
     parser.add_argument("--frame", type=int, default=150)
     parser.add_argument("--timeout", type=float, default=90)
     parser.add_argument("--trace-cd", action="store_true")
@@ -103,6 +104,14 @@ def main():
                         help="wait for real key press/release at pad polls and record held poll counts")
     parser.add_argument("--menu-cycle", type=int, choices=(0,64), default=0,
                         help="capture a complete rendered highlight cycle at every menu checkpoint")
+    parser.add_argument("--audio", action="store_true",
+                        help="observe original Wine ALSA accepted PCM, with committed format and transport events")
+    parser.add_argument("--audio-rate", type=int, choices=(22050,44100,48000), default=44100,
+                        help="virtual playback device rate when --audio is enabled")
+    parser.add_argument("--audio-device", choices=("clock","null"), default="clock",
+                        help="clock uses a real-time sample clock; null is diagnostic and consumes too fast")
+    parser.add_argument("--audio-tail", type=float, default=0,
+                        help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
     if args.frame < 1 or args.timeout <= 0 or not 0 < args.key_hold <= 1:
         parser.error("frame/timeout must be positive and key hold must be in (0,1]")
@@ -112,14 +121,26 @@ def main():
         parser.error("--acknowledged-key requires --keys")
     if args.menu_cycle and args.mode != "menu":
         parser.error("--menu-cycle requires --mode menu")
+    if args.audio_tail < 0 or args.audio_tail > 30 or (args.audio_tail and not args.audio):
+        parser.error("--audio-tail must be in [0,30] and requires --audio")
+    if args.mode=="audio" and (not args.audio or args.audio_tail<=0):
+        parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     game, output = args.game_dir.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    if any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json")) or any(output.glob("step*/checkpoint.json")):
+    if any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio")) or any(output.glob("step*/checkpoint.json")):
         parser.error("output already contains a capture; use a fresh directory")
     WORK.mkdir(parents=True, exist_ok=True)
     with (WORK / "capture.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         run(game, output, args)
+        if args.audio:
+            # Successful capture and scoped process cleanup completed.
+            report=summarize_audio(output/"audio")
+            if any(stream["rate"] != args.audio_rate for stream in report["streams"]):
+                raise RuntimeError("Committed reference audio rate differs from requested virtual device")
+            report.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=args.audio_rate,
+                          virtual_device=args.audio_device)
+            (output/"audio/summary.json").write_text(json.dumps(report,indent=2)+"\n")
 
 
 def run(game, output, args):
@@ -152,10 +173,33 @@ def run(game, output, args):
                DD2_CD_DEVICE=str(device), LD_PRELOAD="dd2_cdrom.so",
                LD_LIBRARY_PATH=":".join(map(str, libraries)) +
                    (":" + env["LD_LIBRARY_PATH"] if env.get("LD_LIBRARY_PATH") else ""))
+    if args.audio:
+        audio_libraries=build_audio(WORK/"audio")
+        (output/"audio").mkdir()
+        env.update(DD2_AUDIO_CAPTURE=str(output/"audio"),DD2_AUDIO_RATE=str(args.audio_rate))
+        env["LD_PRELOAD"]+=" dd2_audio.so"
+        env["LD_LIBRARY_PATH"]=":".join(map(str,audio_libraries))+":"+env["LD_LIBRARY_PATH"]
+        if args.audio_device=="clock":
+            library=json.dumps(str(WORK/"audio"/"$LIB"/"dd2_clock.so"))
+            alsa.write_text(f'pcm_type.dd2clock {{ lib {library} }}\npcm.!default {{ type dd2clock }}\n')
     if args.trace_cd:
         env["DD2_CD_TRACE"] = "1"
     wine = None
     xserver = None
+    engine_log = (output / "audio/engine.jsonl").open("x") if args.audio else None
+
+    def observe_state(pid):
+        # These are bounded, read-only observations of a running process, not
+        # atomic snapshots or a claim to have sampled every engine frame.
+        before = time.monotonic_ns()
+        current = state(pid)
+        after = time.monotonic_ns()
+        if engine_log:
+            engine_log.write(json.dumps({"read_begin_ns": before, "read_end_ns": after,
+                                         **current}) + "\n")
+            engine_log.flush()
+        return current
+
     with (output / "wine.log").open("wb") as wine_log, (output / "xvfb.log").open("wb") as xlog:
         try:
             xserver = subprocess.Popen(["Xvfb", "-displayfd", "1", "-screen", "0", "640x480x16"],
@@ -190,7 +234,7 @@ def run(game, output, args):
                 pid = original_pid(prefix)
                 if pid:
                     try:
-                        current = state(pid)
+                        current = observe_state(pid)
                     except (FileNotFoundError, ProcessLookupError, OSError, struct.error):
                         time.sleep(0.05)
                         continue
@@ -202,21 +246,40 @@ def run(game, output, args):
                         subprocess.run(["xdotool", "search", "--name", "PC-DD2", "windowfocus", "key", "Escape"],
                                        env=env, stdout=subprocess.DEVNULL, stderr=wine_log, timeout=5)
                         last_escape = now
-                    ready = (current["screen"] == 201 and current["level"] == 0) if args.mode == "menu" else current["level"] == 9 and current["cf"] > 0
+                    ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") else current["level"] == 9 and current["cf"] > 0
                     if ready:
+                        if args.mode=="audio":
+                            end = time.monotonic() + args.audio_tail
+                            while time.monotonic() < end:
+                                if wine.poll() is not None:
+                                    raise RuntimeError("Original exited during audio recording")
+                                observe_state(pid)
+                                time.sleep(min(0.02, max(0, end-time.monotonic())))
+                            result={"mode":"audio","phase":"live engine; no debugger", "start_state":current,
+                                    "end_state":observe_state(pid),"exe_modified":False,"exe_sha256":EXE_SHA256,
+                                    "state_observations":"audio/engine.jsonl; bounded non-atomic reads, may include attract",
+                                    "audio_comparison":"pending"}
+                            (output/"checkpoint.json").write_text(json.dumps(result,indent=2)+"\n")
+                            return
                         if args.keys is not None:
                             navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log, args.menu_cycle)
+                            if args.audio_tail:
+                                time.sleep(args.audio_tail)
                             return
                         capture(pid, output, env, args.frame, args.mode == "menu",
                                 max(1, deadline - time.monotonic()))
                         if args.menu_cycle:
                             capture_cycle(pid, output, env, args.menu_cycle, max(1, deadline-time.monotonic()))
+                        if args.audio_tail:
+                            time.sleep(args.audio_tail)
                         return
                 if wine.poll() is not None:
                     raise RuntimeError(f"Original exited before checkpoint ({wine.returncode}); see {output / 'wine.log'}")
                 time.sleep(0.05)
             raise TimeoutError(f"Original did not reach {args.mode} checkpoint in {args.timeout}s")
         finally:
+            if engine_log:
+                engine_log.close()
             # Every process belongs to the dedicated prefix or to this launcher.
             subprocess.run(["wineserver", "-k"], env=env, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=10)

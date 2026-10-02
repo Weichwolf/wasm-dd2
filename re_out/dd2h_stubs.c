@@ -292,9 +292,9 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
    Volume/pan use the DirectSound centi-dB model (amp = 10^(centidb/2000), volumes add in dB;
    pan attenuates the far channel) computed in FIXED POINT (hardcoded 2^(i/16) table, no libm --
    glibc/musl pow() differ, this must be bit-identical native vs wasm). Resampling is a Q16
-   phase-accumulator point-sampler (classic pre-Vista dsound behavior). These semantics are the
-   DEFINITION of the rebuild's audio stream; wine/Windows mixer equivalence is verified against
-   captures separately. */
+   phase-accumulator point-sampler. The Q15 gain approximation and point resampler are the
+   current implementation, not an original-output oracle. Cross-port equality alone does
+   not establish DirectSound equivalence; compare with the original's captured mixed PCM. */
 static const unsigned short exp2_q15[17]={
     32768,34219,35734,37316,38968,40693,42495,44376,
     46341,48393,50535,52773,55109,57549,60097,62757,0 /*[16] handled as <<1 of [0]*/};

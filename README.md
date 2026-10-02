@@ -165,6 +165,39 @@ digital playback path queries this position for TO-only restart, so this referen
 cannot yet prove pause/resume cursor fidelity. That limitation must be resolved
 before using it for complete original audio acceptance.
 
+The original Wine mixer's accepted PCM can now be captured directly, without a
+debugger, through a private ALSA device with a monotonic sample clock. On Debian
+13 this additionally needs `libasound2-dev`, `libasound2t64:i386` and the existing
+GCC multilib toolchain. The observer and device build for both process widths:
+
+```sh
+make verify-audio-observer
+python3 tools/reference/capture.py --mode audio --audio --audio-rate 44100 \
+  --audio-tail 3 --output /tmp/fresh-original-audio
+```
+
+`audio/summary.json` records the actual committed format, frame counts and PCM
+hashes; the tested original selects stereo Float32 at 44100Hz. Each stream's
+`.jsonl` journal records accepted/failed writes, monotonic call bounds and
+transport events; its `.pcm` contains only accepted bytes. `audio/engine.jsonl`
+records bounded, non-atomic observations of the live engine. The capture starts
+at process launch and can include the intro and automatic transition from the
+menu to the attract demo. The EXE and engine memory remain unmodified; no GDB
+stops occur in audio mode. Use fresh output directories and keep these original
+PCM files outside Git.
+
+The ALSA device's clock, polling, manual start, pause/resume, rewind, prepare
+reset and underrun pass real 32/64-bit ALSA tests with exact timestamp-derived
+sample bounds. Observer tests check exact accepted bytes, failed-write exclusion,
+process isolation and rejection of damaged captures. A live reference accepted
+3.100 seconds of PCM over 3.060 seconds of wall time. The old ALSA null device
+accepted 9.263 seconds over 2.573 seconds; `--audio-device null` remains a diagnostic
+option and is unsuitable for timing acceptance. Accepted PCM includes queued
+data; drops/rewinds must be applied before constructing a playback timeline.
+`--audio` also works with video/navigation captures, whose debugger stops can
+cause audio underruns. Full original/native/WASM mixed PCM comparison, playback
+alignment and Windows hardware equivalence remain open acceptance work.
+
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
 directory. For example:
