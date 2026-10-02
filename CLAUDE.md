@@ -51,7 +51,18 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Browser real-key CD menu Play/Stop/Next/Prev passes; submitted track2/3 buffers
   match source bytes exactly. Logs: /tmp/dd2-browser-redbook-reviewed.log and
   /tmp/dd2-redbook-absolute-time.log. Source equality is not full mixed output parity.
-  Interactive menu effects still use the fixed race counter; their clock needs work.
+  Interactive menu effects now use elapsed real time, flushing samples before
+  buffer controls/queries. The prior mixer produced zero buffers with cf=0;
+  real browser navigation now submits nonzero effects while cf remains fixed
+  (/tmp/dd2-menu-audio-before.log, /tmp/dd2-menu-audio-after.log). Controlled 55ms
+  native/WASM COM tests at fixed cf compare 4848 known PCM bytes exactly, covering
+  looping, Stop, one-shot exhaustion and half-frequency playback. Reproduce with
+  make verify-menu-audio and tools/browser/qa_menu_audio.js. Full original mixed
+  playback and timing are still unverified.
+  After this mixer change, all ten native/WASM demos still match frame/palette,
+  RNG/flip, effects and CD PCM exactly (/tmp/dd2-parity-menu-audio-clock/results.json).
+  The real-key browser CD menu still passes (/tmp/dd2-redbook-menu-clock-regression.log),
+  and original L9/cf150 framebuffer/palette remain exact on both ports.
 - The Node build now imports `DD2_*` process options into libc ENV before boot. Before
   this fix, Node silently ignored sound, input scripts and frame capture options.
   New `make verify-parity` compares every presented frame AND its palette, flip/RNG

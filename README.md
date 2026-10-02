@@ -71,8 +71,15 @@ end-of-track, replay and error checks. `node tools/browser/qa_redbook.js web/dd2
 navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
 and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.
 These checks establish exact source PCM and exercised controls. They do not yet
-establish mixed hardware-output parity or original pause/resume timing; menu
-effects also still need a continuous audio clock when the race counter is fixed.
+establish mixed hardware-output parity or original pause/resume timing.
+
+Menu effects now keep playing with the race counter fixed: interactive DirectSound
+mixing uses elapsed real time and flushes samples before buffer controls/queries.
+`make verify-menu-audio` checks looping, Stop, one-shot exhaustion and frequency
+changes on both backends against 4848 known PCM bytes with `cf=0`.
+`node tools/browser/qa_menu_audio.js web/dd2` verifies real menu navigation submits
+nonzero effect buffers without advancing the race counter. The complete original
+mixed stream and its timing remain unverified.
 
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh

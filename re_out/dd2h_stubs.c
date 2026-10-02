@@ -165,9 +165,9 @@ int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,of
    Gated behind DD2_SOUND=1: without it DirectSoundCreate keeps returning DSERR (the proven
    no-sound path all Stage-2 video verification ran on). DD2_SNDLOG=1 logs every call with the
    engine frame counter @0x462ff0 (deterministic, wallclock-free) for ref alignment.
-   Playback lifetime is modelled on the cf counter, NOT wallclock: a non-looping buffer reports
-   DSBSTATUS_PLAYING for ceil(bytes * 25 / bytes_per_sec) cf-ticks after Play (attract runs at
-   25 engine fps). This keeps Sound_Timer's GetStatus->Release lifecycle deterministic. */
+   Deterministic playback uses the cf counter (25 engine fps), keeping Sound_Timer's
+   GetStatus->Release lifecycle reproducible. Interactive DD2_REALTIME playback uses
+   elapsed time, including menus and pause where the race counter is fixed. */
 typedef struct DSBuf {
     void** vtbl;
     unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
@@ -185,6 +185,12 @@ static void* g_dsnd_vtbl[32];
 static void* g_dsnd_obj = g_dsnd_vtbl;
 static void* g_dsb_vtbl[32];
 #define SND_CF (*(int*)(unsigned long)0x462ff0u)
+void dd2_snd_mix_flip(void);
+/* A real DirectSound device keeps playing in menus and advances up to each
+   control/query call. Flush elapsed samples before changing its buffer state. */
+static void ds_realtime_pump(void){
+    if(getenv("DD2_REALTIME")) dd2_snd_mix_flip();
+}
 static FILE* snd_log(void){ static FILE* f; static int init;
     if(!init){ init=1; if(getenv("DD2_SNDLOG")) f=fopen("/tmp/dd2_sndlog.txt","w"); }
     return f; }
@@ -194,17 +200,19 @@ static int dsb_dur_cf(DSBuf* b){ /* whole cf-ticks a one-shot stays PLAYING */
     long n = ((long)b->size * 25 + bps - 1) / bps;
     return n<1 ? 1 : (int)n; }
 /* --- IDirectSoundBuffer methods --- */
-static int dsb_release(DSBuf* b){ SLOG("DSB %p Release",(void*)b);
+static int dsb_release(DSBuf* b){ ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
     if(!b->master && b->pcm) free(b->pcm);
     free(b); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
-    /* playing-state is owned by the mixer clock (dd2_snd_mix_flip advances pos_fp per engine
-       frame and clears playing at end-of-data); dur_cf is only the pre-first-flip fallback */
+    ds_realtime_pump();
+    /* The mixer owns playing-state and clears it at end-of-data. dur_cf is only
+       the deterministic pre-first-flip fallback; real-time queries flush first. */
     if(b->playing){ if(b->looping) s=0x5; /* PLAYING|LOOPING */
-        else if(SND_CF - b->play_cf < dsb_dur_cf(b) || b->pos_fp>0) s=0x1; else b->playing=0; }
+        else if(getenv("DD2_REALTIME") || SND_CF - b->play_cf < dsb_dur_cf(b) || b->pos_fp>0) s=0x1; else b->playing=0; }
     if(st)*st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
 static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,void** p2,unsigned* s2,int fl){
+    ds_realtime_pump();
     (void)fl; if(off>b->size) off=b->size; if(bytes>b->size) bytes=b->size;
     unsigned first = (off+bytes<=b->size)? bytes : b->size-off;
     if(p1)*p1=b->pcm+off; if(s1)*s1=first;
@@ -213,13 +221,14 @@ static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,
 static int dsb_unlock(DSBuf* b,void* p1,unsigned s1,void* p2,unsigned s2){
     (void)p1;(void)p2; SLOG("DSB %p Unlock %u/%u",(void*)b,s1,s2); return 0; }
 static int dsb_play(DSBuf* b,int r1,int r2,int flags){ (void)r1;(void)r2;
+    ds_realtime_pump();
     b->playing=1; b->looping=(flags&1); b->play_cf=SND_CF; b->pos_fp=0;
     SLOG("DSB %p Play flags=%d freq=%d vol=%d pan=%d",(void*)b,flags,b->freq,b->vol,b->pan); return 0; }
-static int dsb_stop(DSBuf* b){ b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
+static int dsb_stop(DSBuf* b){ ds_realtime_pump(); b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
 static int dsb_setpos(DSBuf* b,unsigned pos){ SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
-static int dsb_setvolume(DSBuf* b,int v){ b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
-static int dsb_setpan(DSBuf* b,int p){ b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
-static int dsb_setfreq(DSBuf* b,int f){ b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
+static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump(); b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
+static int dsb_setpan(DSBuf* b,int p){ ds_realtime_pump(); b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
+static int dsb_setfreq(DSBuf* b,int f){ ds_realtime_pump(); b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
 static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
 static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;
     if(g_ndsbufs<256) g_dsbufs[g_ndsbufs++]=b; return b; }
@@ -277,8 +286,9 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
 /* ---------------- deterministic PCM mixdown ----------------
    dd2_snd_mix_flip() is called once per presented frame (ids_flip, dd2_com.c). It advances the
    mixer clock by the engine frame counter @0x462ff0 (25 engine fps -> 882 output frames per cf
-   at 22050 Hz), never by wallclock, so the produced stream is a pure function of the DS call
-   stream (which is bit-deterministic). Output: s16le stereo 22050 Hz raw to $DD2_SNDPCM.
+   at 22050 Hz) in deterministic runs. DD2_REALTIME uses elapsed milliseconds and
+   carries fractional samples across calls; it also flushes before DS controls.
+   Output: s16le stereo 22050 Hz raw to $DD2_SNDPCM.
    Volume/pan use the DirectSound centi-dB model (amp = 10^(centidb/2000), volumes add in dB;
    pan attenuates the far channel) computed in FIXED POINT (hardcoded 2^(i/16) table, no libm --
    glibc/musl pow() differ, this must be bit-identical native vs wasm). Resampling is a Q16
@@ -333,20 +343,36 @@ unsigned dd2_audio_ms(void) {
 }
 void dd2_snd_mix_flip(void){
     static int last_cf=-1; static FILE* pf; static int pf_init;
+    static int clock_init;
+    static unsigned last_ms, remainder;
+    uint64_t pending;
     int cf,dt,i,t;
+    int realtime = getenv("DD2_REALTIME") != NULL;
     static int mix_out = -1;
 #ifdef DD2_BROWSER
     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
 #endif
-    cf=SND_CF;
-    if(last_cf<0){ last_cf=cf; return; }
-    dt=cf-last_cf; last_cf=cf;
-    if(dt<=0||dt>250) return;
-    if(!getenv("DD2_SOUND")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
+    if(realtime){
+        unsigned now=dd2_platform_ms(), elapsed;
+        if(!clock_init){ clock_init=1; last_ms=now; return; }
+        elapsed=now-last_ms; last_ms=now;
+        pending=(uint64_t)elapsed*22050+remainder;
+        remainder=(unsigned)(pending%1000); pending/=1000;
+        if(!pending || !getenv("DD2_SOUND")) return;
+        dt=(int)((pending+881)/882);
+    }else{
+        cf=SND_CF;
+        if(last_cf<0){ last_cf=cf; return; }
+        dt=cf-last_cf; last_cf=cf;
+        if(dt<=0||dt>250) return;
+        if(!getenv("DD2_SOUND")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
+        pending=(uint64_t)dt*882;
+    }
     if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p) pf=fopen(p,"wb"); } }
     for(t=0;t<dt;t++){
         static short out[882*2];
-        if(pf||mix_out>0){ int k; for(k=0;k<882*2;k++) out[k]=0; }
+        int frames=pending>882 ? 882 : (int)pending;
+        if(pf||mix_out>0){ int k; for(k=0;k<frames*2;k++) out[k]=0; }
         for(i=0;i<g_ndsbufs;i++){
             DSBuf* b=g_dsbufs[i];
             long long step,end_fp; int al,gl,gr,k;
@@ -356,7 +382,7 @@ void dd2_snd_mix_flip(void){
             end_fp=(long long)(b->size/al)<<16;
             gl=dd2_amp_q15(b->vol-(b->pan>0?b->pan:0));
             gr=dd2_amp_q15(b->vol+(b->pan<0?b->pan:0));
-            for(k=0;k<882;k++){
+            for(k=0;k<frames;k++){
                 unsigned fr; int sl,sr; const unsigned char* sp;
                 if(b->pos_fp>=end_fp){ if(b->looping) b->pos_fp-=end_fp; else { b->playing=0; break; } }
                 fr=(unsigned)(b->pos_fp>>16); sp=b->pcm+(long long)fr*al;
@@ -368,11 +394,12 @@ void dd2_snd_mix_flip(void){
                     out[k*2+1]=(short)(vr>32767?32767:vr<-32768?-32768:vr); }
             }
         }
-        if(pf) fwrite(out,2,882*2,pf);
+        if(pf) fwrite(out,2,frames*2,pf);
 #ifdef DD2_BROWSER
-        dd2_audio_push(out, 882);
+        dd2_audio_push(out, frames);
 #endif
-        dd2_audio_virtual_ms += 40;
+        pending-=frames;
+        if(!realtime) dd2_audio_virtual_ms += 40;
         /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
            Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
            and sees playback positions of audio already played by the end of the tick. Phase 5:
