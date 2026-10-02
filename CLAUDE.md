@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Play_Movie's MCI blocks are restored by exact patch839 against original
+  414e80..414f75: Open type/filename/returned ID, destination window and
+  rectangle, playback callback/zero fields and Close callback now occupy
+  their original contiguous offsets. The old extracted function fails with
+  an ASan stack-buffer-overflow when MCI reads Open's type at +8 from its
+  four-byte local (/tmp/dd2-movie-params-before-actual/native-asan-run.log).
+  make verify-movie-params MOVIE_PARAMS_ARGS='--mingw <compiler> --output
+  <fresh-dir>' validates real 32-bit WinMM header offsets and nine independent
+  mocked call paths on native ASan/WASM: 640/non-640 success, completion pump,
+  each early-error cleanup and ignored Close error
+  (/tmp/dd2-movie-params-reviewed/report.json). All 176 exact patches and native,
+  Node/browser builds pass; eight L9 original framebuffer/palette checkpoints
+  still match both rebuilt ports. This restores the engine call contract;
+  the platform's AVI decoder and full intro/outro A/V are still absent, and
+  normal native/browser startup currently bypasses Play_Intro. This mock
+  does not establish actual movie API, decoder or notification delivery.
 - Finite CD ranges now have a reproducible Wine-reference limitation probe:
   make verify-redbook-end REDBOOK_END_ARGS='--wine --mingw <compiler> --output
   <fresh-dir>'. Eight ranges at track2+450 sectors exercise 8/39/40/50/52/53/
