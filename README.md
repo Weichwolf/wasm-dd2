@@ -60,3 +60,29 @@ sudo dpkg --add-architecture i386
 sudo apt update
 sudo apt install wine wine32:i386 gdb xvfb xauth
 ```
+
+`make refcapture` runs the unmodified Windows EXE in a private 32-bit Wine prefix
+under `third_party/wine-reference/`, with an isolated copy of `SaveGames`. A Linux
+CD device adapter exposes the provisioned disc TOC and exact CDDA sector reads
+through Wine's normal MCI/DirectSound driver. It needs no physical CD drive and
+does not patch the EXE or engine memory. `make verify-cdrom` checks all TOC entries,
+108 audio reads including track boundaries, invalid requests and descriptor
+isolation. These checks verify the CD data source, not mixed playback PCM parity.
+
+The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
+original image, framebuffer, palette and checkpoint metadata to a fresh output
+directory. For example:
+
+```sh
+OUT=/tmp/dd2-ref-150 make refcapture
+REFMODE=menu OUT=/tmp/dd2-ref-menu make refcapture
+```
+
+The launcher skips the intro with Escape, waits for the selected checkpoint,
+fails on errors/timeouts and terminates only its own Wine prefix and Xvfb.
+Original menu and L9/cf150 captures now work on Debian. The new L9/cf150 reference
+matches both native and WASM exactly: all 307200 indexed pixels and 1024 palette
+bytes at the first `Draw_All` entry. Reproduce the comparison of an existing
+capture with `make verify-reference-video REFCAP=/tmp/dd2-ref-150`. This checks
+one checkpoint; systematic full-run comparisons and original audio output
+validation remain pending.

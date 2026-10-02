@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -76,7 +76,14 @@ run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 shot: web ## headless browser screenshot of the web build -> /tmp/dd2_shot.png
 	node $(ROOT)/tools/browser/shot.js $(ROOT)/web/dd2 /tmp/dd2_shot.png
 
-refcapture: ## Stage-2 reference capture: run original dd2h.exe under Wine, dump live memory (needs WINEPREFIX)
+REFCAP ?= /tmp/dd2-reference
+verify-reference-video: native wasm ## compare one existing original L9 Draw_All checkpoint (REFCAP) with both ports
+	python3 $(ROOT)/tools/reference/compare_video.py --capture $(REFCAP) --native $(NATIVE) --node $(NODE) --wasm $(OUTJS)
+
+verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
+	python3 $(ROOT)/tools/reference/test_cdrom.py
+
+refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh
 
 clean: ## remove generated build/ and outputs

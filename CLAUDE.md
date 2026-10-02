@@ -27,8 +27,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 ## Commands
 - Native debug: `make native NATIVE=/tmp/dd2h_na`, run from `DestructionDerby2/` as
   `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize with `addr2line -f -e`.
-- Reference capture (Stage-2 bit-verify): `make refcapture` (WINEPREFIX defaults to the repo-local
-  gitignored win32 prefix `.wine-dd2/`; needs xvfb; reads state via /proc/PID/mem, NOT gdb breakpoints).
+- Reference capture (Stage-2 bit-verify): `make refcapture` (private prefix in
+  `third_party/wine-reference/`; needs xvfb; polls /proc/PID/mem, then captures at
+  Draw_All entry using a GDB hardware breakpoint).
 
 ## Current acceptance check (2026-10-02, Debian 13)
 - System Emscripten 3.1.69 / LLVM 19 requires `-mllvm -fast-isel=false`: its FastISel
@@ -58,9 +59,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - User reports menu graphics/actions and championship scores broken. Reproduce by
   navigating the menus and verify action effects and rendering against the original;
   label/alive checks alone are insufficient. These issues remain open.
-- Wine 10 and wine32:i386 are installed. Original execution has not yet reached the FE
-  in this session; reference output comparisons are pending. Historical claims below
-  are investigation context, not current full acceptance evidence.
+- Wine 10 and wine32:i386 are installed. The original requires a valid audio CD
+  before DirectDraw/FE initialization. `make refcapture` now builds a virtual
+  Linux CD adapter from the verified Redbook manifest and serves exact sector
+  reads to Wine's own MCI/DirectSound driver. No original EXE or engine memory
+  changes. It uses a private prefix under third_party/wine-reference, an isolated
+  save copy and scoped cleanup (the old global pkill path is removed). Menu and
+  L9/cf150 snapshots at Draw_All entry work. `make verify-cdrom` passes the TOC,
+  108 exact LBA/MSF audio reads (including cross-track reads), invalid request and
+  unrelated-descriptor checks. `tools/reference/compare_video.py` compares the
+  first port Draw_All image with an existing original L9 checkpoint and fails
+  on missing captures, process errors or any differing byte. L9/cf150 passes
+  on both targets (all 307200 pixel and 1024 palette bytes); logs/capture in
+  /tmp/dd2-ref-attract-device. `make verify-reference-video REFCAP=<capture>`
+  reproduces it. This is one checkpoint; full original mixed playback PCM
+  and video stream parity remain open.
+  Historical claims below are investigation context, not full acceptance evidence.
 
 ## Status (3 sequential stages, each gates the next)
 - Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).
