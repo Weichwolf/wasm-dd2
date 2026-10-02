@@ -35,6 +35,45 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Actual engine Play_Movie now has an AVI MCI device, SDL movie texture/PCM16
+  device and browser canvas/source-rate AudioContext. DD2_MOVIE=INTRO.AVI or
+  OUTRO.AVI runs the real Init_Application/Sound_Remove/Set_Draw_Mode/Play_Movie
+  diagnostic entry; browser URLs ?movie=INTRO.AVI / ?movie=OUTRO.AVI use it too.
+  Decoder/container and GDI conversions feed this path, without FFmpeg RGB
+  substitution or a 44100Hz WebAudio movie resampler. Open/Window/Put/Notify
+  Play/Close parameters remain the original patch839 contract; patch840 adds
+  the WASM diagnostic entry only. Movie-aware PeekMessage pumps/yields and
+  keyboard events use the actual window procedure, which clears Movie_Playing
+  on key-down/notify while preserving it on key-up.
+  Both complete films present 1712/1813 frames on actual SDL and canvas; every
+  SDL renderer/canvas pixel compares directly with its submitted ARGB surface.
+  Source-rate device queues/AudioBuffers contain all 6039616/6395840 PCM bytes
+  exactly as Wine ACM, with no resampling at the browser source boundary.
+  Actual Esc key-up retains playback and D key-down closes/stops each film.
+  make verify-native-movie NATIVE_MOVIE_ARGS='--source <AVI-proof-dir>
+  --output <fresh-dir>' and make verify-browser-movie
+  BROWSER_MOVIE_ARGS='<AVI-proof-dir> <fresh-dir>' reproduce full/skip cases.
+  Proofs: third_party/verification-artifacts/dd2-native-movie-final-reviewed
+  and dd2-browser-movie-reviewed/report.json. Native uses the declared SDL
+  dummy audio device; accepted queue data is distinct from consumed/DAC data.
+  Complete source submission on skip does not establish original queued
+  control latency or the original accepted ALSA prefix/tail. Those remain open.
+  The extracted engine against the production MCI backend also passes both
+  full films, early Close, 32-bit clock wrap, every controlled frame deadline,
+  delayed drain-before-notify and unavailable audio devices; the latter retain
+  video like Wine MCIAVI_player. Native ASan/UBSan/WASM compare every generated
+  ARGB byte and source PCM; changed display bits fail. make verify-movie-playback
+  MOVIE_PLAYBACK_ARGS='--source <AVI-proof-dir> --output <fresh-dir>' reproduces
+  third_party/verification-artifacts/dd2-movie-playback-audio-unavailable-reviewed.
+  Eight original L9 framebuffer/palette checkpoints still match the new
+  binaries. Actual native menu/CD/controller/race/pause tests pass 3072000
+  pixels/8550104 mixed bytes; browser CD restart passes 1590 shared buffers/
+  65268 resumed source bytes (dd2-native-window-mci-movie-reviewed and
+  dd2-browser-redbook-mci-movie-reviewed under verification-artifacts).
+  Normal startup still bypasses Play_Intro; original whole movie presentation/
+  output clocks and physical hardware are not established by these checks.
+  In particular Wine omits the last source paint and has a variable silent
+  audio tail; no claim of reproducing Windows or those driver details is made.
 - Portable movie surface conversion now matches actual Win32 GDI RGB32
   StretchDIBits into RGB565 and GetDIBits display expansion. One component
   gradient and sixteen verified original codec checkpoints exercise original

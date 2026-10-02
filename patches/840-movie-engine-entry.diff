@@ -1,0 +1,20 @@
+Expose the AVI backend through the existing CRT-bypass launcher.
+DD2_MOVIE runs the real Init_Application / Sound_Remove / Set_Draw_Mode(1) /
+Play_Movie sequence rather than a decoder-only fixture. It is a diagnostic
+entry for complete native/browser MCI sink and skip/completion comparisons.
+The deterministic race/FE fixtures retain their original entry sequence.
+This launcher change does not modify reconstructed engine instructions.
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -87,6 +87,10 @@
+     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(long)&dd2_crt_lock; }
+     __InitRtns();
+     dd2_com_init();
++    if(getenv("DD2_MOVIE")) {
++        extern int dd2_movie_run(const char*);
++        return dd2_movie_run(getenv("DD2_MOVIE"));
++    }
+     /* Boot through the real Init_Main @0x445814 (like tools/native_main.c): Init_Controller_,
+        Profile_Init, Sound_Init, VSync+VSyncCallback, InitCardSystem (SaveGames -> card buffer),
+        Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags -- the VAG load fills the audio

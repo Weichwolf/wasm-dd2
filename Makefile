@@ -127,6 +127,17 @@ verify-movie-avi: ## compare production AVI parsing/seeks and all decoded source
 verify-movie-surface: ## compare movie RGB565 scaling/display with real Win32 GDI; MOVIE_SURFACE_ARGS selects source/output/MinGW
 	python3 $(ROOT)/tools/verify_movie_surface.py --node $(NODE) $(MOVIE_SURFACE_ARGS)
 
+.PHONY: verify-movie-playback
+verify-movie-playback: patch ## run original Play_Movie through the production MCI device; MOVIE_PLAYBACK_ARGS supplies source/output
+	python3 $(ROOT)/tools/verify_movie_playback.py --node $(NODE) $(MOVIE_PLAYBACK_ARGS)
+
+.PHONY: verify-native-movie verify-browser-movie
+verify-native-movie: native ## compare complete actual SDL movie frames/accepted PCM and real skip keys; NATIVE_MOVIE_ARGS supplies source/output
+	python3 $(ROOT)/tools/verify_native_movie.py --binary $(NATIVE) $(NATIVE_MOVIE_ARGS)
+
+verify-browser-movie: web ## compare complete actual canvas/movie AudioBuffers and live skip keys; BROWSER_MOVIE_ARGS supplies source/output
+	$(NODE) $(ROOT)/tools/browser/qa_movie.js $(ROOT)/web/dd2 $(BROWSER_MOVIE_ARGS)
+
 verify-movie-reference: ## check full original intro accepted PCM; MOVIE_REFERENCE_ARGS supplies --capture/--source
 	python3 $(ROOT)/tools/reference/verify_movie.py $(MOVIE_REFERENCE_ARGS)
 

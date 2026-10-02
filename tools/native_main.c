@@ -191,6 +191,10 @@ int main(void){
     CK("__InitRtns()");             __InitRtns();
     CK("dd2_com_init()");           dd2_com_init();
     dd2_native_init();
+    if(getenv("DD2_MOVIE")) {
+        extern int dd2_movie_run(const char*);
+        return dd2_movie_run(getenv("DD2_MOVIE"));
+    }
     /* The original boots through Init_Main @0x445814: Init_Controller_, Profile_Init, Sound_Init,
      * VSync+VSyncCallback, InitCardSystem (loads/creates SaveGames -> card buffer 0x754460),
      * Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags. Run the real thing. */

@@ -19,7 +19,7 @@ bash "$ROOT/tools/patch.sh"
 F="-mllvm -fast-isel=false -std=gnu89 -w -DDD2_BROWSER -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
 python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.json" "$ROOT/build/dd2_disc.h"
 
-UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm"
+UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm dd2_movie dd2_movie_platform dd2_movie_surface"
 OBJS=""; err=0
 for u in $UNITS; do
   c="$ROOT/build/$u.c"; o="/tmp/web_$u.o"
@@ -46,4 +46,6 @@ emcc $OBJS -o "$OUTDIR/index.html" \
 # the recreated file is byte-identical to the shipped SaveGames). The shell creates an empty
 # target before linking so older MEMFS versions can open it; then it persists to IndexedDB.
 cp -a "$GAME/Redbook" "$OUTDIR/"
+cp "$GAME/Intro.avi" "$OUTDIR/INTRO.AVI"
+cp "$GAME/Outro.avi" "$OUTDIR/OUTRO.AVI"
 echo "built browser port -> $OUTDIR/index.html"

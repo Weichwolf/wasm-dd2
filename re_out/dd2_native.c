@@ -17,6 +17,7 @@ static SDL_Window* native_window;
 static SDL_Renderer* native_renderer;
 static SDL_Texture* native_texture;
 static SDL_AudioDeviceID native_device;
+static SDL_AudioDeviceID movie_device;
 static unsigned native_rate;
 static SDL_Joystick* native_joystick;
 static SDL_GameController* native_controller;
@@ -28,6 +29,7 @@ static void native_fail(const char* operation){
 }
 int dd2_native_enabled(void){return native_window!=NULL;}
 static void native_shutdown(void){
+    dd2_native_movie_audio_stop();
     if(native_device)SDL_CloseAudioDevice(native_device);
     if(native_controller)SDL_GameControllerClose(native_controller);
     else if(native_joystick)SDL_JoystickClose(native_joystick);
@@ -175,3 +177,28 @@ void dd2_native_audio(const float* pcm,unsigned frames,unsigned rate){
     if(rate!=native_rate){fprintf(stderr,"Native SDL device rate changed during playback\n");exit(1);}
     if(SDL_QueueAudio(native_device,pcm,frames*2*sizeof(float)))native_fail("queue combined audio");
 }
+void dd2_native_movie_present(const uint32_t* argb){
+    if(!native_window)return;
+    if(SDL_UpdateTexture(native_texture,NULL,argb,640*4) ||
+        SDL_SetRenderDrawColor(native_renderer,0,0,0,255) || SDL_RenderClear(native_renderer) ||
+        SDL_RenderCopy(native_renderer,native_texture,NULL,NULL))native_fail("present movie");
+    SDL_RenderPresent(native_renderer);
+}
+void dd2_native_movie_audio_stop(void){
+    if(movie_device){SDL_ClearQueuedAudio(movie_device);SDL_CloseAudioDevice(movie_device);movie_device=0;}
+}
+int dd2_native_movie_audio_start(const int16_t* pcm,size_t frames,unsigned rate,unsigned channels){
+    SDL_AudioSpec requested={0},actual;
+    if(!native_window)return 0;
+    if(!pcm || !frames || !rate || channels!=2 || frames>UINT32_MAX/(channels*2))return -1;
+    dd2_native_movie_audio_stop();
+    requested.freq=(int)rate;requested.format=AUDIO_S16LSB;requested.channels=channels;requested.samples=1024;
+    movie_device=SDL_OpenAudioDevice(NULL,0,&requested,&actual,0);
+    if(!movie_device)return -1;
+    if(actual.freq!=(int)rate || actual.format!=AUDIO_S16LSB || actual.channels!=channels ||
+            SDL_QueueAudio(movie_device,pcm,(unsigned)(frames*channels*2))){
+        dd2_native_movie_audio_stop();return -1;
+    }
+    SDL_PauseAudioDevice(movie_device,0);return 0;
+}
+int dd2_native_movie_audio_done(void){return !movie_device || SDL_GetQueuedAudioSize(movie_device)==0;}

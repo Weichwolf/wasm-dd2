@@ -57,7 +57,11 @@ int joyGetPos(int a,void* b){
       ji[0]=dd2_pad_x; ji[1]=dd2_pad_y; ji[2]=32768; ji[3]=dd2_pad_buttons; }
     return 0; }
 #include "dd2_cd.h"
-int mciSendCommandA(int a,int b,int c,int d){ return dd2_mci_send((unsigned)a,(unsigned)b,(unsigned)c,(uint32_t*)(uintptr_t)d); }
+#include "dd2_movie.h"
+int mciSendCommandA(int a,int b,int c,int d){
+    int movie_result=dd2_movie_mci_send((unsigned)a,(unsigned)b,(unsigned)c,(uint32_t*)(uintptr_t)d);
+    return movie_result<0 ? dd2_mci_send((unsigned)a,(unsigned)b,(unsigned)c,(uint32_t*)(uintptr_t)d) : movie_result;
+}
 #include "dd2_symbols.h"
 /* Real _ot_dispatch (= dd2.exe): call the primitive handler from _primfuncs[type] (dd2_relocate has
    rewritten in-fnmap entries to real fn-pointers). A relocated entry is non-null OUTSIDE the image

@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 extern void Translate_Keypress(unsigned int vkey, unsigned int lparam_flags);
+extern int FUN_004132f0(void*,unsigned,unsigned,unsigned);
 
 /* Windows virtual-key codes the default keymaps use (see the two 14-byte maps at 0x467568/0x46757a). */
 enum {
@@ -36,7 +37,8 @@ void dd2_key_event(unsigned int vk, int down)
 {
     if (vk < 256) dd2_keystate[vk] = down ? 1 : 0;
     /* lparam bit 31 set == key-up (WM_KEYUP semantics the engine checks). */
-    Translate_Keypress(vk, down ? 0u : 0x80000000u);
+    FUN_004132f0((void*)(uintptr_t)*(uint32_t*)(uintptr_t)0x46047c,
+                down ? 0x100u : 0x101u,vk,down ? 0u : 0x80000000u);
 }
 
 /* Map a browser KeyboardEvent.code string to a Windows VK code (0 = unmapped/ignore).
