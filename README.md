@@ -49,6 +49,11 @@ Xvfb, xdotool and Python Pillow; output goes to fresh directories under `/tmp`.
 These checks cover the SDL boundary, not physical audio/controller hardware or
 complete original game-stream timing.
 
+`make verify-browser-pad` launches a live race with a synthetic Gamepad API
+device present at boot. It checks steering endpoints, accelerator/brake/release
+values in car physics, actual player movement and browser errors. It does not
+exercise physical HID hardware.
+
 The WASM builds disable LLVM FastISel. With Debian Emscripten 3.1.69 / LLVM 19, its
 folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
 `AI_Com_Server` on level 10. SelectionDAG emits the required 32-bit addition.

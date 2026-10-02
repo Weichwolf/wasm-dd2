@@ -4,7 +4,7 @@ const buildDir=process.argv[2]||'../../web/dd2';
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server=http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';
   fs.readFile(path.join(buildDir,p),(e,b)=>{if(e){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':MIME[path.extname(p)]||'application/octet-stream'});res.end(b);});});
-const st=(page)=>page.evaluate(()=>({x:HEAP32[0x792a24>>2],z:HEAP32[0x792a34>>2],vz:HEAP32[0x792a18>>2],pad:HEAPU16[0x754448>>1],analog:HEAPU8[0x754450],cf:HEAP32[0x462ff0>>2]}));
+const st=(page)=>page.evaluate(()=>({x:HEAP32[0x792a30>>2],z:HEAP32[0x792a38>>2],vz:HEAP32[0x792a18>>2],pad:HEAPU16[0x754448>>1],analog:HEAPU8[0x754450],cf:HEAP32[0x462ff0>>2]}));
 (async()=>{
   await new Promise(r=>server.listen(0,r));
   const browser=await chromium.launch({args:['--no-sandbox']});
@@ -12,7 +12,8 @@ const st=(page)=>page.evaluate(()=>({x:HEAP32[0x792a24>>2],z:HEAP32[0x792a34>>2]
   await page.addInitScript(()=>{ window.__pad={id:'Xbox',index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
     navigator.getGamepads=()=>[window.__pad]; });
   await page.goto(`http://localhost:${server.address().port}/index.html?race=9&pad`,{waitUntil:'load'});
-  for(let i=0;i<80;i++){const r=await page.evaluate(()=>typeof HEAP32!=='undefined'&&HEAP32[0x462ff0>>2]>200).catch(()=>false);if(r)break;await page.waitForTimeout(1000);}
+  // Countdown can reset cf and advances separately from adaptive frame skips.
+  await page.waitForFunction(()=>typeof HEAP32!=='undefined' && HEAP32[0x936ff4>>2]===9 && HEAP32[0x784298>>2]<0,null,{timeout:30000});
   const test=async(name,setup)=>{
     const b=await st(page);
     await page.evaluate(setup);

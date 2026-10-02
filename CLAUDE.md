@@ -35,6 +35,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- make verify-browser-pad now explicitly launches a live L9 race and waits
+  for the actual countdown/control gate. The old probe stayed in the default
+  frontend, timed out without failing and printed heading/height as X/Z.
+  Corrected probes use original world X/Z offsets 792a30/792a38; packed
+  steering/throttle DWORDs and the 434-byte car stride use DataView reads.
+  Actual Gamepad API polling passes boot detection, left/right endpoints,
+  raw controller bits, steering -512/496, throttle +32768/-32768/0,
+  player movement, release and no browser runtime errors
+  (/tmp/dd2-browser-pad-steering-reviewed.log). The matrix now also waits
+  for the countdown instead of assuming cf200, which can precede the green
+  light and its cf reset under adaptive frame skips. This establishes the
+  synthetic input-to-physics chain; physical HID and original-input/timing
+  equivalence still require reference tests.
 - Native SDL play is available through make play-native (DD2_WINDOW=1).
   It presents the existing indexed framebuffer/palette via an exact software
   renderer, queues the final shared Float32 mix, forwards physical SDL keys

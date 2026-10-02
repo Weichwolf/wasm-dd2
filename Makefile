@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -75,6 +75,9 @@ verify-native-sdl: ## verify actual renderer/X11 pixels, accepted audio and SDL 
 
 verify-native-window: native ## use real X11 keys to test native menus/CD/race/pause and exact rendered/accepted output
 	python3 $(ROOT)/tools/verify_native_window.py --binary $(NATIVE) $(NATIVE_WINDOW_ARGS)
+
+verify-browser-pad: web ## check synthetic boot-time controller, steering, player movement, brake and release
+	$(NODE) $(ROOT)/tools/browser/padtest.js $(ROOT)/web/dd2
 
 verify-wasm: wasm ## crash-free check: run the WASM demo (node) on all 10 levels, print N/10
 	python3 $(ROOT)/tools/verify_demos.py wasm --node $(NODE) --wasm $(OUTJS) --game-dir $(GAMEDIR)
