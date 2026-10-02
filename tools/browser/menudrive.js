@@ -1,7 +1,7 @@
 // Browser FE E2E: boot the real front end, navigate the menu with real key events,
 // accept, verify a race starts. Screenshots at each stage.
 const http = require('http'); const fs = require('fs'); const path = require('path');
-const { chromium } = require('playwright');
+const { chromium } = require('./playwright');
 const buildDir = process.argv[2] || '../../web/dd2';
 const MIME = {'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server = http.createServer((req,res)=>{

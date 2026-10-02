@@ -1,7 +1,7 @@
 // QA: step through Race Mode dialog for a chosen mode index, screenshot every screen after each
 // Enter, enumerate whatever dialog follows. arg2 = mode index (0=Wrecking,1=StockCar,2=DD)
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const MODE=parseInt(process.argv[2]||'0');
 const st=(page)=>page.evaluate(()=>({mode:HEAP32[0x4673f8>>2],type:HEAP32[0x4673f4>>2],track:HEAP32[0x4673fc>>2],car:HEAP32[0x467400>>2],fe:HEAP8[0x460005],cf:HEAP32[0x462ff0>>2],ncars:HEAP32[0x46765c>>2]})).catch(()=>'DEAD');

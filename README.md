@@ -22,3 +22,26 @@ Existing `SaveGames` is preserved. Downloads, original files and audio are ignor
 by Git. An existing ZIP can be used with
 `python3 tools/provision_game.py --archive /path/to/Destruction-Derby-2_Win_EN_ISO-Version.zip`;
 `--url` accepts a refreshed download link to the same verified archive.
+
+On Debian, `emscripten`, `gcc-multilib`, `libc6-dev-i386`, `node-playwright`, and
+`chromium` provide the build and browser-test tools. The build uses `emcc` from PATH,
+or falls back to `~/Git/emsdk` (override with `EMSDK`). Browser tools use Playwright's
+downloaded Chromium when available, otherwise `/usr/bin/chromium`; override with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. They also adapt Debian Playwright 1.38's
+callback-based `rimraf` dependency for clean browser teardown.
+The browser shell creates an empty save-file target before linking it into IDBFS,
+so Emscripten 3.1 can initialize the first memory card without a dangling symlink.
+
+The WASM builds disable LLVM FastISel. With Debian Emscripten 3.1.69 / LLVM 19, its
+folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
+`AI_Com_Server` on level 10. SelectionDAG emits the required 32-bit addition.
+`make verify` and `make verify-wasm` check every demo and fail on nonzero exits,
+engine errors, or timeouts; detailed logs go to `/tmp/dd2-verify-native` and
+`/tmp/dd2-verify-wasm`. These are crash checks, not proof of complete game fidelity.
+
+Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
+```sh
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt install wine wine32:i386 gdb xvfb xauth
+```

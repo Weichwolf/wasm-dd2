@@ -62,21 +62,10 @@ web: patch ## browser build -> web/dd2
 	bash $(ROOT)/tools/build_web.sh web/dd2
 
 verify: native ## crash-free check: run the demo on all 10 levels (native), print N/10
-	@echo "== native demo crash-check =="; ok=0; \
-	for L in 1 2 3 4 5 6 7 8 9 10; do \
-	  o=$$(cd $(GAMEDIR) && DD2_LEVEL=$$L timeout 120 $(NATIVE) 2>&1); \
-	  if echo "$$o" | grep -q 'demo returned (no crash!)'; then echo "  L$$L ok"; ok=$$((ok+1)); else echo "  L$$L CRASH"; fi; \
-	done; \
-	echo "== crash-free: $$ok/10 =="
+	python3 $(ROOT)/tools/verify_demos.py native --native $(NATIVE) --game-dir $(GAMEDIR)
 
 verify-wasm: wasm ## crash-free check: run the WASM demo (node) on all 10 levels, print N/10
-	@echo "== WASM demo crash-check (node) =="; ok=0; \
-	for L in 1 2 3 4 5 6 7 8 9 10; do \
-	  rm -rf /tmp/wfv; mkdir -p /tmp/wfv; \
-	  o=$$(cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wfv timeout 120 $(NODE) $(OUTJS) $$L 2>&1); \
-	  if echo "$$o" | grep -qiE 'abort|RuntimeError|exception thrown|SIGSEGV'; then echo "  L$$L CRASH"; else echo "  L$$L ok"; ok=$$((ok+1)); fi; \
-	done; \
-	echo "== WASM crash-free: $$ok/10 =="
+	python3 $(ROOT)/tools/verify_demos.py wasm --node $(NODE) --wasm $(OUTJS) --game-dir $(GAMEDIR)
 
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)

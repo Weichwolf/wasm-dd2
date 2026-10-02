@@ -1,7 +1,7 @@
 // QA: determine the correct cycle interaction for Track/Car. Test (A) main-menu F2 on the
 // highlighted button (no Enter), and (B) inside the opened screen: arrows + F2.
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore';
 const rt=(page)=>page.evaluate(()=>HEAP32[0x4673fc>>2]).catch(()=>'?');   // race_track
 const rc=(page)=>page.evaluate(()=>HEAP32[0x467400>>2]).catch(()=>'?');   // race_car

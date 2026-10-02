@@ -1,6 +1,6 @@
 // E2E validation of the 816/817 dialog fixes: pick a race MODE + TYPE via the nested dialogs,
 // then Go! -> race, verify crash-free. Tests alternate game modes (Destruction Derby etc.).
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir=process.argv[2]||'../../web/dd2'; const OUT='/tmp/modeflow'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server=http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';

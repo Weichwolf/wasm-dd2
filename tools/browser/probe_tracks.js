@@ -1,7 +1,7 @@
 // QA: Select Track — cycle ALL tracks with F2, screenshot each, read track label + race_track.
 // Then launch a race on 2 different tracks to confirm they load. Watch trap/hang.
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const tlabel=(page)=>rd(page,0x469784);
 const rt=(page)=>page.evaluate(()=>HEAP32[0x4673fc>>2]).catch(()=>'?');

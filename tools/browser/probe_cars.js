@@ -1,6 +1,6 @@
 // QA: Select Car — cycle all cars with F2 (both dirs), screenshot, confirm no crash/trap.
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const carlabel=(page)=>rd(page,0x469784);
 const rc=(page)=>page.evaluate(()=>HEAP32[0x467400>>2]).catch(()=>'?');

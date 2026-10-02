@@ -1,7 +1,7 @@
 // QA: Championship flow (Race Type idx0). Select mode, Championship, Enter -> expect name-entry
 // alphabet grid. Try entering letters + confirm. Screenshot each step. Watch for trap/hang.
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const st=(page)=>page.evaluate(()=>({mode:HEAP32[0x4673f8>>2],type:HEAP32[0x4673f4>>2],fe:HEAP8[0x460005],cf:HEAP32[0x462ff0>>2],lvl:HEAP32[0x936ff4>>2]})).catch(()=>'DEAD');
 let errs=[];

@@ -2,7 +2,7 @@
 // keyboard events, screenshot before/after — proves the key path drives the game in-browser.
 //   node drive.js <buildDir> <outPrefix> [bootMs] [driveMs]
 const http = require('http'); const fs = require('fs'); const path = require('path');
-const { chromium } = require('playwright');
+const { chromium } = require('./playwright');
 const buildDir = process.argv[2] || '../../web/dd2';
 const pre = process.argv[3] || '/tmp/drive';
 const boot = parseInt(process.argv[4] || '40000', 10);

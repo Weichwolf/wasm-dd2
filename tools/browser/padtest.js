@@ -2,7 +2,7 @@
 // shell's poll loop -> dd2_pad_update -> engine joystick path drives the car. Validates the
 // full chain except the physical HID layer.
 const http = require('http'); const fs = require('fs'); const path = require('path');
-const { chromium } = require('playwright');
+const { chromium } = require('./playwright');
 const buildDir = process.argv[2] || '../../web/dd2';
 const MIME = {'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server = http.createServer((req,res)=>{

@@ -1,6 +1,6 @@
 // QA: after RETIRE, watch the results-replay for a menu (Save Replay/Next Race/View League...).
 // Poll fe005 + a few candidate screen bytes; screenshot each phase; try Enter/Esc to surface a menu.
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir='../../web/dd2'; const OUT='/tmp/qa_explore2'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server=http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';

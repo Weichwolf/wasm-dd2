@@ -2,7 +2,7 @@
 // screenshot the canvas, exit. No external server / pkill needed.
 //   node shot.js <buildDir> <out.png> [waitMs]
 const http = require('http'); const fs = require('fs'); const path = require('path');
-const { chromium } = require('playwright');
+const { chromium } = require('./playwright');
 
 const buildDir = process.argv[2] || 'web/build';
 const out = process.argv[3] || 'shot.png';

@@ -1,7 +1,7 @@
 // QA: select a Race Type by index, Enter, then drive to Go! and launch. Observe trap/launch.
 // arg2 = type index (0..3). Mode fixed = Wrecking(0).
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const TI=parseInt(process.argv[2]||'2');
 const st=(page)=>page.evaluate(()=>({mode:HEAP32[0x4673f8>>2],type:HEAP32[0x4673f4>>2],fe:HEAP8[0x460005],cf:HEAP32[0x462ff0>>2],ncars:HEAP32[0x46765c>>2],lvl:HEAP32[0x936ff4>>2]})).catch(()=>'DEAD');

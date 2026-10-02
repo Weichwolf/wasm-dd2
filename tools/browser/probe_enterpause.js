@@ -1,6 +1,6 @@
 // QA: does ENTER pause mid-race (CLAUDE.md claims ESC/ENTER=pause)? Clean isolated test.
 const {serve,key,alive,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore';
 const cf=(page)=>page.evaluate(()=>HEAP32[0x462ff0>>2]).catch(()=>'DEAD');
 let errs=[];

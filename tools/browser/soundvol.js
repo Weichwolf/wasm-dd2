@@ -1,5 +1,5 @@
 // Reach Sound Volume (Config rec-1) and exercise volume up/down. Screenshots + error capture.
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir=process.argv[2]||'../../web/dd2'; const OUT='/tmp/soundvol'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server=http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';

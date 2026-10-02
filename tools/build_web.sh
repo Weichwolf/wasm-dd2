@@ -10,12 +10,13 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTDIR="${1:-$ROOT/web/dd2}"
 mkdir -p "$OUTDIR"
-source "$HOME/Git/emsdk/emsdk_env.sh" >/dev/null 2>&1
+source "$ROOT/tools/emscripten_env.sh"
 GAME="$ROOT/DestructionDerby2"
 
 bash "$ROOT/tools/patch.sh"
 
-F="-std=gnu89 -w -DDD2_BROWSER -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
+# Match build.sh: preserve wrapping 32-bit addresses instead of FastISel offsets.
+F="-mllvm -fast-isel=false -std=gnu89 -w -DDD2_BROWSER -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
 UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate"
 OBJS=""; err=0
 for u in $UNITS; do
@@ -40,5 +41,6 @@ emcc $OBJS -o "$OUTDIR/index.html" \
 # SaveGames is NOT preloaded: it is IDBFS-backed (shell_port.html mounts /persist and symlinks
 # /SaveGames -> /persist/SaveGames). On a first-ever run the file is absent, so the engine's
 # InitCardSystem @0x423220 recreates a fresh 128KB card from the image baseline (proven native:
-# the recreated file is byte-identical to the shipped SaveGames) -- then it persists to IndexedDB.
+# the recreated file is byte-identical to the shipped SaveGames). The shell creates an empty
+# target before linking so older MEMFS versions can open it; then it persists to IndexedDB.
 echo "built browser port -> $OUTDIR/index.html"

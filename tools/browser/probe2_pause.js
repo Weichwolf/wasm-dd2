@@ -2,7 +2,7 @@
 // nav: pause, walk items 0..4, adjust Draw Distance + SFX Volume, resume.
 // retire: pause, go to Retire(item3), Enter, sure?->Yes, observe results/replay screen + exercise it.
 // quit:   pause, go to Quit(item4), Enter, sure?->Yes, observe result (title/results).
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir='../../web/dd2'; const SC=process.argv[2]||'nav';
 const OUT='/tmp/qa_explore2'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};

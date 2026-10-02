@@ -1,7 +1,7 @@
 // QA: isolate the Race Type dialog trap. For a given mode, open Race Type, step ArrowRight one
 // at a time from fresh boot, log errs + label after EACH key. Find the exact trapping index.
 const {serve,key,alive,rd,menuLabel,boot}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const MODE=parseInt(process.argv[2]||'0');       // 0=Wrecking 1=StockCar 2=DD
 const NR=parseInt(process.argv[3]||'5');          // number of ArrowRight steps

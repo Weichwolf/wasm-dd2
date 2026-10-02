@@ -1,7 +1,7 @@
 // QA: launch a race via the menu Go!, verify car moves under KeyA/arrows, test pause(Esc & Enter)
 // + resume, run ~30s. Screenshots before/after. Watch pageerror/hang.
 const {serve,key,alive,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const down=(page,c)=>page.evaluate(cc=>window.dispatchEvent(new KeyboardEvent('keydown',{code:cc})),c);
 const up=(page,c)=>page.evaluate(cc=>window.dispatchEvent(new KeyboardEvent('keyup',{code:cc})),c);

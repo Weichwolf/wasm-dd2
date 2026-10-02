@@ -1,6 +1,6 @@
 // Validate View_Statistics render: force stats_recorded=1 in HEAP so the Info screen lands on
 // rec-0 (View Statistics), then drive category nav + drill-in. Screenshots + error capture.
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir=process.argv[2]||'../../web/dd2'; const OUT='/tmp/statsforce'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};
 const server=http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';

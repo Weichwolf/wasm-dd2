@@ -1,7 +1,7 @@
 // QA: pick track N via menu F2, then Go! -> launch, confirm the race loads (cf advances, 3D view).
 // arg2 = number of F2 presses (track index).
 const {serve,key,alive,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore';
 const TN=parseInt(process.argv[2]||'2');
 const rt=(page)=>page.evaluate(()=>HEAP32[0x4673fc>>2]).catch(()=>'?');

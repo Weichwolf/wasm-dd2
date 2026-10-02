@@ -1,7 +1,7 @@
 // QA: after the Race Type idx2 trap, is the FE hung? Try Escape/arrows/Enter and watch if ANY
 // observable state changes (fe byte, menu label). Baseline: a healthy dialog responds to keys.
 const {serve,key,alive,rd,menuLabel,boot}=require('./felib.js');
-const {chromium}=require('playwright');
+const {chromium}=require('./playwright');
 const readFE=(page)=>page.evaluate(()=>HEAP8[0x460005]).catch(()=>'DEAD');
 let errs=[];
 (async()=>{

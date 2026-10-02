@@ -5,13 +5,16 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTJS="${1:-/tmp/lvltest/dd2run.js}"
 mkdir -p "$(dirname "$OUTJS")"
-source "$HOME/Git/emsdk/emsdk_env.sh" >/dev/null 2>&1
+source "$ROOT/tools/emscripten_env.sh"
 
 # 1) patch: pristine decompile + patches/*.diff -> build/
 if [ -z "$DD2_NOPATCH" ]; then bash "$ROOT/tools/patch.sh"; fi
 
 # 2) compile the linked units (re_out/ also holds unlinked Ghidra copies — sprite_handlers.c etc. — skip them)
-F="-std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
+# FastISel in LLVM 19 folds integer addresses into unsigned WASM memory offsets
+# even when the integer addition must wrap (e.g. AI_Com_Server's target-0 lookup).
+# SelectionDAG preserves the x86 32-bit address addition; keep the C engine intact.
+F="-mllvm -fast-isel=false -std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
 UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate"
 OBJS=""
 err=0

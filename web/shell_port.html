@@ -46,7 +46,7 @@
       // Persist the memory card (SaveGames) across page reloads via IndexedDB. The engine opens
       // "SaveGames" at the FS root; we back that path with an IDBFS mount at /persist and load its
       // contents BEFORE main() runs (addRunDependency gates the boot on the async syncfs). On a
-      // first-ever run /persist/SaveGames is absent -> InitCardSystem recreates a fresh 128KB card
+      // first-ever run /persist/SaveGames is empty -> InitCardSystem recreates a fresh 128KB card
       // (byte-identical to the shipped file). Writes land in /persist and are flushed back to
       // IndexedDB on tab-hide / unload (syncfs(false)). No engine change; native/node use real disk.
       function(){
@@ -56,6 +56,11 @@
           Module.addRunDependency('idbfs-load');
           FS.syncfs(true, function(err){
             if (err) console.error('IDBFS load failed', err);
+            // Emscripten 3.1 MEMFS cannot create a file through a dangling symlink.
+            // Ensure the target exists; InitCardSystem fills an empty card itself.
+            if (!FS.analyzePath('/persist/SaveGames').exists) {
+              FS.writeFile('/persist/SaveGames', new Uint8Array(0));
+            }
             try { FS.unlink('/SaveGames'); } catch(e){}          // drop any stale root node
             try { FS.symlink('/persist/SaveGames', '/SaveGames'); } catch(e){ console.error('symlink SaveGames', e); }
             Module.removeRunDependency('idbfs-load');

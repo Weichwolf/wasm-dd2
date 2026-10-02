@@ -1,7 +1,7 @@
 // Visual menu tour: boots the FE, walks all 8 sub-screens, enters each (accept),
 // screenshots every state, and reports which screen traps. Robust: polls HEAP for
 // boot, keys via real KeyboardEvents, per-step pageerror capture.
-const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('playwright');
+const http=require('http'),fs=require('fs'),path=require('path'); const {chromium}=require('./playwright');
 const buildDir=process.argv[2]||'../../web/dd2';
 const OUT='/tmp/menutour'; fs.mkdirSync(OUT,{recursive:true});
 const MIME={'.html':'text/html','.js':'text/javascript','.wasm':'application/wasm','.data':'application/octet-stream'};

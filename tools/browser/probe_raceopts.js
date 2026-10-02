@@ -1,7 +1,7 @@
 // QA: enumerate the Wrecking / race-options dialog. Open it, cycle mode+type with F2/F1 and
 // arrows, read race_mode(0x4673f8) race_type(0x4673f4), screenshot every state.
 const {serve,key,alive,rd,menuLabel,boot,gotoButton}=require('./felib.js');
-const {chromium}=require('playwright'); const fs=require('fs');
+const {chromium}=require('./playwright'); const fs=require('fs');
 const OUT='/tmp/qa_explore'; fs.mkdirSync(OUT,{recursive:true});
 const st=(page)=>page.evaluate(()=>[HEAP32[0x4673f8>>2],HEAP32[0x4673f4>>2],HEAP8[0x460005],HEAP32[0x462ff0>>2]]).catch(()=>'DEAD');
 let errs=[];
