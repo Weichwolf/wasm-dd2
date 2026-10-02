@@ -28,6 +28,7 @@ done
 
 # 3) link
 emcc $OBJS -o "$OUTJS" \
+  --pre-js "$ROOT/tools/node_env.js" \
   -sGLOBAL_BASE=10485760 -sSTACK_SIZE=16777216 -sINITIAL_MEMORY=268435456 \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 -sERROR_ON_UNDEFINED_SYMBOLS=0 -sNODERAWFS=1 --emit-symbol-map 2>/dev/null
 echo "built $OUTJS"

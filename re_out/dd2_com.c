@@ -124,7 +124,13 @@ static int ids_flip(int t,int a,int b){
         char nm[256];
         if(!getenv("DD2_CFONLY")){
             sprintf(nm,"%s/f%05d.bin", dir, g_frameno);
-            FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,640*480,f); fclose(f); } }
+            FILE* f=fopen(nm,"wb"); if(f){ fwrite((void*)(unsigned long)0x700450u,1,640*480,f); fclose(f); }
+            /* A changing palette is part of the presented video frame. A single
+               final palette.bin cannot verify fades or menu color changes. */
+            if(getenv("DD2_PALDUMP")){
+                sprintf(nm,"%s/f%05d.pal", dir, g_frameno);
+                f=fopen(nm,"wb"); if(f){ fwrite(g_palette,1,256*4,f); fclose(f); } }
+        }
         /* current_frame-keyed dump for ref alignment: name by engine frame counter @0x462ff0
            (same counter tools/refcap.c polls in the reference) so frames line up across builds. */
         if(getenv("DD2_CFDUMP")){ int cf=*(int*)(unsigned long)0x462ff0u;

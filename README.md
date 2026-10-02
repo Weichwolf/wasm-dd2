@@ -39,6 +39,13 @@ folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
 engine errors, or timeouts; detailed logs go to `/tmp/dd2-verify-native` and
 `/tmp/dd2-verify-wasm`. These are crash checks, not proof of complete game fidelity.
 
+The Node build transfers `DD2_*` options from `process.env` into Emscripten's libc
+environment before boot. `make verify-parity` enables sound and compares every
+presented indexed framebuffer, its palette, the flip/RNG log and the PCM stream
+byte-for-byte between native and WASM on all ten demos. Logs and results go to
+`/tmp/dd2-parity`; identical captures are removed, failed captures are retained.
+This target does not compare with `dd2h.exe` or validate menu actions.
+
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh
 sudo dpkg --add-architecture i386

@@ -41,6 +41,11 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Debian Playwright/Chromium. The shell creates the save-file symlink target before boot.
 - Original assets and 18 exact CDDA track extracts are provisioned with `make provision`
   and remain gitignored. CD playback is still unimplemented (`mciSendCommandA` is a stub).
+- The Node build now imports `DD2_*` process options into libc ENV before boot. Before
+  this fix, Node silently ignored sound, input scripts and frame capture options.
+  New `make verify-parity` compares every presented frame AND its palette, flip/RNG
+  logs and generated PCM bytes. L9/L10 each match exactly across native/WASM for
+  1525 presented frames and 2638944 PCM bytes; other levels are pending this check.
 - User reports menu graphics/actions and championship scores broken. Reproduce by
   navigating the menus and verify action effects and rendering against the original;
   label/alive checks alone are insufficient. These issues remain open.
