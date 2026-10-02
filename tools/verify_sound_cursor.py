@@ -70,6 +70,7 @@ def main():
     if args.report and args.report.exists():
         parser.error("report already exists; use a fresh path")
     env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
+    env["DD2_SND_RATE"]="22050" # This controlled cursor/PCM fixture uses this device rate.
     expected = expected_positions()
     source = [(i - 128) * 256 for i in range(256)]
     samples = source[17:39] + source[39:61] + [0]*220 + source[61:83]
@@ -87,7 +88,7 @@ def main():
         native, wasm = directory / "native", directory / "wasm.js"
         subprocess.run(["gcc", "-m32", "-no-pie", *common, "-o", str(native)], check=True)
         subprocess.run([args.emcc, *common, "-sNODERAWFS=1", "-sEXIT_RUNTIME=1",
-                        "-sGLOBAL_BASE=10485760", "-o", str(wasm)], check=True)
+                        "-sGLOBAL_BASE=10485760", "--pre-js", str(ROOT/"tools/node_env.js"), "-o", str(wasm)], check=True)
         # Establish real API evidence before running the port comparison.
         if args.wine:
             executable = directory / "cursor.exe"

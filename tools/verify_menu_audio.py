@@ -28,7 +28,7 @@ def main():
         native, wasm = directory / "native", directory / "wasm.js"
         subprocess.run(["gcc", "-m32", "-no-pie", *common, "-o", str(native)], check=True)
         subprocess.run([args.emcc, *common, "-sNODERAWFS=1", "-sEXIT_RUNTIME=1",
-                        "-sGLOBAL_BASE=10485760", "-o", str(wasm)], check=True)
+                        "-sGLOBAL_BASE=10485760", "--pre-js", str(ROOT/"tools/node_env.js"), "-o", str(wasm)], check=True)
         source = [0, 16384, 32512, -32768]
         samples = [source[i % 4] for i in range(441)] + [0]*727
         samples += source + [0]*18
@@ -39,6 +39,7 @@ def main():
         cycle=bytes.fromhex(next(c["cycle_hex"] for c in reference["loops"] if c["frequency"]==11025))
         expected+=b"".join(cycle[(i%8)*8:(i%8+1)*8] for i in range(22))
         env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
+        env["DD2_SND_RATE"]="22050" # Exercise the established menu-clock fixture device.
         for target, command in (("native", [str(native)]), ("wasm", [args.node, str(wasm)])):
             output = directory / f"{target}.pcm"
             subprocess.run([*command, str(output)], env=env, check=True, timeout=30)

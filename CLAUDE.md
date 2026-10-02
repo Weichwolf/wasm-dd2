@@ -35,8 +35,38 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- The effects device now defaults to Float32 stereo 44100Hz, matching the
+  observed original reference device and CD source rate. Previously C emitted
+  22050Hz and WebAudio resampled it again to 44100Hz. Source buffers retain
+  their original rates; the calibrated C FIR performs the single conversion.
+  DD2_SND_RATE selects 22050/44100/48000 for device calibration. Cursor phases,
+  elapsed-time remainders, 40ms ticks, PCM metadata and WebAudio buffers all
+  use that rate (default tick 1764 frames). make verify-sound-resample now
+  checks 24 complete one-shots and six loop cycles against actual Wine captures
+  at all three rates: 190977 active one-shot frames per target, with no byte
+  tolerance (/tmp/dd2-device-rates-port-reviewed/report.json). New actual Wine
+  captures are in /tmp/dd2-resample-device-rates-calibration; an independent
+  --wine --device-rates 44100 rerun also passes every case and both loops
+  (/tmp/dd2-device44-wine-reviewed/report.json). CPU x87/WASM comparison now
+  checks 1084900 results, including all remainders at all three device rates.
+  Existing cursor/menu/gain fixtures explicitly use their established 22050Hz
+  device and still pass. Their standalone Node builders now import DD2_* via
+  tools/node_env.js, just like the full Node build; otherwise that rate option
+  was silently ignored by libc ENV.
+  Rebuilt all targets. Original L9/cf150 framebuffer/palette remain exact
+  (/tmp/dd2-device44-original-video.log). Browser effects compare actual channel
+  bits with the C buffer and require exactly one delivered buffer per running
+  mixer import: 1105 buffers, 417097 frames, zero mismatches/missing buffers,
+  source/device rate 44100Hz, nonzero effects at cf=0
+  (/tmp/dd2-device44-browser-audio-reviewed.log). The CD menu still delivers
+  exact source bytes for tracks 2/3 and Play/Stop/Next/Prev all pass
+  (/tmp/dd2-device44-browser-cd.log). The CD observer identifies effects through
+  their actual WASM import rather than assuming every 44100Hz buffer is music.
+  CD and effects still use separate scheduling cursors; complete mixed PCM,
+  queued controls, stream-start timing and original full-output parity remain open.
 - Effects resampling now follows the observed Wine 10 FIR instead of the Q16
-  point sampler. The cursor uses an exact remainder / 22050; seeking retains
+  point sampler. Initially calibrated at 22050Hz, the cursor uses an exact
+  remainder / device rate; seeking retains
   that remainder, and the equal-rate copy path leaves it unchanged. Loops wrap
   the forward filter window; one-shots zero-pad it. Gaussian-windowed sinc
   coefficients are generated mathematically by tools/generate_sound_fir.py,
@@ -71,7 +101,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   original on both targets: 448 framebuffer/palette pairs per target, zero
   differing bytes (/tmp/dd2-config-fir-comparison.json; captures under
   /tmp/dd2-native-config-fir and /tmp/dd2-browser-config-fir).
-- Effects output now uses Float32 LE stereo at 22050Hz (DD2_SNDPCM plus a format
+- Effects Float32 LE stereo was initially calibrated at 22050Hz (DD2_SNDPCM plus a format
   .json sidecar), preserving Wine's observed quantized gain and unclipped sums.
   The prior Q15/16-bit implementation produced 0.2505798340 at volume -600 for
   a constant 0.5 source; actual Wine PCM is 0.2499961853. Table generation uses

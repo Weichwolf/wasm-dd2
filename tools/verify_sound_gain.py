@@ -156,13 +156,14 @@ def main():
         output=args.output.resolve() if args.output else directory/"captures"
         output.mkdir(parents=True,exist_ok=False)
         env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
+        env["DD2_SND_RATE"]="22050" # Gain calibration deliberately avoids a resampler.
         source=ROOT/"tools/sound_gain_test.c"
         common=["-std=gnu89","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
                 f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2h_stubs.c"),str(source),"-Wl,--gc-sections"]
         native,wasm=directory/"native",directory/"wasm.js"
         subprocess.run(["gcc","-m32","-no-pie",*common,"-o",str(native)],check=True)
         subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
-                        "-o",str(wasm)],check=True)
+                        "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
         report={"scope":"gain/control calibration at matching source/device rate; full stream timing and original game parity pending",
                 "cases":[],"volume_sweep":10001,"three_buffer_sum_above_one":True,"wine":args.wine}
         if args.wine:

@@ -14,6 +14,17 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   page.on('response',response=>{if(response.url().endsWith('.cdda'))console.log('CD fetch:',response.status(),response.url());});
   await page.addInitScript(()=>{
    window.__cdTest={track:0,parts:[],frames:0,totalBuffers:0,plays:[]};
+   let effects=false;
+   const observeImports=imports=>{
+    if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__cdObserved)return;
+    const original=imports.env.dd2_audio_push;
+    const observed=function(...args){effects=true;try{return original.apply(this,args);}finally{effects=false;}};
+    observed.__cdObserved=true;imports.env.dd2_audio_push=observed;
+   };
+   for(const name of ['instantiate','instantiateStreaming']){
+    const original=WebAssembly[name];
+    if(original)WebAssembly[name]=function(bytes,imports,...rest){observeImports(imports);return original.call(this,bytes,imports,...rest);};
+   }
    const log=console.log;
    console.log=function(...args){
     const message=args.join(' '),match=message.match(/\[CD\] play track=(\d+) frame=(\d+)/);
@@ -25,7 +36,7 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
     const source=create.apply(this,args),start=source.start;
     source.start=function(...args){
      const state=window.__cdTest,buffer=source.buffer;
-     if(buffer && buffer.sampleRate===44100){
+     if(buffer && buffer.sampleRate===44100 && !effects){
       state.totalBuffers++;
       if(state.frames<100000){
        const left=buffer.getChannelData(0),right=buffer.getChannelData(1);

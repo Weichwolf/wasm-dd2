@@ -24,7 +24,7 @@ static void check(float actual,long double expected){
     operations++;
 }
 int main(int argc,char **argv){
-    unsigned i;DD2Wide total={0,0,0};
+    unsigned i,r;const unsigned rates[]={22050,44100,48000};DD2Wide total={0,0,0};
 #ifndef __EMSCRIPTEN__
     volatile long double reference=0;
     unsigned short control;
@@ -60,14 +60,14 @@ int main(int argc,char **argv){
     /* Exhaust every possible device-rate fractional remainder at three FIR
      * indices. This also checks tiny ratios and x87 cancellation before rem's
      * f32 store, rather than relying on the random large-numerator coverage. */
-    for(i=0;i<3*22050;i++){
-        unsigned integer=i/22050*100000,phase=i%22050;
-        uint64_t numerator=(uint64_t)integer*22050+phase;
-        DD2Wide ratio=dd2_wide_ratio(numerator,22050),negative=ratio;
+    for(r=0;r<3;r++)for(i=0;i<3*rates[r];i++){
+        unsigned integer=i/rates[r]*100000,phase=i%rates[r];
+        uint64_t numerator=(uint64_t)integer*rates[r]+phase;
+        DD2Wide ratio=dd2_wide_ratio(numerator,rates[r]),negative=ratio;
         DD2Wide upper=dd2_wide_float((float)(integer+1));
         negative.negative=1;
 #ifndef __EMSCRIPTEN__
-        volatile long double cpu_ratio=(long double)numerator/22050;
+        volatile long double cpu_ratio=(long double)numerator/rates[r];
         volatile long double cpu_rem=(long double)(integer+1)-cpu_ratio;
         check(dd2_wide_to_float(ratio),cpu_ratio);
         check(dd2_wide_to_float(dd2_wide_add(upper,negative)),cpu_rem);

@@ -10,14 +10,22 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
   const page=await browser.newPage();const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
-   window.__menuAudio={buffers:0,frames:0,nonzero:0,exactBuffers:0,mismatches:0};
+   window.__menuAudio={buffers:0,frames:0,nonzero:0,exactBuffers:0,mismatches:0,missingBuffers:0,pushes:0,suspendedPushes:0,otherBuffers:0};
    let expected;
    const observeImports=imports=>{
     if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__observed)return;
     const original=imports.env.dd2_audio_push;
-    const observed=function(pointer,frames){
-     expected={pointer,frames};
-     try{return original.call(this,pointer,frames);}finally{expected=undefined;}
+    const observed=function(pointer,frames,rate){
+     const state=window.__menuAudio,running=Module._dd2ac && Module._dd2ac.state==='running';
+     state.pushes++;
+     expected={pointer,frames,rate,starts:0};
+     try{return original.call(this,pointer,frames,rate);}finally{
+      // The first import can construct an already-running context after the
+      // first user gesture. Classify suspension after the call, not before it.
+      if(expected.starts===0 && !running && Module._dd2ac && Module._dd2ac.state==='suspended')state.suspendedPushes++;
+      else if(expected.starts!==1)state.missingBuffers++;
+      expected=undefined;
+     }
     };
     observed.__observed=true;imports.env.dd2_audio_push=observed;
    };
@@ -32,9 +40,10 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
     const source=create.apply(this,args),start=source.start;
     source.start=function(...args){
      const buffer=source.buffer,state=window.__menuAudio;
-     if(buffer && buffer.sampleRate===22050){
+     if(buffer && expected){
+      expected.starts++;
       state.buffers++;state.frames+=buffer.length;
-      let exact=expected && expected.frames===buffer.length && buffer.numberOfChannels===2;
+      let exact=expected.frames===buffer.length && buffer.numberOfChannels===2 && buffer.sampleRate===expected.rate && expected.rate===44100;
       for(let channel=0;channel<buffer.numberOfChannels;channel++){
        const samples=buffer.getChannelData(channel);
        const bits=new Uint32Array(samples.buffer,samples.byteOffset,samples.length);
@@ -44,7 +53,7 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
        }
       }
       if(exact)state.exactBuffers++;else state.mismatches++;
-     }
+     }else if(buffer)state.otherBuffers++;
      return start.apply(this,args);
     };
     return source;
@@ -61,6 +70,7 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
   assert(initial.level===0 && result.level===0 && result.cf===initial.cf,'test left the menu or advanced the race counter');
   assert(result.buffers>0 && result.nonzero>0,'navigation produces no audible effect buffers');
   assert(result.exactBuffers===result.buffers && result.mismatches===0,'WebAudio samples differ from the C Float32 mixer');
+  assert(result.missingBuffers===0 && result.buffers===result.pushes-result.suspendedPushes,'running mixer imports must each deliver exactly one buffer');
   assert(result.rate===44100,'shared audio device must preserve CD rate');
   assert.deepEqual(errors,[],'browser runtime errors');
   console.log('PASS menu navigation effects with fixed race counter');
