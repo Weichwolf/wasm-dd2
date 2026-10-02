@@ -5,6 +5,12 @@
    fog window (_near_fog=0x3e8/_far_fog), far_z_clip=0x8000 block, attract-camera parameters,
    track_lookup/menu tables, player count _DAT_00467660=1, highlight_colour, etc.
    Relocated function-pointer tables and CRT/display-COM state are explicitly excluded.
+   The historical capture also differed at action slots 468b38, 469b7c,
+   469ebc, 46aaac, 46af90, 46afb8 and 46afcc: their handlers were not yet
+   registered when this snapshot was generated. Copying those original VAs
+   now undoes dd2_relocate (native CD Play crashed at raw 0x45220c; a hardware
+   watchpoint identifies this memcpy). Keep these executable pointers intact,
+   exactly as the other relocated descriptors, instead of restoring PE code.
    Values are binary-determined (same exe => same front-end init path); regenerate with
    tools/refpg.sh. pal_flag=0 and the DemoMode settings are applied separately. */
 #include <string.h>
@@ -21,7 +27,6 @@ static const struct dd2_festate dd2_festate_tab[] = {
   { 0x0046748c, 11, (const unsigned char[]){0x04,0x00,0x12,0x00,0x00,0x0c,0x00,0xf3,0xd0,0x00,0x12} },
   { 0x00467564, 1, (const unsigned char[]){0x00} },
   { 0x00467660, 1, (const unsigned char[]){0x01} },
-  { 0x00468b38, 4, (const unsigned char[]){0x28,0xe3,0x44,0x00} },
   { 0x00469578, 11, (const unsigned char[]){0x16,0x00,0x08,0x00,0x00,0x3b,0x00,0x80,0x00,0x00,0x08} },
   { 0x00469590, 11, (const unsigned char[]){0x15,0x00,0x07,0x00,0x40,0x3b,0x00,0xbe,0xf0,0x00,0x07} },
   { 0x004695a8, 11, (const unsigned char[]){0x12,0x00,0x06,0x00,0x40,0x3e,0x80,0x80,0x50,0x00,0x06} },
@@ -41,12 +46,6 @@ static const struct dd2_festate dd2_festate_tab[] = {
   { 0x00469798, 1, (const unsigned char[]){0xf8} },
   { 0x0046996d, 1, (const unsigned char[]){0x00} },
   { 0x004699c8, 5, (const unsigned char[]){0x6c,0x6c,0x6c,0x00,0x05} },
-  { 0x00469b7c, 4, (const unsigned char[]){0x00,0xd3,0x44,0x00} },
-  { 0x00469ebc, 4, (const unsigned char[]){0x0c,0x22,0x45,0x00} },
-  { 0x0046aaac, 4, (const unsigned char[]){0xd0,0x3b,0x45,0x00} },
-  { 0x0046af90, 4, (const unsigned char[]){0x00,0x3c,0x45,0x00} },
-  { 0x0046afb8, 4, (const unsigned char[]){0xf8,0x46,0x45,0x00} },
-  { 0x0046afcc, 4, (const unsigned char[]){0x00,0xd3,0x44,0x00} },
 };
 void dd2_apply_frontend_state(void) {
     unsigned i;

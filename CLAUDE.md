@@ -35,6 +35,18 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- The original frontend-exit snapshot now excludes seven executable action
+  slots. These historical entries undid startup relocation after newer menu
+  handlers were registered: real native CD Play jumped to PE VA 0x45220c.
+  A hardware watchpoint pinpoints dd2_apply_frontend_state's memcpy, and the
+  corrected boot retains the actual FUN_0045220c pointer. The six currently
+  registered affected actions are checked by native window QA. Real native
+  CD Play/Stop now work; both rebuilt ports retain exact original L9/cf150
+  pixels/palette and full L1 demo parity. Complete ten-track regressions are
+  running; native SDL integration and complete original A/V remain separate
+  work (/tmp/dd2-native-cd-relocation-watch.log,
+  /tmp/dd2-native-cd-relocation-fixed.log,
+  /tmp/dd2-native-sdl-festate-original-video.log).
 - CD-menu browser QA now waits for the real slab rotation/bounce to finish,
   acknowledges ReadPad press/release and checks each Prev selection before
   issuing the next input. Fixed-duration pulses could land in transition
