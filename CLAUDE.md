@@ -47,13 +47,18 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   bytes from the surviving buffer. Optional SOUND_LIFETIME_ARGS='--wine --asan
   --mingw <32-bit compiler> --report <path>' compares the same COM operations
   with actual Wine and checks native ownership under ASan. The fixed real-Wine/
-  ASan/WASM run passes (/tmp/dd2-sound-lifetime-fixed.json). Cursor, gain, shared
+  ASan/WASM run passes (/tmp/dd2-sound-lifetime-reviewed.json, including fixture
+  source/EXE hashes and Wine version). Cursor, gain, shared
   CD/effects, Redbook boundary and all resampler-rate regressions still pass
   (/tmp/dd2-sound-lifetime-regression.log). Rebuilt native, Node and browser;
   original L9/cf150 pixels/palette remain exact on both ports. Browser actual
   combined output matches C on 3945 CD-menu buffers and 1279 menu-navigation
-  buffers, with no missing buffers or bit mismatches. Full ten-demo regression
-  runs in /tmp/dd2-parity-sound-lifetime. This corrects source/object lifetime;
+  buffers, with no missing buffers or bit mismatches. All ten complete
+  sound-enabled demos again match: 15255 presented frames/palettes and all
+  RNG/flip logs; each demo has 10569888 exact bytes in each of effects, combined
+  and music-part Float32 captures, plus 4939200 raw CD bytes and format metadata
+  (/tmp/dd2-parity-sound-lifetime/results.json). Canonical native/Node binaries
+  now contain the validated lifetime fix. This corrects source/object lifetime;
   complete original stream/timing and hardware verification remain open.
 - CD and effects now share the ordered C Float32 device, one sample clock and
   one WebAudio scheduling cursor/sink. MCI Play creates a CD source in the
