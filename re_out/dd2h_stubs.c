@@ -169,6 +169,10 @@ int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,of
    GetStatus->Release lifecycle reproducible. Interactive DD2_REALTIME playback uses
    elapsed time, including menus and pause where the race counter is fixed. */
 #include "dd2_sound.h"
+typedef struct DSData {
+    unsigned char* pcm;
+    unsigned references;                      /* buffer objects sharing this source */
+} DSData;
 typedef struct DSBuf {
     void** vtbl;
     unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
@@ -180,7 +184,8 @@ typedef struct DSBuf {
     int playing, looping;
     int play_cf;                              /* cf @ Play() */
     unsigned position, phase;                /* source frame + remainder / device rate */
-    struct DSBuf* master;                     /* dup source (shares data) */
+    DSData* storage;                          /* source lifetime is independent of objects */
+    unsigned references;                     /* COM AddRef/Release of this buffer object */
     DD2SoundRead stream_read;
     DD2SoundConsume stream_consume;
     void* stream_context;
@@ -214,9 +219,13 @@ static FILE* snd_log(void){ static FILE* f; static int init;
     return f; }
 #define SLOG(...) do{ FILE* _f=snd_log(); if(_f){ fprintf(_f,"cf%d ",SND_CF); fprintf(_f,__VA_ARGS__); fputc('\n',_f); fflush(_f);} }while(0)
 /* --- IDirectSoundBuffer methods --- */
-static int dsb_release(DSBuf* b){ ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
+static int dsb_addref(DSBuf* b){return (int)++b->references;}
+static int dsb_release(DSBuf* b){ unsigned remaining;
+    ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
+    remaining=--b->references;
+    if(remaining)return (int)remaining;
     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
-    if(!b->master && b->pcm) free(b->pcm);
+    if(b->storage && !--b->storage->references){free(b->storage->pcm);free(b->storage);}
     if(b->stream_read)g_ds_music_buffers--;
     free(b); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
@@ -290,7 +299,7 @@ static int dsb_getfreq(DSBuf* b,unsigned* result_value){
     if(!result_value)return (int)0x80070057u;
     *result_value=(unsigned)b->freq;return 0; }
 static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
-static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;
+static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;b->references=1;
     if(g_ndsbufs<256) g_dsbufs[g_ndsbufs++]=b; return b; }
 void* dd2_snd_music_create(unsigned frames,DD2SoundRead read,DD2SoundConsume consume,void* context){
     DSBuf* b;
@@ -310,7 +319,10 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
     DSBuf* b=dsb_new();
     b->size = desc? (unsigned)desc[2] : 0;
     b->flags = desc? (unsigned)desc[1] : 0;
-    if(b->size){ b->pcm=(unsigned char*)calloc(1,b->size); }
+    if(b->size){
+        b->storage=(DSData*)calloc(1,sizeof(DSData));b->storage->references=1;
+        b->pcm=b->storage->pcm=(unsigned char*)calloc(1,b->size);
+    }
     if(desc && desc[4]){ /* WAVEFORMATEX: wFormatTag+nChannels, nSamplesPerSec, nAvgBytesPerSec,
                              nBlockAlign+wBitsPerSample */
         unsigned char* wfx=(unsigned char*)(unsigned long)(unsigned)desc[4];
@@ -326,11 +338,15 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
     SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d -> %p",desc?desc[1]:0,b->size,b->freq,(void*)b);
     return 0; }
 static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
-    DSBuf* b=dsb_new(); DSBuf* m=src->master? src->master:src;
-    b->pcm=m->pcm; b->size=m->size; b->freq=src->freq; b->nAvgBytesPerSec=m->nAvgBytesPerSec;
+    DSBuf* b=dsb_new();
+    /* Wine's identical COM probe releases the original, duplicates a survivor
+       and writes through another survivor. No original-object pointer may be
+       retained: only the shared sample allocation has that lifetime. */
+    b->storage=src->storage;if(b->storage)b->storage->references++;
+    b->pcm=src->pcm; b->size=src->size; b->freq=src->freq; b->nAvgBytesPerSec=src->nAvgBytesPerSec;
     b->original_freq=src->original_freq;b->flags=src->flags;b->vol=src->vol;b->pan=src->pan;
-    b->channels=m->channels; b->bits=m->bits; b->blockalign=m->blockalign;
-    b->master=m; if(pp)*pp=b;
+    b->channels=src->channels; b->bits=src->bits; b->blockalign=src->blockalign;
+    if(pp)*pp=b;
     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
 static int ds_setcooplevel(void* t,int hwnd,int level){ (void)t;(void)hwnd;
     SLOG("DS SetCooperativeLevel %d",level); return 0; }
@@ -343,6 +359,7 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     g_dsnd_vtbl[0x0c/4]=(void*)&ds_createbuffer;
     g_dsnd_vtbl[0x14/4]=(void*)&ds_dupbuffer;
     g_dsnd_vtbl[0x18/4]=(void*)&ds_setcooplevel;
+    g_dsb_vtbl[0x04/4]=(void*)&dsb_addref;
     g_dsb_vtbl[0x08/4]=(void*)&dsb_release;
     g_dsb_vtbl[0x10/4]=(void*)&dsb_getpos;
     g_dsb_vtbl[0x18/4]=(void*)&dsb_getvolume;

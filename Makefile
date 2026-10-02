@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -91,6 +91,9 @@ verify-menu-audio: ## check elapsed-time DirectSound playback and controls with 
 
 verify-sound-cursor: ## check seeking, Play/Stop/resume/end and exact PCM; SOUND_CURSOR_ARGS can enable the Wine API fixture
 	python3 $(ROOT)/tools/verify_sound_cursor.py --node $(NODE) $(SOUND_CURSOR_ARGS)
+
+verify-sound-lifetime: ## check duplicate sample ownership and COM references; SOUND_LIFETIME_ARGS can enable Wine/ASan
+	python3 $(ROOT)/tools/verify_sound_lifetime.py --node $(NODE) $(SOUND_LIFETIME_ARGS)
 
 verify-sound-gain: ## check all quantized gains and Float32 mix; SOUND_GAIN_ARGS can enable real Wine PCM calibration
 	python3 $(ROOT)/tools/generate_sound_gain.py --check

@@ -35,6 +35,26 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- DirectSound duplicates now own a reference to shared PCM storage independently
+  of the original COM buffer. Previously releasing the original then duplicating
+  a survivor read freed memory in ds_dupbuffer; the actual Wine fixture passed
+  while native ASan failed (/tmp/dd2-sound-lifetime-before.log). DS buffer
+  AddRef/Release now retains the object until its last reference, and storage
+  remains until its last sharing buffer is released. make verify-sound-lifetime
+  exercises two original duplicates, original release, another duplicate from
+  a survivor, shared mutations, independent stopped cursors, release ordering
+  and retained/final COM reference counts. Both ports then play 3528 exact PCM
+  bytes from the surviving buffer. Optional SOUND_LIFETIME_ARGS='--wine --asan
+  --mingw <32-bit compiler> --report <path>' compares the same COM operations
+  with actual Wine and checks native ownership under ASan. The fixed real-Wine/
+  ASan/WASM run passes (/tmp/dd2-sound-lifetime-fixed.json). Cursor, gain, shared
+  CD/effects, Redbook boundary and all resampler-rate regressions still pass
+  (/tmp/dd2-sound-lifetime-regression.log). Rebuilt native, Node and browser;
+  original L9/cf150 pixels/palette remain exact on both ports. Browser actual
+  combined output matches C on 3945 CD-menu buffers and 1279 menu-navigation
+  buffers, with no missing buffers or bit mismatches. Full ten-demo regression
+  runs in /tmp/dd2-parity-sound-lifetime. This corrects source/object lifetime;
+  complete original stream/timing and hardware verification remain open.
 - CD and effects now share the ordered C Float32 device, one sample clock and
   one WebAudio scheduling cursor/sink. MCI Play creates a CD source in the
   buffer list; Stop releases it, Pause retains its cursor. Two read-only CD
