@@ -86,8 +86,8 @@ verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on nati
 verify-menu-audio: ## check elapsed-time DirectSound playback and controls with a fixed menu frame counter
 	python3 $(ROOT)/tools/verify_menu_audio.py --node $(NODE)
 
-verify-champ-names: patch ## check naming/score builders on both targets; optional CHAMPREF and CHAMPBROWSER captures
-	python3 $(ROOT)/tools/verify_champ_names.py --node $(NODE) $(if $(CHAMPREF),--reference $(CHAMPREF)) $(if $(CHAMPBROWSER),--browser $(CHAMPBROWSER))
+verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHAMPBROWSER and CHAMPNATIVE captures
+	python3 $(ROOT)/tools/verify_champ_names.py --node $(NODE) $(if $(CHAMPREF),--reference $(CHAMPREF)) $(if $(CHAMPBROWSER),--browser $(CHAMPBROWSER)) $(if $(CHAMPNATIVE),--native-capture $(CHAMPNATIVE))
 
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py

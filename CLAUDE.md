@@ -89,7 +89,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   corrupted/empty championship names: Setup_Driver_Names started its computer-name
   table at humans*8 bytes, while original 0x44c5a7-0x44c5b3 uses humans*16 bytes.
   Real Championship -> name "A" -> Go -> Pause/Retire/Yes -> View League on the
-  browser now matches all 20 original names/points and all four pages' framebuffer
+  browser and native now match all 20 original names/points and all four pages' framebuffer
   and palette bytes exactly. Original capture: /tmp/dd2-original-champ-acknowledged;
   browser: /tmp/dd2-champ-scores-strict-final; logs /tmp/dd2-champ-names-final.log.
   Tools/reference/capture.py --mode menu --acknowledged-key --keys ... drives real X11
@@ -102,8 +102,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   make verify-champ-names tests 1/2/5/10-human naming on native/WASM. Optional
   CHAMPREF/CHAMPBROWSER checks real score builders with original standings as an
   explicit fixture and the live browser's names/points/pixels/palettes against the
-  original. Native live viewer rendering, full seasons/promotion/relegation, other
-  menu reports and complete original streams remain open. All ten native/WASM
+  original. tools/capture_native_menu.py now drives the native full frontend with
+  its normal dd2_key_event bridge (one ReadPad call per held key) and captures
+  Draw_All entry. Native Championship/Go/Pause/Retire/Yes/View League matches
+  all four original pages byte-exact: /tmp/dd2-native-champ-live;
+  /tmp/dd2-champ-native-verification.log. CHAMPNATIVE adds this comparison to
+  verify-champ-names and requires a real race, Retire confirmation and results.
+  Native window-system input/hardware audio, full seasons/promotion/relegation,
+  other menu reports and complete original streams remain open. All ten native/WASM
   demos still match after patch 838: /tmp/dd2-parity-champ-names/results.json.
 - Wine 10 and wine32:i386 are installed. The original requires a valid audio CD
   before DirectDraw/FE initialization. `make refcapture` now builds a virtual

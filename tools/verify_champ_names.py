@@ -22,6 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--browser", type=Path, help="optional live browser scores.json to compare with original")
+    parser.add_argument("--native-capture", type=Path, help="optional native full-frontend navigation capture")
     parser.add_argument("--node", default="node")
     parser.add_argument("--emcc", default="emcc")
     args = parser.parse_args()
@@ -51,8 +52,51 @@ def main():
                 ref_image = directory / "image.bin"
         if set(reference) != set(range(4)):
             raise ValueError("Need populated original captures of all four score divisions")
-    elif args.browser:
-        parser.error("--browser requires --reference")
+    elif args.browser or args.native_capture:
+        parser.error("--browser/--native-capture requires --reference")
+    if args.native_capture:
+        navigation_native = json.loads((args.native_capture / "navigation.json").read_text())
+        if navigation_native.get("input") != "dd2_key_event" or navigation_native.get("keys") != navigation["keys"]:
+            raise ValueError("Need native normal-input navigation with the same key sequence as original")
+        checkpoints = navigation_native["checkpoints"]
+        if len(checkpoints) != len(navigation["keys"])+1:
+            raise ValueError("Incomplete native navigation")
+        native_images = []
+        for name in checkpoints:
+            directory = args.native_capture / name
+            checkpoint = json.loads((directory / "checkpoint.json").read_text())
+            image = (directory / "image.bin").read_bytes()
+            if checkpoint.get("phase") != "native Draw_All entry" or len(image) != 0x580400:
+                raise ValueError("Need complete native renderer-entry checkpoints")
+            native_images.append((directory, image))
+        value = lambda image, address: struct.unpack_from("<i", image, address-0x400000)[0]
+        # Require actual race/statistics initialization and Retire -> results,
+        # beyond a selected label or directly invoked score-rendering function.
+        if not any(value(image, 0x936ff4)==1 and value(image, 0x462ff0)>0 and value(image, 0x46741c)==1
+                   for _,image in native_images):
+            raise ValueError("Native championship race did not start")
+        if not any(value(image, 0x9376a8)==1 for _,image in native_images):
+            raise ValueError("Native Retire confirmation was not reached")
+        if not any(value(image, 0x936ff4)==15 and value(image, 0x46741c)==1 for _,image in native_images):
+            raise ValueError("Native championship did not return to results")
+        native_divisions = {}
+        for directory, image in native_images:
+            division = value(image, 0x46ad00)
+            read = lambda a,n: image[a-0x400000:a-0x400000+n].split(b"\0")[0].decode("ascii")
+            rows = [{"name": read(0x940290+i*26,26), "points": read(0x940240+i*16,16)} for i in range(5)]
+            if division in range(4) and all(row["name"].startswith("%R%JL%T/") for row in rows):
+                native_divisions[division] = (directory, rows)
+        if set(native_divisions) != set(range(4)):
+            raise ValueError("Need all four populated native divisions")
+        for division, (directory, rows) in native_divisions.items():
+            if rows != reference[division]:
+                raise RuntimeError(f"Native division {division}: names/points differ from original")
+            for name, size in (("framebuf.bin",307200), ("palette.bin",1024)):
+                original = (ref_directories[division] / name).read_bytes()
+                port = (directory / name).read_bytes()
+                if len(original) != size or port != original:
+                    raise RuntimeError(f"Native division {division}: {name} bytes differ from original")
+        print("PASS native full frontend vs original: Championship/Retire/Yes; all 20 names/points and all 4 pages byte-exact")
     expected = b"".join(name.encode().ljust(54,b"\0") for humans in (1,2,5,10)
                         for name in [*[f"PLAYER{i+1}" for i in range(humans)], *NAMES[humans-1:]])
     with tempfile.TemporaryDirectory(prefix="dd2-champ-builders-") as tmp:

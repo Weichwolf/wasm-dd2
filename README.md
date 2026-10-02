@@ -84,7 +84,8 @@ mixed stream and its timing remain unverified.
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
-matches the original on all four divisions: all 20 names/points, all 307200
+matches the original in both native and browser rendering on all four divisions:
+all 20 names/points, all 307200
 framebuffer pixels per page, and all 1024 palette bytes per page.
 `node tools/browser/qa_champ_scores.js web/dd2 /tmp/fresh-champ-browser` exercises
 that flow and saves the score data, raw pixels/palettes and screenshots. It releases
@@ -101,14 +102,27 @@ make verify-champ-names CHAMPREF=/tmp/fresh-champ-original \
   CHAMPBROWSER=/tmp/fresh-champ-browser/scores.json
 ```
 
+For the native full frontend (requires a debug build and GDB):
+
+```sh
+ASAN=' ' bash tools/build_native.sh /tmp/dd2_native
+python3 tools/capture_native_menu.py --output /tmp/fresh-champ-native --keys \
+  Return Return Return Return Up Left Return Down Down Return Escape Down Down Down \
+  Return Up Return Right Return Right Right Right
+make verify-champ-names CHAMPREF=/tmp/fresh-champ-original \
+  CHAMPBROWSER=/tmp/fresh-champ-browser/scores.json CHAMPNATIVE=/tmp/fresh-champ-native
+```
+
 The reference sends real X11 key events and uses hardware breakpoints to let each
 key reach the pad reader and acknowledge its release, without changing engine
 memory. It records all intervening held polls; Wine may queue key-up late.
 Ordinary `--keys` can also use `--key-hold=<seconds>`. Navigation captures include races/results.
 The native/WASM score-builder comparison uses captured original standings as an
-explicit fixture; the browser comparison exercises a live championship. Full
-native viewer rendering, full seasons, promotion/relegation and complete streams
-still need acceptance checks. Use fresh capture directories; stale output is rejected.
+explicit fixture; browser and native captures exercise live championships. The
+native helper calls the normal `dd2_key_event` bridge for one pad poll per key
+and checks the real renderer output; native window-system input and hardware audio
+are not exercised. Full seasons, promotion/relegation and complete streams still
+need acceptance checks. Use fresh capture directories; stale output is rejected.
 
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh
