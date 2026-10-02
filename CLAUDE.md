@@ -35,6 +35,28 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Original video capture now accepts --frames for several L9 checkpoints in
+  one unmodified attract run; each port compares all counters in one run too.
+  It waits for the actual green-light gate, because the countdown resets cf.
+  Original Play_Game@423b50 budgets 1500 physics steps and divides the counter
+  by two, so unreachable attract requests beyond cf700 now fail before Wine
+  launches. Manifests are published only when all requested captures succeed;
+  incomplete or mismatched metadata is rejected. Eight actual original
+  checkpoints at cf1/25/50/150/300/450/600/650 match every framebuffer/palette
+  byte on both ports (2457600 pixels and 8192 palette bytes per target;
+  /tmp/dd2-original-l9-complete-checkpoints-reviewed/video-comparison.json).
+  These are checkpoints on L9, not all original frames/tracks or audio timing.
+  After the MCI completion fix, rebuilt native/Node/browser pass all ten full
+  sound-enabled demos: 15255 frames/palettes, RNG/flip logs and all effects,
+  final mix, music and raw CD bytes
+  (/tmp/dd2-parity-redbook-controls/results.json). Browser CD/menu checks
+  accept 3807/1469 exact combined WebAudio buffers with no missing/extra or
+  differing buffers. Actual native SDL/X11 menus, CD, virtual controller,
+  live physics and pause/resume pass ten rendering checkpoints (3072000
+  pixels) and 7411264 accepted audio bytes matching the declared C-mix prefix
+  (/tmp/dd2-native-redbook-controls-pad-reviewed/report.json). Canonical
+  /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now hold these validated
+  builds; native SHA 0692515984f2e3994ecab6af354f49ec103b66e7e5b84655fac8322ff400f40c.
 - MCI Pause/Resume now preserve a completed transport's stopped state instead
   of reporting Pause/Play and restarting its retained source at a reset DS
   cursor. A fresh real Wine 10 fixture confirms all 11 drained/live and

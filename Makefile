@@ -92,7 +92,7 @@ shot: web ## headless browser screenshot of the web build -> /tmp/dd2_shot.png
 	node $(ROOT)/tools/browser/shot.js $(ROOT)/web/dd2 /tmp/dd2_shot.png
 
 REFCAP ?= /tmp/dd2-reference
-verify-reference-video: native wasm ## compare one existing original L9 Draw_All checkpoint (REFCAP) with both ports
+verify-reference-video: native wasm ## compare existing original L9 Draw_All checkpoints (REFCAP) with both ports
 	python3 $(ROOT)/tools/reference/compare_video.py --capture $(REFCAP) --native $(NATIVE) --node $(NODE) --wasm $(OUTJS)
 
 verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on native/WASM against provisioned CDDA

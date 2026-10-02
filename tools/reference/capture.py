@@ -49,7 +49,10 @@ def state(pid):
 def capture(pid, output, env, frame, menu, timeout, navigation=False):
     # GDB stops at the same engine function as the port's diagnostic capture.
     # The condition is evaluated in the original address space, without writes.
-    condition = "*(int*)0x936ff4 == 0" if menu else f"*(int*)0x936ff4 == 9 && *(int*)0x462ff0 >= {frame}"
+    # The countdown resets cf at the green light. Capture the post-countdown
+    # occurrence, matching the port's cf-keyed dumps after that same reset.
+    condition = "*(int*)0x936ff4 == 0" if menu else (
+        f"*(int*)0x936ff4 == 9 && *(int*)0x784298 < 1 && *(int*)0x462ff0 >= {frame}")
     if navigation:
         condition = "1"
     commands = ["set pagination off", "set auto-solib-add off", f"attach {pid}",
@@ -70,10 +73,12 @@ def capture(pid, output, env, frame, menu, timeout, navigation=False):
         raise RuntimeError("Incomplete original image capture")
     saved_cf = struct.unpack_from("<i", image, 0x462FF0 - 0x400000)[0]
     saved_level = struct.unpack_from("<i", image, 0x936FF4 - 0x400000)[0]
+    countdown = struct.unpack_from("<i", image, 0x784298 - 0x400000)[0]
     log = (output / "gdb.log").read_text()
     if "Breakpoint 1," not in log or "0x00420c9c" not in log:
         raise RuntimeError("Reference did not stop at Draw_All entry")
-    if not navigation and ((menu and saved_level != 0) or (not menu and (saved_level != 9 or saved_cf < frame))):
+    if not navigation and ((menu and saved_level != 0) or
+                           (not menu and (saved_level != 9 or saved_cf < frame or countdown >= 1))):
         raise RuntimeError("Wrong reference checkpoint")
     fb, palette = (output / "framebuf.bin").read_bytes(), (output / "palette.bin").read_bytes()
     if len(fb) != 307200 or len(palette) != 1024:
@@ -84,6 +89,8 @@ def capture(pid, output, env, frame, menu, timeout, navigation=False):
               "mode": "real-key navigation" if navigation else "menu" if menu else "FE attract", "exe_modified": False,
               "exe_sha256": EXE_SHA256,
               "audio_comparison": "pending"}
+    if not menu and not navigation:
+        result["countdown"] = countdown
     (output / "checkpoint.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Original captured: level={saved_level}, cf={saved_cf}, Draw_All entry -> {output}", flush=True)
 
@@ -93,7 +100,10 @@ def main():
     parser.add_argument("--game-dir", type=Path, default=ROOT / "DestructionDerby2")
     parser.add_argument("--output", type=Path, default=Path("/tmp/dd2-reference"))
     parser.add_argument("--mode", choices=("menu", "attract", "audio"), default="attract")
-    parser.add_argument("--frame", type=int, default=150)
+    frames = parser.add_mutually_exclusive_group()
+    frames.add_argument("--frame", type=int, default=150)
+    frames.add_argument("--frames", type=int, nargs="+",
+                        help="capture increasing race checkpoints in one unmodified attract run")
     parser.add_argument("--timeout", type=float, default=90)
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--keys", nargs="*", choices=("Left", "Right", "Up", "Down", "Return", "Escape", "F1", "F2"),
@@ -115,6 +125,13 @@ def main():
     args = parser.parse_args()
     if args.frame < 1 or args.timeout <= 0 or not 0 < args.key_hold <= 1:
         parser.error("frame/timeout must be positive and key hold must be in (0,1]")
+    # Play_Game budgets 1500 physics steps; current_frame divides steps by two
+    # and resets at the green light. Later counters cannot occur in this demo.
+    if args.mode == "attract" and (args.frame > 700 or (args.frames and max(args.frames) > 700)):
+        parser.error("attract checkpoints must be within cf1..700")
+    if args.frames and (args.mode != "attract" or min(args.frames) < 1 or
+                        args.frames != sorted(set(args.frames))):
+        parser.error("--frames requires attract mode and strictly increasing frames within cf1..700")
     if args.keys is not None and args.mode != "menu":
         parser.error("--keys requires --mode menu")
     if args.acknowledged_key and args.keys is None:
@@ -127,7 +144,8 @@ def main():
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     game, output = args.game_dir.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    if any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio")) or any(output.glob("step*/checkpoint.json")):
+    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json"))
+            or any(output.glob("step*/checkpoint.json")) or any(output.glob("frame*/checkpoint.json"))):
         parser.error("output already contains a capture; use a fresh directory")
     WORK.mkdir(parents=True, exist_ok=True)
     with (WORK / "capture.lock").open("w") as lock:
@@ -263,6 +281,25 @@ def run(game, output, args):
                             return
                         if args.keys is not None:
                             navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log, args.menu_cycle)
+                            if args.audio_tail:
+                                time.sleep(args.audio_tail)
+                            return
+                        if args.frames:
+                            checkpoints = []
+                            for frame in args.frames:
+                                directory = output / f"frame{frame:05d}"
+                                directory.mkdir()
+                                capture(pid, directory, env, frame, False,
+                                        max(1, deadline-time.monotonic()))
+                                checkpoints.append({"requested_cf": frame, "directory": directory.name,
+                                    "checkpoint": json.loads((directory/"checkpoint.json").read_text())})
+                            # Publish a complete manifest only after every
+                            # requested checkpoint succeeds. Failed runs retain
+                            # their individual snapshots for diagnosis.
+                            (output/"video-checkpoints.json").write_text(json.dumps({
+                                "scope": "read-only Draw_All video checkpoints; complete streams and audio pending",
+                                "requested_frames": args.frames,
+                                "checkpoints": checkpoints}, indent=2)+"\n")
                             if args.audio_tail:
                                 time.sleep(args.audio_tail)
                             return

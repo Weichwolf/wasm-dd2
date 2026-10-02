@@ -254,6 +254,21 @@ digital playback path queries this position for TO-only restart, so this referen
 cannot yet prove pause/resume cursor fidelity. That limitation must be resolved
 before using it for complete original audio acceptance.
 
+Several L9 video checkpoints can be captured from one unmodified attract run
+and compared with one run of each port:
+
+```sh
+python3 tools/reference/capture.py --mode attract --frames 50 150 300 450 600 650 \
+  --timeout 150 --output /tmp/fresh-original-video
+python3 tools/reference/compare_video.py --capture /tmp/fresh-original-video
+```
+
+The manifest records each actual counter and snapshot directory. Captures wait
+for the green light because the countdown resets the counter. Attract requests
+are limited to cf1..700: Play_Game's 1500-step demo budget ends before larger
+race counters. These are exact framebuffer/palette checkpoints; complete
+original video/audio streams and other tracks still need acceptance checks.
+
 The original Wine mixer's accepted PCM can now be captured directly, without a
 debugger, through a private ALSA device with a monotonic sample clock. On Debian
 13 this additionally needs `libasound2-dev`, `libasound2t64:i386` and the existing
