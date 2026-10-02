@@ -62,8 +62,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Menu navigation separately checks 1494 exact buffers while cf stays zero
   (/tmp/dd2-shared-mix-browser-menu.log). Redbook's 29821008 source bytes,
   cursor/menu/gain fixtures, all resampler device rates and original L9/cf150
-  video still pass. Full ten-demo mixed-output regression is running under
-  /tmp/dd2-parity-shared-mix. This resolves separate CD/effects mixing, not
+  video still pass. All ten complete sound-enabled demos match on both ports:
+  15255 presented frames/palettes and every RNG/flip log; each demo has
+  10569888 effects bytes, 10569888 combined bytes, 10569888 music-part bytes
+  and 4939200 raw CD bytes, with exact format sidecars
+  (/tmp/dd2-parity-shared-mix/results.json). The earlier MCI entry now starts
+  the common clock before the first Draw_All; this captures one additional
+  40ms device tick compared with the previous separate clocks. Native/WASM
+  equality does not prove that this start time matches the original device.
+  This resolves separate CD/effects mixing, not
   full original game streams: Wine's 91728-byte CD ring/worker/end behavior,
   queued controls, device start timing, native hardware output and complete
   Windows hardware equivalence remain open.
