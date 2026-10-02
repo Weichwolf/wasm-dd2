@@ -54,7 +54,8 @@ int main(int argc, char **argv) {
         require(dd2_mci_send(1,0x808,0,NULL)==0,"stop for pause");
         now += 777; dd2_cd_pump();
         require(status(4)==525 && status(2)==((unsigned)track | 7u<<24),"stopped cursor stays fixed");
-        require(dd2_mci_send(1,0x806,end_flags,play)==0,"TO-only resume keeps sample cursor");
+        played=played/588u*588u;
+        require(dd2_mci_send(1,0x806,end_flags,play)==0,"TO-only resume starts at public Q-channel sector");
         resumed=now;
         now += 99; dd2_cd_pump();
         played+=(unsigned)((uint64_t)now*44100/1000-(uint64_t)resumed*44100/1000);

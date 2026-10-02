@@ -24,6 +24,12 @@ class AudioRead(C.Structure):
                 ("frames", C.c_int), ("buffer", C.c_void_p)]
 
 
+class SubChannel(C.Structure):
+    _fields_ = [("format", C.c_ubyte), ("status", C.c_ubyte),
+                ("control", C.c_ubyte), ("track", C.c_ubyte), ("index", C.c_ubyte),
+                ("absolute", Address), ("relative", Address)]
+
+
 def main():
     game = ROOT / "DestructionDerby2"
     with tempfile.TemporaryDirectory(prefix="dd2-cdrom-test-") as tmp:
@@ -89,9 +95,33 @@ def main():
                               (tracks[1]["start_sector"], -1)):
                 request.address.lba, request.frames = at, count
                 assert ioctl(fd, 0x530E, C.byref(request)) == -1 and C.get_errno() == errno.EINVAL
+            qfile = output / "q-sector"
+            os.environ["DD2_CD_Q_POSITION"] = str(qfile)
+            for track in tracks[1:]:
+                for at in (track["start_sector"], track["start_sector"]+37, track["end_sector"]-1):
+                    qfile.write_text(f"{at} 17\n")
+                    for fmt in (1, 2):
+                        q = SubChannel(format=fmt)
+                        assert ioctl(fd, 0x530B, C.byref(q)) == 0
+                        assert (q.track, q.index, q.control, q.status) == (track["number"], 1, 1, 0x11)
+                        if fmt == 1:
+                            assert q.absolute.lba == at and q.relative.lba == at-track["start_sector"]
+                        else:
+                            m, s, f = q.absolute.msf
+                            assert (m*60+s)*75+f == at+150
+                            m, s, f = q.relative.msf
+                            assert (m*60+s)*75+f == at-track["start_sector"]
+            for invalid in ("0 17", f"{tracks[-1]['end_sector']} 17", "-1 17", "bad", "45315 17 extra", "45315", "45315 99"):
+                qfile.write_text(invalid+"\n")
+                assert ioctl(fd, 0x530B, C.byref(q)) == -1 and C.get_errno() == errno.EINVAL
+            qfile.unlink()
+            assert ioctl(fd, 0x530B, C.byref(q)) == -1 and C.get_errno() == errno.ENOENT
+            os.environ.pop("DD2_CD_Q_POSITION")
+            q = SubChannel(format=1)
+            assert ioctl(fd, 0x530B, C.byref(q)) == 0 and q.absolute.lba == tracks[1]["start_sector"]
         with (output / "unrelated").open("w+b") as other:
             assert ioctl(other.fileno(), 0x5305, header) == -1 and C.get_errno() == errno.ENOTTY
-        print(f"CD device: 20 TOC entries in LBA/MSF, {checks} exact CDDA reads; invalid requests and descriptor isolation passed")
+        print(f"CD device: 20 TOC entries, {checks} exact CDDA reads and 108 explicit Q positions; invalid requests and descriptor isolation passed")
 
 
 if __name__ == "__main__":

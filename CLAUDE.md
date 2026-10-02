@@ -35,6 +35,29 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Original-style CD_Pause/Restart (Stop then Play with TO only) now restarts
+  at the public whole CD sector, rather than the retained fractional sample.
+  Original 4162e4/416314 and Wine MCICDA_Play's Q/MSF conversion establish the
+  operation. A live Wine fixture with an explicit declared Q snapshot passes
+  while the preceding native run resumes 338 stereo frames beyond that sector
+  (/tmp/dd2-redbook-restart-sector-before/wine-proof.json and native-source.pcm).
+  Both fixed ports match 70736 source bytes and all 317872 controlled mixed
+  bytes; actual Wine prefixes match both literal source starts. The verifier
+  rejects the old fractional restart and one altered accepted PCM bit
+  (/tmp/dd2-redbook-restart-sector-negative-reviewed/report.json).
+  make verify-redbook-restart supports REDBOOK_RESTART_ARGS='--wine --mingw
+  <compiler> --output <dir>'. True MCI Pause/Resume still retain their buffer's
+  sample cursor. All 18 Redbook Stop/TO-only expectations now include fractional
+  sector repetition; full track/cross-track, completion controls, shared mixer,
+  menu audio and DS cursor regressions pass
+  (/tmp/dd2-redbook-sector-regression.log).
+  The optional read-only DD2_CD_Q_POSITION device input contains absolute LBA
+  and Linux audio status; 108 Q snapshots/positions and malformed/missing input
+  tests pass. Wine ntdll ignores supplied addresses on AUDIO_NO_STATUS and
+  clears its cached position. The fixture explicitly observes PLAY then
+  COMPLETED snapshots to retain a known sector through Stop; no live transport
+  clock or queue/control timing is established. Normal reference game captures
+  still report NO_STATUS and remain invalid for full pause/resume acceptance.
 - Original video capture now accepts --frames for several L9 checkpoints in
   one unmodified attract run; each port compares all counters in one run too.
   It waits for the actual green-light gate, because the countdown resets cf.
@@ -436,9 +459,10 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   /tmp/dd2-ref-attract-device. `make verify-reference-video REFCAP=<capture>`
   reproduces it. This is one checkpoint; full original mixed playback PCM
   and video stream parity remain open.
-  The adapter Q-channel position is currently fixed at track2 start. Wine mcicda's
-  TO-only MCI_PLAY reads that position, even after digital playback; current Wine
-  reference pause/restart therefore cannot establish original cursor fidelity.
+  The default adapter supplies a track2 Q address with AUDIO_NO_STATUS; Wine
+  ntdll clears its Q cache and ignores that address. TO-only MCI_PLAY therefore
+  cannot establish original live pause/restart cursor fidelity. Explicit Q
+  sector/status inputs are available only for controlled API fixtures.
   Historical claims below are investigation context, not full acceptance evidence.
 - Original mixed PCM can now be observed at Wine's actual `snd_pcm_writei`, with
   accepted-write extents, format, SHA256, monotonic call bounds and transport

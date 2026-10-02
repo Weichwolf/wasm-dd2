@@ -48,10 +48,14 @@ def main():
                 # This is calculated from the explicit external schedule, not
                 # inferred from the port cursor or accepted output length.
                 start=index*977
-                prefix_frames=((start+101)*44100//1000-start*44100//1000 +
-                               (start+977)*44100//1000-(start+878)*44100//1000)
+                first_frames=(start+101)*44100//1000-start*44100//1000
+                resumed_frames=(start+977)*44100//1000-(start+878)*44100//1000
                 with (game / "Redbook" / track["file"]).open("rb") as source:
-                    assert actual.read(prefix_frames*4) == source.read(prefix_frames*4), f"track {track['number']} prefix differs"
+                    assert actual.read(first_frames*4) == source.read(first_frames*4), f"track {track['number']} prefix differs"
+                    # Original STOP/TO-only PLAY reads the public hardware Q
+                    # position, repeating the current fractional CD sector.
+                    source.seek(first_frames//588*588*4)
+                    assert actual.read(resumed_frames*4) == source.read(resumed_frames*4), f"track {track['number']} sector restart differs"
             with (game / "Redbook" / tracks[0]["file"]).open("rb") as source:
                 while chunk := source.read(1024*1024):
                     assert actual.read(len(chunk)) == chunk, "complete track02 differs"

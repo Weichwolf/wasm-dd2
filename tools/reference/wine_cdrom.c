@@ -111,21 +111,43 @@ static int virtual_ioctl(int fd, unsigned long request, void *arg, int time64) {
     }
     case CDROMSUBCHNL: {
         struct cdrom_subchnl *channel = arg;
+        const char *snapshot = getenv("DD2_CD_Q_POSITION");
+        int at = starts[1], track = 1, audio_status = CDROM_AUDIO_NO_STATUS;
         if (!channel) return failure(EFAULT);
         if (channel->cdsc_format != CDROM_MSF && channel->cdsc_format != CDROM_LBA)
             return failure(EINVAL);
-        /* This adapter supplies data, not an analogue transport. Wine tracks
-         * digital playing/stopped mode, but TO-only MCI_PLAY still queries this
-         * fixed Q position. Pause/resume reference comparisons remain invalid
-         * until the adapter can expose the actual transport cursor. */
-        channel->cdsc_audiostatus = CDROM_AUDIO_NO_STATUS;
+        /* A controlled API fixture may supply absolute LBA and audio status through
+         * this read-only file. It models one reported hardware sector, not a
+         * clock or Wine's digital-buffer cursor. Normal original game captures
+         * still have a fixed Q position and cannot prove transport timing. */
+        if (snapshot) {
+            long sector;
+            unsigned reported_status;
+            char extra;
+            FILE *file = fopen(snapshot, "r");
+            if (!file) return -1;
+            int valid = fscanf(file, "%ld %u %c", &sector, &reported_status, &extra) == 2;
+            fclose(file);
+            if (!valid || sector < starts[1] || sector >= starts[TRACK_COUNT] ||
+                reported_status < CDROM_AUDIO_PLAY || reported_status > CDROM_AUDIO_NO_STATUS)
+                return failure(EINVAL);
+            at = (int)sector;
+            audio_status = (int)reported_status;
+        }
+        for (; track < TRACK_COUNT - 1 && at >= starts[track + 1]; track++);
+        channel->cdsc_audiostatus = audio_status;
         channel->cdsc_adr = 1;
         channel->cdsc_ctrl = 0;
-        channel->cdsc_trk = 2;
+        channel->cdsc_trk = track + 1;
         channel->cdsc_ind = 1;
         memset(&channel->cdsc_reladdr, 0, sizeof(channel->cdsc_reladdr));
-        if (channel->cdsc_format == CDROM_MSF) to_msf(&channel->cdsc_absaddr, starts[1]);
-        else channel->cdsc_absaddr.lba = starts[1];
+        if (channel->cdsc_format == CDROM_MSF) {
+            to_msf(&channel->cdsc_absaddr, at);
+            to_msf(&channel->cdsc_reladdr, at - starts[track] - CD_MSF_OFFSET);
+        } else {
+            channel->cdsc_absaddr.lba = at;
+            channel->cdsc_reladdr.lba = at - starts[track];
+        }
         return 0;
     }
     case CDROMREADAUDIO:

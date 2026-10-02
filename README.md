@@ -107,6 +107,15 @@ With `REDBOOK_CONTROLS_ARGS='--wine --mingw <32-bit compiler> --output <new dir>
 the same fixture runs against actual Wine MCI. Pause/Resume leave a completed
 track stopped; explicit Play starts a new transport. The one-second drain wait
 excludes asynchronous CD ring-end timing from this state comparison.
+`make verify-redbook-restart` checks the original's Stop/TO-only Play restart:
+the public CD position has sector resolution, so restarting repeats the current
+fractional sector. MCI Pause/Resume retain the same buffer's sample cursor.
+The fixture checks 70736 exact source and 317872 complete mixed PCM bytes.
+`REDBOOK_RESTART_ARGS='--wine --mingw <32-bit compiler> --output <new dir>'`
+also captures Wine's actual mixer with an explicit hardware Q snapshot. Both
+literal source starts must match byte for byte; altered PCM and the old
+within-sector restart are rejected. Queued control edges and the live game's
+transport clock remain outside this fixture's proof.
 `node tools/browser/qa_redbook.js web/dd2`
 navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
 and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.
@@ -249,10 +258,15 @@ through Wine's normal MCI/DirectSound driver. It needs no physical CD drive and
 does not patch the EXE or engine memory. `make verify-cdrom` checks all TOC entries,
 108 audio reads including track boundaries, invalid requests and descriptor
 isolation. These checks verify the CD data source, not mixed playback PCM parity.
-The adapter currently reports a fixed CD position in Q-channel requests. Wine's
-digital playback path queries this position for TO-only restart, so this reference
-cannot yet prove pause/resume cursor fidelity. That limitation must be resolved
-before using it for complete original audio acceptance.
+The default adapter reports NO_STATUS with a track2 Q address. Wine clears its
+Q cache in that state and ignores the supplied address; a live TO-only restart
+can fall back to track2. The optional `DD2_CD_Q_POSITION` file supplies an explicit
+absolute LBA and Linux audio status for controlled API fixtures. The restart
+fixture first observes a PLAY snapshot, then reports COMPLETED to retain Wine's
+cached sector through Stop. These are declared device inputs, not an actual
+transport clock. See [Wine's Q-channel conversion](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/ntdll/unix/cdrom.c).
+Live pause/resume timing still needs a valid transport reference before complete
+original audio acceptance.
 
 Several L9 video checkpoints can be captured from one unmodified attract run
 and compared with one run of each port:

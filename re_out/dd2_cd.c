@@ -235,7 +235,12 @@ int dd2_mci_send(unsigned device, unsigned command, unsigned flags, uint32_t *pa
         }
     case 0x806: /* MCI_PLAY: FROM/TO, or TO only after the original's MCI_STOP pause. */
         if (!params) return NULL_PARAMETER;
-        from = cd_position; to = track_start(DD2_CD_TRACKS+1);
+        /* Without FROM, MCI reads the hardware Q-channel's absolute MSF
+         * address (Wine mcicda MCICDA_Play / FRAME_OF_ADDR), a whole CD sector.
+         * The original CD_Pause/Restart uses STOP then TO-only PLAY, so the
+         * fractional sector cannot survive as a PCM sample cursor. MCI_PAUSE/
+         * RESUME instead retain the existing DS buffer's exact sample cursor. */
+        from = cd_position/588*588; to = track_start(DD2_CD_TRACKS+1);
         if (flags & 4) { error = decode_time(params[1],&from); if (error) return error; }
         if (flags & 8) { error = decode_time(params[2],&to); if (error) return error; }
         if (from < track_start(2)) from = track_start(2); /* skip the data track */
