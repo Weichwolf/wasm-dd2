@@ -55,6 +55,17 @@ def main():
             with (game / "Redbook" / tracks[0]["file"]).open("rb") as source:
                 while chunk := source.read(1024*1024):
                     assert actual.read(len(chunk)) == chunk, "complete track02 differs"
+            began=18*977+500000
+            resumed=began+73+911
+            paused_frames=((began+73)*44100//1000-began*44100//1000 +
+                           (resumed+27)*44100//1000-resumed*44100//1000)
+            with (game / "Redbook" / tracks[1]["file"]).open("rb") as source:
+                assert actual.read(paused_frames*4)==source.read(paused_frames*4), "MCI pause/resume source differs"
+            with (game / "Redbook" / tracks[0]["file"]).open("rb") as source:
+                source.seek(-2*2352,os.SEEK_END)
+                assert actual.read(2*2352)==source.read(), "track02 boundary suffix differs"
+            with (game / "Redbook" / tracks[1]["file"]).open("rb") as source:
+                assert actual.read(2*2352)==source.read(2*2352), "track03 boundary prefix differs"
             assert actual.read(1) == b"", "extra samples beyond track end"
         print(f"Native/WASM CD PCM exact against original CDDA: {outputs[0].stat().st_size} bytes")
 

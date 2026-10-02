@@ -67,6 +67,12 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   full original game streams: Wine's 91728-byte CD ring/worker/end behavior,
   queued controls, device start timing, native hardware output and complete
   Windows hardware equivalence remain open.
+  Additional Redbook regressions exercise MCI_PAUSE/MCI_RESUME with a 911ms
+  device-clock advance during pause, and a four-sector interval crossing from
+  the end of track02 into track03. Both ports preserve the exact source bytes
+  through the new page reader and stop at the requested end: 29848052 bytes
+  total (/tmp/dd2-shared-mix-redbook-boundary.log). These are explicit-clock
+  source tests, not a Wine worker/queued-control timing claim.
 - The effects device now defaults to Float32 stereo 44100Hz, matching the
   observed original reference device and CD source rate. Previously C emitted
   22050Hz and WebAudio resampled it again to 44100Hz. Source buffers retain

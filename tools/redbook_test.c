@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dd2_cd.h"
+#include "dd2_disc.h"
 #ifndef __EMSCRIPTEN__
 #include <sys/mman.h>
 #endif
@@ -65,7 +66,31 @@ int main(int argc, char **argv) {
     require(dd2_mci_send(1,0x806,12,play)==0,"full track play");
     now += 500000; dd2_cd_pump();
     require(status(4)==525 && status(2)==3,"stopped at next track boundary");
+    /* Pause retains the same buffer, unlike the engine's Stop/TO-only resume.
+     * The source does not advance during the pause; the device clock does. */
+    play[1]=3;play[2]=4;
+    require(dd2_mci_send(1,0x806,12,play)==0,"play before MCI pause");
+    now+=73;dd2_cd_pump();
+    require(dd2_mci_send(1,0x809,0,NULL)==0,"pause existing CD buffer");
+    require(status(4)==529 && status(2)==(3u|5u<<24),"paused source position");
+    now+=911;dd2_cd_pump();
+    require(status(4)==529 && status(2)==(3u|5u<<24),"pause retains source cursor");
+    require(dd2_mci_send(1,0x855,0,NULL)==0,"resume existing CD buffer");
+    now+=27;dd2_cd_pump();
+    require(status(4)==526 && status(2)==(3u|7u<<24),"resumed source position");
+    require(dd2_mci_send(1,0x808,0,NULL)==0,"stop resumed buffer");
+    /* Four sectors straddle a physical track boundary and the page reader
+     * must switch files without repeating, dropping or inventing samples. */
+    {
+        unsigned sector=dd2_cd_sectors[2]-dd2_cd_sectors[1]-2;
+        play[1]=2u|sector/4500u<<8|(sector/75u%60u)<<16|(sector%75u)<<24;
+        play[2]=3u|2u<<24;
+    }
+    require(dd2_mci_send(1,0x806,12,play)==0,"play across physical tracks");
+    now+=54;dd2_cd_pump();
+    require(status(4)==525 && status(2)==(3u|2u<<24),"exact end after crossing tracks");
     /* Replay loop is requested by the engine, not silently invented by the device. */
+    play[1]=2;play[2]=3;
     require(dd2_mci_send(1,0x806,12,play)==0,"restart finished track");
     require(status(4)==526 && status(2)==2,"replay starts at track boundary");
     require(dd2_mci_send(1,0x808,0,NULL)==0,"stop replay");
