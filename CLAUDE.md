@@ -56,7 +56,13 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   A parallel full RGB32/parity run exhausted /tmp: its failures are retained
   as failed evidence under third_party/verification-artifacts, with old /tmp
   paths symlinked there. The fresh complete RGB32 rerun passes on the larger
-  filesystem; the ten-level parity rerun uses that filesystem too.
+  filesystem; the complete ten-level parity rerun passes 10/10: 15255 frames,
+  every framebuffer/palette, RNG/flip log, effects/final-mix/music-summand
+  byte and raw CD source byte matches. Full results:
+  third_party/verification-artifacts/dd2-parity-avi-final-reviewed/results.json.
+  Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now use these
+  verified AVI-component builds; native SHA
+  87f03b1baac86a1d577402865bfa0f3b2518456c8419ca85e2429656bbfa47f9.
   dd2_avi.c/h is ready for MCI playback integration. Normal startup still
   bypasses movies; original presentation/scaling, clock and skip/completion
   behavior remain open. Decoder/container proof is not full movie acceptance.
