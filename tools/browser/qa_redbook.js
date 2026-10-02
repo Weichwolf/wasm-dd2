@@ -13,12 +13,18 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   page.on('console',message=>{if(message.text().includes('[CD]'))console.log('device:',message.text());});
   page.on('response',response=>{if(response.url().endsWith('.cdda'))console.log('CD fetch:',response.status(),response.url());});
   await page.addInitScript(()=>{
-   window.__cdTest={track:0,parts:[],frames:0,totalBuffers:0,plays:[]};
-   let effects=false;
+   window.__cdTest={track:0,parts:[],frames:0,totalBuffers:0,musicBuffers:0,mismatches:0,missingBuffers:0,otherBuffers:0,plays:[]};
+   let expected;
    const observeImports=imports=>{
     if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__cdObserved)return;
     const original=imports.env.dd2_audio_push;
-    const observed=function(...args){effects=true;try{return original.apply(this,args);}finally{effects=false;}};
+    const observed=function(pointer,effects,music,frames,rate,musicFrames){
+     expected={pointer,music,frames,rate,musicFrames,starts:0};
+     try{return original.call(this,pointer,effects,music,frames,rate,musicFrames);}finally{
+      if(Module._dd2ac && Module._dd2ac.state==='running' && expected.starts!==1)__cdTest.missingBuffers++;
+      expected=undefined;
+     }
+    };
     observed.__cdObserved=true;imports.env.dd2_audio_push=observed;
    };
    for(const name of ['instantiate','instantiateStreaming']){
@@ -36,15 +42,27 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
     const source=create.apply(this,args),start=source.start;
     source.start=function(...args){
      const state=window.__cdTest,buffer=source.buffer;
-     if(buffer && buffer.sampleRate===44100 && !effects){
-      state.totalBuffers++;
-      if(state.frames<100000){
-       const left=buffer.getChannelData(0),right=buffer.getChannelData(1);
-       const pcm=new Int16Array(buffer.length*2);
-       for(let i=0;i<buffer.length;i++){pcm[i*2]=Math.round(left[i]*32768);pcm[i*2+1]=Math.round(right[i]*32768);}
-       state.parts.push(new Uint8Array(pcm.buffer));state.frames+=buffer.length;
+     if(buffer && expected){
+      expected.starts++;state.totalBuffers++;
+      let exact=buffer.length===expected.frames && buffer.sampleRate===expected.rate && buffer.numberOfChannels===2;
+      for(let ch=0;ch<2;ch++){
+       const samples=buffer.getChannelData(ch),bits=new Uint32Array(samples.buffer,samples.byteOffset,samples.length);
+       for(let i=0;i<buffer.length;i++)if(bits[i]!==HEAPU32[(expected.pointer>>2)+i*2+ch])exact=false;
       }
-     }
+      if(!exact)state.mismatches++;
+      if(expected.musicFrames){
+       state.musicBuffers++;
+       if(state.frames<100000){
+        const pcm=new Int16Array(expected.musicFrames*2);
+        for(let i=0;i<pcm.length;i++){
+         const sample=HEAPF32[(expected.music>>2)+i]*32768;
+         if(sample!==Math.round(sample) || sample<-32768 || sample>32767)state.mismatches++;
+         pcm[i]=sample;
+        }
+        state.parts.push(new Uint8Array(pcm.buffer));state.frames+=expected.musicFrames;
+       }
+      }
+     }else if(buffer)state.otherBuffers++;
      return start.apply(this,args);
     };
     return source;
@@ -77,19 +95,19 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
    });
    const actual=Buffer.from(capture.pcm,'base64');
    const source=fs.readFileSync(path.join(build,'Redbook',`track${String(track).padStart(2,'0')}.cdda`));
-   assert(actual.equals(source.subarray(0,actual.length)),`track ${track}: delivered WebAudio PCM differs from CDDA`);
+   assert(actual.equals(source.subarray(0,actual.length)),`track ${track}: C music summand differs from CDDA`);
    assert(actual.some(byte=>byte!==0),'captured only silence');
    assert(capture.plays.at(-1).frame===0,'Play did not restart at the track beginning');
    assert(capture.rate===44100,'CD AudioContext did not preserve 44100Hz');
    fs.writeFileSync(path.join(output,`track${track}.pcm`),actual);
-   console.log(`PASS browser track${track}: ${actual.length} exact PCM bytes delivered to WebAudio`);
+   console.log(`PASS browser track${track}: ${actual.length} exact CD source bytes in the shared mixer`);
   }
   await playAndCompare(2);
   await key(page,'ArrowRight',700);await key(page,'Enter',700);
-  const stopped=await page.evaluate(()=>({playing:HEAP32[0x462d70>>2],sources:Module._dd2cdsources.length,buffers:__cdTest.totalBuffers}));
-  assert(stopped.playing===0 && stopped.sources===0,'Stop did not stop the engine/device sources');
+  const stopped=await page.evaluate(()=>({playing:HEAP32[0x462d70>>2],buffers:__cdTest.musicBuffers}));
+  assert(stopped.playing===0,'Stop did not stop the engine CD device');
   await page.waitForTimeout(400);
-  assert(await page.evaluate(()=>__cdTest.totalBuffers)===stopped.buffers,'CD still submits audio after Stop');
+  assert(await page.evaluate(()=>__cdTest.musicBuffers)===stopped.buffers,'CD still submits audio after Stop');
   await key(page,'ArrowRight',700);await key(page,'Enter',700);
   assert(await page.evaluate(()=>HEAP32[0x469efc>>2])===1,'Next Track did not change selection');
   await key(page,'ArrowLeft',400);await key(page,'ArrowLeft',400);
@@ -99,6 +117,9 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   assert(await page.evaluate(()=>__cdTest.plays.at(-1).track)===3,'selection unexpectedly changed playing track');
   await key(page,'ArrowRight',400);await key(page,'ArrowRight',400);await key(page,'Enter',700);
   await page.screenshot({path:path.join(output,'stopped.png')});
+  const sink=await page.evaluate(()=>({mismatches:__cdTest.mismatches,missing:__cdTest.missingBuffers,other:__cdTest.otherBuffers,buffers:__cdTest.totalBuffers,separateCursor:Module._dd2cdt!==undefined}));
+  assert(sink.buffers>0 && sink.mismatches===0 && sink.missing===0 && sink.other===0 && !sink.separateCursor,'shared WebAudio output differs from the combined C mixer or uses a second sink');
+  console.log('Shared WebAudio sink:',JSON.stringify(sink));
   assert.deepEqual(errors,[],'browser runtime errors');
   console.log('PASS CD menu Play/Stop/Next/Prev; no runtime errors');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

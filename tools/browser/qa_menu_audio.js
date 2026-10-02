@@ -15,11 +15,11 @@ const {serve,key,boot,menuLabel,chromium}=require('./felib');
    const observeImports=imports=>{
     if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__observed)return;
     const original=imports.env.dd2_audio_push;
-    const observed=function(pointer,frames,rate){
+    const observed=function(pointer,effects,music,frames,rate,musicFrames){
      const state=window.__menuAudio,running=Module._dd2ac && Module._dd2ac.state==='running';
      state.pushes++;
      expected={pointer,frames,rate,starts:0};
-     try{return original.call(this,pointer,frames,rate);}finally{
+     try{return original.call(this,pointer,effects,music,frames,rate,musicFrames);}finally{
       // The first import can construct an already-running context after the
       // first user gesture. Classify suspension after the call, not before it.
       if(expected.starts===0 && !running && Module._dd2ac && Module._dd2ac.state==='suspended')state.suspendedPushes++;

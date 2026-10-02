@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/sound_cursor_test.c"
 
 
-def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type null }\n", arguments=()):
+def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type null }\n", arguments=(), cd_device=None):
     prefix = directory / "wine-prefix"
     config = directory / "asound.conf"
     config.write_text(alsa_config)
@@ -35,6 +35,15 @@ def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type n
             subprocess.run(["wine", "reg", "add", r"HKCU\Software\Wine\Drivers",
                             "/v", "Audio", "/t", "REG_SZ", "/d", "alsa", "/f"],
                            env=env, stdout=log, stderr=log, check=True, timeout=30)
+            if cd_device is not None:
+                for name, target in (("d:", directory), ("d::", cd_device)):
+                    link = prefix / "dosdevices" / name
+                    if link.is_symlink():
+                        link.unlink()
+                    link.symlink_to(target)
+                subprocess.run(["wine", "reg", "add", r"HKLM\Software\Wine\Drives",
+                                "/v", "d:", "/t", "REG_SZ", "/d", "cdrom", "/f"],
+                               env=env, stdout=log, stderr=log, check=True, timeout=30)
             subprocess.run(["wineserver", "-k"], env=env, check=True, timeout=10)
             subprocess.run(["wineserver", "-w"], env=env, check=True, timeout=10)
             result = subprocess.run(["wine", str(executable), *arguments], env=env, stdout=subprocess.PIPE,

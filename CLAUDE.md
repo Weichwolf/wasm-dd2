@@ -35,6 +35,38 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- CD and effects now share the ordered C Float32 device, one sample clock and
+  one WebAudio scheduling cursor/sink. MCI Play creates a CD source in the
+  buffer list; Stop releases it, Pause retains its cursor. Two read-only CD
+  pages cover source/FIR lookahead across page and track boundaries. Legacy
+  DD2_SNDPCM remains effects-only and DD2_CDPCM remains consumed s16 CD source;
+  DD2_MIXPCM is the final ordered device output, DD2_MUSICPCM its music part,
+  both Float32 with rate/format sidecars. verify-parity now compares these
+  additional complete streams and metadata as well as video/palettes/RNG.
+  make verify-shared-audio checks a real WinMM/DirectSound fixture with an
+  effect created before the CD buffer and another after it. Actual Wine 10
+  captures match 27740 consecutive mixed waveform frames, including 2995
+  frames that distinguish source summation order. A fresh --wine rerun passes
+  27741 frames; timer-driven leading/trailing control phases are explicitly
+  reported, not aligned away or claimed identical. Both ports also match the
+  entire controlled 960ms output (338688 Float32 bytes), 30870 CD source frames
+  and complete music summand. Calibration stores hashes/metadata only in
+  tools/reference/shared_audio_wine10.json; game PCM stays outside Git.
+  Logs: /tmp/dd2-shared-audio-wine-reviewed/report.json and
+  /tmp/dd2-shared-audio-wine-recheck/report.json. Altered bits, reordered sums
+  and lost CD are rejected. Optional SHARED_AUDIO_ARGS='--wine --mingw
+  <32-bit compiler> --output <fresh-dir>' repeats the actual reference.
+  Browser CD menu passes Play/Stop/Next/Prev and exact track2/3 source parts;
+  all 4208 actually submitted mixed buffers match C bits, with zero missing
+  or extra buffers and no separate CD cursor (/tmp/dd2-shared-mix-browser-cd.log).
+  Menu navigation separately checks 1494 exact buffers while cf stays zero
+  (/tmp/dd2-shared-mix-browser-menu.log). Redbook's 29821008 source bytes,
+  cursor/menu/gain fixtures, all resampler device rates and original L9/cf150
+  video still pass. Full ten-demo mixed-output regression is running under
+  /tmp/dd2-parity-shared-mix. This resolves separate CD/effects mixing, not
+  full original game streams: Wine's 91728-byte CD ring/worker/end behavior,
+  queued controls, device start timing, native hardware output and complete
+  Windows hardware equivalence remain open.
 - The effects device now defaults to Float32 stereo 44100Hz, matching the
   observed original reference device and CD source rate. Previously C emitted
   22050Hz and WebAudio resampled it again to 44100Hz. Source buffers retain

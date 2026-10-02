@@ -1,7 +1,8 @@
 /* WinMM CD-Audio backend for the port. The engine still selects tracks, stops,
  * resumes and repeats them through its original MCI calls. This device reads
- * exact s16le/44100Hz/stereo CDDA bytes; it does not mix or downsample them into
- * the game's separate 22050Hz effects stream. DD2_CDPCM captures its source PCM.
+ * exact s16le/44100Hz/stereo CDDA bytes into the same ordered DirectSound device
+ * as effects. DD2_CDPCM captures consumed source frames; DD2_MIXPCM captures
+ * the shared device's final Float32 PCM. There is one clock and browser sink.
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -11,6 +12,7 @@
 #include <emscripten.h>
 #endif
 #include "dd2_cd.h"
+#include "dd2_sound.h"
 #include "dd2_disc.h"
 
 #define CD_DEVICE 1
@@ -29,49 +31,19 @@
 #define NULL_PARAMETER 297
 
 static int cd_open, cd_mode = MODE_STOP, cd_track = -1;
-static unsigned cd_format = 2, cd_last_ms;
-static uint64_t cd_position, cd_end;
-static unsigned cd_remainder;
+static unsigned cd_format = 2;
+static uint64_t cd_position, cd_end, cd_origin;
+static void* cd_sound;
 static FILE *cd_file, *cd_capture;
 static int cd_capture_init;
 #ifdef DD2_BROWSER
 static unsigned char *cd_data;
 static int cd_data_size;
-EM_JS(void, cd_sink_stop, (), {
-    if (Module._dd2cdsources) {
-        Module._dd2cdsources.forEach(function(source) { try { source.stop(); } catch(e){} });
-        Module._dd2cdsources = [];
-    }
-    Module._dd2cdt = 0;
-});
-EM_JS(void, cd_sink_push, (const short *pcm, int frames), {
-    if (!Module._dd2ac) {
-        Module._dd2ac = new AudioContext({sampleRate:44100});
-        Module._dd2t = 0;
-        var resume = function() { if (Module._dd2ac.state === 'suspended') Module._dd2ac.resume(); };
-        window.addEventListener('keydown', resume);
-        window.addEventListener('click', resume);
-    }
-    var ac = Module._dd2ac;
-    if (ac.state !== 'running') return;
-    var buffer = ac.createBuffer(2, frames, 44100);
-    var left = buffer.getChannelData(0), right = buffer.getChannelData(1);
-    for (var i=0; i<frames; i++) {
-        left[i] = HEAP16[(pcm>>1)+i*2] / 32768;
-        right[i] = HEAP16[(pcm>>1)+i*2+1] / 32768;
-    }
-    var source = ac.createBufferSource();
-    source.buffer = buffer; source.connect(ac.destination);
-    var sources = Module._dd2cdsources || (Module._dd2cdsources=[]);
-    sources.push(source);
-    source.onended = function() { var i=sources.indexOf(source); if (i>=0) sources.splice(i,1); };
-    if (!Module._dd2cdt || Module._dd2cdt < ac.currentTime) Module._dd2cdt = ac.currentTime + 0.04;
-    source.start(Module._dd2cdt);
-    Module._dd2cdt += frames/44100;
-});
-#else
-static void cd_sink_stop(void) {}
 #endif
+
+typedef struct { uint64_t start; unsigned count; int valid; short pcm[4096*2]; } CDPage;
+static CDPage cd_pages[2];
+static unsigned cd_next_page;
 
 static uint64_t track_start(int track) { return (uint64_t)dd2_cd_sectors[track-1] * 588; }
 static int position_track(uint64_t position) {
@@ -149,49 +121,71 @@ static unsigned encode_position(uint64_t position) {
     return minute | second<<8 | frame<<16;
 }
 
-void dd2_cd_pump(void) {
-    unsigned now = dd2_audio_ms(), elapsed = now-cd_last_ms;
-    uint64_t frames;
-    cd_last_ms = now;
-    if (!cd_open || cd_mode != MODE_PLAY) return;
-    frames = (uint64_t)elapsed*44100+cd_remainder;
-    cd_remainder = (unsigned)(frames%1000);
-    frames /= 1000;
-    if (frames > cd_end-cd_position) frames = cd_end-cd_position;
+/* Two read-only pages retain both sides of a FIR lookahead/page/track boundary.
+ * The reader never advances the MCI cursor; only consumed device source frames
+ * do. A track fetch therefore cannot independently move the CD clock. */
+static CDPage* source_page(uint64_t position) {
+    CDPage* page;
+    int i,track;
+    uint64_t offset,remaining;
+    for(i=0;i<2;i++)if(cd_pages[i].valid && position>=cd_pages[i].start &&
+            position<cd_pages[i].start+cd_pages[i].count)return &cd_pages[i];
+    if(position>=cd_end)return NULL;
+    track=position_track(position);
+    if(load_track(track))return NULL;
+    page=&cd_pages[cd_next_page++%2];page->valid=0;
+    page->start=track_start(track)+(position-track_start(track))/4096*4096;
+    remaining=track_start(track+1)-page->start;
+    if(remaining>cd_end-page->start)remaining=cd_end-page->start;
+    page->count=remaining>4096?4096:(unsigned)remaining;
+    offset=(page->start-track_start(track))*4;
+#ifdef DD2_BROWSER
+    memcpy(page->pcm,cd_data+offset,page->count*4);
+#else
+    if(fseek(cd_file,(long)offset,SEEK_SET) || fread(page->pcm,4,page->count,cd_file)!=page->count)return NULL;
+#endif
+    page->valid=1;
+    return page;
+}
+static float read_source(void* context,uint64_t frame,int channel) {
+    uint64_t position=cd_origin+frame;
+    CDPage* page;
+    (void)context;
+    page=source_page(position);
+    if(!page){cd_mode=MODE_STOP;dd2_snd_music_stop(cd_sound);return 0.0f;}
+    return page->pcm[(position-page->start)*2+channel]/32768.0f;
+}
+static void consume_source(void* context,unsigned first,unsigned frames) {
+    uint64_t position=cd_origin+first;
+    (void)context;
     if (!cd_capture_init) {
         const char *capture = getenv("DD2_CDPCM");
         cd_capture_init = 1;
         if (capture) cd_capture = fopen(capture,"wb");
     }
-    while (frames) {
-        static short pcm[4096*2];
-        unsigned count = frames > 4096 ? 4096 : (unsigned)frames;
-        int track = position_track(cd_position);
-        uint64_t remaining = track_start(track+1)-cd_position, offset;
-        if (count > remaining) count = (unsigned)remaining;
-        if (load_track(track)) { cd_mode = MODE_STOP; cd_sink_stop(); return; }
-        offset = (cd_position-track_start(track))*4;
-#ifdef DD2_BROWSER
-        memcpy(pcm,cd_data+offset,count*4);
-#else
-        if (fseek(cd_file,(long)offset,SEEK_SET) || fread(pcm,4,count,cd_file) != count) {
-            cd_mode = MODE_STOP; cd_sink_stop(); return;
-        }
-#endif
-        if (cd_capture) fwrite(pcm,4,count,cd_capture);
-#ifdef DD2_BROWSER
-        cd_sink_push(pcm,count);
-#endif
-        cd_position += count;
-        frames -= count;
+    if(cd_capture)while(frames){
+        CDPage* page=source_page(position);
+        unsigned count;
+        if(!page){cd_mode=MODE_STOP;dd2_snd_music_stop(cd_sound);return;}
+        count=page->count-(unsigned)(position-page->start);
+        if(count>frames)count=frames;
+        fwrite(page->pcm+(position-page->start)*2,4,count,cd_capture);
+        position+=count;frames-=count;
     }
+    else position+=frames;
+    cd_position=position;
     if (cd_capture) fflush(cd_capture);
     if (cd_position >= cd_end) cd_mode = MODE_STOP;
+}
+void dd2_cd_pump(void) { dd2_snd_mix_flip(); }
+static void destroy_sound(void) {
+    dd2_snd_music_destroy(cd_sound);cd_sound=NULL;
 }
 
 int dd2_mci_send(unsigned device, unsigned command, unsigned flags, uint32_t *params) {
     uint64_t from, to;
     int error;
+    dd2_cd_pump(); /* Flush the shared device before changing either source. */
     if (command == 0x803) { /* MCI_OPEN */
         const char *type;
         if (!params) return NULL_PARAMETER;
@@ -211,15 +205,15 @@ int dd2_mci_send(unsigned device, unsigned command, unsigned flags, uint32_t *pa
 #endif
         cd_open = 1; cd_mode = MODE_STOP; cd_format = 2;
         cd_position = track_start(2); cd_end = track_start(DD2_CD_TRACKS+1);
-        cd_last_ms = dd2_audio_ms(); cd_remainder = 0;
+        cd_pages[0].valid=cd_pages[1].valid=0;
         params[1] = CD_DEVICE;
         return 0;
     }
     if (!cd_open || device != CD_DEVICE) return INVALID_DEVICE;
-    dd2_cd_pump();
     switch (command) {
     case 0x804: /* MCI_CLOSE */
-        cd_sink_stop(); release_track(); cd_open = 0; cd_mode = MODE_STOP; return 0;
+        destroy_sound();release_track();cd_pages[0].valid=cd_pages[1].valid=0;
+        cd_open = 0; cd_mode = MODE_STOP; return 0;
     case 0x80d: /* MCI_SET */
         if (!params) return NULL_PARAMETER;
         if (flags & 0x400) {
@@ -246,22 +240,24 @@ int dd2_mci_send(unsigned device, unsigned command, unsigned flags, uint32_t *pa
         if (flags & 8) { error = decode_time(params[2],&to); if (error) return error; }
         if (from < track_start(2)) from = track_start(2); /* skip the data track */
         if (to < from) return OUT_OF_RANGE;
-        cd_sink_stop(); cd_mode = MODE_STOP;
+        destroy_sound();cd_mode = MODE_STOP;
         if (from < to) { error = load_track(position_track(from)); if (error) return error; }
         cd_position = from; cd_end = to;
-        cd_last_ms = dd2_audio_ms();
-        if (flags & 4) cd_remainder = 0;
+        cd_origin=from;
+        cd_pages[0].valid=cd_pages[1].valid=0;
+        if(from<to){cd_sound=dd2_snd_music_create((unsigned)(to-from),read_source,consume_source,NULL);
+            dd2_snd_music_play(cd_sound);}
         cd_mode = from < to ? MODE_PLAY : MODE_STOP;
         if (getenv("DD2_CDLOG")) printf("[CD] play track=%d frame=%u mode=%d\n",position_track(from),
             (unsigned)(from-track_start(position_track(from))),cd_mode);
         return 0;
     case 0x808:
-        cd_sink_stop(); cd_mode = MODE_STOP;
+        destroy_sound();cd_mode = MODE_STOP;
         if (getenv("DD2_CDLOG")) printf("[CD] stop track=%d frame=%u\n",position_track(cd_position),
             (unsigned)(cd_position-track_start(position_track(cd_position))));
         return 0; /* MCI_STOP keeps the cursor */
-    case 0x809: cd_sink_stop(); cd_mode = MODE_PAUSE; return 0;
-    case 0x855: cd_last_ms = dd2_audio_ms(); cd_mode = MODE_PLAY; return 0;
+    case 0x809: dd2_snd_music_stop(cd_sound);cd_mode = MODE_PAUSE; return 0;
+    case 0x855: dd2_snd_music_play(cd_sound);cd_mode = MODE_PLAY;return 0;
     case 0x830: return UNRECOGNIZED; /* Wine's CD driver also rejects MCI_CUE; game ignores it. */
     default: return UNRECOGNIZED;
     }

@@ -168,6 +168,7 @@ int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,of
    Deterministic playback uses the cf counter (25 engine fps), keeping Sound_Timer's
    GetStatus->Release lifecycle reproducible. Interactive DD2_REALTIME playback uses
    elapsed time, including menus and pause where the race counter is fixed. */
+#include "dd2_sound.h"
 typedef struct DSBuf {
     void** vtbl;
     unsigned char* pcm; unsigned size;      /* PCM payload (dwBufferBytes) */
@@ -180,8 +181,13 @@ typedef struct DSBuf {
     int play_cf;                              /* cf @ Play() */
     unsigned position, phase;                /* source frame + remainder / device rate */
     struct DSBuf* master;                     /* dup source (shares data) */
+    DD2SoundRead stream_read;
+    DD2SoundConsume stream_consume;
+    void* stream_context;
 } DSBuf;
 static DSBuf* g_dsbufs[256]; static int g_ndsbufs;
+static unsigned g_ds_music_buffers;
+static int ds_mixing; /* Stream callbacks cannot recursively enter the device mix. */
 static void* g_dsnd_vtbl[32];
 static void* g_dsnd_obj = g_dsnd_vtbl;
 static void* g_dsb_vtbl[32];
@@ -211,6 +217,7 @@ static FILE* snd_log(void){ static FILE* f; static int init;
 static int dsb_release(DSBuf* b){ ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
     if(!b->master && b->pcm) free(b->pcm);
+    if(b->stream_read)g_ds_music_buffers--;
     free(b); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
     ds_realtime_pump();
@@ -285,6 +292,18 @@ static int dsb_getfreq(DSBuf* b,unsigned* result_value){
 static int dsb_restore(DSBuf* b){ SLOG("DSB %p Restore",(void*)b); return 0; }
 static DSBuf* dsb_new(void){ DSBuf* b=(DSBuf*)calloc(1,sizeof(DSBuf)); b->vtbl=g_dsb_vtbl;
     if(g_ndsbufs<256) g_dsbufs[g_ndsbufs++]=b; return b; }
+void* dd2_snd_music_create(unsigned frames,DD2SoundRead read,DD2SoundConsume consume,void* context){
+    DSBuf* b;
+    ds_realtime_pump();
+    b=dsb_new();b->size=frames*4;b->freq=b->original_freq=44100;
+    b->channels=2;b->bits=16;b->blockalign=4;b->nAvgBytesPerSec=176400;
+    b->stream_read=read;b->stream_consume=consume;b->stream_context=context;
+    g_ds_music_buffers++;
+    return b;
+}
+void dd2_snd_music_destroy(void* buffer){if(buffer)dsb_release((DSBuf*)buffer);}
+void dd2_snd_music_stop(void* buffer){if(buffer)dsb_stop((DSBuf*)buffer);}
+void dd2_snd_music_play(void* buffer){if(buffer)dsb_play((DSBuf*)buffer,0,0,0);}
 /* --- IDirectSound methods --- */
 static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(void)outer;
     /* DSBUFFERDESC: +0 dwSize, +4 dwFlags, +8 dwBufferBytes, +0x10 lpwfxFormat */
@@ -368,7 +387,9 @@ static float dd2_amp_float(int centidb){
 #ifdef DD2_BROWSER
 /* WebAudio sink: schedule each mixed device-rate Float32 stereo tick on a running time
    cursor. Lazy AudioContext (browsers require a user gesture before audio can start). */
-EM_JS(void, dd2_audio_push, (const float* pcm, int frames, int rate), {
+EM_JS(void, dd2_audio_push, (const float* pcm, const float* effects, const float* music, int frames, int rate, int music_frames), {
+    /* The optional parts are read-only diagnostics of the exact C summands;
+       only the combined buffer is submitted to the audio device. */
     if (!Module._dd2ac) {
         /* Shared CD/effects device; the default C mixer already emits 44100Hz,
            preserving source rates without a second WebAudio effects resampler. */
@@ -401,6 +422,7 @@ static float ds_source_sample(DSBuf* b,uint64_t frame,int channel){
     const unsigned char* sample;
     unsigned count=b->size/b->blockalign;
     if(frame>=count && !b->looping)return 0.0f;
+    if(b->stream_read)return b->stream_read(b->stream_context,frame%count,channel);
     sample=b->pcm+(frame%count)*b->blockalign;
     if(b->channels==1)channel=0;
     if(b->bits==16)return (float)*(short*)(sample+channel*2)/32768.0f;
@@ -415,7 +437,7 @@ static float ds_source_sample(DSBuf* b,uint64_t frame,int channel){
  * coefficients. This avoids replacing x87 sums with WASM f32 or f64 sums.
  * Source/assembly calibration: tools/sound_resample_test.c and Wine 10
  * dsound.dll DSOUND_MixToPrimary+0x460..+0x5f4 on Debian 13. */
-static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
+static void ds_mix_buffer(DSBuf* b,float* out,float* effects,float* music,int frames){
     uint64_t advance,base;unsigned initial_phase=b->phase;
     unsigned rate=ds_device_rate();
     unsigned firstep=(unsigned)b->freq>=rate?DD2_FIR_STEP*rate/b->freq:DD2_FIR_STEP;
@@ -424,7 +446,7 @@ static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
     float gr=dd2_amp_float(b->vol+(b->pan<0?b->pan:0));
     DD2Wide one=dd2_wide_float(1.0f),gain=dd2_wide_float(firgain);
     int k;
-    if(produce)for(k=0;k<frames;k++){
+    if(out || (b->stream_read?music:effects))for(k=0;k<frames;k++){
         float sl,sr;
         if((unsigned)b->freq==rate){
             sl=ds_source_sample(b,(uint64_t)b->position+k,0);
@@ -458,7 +480,10 @@ static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
             sl=dd2_wide_to_float(dd2_wide_mul(left,gain));
             sr=b->channels==1?sl:dd2_wide_to_float(dd2_wide_mul(right,gain));
         }
-        { volatile float vl=sl*gl,vr=sr*gr;out[k*2]+=vl;out[k*2+1]+=vr; }
+        { volatile float vl=sl*gl,vr=sr*gr;
+          float* part=b->stream_read?music:effects;
+          if(out){out[k*2]+=vl;out[k*2+1]+=vr;}
+          if(part){part[k*2]+=vl;part[k*2+1]+=vr;} }
     }
     if((unsigned)b->freq==rate)advance=frames; /* Wine fast path retains freqAccNum. */
     else {
@@ -466,6 +491,10 @@ static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
         advance=end/rate;b->phase=(unsigned)(end%rate);
     }
     base=(uint64_t)b->position+advance;
+    if(b->stream_consume){
+        unsigned available=b->size/b->blockalign-b->position;
+        b->stream_consume(b->stream_context,b->position,advance>available?available:(unsigned)advance);
+    }
     if(base>=b->size/b->blockalign){
         if(b->looping)base%=b->size/b->blockalign;
         else {base=0;b->playing=0;}
@@ -473,8 +502,19 @@ static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
     b->position=(unsigned)base;
 }
 
+static FILE* ds_capture_open(const char* variable,unsigned rate){
+    const char* path=getenv(variable);FILE* pcm;
+    if(!path)return NULL;
+    pcm=fopen(path,"wb");
+    if(pcm){
+        char* sidecar=(char*)malloc(strlen(path)+6);FILE* metadata;
+        sprintf(sidecar,"%s.json",path);metadata=fopen(sidecar,"w");free(sidecar);
+        if(metadata){fprintf(metadata,"{\"format\":\"FLOAT_LE\",\"rate\":%u,\"channels\":2}\n",rate);fclose(metadata);}
+    }
+    return pcm;
+}
 void dd2_snd_mix_flip(void){
-    static int last_cf=-1; static FILE* pf; static int pf_init;
+    static int last_cf=-1; static FILE *pf,*mixed_capture,*music_capture; static int pf_init;
     static int clock_init;
     static unsigned last_ms, remainder;
     uint64_t pending;
@@ -482,6 +522,7 @@ void dd2_snd_mix_flip(void){
     unsigned rate=ds_device_rate(),tick_frames=rate/25;
     int realtime = getenv("DD2_REALTIME") != NULL;
     static int mix_out = -1;
+    if(ds_mixing)return;
 #ifdef DD2_BROWSER
     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
 #endif
@@ -491,36 +532,42 @@ void dd2_snd_mix_flip(void){
         elapsed=now-last_ms; last_ms=now;
         pending=(uint64_t)elapsed*rate+remainder;
         remainder=(unsigned)(pending%1000); pending/=1000;
-        if(!pending || !getenv("DD2_SOUND")) return;
+        if(!pending || (!getenv("DD2_SOUND") && !g_ds_music_buffers && !getenv("DD2_MIXPCM"))) return;
         dt=(int)((pending+tick_frames-1)/tick_frames);
     }else{
         cf=SND_CF;
         if(last_cf<0){ last_cf=cf; return; }
         dt=cf-last_cf; last_cf=cf;
         if(dt<=0||dt>250) return;
-        if(!getenv("DD2_SOUND")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
+        if(!getenv("DD2_SOUND") && !g_ds_music_buffers && !getenv("DD2_MIXPCM")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
         pending=(uint64_t)dt*tick_frames;
     }
-    if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p){
-        pf=fopen(p,"wb");
-        if(pf){
-            char* path=(char*)malloc(strlen(p)+6);FILE* metadata;
-            sprintf(path,"%s.json",p);metadata=fopen(path,"w");free(path);
-            if(metadata){fprintf(metadata,"{\"format\":\"FLOAT_LE\",\"rate\":%u,\"channels\":2}\n",rate);fclose(metadata);}
-        }
-    } } }
+    ds_mixing=1;
+    if(!pf_init){pf_init=1;pf=ds_capture_open("DD2_SNDPCM",rate);
+        mixed_capture=ds_capture_open("DD2_MIXPCM",rate);music_capture=ds_capture_open("DD2_MUSICPCM",rate);}
     for(t=0;t<dt;t++){
-        static float out[1920*2]; /* Largest supported 40ms device tick. */
+        static float out[1920*2],effects[1920*2],music[1920*2];
+        float* combined=(mixed_capture||mix_out>0)?out:NULL;
+        float* effects_out=(pf||mix_out>0)?effects:NULL;
+        float* cd=(music_capture||mix_out>0)?music:NULL;
+        unsigned music_frames=0;
         int frames=pending>tick_frames ? (int)tick_frames : (int)pending;
-        if(pf||mix_out>0){ int k; for(k=0;k<frames*2;k++) out[k]=0; }
+        { int k;for(k=0;k<frames*2;k++){if(combined)out[k]=0;if(effects_out)effects[k]=0;if(cd)music[k]=0;} }
         for(i=0;i<g_ndsbufs;i++){
             DSBuf* b=g_dsbufs[i];
-            if(!b->playing||!b->pcm||!b->size||b->freq<=0) continue;
-            ds_mix_buffer(b,out,frames,pf||mix_out>0);
+            if(!b->playing||(!b->pcm&&!b->stream_read)||!b->size||b->freq<=0) continue;
+            if(b->stream_read){
+                uint64_t available=(uint64_t)(b->size/b->blockalign-b->position)*rate-b->phase;
+                unsigned valid=(unsigned)((available+b->freq-1)/b->freq);
+                music_frames=valid<(unsigned)frames?valid:(unsigned)frames;
+            }
+            ds_mix_buffer(b,combined,effects_out,cd,frames);
         }
-        if(pf) fwrite(out,sizeof(float),frames*2,pf);
+        if(pf) fwrite(effects,sizeof(float),frames*2,pf);
+        if(mixed_capture)fwrite(out,sizeof(float),frames*2,mixed_capture);
+        if(music_capture)fwrite(music,sizeof(float),frames*2,music_capture);
 #ifdef DD2_BROWSER
-        dd2_audio_push(out, frames, rate);
+        dd2_audio_push(out,effects,music,frames,rate,music_frames);
 #endif
         pending-=frames;
         if(!realtime) dd2_audio_virtual_ms += 40;
@@ -537,4 +584,7 @@ void dd2_snd_mix_flip(void){
           if(!getenv("DD2_REALTIME") && g_dd2_mmtimer_active && tick_cf % 10 == 5) FUN_0041345c(); }
     }
     if(pf) fflush(pf);
+    if(mixed_capture)fflush(mixed_capture);
+    if(music_capture)fflush(music_capture);
+    ds_mixing=0;
 }

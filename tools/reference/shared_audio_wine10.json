@@ -1,0 +1,21 @@
+{
+  "scope": "Check the ordered CD/effects mix against captured Wine PCM and both ports.\n\nWine's timer-driven preroll/control edges are reported separately. The comparison\nanchors at the first nonzero CD source frame and requires the entire subsequent\nobserved prefix byte for byte, without fitting a phase or allowing sample errors.\nIt does not establish queued-control timing or original game full-stream parity.\n",
+  "fixture": {
+    "rate": 44100,
+    "track": 2,
+    "order": [
+      "effect-half",
+      "cd",
+      "effect-gain"
+    ]
+  },
+  "source_sha256": "85a6e4002bbf8b717ad91dec36dac03369f113ac3e9bc1b610168cfa676bc7d8",
+  "fixture_source_sha256": "f20dde454f92aba33595d05eea1dec940f564bb5be140545872f92b2f855be2c",
+  "first_nonzero_source_frame": 3126,
+  "exact_wave_frames": 27740,
+  "wave_sha256": "8d01c6a48578898e3637ac46fb5abd6601a7f17c743265d55e3a2fd7e3bb52b5",
+  "order_sensitive_frames": 2995,
+  "accepted_frames": 44100,
+  "leading_control_frames": 9831,
+  "trailing_control_frames": 6529
+}

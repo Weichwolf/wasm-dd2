@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-sound-cursor verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -82,6 +82,9 @@ verify-reference-video: native wasm ## compare one existing original L9 Draw_All
 
 verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on native/WASM against provisioned CDDA
 	python3 $(ROOT)/tools/verify_redbook.py --node $(NODE)
+
+verify-shared-audio: ## check ordered CD/effects mix against Wine PCM; SHARED_AUDIO_ARGS can recapture Wine
+	python3 $(ROOT)/tools/verify_shared_audio.py --node $(NODE) $(SHARED_AUDIO_ARGS)
 
 verify-menu-audio: ## check elapsed-time DirectSound playback and controls with a fixed menu frame counter
 	python3 $(ROOT)/tools/verify_menu_audio.py --node $(NODE)

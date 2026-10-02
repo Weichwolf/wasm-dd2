@@ -39,7 +39,8 @@ def main():
             env = {k: v for k, v in os.environ.items() if not k.startswith("DD2_")}
             env.update(DD2_LEVEL=str(level), DD2_SOUND="1", DD2_FRAMEDIR=str(frames),
                        DD2_PALDUMP="1", DD2_FLIPLOG="1", DD2_SNDPCM=str(frames / "audio.pcm"),
-                       DD2_CDPCM=str(frames / "redbook.pcm"))
+                       DD2_CDPCM=str(frames / "redbook.pcm"),
+                       DD2_MIXPCM=str(frames / "mixed.pcm"), DD2_MUSICPCM=str(frames / "music.pcm"))
             cmd = [args.native] if target == "native" else [args.node, args.wasm, str(level)]
             with (capture / f"{target}.log").open("wb") as output:
                 try:
@@ -64,6 +65,11 @@ def main():
             failures.append("PCM output missing/empty")
         if "redbook.pcm" not in files or not (native / "redbook.pcm").stat().st_size:
             failures.append("CD PCM output missing/empty")
+        for name in ("mixed.pcm", "music.pcm"):
+            if name not in files or not (native / name).stat().st_size:
+                failures.append(f"{name} missing/empty")
+            if name+".json" not in files:
+                failures.append(f"{name} format metadata missing")
         for name in sorted(files & others):
             # Compare bytes directly, without image conversions or approximate thresholds.
             with (native / name).open("rb") as left, (wasm / name).open("rb") as right:
@@ -79,6 +85,8 @@ def main():
         result = {"level": level, "pass": not failures, "frames": frame_count,
                   "pcm_bytes": (native / "audio.pcm").stat().st_size if "audio.pcm" in files else 0,
                   "cd_pcm_bytes": (native / "redbook.pcm").stat().st_size if "redbook.pcm" in files else 0,
+                  "mixed_pcm_bytes": (native / "mixed.pcm").stat().st_size if "mixed.pcm" in files else 0,
+                  "music_pcm_bytes": (native / "music.pcm").stat().st_size if "music.pcm" in files else 0,
                   "failures": failures, "captures": str(capture) if failures else None}
         results.append(result)
         if not failures:

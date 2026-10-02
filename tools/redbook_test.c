@@ -4,8 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dd2_cd.h"
+#ifndef __EMSCRIPTEN__
+#include <sys/mman.h>
+#endif
 static unsigned now;
-unsigned dd2_audio_ms(void) { return now; }
+unsigned dd2_platform_ms(void) { return now; }
+void FUN_0041345c(void) { abort(); }
 static void require(int ok, const char *reason) {
     if (!ok) { fprintf(stderr,"Redbook test failed: %s\n",reason); exit(1); }
 }
@@ -17,6 +21,12 @@ static unsigned status(unsigned item) {
 int main(int argc, char **argv) {
     uint32_t open[5] = {0}, set[3] = {0,10,0}, play[3] = {0};
     int track;
+#ifndef __EMSCRIPTEN__
+    require(mmap((void*)0x400000,0x580400,PROT_READ|PROT_WRITE,
+        MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED_NOREPLACE,-1,0)!=(void*)-1,"map engine clock");
+#endif
+    *(int*)0x462ff0=0;
+    setenv("DD2_REALTIME","1",1);
     require(argc==2,"PCM output path required");
     setenv("DD2_CDPCM",argv[1],1);
     open[2] = (uint32_t)(uintptr_t)"cdaudio";
@@ -32,18 +42,22 @@ int main(int argc, char **argv) {
     require(status(4)==525,"initial stop");
     require(dd2_mci_send(1,0x830,12,play)==261,"CDAudio CUE unsupported as in original driver");
     for (track=2;track<=19;track++) {
+        unsigned began=now,resumed,played;
         unsigned end_flags = track<19 ? 8 : 0;
         play[1]=track; play[2]=track+1;
         require(dd2_mci_send(1,0x806,4|end_flags,play)==0,"play physical audio track");
         require(status(4)==526 && status(8)==(unsigned)track,"playing correct track");
         now += 101; dd2_cd_pump();
+        played=(unsigned)((uint64_t)now*44100/1000-(uint64_t)began*44100/1000);
         require(status(2)==((unsigned)track | 7u<<24),"TMSF position after 101ms");
         require(dd2_mci_send(1,0x808,0,NULL)==0,"stop for pause");
         now += 777; dd2_cd_pump();
         require(status(4)==525 && status(2)==((unsigned)track | 7u<<24),"stopped cursor stays fixed");
         require(dd2_mci_send(1,0x806,end_flags,play)==0,"TO-only resume keeps sample cursor");
+        resumed=now;
         now += 99; dd2_cd_pump();
-        require(status(2)==((unsigned)track | 15u<<24),"fractional sample clock survives pause/resume");
+        played+=(unsigned)((uint64_t)now*44100/1000-(uint64_t)resumed*44100/1000);
+        require(status(2)==((unsigned)track | (played/588u)<<24),"resume follows the shared fractional device clock");
         require(dd2_mci_send(1,0x808,0,NULL)==0,"stop before next track");
     }
     /* A complete track, including its exact end and no data from the next. */
