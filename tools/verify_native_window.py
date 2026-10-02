@@ -5,8 +5,9 @@ Reads state without engine writes, validates actual renderer readback and every
 accepted audio byte up to a declared presentation checkpoint. An isolated save
 copy prevents changing the user's save. --controller attaches an external SDL
 virtual device and selects Joystick through the actual Configuration menu.
-Physical hardware and original complete stream/timing equivalence are not
-established by this test.
+Race Pause/Resume also checks Stop/TO-only CD restart at its public sector and
+the actual resumed source bytes. Physical hardware and original complete
+stream/timing equivalence are not established by this test.
 """
 import argparse
 import hashlib
@@ -68,6 +69,7 @@ def main():
                 env["DISPLAY"]=":"+number
                 process=subprocess.Popen([str(binary)],cwd=game,env={**env,"DD2_WINDOW":"1","SDL_AUDIODRIVER":"dummy",
                     "LD_PRELOAD":preload,"DD2_NATIVE_PAD_INPUT":str(padfile),"DD2_NATIVE_OBSERVE":str(output),"DD2_MIXPCM":str(output/"c-mixed.pcm"),
+                    "DD2_CDPCM":str(output/"cd-source.pcm"),
                     "DD2_NATIVE_PALETTE_ADDRESS":hex(table["g_palette"])},stdout=log,stderr=log)
                 def read(address,count):
                     nonlocal memory
@@ -198,9 +200,34 @@ def main():
                     pad();wait(lambda:read(0x754448,2)==b"\0\0" and integer(0x792a86+player*0x1b2)==0)
                 else:
                     edge("a",False);wait(lambda:read(table["dd2_keystate"]+0x41,1)==b"\0")
-                key("Escape");time.sleep(0.4);paused=state()["cf"];time.sleep(0.4)
-                if state()["cf"]!=paused:raise RuntimeError("Native Escape did not pause the race")
-                capture();key("Return");wait(lambda:state()["cf"]>paused);final=capture()
+                # Exercise a fractional stopped sector through actual keys;
+                # an exactly aligned stop cannot distinguish the old restart.
+                # Retry by resuming normally, without changing engine state.
+                for attempt in range(3):
+                    key("Escape");time.sleep(0.4);paused=state()["cf"];time.sleep(0.4)
+                    if state()["cf"]!=paused:raise RuntimeError("Native Escape did not pause the race")
+                    if integer(table["cd_mode"])!=525 or integer(0x462d70)!=0:
+                        raise RuntimeError("Original pause did not stop the MCI CD transport")
+                    paused_position=struct.unpack("<Q",read(table["cd_position"],8))[0]
+                    stopped_bytes=(output/"cd-source.pcm").stat().st_size
+                    capture();key("Return");wait(lambda:state()["cf"]>paused)
+                    if paused_position%588:break
+                    resumed_cf=state()["cf"];wait(lambda:state()["cf"]>resumed_cf+7)
+                else:raise RuntimeError("CD restart test did not exercise a fractional sector")
+                origin=struct.unpack("<Q",read(table["cd_origin"],8))[0]
+                if origin!=paused_position//588*588:
+                    raise RuntimeError(f"Race CD restart retained fractional samples: stopped={paused_position}, origin={origin}")
+                wait(lambda:(output/"cd-source.pcm").stat().st_size>=stopped_bytes+2352)
+                disc=json.loads((ROOT/"DestructionDerby2/Redbook/disc.json").read_text())
+                track=next(t for t in disc["tracks"][1:] if t["start_sector"]*588<=origin<t["end_sector"]*588)
+                with (ROOT/"DestructionDerby2/Redbook"/track["file"]).open("rb") as source:
+                    source.seek((origin-track["start_sector"]*588)*4)
+                    resumed_source=source.read(2352)
+                with (output/"cd-source.pcm").open("rb") as actual_source:
+                    actual_source.seek(stopped_bytes)
+                    if actual_source.read(2352)!=resumed_source:
+                        raise RuntimeError("Actual race CD restart bytes differ from the declared public sector")
+                final=capture()
                 if state()["cars"]!=20:raise RuntimeError("Native race has no full opponent field")
                 # The SDL observer records an explicit accepted-byte boundary at
                 # this presentation. C has flushed the shared mixer before it.
@@ -213,10 +240,13 @@ def main():
                 report={"scope":__doc__,"pass":True,"renderer_pixels":pixels,"captures":captures,
                         "accepted_audio_bytes":accepted,"race":state(),"input":"actual X11 keyboard -> SDL -> engine", "virtual_controller":args.controller,
                         "binary":str(binary),"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),
+                        "cd_restart":{"stopped_position":paused_position,"fractional_frames":paused_position%588,
+                                      "public_sector":paused_position//588,"new_origin":origin,
+                                      "source_capture_offset":stopped_bytes,"verified_source_bytes":2352},
                         "driving":{"player":player,"start_cf":start,"end_cf":end,"position_before":before,"position_after":after}}
                 (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
                 print(f"PASS native window: real menu/CD controls, populated race, "
-                      f"{'SDL controller steering/accelerate/brake/release' if args.controller else 'keyboard acceleration'} and pause/resume; "
+                      f"{'SDL controller steering/accelerate/brake/release' if args.controller else 'keyboard acceleration'} and pause/resume/CD sector restart; "
                       f"{pixels} exact rendered pixels and {accepted} exact accepted mixed audio bytes",flush=True)
                 print(f"Report: {output/'report.json'}",flush=True)
             finally:

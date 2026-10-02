@@ -116,6 +116,13 @@ also captures Wine's actual mixer with an explicit hardware Q snapshot. Both
 literal source starts must match byte for byte; altered PCM and the old
 within-sector restart are rejected. Queued control edges and the live game's
 transport clock remain outside this fixture's proof.
+Native window QA also pauses/resumes a real race through X11, checks the
+public sector and actual resumed source bytes, and verifies the accepted SDL
+mix. `make verify-browser-redbook-restart` checks the live browser keyboard
+flow, stopped race/CD state, resumed CDDA bytes and every shared WebAudio
+buffer bit. `BROWSER_RESTART_OUTPUT=<empty dir>` retains its report/source/PNG.
+Both checks exercise a fractional stopped sector, so the preceding incorrect
+sample-cursor restart cannot pass merely by stopping at an aligned sector.
 `node tools/browser/qa_redbook.js web/dd2`
 navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
 and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.

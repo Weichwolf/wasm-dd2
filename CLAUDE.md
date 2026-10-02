@@ -35,6 +35,27 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Native/browser real race pause/resume now verify the CD sector restart end
+  to end. The new native read-only check fails the preceding binary after real
+  X11 Escape/Return (stopped/origin=26779857, still fractional;
+  /tmp/dd2-native-cd-restart-before.log). The fixed binary stops at 26767025,
+  resumes at sector45522/sample26766936, repeats the 89 fractional frames and
+  reads the exact next 2352 bytes of the original CD source. Menus, live SDL
+  controller/physics and ten renderer checkpoints (3072000 pixels) pass, with
+  7549560 exact accepted C-mix bytes
+  (/tmp/dd2-native-cd-restart-reviewed/report.json). It retries ordinary
+  pause/resume if a stop lands exactly on a sector, without engine writes.
+  Browser live keys stop at relative source frame206300 and restart205800:
+  67208 exact resumed CDDA bytes, all 1401 shared WebAudio buffers match C,
+  no missing/extra/differing buffers or runtime errors, race/CD frozen during
+  pause (/tmp/dd2-browser-cd-restart-reviewed/report.json).
+  make verify-browser-redbook-restart supports BROWSER_RESTART_OUTPUT=<dir>.
+  The rebuilt native/Node pair passes all ten full demos again: 15255 presented
+  frames/palettes, RNG/flip logs and every effects/mix/music/raw-CD byte
+  (/tmp/dd2-parity-redbook-sector/results.json). Native SHA
+  6534927544c283e64c8771036d263d8497511eb74b504d9abe9cf92c29aeba44.
+  These establish exercised input/control/source/output chains, not physical
+  hardware or the complete original live Q-channel/queue timing.
 - Original-style CD_Pause/Restart (Stop then Play with TO only) now restarts
   at the public whole CD sector, rather than the retained fractional sample.
   Original 4162e4/416314 and Wine MCICDA_Play's Q/MSF conversion establish the
