@@ -1,0 +1,28 @@
+Restore Setup_Driver_Names' computer-name table base (dd2h.exe 0x44c550).
+At 0x44c5a5 ESI receives the human-driver count; 0x44c5a7 shifts it left
+by four, 0x44c5aa subtracts 16 and 0x44c5b3 adds 0x467664. The first
+computer name is therefore 0x467654 + humans*16. Each subsequent name
+advances another 16 bytes (0x44c5c1), and each destination champ_info
+record advances 54 bytes (0x44c5cc).
+
+Ghidra expressed the starting address as &num_races + humans*8 before
+assigning it to a WORD pointer. Our byte-typed num_races symbol makes
+that initial addition advance only 8 bytes per human; the later WORD
+pointer increments still advance 16. With one human this starts at
+0x46765c, the num_cars DWORD, then copies truncated/empty suffixes of
+the actual names. Live championship Retire/Yes -> View League reproduced
+all affected rows; the unmodified original produced the full names and
+the same point totals. Use explicit byte address arithmetic for the
+original base, keeping the existing WORD-pointer loop stride intact.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -38286,7 +38286,7 @@
+   if (_DAT_00467658 < 0x14) {
+     pcVar4 = &champ_info + _DAT_00467658 * 0x36;
+     iVar2 = _DAT_00467658;
+-    puVar3 = &num_races + _DAT_00467658 * 8;
++    puVar3 = (undefined2 *)GIMG(0x467654 + _DAT_00467658 * 0x10);
+     do {
+       iVar2 = iVar2 + 1;
+       FUN_004568ee(pcVar4,&DAT_0046d594,puVar3);

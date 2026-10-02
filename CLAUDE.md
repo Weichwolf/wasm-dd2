@@ -85,7 +85,26 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   not geometry-cache structures; they were downstream consequences.
 - User reports menu graphics/actions and championship scores broken. Reproduce by
   navigating the menus and verify action effects and rendering against the original;
-  label/alive checks alone are insufficient. These issues remain open.
+  label/alive checks alone are insufficient. Patch 838 fixes the reproduced
+  corrupted/empty championship names: Setup_Driver_Names started its computer-name
+  table at humans*8 bytes, while original 0x44c5a7-0x44c5b3 uses humans*16 bytes.
+  Real Championship -> name "A" -> Go -> Pause/Retire/Yes -> View League on the
+  browser now matches all 20 original names/points and all four pages' framebuffer
+  and palette bytes exactly. Original capture: /tmp/dd2-original-champ-acknowledged;
+  browser: /tmp/dd2-champ-scores-strict-final; logs /tmp/dd2-champ-names-final.log.
+  Tools/reference/capture.py --mode menu --acknowledged-key --keys ... drives real X11
+  inputs via read-only ReadPad hardware breakpoints and records each held-poll
+  count until release. Wine can queue key-up late, so this does not claim one
+  poll per key. This avoids long held keys in the fast Wine FE and missed short
+  keys during a race. Browser qa_champ_scores
+  releases each key after one presented frame and asserts actual Retire activation;
+  prior 140ms/down-confirm tests skipped menu items or selected No.
+  make verify-champ-names tests 1/2/5/10-human naming on native/WASM. Optional
+  CHAMPREF/CHAMPBROWSER checks real score builders with original standings as an
+  explicit fixture and the live browser's names/points/pixels/palettes against the
+  original. Native live viewer rendering, full seasons/promotion/relegation, other
+  menu reports and complete original streams remain open. All ten native/WASM
+  demos still match after patch 838: /tmp/dd2-parity-champ-names/results.json.
 - Wine 10 and wine32:i386 are installed. The original requires a valid audio CD
   before DirectDraw/FE initialization. `make refcapture` now builds a virtual
   Linux CD adapter from the verified Redbook manifest and serves exact sector

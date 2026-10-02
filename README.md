@@ -53,7 +53,7 @@ across native and WASM (1525-1527 frames, 2638944 effects PCM bytes and 4939200
 CD PCM bytes per demo). Patch
 835 restores the original contiguous angle vector for the animated L1 objects;
 its split stack locals caused the previous 137-frame discrepancy. Menu behavior,
-championship scores and complete comparisons with the running original
+full championships, other menu actions and complete comparisons with the running original
 remain open acceptance work.
 
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
@@ -80,6 +80,35 @@ changes on both backends against 4848 known PCM bytes with `cf=0`.
 `node tools/browser/qa_menu_audio.js web/dd2` verifies real menu navigation submits
 nonzero effect buffers without advancing the race counter. The complete original
 mixed stream and its timing remain unverified.
+
+Patch 838 fixes corrupted championship names: the computer-name table began at
+an 8-byte offset per human instead of the original 16-byte offset. A real menu
+run through Championship, name entry, Go, Pause/Retire/Yes and View League now
+matches the original on all four divisions: all 20 names/points, all 307200
+framebuffer pixels per page, and all 1024 palette bytes per page.
+`node tools/browser/qa_champ_scores.js web/dd2 /tmp/fresh-champ-browser` exercises
+that flow and saves the score data, raw pixels/palettes and screenshots. It releases
+keys after one presented frame; long held keys skipped pause items in older tests.
+
+`make verify-champ-names` tests the real engine's naming code on native/WASM with
+1/2/5/10 human drivers. For the original reference and browser comparison:
+
+```sh
+python3 tools/reference/capture.py --mode menu --acknowledged-key --timeout 150 \
+  --output /tmp/fresh-champ-original --keys Return Return Return Return Up Left \
+  Return Down Down Return Escape Down Down Down Return Up Return Right Return Right Right Right
+make verify-champ-names CHAMPREF=/tmp/fresh-champ-original \
+  CHAMPBROWSER=/tmp/fresh-champ-browser/scores.json
+```
+
+The reference sends real X11 key events and uses hardware breakpoints to let each
+key reach the pad reader and acknowledge its release, without changing engine
+memory. It records all intervening held polls; Wine may queue key-up late.
+Ordinary `--keys` can also use `--key-hold=<seconds>`. Navigation captures include races/results.
+The native/WASM score-builder comparison uses captured original standings as an
+explicit fixture; the browser comparison exercises a live championship. Full
+native viewer rendering, full seasons, promotion/relegation and complete streams
+still need acceptance checks. Use fresh capture directories; stale output is rejected.
 
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh
