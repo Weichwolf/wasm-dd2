@@ -29,7 +29,7 @@ def build_audio(output):
     return libraries
 
 
-def summarize_audio(directory):
+def summarize_audio(directory,*,write=True):
     if (directory/"error.txt").exists():
         raise RuntimeError((directory/"error.txt").read_text())
     streams=[]
@@ -75,5 +75,6 @@ def summarize_audio(directory):
         raise ValueError("Selected process produced no captured ALSA frames")
     report={"scope":"actual Wine ALSA accepted PCM; transport/timing alignment and port comparison pending",
             "streams":streams}
-    (directory/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
+    if write:
+        (directory/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
     return report

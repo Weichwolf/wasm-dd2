@@ -35,6 +35,29 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- A complete, unmodified dd2h.exe intro now has an actual accepted-audio
+  comparison, beyond the codec API fixtures. At the declared 22050Hz reference
+  device it emits all 6039616 source PCM16 bytes exactly, followed by 660
+  actual silent stereo frames. No alignment, trimming or tolerance is used
+  (/tmp/dd2-original-full-intro-audio-reviewed/movie-negative-proof.json).
+  Changed source bits and nonzero tails fail even after updating their valid
+  capture hashes; accepted-write journals are checked without overwriting
+  the original capture's summary metadata. make verify-movie-reference
+  MOVIE_REFERENCE_ARGS='--capture <dir> --source <movie-audio-proof-dir>
+  --negative-controls --report <fresh-file>' reproduces this.
+  Reference capture.py now accepts --keep-movie and explicit --wine-debug,
+  recording those choices in its audio summary. The full run used --mode
+  audio --audio --audio-rate 22050 --audio-tail 3 --keep-movie
+  --wine-debug=-all,+iccvid,+mciavi --timeout 120. The 44100-only virtual
+  reference device could not open this film's ADPCM WaveOut stream (error32);
+  its later frontend PCM is not valid movie evidence. This is the configured
+  device limitation, not evidence about original Windows hardware.
+  Original command/codec traces confirm output RGB32/320x192 and destination
+  (0,48)-(640,432); they record paints0..1710, not source frame1711. These are
+  observations of Wine's MCI driver, not complete original pixel/clock parity.
+  MCI/AVI integration, actual presentation and output/control timing still
+  remain to be implemented/compared. 32/64-bit ALSA clock/observer regressions
+  pass after adding read-only summary validation.
 - Portable Microsoft ADPCM source decoding now matches actual Wine Win32 ACM
   for both complete original film audio streams. Intro: 1509904 stereo frames/
   6039616 PCM16LE bytes; Outro: 1598960 frames/6395840 bytes, both at 22050Hz.

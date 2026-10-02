@@ -106,6 +106,10 @@ def main():
                         help="capture increasing race checkpoints in one unmodified attract run")
     parser.add_argument("--timeout", type=float, default=90)
     parser.add_argument("--trace-cd", action="store_true")
+    parser.add_argument("--wine-debug", default="-all",
+                        help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
+    parser.add_argument("--keep-movie", action="store_true",
+                        help="play the original intro through completion during reference capture")
     parser.add_argument("--keys", nargs="*", choices=("Left", "Right", "Up", "Down", "Return", "Escape", "F1", "F2"),
                         help="navigate from the initial menu with real X11 keys; capture after each action")
     parser.add_argument("--key-hold", type=float, default=0.14,
@@ -157,7 +161,8 @@ def main():
             if any(stream["rate"] != args.audio_rate for stream in report["streams"]):
                 raise RuntimeError("Committed reference audio rate differs from requested virtual device")
             report.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=args.audio_rate,
-                          virtual_device=args.audio_device)
+                          virtual_device=args.audio_device,wine_debug=args.wine_debug,
+                          movie_autoskip=not args.keep_movie)
             (output/"audio/summary.json").write_text(json.dumps(report,indent=2)+"\n")
 
 
@@ -186,7 +191,7 @@ def run(game, output, args):
     alsa = WORK / "asound.conf"
     alsa.write_text("pcm.!default { type null }\n")
     env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
-    env.update(WINEPREFIX=str(prefix), WINEARCH="win32", WINEDEBUG="-all",
+    env.update(WINEPREFIX=str(prefix), WINEARCH="win32", WINEDEBUG=args.wine_debug,
                ALSA_CONFIG_PATH=str(alsa), DD2_CD_ROOT=str(game / "Redbook"),
                DD2_CD_DEVICE=str(device), LD_PRELOAD="dd2_cdrom.so",
                LD_LIBRARY_PATH=":".join(map(str, libraries)) +
@@ -260,7 +265,7 @@ def run(game, output, args):
                     if now - last_report >= 5:
                         print(json.dumps(current), flush=True)
                         last_report = now
-                    if current["movie"] and now - last_escape >= 2:
+                    if current["movie"] and not args.keep_movie and now - last_escape >= 2:
                         subprocess.run(["xdotool", "search", "--name", "PC-DD2", "windowfocus", "key", "Escape"],
                                        env=env, stdout=subprocess.DEVNULL, stderr=wine_log, timeout=5)
                         last_escape = now
