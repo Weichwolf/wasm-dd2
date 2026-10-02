@@ -46,10 +46,11 @@ byte-for-byte between native and WASM on all ten demos. Logs and results go to
 `/tmp/dd2-parity`; identical captures are removed, failed captures are retained.
 This target does not compare with `dd2h.exe` or validate menu actions.
 
-Current Debian validation: all ten demos return on both ports; complete demo
-output matches on levels 2-10. Level 1 has 137 differing video frames, first at
-engine frame 365, while its palette, PCM and flip/RNG logs match. The parity target
-therefore fails until that graphics discrepancy is corrected. Menu behavior,
+Current Debian validation: all ten sound-enabled demos return on both ports.
+Every presented frame and palette, flip/RNG log and generated PCM byte matches
+across native and WASM (1525-1527 frames and 2638944 PCM bytes per demo). Patch
+835 restores the original contiguous angle vector for the animated L1 objects;
+its split stack locals caused the previous 137-frame discrepancy. Menu behavior,
 championship scores, Redbook playback and comparisons with the running original
 remain open acceptance work.
 

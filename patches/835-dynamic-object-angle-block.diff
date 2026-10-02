@@ -1,0 +1,63 @@
+Draw_Other_Objects (0x42d008), L1 Wild Bill and cigar animation: reconstruct
+its contiguous 8-byte angle vector, instead of passing the address of a
+standalone DWORD and reading unrelated stack locals as its Z angle.
+Original dd2h.exe:
+  0x42d02d / 0x42d062: edi = ebp-0x24
+  0x42d039-0x42d03a / 0x42d07b-0x42d07c: two movsd copy all 8 source bytes
+  0x42d055 / 0x42d097: mov [ebp-0x20],ax replaces only the third SHORT
+  0x42d059 / 0x42d09b: lea eax,[ebp-0x24], passed to Draw_Dynamic_Objects
+  0x420510: FUN_004204d0 loads angle Z from DWORD[input+2] >> 16.
+The decompile split the vector into local_28/local_24/uStack_22 and wrote
+its third angle to the unrelated invented global _local_24. Native and
+WASM consequently used different adjacent stack bytes when rotating the
+Wild Bill mesh. Keep both source DWORDs and replace exactly its Z WORD.
+This removes the L1 native/WASM video split without changing culling.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -19597,9 +19597,7 @@
+   undefined4 *puVar7;
+   int *piVar8;
+   int *piVar9;
+-  int local_28;
+-  short local_24;
+-  undefined2 uStack_22;
++  int object_angles[2];  /* contiguous original 8-byte angle block at ebp-0x24 */
+   int local_20;
+   int *local_1c;
+   int *local_18;
+@@ -19607,22 +19605,20 @@
+   
+   switch(_current_level) {
+   case 1:
+-    local_28 = CONCAT22((*(unsigned short*)((char*)&wild_bill_angles + 2)),(undefined2)wild_bill_angles);
+-    local_24 = DAT_00464e50;
+-    uStack_22 = uRam00464e52;
++    object_angles[0] = wild_bill_angles;
++    object_angles[1] = DAT_00464e50;
+     iVar6 = rsin((int)DAT_00464e50);
+-    _local_24 = CONCAT22(uStack_22,
+-                         (short)((int)((iVar6 + (iVar6 >> 0x1f) * -0x10) -
+-                                      (uint)((iVar6 >> 0x1f) << 3 < 0)) >> 4));
+-    Draw_Dynamic_Objects((undefined4 *)0x781f6c,&local_28,(int *)&wild_bill_position);
+-    local_28 = CONCAT22((*(unsigned short*)((char*)&cigar_angles + 2)),(undefined2)cigar_angles);
+-    local_24 = DAT_00464e58;
+-    uStack_22 = uRam00464e5a;
++    *(short *)&object_angles[1] =
++         (short)((int)((iVar6 + (iVar6 >> 0x1f) * -0x10) -
++                      (uint)((iVar6 >> 0x1f) << 3 < 0)) >> 4);
++    Draw_Dynamic_Objects((undefined4 *)0x781f6c,object_angles,(int *)&wild_bill_position);
++    object_angles[0] = cigar_angles;
++    object_angles[1] = DAT_00464e58;
+     iVar6 = rsin((int)DAT_00464e58);
+-    _local_24 = CONCAT22(uStack_22,
+-                         (short)((int)((iVar6 + (iVar6 >> 0x1f) * -0x10) -
+-                                      (uint)((iVar6 >> 0x1f) << 3 < 0)) >> 4));
+-    Draw_Dynamic_Objects((undefined4 *)&cigar_object,&local_28,(int *)&cigar_position);
++    *(short *)&object_angles[1] =
++         (short)((int)((iVar6 + (iVar6 >> 0x1f) * -0x10) -
++                      (uint)((iVar6 >> 0x1f) << 3 < 0)) >> 4);
++    Draw_Dynamic_Objects((undefined4 *)&cigar_object,object_angles,(int *)&cigar_position);
+     Texture_Animation(2,(undefined4 *)0x781f0c,&sca_frame_count_);
+     return;
+   case 4:

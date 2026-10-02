@@ -46,14 +46,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   New `make verify-parity` compares every presented frame AND its palette, flip/RNG
   logs and generated PCM bytes. All ten sound-enabled demos return. L2-L10 match
   exactly across native/WASM (1525-1527 presented frames and 2638944 PCM bytes per
-  demo). L1 FAILS video parity: 137 presented frames differ, first f00853 at cf365
-  (149 pixels, bbox x59..90/y192..210), last f01183. Palettes, PCM and flip/RNG logs
-  match. Reproduce with `make verify-parity` (nonzero exit is expected until fixed).
-  Captures in this session: /tmp/dd2-parity-levels1-8/level01-t9by6ffs; diagnostic
-  images at cf363/364/365 in /tmp/dd2-L1-{native,wasm}-state. The first observed
-  geometry-cache differences precede the visible split: native words at 0x874c84,
-  0x874d60, 0x874de4 are zero while WASM has projected-poly pointers. Investigate
-  scene projection/culling against the original; this is not yet a verified cause.
+  demo). Patch 835 restores Draw_Other_Objects' contiguous 8-byte angle vector
+  (two movsd and a third-WORD replacement at 0x42d028-0x42d0a4). The decompile
+  wrote the Z angle to an invented global and passed a standalone DWORD, so the
+  rotating Wild Bill mesh read target-dependent adjacent stack bytes. L1 now
+  also matches: 1525 frames/palettes and 2638944 PCM bytes. Rebuilt native, Node
+  and browser; the other nine complete demos still match. Verification logs:
+  /tmp/dd2-parity-L1-fix/results.json and /tmp/dd2-parity-835-regression/results.json.
+  Earlier observed differences at 0x874c84/0x874d60/0x874de4 are OT bucket heads,
+  not geometry-cache structures; they were downstream consequences.
 - User reports menu graphics/actions and championship scores broken. Reproduce by
   navigating the menus and verify action effects and rendering against the original;
   label/alive checks alone are insufficient. These issues remain open.
