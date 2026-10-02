@@ -111,6 +111,21 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Native window-system input/hardware audio, full seasons/promotion/relegation,
   other menu reports and complete original streams remain open. All ten native/WASM
   demos still match after patch 838: /tmp/dd2-parity-champ-names/results.json.
+  New menu-cycle captures compare all 64 highlight phases at presentation, with
+  no pixel masks/tolerance. Main-menu Down/Right/Right -> Configuration -> Right
+  -> Audio Volume matches original/native/browser on all seven checkpoints:
+  448 frames per port, every framebuffer/palette byte. Artifacts:
+  /tmp/dd2-original-config-presented, /tmp/dd2-native-config-presented,
+  /tmp/dd2-browser-config-presented; /tmp/dd2-config-presented-comparison.json.
+  Browser capture checks actual canvas ImageData against indexed pixels/palette.
+  tools/menu_cycle_gdb.py uses original hardware-only breakpoints. Draw_All
+  presents the previous framebuffer before rasterizing current OT; return-stage
+  capture was one image ahead of browser presentation (all 16 color-transition
+  phases per cycle failed). Entry-stage captures align exactly without shifting
+  recorded phases. Reproduce via --menu-cycle 64 on reference/native capture,
+  tools/browser/capture_menu_cycle.js and make verify-menu-cycles. This proves
+  the rendered highlight cycle on this path only; input-repeat/wall-clock/audio
+  timing, other animations and reported menu-action failures remain open.
 - Wine 10 and wine32:i386 are installed. The original requires a valid audio CD
   before DirectDraw/FE initialization. `make refcapture` now builds a virtual
   Linux CD adapter from the verified Redbook manifest and serves exact sector

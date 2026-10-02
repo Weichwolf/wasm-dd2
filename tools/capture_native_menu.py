@@ -45,6 +45,9 @@ def capture(index, key):
              'held_pad_polls': 1 if key else 0}
     (directory / 'checkpoint.json').write_text(json.dumps(state, indent=2)+'\n')
     print('Native checkpoint %d %s: %s' % (index, key, state), flush=True)
+    if cycle_frames:
+        from menu_cycle_gdb import record_cycle
+        record_cycle(directory, cycle_frames, int(gdb.parse_and_eval('&Draw_All')), already_at_entry=True)
 
 start = gdb.Breakpoint('*Front_End', temporary=True)
 gdb.execute('run')
@@ -76,6 +79,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--keys", nargs="+", choices=KEYS, required=True)
     parser.add_argument("--settle-frames", type=int, default=60)
+    parser.add_argument("--menu-cycle", type=int, choices=(0,64), default=0)
     parser.add_argument("--timeout", type=float, default=90)
     args = parser.parse_args()
     if args.settle_frames < 1 or args.timeout <= 0:
@@ -88,7 +92,9 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
     env.update(DD2_FE="1", DD2_SOUND="1", DD2_NOSEGV="1")
-    parameters = f"output={str(output)!r}\nkeys={args.keys!r}\nvkeys={KEYS!r}\nsettle_frames={args.settle_frames!r}\n"
+    parameters = (f"import sys\nsys.path.insert(0, {str(ROOT / 'tools')!r})\n"
+                  f"output={str(output)!r}\nkeys={args.keys!r}\nvkeys={KEYS!r}\n"
+                  f"settle_frames={args.settle_frames!r}\ncycle_frames={args.menu_cycle!r}\n")
     script = output / "capture.gdb"
     script.write_text("set pagination off\nset confirm off\nset auto-solib-add off\npython\nexec(" +
                       repr(parameters + GDB_DRIVER) + ")\nend\nquit\n")

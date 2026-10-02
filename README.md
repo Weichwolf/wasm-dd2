@@ -124,6 +124,28 @@ and checks the real renderer output; native window-system input and hardware aud
 are not exercised. Full seasons, promotion/relegation and complete streams still
 need acceptance checks. Use fresh capture directories; stale output is rejected.
 
+Menu graphics can be compared over complete 64-frame highlight cycles. This
+checks every indexed pixel and palette byte at presentation, including the
+browser's canvas conversion; it uses no pixel mask or tolerance. For the path
+Main Menu -> Configuration -> Audio Volume:
+
+```sh
+python3 tools/reference/capture.py --mode menu --acknowledged-key --menu-cycle 64 \
+  --timeout 150 --output /tmp/fresh-original-cycle --keys Down Right Right Return Right Return
+python3 tools/capture_native_menu.py --menu-cycle 64 --timeout 150 \
+  --output /tmp/fresh-native-cycle --keys Down Right Right Return Right Return
+node tools/browser/capture_menu_cycle.js web/dd2 /tmp/fresh-browser-cycle \
+  Down Right Right Return Right Return
+make verify-menu-cycles MCREF=/tmp/fresh-original-cycle MCNATIVE=/tmp/fresh-native-cycle \
+  MCBROWSER=/tmp/fresh-browser-cycle MCREPORT=/tmp/fresh-cycle-report.json
+```
+
+All seven checkpoints on this path match the original on both ports: 448 frames
+per target. `Draw_All` presents the existing framebuffer before rasterizing the
+next image, so reference/native captures stop at entry. Pairing by the recorded
+highlight counter aligns this specific animation. It does not establish wall-clock
+timing, other animations, input-repeat timing or audio-stream equality.
+
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh
 sudo dpkg --add-architecture i386

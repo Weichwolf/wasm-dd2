@@ -101,6 +101,8 @@ def main():
                         help="seconds per held key; record this for timing comparisons")
     parser.add_argument("--acknowledged-key", action="store_true",
                         help="wait for real key press/release at pad polls and record held poll counts")
+    parser.add_argument("--menu-cycle", type=int, choices=(0,64), default=0,
+                        help="capture a complete rendered highlight cycle at every menu checkpoint")
     args = parser.parse_args()
     if args.frame < 1 or args.timeout <= 0 or not 0 < args.key_hold <= 1:
         parser.error("frame/timeout must be positive and key hold must be in (0,1]")
@@ -108,6 +110,8 @@ def main():
         parser.error("--keys requires --mode menu")
     if args.acknowledged_key and args.keys is None:
         parser.error("--acknowledged-key requires --keys")
+    if args.menu_cycle and args.mode != "menu":
+        parser.error("--menu-cycle requires --mode menu")
     game, output = args.game_dir.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     if any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json")) or any(output.glob("step*/checkpoint.json")):
@@ -201,10 +205,12 @@ def run(game, output, args):
                     ready = (current["screen"] == 201 and current["level"] == 0) if args.mode == "menu" else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.keys is not None:
-                            navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log)
+                            navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log, args.menu_cycle)
                             return
                         capture(pid, output, env, args.frame, args.mode == "menu",
                                 max(1, deadline - time.monotonic()))
+                        if args.menu_cycle:
+                            capture_cycle(pid, output, env, args.menu_cycle, max(1, deadline-time.monotonic()))
                         return
                 if wine.poll() is not None:
                     raise RuntimeError(f"Original exited before checkpoint ({wine.returncode}); see {output / 'wine.log'}")
@@ -272,7 +278,23 @@ def key_acknowledged(pid, output, env, key, timeout):
     return held
 
 
-def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log):
+def capture_cycle(pid, output, env, frames, timeout):
+    commands = ["set pagination off", "set auto-solib-add off", f"attach {pid}",
+                "python", "import sys", f"sys.path.insert(0, {str(ROOT / 'tools')!r})",
+                "from menu_cycle_gdb import record_cycle",
+                f"record_cycle({str(output)!r}, {frames}, 0x420c9c, hardware=True)",
+                "end", "detach", "quit"]
+    script = output / "cycle.gdb"
+    script.write_text("\n".join(commands)+"\n")
+    with (output / "cycle.log").open("wb") as log:
+        subprocess.run(["gdb", "--nx", "-q", "-batch", "-x", str(script)], env=env,
+                       stdout=log, stderr=subprocess.STDOUT, check=True, timeout=timeout)
+    cycle = json.loads((output / "cycle/cycle.json").read_text())
+    if len(cycle["frames"]) != frames:
+        raise RuntimeError("Incomplete original rendered cycle")
+
+
+def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log, cycle_frames=0):
     """Read-only checkpoints after real input; no EXE or engine-state writes."""
     sequence = [None, *keys]
     held_polls = []
@@ -292,6 +314,8 @@ def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log)
                            stderr=wine_log, check=True, timeout=5)
         time.sleep(0.7)
         capture(pid, directory, env, 0, True, max(1, deadline-time.monotonic()), navigation=True)
+        if cycle_frames:
+            capture_cycle(pid, directory, env, cycle_frames, max(1, deadline-time.monotonic()))
     (output / "navigation.json").write_text(json.dumps({"keys": keys,
         "key_hold_seconds": None if acknowledged else key_hold,
         "acknowledged_keys": acknowledged, "held_pad_polls": held_polls, "input": "real X11 keys",
