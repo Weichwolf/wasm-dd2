@@ -54,6 +54,10 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   frames/palettes, RNG/flip logs and every effects/mix/music/raw-CD byte
   (/tmp/dd2-parity-redbook-sector/results.json). Native SHA
   6534927544c283e64c8771036d263d8497511eb74b504d9abe9cf92c29aeba44.
+  Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now contain these
+  validated sector-restart builds. All eight existing original L9 checkpoints
+  at cf1/25/50/150/300/450/600/650 still match framebuffer and palette exactly
+  on both rebuilt ports (/tmp/dd2-redbook-sector-original-video.log).
   These establish exercised input/control/source/output chains, not physical
   hardware or the complete original live Q-channel/queue timing.
 - Original-style CD_Pause/Restart (Stop then Play with TO only) now restarts
