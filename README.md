@@ -46,6 +46,13 @@ byte-for-byte between native and WASM on all ten demos. Logs and results go to
 `/tmp/dd2-parity`; identical captures are removed, failed captures are retained.
 This target does not compare with `dd2h.exe` or validate menu actions.
 
+Current Debian validation: all ten demos return on both ports; complete demo
+output matches on levels 2-10. Level 1 has 137 differing video frames, first at
+engine frame 365, while its palette, PCM and flip/RNG logs match. The parity target
+therefore fails until that graphics discrepancy is corrected. Menu behavior,
+championship scores, Redbook playback and comparisons with the running original
+remain open acceptance work.
+
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh
 sudo dpkg --add-architecture i386

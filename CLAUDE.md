@@ -44,8 +44,16 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - The Node build now imports `DD2_*` process options into libc ENV before boot. Before
   this fix, Node silently ignored sound, input scripts and frame capture options.
   New `make verify-parity` compares every presented frame AND its palette, flip/RNG
-  logs and generated PCM bytes. L9/L10 each match exactly across native/WASM for
-  1525 presented frames and 2638944 PCM bytes; other levels are pending this check.
+  logs and generated PCM bytes. All ten sound-enabled demos return. L2-L10 match
+  exactly across native/WASM (1525-1527 presented frames and 2638944 PCM bytes per
+  demo). L1 FAILS video parity: 137 presented frames differ, first f00853 at cf365
+  (149 pixels, bbox x59..90/y192..210), last f01183. Palettes, PCM and flip/RNG logs
+  match. Reproduce with `make verify-parity` (nonzero exit is expected until fixed).
+  Captures in this session: /tmp/dd2-parity-levels1-8/level01-t9by6ffs; diagnostic
+  images at cf363/364/365 in /tmp/dd2-L1-{native,wasm}-state. The first observed
+  geometry-cache differences precede the visible split: native words at 0x874c84,
+  0x874d60, 0x874de4 are zero while WASM has projected-poly pointers. Investigate
+  scene projection/culling against the original; this is not yet a verified cause.
 - User reports menu graphics/actions and championship scores broken. Reproduce by
   navigating the menus and verify action effects and rendering against the original;
   label/alive checks alone are insufficient. These issues remain open.
