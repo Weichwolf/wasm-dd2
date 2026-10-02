@@ -256,8 +256,16 @@ int dd2_mci_send(unsigned device, unsigned command, unsigned flags, uint32_t *pa
         if (getenv("DD2_CDLOG")) printf("[CD] stop track=%d frame=%u\n",position_track(cd_position),
             (unsigned)(cd_position-track_start(position_track(cd_position))));
         return 0; /* MCI_STOP keeps the cursor */
-    case 0x809: dd2_snd_music_stop(cd_sound);cd_mode = MODE_PAUSE; return 0;
-    case 0x855: dd2_snd_music_play(cd_sound);cd_mode = MODE_PLAY;return 0;
+    /* Wine mcicda Pause/Resume leave a drained worker stopped when stopEvent
+     * is signalled. They also retain the existing state on repeated controls.
+     * A retained completed source must not be restarted through its reset
+     * DirectSound cursor; only a new MCI_PLAY creates a new transport. */
+    case 0x809:
+        if(cd_mode==MODE_PLAY){dd2_snd_music_stop(cd_sound);cd_mode=MODE_PAUSE;}
+        return 0;
+    case 0x855:
+        if(cd_mode==MODE_PAUSE){dd2_snd_music_play(cd_sound);cd_mode=MODE_PLAY;}
+        return 0;
     case 0x830: return UNRECOGNIZED; /* Wine's CD driver also rejects MCI_CUE; game ignores it. */
     default: return UNRECOGNIZED;
     }

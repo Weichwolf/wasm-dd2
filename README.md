@@ -99,6 +99,14 @@ CD playback and the 400ms multimedia timer use elapsed real time, including menu
 `make verify-redbook` compares native/WASM playback directly with all 18 track
 prefixes and one complete track: 29848052 exact PCM bytes, including stop/resume,
 pause, cross-track boundaries, end-of-track, replay and error checks.
+`make verify-redbook-controls` checks drained/live Pause/Resume and repeated
+controls against 11 transport-state records and 50568 exact source PCM bytes.
+Both complete mixed/music streams also match 515088 exact Float32 bytes,
+including silence after completion and throughout repeated pause commands.
+With `REDBOOK_CONTROLS_ARGS='--wine --mingw <32-bit compiler> --output <new dir>'`,
+the same fixture runs against actual Wine MCI. Pause/Resume leave a completed
+track stopped; explicit Play starts a new transport. The one-second drain wait
+excludes asynchronous CD ring-end timing from this state comparison.
 `node tools/browser/qa_redbook.js web/dd2`
 navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
 and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.

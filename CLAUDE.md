@@ -35,6 +35,20 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- MCI Pause/Resume now preserve a completed transport's stopped state instead
+  of reporting Pause/Play and restarting its retained source at a reset DS
+  cursor. A fresh real Wine 10 fixture confirms all 11 drained/live and
+  repeated-control records; the preceding native fixture failed four drained
+  controls (/tmp/dd2-redbook-controls-before/native-records.json). Both fixed
+  ports match those records, 50568 exact source PCM bytes and the entire
+  515088-byte mixed/music stream, including completion/paused silence
+  (/tmp/dd2-redbook-controls-mixed-reviewed/report.json). Explicit Play still
+  creates a new transport. make verify-redbook-controls can run the same
+  fixture with REDBOOK_CONTROLS_ARGS='--wine --mingw <compiler> --output <dir>'.
+  Redbook all-18/full-track, shared ordered mix, menu audio and DS cursor
+  regressions pass (/tmp/dd2-redbook-controls-regression.log). The one-second
+  drain wait tests the final state, not Wine's asynchronous CD ring-end timing;
+  complete original game A/V and Stop/TO-only Q-channel resume remain open.
 - Native window QA's --controller option now attaches a virtual SDL device
   before boot, selects Configuration -> Control Method -> Joystick through
   real X11 keys, and drives the actual player through SDL axes/buttons.
