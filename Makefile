@@ -119,6 +119,10 @@ verify-movie-codec: ## compare every original AVI Cinepak source frame with Wine
 verify-movie-audio: ## compare complete AVI ADPCM source PCM with Wine ACM on native/WASM; MOVIE_AUDIO_ARGS selects MinGW
 	python3 $(ROOT)/tools/verify_movie_audio.py --node $(NODE) $(MOVIE_AUDIO_ARGS)
 
+.PHONY: verify-movie-avi
+verify-movie-avi: ## compare production AVI parsing/seeks and all decoded source bytes with Wine; MOVIE_AVI_ARGS selects MinGW/output
+	python3 $(ROOT)/tools/verify_movie_avi.py --node $(NODE) $(MOVIE_AVI_ARGS)
+
 verify-movie-reference: ## check full original intro accepted PCM; MOVIE_REFERENCE_ARGS supplies --capture/--source
 	python3 $(ROOT)/tools/reference/verify_movie.py $(MOVIE_REFERENCE_ARGS)
 

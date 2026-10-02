@@ -28,7 +28,7 @@ fi
 # engine units (dd2_runtime EXCLUDED — native_main.c provides main + CRT helpers)
 python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.json" "$ROOT/build/dd2_disc.h"
 
-UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd"
+UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm"
 if [ -z "$DD2_BUILD_HEADLESS" ]; then UNITS="$UNITS dd2_native"; fi
 OBJS=""
 for u in $UNITS; do
@@ -38,7 +38,7 @@ for u in $UNITS; do
   # the next elapsed-time block and starves live races. Keep the reconstructed
   # engine at -O0; optimize the handwritten mixer/transport shim without
   # fast-math or aliasing assumptions about its Win32 buffer structures.
-  if [ "$u" = dd2h_stubs ]; then UNIT_FLAGS=(-O2 -fno-strict-aliasing); fi
+  case "$u" in dd2h_stubs|dd2_avi|dd2_cinepak|dd2_msadpcm) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
   if ! gcc "${F[@]}" "${UNIT_FLAGS[@]}" -c "$ROOT/build/$u.c" -o "/tmp/n_$u.o" 2>"/tmp/ne_$u.txt"; then
     cat "/tmp/ne_$u.txt";exit 1
   fi

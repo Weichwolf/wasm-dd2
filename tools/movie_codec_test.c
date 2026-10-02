@@ -27,6 +27,7 @@ int main(int argc,char** argv) {
     HIC codec;
     BITMAPINFOHEADER input={0},output={0};
     unsigned char *dib,*rgb;
+    unsigned dib_pixel_bytes;
 #else
     DD2Cinepak* codec;
 #endif
@@ -40,8 +41,15 @@ int main(int argc,char** argv) {
     require(width%4==0,"fixture's unpadded Win32 RGB24 rows");
     input.biSize=sizeof(input);input.biWidth=width;input.biHeight=height;
     input.biPlanes=1;input.biBitCount=24;input.biCompression=mmioFOURCC('c','v','i','d');
-    output=input;output.biCompression=BI_RGB;output.biSizeImage=bytes;
-    dib=calloc(1,bytes);rgb=malloc(bytes);require(dib && rgb,"allocate DIB/RGB");
+    output=input;output.biCompression=BI_RGB;
+#ifdef DD2_MOVIE_DIB32
+    /* Actual unmodified dd2h.exe MCI traces request a positive-height RGB32
+     * DIB. Keep RGB24 available for the independent source codec verifier. */
+    output.biBitCount=32;
+#endif
+    dib_pixel_bytes=output.biBitCount/8;
+    output.biSizeImage=width*height*dib_pixel_bytes;
+    dib=calloc(1,output.biSizeImage);rgb=malloc(bytes);require(dib && rgb,"allocate DIB/RGB");
     codec=ICOpen(ICTYPE_VIDEO,input.biCompression,ICMODE_DECOMPRESS);require(codec!=NULL,"open actual ICCVID");
     require(ICDecompressQuery(codec,&input,&output)==ICERR_OK,"query actual RGB24 codec");
     require(ICDecompressBegin(codec,&input,&output)==ICERR_OK,"begin actual codec");
@@ -62,7 +70,7 @@ int main(int argc,char** argv) {
         {
             unsigned x,y;
             for(y=0;y<height;y++)for(x=0;x<width;x++) {
-                const unsigned char* p=dib+((size_t)(height-1-y)*width+x)*3;
+                const unsigned char* p=dib+((size_t)(height-1-y)*width+x)*dib_pixel_bytes;
                 unsigned char* q=rgb+((size_t)y*width+x)*3;
                 q[0]=p[2];q[1]=p[1];q[2]=p[0];
             }

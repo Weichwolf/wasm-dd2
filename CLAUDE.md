@@ -35,6 +35,31 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The production AVI source interface now owns/parses complete original files,
+  preserves separate video/compressed-audio/PCM clocks, decodes all audio and
+  supports sequential and forward/backward/repeated frame requests. Empty
+  Outro packets hold the prior image; caller buffers can be freed immediately.
+  Native ASan/UBSan and WASM compare every 649728000 RGB byte and 12435456
+  PCM16 byte with actual Wine ICCVID/ACM, including RGB32 DIB output as requested
+  by unmodified dd2h.exe. All seven nonlinear frame requests per film match;
+  ten malformed file/header/block cases per film fail without output or
+  sanitizer errors. make verify-movie-avi MOVIE_AVI_ARGS='--mingw <compiler>
+  --output <fresh-dir>' reproduces this. Complete RGB32 proof:
+  third_party/verification-artifacts/dd2-movie-avi-rgb32-final-reviewed/report.json.
+  Source components are linked into native, Node and browser builds, all of
+  which pass all 176 exact patches. Eight original L9 framebuffer/palette
+  checkpoints still match both new binaries. Actual native menus/CD/controller/
+  race/pause pass 3072000 rendered pixels and 9957072 accepted mixed bytes
+  (/tmp/dd2-native-avi-reviewed/report.json); browser live Pause/Resume passes
+  1937 shared WebAudio buffers and 64564 resumed source bytes
+  (/tmp/dd2-browser-avi-reviewed/report.json).
+  A parallel full RGB32/parity run exhausted /tmp: its failures are retained
+  as failed evidence under third_party/verification-artifacts, with old /tmp
+  paths symlinked there. The fresh complete RGB32 rerun passes on the larger
+  filesystem; the ten-level parity rerun uses that filesystem too.
+  dd2_avi.c/h is ready for MCI playback integration. Normal startup still
+  bypasses movies; original presentation/scaling, clock and skip/completion
+  behavior remain open. Decoder/container proof is not full movie acceptance.
 - A complete, unmodified dd2h.exe intro now has an actual accepted-audio
   comparison, beyond the codec API fixtures. At the declared 22050Hz reference
   device it emits all 6039616 source PCM16 bytes exactly, followed by 660
