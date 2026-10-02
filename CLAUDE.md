@@ -35,6 +35,24 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Finite CD ranges now have a reproducible Wine-reference limitation probe:
+  make verify-redbook-end REDBOOK_END_ARGS='--wine --mingw <compiler> --output
+  <fresh-dir>'. Eight ranges at track2+450 sectors exercise 8/39/40/50/52/53/
+  65/66 sectors, using the same MCI fixture and one retained DirectSound device.
+  Actual Wine accepted audio is a literal source prefix in every case, but
+  four ranges lose their tail: the reviewed 50-sector run delivers 23370 of
+  29400 stereo frames (6030 missing). Exact cutoff counts vary with its worker
+  scheduling; no waveform phase or tolerance is fitted. The eight-sector
+  range still reports PLAY at 200ms after its 4704 source frames have ended.
+  Wine MCICDA_playLoop's three 13-sector fragments explain these observations;
+  they are Wine driver behavior, not evidence about original Windows hardware.
+  Both ports preserve every requested sample: 877296 complete raw CD bytes and
+  all 4304160 controlled mixed bytes, including stopped silence and expected
+  modes. An altered accepted Wine bit is rejected
+  (/tmp/dd2-redbook-end-reviewed/report.json). This diagnostic deliberately
+  reports the missing reference tail instead of claiming full Wine/port parity
+  or reproducing that driver loss in the port. Full original A/V acceptance
+  still requires an adequate original CD transport/clock reference.
 - Native/browser real race pause/resume now verify the CD sector restart end
   to end. The new native read-only check fails the preceding binary after real
   X11 Escape/Return (stopped/origin=26779857, still fractional;

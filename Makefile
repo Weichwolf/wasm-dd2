@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-browser-redbook-restart verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-browser-redbook-restart verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -106,6 +106,9 @@ verify-redbook-controls: ## check drained/live Pause/Resume states and exact PCM
 
 verify-redbook-restart: ## check original Stop/TO-only Play sector restart; REDBOOK_RESTART_ARGS can enable Wine
 	python3 $(ROOT)/tools/verify_redbook_restart.py --node $(NODE) $(REDBOOK_RESTART_ARGS)
+
+verify-redbook-end: ## measure Wine CD end truncation and verify complete port ranges; REDBOOK_END_ARGS can enable Wine
+	python3 $(ROOT)/tools/verify_redbook_end.py --node $(NODE) $(REDBOOK_END_ARGS)
 
 verify-shared-audio: ## check ordered CD/effects mix against Wine PCM; SHARED_AUDIO_ARGS can recapture Wine
 	python3 $(ROOT)/tools/verify_shared_audio.py --node $(NODE) $(SHARED_AUDIO_ARGS)
