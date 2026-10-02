@@ -64,6 +64,13 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   (/tmp/dd2-fir-browser-audio.log). Full original streams, frequency/control
   changes with queued audio, combined CD/effects, original timing and Windows
   hardware fidelity remain open; this calibrates the exercised Wine backend.
+  All ten complete sound-enabled native/WASM demos pass after the FIR change:
+  15255 presented frames/palettes, all RNG/flip logs, 5277888 Float32 effects
+  bytes and 4939200 CD source bytes per demo (/tmp/dd2-parity-fir/results.json).
+  Fresh full Configuration/Audio Volume highlight cycles also match the
+  original on both targets: 448 framebuffer/palette pairs per target, zero
+  differing bytes (/tmp/dd2-config-fir-comparison.json; captures under
+  /tmp/dd2-native-config-fir and /tmp/dd2-browser-config-fir).
 - Effects output now uses Float32 LE stereo at 22050Hz (DD2_SNDPCM plus a format
   .json sidecar), preserving Wine's observed quantized gain and unclipped sums.
   The prior Q15/16-bit implementation produced 0.2505798340 at volume -600 for
