@@ -35,6 +35,41 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Native SDL play is available through make play-native (DD2_WINDOW=1).
+  It presents the existing indexed framebuffer/palette via an exact software
+  renderer, queues the final shared Float32 mix, forwards physical SDL keys
+  through Translate_Keypress/GetKeyState and detects a controller at boot.
+  make provision-native extracts Debian i386 SDL headers locally; the i386
+  SDL runtime is required. DD2_BUILD_HEADLESS=1 retains builds without SDL.
+  Native ELF dependencies are isolated from reconstructed CRT definitions:
+  the engine's unused unlink stub otherwise intercepted real POSIX unlink.
+  Unix SIGINT/SIGTERM retain their normal behavior; window close follows the
+  original WM_CLOSE handler. The handwritten mixer uses -O2 without fast-math
+  or strict-alias assumptions: -O0 could take longer than the elapsed audio
+  block, feed back into the next block and stall races at cf2.
+  make verify-native-sdl passes 614400 exact renderer AND actual X11 pixels,
+  7976 accepted Float32 bytes (including amplitudes outside [-1,1]), keyboard
+  and a boot-time virtual controller. make verify-native-window uses actual
+  X11 input to check menus, CD Play/Stop, a 20-car race, actual player movement
+  after the countdown and pause/resume. Nine presentations match 2764800
+  source pixels; 5770392 accepted SDL audio bytes match the complete declared
+  C-mix prefix (/tmp/dd2-native-sdl-window-world-reviewed/report.json).
+  Startup waits for the child's executable before opening proc mem: early
+  descriptors could permanently pin Python's old mm (the observed garbage
+  exactly matched /usr/bin/python3.13 code). Input QA acknowledges ReadPad
+  and waits for the actual slab bounce, current keymap and countdown gate.
+  Original assembly 442dc0..442de7 confirms world X/Z at 792a30/792a38;
+  the older pad probes measured heading/height at 792a24/792a34 instead.
+  The optimized native resampler still matches actual Wine hashes at all
+  three device rates and the 1084900-result x87/WASM oracle. Cursor, gain,
+  ownership, menu audio, ordered shared mix and Redbook regressions pass.
+  Rebuilt all targets: original L9/cf150 pixels/palette remain exact; browser
+  CD/menu output checks 3666/1184 exact combined buffers, with none missing
+  or extra. All ten complete optimized-native/Node demos again match 15255
+  frames/palettes, RNG/flip logs and every effects/combined/music/CD byte
+  (/tmp/dd2-parity-native-sdl-mixopt/results.json). SDL dummy audio acceptance
+  and a virtual controller do not prove physical hardware or full original
+  A/V timing; the overall goal remains active.
 - The original frontend-exit snapshot now excludes seven executable action
   slots. These historical entries undid startup relocation after newer menu
   handlers were registered: real native CD Play jumped to PE VA 0x45220c.
@@ -42,8 +77,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   corrected boot retains the actual FUN_0045220c pointer. The six currently
   registered affected actions are checked by native window QA. Real native
   CD Play/Stop now work; both rebuilt ports retain exact original L9/cf150
-  pixels/palette and full L1 demo parity. Complete ten-track regressions are
-  running; native SDL integration and complete original A/V remain separate
+  pixels/palette and complete ten-track demo parity (15255 frames). The
+  snapshot-only regression and optimized SDL build both pass all ten tracks;
+  complete original A/V remains separate
   work (/tmp/dd2-native-cd-relocation-watch.log,
   /tmp/dd2-native-cd-relocation-fixed.log,
   /tmp/dd2-native-sdl-festate-original-video.log).

@@ -1,0 +1,7 @@
+/* Keep the reconstructed executable's CRT inside the engine. ELF dependencies
+ * must resolve their own POSIX/CRT functions: the unused Watcom unlink stub
+ * otherwise intercepts an observer's real unlink, and host rand/srand calls
+ * could consume or reseed the game's deterministic LCG. Debug symbols remain. */
+{
+    local: *;
+};

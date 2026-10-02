@@ -1,5 +1,6 @@
 /* matching-signature stubs for excluded-CRT + a few Win32 fns (replace emcc abort-stubs to run past CRT init) */
 #include <time.h>
+#include "dd2_native.h"
 #include "ghidra_compat.h"
 unsigned __doclose(void* p,int q){ return 0; }
 char* __cvt(double v,int n,void* d,void* s){ if(d)*(int*)d=0; if(s)*(int*)s=0; return ""; }
@@ -10,7 +11,7 @@ uint FUN_0045a174(void* h){ return 0; }
    for "key down". Back it with the live key-state array dd2_input.c maintains (0 stub = rebind
    never detected a key). Not on any bit-exact path (demo/race never call it). */
 extern unsigned char dd2_keystate[256];
-short GetKeyState(int k){ return (k>=0 && k<256 && dd2_keystate[k]) ? (short)0x8000 : 0; }
+short GetKeyState(int k){ dd2_native_poll();return (k>=0 && k<256 && dd2_keystate[k]) ? (short)0x8000 : 0; }
 /* GetTickCount: the engine paces itself to 25fps with this (frame limiter in Play_Game).
    Deterministic default: a fake +16ms/call ticker (proven for all bit-exact runs).
    DD2_REALTIME=1 (interactive browser/native play): real milliseconds, so the game runs at

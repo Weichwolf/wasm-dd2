@@ -2,6 +2,7 @@
 int dd2_dbg_prim=0;
 #include <stdio.h>
 #include <stdlib.h>
+#include "dd2_native.h"
 #ifdef DD2_BROWSER
 #include <emscripten.h>   /* MUST precede dd2_symbols.h: its symbol #defines (e.g. `data`)
                              would otherwise mangle emscripten header parameter names */
@@ -36,6 +37,7 @@ unsigned dd2_pad_x = 32768, dd2_pad_y = 32768, dd2_pad_buttons = 0;
 void dd2_pad_update(int present, unsigned x, unsigned y, unsigned buttons){
     dd2_pad_present = present; dd2_pad_x = x; dd2_pad_y = y; dd2_pad_buttons = buttons; }
 int joyGetDevCapsA(int a,void* b,int c){ (void)a;
+    dd2_native_poll();
     if(!dd2_pad_present || c < 0x20) return 2; /* JOYERR */
     /* JOYCAPSA: wMid+wPid @0, szPname @4 (32), wXmin @0x24, wXmax @0x28, wYmin @0x2c,
        wYmax @0x30 (the game reads 4 UINTs from the stack block at those offsets) */
@@ -46,6 +48,7 @@ int joyGetDevCapsA(int a,void* b,int c){ (void)a;
       *(unsigned*)(p+0x30)=65535;  /* wYmax */ }
     return 0; }
 int joyGetPos(int a,void* b){
+    dd2_native_poll();
     /* DD2_PADSCRIPT implies a pad is plugged in from boot (detection runs in Init_Main) */
     { static int init; if(!init){ init=1; if(getenv("DD2_PADSCRIPT")) dd2_pad_present=1; } }
     if(!dd2_pad_present || a!=0) return 2; /* JOYERR: only pad id 0 */
@@ -543,6 +546,9 @@ void dd2_snd_mix_flip(void){
 #ifdef DD2_BROWSER
     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
 #endif
+#ifdef DD2_NATIVE_SDL
+    if(mix_out<0)mix_out=dd2_native_enabled();
+#endif
     if(realtime){
         unsigned now=dd2_platform_ms(), elapsed;
         if(!clock_init){ clock_init=1; last_ms=now; return; }
@@ -585,6 +591,9 @@ void dd2_snd_mix_flip(void){
         if(music_capture)fwrite(music,sizeof(float),frames*2,music_capture);
 #ifdef DD2_BROWSER
         dd2_audio_push(out,effects,music,frames,rate,music_frames);
+#endif
+#ifdef DD2_NATIVE_SDL
+        if(mix_out>0)dd2_native_audio(out,(unsigned)frames,rate);
 #endif
         pending-=frames;
         if(!realtime) dd2_audio_virtual_ms += 40;

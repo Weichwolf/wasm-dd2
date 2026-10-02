@@ -94,7 +94,9 @@ def main():
         common=["-std=gnu89","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
                 f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2h_stubs.c"),str(source),"-Wl,--gc-sections"]
         native,wasm=directory/"native",directory/"wasm.js"
-        subprocess.run(["gcc","-m32","-no-pie",*common,"-o",str(native)],check=True)
+        # Match the production native mixer: exact FIR arithmetic must run
+        # faster than its elapsed-time audio clock, without fast-math.
+        subprocess.run(["gcc","-m32","-no-pie","-O2","-fno-strict-aliasing",*common,"-o",str(native)],check=True)
         subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
                         "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
         # This oracle executes actual CPU x87 arithmetic and compares all four

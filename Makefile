@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -29,6 +29,9 @@ help:                 ## list targets
 
 provision:            ## download and verify the original game, extract its image and lossless CD music
 	python3 $(ROOT)/tools/provision_game.py
+
+provision-native: ## extract Debian i386 SDL headers into ignored third_party without a system installation
+	python3 $(ROOT)/tools/native_sdl_config.py provision
 
 decompile: ## re-run Ghidra headless: dd2h.exe -> re_out/dd2_decomp.c
 	bash $(ROOT)/tools/decompile.sh
@@ -55,6 +58,9 @@ check: ## dry-run the patch series against the pristine decompile (anchor check)
 native: patch ## native 32-bit build (no ASan by default = real crash semantics) -> $(NATIVE)
 	ASAN=' ' bash $(ROOT)/tools/build_native.sh $(NATIVE)
 
+play-native: native ## play native in an SDL window with shared Float32 audio and keyboard/boot-time gamepad input
+	cd $(GAMEDIR) && DD2_WINDOW=1 DD2_FE=1 $(NATIVE)
+
 wasm: patch ## WASM build -> $(OUTJS)
 	bash $(ROOT)/tools/build.sh $(OUTJS)
 
@@ -63,6 +69,12 @@ web: patch ## browser build -> web/dd2
 
 verify: native ## crash-free check: run the demo on all 10 levels (native), print N/10
 	python3 $(ROOT)/tools/verify_demos.py native --native $(NATIVE) --game-dir $(GAMEDIR)
+
+verify-native-sdl: ## verify actual renderer/X11 pixels, accepted audio and SDL keyboard/virtual-controller input
+	python3 $(ROOT)/tools/verify_native_sdl.py $(NATIVE_SDL_ARGS)
+
+verify-native-window: native ## use real X11 keys to test native menus/CD/race/pause and exact rendered/accepted output
+	python3 $(ROOT)/tools/verify_native_window.py --binary $(NATIVE) $(NATIVE_WINDOW_ARGS)
 
 verify-wasm: wasm ## crash-free check: run the WASM demo (node) on all 10 levels, print N/10
 	python3 $(ROOT)/tools/verify_demos.py wasm --node $(NODE) --wasm $(OUTJS) --game-dir $(GAMEDIR)

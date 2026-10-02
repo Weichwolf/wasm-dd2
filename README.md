@@ -2,8 +2,8 @@
 
 A faithful port of the 1996 game **Destruction Derby 2** (`dd2h.exe`, 640x480 build) to reproducible C
 compiling to native and WebAssembly. The engine C is **mechanically derived from the binary via Ghidra**
-(decompile → transpile/patch → compile); only the platform/runtime shim (DirectDraw→canvas,
-DirectSound→WebAudio, Win32/CRT) is hand-written.
+(decompile → transpile/patch → compile); only the platform/runtime shim (DirectDraw→SDL/canvas,
+DirectSound→SDL/WebAudio, Win32/CRT) is hand-written.
 
 Pipeline: `dd2h.exe → tools/decompile.sh → tools/transpile.py → tools/build*.sh`.
 See **CLAUDE.md** for build commands, current status, and conventions.
@@ -32,6 +32,23 @@ callback-based `rimraf` dependency for clean browser teardown.
 The browser shell creates an empty save-file target before linking it into IDBFS,
 so Emscripten 3.1 can initialize the first memory card without a dangling symlink.
 
+Native play uses the i386 SDL2 runtime (`libsdl2-2.0-0:i386`). Install
+`libsdl2-dev:i386`, or run `make provision-native` to extract Debian's i386
+development headers under ignored `third_party/` without installing them.
+`make play-native` builds and opens the 640×480 game window, forwards keyboard
+and a controller connected at boot, and queues the shared Float32 audio mix.
+Arrow keys navigate, Enter confirms, A accelerates, Z brakes, and Escape pauses.
+The engine stays at debug optimization; the handwritten audio shim uses `-O2`
+without fast-math so its exact FIR can keep up with real time. For a build
+without SDL, use `DD2_BUILD_HEADLESS=1 make native`.
+`make verify-native-sdl` checks actual renderer and X11 pixels, accepted SDL
+audio bytes and keyboard/virtual-controller transport. `make verify-native-window`
+uses real X11 keys on the game to check menus, CD controls, populated racing,
+acceleration and pause/resume with exact renderer/audio comparisons. Tests need
+Xvfb, xdotool and Python Pillow; output goes to fresh directories under `/tmp`.
+These checks cover the SDL boundary, not physical audio/controller hardware or
+complete original game-stream timing.
+
 The WASM builds disable LLVM FastISel. With Debian Emscripten 3.1.69 / LLVM 19, its
 folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
 `AI_Com_Server` on level 10. SelectionDAG emits the required 32-bit addition.
@@ -41,16 +58,16 @@ engine errors, or timeouts; detailed logs go to `/tmp/dd2-verify-native` and
 
 The Node build transfers `DD2_*` options from `process.env` into Emscripten's libc
 environment before boot. `make verify-parity` enables sound and compares every
-presented indexed framebuffer, its palette, the flip/RNG log, the effects PCM
-stream and the separate 44100Hz CD PCM stream
+presented indexed framebuffer, its palette, the flip/RNG log, the effects PCM,
+combined Float32 device output, music part and raw 44100Hz CD PCM
 byte-for-byte between native and WASM on all ten demos. Logs and results go to
 `/tmp/dd2-parity`; identical captures are removed, failed captures are retained.
 This target does not compare with `dd2h.exe` or validate menu actions.
 
 Current Debian validation: all ten sound-enabled demos return on both ports.
 Every presented frame and palette, flip/RNG log and generated PCM byte matches
-across native and WASM (1525-1527 frames, 5277888 effects PCM bytes and 4939200
-CD PCM bytes per demo). Patch
+across native and WASM (1525-1527 frames, 10569888 bytes in each effects,
+combined and music-part Float32 stream, and 4939200 raw CD PCM bytes per demo). Patch
 835 restores the original contiguous angle vector for the animated L1 objects;
 its split stack locals caused the previous 137-frame discrepancy. Menu behavior,
 full championships, other menu actions and complete comparisons with the running original
@@ -60,15 +77,20 @@ Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo
 s16le CDDA at 44100Hz; browser builds serve the tracks separately and load one
-track at a time into a shared 44100Hz WebAudio device. Effects retain their
-22050Hz source buffers. CD source capture uses `DD2_CDPCM=<file>`; effects
-use `DD2_SNDPCM=<file>` (Float32 little-endian stereo at 22050Hz, with a `.json`
-format sidecar). Deterministic runs share a 25Hz audio clock. Interactive
+track at a time. The C mixer combines CD and effects in source creation order
+on one 44100Hz Float32 stereo device, delivered through one SDL/WebAudio sink.
+Effects retain their source rates; the calibrated C FIR converts them once.
+CD source capture uses `DD2_CDPCM=<file>`; effects use `DD2_SNDPCM=<file>`.
+`DD2_MIXPCM` captures the final mix and `DD2_MUSICPCM` its music part, all
+Float32 little-endian stereo at the device rate with `.json` format sidecars.
+`DD2_SND_RATE` can select 22050/44100/48000Hz for calibration.
+Deterministic runs share a 25Hz audio clock. Interactive
 CD playback and the 400ms multimedia timer use elapsed real time, including menus.
 
 `make verify-redbook` compares native/WASM playback directly with all 18 track
-prefixes and one complete track: 29821008 exact PCM bytes, including stop/resume,
-end-of-track, replay and error checks. `node tools/browser/qa_redbook.js web/dd2`
+prefixes and one complete track: 29848052 exact PCM bytes, including stop/resume,
+pause, cross-track boundaries, end-of-track, replay and error checks.
+`node tools/browser/qa_redbook.js web/dd2`
 navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
 and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.
 These checks establish exact source PCM and exercised controls. They do not yet

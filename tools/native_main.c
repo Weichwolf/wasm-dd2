@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <signal.h>
 #include <execinfo.h>
+#include "dd2_native.h"
 
 /* DEBUG: poly-command ring buffer (BSS -> no heap shift -> doesn't move the _gpoly-desync heisenbug).
    Recorded by a debug-patch in FUN_0041fb7c's walk loop; dumped here on crash. */
@@ -189,6 +190,7 @@ int main(void){
     { unsigned va; for(va=0x46c330; va<=0x46c364; va+=4) *(int*)(uintptr_t)va = (int)(uintptr_t)&dd2_crt_lock; }
     CK("__InitRtns()");             __InitRtns();
     CK("dd2_com_init()");           dd2_com_init();
+    dd2_native_init();
     /* The original boots through Init_Main @0x445814: Init_Controller_, Profile_Init, Sound_Init,
      * VSync+VSyncCallback, InitCardSystem (loads/creates SaveGames -> card buffer 0x754460),
      * Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags. Run the real thing. */

@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "dd2_native.h"
 static unsigned char g_pixels[640*512];   /* 8-bit indexed surface store (PSX-style) */
 
 /* interface objects: a single word holding the vtable pointer (the decompile derefs *iface = vtable) */
@@ -115,6 +116,9 @@ static int ids_flip(int t,int a,int b){
 #ifdef DD2_BROWSER
     dd2_present((const unsigned char*)(unsigned long)0x700450u, g_palette);
     emscripten_sleep(0);   /* yield each presented frame so the browser paints + processes key events */
+#endif
+#ifdef DD2_NATIVE_SDL
+    dd2_native_present((const unsigned char*)(unsigned long)0x700450u,g_palette);
 #endif
     const char* dir = getenv("DD2_FRAMEDIR");
     if(dir){
