@@ -3,8 +3,10 @@
 
 Reads state without engine writes, validates actual renderer readback and every
 accepted audio byte up to a declared presentation checkpoint. An isolated save
-copy prevents changing the user's save. Physical hardware and original complete
-stream/timing equivalence are not established by this test.
+copy prevents changing the user's save. --controller attaches an external SDL
+virtual device and selects Joystick through the actual Configuration menu.
+Physical hardware and original complete stream/timing equivalence are not
+established by this test.
 """
 import argparse
 import hashlib
@@ -16,7 +18,7 @@ import struct
 import subprocess
 import tempfile
 import time
-from verify_native_sdl import build_observer,validate_frames
+from verify_native_sdl import build_observer,validate_frames,config
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -35,6 +37,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary",type=Path,default=Path("/tmp/dd2_native"))
     parser.add_argument("--output",type=Path)
+    parser.add_argument("--controller",action="store_true",help="attach a boot-time SDL virtual controller, select it through Configuration and drive it")
     args=parser.parse_args()
     binary=args.binary.resolve()
     if args.output:
@@ -43,6 +46,14 @@ def main():
     table=symbols(binary)
     with tempfile.TemporaryDirectory(prefix="dd2-native-window-") as tmp:
         directory=Path(tmp);library=build_observer(directory)
+        preload=str(library);padfile=directory/"pad-input"
+        def pad(x=0,y=0,buttons=0):
+            pending=directory/"pad-input.tmp";pending.write_text(f"{x} {y} {buttons:x}\n");pending.replace(padfile)
+        if args.controller:
+            driver=directory/"virtual-pad.so"
+            subprocess.run(["gcc","-m32","-shared","-fPIC","-Wall","-Wextra","-Werror",*config("cflags"),
+                str(ROOT/"tools/native_sdl_virtual_pad.c"),*config("libs"),"-ldl","-o",str(driver)],check=True)
+            preload+=":"+str(driver);pad()
         game=directory/"game";game.mkdir()
         for asset in (ROOT/"DestructionDerby2").iterdir():
             if asset.name=="SaveGames":shutil.copyfile(asset,game/asset.name)
@@ -56,7 +67,7 @@ def main():
                 if not number:raise RuntimeError("Xvfb did not start")
                 env["DISPLAY"]=":"+number
                 process=subprocess.Popen([str(binary)],cwd=game,env={**env,"DD2_WINDOW":"1","SDL_AUDIODRIVER":"dummy",
-                    "LD_PRELOAD":str(library),"DD2_NATIVE_OBSERVE":str(output),"DD2_MIXPCM":str(output/"c-mixed.pcm"),
+                    "LD_PRELOAD":preload,"DD2_NATIVE_PAD_INPUT":str(padfile),"DD2_NATIVE_OBSERVE":str(output),"DD2_MIXPCM":str(output/"c-mixed.pcm"),
                     "DD2_NATIVE_PALETTE_ADDRESS":hex(table["g_palette"])},stdout=log,stderr=log)
                 def read(address,count):
                     nonlocal memory
@@ -140,6 +151,15 @@ def main():
                 key("Right");wait(lambda:"Stop" in text(0x469d64));key("Return");wait(lambda:integer(0x462d70)==0);capture()
                 key("Escape");wait(lambda:"CD Audio Player" in text(0x46975c))
                 settled()
+                if args.controller:
+                    key("Right");key("Right");wait(lambda:"Configuration" in text(0x46975c))
+                    key("Return");wait(lambda:"Control Method" in text(0x469158));settled()
+                    key("Return");wait(lambda:"Keyboard" in text(0x46a1b4));settled()
+                    key("Right");wait(lambda:"Joystick" in text(0x46a1b4));key("Return")
+                    wait(lambda:integer(0x467414)==1 and read(0x46303e,1)==b"\x01" and integer(0x463024)==0)
+                    wait(lambda:integer(0x940010)==0x4690c4);settled();capture()
+                    key("Escape");wait(lambda:integer(0x940010)==0x4696b0);settled()
+                    key("Left");key("Left");wait(lambda:"CD Audio Player" in text(0x46975c))
                 key("Up");wait(lambda:"Wrecking" in text(0x46975c))
                 key("Down");key("Down");wait(lambda:"Go!" in text(0x46975c));key("Return")
                 first=wait(lambda:state() if state()["sb"]==89 and state()["level"]>0 else None,30)
@@ -155,17 +175,29 @@ def main():
                 # browser pad probes accidentally measured heading/height.
                 def position():return [integer(0x792a30+player*0x1b2),integer(0x792a38+player*0x1b2)]
                 before=position()
-                edge("a",True)
-                wait(lambda:read(table["dd2_keystate"]+0x41,1)==b"\x01")
+                if args.controller:
+                    pad(-32768,0,1)
+                    wait(lambda:read(0x754448,2)==b"\x80\x40" and read(0x754450,1)==b"\0")
+                else:
+                    edge("a",True)
+                    wait(lambda:read(table["dd2_keystate"]+0x41,1)==b"\x01")
                 start=state()["cf"];wait(lambda:state()["cf"]>=start+40,10)
-                if not any(read(0x46304b,2)):raise RuntimeError("Physical accelerate key did not reach engine pad flags")
+                if integer(0x792a86+player*0x1b2)!=32768:raise RuntimeError("Accelerate input did not reach live player throttle")
+                if args.controller and integer(0x792a82+player*0x1b2)!=-512:raise RuntimeError("SDL full-left axis did not reach player steering")
                 after=position()
                 end=state()["cf"]
                 if after==before:raise RuntimeError(f"Native player car did not move: player={player}, cf={start}..{end}, "
                     f"position={before}, map={read(0x46302c,14).hex()}, raw={read(0x754448,10).hex()}, "
                     f"countdown={integer(0x784298)}, replay={integer(0x467074)}, pit={integer(0x46704c)}, "
                     f"throttle={integer(0x792a86+player*0x1b2)}")
-                capture();edge("a",False);wait(lambda:read(table["dd2_keystate"]+0x41,1)==b"\0")
+                capture()
+                if args.controller:
+                    pad(32767,0,2)
+                    wait(lambda:read(0x754448,2)==b"\x20\x80" and read(0x754450,1)==b"\xff")
+                    wait(lambda:integer(0x792a86+player*0x1b2)==-32768 and integer(0x792a82+player*0x1b2)==496)
+                    pad();wait(lambda:read(0x754448,2)==b"\0\0" and integer(0x792a86+player*0x1b2)==0)
+                else:
+                    edge("a",False);wait(lambda:read(table["dd2_keystate"]+0x41,1)==b"\0")
                 key("Escape");time.sleep(0.4);paused=state()["cf"];time.sleep(0.4)
                 if state()["cf"]!=paused:raise RuntimeError("Native Escape did not pause the race")
                 capture();key("Return");wait(lambda:state()["cf"]>paused);final=capture()
@@ -179,11 +211,12 @@ def main():
                     raise RuntimeError("Accepted native SDL audio differs from complete C mixed prefix")
                 pixels=validate_frames(output,captures)
                 report={"scope":__doc__,"pass":True,"renderer_pixels":pixels,"captures":captures,
-                        "accepted_audio_bytes":accepted,"race":state(),"input":"actual X11 keyboard -> SDL -> engine",
+                        "accepted_audio_bytes":accepted,"race":state(),"input":"actual X11 keyboard -> SDL -> engine", "virtual_controller":args.controller,
                         "binary":str(binary),"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),
                         "driving":{"player":player,"start_cf":start,"end_cf":end,"position_before":before,"position_after":after}}
                 (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
-                print(f"PASS native window: real menu/CD controls, populated race, accelerate and pause/resume; "
+                print(f"PASS native window: real menu/CD controls, populated race, "
+                      f"{'SDL controller steering/accelerate/brake/release' if args.controller else 'keyboard acceleration'} and pause/resume; "
                       f"{pixels} exact rendered pixels and {accepted} exact accepted mixed audio bytes",flush=True)
                 print(f"Report: {output/'report.json'}",flush=True)
             finally:

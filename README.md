@@ -37,6 +37,7 @@ Native play uses the i386 SDL2 runtime (`libsdl2-2.0-0:i386`). Install
 development headers under ignored `third_party/` without installing them.
 `make play-native` builds and opens the 640×480 game window, forwards keyboard
 and a controller connected at boot, and queues the shared Float32 audio mix.
+For native controller play, select Configuration → Control Method → Joystick.
 Arrow keys navigate, Enter confirms, A accelerates, Z brakes, and Escape pauses.
 The engine stays at debug optimization; the handwritten audio shim uses `-O2`
 without fast-math so its exact FIR can keep up with real time. For a build
@@ -48,6 +49,9 @@ acceleration and pause/resume with exact renderer/audio comparisons. Tests need
 Xvfb, xdotool and Python Pillow; output goes to fresh directories under `/tmp`.
 These checks cover the SDL boundary, not physical audio/controller hardware or
 complete original game-stream timing.
+`make verify-native-window NATIVE_WINDOW_ARGS='--controller'` additionally
+attaches a virtual SDL device before boot, selects Joystick using real menu
+input and verifies actual player steering, movement, gas, brake and release.
 
 `make verify-browser-pad` launches a live race with a synthetic Gamepad API
 device present at boot. It checks steering endpoints, accelerator/brake/release

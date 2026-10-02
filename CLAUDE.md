@@ -35,6 +35,18 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Native window QA's --controller option now attaches a virtual SDL device
+  before boot, selects Configuration -> Control Method -> Joystick through
+  real X11 keys, and drives the actual player through SDL axes/buttons.
+  The separate test-only input driver uses SDL APIs; the output observer
+  remains read-only and neither writes engine memory. Full-left/right raw
+  bits and endpoints, live steering -512/496, throttle +32768/-32768/0,
+  actual world movement, release and keyboard pause/resume all pass. Ten
+  rendered checkpoints match 3072000 source pixels; the declared complete
+  accepted SDL audio prefix matches 7380576 C-mix bytes
+  (/tmp/dd2-native-sdl-pad-engine-reviewed/report.json). Native controllers
+  honor the original Control Method choice; select Joystick in Configuration.
+  Physical controller hardware and full original A/V timing remain unproved.
 - make verify-browser-pad now explicitly launches a live L9 race and waits
   for the actual countdown/control gate. The old probe stayed in the default
   frontend, timed out without failing and printed heading/height as X/Z.
