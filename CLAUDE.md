@@ -35,6 +35,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Portable movie surface conversion now matches actual Win32 GDI RGB32
+  StretchDIBits into RGB565 and GetDIBits display expansion. One component
+  gradient and sixteen verified original codec checkpoints exercise original
+  2x/1x, offset and clipped rectangles: all 83558400 ARGB bytes match on both
+  native ASan/UBSan and WASM. Changed display bits fail the same complete-byte
+  comparison. make verify-movie-surface MOVIE_SURFACE_ARGS='--mingw <compiler>
+  --source <movie-codec-proof-dir> --output <fresh-dir>' reproduces this;
+  third_party/verification-artifacts/dd2-movie-surface-negative-reviewed/report.json
+  retains actual Win32 fixture/source hashes and each case. This establishes
+  the controlled GDI surface conversion, not original dd2h.exe window output,
+  full movie sink/timing or physical display fidelity. MCI integration is next.
 - The production AVI source interface now owns/parses complete original files,
   preserves separate video/compressed-audio/PCM clocks, decodes all audio and
   supports sequential and forward/backward/repeated frame requests. Empty

@@ -123,6 +123,10 @@ verify-movie-audio: ## compare complete AVI ADPCM source PCM with Wine ACM on na
 verify-movie-avi: ## compare production AVI parsing/seeks and all decoded source bytes with Wine; MOVIE_AVI_ARGS selects MinGW/output
 	python3 $(ROOT)/tools/verify_movie_avi.py --node $(NODE) $(MOVIE_AVI_ARGS)
 
+.PHONY: verify-movie-surface
+verify-movie-surface: ## compare movie RGB565 scaling/display with real Win32 GDI; MOVIE_SURFACE_ARGS selects source/output/MinGW
+	python3 $(ROOT)/tools/verify_movie_surface.py --node $(NODE) $(MOVIE_SURFACE_ARGS)
+
 verify-movie-reference: ## check full original intro accepted PCM; MOVIE_REFERENCE_ARGS supplies --capture/--source
 	python3 $(ROOT)/tools/reference/verify_movie.py $(MOVIE_REFERENCE_ARGS)
 
