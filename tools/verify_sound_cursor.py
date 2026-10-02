@@ -74,8 +74,10 @@ def main():
     source = [(i - 128) * 256 for i in range(256)]
     samples = source[17:39] + source[39:61] + [0]*220 + source[61:83]
     samples += source[250:] + source[:16] + source[255:] + [0]*21 + source[:22]
-    samples += [32512]*22
     pcm = b"".join(struct.pack("<ff", sample/32768, sample/32768) for sample in samples)
+    reference=json.loads((ROOT/"tools/reference/sound_resample_wine10.json").read_text())
+    cycle=bytes.fromhex(next(c["cycle_hex"] for c in reference["loops"] if c["frequency"]==176400))
+    pcm+=cycle*22
     report = {"scope": "stopped DirectSound API fixture and controlled port PCM; full original mix parity pending",
               "positions": expected, "controlled_pcm_bytes": len(pcm), "targets": [], "wine": False}
     with tempfile.TemporaryDirectory(prefix="dd2-sound-cursor-") as tmp:

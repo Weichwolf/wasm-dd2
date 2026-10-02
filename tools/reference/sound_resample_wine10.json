@@ -1,0 +1,132 @@
+{
+  "scope": "complete synthetic one-shot waveforms captured from real Wine 10 DirectSound on Debian 13; Float32 LE stereo device 22050Hz; no original game stream/timing or Windows hardware parity claim",
+  "fixture_source_sha256": "ce1d2b59d4143fcb66680fb7dc6f3996a40f24946d0f90d9d9f4957ec9c234ef",
+  "cases": [
+    {
+      "source_frames": 4096,
+      "frequency": 11025,
+      "bits": 16,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 8192,
+      "trailing_silence_frames": 5700,
+      "active_sha256": "e3dc993aeb1d08b29e73ac426d2f83585d3e8f8e1910a7f413d07e6519126231",
+      "accepted_frames": 14112
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 16000,
+      "bits": 16,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 5645,
+      "trailing_silence_frames": 8247,
+      "active_sha256": "cebe7b44655456b3152f6925094877044beab9010d4201770ccaa268f48f7884",
+      "accepted_frames": 14112
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 22050,
+      "bits": 16,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 4096,
+      "trailing_silence_frames": 9797,
+      "active_sha256": "565fdb01d830821cffdc4018f76faa6c483594d2715589e0603530076e882f54",
+      "accepted_frames": 14113
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 44100,
+      "bits": 16,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 2048,
+      "trailing_silence_frames": 11843,
+      "active_sha256": "3e6da75ae93e82cfd3a09ff0fbac627b96848f5a82efc113b43bf2f9dc5b3c05",
+      "accepted_frames": 14111
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 88200,
+      "bits": 16,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 1024,
+      "trailing_silence_frames": 12869,
+      "active_sha256": "33082b09f4d4f0b3d1a383ce0ba3e07f8b1d95f349669abd42ed891865b5271b",
+      "accepted_frames": 14113
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 11025,
+      "bits": 8,
+      "channels": 1,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 8192,
+      "trailing_silence_frames": 5701,
+      "active_sha256": "33db92f69844c5678bef3e83fd7bbbf725eb40450aa4facdb45ef9337c866760",
+      "accepted_frames": 14113
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 44100,
+      "bits": 8,
+      "channels": 2,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 2048,
+      "trailing_silence_frames": 11843,
+      "active_sha256": "b74460a13495b146782e28c7886a398dec531eab7e63e3690aa324de7e69e40a",
+      "accepted_frames": 14111
+    },
+    {
+      "source_frames": 4096,
+      "frequency": 16000,
+      "bits": 16,
+      "channels": 2,
+      "status": 0,
+      "leading_silence_frames": 220,
+      "active_frames": 5645,
+      "trailing_silence_frames": 8247,
+      "active_sha256": "406fff1bf593b886fe57a88ed2568481e19f24cf367becf4af52c85636804b32",
+      "accepted_frames": 14112
+    }
+  ],
+  "reference": "Wine 10.0, Debian 13 i386-windows/dsound.dll with observed clocked ALSA device; recaptured by verify_sound_resample.py --wine",
+  "wine_dsound_sha256": "3950cc40fd9f8bb8a985cc464fc6b99ecdc28d189a7f4196552cf30ead0e7692",
+  "loops": [
+    {
+      "source_frames": 4,
+      "frequency": 11025,
+      "bits": 8,
+      "channels": 1,
+      "status": 0,
+      "loop": true,
+      "period_frames": 8,
+      "cycle_hex": "661fe1be661fe1bed47f623ed47f623e6e17533f6e17533f6c2a823f6c2a823f43842f3f43842f3f229acb3c229acb3c3c0d14bf3c0d14bfae5445bfae5445bf",
+      "leading_silence_frames": 220,
+      "active_frames": 3352,
+      "trailing_silence_frames": 1280
+    },
+    {
+      "source_frames": 4,
+      "frequency": 176400,
+      "bits": 8,
+      "channels": 1,
+      "status": 0,
+      "loop": true,
+      "period_frames": 1,
+      "cycle_hex": "c0fbfb3dc0fbfb3d",
+      "leading_silence_frames": 220,
+      "active_frames": 3572,
+      "trailing_silence_frames": 1061
+    }
+  ]
+}

@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-sound-cursor verify-sound-gain verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-sound-cursor verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -92,6 +92,10 @@ verify-sound-cursor: ## check seeking, Play/Stop/resume/end and exact PCM; SOUND
 verify-sound-gain: ## check all quantized gains and Float32 mix; SOUND_GAIN_ARGS can enable real Wine PCM calibration
 	python3 $(ROOT)/tools/generate_sound_gain.py --check
 	python3 $(ROOT)/tools/verify_sound_gain.py --node $(NODE) $(SOUND_GAIN_ARGS)
+
+verify-sound-resample: ## check complete waveforms against real Wine FIR hashes and CPU x87; SOUND_RESAMPLE_ARGS can recapture Wine
+	python3 $(ROOT)/tools/generate_sound_fir.py --check
+	python3 $(ROOT)/tools/verify_sound_resample.py --node $(NODE) $(SOUND_RESAMPLE_ARGS)
 
 verify-menu-cycles: ## compare all 64 presented phases; MCREF, MCNATIVE/MCBROWSER, MCREPORT required
 	python3 $(ROOT)/tools/verify_menu_cycles.py --reference $(MCREF) $(if $(MCNATIVE),--native $(MCNATIVE)) $(if $(MCBROWSER),--browser $(MCBROWSER)) --report $(MCREPORT)

@@ -178,7 +178,7 @@ typedef struct DSBuf {
     int vol, pan;
     int playing, looping;
     int play_cf;                              /* cf @ Play() */
-    long long pos_fp;                         /* source position, FRAMES in Q16 (mixer clock) */
+    unsigned position, phase;                /* source frame + rational remainder / 22050 */
     struct DSBuf* master;                     /* dup source (shares data) */
 } DSBuf;
 static DSBuf* g_dsbufs[256]; static int g_ndsbufs;
@@ -211,7 +211,7 @@ static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
 static int dsb_getpos(DSBuf* b,unsigned* play,unsigned* write){
     unsigned pos;
     ds_realtime_pump();
-    pos=(unsigned)(b->pos_fp>>16)*(unsigned)b->blockalign;
+    pos=b->position*(unsigned)b->blockalign;
     if(b->size)pos%=b->size;
     if(play)*play=pos;
     if(write){
@@ -244,7 +244,8 @@ static int dsb_setpos(DSBuf* b,unsigned pos){
        https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418076(v=vs.85) */
     ds_realtime_pump();
     if(pos>=b->size)return (int)0x80070057u;
-    b->pos_fp=(long long)(pos/(unsigned)b->blockalign)<<16;
+    /* Wine SetCurrentPosition changes sec_mixpos and retains freqAccNum. */
+    b->position=pos/(unsigned)b->blockalign;
     SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
 static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump();
     if(!(b->flags&0x80))return (int)0x8878001eu;
@@ -344,6 +345,8 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
    resampling, combined CD/effect output and start/stop timing remain unverified.
    https://raw.githubusercontent.com/wine-mirror/wine/wine-10.0/dlls/dsound/mixer.c */
 #include "dd2_sound_gain.h"
+#include "dd2_sound_fir.h"
+#include "dd2_sound_wide.h"
 static float dd2_amp_float(int centidb){
     volatile float gain;
     if(centidb>=0)return 1.0f;
@@ -382,6 +385,81 @@ unsigned dd2_audio_ms(void) {
        counting those polling calls would make CD music run over twice as fast. */
     return getenv("DD2_REALTIME") ? dd2_platform_ms() : dd2_audio_virtual_ms;
 }
+static float ds_source_sample(DSBuf* b,uint64_t frame,int channel){
+    const unsigned char* sample;
+    unsigned count=b->size/b->blockalign;
+    if(frame>=count && !b->looping)return 0.0f;
+    sample=b->pcm+(frame%count)*b->blockalign;
+    if(b->channels==1)channel=0;
+    if(b->bits==16)return (float)*(short*)(sample+channel*2)/32768.0f;
+    return ((int)sample[channel]-128)/128.0f;
+}
+
+/* Wine 10's FIR is a forward lookahead, with zero padding for one-shots and
+ * wrapping for loops. The integer cursor/phase follows freqAccNum exactly;
+ * a truncated Q16 step drifts even when no PCM sink is enabled.
+ * Explicit 64-significand-bit operations reproduce the installed i386 Wine
+ * mixer's x87 instructions, including rem's f32 spill and fir_copy's f32
+ * coefficients. This avoids replacing x87 sums with WASM f32 or f64 sums.
+ * Source/assembly calibration: tools/sound_resample_test.c and Wine 10
+ * dsound.dll DSOUND_MixToPrimary+0x460..+0x5f4 on Debian 13. */
+static void ds_mix_buffer(DSBuf* b,float* out,int frames,int produce){
+    uint64_t advance,base;unsigned initial_phase=b->phase;
+    unsigned firstep=b->freq>=22050?DD2_FIR_STEP*22050/b->freq:DD2_FIR_STEP;
+    volatile float firgain=(float)firstep/DD2_FIR_STEP;
+    float gl=dd2_amp_float(b->vol-(b->pan>0?b->pan:0));
+    float gr=dd2_amp_float(b->vol+(b->pan<0?b->pan:0));
+    DD2Wide one=dd2_wide_float(1.0f),gain=dd2_wide_float(firgain);
+    int k;
+    if(produce)for(k=0;k<frames;k++){
+        float sl,sr;
+        if(b->freq==22050){
+            sl=ds_source_sample(b,(uint64_t)b->position+k,0);
+            sr=b->channels==1?sl:ds_source_sample(b,(uint64_t)b->position+k,1);
+        }else{
+            uint64_t fraction=(uint64_t)initial_phase+(uint64_t)k*b->freq;
+            uint64_t numerator=fraction*firstep,steps=numerator/22050;
+            unsigned idx;float rem;
+            DD2Wide total=dd2_wide_ratio(numerator,22050),weight,complement;
+            DD2Wide left={0,0,0},right={0,0,0};
+            total.negative=1;
+            rem=dd2_wide_to_float(dd2_wide_add(dd2_wide_float((float)(steps+1)),total));
+            weight=dd2_wide_float(rem);weight.negative^=1;
+            complement=dd2_wide_add(one,weight);weight.negative^=1;
+            base=steps/firstep;
+            idx=(unsigned)((base+1)*firstep-steps-1);
+            base+=b->position;
+            for(;idx<DD2_FIR_LENGTH-1;idx+=firstep,base++){
+                float coefficient;
+                DD2Wide tap;
+                if(rem==1.0f)coefficient=dd2_sound_fir[idx+1];
+                else if(rem==0.0f)coefficient=dd2_sound_fir[idx];
+                else coefficient=dd2_wide_to_float(dd2_wide_add(
+                    dd2_wide_mul(dd2_wide_float(dd2_sound_fir[idx]),complement),
+                    dd2_wide_mul(dd2_wide_float(dd2_sound_fir[idx+1]),weight)));
+                tap=dd2_wide_float(coefficient);
+                left=dd2_wide_add(left,dd2_wide_mul(tap,dd2_wide_float(ds_source_sample(b,base,0))));
+                if(b->channels>1)
+                    right=dd2_wide_add(right,dd2_wide_mul(tap,dd2_wide_float(ds_source_sample(b,base,1))));
+            }
+            sl=dd2_wide_to_float(dd2_wide_mul(left,gain));
+            sr=b->channels==1?sl:dd2_wide_to_float(dd2_wide_mul(right,gain));
+        }
+        { volatile float vl=sl*gl,vr=sr*gr;out[k*2]+=vl;out[k*2+1]+=vr; }
+    }
+    if(b->freq==22050)advance=frames; /* Wine fast path retains freqAccNum. */
+    else {
+        uint64_t end=(uint64_t)initial_phase+(uint64_t)frames*b->freq;
+        advance=end/22050;b->phase=(unsigned)(end%22050);
+    }
+    base=(uint64_t)b->position+advance;
+    if(base>=b->size/b->blockalign){
+        if(b->looping)base%=b->size/b->blockalign;
+        else {base=0;b->playing=0;}
+    }
+    b->position=(unsigned)base;
+}
+
 void dd2_snd_mix_flip(void){
     static int last_cf=-1; static FILE* pf; static int pf_init;
     static int clock_init;
@@ -423,31 +501,8 @@ void dd2_snd_mix_flip(void){
         if(pf||mix_out>0){ int k; for(k=0;k<frames*2;k++) out[k]=0; }
         for(i=0;i<g_ndsbufs;i++){
             DSBuf* b=g_dsbufs[i];
-            long long step,end_fp; int al,k;float gl,gr;
             if(!b->playing||!b->pcm||!b->size||b->freq<=0) continue;
-            al=b->blockalign; if(al<1) al=1;
-            step=((long long)b->freq<<16)/22050;
-            end_fp=(long long)(b->size/al)<<16;
-            gl=dd2_amp_float(b->vol-(b->pan>0?b->pan:0));
-            gr=dd2_amp_float(b->vol+(b->pan<0?b->pan:0));
-            for(k=0;k<frames;k++){
-                unsigned fr; int sl,sr; const unsigned char* sp;
-                fr=(unsigned)(b->pos_fp>>16); sp=b->pcm+(long long)fr*al;
-                if(b->bits==16){ sl=*(short*)sp; sr=(b->channels>1)?*(short*)(sp+2):sl; }
-                else { sl=((int)sp[0]-128)<<8; sr=(b->channels>1)?(((int)sp[1]-128)<<8):sl; }
-                b->pos_fp+=step;
-                if(b->pos_fp>=end_fp){
-                    if(b->looping)b->pos_fp%=end_fp; /* A step can span several loops. */
-                    else { b->playing=0; b->pos_fp=0; }
-                }
-                if(pf||mix_out>0){
-                    /* Round each product to f32 before adding. x87 extended
-                       temporaries must not fuse a product and sum differently
-                       from the WASM f32.mul/f32.add sequence. */
-                    volatile float vl=((float)sl/32768.0f)*gl, vr=((float)sr/32768.0f)*gr;
-                    out[k*2]+=vl;out[k*2+1]+=vr; }
-                if(!b->playing)break;
-            }
+            ds_mix_buffer(b,out,frames,pf||mix_out>0);
         }
         if(pf) fwrite(out,sizeof(float),frames*2,pf);
 #ifdef DD2_BROWSER

@@ -35,6 +35,35 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Effects resampling now follows the observed Wine 10 FIR instead of the Q16
+  point sampler. The cursor uses an exact remainder / 22050; seeking retains
+  that remainder, and the equal-rate copy path leaves it unchanged. Loops wrap
+  the forward filter window; one-shots zero-pad it. Gaussian-windowed sinc
+  coefficients are generated mathematically by tools/generate_sound_fir.py,
+  with the reference generator's ten-decimal rounding (7907 coefficients).
+  The installed i386 Wine mixer accumulates with x87 precision: f32 summation
+  differed on the first sample (0.6078085899 versus 0.6078086495). A portable
+  explicit 64-significand-bit implementation now reproduces those operations
+  on native/WASM, including f32 coefficient/rem spills. Its actual CPU x87
+  oracle compares 532300 results, including every device-rate fractional
+  remainder at three indices (/tmp/dd2-fir-final-port-tests/report.json).
+  make verify-sound-resample checks eight complete nonconstant one-shot waves
+  against recorded real Wine hashes (36890 active stereo frames), plus exact
+  11025/176400Hz short-loop cycles. Optional SOUND_RESAMPLE_ARGS='--wine --mingw
+  <32-bit compiler> --output <fresh-dir>' recaptures actual Wine PCM and compares
+  every active byte; /tmp/dd2-fir-wine-reviewed/report.json passes all ten cases.
+  Altered bits, shortened/duplicated waveforms and corrupt loop cycles fail.
+  Device preroll/trailing silence is checked and reported separately; loop
+  tone durations are not claimed equal. These are synthetic API fixtures, not
+  the original game. Updated menu/cursor tests use the independently captured
+  Wine filter cycles rather than point-sampler expectations. Menu/cursor/gain
+  regressions pass. Rebuilt native, Node and browser; original L9/cf150 pixels
+  and palette still match on both ports (/tmp/dd2-fir-original-video.log).
+  Actual browser channel data matches the C mixer on 1169 buffers, 231547
+  frames, zero mismatches, with nonzero effects at cf=0
+  (/tmp/dd2-fir-browser-audio.log). Full original streams, frequency/control
+  changes with queued audio, combined CD/effects, original timing and Windows
+  hardware fidelity remain open; this calibrates the exercised Wine backend.
 - Effects output now uses Float32 LE stereo at 22050Hz (DD2_SNDPCM plus a format
   .json sidecar), preserving Wine's observed quantized gain and unclipped sums.
   The prior Q15/16-bit implementation produced 0.2505798340 at volume -600 for
@@ -54,8 +83,8 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   reference validators reject an altered bit, all-silent audible tone and clipped
   sum (automatically checked in the reviewed --wine run).
   This proves amplitudes and exercised controls, not stream-start alignment,
-  full original game PCM, FIR resampling, combined CD/effects or Windows hardware
-  equality. The Q16 point sampler and separate CD/sound scheduling remain open.
+  full original game PCM, combined CD/effects or Windows hardware equality.
+  FIR calibration is documented above; separate CD/sound scheduling remains open.
   Rebuilt all three targets. All ten complete sound-enabled native/WASM demos
   match: 15255 presented frames/palettes, RNG/flip logs, 5277888 Float32 effects
   PCM bytes and 4939200 CD source PCM bytes per demo
@@ -270,8 +299,8 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   cf-gate → target fn); sys.setrecursionlimit MANDATORY in every gdb-python on_stop script (ours
   AND wine — dies after ~50 hits otherwise); refmulti.sh rotates old reffb dumps — save first;
   fb-vs-ref compares only at the same Draw_All-entry phase; prim compares only for prims that
-  WIN pixels. **AUDIO = DONE for the L9 attract:** DirectSound COM shim (DD2_SOUND=1) + deterministic
-  PCM mixdown (dd2h_stubs.c; engine-frame clock, fixed-point centi-dB, Q16 point-sampler;
+  WIN pixels. **L9 attract audio evidence is limited to port PCM and game-side calls:** DirectSound COM shim (DD2_SOUND=1) + deterministic
+  PCM mixdown (dd2h_stubs.c; engine-frame clock, quantized gain, Float32 FIR and rational cursor;
   DD2_SNDPCM/<path>, DD2_SNDLOG): PCM stream bit-identical across native runs AND native<->wasm;
   game-side DS call stream matches the SOUND-ENABLED wine reference EXACTLY (59/59 race sound-start
   groups incl. every volume/pan/frequency value; Modify_Sound streams exact in every clean
@@ -280,8 +309,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   2x scattered DSBUFFERDESC, dropped reg-args, volume-curve log10 reconstruction + CRT log10 body,
   mm-timer callback 0x41345c reconstruction + deterministic 10-cf/phase-5 driver, commentator gate
   = BYTE test of demo counter [0x7746c0] opening every 128 cf). Sound-enabled refs need the ALSA
-  null device (~/.asoundrc `pcm.!default { type null }`) — headless wine otherwise has NO audio
-  device and DirectSoundCreate fails (all pre-2026-07-03 refs ran no-sound). FAITHFUL BOOT PATH
+  null device in those historical captures — current reference tools use a private
+  clocked ALSA device and observe actual accepted PCM. Headless Wine without a configured
+  device makes DirectSoundCreate fail (all pre-2026-07-03 refs ran no-sound). FAITHFUL BOOT PATH
   CONFIRMED: the real FE-driven attract (Front_End idle -> View_Frontend_Replay, a fixed recorded
   replay — NOT the DemoModeLevel harness) is bit-identical to the Windows reference (cf200 AND
   cf450 = 0/307200) and to the DemoModeLevel harness (cf200 = 0/307200); since it is a
