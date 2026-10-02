@@ -35,6 +35,24 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- A portable Cinepak source decoder now matches actual Wine Win32 ICCVID for
+  every Intro/Outro frame. The same original compressed packet sequence feeds
+  ICDecompress and native ASan/UBSan/WASM; every normalized RGB24 byte is
+  compared directly, before saving hashes/checkpoints and deleting large
+  matching streams. Intro: 1712 frames/315555840 bytes; Outro: 1813 frames/
+  334172160 bytes, including all 12 empty hold packets. All 649728000 bytes
+  match both targets (/tmp/dd2-movie-codec-reviewed/report.json).
+  Cinepak codebooks/interframes, both-strip inheritance, flag-word crossings,
+  vector-chunk padding and signed/clipped chroma conversion are exercised.
+  Wine green uses ceil(U/2); FFmpeg's default conversion differs already at
+  intro RGB byte8017 (Wine13 vs FFmpeg14), so an unverified FFmpeg RGB path
+  would not preserve this decoder's source values. Changed decoded pixels
+  are rejected. make verify-movie-codec MOVIE_CODEC_ARGS='--mingw <compiler>
+  --ffmpeg ffmpeg --output <fresh-dir>' reproduces the reference run.
+  dd2_cinepak.c/h is a component for the pending AVI backend; normal game
+  startup/transport still does not play movies. This verifies the real Wine
+  codec's source frames, not original Windows hardware, original dd2h.exe's
+  movie presentation/scaling/timing or ADPCM/audio output. Those remain open.
 - Rebuilt movie-parameter targets pass all ten complete sound-enabled demos:
   15255 presented frames/palettes, RNG/flip logs and every effects, final mix,
   music-summand and raw CD byte (/tmp/dd2-parity-movie-params/results.json).
