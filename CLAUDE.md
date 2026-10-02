@@ -64,6 +64,12 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   their actual WASM import rather than assuming every 44100Hz buffer is music.
   CD and effects still use separate scheduling cursors; complete mixed PCM,
   queued controls, stream-start timing and original full-output parity remain open.
+  All ten complete sound-enabled native/WASM demos pass at the new default
+  44100Hz device: 15255 presented frames/palettes, every RNG/flip log, 10555776
+  Float32 effects bytes and 4939200 CD source bytes per demo, including format
+  sidecars (/tmp/dd2-parity-device44/results.json). This compares the two ports;
+  the original video proof remains the L9 checkpoint above, and the original
+  audio proof remains the actual captured synthetic waveform/control fixtures.
 - Effects resampling now follows the observed Wine 10 FIR instead of the Q16
   point sampler. Initially calibrated at 22050Hz, the cursor uses an exact
   remainder / device rate; seeking retains
