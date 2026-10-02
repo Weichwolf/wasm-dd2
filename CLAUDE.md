@@ -35,6 +35,27 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- Rebuilt movie-parameter targets pass all ten complete sound-enabled demos:
+  15255 presented frames/palettes, RNG/flip logs and every effects, final mix,
+  music-summand and raw CD byte (/tmp/dd2-parity-movie-params/results.json).
+  All eight existing original L9 video/palette checkpoints still match both
+  targets. Actual native SDL/X11 menu/CD/Configuration/Joystick/live-driving
+  and pause/resume pass ten rendering checkpoints (3072000 pixels) and
+  8376176 exact accepted mixed bytes; Stop/TO-only restarts source at sector
+  45582/sample26802216 instead of the fractional stop sample26802569, and
+  the next 2352 CD bytes match (/tmp/dd2-native-movie-params-reviewed/report.json).
+  Browser live pause/resume restarts relative frame552617 at frame552132:
+  68620 exact resumed source bytes and 1672 exact shared WebAudio buffers,
+  with no missing/extra/differing buffers or runtime errors
+  (/tmp/dd2-browser-movie-params-reviewed/report.json).
+  Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now contain these
+  validated builds; native SHA
+  d7a8c076d2df56dabbe13a194a2a07708da4a81befd276546ffbc1c3e651c52d.
+  Exact patch context includes upstream trailing spaces, so .gitattributes
+  exempts only patch files' end-of-line whitespace from Git's warning; all
+  176 patches still apply with -F0, and the repeated movie fixture retains
+  the same function hash/records (/tmp/dd2-movie-params-patch-format-reviewed).
+  These regressions do not establish full original A/V or movie playback.
 - Play_Movie's MCI blocks are restored by exact patch839 against original
   414e80..414f75: Open type/filename/returned ID, destination window and
   rectangle, playback callback/zero fields and Close callback now occupy

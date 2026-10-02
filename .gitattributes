@@ -1,0 +1,3 @@
+# Exact upstream context in the ordered patch series includes trailing spaces.
+# tools/patch.sh validates those bytes with -F0; preserve them in patch files.
+patches/*.diff whitespace=-blank-at-eol
