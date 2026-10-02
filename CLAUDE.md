@@ -35,6 +35,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-02, Debian 13)
+- CD-menu browser QA now waits for the real slab rotation/bounce to finish,
+  acknowledges ReadPad press/release and checks each Prev selection before
+  issuing the next input. Fixed-duration pulses could land in transition
+  frames and falsely report missing actions under load. The updated test
+  passes Play/Stop/Next/Prev, exact track2/3 source parts and 2920 actual
+  combined WebAudio buffers with zero missing, extra or differing buffers
+  (/tmp/dd2-native-sdl-browser-cd-ack.log). This changes test input timing,
+  not engine behavior or waveform alignment.
 - DirectSound duplicates now own a reference to shared PCM storage independently
   of the original COM buffer. Previously releasing the original then duplicating
   a survivor read freed memory in ds_dupbuffer; the actual Wine fixture passed

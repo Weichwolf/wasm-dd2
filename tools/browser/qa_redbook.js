@@ -13,9 +13,18 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   page.on('console',message=>{if(message.text().includes('[CD]'))console.log('device:',message.text());});
   page.on('response',response=>{if(response.url().endsWith('.cdda'))console.log('CD fetch:',response.status(),response.url());});
   await page.addInitScript(()=>{
-   window.__cdTest={track:0,parts:[],frames:0,totalBuffers:0,musicBuffers:0,mismatches:0,missingBuffers:0,otherBuffers:0,plays:[]};
+   window.__cdTest={track:0,parts:[],frames:0,totalBuffers:0,musicBuffers:0,mismatches:0,missingBuffers:0,otherBuffers:0,plays:[],presentations:0,zeroSlabFrames:0};
    let expected;
    const observeImports=imports=>{
+    if(imports && imports.env && imports.env.dd2_present && !imports.env.dd2_present.__cdObserved){
+     const present=imports.env.dd2_present;
+     const observed=function(...args){
+      __cdTest.presentations++;
+      __cdTest.zeroSlabFrames=HEAPU16[0x46996c>>1]===0?__cdTest.zeroSlabFrames+1:0;
+      return present.apply(this,args);
+     };
+     observed.__cdObserved=true;imports.env.dd2_present=observed;
+    }
     if(!imports || !imports.env || !imports.env.dd2_audio_push || imports.env.dd2_audio_push.__cdObserved)return;
     const original=imports.env.dd2_audio_push;
     const observed=function(pointer,effects,music,frames,rate,musicFrames){
@@ -74,17 +83,31 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   await boot(page,server);
   assert(await gotoButton(page,'CD Audio Player'),'cannot reach CD player');
   await key(page,'Enter',700);
+  // The label is installed before eight rotation and fifteen bounce frames.
+  // Five zero-angle presentations extend past the four final bounce entries.
+  await page.waitForFunction(()=>HEAP32[0x940010>>2]===0x469e2c && __cdTest.zeroSlabFrames>=5);
+  async function cdKey(code,post=320){
+   const masks={Enter:0x4000,ArrowRight:0x20,ArrowLeft:0x80};
+   await page.evaluate(c=>window.dispatchEvent(new KeyboardEvent('keydown',{code:c})),code);
+   await page.waitForFunction(mask=>(HEAPU16[0x754448>>1]&mask)!==0,masks[code]);
+   await page.evaluate(c=>window.dispatchEvent(new KeyboardEvent('keyup',{code:c})),code);
+   await page.waitForFunction(mask=>(HEAPU16[0x754448>>1]&mask)===0,masks[code]);
+   await page.waitForTimeout(post);
+  }
   const initialSelection=await page.evaluate(()=>HEAP32[0x469efc>>2]);
   assert(initialSelection>=0 && initialSelection<=16,'invalid initial CD selection');
   // The original image defaults to index 11. Reach track 2 through real Prev actions.
-  for(let i=0;i<initialSelection;i++) await key(page,'Enter',320);
+  for(let i=initialSelection;i>0;i--){
+   await cdKey('Enter');
+   await page.waitForFunction(index=>HEAP32[0x469efc>>2]===index,i-1);
+  }
   assert(await page.evaluate(()=>HEAP32[0x469efc>>2])===0,'Prev actions did not reach first audio track');
-  await key(page,'Enter',320);
+  await cdKey('Enter',320);
   assert(await page.evaluate(()=>HEAP32[0x469efc>>2])===0,'Prev moved below first audio track');
-  await key(page,'ArrowRight',700);
+  await cdKey('ArrowRight',700);
   assert((await rd(page,0x469d64)).includes('Play'),'Play category missing');
   async function playAndCompare(track){
-   await key(page,'Enter',800);
+   await cdKey('Enter',800);
    try { await page.waitForFunction(t=>window.__cdTest.track===t && window.__cdTest.frames>=80000,track,{timeout:8000}); }
    catch(error){console.log('CD failure state:',await page.evaluate(()=>({track:__cdTest.track,frames:__cdTest.frames,total:__cdTest.totalBuffers,plays:__cdTest.plays,ac:Module._dd2ac&&Module._dd2ac.state,enabled:HEAP32[0x462d74>>2],playing:HEAP32[0x462d70>>2],from:HEAP32[0x74f174>>2],env:ENV.DD2_CDLOG})));throw error;}
    const capture=await page.evaluate(()=>{
@@ -103,19 +126,19 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
    console.log(`PASS browser track${track}: ${actual.length} exact CD source bytes in the shared mixer`);
   }
   await playAndCompare(2);
-  await key(page,'ArrowRight',700);await key(page,'Enter',700);
+  await cdKey('ArrowRight',700);await cdKey('Enter',700);
   const stopped=await page.evaluate(()=>({playing:HEAP32[0x462d70>>2],buffers:__cdTest.musicBuffers}));
   assert(stopped.playing===0,'Stop did not stop the engine CD device');
   await page.waitForTimeout(400);
   assert(await page.evaluate(()=>__cdTest.musicBuffers)===stopped.buffers,'CD still submits audio after Stop');
-  await key(page,'ArrowRight',700);await key(page,'Enter',700);
+  await cdKey('ArrowRight',700);await cdKey('Enter',700);
   assert(await page.evaluate(()=>HEAP32[0x469efc>>2])===1,'Next Track did not change selection');
-  await key(page,'ArrowLeft',400);await key(page,'ArrowLeft',400);
+  await cdKey('ArrowLeft',400);await cdKey('ArrowLeft',400);
   await playAndCompare(3);
-  await key(page,'ArrowLeft',400);await key(page,'Enter',700);
+  await cdKey('ArrowLeft',400);await cdKey('Enter',700);
   assert(await page.evaluate(()=>HEAP32[0x469efc>>2])===0,'Prev Track did not change selection');
   assert(await page.evaluate(()=>__cdTest.plays.at(-1).track)===3,'selection unexpectedly changed playing track');
-  await key(page,'ArrowRight',400);await key(page,'ArrowRight',400);await key(page,'Enter',700);
+  await cdKey('ArrowRight',400);await cdKey('ArrowRight',400);await cdKey('Enter',700);
   await page.screenshot({path:path.join(output,'stopped.png')});
   const sink=await page.evaluate(()=>({mismatches:__cdTest.mismatches,missing:__cdTest.missingBuffers,other:__cdTest.otherBuffers,buffers:__cdTest.totalBuffers,separateCursor:Module._dd2cdt!==undefined}));
   assert(sink.buffers>0 && sink.mismatches===0 && sink.missing===0 && sink.other===0 && !sink.separateCursor,'shared WebAudio output differs from the combined C mixer or uses a second sink');
