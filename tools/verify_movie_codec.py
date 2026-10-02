@@ -22,8 +22,8 @@ FIXTURE=ROOT/"tools/movie_codec_test.c"
 DECODER=ROOT/"re_out/dd2_cinepak.c"
 
 
-def packets(path):
-    data=path.read_bytes();frames=[];formats=[]
+def riff_chunks(path):
+    data=path.read_bytes()
     def walk(at,end):
         while at<end:
             if at+8>end:
@@ -35,18 +35,25 @@ def packets(path):
             if kind in (b"RIFF",b"LIST"):
                 if size<4:
                     raise ValueError("Incomplete RIFF/LIST type")
-                walk(at+12,limit)
-            elif kind==b"strf" and size>=40 and data[at+8+16:at+8+20]==b"cvid":
-                header=struct.unpack_from("<IiiHH4s",data,at+8)
-                formats.append((header[1],header[2]))
-            elif kind==b"00dc":
-                frames.append(data[at+8:limit])
+                yield from walk(at+12,limit)
+            else:
+                yield kind,data[at+8:limit]
             at=limit+(size&1)
         if at!=end:
             raise ValueError("Invalid RIFF padding extent")
     if data[:4]!=b"RIFF" or data[8:12]!=b"AVI " or struct.unpack_from("<I",data,4)[0]+8!=len(data):
         raise ValueError("Expected complete original AVI RIFF")
-    walk(12,len(data))
+    yield from walk(12,len(data))
+
+
+def packets(path):
+    frames=[];formats=[]
+    for kind,data in riff_chunks(path):
+        if kind==b"strf" and len(data)>=40 and data[16:20]==b"cvid":
+            header=struct.unpack_from("<IiiHH4s",data)
+            formats.append((header[1],header[2]))
+        elif kind==b"00dc":
+            frames.append(data)
     if len(formats)!=1 or not frames:
         raise ValueError("Expected one Cinepak format and video stream")
     return formats[0],frames
@@ -59,7 +66,7 @@ def compare(first,second):
             a=reference.read(65536);b=target.read(65536)
             if a!=b:
                 changed=next((i for i,(x,y) in enumerate(zip(a,b)) if x!=y),min(len(a),len(b)))
-                raise RuntimeError(f"RGB bytes differ at {offset+changed}: {first} vs {second}")
+                raise RuntimeError(f"Decoded bytes differ at {offset+changed}: {first} vs {second}")
             if not a:
                 return offset
             offset+=len(a)
@@ -104,7 +111,8 @@ def main():
         subprocess.run([args.mingw,"-O2","-Wall","-Wextra","-Werror",str(FIXTURE),
                         "-lmsvfw32","-o",str(exe)],check=True)
         common=["-std=gnu99","-O2","-Wall","-Wextra","-Werror",f"-I{ROOT/'re_out'}",str(DECODER),str(FIXTURE)]
-        subprocess.run(["gcc","-m32","-no-pie","-fsanitize=address,undefined",*common,"-o",str(native)],check=True)
+        subprocess.run(["gcc","-m32","-no-pie","-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        *common,"-o",str(native)],check=True)
         subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-o",str(wasm)],check=True)
         report["wine_executable_sha256"]=hashlib.sha256(exe.read_bytes()).hexdigest()
         for movie in ("Intro.avi","Outro.avi"):

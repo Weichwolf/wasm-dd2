@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-browser-redbook-restart verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-browser-redbook-restart verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -115,6 +115,9 @@ verify-movie-params: patch ## check original movie MCI blocks/control flow on na
 
 verify-movie-codec: ## compare every original AVI Cinepak source frame with Wine ICCVID on native/WASM; MOVIE_CODEC_ARGS selects MinGW
 	python3 $(ROOT)/tools/verify_movie_codec.py --node $(NODE) $(MOVIE_CODEC_ARGS)
+
+verify-movie-audio: ## compare complete AVI ADPCM source PCM with Wine ACM on native/WASM; MOVIE_AUDIO_ARGS selects MinGW
+	python3 $(ROOT)/tools/verify_movie_audio.py --node $(NODE) $(MOVIE_AUDIO_ARGS)
 
 verify-shared-audio: ## check ordered CD/effects mix against Wine PCM; SHARED_AUDIO_ARGS can recapture Wine
 	python3 $(ROOT)/tools/verify_shared_audio.py --node $(NODE) $(SHARED_AUDIO_ARGS)

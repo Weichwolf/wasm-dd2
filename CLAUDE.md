@@ -34,7 +34,23 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   --audio-tail 3 --output /tmp/fresh-original-audio` (no debugger). Observer/clock
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
-## Current acceptance check (2026-10-02, Debian 13)
+## Current acceptance check (2026-10-03, Debian 13)
+- Portable Microsoft ADPCM source decoding now matches actual Wine Win32 ACM
+  for both complete original film audio streams. Intro: 1509904 stereo frames/
+  6039616 PCM16LE bytes; Outro: 1598960 frames/6395840 bytes, both at 22050Hz.
+  Native ASan/UBSan and WASM directly compare every source byte; malformed
+  partial blocks, incomplete formats and invalid predictor indices fail
+  before creating output, with no sanitizer error. Changed decoded samples
+  are rejected (/tmp/dd2-movie-audio-negative-reviewed/report.json).
+  make verify-movie-audio MOVIE_AUDIO_ARGS='--mingw <compiler> --ffmpeg ffmpeg
+  --output <fresh-dir>' reproduces this. FFmpeg's default audio matches the
+  actual ACM source in these films (its video conversion differs).
+  Both movie verifiers share one strict RIFF iterator, and native sanitizer
+  failures are fatal. The refactored video verifier passes all 3525 frames/
+  649728000 RGB bytes again (/tmp/dd2-movie-codec-riff-reviewed/report.json).
+  dd2_msadpcm.c/h and dd2_cinepak.c/h remain decoder components pending AVI
+  transport/startup/presentation integration; source codec parity does not
+  establish original movie A/V delivery, scaling, clocks or output resampling.
 - A portable Cinepak source decoder now matches actual Wine Win32 ICCVID for
   every Intro/Outro frame. The same original compressed packet sequence feeds
   ICDecompress and native ASan/UBSan/WASM; every normalized RGB24 byte is
