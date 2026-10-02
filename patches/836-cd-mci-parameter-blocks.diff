@@ -1,0 +1,72 @@
+Reconstruct the original contiguous WinMM parameter blocks before the MCI
+backend writes status results or reads the resume end time. Ghidra split them
+into unrelated C locals, so even successful commands consumed wrong stack bytes.
+Original dd2h.exe, verified with objdump:
+- CD_Check: 0x416677 passes ebp-0x14; 0x416691 writes item=3 at +8;
+  0x4166a1 compares the returned track count at +4 with 19.
+- Check_For_CD_Loop: 0x416250 passes ebp-0x1c; 0x41626a writes item=4
+  at +8; 0x416272 compares the returned mode at +4 with MCI_MODE_PLAY.
+- CD_Restart: 0x416329 writes dwTo at ebp-8, 0x41632c passes ebp-0x10
+  (dwTo = +8), and MCI_PLAY carries only MCI_TO (flags=8). The callback
+  and from fields are unused, as in the original.
+Use real arrays with the original offsets; no fabricated track count, mode,
+resume position, or new engine branch.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -5849,14 +5849,12 @@
+ 
+ {
+   MCIERROR MVar1;
+-  undefined1 local_20 [4];
+-  int local_1c;
+-  undefined4 local_18;
++  uint status[4];  /* MCI_STATUS_PARMS at original ebp-0x1c */
+   
+   if (((DAT_00462d74 != 0) && (DAT_00462d6c != 0)) && (DAT_00462d70 != 0)) {
+-    local_18 = 4;
+-    mciSendCommandA(DAT_00462d78,0x814,0x100,(DWORD_PTR)local_20);
+-    if ((local_1c != 0x20e) && (DAT_00462d74 != 0)) {
++    status[2] = 4;
++    mciSendCommandA(DAT_00462d78,0x814,0x100,(DWORD_PTR)status);
++    if ((status[1] != 0x20e) && (DAT_00462d74 != 0)) {
+       MVar1 = mciSendCommandA(DAT_00462d78,0x806,0xc,0x74f170);
+       if (MVar1 == 0) {
+         DAT_00462d70 = 1;
+@@ -5899,12 +5897,11 @@
+ 
+ {
+   MCIERROR MVar1;
+-  undefined1 local_14 [8];
+-  undefined4 local_c;
++  uint play[3];  /* MCI_PLAY_PARMS at original ebp-0x10 */
+   
+   if (DAT_00462d74 != 0) {
+-    local_c = DAT_00462d80;
+-    MVar1 = mciSendCommandA(DAT_00462d78,0x806,8,(DWORD_PTR)local_14);
++    play[2] = DAT_00462d80;
++    MVar1 = mciSendCommandA(DAT_00462d78,0x806,8,(DWORD_PTR)play);
+     if (MVar1 == 0) {
+       DAT_00462d70 = 1;
+     }
+@@ -6118,15 +6115,13 @@
+ {
+   MCIERROR MVar1;
+   undefined4 uVar2;
+-  undefined1 local_18 [4];
+-  int local_14;
+-  undefined4 local_10;
+-  
+-  local_10 = 3;
+-  MVar1 = mciSendCommandA(DAT_00462d78,0x814,0x100,(DWORD_PTR)local_18);
++  uint status[4];  /* MCI_STATUS_PARMS at original ebp-0x14 */
++  
++  status[2] = 3;
++  MVar1 = mciSendCommandA(DAT_00462d78,0x814,0x100,(DWORD_PTR)status);
+   if (MVar1 == 0) {
+     uVar2 = 0;
+-    if (local_14 == 0x13) {
++    if (status[1] == 0x13) {
+       uVar2 = 1;
+     }
+   }

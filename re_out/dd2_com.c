@@ -74,8 +74,10 @@ EM_JS(void, dd2_present, (const unsigned char* fb, const unsigned char* pal), {
 });
 #endif
 static int ids_flip(int t,int a,int b){
-    /* deterministic audio mixdown clock (dd2h_stubs.c): advance by engine frames, once per flip */
+    /* Advance the shared audio clock before CD playback/timer status checks. */
     { extern void dd2_snd_mix_flip(void); dd2_snd_mix_flip(); }
+    { extern void dd2_cd_pump(void); extern void dd2_mmtimer_poll(void);
+      dd2_cd_pump(); dd2_mmtimer_poll(); }
     /* DD2_SCRIPT=<file>: deterministic scripted input. Lines "<cf> <vk> <down>" (decimal/0x..),
        sorted by cf; when the ENGINE frame counter @0x462ff0 reaches that value the key event is
        injected through the same dd2_key_event -> Translate_Keypress path a real key takes.

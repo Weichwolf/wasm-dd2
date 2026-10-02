@@ -16,7 +16,9 @@ F="-m32 -no-pie -g -O0 $ASAN -std=gnu89 -w \
   -Wno-return-type -Wno-return-mismatch -Wno-incompatible-pointer-types"
 
 # engine units (dd2_runtime EXCLUDED — native_main.c provides main + CRT helpers)
-UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate"
+python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.json" "$ROOT/build/dd2_disc.h"
+
+UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd"
 OBJS=""
 for u in $UNITS; do
   gcc $F -c "$ROOT/build/$u.c" -o "/tmp/n_$u.o" 2>/tmp/ne_$u.txt || true

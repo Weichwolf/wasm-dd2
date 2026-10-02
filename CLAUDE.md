@@ -41,7 +41,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - Browser track selection -> populated L7 race and IDBFS reload persistence pass with
   Debian Playwright/Chromium. The shell creates the save-file symlink target before boot.
 - Original assets and 18 exact CDDA track extracts are provisioned with `make provision`
-  and remain gitignored. CD playback is still unimplemented (`mciSendCommandA` is a stub).
+  and remain gitignored. `mciSendCommandA` now delegates to re_out/dd2_cd.c: the
+  original engine controls CD tracks, Play/Stop/resume/repeat, with exact 44100Hz
+  stereo s16le source data. Patches 836/837 restore contiguous MCI parameter blocks
+  and the mandatory valid-CD boot branch. Browser builds fetch one raw CD track
+  at a time and submit it to WebAudio; native/Node expose source PCM capture.
+  `make verify-redbook` passes all 18 prefixes, stop/resume positions, full track02,
+  end/replay and invalid/missing-disc cases: 29821008 exact bytes against CDDA.
+  Browser real-key CD menu Play/Stop/Next/Prev passes; submitted track2/3 buffers
+  match source bytes exactly. Logs: /tmp/dd2-browser-redbook-reviewed.log and
+  /tmp/dd2-redbook-absolute-time.log. Source equality is not full mixed output parity.
+  Interactive menu effects still use the fixed race counter; their clock needs work.
 - The Node build now imports `DD2_*` process options into libc ENV before boot. Before
   this fix, Node silently ignored sound, input scripts and frame capture options.
   New `make verify-parity` compares every presented frame AND its palette, flip/RNG
@@ -54,6 +64,12 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   also matches: 1525 frames/palettes and 2638944 PCM bytes. Rebuilt native, Node
   and browser; the other nine complete demos still match. Verification logs:
   /tmp/dd2-parity-L1-fix/results.json and /tmp/dd2-parity-835-regression/results.json.
+  After Redbook implementation, all ten demos also match with a shared 25Hz audio
+  clock: /tmp/dd2-parity-cd-shared-clock/results.json (4939200 CD PCM bytes per demo,
+  same frame/palette/RNG/effects results). Reading the fake GetTickCount polling
+  clock for music would advance it over twice as fast; use dd2_audio_ms instead.
+  Real-time Node demos pass after replacing the incorrect handcrafted timespec
+  with libc's struct timespec (Emscripten time_t is 64-bit).
   Earlier observed differences at 0x874c84/0x874d60/0x874de4 are OT bucket heads,
   not geometry-cache structures; they were downstream consequences.
 - User reports menu graphics/actions and championship scores broken. Reproduce by
@@ -74,6 +90,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   /tmp/dd2-ref-attract-device. `make verify-reference-video REFCAP=<capture>`
   reproduces it. This is one checkpoint; full original mixed playback PCM
   and video stream parity remain open.
+  The adapter Q-channel position is currently fixed at track2 start. Wine mcicda's
+  TO-only MCI_PLAY reads that position, even after digital playback; current Wine
+  reference pause/restart therefore cannot establish original cursor fidelity.
   Historical claims below are investigation context, not full acceptance evidence.
 
 ## Status (3 sequential stages, each gates the next)

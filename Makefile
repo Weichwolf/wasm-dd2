@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-redbook verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -79,6 +79,9 @@ shot: web ## headless browser screenshot of the web build -> /tmp/dd2_shot.png
 REFCAP ?= /tmp/dd2-reference
 verify-reference-video: native wasm ## compare one existing original L9 Draw_All checkpoint (REFCAP) with both ports
 	python3 $(ROOT)/tools/reference/compare_video.py --capture $(REFCAP) --native $(NATIVE) --node $(NODE) --wasm $(OUTJS)
+
+verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on native/WASM against provisioned CDDA
+	python3 $(ROOT)/tools/verify_redbook.py --node $(NODE)
 
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py

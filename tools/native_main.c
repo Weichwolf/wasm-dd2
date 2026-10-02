@@ -202,7 +202,7 @@ int main(void){
     /* default: force "skip DirectSound COM" in Init_Application; with DD2_SOUND the flag already
      * holds the live init state (1) and Init_Application's own DSInit call skips itself. */
     if(!getenv("DD2_SOUND")) *(int*)(uintptr_t)0x462d68 = 1;
-    CK("Init_Application()");       Init_Application((void*)1);
+    CK("Init_Application()");       if (!Init_Application((void*)1)) return 1;
     *(int*)(uintptr_t)0x463010 = -1;
     /* ddmain@0x423b28 sets pal_flag=0 before any init; our CRT bypass skips ddmain, and the image
      * default is 1 -> Init_Overlays would skip its -0x10 tpage adjustment and every overlay/HUD/

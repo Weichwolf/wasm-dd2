@@ -31,6 +31,7 @@
         // ?level=N picks the track; the FE menu flow replaces this once its rendering lands.)
         var q = new URLSearchParams(location.search);
         ENV.DD2_SOUND = '1';
+        if (q.has('cdlog')) ENV.DD2_CDLOG = '1';
         ENV.DD2_REALTIME = '1';   // faithful 25fps pacing (engine frame limiter on real time)
         // Default boot = the REAL front end (title -> menus -> track select -> race), like the
         // original ddmain. ?race=N boots straight into a live race, ?demo runs the attract.

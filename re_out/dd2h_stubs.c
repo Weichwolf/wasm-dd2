@@ -53,7 +53,8 @@ int joyGetPos(int a,void* b){
     { unsigned* ji=(unsigned*)b;
       ji[0]=dd2_pad_x; ji[1]=dd2_pad_y; ji[2]=32768; ji[3]=dd2_pad_buttons; }
     return 0; }
-int mciSendCommandA(int a,int b,int c,int d){ (void)a;(void)b;(void)c;(void)d; return 0; }
+#include "dd2_cd.h"
+int mciSendCommandA(int a,int b,int c,int d){ return dd2_mci_send((unsigned)a,(unsigned)b,(unsigned)c,(uint32_t*)(uintptr_t)d); }
 #include "dd2_symbols.h"
 /* Real _ot_dispatch (= dd2.exe): call the primitive handler from _primfuncs[type] (dd2_relocate has
    rewritten in-fnmap entries to real fn-pointers). A relocated entry is non-null OUTSIDE the image
@@ -122,10 +123,24 @@ int timeEndPeriod(int a){ (void)a; return 0; }
    FUN_0041345c (patch 730, drives Sound_Timer_). Deterministic driver: dd2_snd_mix_flip fires
    it every 10 engine frames (= 400ms at 25 engine fps) instead of wallclock. */
 int g_dd2_mmtimer_active = 0;
+static unsigned dd2_timer_ms;
 int timeKillEvent(int a){ (void)a; g_dd2_mmtimer_active = 0; return 0; }
 int timeSetEvent(int a,int b,void* c,int d,int e){ (void)b;(void)c;(void)d;(void)e;
-    if(a==400) g_dd2_mmtimer_active = 1;
+    if(a==400) { g_dd2_mmtimer_active = 1; dd2_timer_ms = dd2_platform_ms(); }
     return 1; }
+
+/* Interactive timer continues in menus and pause, where current_frame stays
+   fixed. Deterministic demos retain the existing cf/phase-5 timer below. */
+void dd2_mmtimer_poll(void) {
+    unsigned now;
+    extern void FUN_0041345c(void);
+    if (!getenv("DD2_REALTIME") || !g_dd2_mmtimer_active) return;
+    now = dd2_platform_ms();
+    while ((unsigned)(now-dd2_timer_ms) >= 400) {
+        dd2_timer_ms += 400;
+        FUN_0041345c();
+    }
+}
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -289,7 +304,9 @@ static int dd2_amp_q15(int centidb){ /* 10^(centidb/2000) in Q15 for centidb<=0 
    cursor. Lazy AudioContext (browsers require a user gesture before audio can start). */
 EM_JS(void, dd2_audio_push, (const short* pcm, int frames), {
     if (!Module._dd2ac) {
-        try { Module._dd2ac = new AudioContext({sampleRate:22050}); } catch(e){ return; }
+        /* Keep the shared device at CD rate even when effects start first.
+           Effects retain their original 22050Hz source buffers. */
+        try { Module._dd2ac = new AudioContext({sampleRate:44100}); } catch(e){ return; }
         Module._dd2t = 0;
         var resume = function(){ if (Module._dd2ac.state==='suspended') Module._dd2ac.resume(); };
         window.addEventListener('keydown', resume); window.addEventListener('click', resume);
@@ -307,11 +324,17 @@ EM_JS(void, dd2_audio_push, (const short* pcm, int frames), {
     src.start(Module._dd2t); Module._dd2t += frames/22050;
 });
 #endif
+static unsigned dd2_audio_virtual_ms;
+unsigned dd2_audio_ms(void) {
+    /* Headless comparisons use the SAME 25Hz simulation clock as effects.
+       GetTickCount's synthetic +16/call ticker only drives the frame limiter;
+       counting those polling calls would make CD music run over twice as fast. */
+    return getenv("DD2_REALTIME") ? dd2_platform_ms() : dd2_audio_virtual_ms;
+}
 void dd2_snd_mix_flip(void){
     static int last_cf=-1; static FILE* pf; static int pf_init;
     int cf,dt,i,t;
     static int mix_out = -1;
-    if(!getenv("DD2_SOUND")) return;
 #ifdef DD2_BROWSER
     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
 #endif
@@ -319,6 +342,7 @@ void dd2_snd_mix_flip(void){
     if(last_cf<0){ last_cf=cf; return; }
     dt=cf-last_cf; last_cf=cf;
     if(dt<=0||dt>250) return;
+    if(!getenv("DD2_SOUND")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
     if(!pf_init){ pf_init=1; { const char* p=getenv("DD2_SNDPCM"); if(p) pf=fopen(p,"wb"); } }
     for(t=0;t<dt;t++){
         static short out[882*2];
@@ -348,6 +372,7 @@ void dd2_snd_mix_flip(void){
 #ifdef DD2_BROWSER
         dd2_audio_push(out, 882);
 #endif
+        dd2_audio_virtual_ms += 40;
         /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
            Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
            and sees playback positions of audio already played by the end of the tick. Phase 5:
@@ -358,7 +383,7 @@ void dd2_snd_mix_flip(void){
            end positions by <1 tick vs wallclock, so the phase absorbs that quantization). */
         { extern int g_dd2_mmtimer_active; extern void FUN_0041345c(void);
           int tick_cf = last_cf - dt + 1 + t;
-          if(g_dd2_mmtimer_active && tick_cf % 10 == 5) FUN_0041345c(); }
+          if(!getenv("DD2_REALTIME") && g_dd2_mmtimer_active && tick_cf % 10 == 5) FUN_0041345c(); }
     }
     if(pf) fflush(pf);
 }

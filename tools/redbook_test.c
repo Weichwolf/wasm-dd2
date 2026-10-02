@@ -1,0 +1,70 @@
+/* Backend behavior tests with an explicit clock, using the provisioned CD. */
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "dd2_cd.h"
+static unsigned now;
+unsigned dd2_audio_ms(void) { return now; }
+static void require(int ok, const char *reason) {
+    if (!ok) { fprintf(stderr,"Redbook test failed: %s\n",reason); exit(1); }
+}
+static unsigned status(unsigned item) {
+    uint32_t p[4] = {0,0,item,0};
+    require(dd2_mci_send(1,0x814,0x100,p)==0,"status command");
+    return p[1];
+}
+int main(int argc, char **argv) {
+    uint32_t open[5] = {0}, set[3] = {0,10,0}, play[3] = {0};
+    int track;
+    require(argc==2,"PCM output path required");
+    setenv("DD2_CDPCM",argv[1],1);
+    open[2] = (uint32_t)(uintptr_t)"cdaudio";
+    require(dd2_mci_send(0,0x803,0x2000,open)==0 && open[1]==1,"open CD device");
+    require(status(2)==(10u | 6u<<8 | 15u<<16),"default MSF includes CD lead-in");
+    set[1]=0;
+    require(dd2_mci_send(1,0x80d,0x400,set)==0 && status(2)==606201,"absolute CD milliseconds");
+    play[1]=606201; play[2]=606201;
+    require(dd2_mci_send(1,0x806,12,play)==0 && status(2)==606201,"millisecond seek rounds to CD sector");
+    set[1]=10;
+    require(dd2_mci_send(1,0x80d,0x400,set)==0,"set TMSF");
+    require(status(3)==19,"19 physical tracks");
+    require(status(4)==525,"initial stop");
+    require(dd2_mci_send(1,0x830,12,play)==261,"CDAudio CUE unsupported as in original driver");
+    for (track=2;track<=19;track++) {
+        unsigned end_flags = track<19 ? 8 : 0;
+        play[1]=track; play[2]=track+1;
+        require(dd2_mci_send(1,0x806,4|end_flags,play)==0,"play physical audio track");
+        require(status(4)==526 && status(8)==(unsigned)track,"playing correct track");
+        now += 101; dd2_cd_pump();
+        require(status(2)==((unsigned)track | 7u<<24),"TMSF position after 101ms");
+        require(dd2_mci_send(1,0x808,0,NULL)==0,"stop for pause");
+        now += 777; dd2_cd_pump();
+        require(status(4)==525 && status(2)==((unsigned)track | 7u<<24),"stopped cursor stays fixed");
+        require(dd2_mci_send(1,0x806,end_flags,play)==0,"TO-only resume keeps sample cursor");
+        now += 99; dd2_cd_pump();
+        require(status(2)==((unsigned)track | 15u<<24),"fractional sample clock survives pause/resume");
+        require(dd2_mci_send(1,0x808,0,NULL)==0,"stop before next track");
+    }
+    /* A complete track, including its exact end and no data from the next. */
+    play[1]=2; play[2]=3;
+    require(dd2_mci_send(1,0x806,12,play)==0,"full track play");
+    now += 500000; dd2_cd_pump();
+    require(status(4)==525 && status(2)==3,"stopped at next track boundary");
+    /* Replay loop is requested by the engine, not silently invented by the device. */
+    require(dd2_mci_send(1,0x806,12,play)==0,"restart finished track");
+    require(status(4)==526 && status(2)==2,"replay starts at track boundary");
+    require(dd2_mci_send(1,0x808,0,NULL)==0,"stop replay");
+    play[1]=20; play[2]=19;
+    require(dd2_mci_send(1,0x806,12,play)==282,"invalid TMSF track");
+    play[1]=3; play[2]=2;
+    require(dd2_mci_send(1,0x806,12,play)==282,"reversed playback interval");
+    require(dd2_mci_send(2,0x814,0x100,set)==257,"invalid device");
+    require(dd2_mci_send(1,0x814,0x100,NULL)==297,"null parameter block");
+    require(dd2_mci_send(1,0x804,0,NULL)==0,"close device");
+    require(dd2_mci_send(1,0x814,0x100,set)==257,"closed device status");
+    setenv("DD2_CD_ROOT","/dd2-missing-test-disc",1);
+    require(dd2_mci_send(0,0x803,0x2000,open)==276,"missing disc rejected");
+    puts("Redbook: all 18 tracks, exact positions, stop/resume, full-track end, replay and errors passed");
+    return 0;
+}

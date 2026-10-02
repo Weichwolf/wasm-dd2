@@ -114,8 +114,10 @@ static int virtual_ioctl(int fd, unsigned long request, void *arg, int time64) {
         if (!channel) return failure(EFAULT);
         if (channel->cdsc_format != CDROM_MSF && channel->cdsc_format != CDROM_LBA)
             return failure(EINVAL);
-        /* No analogue transport: Wine's DirectSound playback tracks its own
-         * playing/paused/stopped state and position. This is its idle device. */
+        /* This adapter supplies data, not an analogue transport. Wine tracks
+         * digital playing/stopped mode, but TO-only MCI_PLAY still queries this
+         * fixed Q position. Pause/resume reference comparisons remain invalid
+         * until the adapter can expose the actual transport cursor. */
         channel->cdsc_audiostatus = CDROM_AUDIO_NO_STATUS;
         channel->cdsc_adr = 1;
         channel->cdsc_ctrl = 0;

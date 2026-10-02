@@ -15,7 +15,9 @@ if [ -z "$DD2_NOPATCH" ]; then bash "$ROOT/tools/patch.sh"; fi
 # even when the integer addition must wrap (e.g. AI_Com_Server's target-0 lookup).
 # SelectionDAG preserves the x86 32-bit address addition; keep the C engine intact.
 F="-mllvm -fast-isel=false -std=gnu89 -w -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-return-type -Wno-return-mismatch"
-UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate"
+python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.json" "$ROOT/build/dd2_disc.h"
+
+UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd"
 OBJS=""
 err=0
 for u in $UNITS; do

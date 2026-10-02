@@ -1,4 +1,5 @@
 /* matching-signature stubs for excluded-CRT + a few Win32 fns (replace emcc abort-stubs to run past CRT init) */
+#include <time.h>
 #include "ghidra_compat.h"
 unsigned __doclose(void* p,int q){ return 0; }
 char* __cvt(double v,int n,void* d,void* s){ if(d)*(int*)d=0; if(s)*(int*)s=0; return ""; }
@@ -14,7 +15,10 @@ short GetKeyState(int k){ return (k>=0 && k<256 && dd2_keystate[k]) ? (short)0x8
    Deterministic default: a fake +16ms/call ticker (proven for all bit-exact runs).
    DD2_REALTIME=1 (interactive browser/native play): real milliseconds, so the game runs at
    its faithful realtime speed instead of as-fast-as-possible. */
-unsigned GetTickCount(void){
+static unsigned dd2_virtual_ms = 0;
+/* Read the platform clock without consuming an engine GetTickCount call. MCI
+   and the audio sink share this timeline; deterministic inputs stay unchanged. */
+unsigned dd2_platform_ms(void){
     static int mode=-1;
     if(mode<0){ extern char* getenv(const char*); mode = getenv("DD2_REALTIME") ? 1 : 0; }
     if(mode){
@@ -22,13 +26,16 @@ unsigned GetTickCount(void){
         double emscripten_get_now(void);
         return (unsigned)emscripten_get_now();
 #else
-        extern int clock_gettime(int, void*);
-        struct { long s; long ns; } ts;
-        clock_gettime(1 /*CLOCK_MONOTONIC*/, &ts);
-        return (unsigned)(ts.s*1000u + ts.ns/1000000u);
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return (unsigned)((uint64_t)ts.tv_sec*1000u + ts.tv_nsec/1000000u);
 #endif
     }
-    { static unsigned t=0; t+=16; return t; }
+    return dd2_virtual_ms;
+}
+unsigned GetTickCount(void){
+    if(!getenv("DD2_REALTIME")) dd2_virtual_ms += 16;
+    return dd2_platform_ms();
 }
 void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers (sound-bank blob
     + offset, FUN_00416688 -> DSLoadSoundBuffer), never real HRSRC handles: identity is the
