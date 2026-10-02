@@ -195,10 +195,6 @@ static FILE* snd_log(void){ static FILE* f; static int init;
     if(!init){ init=1; if(getenv("DD2_SNDLOG")) f=fopen("/tmp/dd2_sndlog.txt","w"); }
     return f; }
 #define SLOG(...) do{ FILE* _f=snd_log(); if(_f){ fprintf(_f,"cf%d ",SND_CF); fprintf(_f,__VA_ARGS__); fputc('\n',_f); fflush(_f);} }while(0)
-static int dsb_dur_cf(DSBuf* b){ /* whole cf-ticks a one-shot stays PLAYING */
-    int bps = b->nAvgBytesPerSec>0 ? b->nAvgBytesPerSec : 22050;
-    long n = ((long)b->size * 25 + bps - 1) / bps;
-    return n<1 ? 1 : (int)n; }
 /* --- IDirectSoundBuffer methods --- */
 static int dsb_release(DSBuf* b){ ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
@@ -206,11 +202,22 @@ static int dsb_release(DSBuf* b){ ds_realtime_pump(); SLOG("DSB %p Release",(voi
     free(b); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
     ds_realtime_pump();
-    /* The mixer owns playing-state and clears it at end-of-data. dur_cf is only
-       the deterministic pre-first-flip fallback; real-time queries flush first. */
-    if(b->playing){ if(b->looping) s=0x5; /* PLAYING|LOOPING */
-        else if(getenv("DD2_REALTIME") || SND_CF - b->play_cf < dsb_dur_cf(b) || b->pos_fp>0) s=0x1; else b->playing=0; }
-    if(st)*st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
+    /* Playback state follows actual consumed samples, including seeks and
+       frequency changes; an estimated cf duration can stop a live buffer. */
+    if(!st)return (int)0x80070057u;
+    if(b->playing)s=b->looping?0x5:0x1; /* PLAYING|LOOPING */
+    *st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
+static int dsb_getpos(DSBuf* b,unsigned* play,unsigned* write){
+    unsigned pos;
+    ds_realtime_pump();
+    pos=(unsigned)(b->pos_fp>>16)*(unsigned)b->blockalign;
+    if(b->size)pos%=b->size;
+    if(play)*play=pos;
+    if(write){
+        unsigned lead=b->playing?(unsigned)(b->freq/100)*(unsigned)b->blockalign:0;
+        *write=b->size?(pos+lead)%b->size:pos;
+    }
+    return 0; }
 static int dsb_lock(DSBuf* b,unsigned off,unsigned bytes,void** p1,unsigned* s1,void** p2,unsigned* s2,int fl){
     ds_realtime_pump();
     (void)fl; if(off>b->size) off=b->size; if(bytes>b->size) bytes=b->size;
@@ -222,10 +229,22 @@ static int dsb_unlock(DSBuf* b,void* p1,unsigned s1,void* p2,unsigned s2){
     (void)p1;(void)p2; SLOG("DSB %p Unlock %u/%u",(void*)b,s1,s2); return 0; }
 static int dsb_play(DSBuf* b,int r1,int r2,int flags){ (void)r1;(void)r2;
     ds_realtime_pump();
-    b->playing=1; b->looping=(flags&1); b->play_cf=SND_CF; b->pos_fp=0;
+    /* DirectSound Play starts/resumes at the current cursor; a repeated Play
+       only replaces flags. Play_Sound in dd2h.exe explicitly seeks zero first
+       (push 0; call [vtbl+0x34] at 0x415e19-0x415e21).
+       https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418074(v=vs.85) */
+    if(!b->playing)b->play_cf=SND_CF;
+    b->playing=1; b->looping=(flags&1);
     SLOG("DSB %p Play flags=%d freq=%d vol=%d pan=%d",(void*)b,flags,b->freq,b->vol,b->pan); return 0; }
 static int dsb_stop(DSBuf* b){ ds_realtime_pump(); b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
-static int dsb_setpos(DSBuf* b,unsigned pos){ SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
+static int dsb_setpos(DSBuf* b,unsigned pos){
+    /* Byte offsets are aligned down to complete source frames. Wine's real
+       stopped-buffer API probe verifies alignment and invalid-offset errors.
+       https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418076(v=vs.85) */
+    ds_realtime_pump();
+    if(pos>=b->size)return (int)0x80070057u;
+    b->pos_fp=(long long)(pos/(unsigned)b->blockalign)<<16;
+    SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
 static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump(); b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
 static int dsb_setpan(DSBuf* b,int p){ ds_realtime_pump(); b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
 static int dsb_setfreq(DSBuf* b,int f){ ds_realtime_pump(); b->freq=f; SLOG("DSB %p SetFrequency %d",(void*)b,f); return 0; }
@@ -269,6 +288,7 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     g_dsnd_vtbl[0x14/4]=(void*)&ds_dupbuffer;
     g_dsnd_vtbl[0x18/4]=(void*)&ds_setcooplevel;
     g_dsb_vtbl[0x08/4]=(void*)&dsb_release;
+    g_dsb_vtbl[0x10/4]=(void*)&dsb_getpos;
     g_dsb_vtbl[0x24/4]=(void*)&dsb_getstatus;
     g_dsb_vtbl[0x2c/4]=(void*)&dsb_lock;
     g_dsb_vtbl[0x30/4]=(void*)&dsb_play;
@@ -384,14 +404,18 @@ void dd2_snd_mix_flip(void){
             gr=dd2_amp_q15(b->vol+(b->pan<0?b->pan:0));
             for(k=0;k<frames;k++){
                 unsigned fr; int sl,sr; const unsigned char* sp;
-                if(b->pos_fp>=end_fp){ if(b->looping) b->pos_fp-=end_fp; else { b->playing=0; break; } }
                 fr=(unsigned)(b->pos_fp>>16); sp=b->pcm+(long long)fr*al;
                 if(b->bits==16){ sl=*(short*)sp; sr=(b->channels>1)?*(short*)(sp+2):sl; }
                 else { sl=((int)sp[0]-128)<<8; sr=(b->channels>1)?(((int)sp[1]-128)<<8):sl; }
                 b->pos_fp+=step;
+                if(b->pos_fp>=end_fp){
+                    if(b->looping)b->pos_fp%=end_fp; /* A step can span several loops. */
+                    else { b->playing=0; b->pos_fp=0; }
+                }
                 if(pf||mix_out>0){ int vl=out[k*2]+((sl*gl)>>15), vr=out[k*2+1]+((sr*gr)>>15);
                     out[k*2]  =(short)(vl>32767?32767:vl<-32768?-32768:vl);
                     out[k*2+1]=(short)(vr>32767?32767:vr<-32768?-32768:vr); }
+                if(!b->playing)break;
             }
         }
         if(pf) fwrite(out,2,frames*2,pf);

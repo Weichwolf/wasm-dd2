@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-menu-audio verify-sound-cursor verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -85,6 +85,9 @@ verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on nati
 
 verify-menu-audio: ## check elapsed-time DirectSound playback and controls with a fixed menu frame counter
 	python3 $(ROOT)/tools/verify_menu_audio.py --node $(NODE)
+
+verify-sound-cursor: ## check seeking, Play/Stop/resume/end and exact PCM; SOUND_CURSOR_ARGS can enable the Wine API fixture
+	python3 $(ROOT)/tools/verify_sound_cursor.py --node $(NODE) $(SOUND_CURSOR_ARGS)
 
 verify-menu-cycles: ## compare all 64 presented phases; MCREF, MCNATIVE/MCBROWSER, MCREPORT required
 	python3 $(ROOT)/tools/verify_menu_cycles.py --reference $(MCREF) $(if $(MCNATIVE),--native $(MCNATIVE)) $(if $(MCBROWSER),--browser $(MCBROWSER)) --report $(MCREPORT)

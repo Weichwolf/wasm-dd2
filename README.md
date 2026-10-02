@@ -81,6 +81,26 @@ changes on both backends against 4848 known PCM bytes with `cf=0`.
 nonzero effect buffers without advancing the race counter. The complete original
 mixed stream and its timing remain unverified.
 
+DirectSound buffer controls now preserve the source cursor: `SetCurrentPosition`
+seeks by byte offset, repeated `Play` continues playback, and `Stop`/`Play`
+resumes instead of restarting. Automatic one-shot completion resets the cursor
+to zero, and high-frequency steps wrap correctly across multiple short loops.
+`GetCurrentPosition` now returns cursor values; status follows consumed samples
+rather than an estimated race-frame duration. The original engine explicitly
+seeks zero when starting a new effect (`dd2h.exe` at 0x415e19-0x415e21).
+
+```sh
+make verify-sound-cursor
+# Optional real DirectSound API reference; requires 32-bit MinGW, Wine and Xvfb:
+make verify-sound-cursor SOUND_CURSOR_ARGS='--wine --mingw i686-w64-mingw32-gcc'
+```
+
+Both ports match all 14 stopped-buffer cursor/error records from real Wine
+DirectSound, including stereo frame alignment and invalid offsets. Controlled
+seek/repeated Play/Stop/resume/end/short-loop sequences match 1496 known PCM bytes
+exactly on both ports. The Wine check uses a separate API fixture, not the game
+EXE, and does not establish original mixed PCM or timing equality.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

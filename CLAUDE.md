@@ -171,6 +171,32 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   highlight phases. /tmp/dd2-config-audio-clock-comparison.json reports zero
   framebuffer/palette mismatches for all 448 comparisons on each of native and
   browser. Debugger pauses in this video regression do not prove audio timing.
+- DirectSound cursor controls were incorrect: SetCurrentPosition ignored its
+  offset, and every Play reset source position. The runtime now seeks/aligns byte
+  offsets, preserves position across repeated Play and Stop/resume, implements
+  GetCurrentPosition, resets at automatic one-shot end, and wraps a frequency step
+  spanning several short loops. GetStatus follows actual sample consumption;
+  the old cf-duration fallback could stop a live seeked/frequency-changed buffer.
+  Original Play_Sound explicitly seeks zero at 0x415e19-0x415e21. No engine patch
+  is required: these are handwritten platform-shim corrections.
+  tools/sound_cursor_test.c runs the same stopped-buffer COM probe against real
+  Wine DirectSound and native/WASM. The pre-fix run failed on the selected seek
+  (/tmp/dd2-sound-cursor-before.log) after the Wine reference passed. The fixed
+  /tmp/dd2-sound-cursor-wine-final.json passes all 14 mono8/stereo16 cursor/error
+  records and 1496 exact controlled PCM bytes on each port. Reproduce via
+  make verify-sound-cursor; SOUND_CURSOR_ARGS='--wine --mingw <32-bit MinGW gcc>'
+  enables the real API fixture in its own temporary Wine prefix. The existing
+  55ms menu test still matches 4848 bytes after explicitly seeking zero for replay.
+  These tests verify exercised API transport, not full original PCM/timing parity.
+  Rebuilt native, Node and browser. All ten sound-enabled native/WASM demos remain
+  byte-exact: 15255 presented frames per target with palettes/RNG/flip logs,
+  2638944 effect PCM bytes and 4939200 CD PCM bytes per demo
+  (/tmp/dd2-parity-sound-cursor/results.json). Original L9/cf150 still matches
+  both ports (/tmp/dd2-sound-cursor-original-video.log). Fresh native and browser
+  Configuration/Audio Volume captures match all 448 original presented phases
+  per target (/tmp/dd2-config-cursor-fixed-comparison.json). Real browser menu
+  effects still deliver nonzero samples at cf=0
+  (/tmp/dd2-sound-cursor-browser-audio.log).
 
 ## Status (3 sequential stages, each gates the next)
 - Source: pure dd2h.exe decompile (`re_out/dd2.c` = dd2h Ghidra output, 640x480 rasterizers).

@@ -40,6 +40,7 @@ int main(int argc,char **argv) {
     now=1;dd2_snd_mix_flip();now=20;dd2_snd_mix_flip();
     ((int(*)(void*))vtable[18])(buffer);
     now=53;dd2_snd_mix_flip(); /* 33ms of silence after Stop. */
+    ((int(*)(void*,unsigned))vtable[13])(buffer,0); /* Replay explicitly seeks zero. */
     ((int(*)(void*,int,int,int))vtable[12])(buffer,0,0,0);
     now=54;dd2_snd_mix_flip();
     ((int(*)(void*,unsigned*))vtable[9])(buffer,&status);
