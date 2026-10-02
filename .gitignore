@@ -16,6 +16,14 @@ web/dd2/
 third_party/
 .wine-dd2/
 
-# copyrighted DD2 game data — user provides their own dd2h.exe; the rest is derived
+# Original game files, CD images and lossless music (provisioned locally).
 DestructionDerby2/
 /Dirinfo
+/DIRINFO
+/dd2.exe
+/dd2h.exe
+/SaveGames
+/Redbook/
+DD2_PC.bin
+DD2_PC.cue
+Destruction-Derby-2*.zip

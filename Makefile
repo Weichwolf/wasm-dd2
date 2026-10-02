@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline decompile assemble symbols image patch check native wasm web verify verify-wasm run shot refcapture clean help
+.PHONY: all pipeline provision decompile assemble symbols image patch check native wasm web verify verify-wasm run shot refcapture clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -26,6 +26,9 @@ pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-b
 
 help:                 ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-18s %s\n",$$1,$$2}'
+
+provision:            ## download and verify the original game, extract its image and lossless CD music
+	python3 $(ROOT)/tools/provision_game.py
 
 decompile: ## re-run Ghidra headless: dd2h.exe -> re_out/dd2_decomp.c
 	bash $(ROOT)/tools/decompile.sh
