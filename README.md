@@ -545,6 +545,23 @@ records what remains after drops/rewinds.
 cause audio underruns. Full original/native/WASM mixed PCM comparison, playback
 alignment and Windows hardware equivalence remain open acceptance work.
 
+`make verify-original-menu-audio ORIGINAL_MENU_AUDIO_ARGS='--output /tmp/wasm-dd2/fresh-menu-mix'`
+records a bounded original audio run with DirectSound tracing and checks the
+entire menu-device PCM against independently rendered production port sources.
+`--capture /tmp/wasm-dd2/existing-menu-audio` can use an existing capture made
+with `--wine-debug=-all,+timestamp,+dsound`. The trace must show the actual
+BANK1 index42 mono8 slab effect (11025Hz source, 5512Hz playback, volume -1,
+centered pan, one shot) followed by looping CD13. Native, WASM O0 and browser
+mixer settings O2 all reproduce the complete recorded window, including initial
+silence and effect/CD overlap. Source start offsets are inferred from exact
+patterns; this diagnoses complete sample values in the bounded window, not
+identical-input live start timing or intro/hardware output. All bytes remain in
+the comparison; damaged prefix, effect, overlap, right-channel tail and truncated
+PCM reject. The check also rejects a recording that enters the attract race,
+instead of fitting the racing sources into this two-source menu check. Tracing
+changes execution timing. Reports retain the inferred offsets and device time
+segments; successful generated source PCM is removed after the report.
+
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
 directory. For example:

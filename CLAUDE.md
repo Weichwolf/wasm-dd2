@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Complete bounded original menu-device PCM now matches independent Native,
+  WASM O0 and browser-mixer O2 source renders: all 1157048 bytes in
+  original-menu-mix-verified-final/report.json, including initial silence,
+  resampled slab effect and CD13 overlap/tail. The actual Wine API trace identifies
+  BANK1 index42, mono8/11025 source, frequency5512, volume-1, pan0 and one-shot
+  play, then the original looping CD13 buffer. Original controls are validated,
+  not fitted from samples. Native FIR/gain source bytes and literal CDDA form
+  the expected Float32 mix; offsets are inferred from unique source patterns.
+  Five damaged full-stream cases reject through the actual recomposition check.
+  A fresh three-second run reaches the attract race and correctly rejects the
+  two-source menu check (original-menu-mix-verified-fresh). Its evidence exposes
+  the old cached-CLUT readiness proxy; actual menu phase/timing remains to fix.
+  make verify-original-menu-audio ORIGINAL_MENU_AUDIO_ARGS='--output /tmp/wasm-dd2/fresh-menu-mix'
+  captures/checks a new run; --capture can use an existing traced audio capture.
+  This proves the recorded window's sample values after inferred alignment,
+  not identical-input live original/port timing, intro, races or hardware output.
 - Clocked original-audio capture now records device-consumed PCM separately
   from accepted writes, preserving sample-time intervals and pause/XRUN gaps.
   Real ALSA tests pass both process widths, Float32/S16 and all three supported

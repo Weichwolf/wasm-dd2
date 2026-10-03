@@ -225,6 +225,10 @@ verify-card: patch ## compare empty/full/sparse card operations and complete blo
 verify-audio-observer: ## check exact accepted/consumed PCM and 32/64-bit sample clocks; no port parity claim
 	python3 $(ROOT)/tools/reference/test_audio.py $(AUDIO_OBSERVER_ARGS)
 
+.PHONY: verify-original-menu-audio
+verify-original-menu-audio: ## compare bounded original menu mix with port sources at inferred offsets; live timing pending
+	python3 $(ROOT)/tools/verify_original_menu_audio.py --node $(NODE) $(ORIGINAL_MENU_AUDIO_ARGS)
+
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh
 
