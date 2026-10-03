@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real native window replay save/restart/load and cancelled/confirmed deletion.
+"""Real native window replay save/overwrite/restart/load and cancelled/confirmed deletion.
 
 Normal original startup, real X11 keys and read-only process/file observations.
 An isolated card protects provisioned/user saves. This verifies the exercised
@@ -125,13 +125,20 @@ class NativeUI:
         mapping = self.read(0x46302c, 14)
         bits = (1, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000)
         mask = next(bits[i] for i in (0, 1, 2, 3, 4, 5, 8, 6, 9, 7, 10, 11, 12, 13) if mapping[i] == vk)
-        self.wait(lambda: struct.unpack('<HH', self.read(0x754448, 4))[0] & mask == 0)
+        level = self.integer(0x936ff4)
+        self.wait(lambda: self.controls() & mask == 0)
         self.edge(code, True)
-        self.wait(lambda: struct.unpack('<H', self.read(0x754448, 2))[0] & mask)
+        # Retire/Yes restores the previous pad before the next presentation.
+        # The genuine level transition also acknowledges the consumed key.
+        self.wait(lambda: self.controls() & mask or self.integer(0x936ff4) != level)
         self.edge(code, False)
         self.wait(lambda: struct.unpack('<H', self.read(0x754448, 2))[0] & mask == 0)
         time.sleep(0.25)
         print('X11', code, self.text(0x46975c), self.text(0x4672ac), flush=True)
+
+    def controls(self):
+        held, pressed = struct.unpack('<HH', self.read(0x754448, 4))
+        return held | pressed
 
     def card(self):
         data = (self.game / 'SaveGames').read_bytes()
@@ -208,6 +215,22 @@ def main():
             require((magic, car, end, mode, race_type, season, level, pad) ==
                     (0x2020, recorded['car'], recorded['end'], recorded['mode'], recorded['type'], recorded['season'], recorded['replayLevel'], recorded['pad']), 'native saved replay metadata differs')
             require(payload[18:18+0x1c00] == script and payload[18+0x1c00:] == order, 'native saved script/order differ')
+            report['first_saved'] = report['saved']
+            for code in ['Return', 'Return']:
+                ui.key(code)
+            require('Overwrite File' in ui.text(0x4672ac), 'native overwrite confirmation missing')
+            ui.key('Escape'); report['cancelled_overwrite'] = ui.card()
+            require(report['cancelled_overwrite'] == report['first_saved'], 'native cancelled overwrite changed card')
+            for code in ['Return', 'Return', 'Left', 'Return']:
+                ui.key(code)
+            # Existing name A: third-row backspace, select B, then tick.
+            for code in ['Down', 'Down', 'Return', 'Up', 'Up', 'Right', 'Return', 'Down', 'Down', 'Right', 'Return']:
+                ui.key(code)
+            ui.wait(lambda: (game / 'SaveGames').read_bytes()[4:6] == b'B\0')
+            report['saved'] = ui.card()
+            require(len(report['saved']['slots']) == 1 and report['saved']['slots'][0]['name'] == 'B', 'native overwrite did not rename the same card entry')
+            new_payload = (game / 'SaveGames').read_bytes()[0x2000:0x2000 + PACKED_BYTES]
+            require(new_payload == payload, 'native overwrite changed the replay payload')
             ui.stop(); ui = NativeUI(binary, game, out, ':' + number, 2); ui.boot()
             report['reloaded'] = ui.card(); require(report['reloaded'] == report['saved'], 'native card did not survive process restart')
             before = ui.state(); report['before_loading'] = before
@@ -246,7 +269,7 @@ def main():
             report['deleted_reloaded'] = ui.card()
             require(report['deleted_reloaded'] == report['deleted'], 'native deletion did not survive restart')
             report['pass_'] = True
-            print('PASS real native replay save/restart/load/natural playback and cancelled/confirmed deletion', flush=True)
+            print('PASS real native replay save/overwrite/restart/load/natural playback and cancelled/confirmed deletion', flush=True)
         except Exception as error:
             report['error'] = str(error)
             if ui:

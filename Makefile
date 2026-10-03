@@ -213,10 +213,10 @@ verify-replay: patch ## compare replay recording/decoding with actual original x
 verify-replay-metadata: patch ## compare packed replay bytes/load setup with original x86 at external API boundaries
 	python3 $(ROOT)/tools/verify_replay_metadata.py $(REPLAY_METADATA_ARGS)
 
-verify-browser-replay-save: web ## save/load a real replay, restart, finish playback and check cancelled/confirmed deletion
+verify-browser-replay-save: web ## real replay save/overwrite/restart/load/playback and cancelled/confirmed deletion
 	$(NODE) $(ROOT)/tools/browser/qa_replay_save.js $(ROOT)/web/dd2 $(BROWSER_REPLAY_SAVE_OUTPUT)
 
-verify-native-replay: native ## real X11 replay save/process restart/load/natural playback and cancelled/confirmed deletion
+verify-native-replay: native ## real X11 replay save/overwrite/process restart/load/playback and cancelled/confirmed deletion
 	python3 $(ROOT)/tools/verify_native_replay.py --binary $(NATIVE) $(NATIVE_REPLAY_ARGS)
 
 verify-card: patch ## compare empty/full/sparse card operations and complete block/directory bytes with original x86

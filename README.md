@@ -276,7 +276,9 @@ require acceptance.
 Yes/Save Replay/name entry, normal page navigation, File Manager loading and
 natural playback completion. It checks every script/order byte, the complete
 128-KiB card hash before/after restart, RAM/file equality and restoration of
-the previous frontend configuration. It also cancels then confirms deletion
+the previous frontend configuration. It cancels an overwrite, then confirms
+renaming the same entry from A to B without changing its replay payload.
+It also cancels then confirms deletion
 and checks the deleted card after another restart. The test performs no engine
 or file writes and never calls `syncfs` itself. Its report uses a fresh directory
 under `/tmp/wasm-dd2/`; `BROWSER_REPLAY_SAVE_OUTPUT` can supply that path.
@@ -287,7 +289,7 @@ are serialized and a write during an active sync queues another snapshot.
 The previous unload-only shell loses the named replay on ordinary navigation
 and is rejected by the same test.
 
-`make verify-native-replay` exercises the same save/restart/load/playback and
+`make verify-native-replay` exercises the same save/overwrite/restart/load/playback and
 cancelled/confirmed deletion flow in the real native SDL window, using X11 keys.
 It boots the normal intro/frontend three times, checks the entire 128-KiB card
 against engine RAM, compares complete saved/loaded script/order bytes, requires
@@ -295,7 +297,7 @@ natural playback and restores the previous frontend configuration. A private
 game directory prevents changing provisioned/user saves and is removed after
 successful checks. `NATIVE_REPLAY_ARGS='--output /tmp/wasm-dd2/fresh-native-replay'`
 selects the report path; Xvfb and xdotool are required. This is functional native
-window acceptance. Whole original menu/player video/audio and overwrite/full-card
+window acceptance. Whole original menu/player video/audio and complete full-card menu
 behavior still need checks.
 
 `make verify-card` compares seven actual card functions with unmodified original

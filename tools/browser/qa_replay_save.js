@@ -11,7 +11,7 @@ assert(output.startsWith('/tmp/wasm-dd2/'), 'verification output must use /tmp/w
 const parent = fs.realpathSync(path.dirname(output));
 assert(parent === '/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'), 'verification parent must remain inside /tmp/wasm-dd2');
 fs.mkdirSync(output, {recursive: false});
-const report = {scope: 'Actual browser replay saving, full-card persistence, loading, natural playback, configuration restoration and cancelled/confirmed deletion; no complete original video/audio parity claim', pass: false};
+const report = {scope: 'Actual browser replay saving, cancelled/confirmed overwrite, full-card persistence, loading, natural playback, configuration restoration and cancelled/confirmed deletion; no complete original video/audio parity claim', pass: false};
 const metadata = page => page.evaluate(() => ({car: HEAP32[0x467400 >> 2], mode: HEAP32[0x4673f8 >> 2],
   type: HEAP32[0x4673f4 >> 2], season: HEAP32[0x93dec0 >> 2], level: HEAP32[0x936ff4 >> 2],
   replayLevel: HEAP32[0x9392bc >> 2], pad: HEAP32[0x467078 >> 2], end: HEAPU32[0x9392c4 >> 2],
@@ -101,6 +101,18 @@ const card = page => page.evaluate(async () => {
     assert.deepEqual(saved.packed.slice(18+0x1c00), report.order, 'saved car order differs');
     assert(report.saved.engineMatchesFile, 'saved card disk bytes differ from engine');
     console.log('Saved nonzero-car replay', saved.name, words.getInt16(2, true));
+    report.firstSaved = report.saved;
+    await tap(page, 'Enter'); await tap(page, 'Enter');
+    assert((await rd(page, 0x4672ac)).includes('Overwrite File'), 'overwrite confirmation missing');
+    await tap(page, 'Escape'); report.cancelledOverwrite = await card(page);
+    assert.deepEqual(report.cancelledOverwrite, report.firstSaved, 'cancelled overwrite changed card');
+    for (const code of ['Enter', 'Enter', 'ArrowLeft', 'Enter']) await tap(page, code);
+    // Existing A: backspace, select B, then confirm the tick.
+    for (const code of ['ArrowDown', 'ArrowDown', 'Enter', 'ArrowUp', 'ArrowUp', 'ArrowRight', 'Enter', 'ArrowDown', 'ArrowDown', 'ArrowRight', 'Enter']) await tap(page, code);
+    await page.waitForFunction(() => FS.readFile('/SaveGames')[4] === 66 && FS.readFile('/SaveGames')[5] === 0, null, {timeout: 15000});
+    report.saved = await card(page);
+    assert(report.saved.slots.length === 1 && report.saved.slots[0].name === 'B', 'overwrite did not rename the same card entry');
+    assert.deepEqual(report.saved.slots[0].packed, saved.packed, 'overwrite changed the replay payload');
     // Normal navigation away invokes the production pagehide/unload persistence.
     // The test never calls syncfs or writes either the card or engine memory.
     await page.goto('about:blank');
@@ -149,7 +161,7 @@ const card = page => page.evaluate(async () => {
     assert.deepEqual(report.deletedReloaded, report.deleted, 'confirmed deletion did not survive page navigation');
     report.errors = errors; assert.deepEqual(errors, [], 'browser runtime errors');
     report.pass = true;
-    console.log('PASS Save Replay, exact full-card persistence, loaded playback/return and cancelled/confirmed deletion');
+    console.log('PASS Save Replay/overwrite, exact full-card persistence, loaded playback/return and cancelled/confirmed deletion');
   } catch (error) {
     report.error = error.message; report.errors = errors;
     if (page) {
@@ -163,7 +175,7 @@ const card = page => page.evaluate(async () => {
     if (report.pass) {
       const summarize = bytes => ({bytes: bytes.length, sha256: createHash('sha256').update(Buffer.from(bytes)).digest('hex')});
       report.script = summarize(report.script);
-      for (const name of ['initial', 'saved', 'reloaded', 'cancelledDeletion', 'deleted', 'deletedReloaded']) {
+      for (const name of ['initial', 'firstSaved', 'cancelledOverwrite', 'saved', 'reloaded', 'cancelledDeletion', 'deleted', 'deletedReloaded']) {
         for (const slot of report[name].slots) {
           slot.header = slot.packed.slice(0, 18);
           slot.payload = summarize(slot.packed);

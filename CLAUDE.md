@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Real native and browser replay QA also passes cancelled/confirmed overwrite.
+  Cancelling preserves the whole card; confirming renames entry A to B in the
+  same slot with the complete replay payload unchanged, then preserves it after
+  restart and loads/plays it naturally. Native observes 32 playback counters,
+  browser 33; both restore frontend configuration and retain cancelled/confirmed
+  deletion behavior (native-replay-overwrite-reviewed/report.json;
+  browser-replay-overwrite-first/report.json). Native first/cancelled card SHA256
+  829dfbfd2a449e01b767fe0d0b6a00e9a4c7791e71d4242a3f392e16d435b1dd;
+  overwritten/reloaded 784fdd7fef4987662a7d05137a68c72ac24fd7b69bfcfc95c7e3b2e81e194c77.
+  Browser first/cancelled 01bb36eb9d0b83b51813a547c618253cbc266de9b3fd586611cb54c5b7f42975;
+  overwritten/reloaded 85cf4dfe4a54c377e772bf03b80466ae163238cc99fa6c90956d6506f7a25949.
+  These are independently timed functional runs, not cross-target/original
+  trajectory or video/audio acceptance. Native key acknowledgement handles
+  Retire/Yes restoring the previous pad before presentation: the actual level
+  transition acknowledges that action even when its old control bits disappear.
+  No engine state or input is substituted; keys remain actual X11 events.
 - Card component conformance now passes on both ports against actual unmodified
   x86 SaveCardFile/DeleteFileMC/LoadCardFiles/LoadCardFile/DupFileCheck/
   FirstSavedGame/FUN_0042366c. All 26 cases compare 148040 bytes each: complete
