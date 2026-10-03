@@ -1,15 +1,7 @@
 /* Isolated replay components: actual original x86 or actual reconstructed C.
  * Explicit input fixtures; this does not run or establish full-game parity. */
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifndef __EMSCRIPTEN__
-#include <sys/mman.h>
-#endif
+#include "pe_fixture.h"
 
-#define BASE 0x400000u
-#define SIZE 0x590000u
 #define PAD 0x754448u
 #define SCRIPT 0x9376b0u
 #define CURSOR 0x9392b4u
@@ -26,38 +18,6 @@ void Terminate_Replay_Bodge(int);
 void Control_Car_Replay(int,int);
 #endif
 
-static void require(int ok,const char *message) {
-    if (!ok) { fprintf(stderr,"replay fixture: %s\n",message); exit(1); }
-}
-static uint32_t read32(const void *p) { uint32_t n; memcpy(&n,p,4); return n; }
-static uint16_t read16(const void *p) { uint16_t n; memcpy(&n,p,2); return n; }
-static void put32(unsigned a,uint32_t n) { memcpy((void*)(uintptr_t)a,&n,4); }
-static void put16(unsigned a,uint16_t n) { memcpy((void*)(uintptr_t)a,&n,2); }
-static void load_original(const char *path) {
-    FILE *f=fopen(path,"rb"); unsigned char *pe; long length;
-    unsigned h,opt,table,count,i;
-    require(f!=NULL,"open supported original executable");
-    require(fseek(f,0,SEEK_END)==0,"seek original"); length=ftell(f);
-    require(length>256 && fseek(f,0,SEEK_SET)==0,"original size");
-    pe=malloc((size_t)length); require(pe!=NULL,"allocate PE input");
-    require(fread(pe,1,(size_t)length,f)==(size_t)length,"read PE input"); fclose(f);
-    h=read32(pe+0x3c); require(h+24u<(unsigned)length,"PE header bounds");
-    require(memcmp(pe+h,"PE\0\0",4)==0 && read16(pe+h+4)==0x14c,"PE32 x86");
-    opt=h+24; require(read32(pe+opt+28)==BASE && read32(pe+opt+56)==SIZE,"supported fixed image layout");
-    count=read16(pe+h+6); table=opt+read16(pe+h+20);
-    require(table+count*40u<=(unsigned)length,"section table bounds");
-    for (i=0;i<count;i++) {
-        unsigned char *section=pe+table+i*40;
-        unsigned address=read32(section+12),bytes=read32(section+16),offset=read32(section+20);
-        require(address<=SIZE && bytes<=SIZE-address,"mapped section bounds");
-        /* Watcom's BSS declares its allocation in SizeOfRawData with no file
-         * payload. The Windows loader zeroes uninitialized-data sections. */
-        if (read32(section+36)&0x80u) continue;
-        require(offset<=(unsigned)length && bytes<=(unsigned)length-offset,"file section bounds");
-        memcpy((void*)(uintptr_t)(BASE+address),pe+offset,bytes);
-    }
-    free(pe);
-}
 static void reset(unsigned type) {
     memset((void*)0x467074,0,20);
     memset((void*)0x9392b0,0,24);
@@ -85,10 +45,7 @@ int main(int argc,char **argv) {
     const int steering[]={-512,-256,-64,-32,0,32,64,256,512};
     const uint16_t controls[]={0,0x8000,0x4000,0xa000,0x6000,0xc000,0x1000,0x800,0x9000,0x4800};
     require(argc==3,"original executable and checkpoint output required");
-#ifndef __EMSCRIPTEN__
-    require(mmap((void*)BASE,SIZE,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED_NOREPLACE,-1,0)!=(void*)-1,"map isolated engine image");
-#endif
-    load_original(argv[1]); out=fopen(argv[2],"wb"); require(out!=NULL,"open checkpoints");
+    map_original(argv[1]); out=fopen(argv[2],"wb"); require(out!=NULL,"open checkpoints");
     for(type=1;type<=3;type++) {
         reset(type);
         for(i=0;i<8;i++) {Record_Event(type==1?keyboard[i]:analog[i],PAD);put32(0x9392b8,1);snapshot(out,"record-change");}

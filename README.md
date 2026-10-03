@@ -256,8 +256,23 @@ The old browser build is rejected for zero-length packets. Shared browser race
 launch detection uses advancing physics ticks, level and quit state: byte
 0x460005 belongs to a cached texture CLUT pointer and is not a screen identifier.
 Recorded/replayed positions at common ticks are diagnostic observations, not
-complete original replay video/audio acceptance. Replay save/load, complete
-trajectories and original audio still require checks.
+complete original replay video/audio acceptance.
+
+Patch 848 restores packed replay metadata WORD stores and signed WORD loads.
+The final magic store previously erased the selected car; loading read adjoining
+fields together, and the file dispatcher compared a combined magic/car DWORD.
+`make verify-replay-metadata` executes the actual original pack/load functions
+in 16 isolated runs (eight cases each), stopping with read-only hardware
+breakpoints before their external file browser/player calls. Both ports match
+every packed byte, script, car order, guard and setup field (14462 bytes per
+checkpoint). Cases include real values, negative WORDs and discarded upper
+halves. Removing only patch 848 rejects the overwritten car and widened loads.
+GDB is required in addition to the replay component dependencies. These API
+boundary comparisons do not run the original file browser or complete player;
+full save/load behavior, replay trajectories and original audio still require
+acceptance. The current real browser save test already verifies the saved
+nonzero car, complete script and car order; it exposes lost card persistence
+after normal page navigation, which still needs correction.
 
 Menu graphics can be compared over complete 64-frame highlight cycles. This
 checks every indexed pixel and palette byte at presentation, including the

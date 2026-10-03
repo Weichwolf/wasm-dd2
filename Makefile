@@ -206,9 +206,12 @@ verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descri
 verify-corner-lanes: patch ## check BYTE corner FD writes and reject old neighbor corruption on both targets
 	python3 $(ROOT)/tools/verify_corner_lanes.py
 
-.PHONY: verify-replay
+.PHONY: verify-replay verify-replay-metadata
 verify-replay: patch ## compare replay recording/decoding with actual original x86; reject old DWORD cursors
 	python3 $(ROOT)/tools/verify_replay.py $(REPLAY_ARGS)
+
+verify-replay-metadata: patch ## compare packed replay bytes/load setup with original x86 at external API boundaries
+	python3 $(ROOT)/tools/verify_replay_metadata.py $(REPLAY_METADATA_ARGS)
 
 verify-audio-observer: ## check 32/64-bit ALSA sample clocks and exact accepted-write capture; no port parity claim
 	python3 $(ROOT)/tools/reference/test_audio.py

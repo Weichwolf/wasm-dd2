@@ -35,6 +35,36 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 848 restores replay metadata WORD stores, signed WORD loads and the
+  unsigned WORD file discriminator. Original packing's final magic store must
+  preserve the selected car; Load_Card_File must ignore the adjacent car WORD.
+  All 16 actual unmodified x86 runs (eight save/eight load cases) match Native
+  and WASM at the LoadSave/View_Frontend_Replay boundaries: 14462 bytes each,
+  including the complete packed payload/script/order, neighbor guards and
+  engine setup. Negative signed WORDs and discarded upper halves match.
+  Original executions use read-only hardware breakpoints; neither code nor
+  registers are changed. Native/WASM also restore frontend configuration after
+  their fixture player returns. Removing only patch 848 overwrites car7 with
+  zero at first packed offset2 and rejects widened load fields; changed guard
+  bytes/truncated checkpoints are rejected. make verify-replay-metadata;
+  replay-metadata-848-reviewed/report.json; original aggregate SHA256
+  5ae73bc7ebdc71d347aa15289f80663cd59f2d6c6d65e554f2ce5669ba746986.
+  This is component acceptance, not original full-menu save/load or A/V parity.
+  The real browser Select Car/practice/Retire/Yes/Save Replay/name entry test
+  saves car1, every script/order byte and matching card RAM/disk successfully,
+  then rejects because the named replay disappears on ordinary navigation
+  (browser-replay-save-848-first/report.json). The old marker persistence test
+  forced syncfs itself and did not cover this real save/navigation failure.
+  The PE loader is shared with the existing replay fixture, which retains all
+  384 matching original/native/WASM checkpoints and old-cursor negatives
+  (replay-components-848/report.json). All 185 patches apply with zero fuzz.
+  All ten default Native/WASM demo regressions still pass with patch 848:
+  15255 frames/palettes and every effects/CD/mixed/music PCM and RNG/flip byte
+  (parity-848/results.json). Verified Native SHA256
+  23ac6a9bfe9cb26284aece1405cc7dbbf326cb2860f5f117ac41734e3c1d25ac;
+  Node WASM 48063723cf805c781adc1381e65fd6f3fd113e1656f63dce07e7d5eeafca9086;
+  browser WASM 9a7453c5f1c1be7e18c06c4f5231e7b3375876fb18edb0761ae03b679143f6cd.
+  These are internal regressions, not complete original audio/video acceptance.
 - Patch 847 restores WORD replay packets, two-byte cursor steps and the WORD
   termination store. All 384 component checkpoints (15896 bytes each) match
   literal unmodified original x86 Record_Event/Terminate_Replay/
