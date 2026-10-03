@@ -49,7 +49,7 @@
       // contents BEFORE main() runs (addRunDependency gates the boot on the async syncfs). On a
       // first-ever run /persist/SaveGames is empty -> InitCardSystem recreates a fresh 128KB card
       // (byte-identical to the shipped file). Writes land in /persist and are flushed back to
-      // IndexedDB on tab-hide / unload (syncfs(false)). No engine change; native/node use real disk.
+      // IndexedDB after card writes (syncfs(false)). No engine change; native/node use real disk.
       function(){
         try {
           FS.mkdir('/persist');
@@ -64,14 +64,40 @@
             }
             try { FS.unlink('/SaveGames'); } catch(e){}          // drop any stale root node
             try { FS.symlink('/persist/SaveGames', '/SaveGames'); } catch(e){ console.error('symlink SaveGames', e); }
+            // The original keeps its card FILE open throughout the session.
+            // Observe its actual writes; waiting for close/pagehide can lose a
+            // completed save when navigation destroys the asynchronous sync.
+            var cardNode = FS.lookupPath('/persist/SaveGames').node;
+            var cardWrite = cardNode.stream_ops.write;
+            cardNode.stream_ops = Object.assign({}, cardNode.stream_ops);
+            cardNode.stream_ops.write = function(){
+              var written = cardWrite.apply(this, arguments);
+              if (written > 0) Module.dd2PersistCard();
+              return written;
+            };
             Module.removeRunDependency('idbfs-load');
           });
         } catch(e){ console.error('IDBFS mount failed', e); }
       }],
       onRuntimeInitialized: function(){
-        // Flush the memory card to IndexedDB when the tab is hidden or closing (the engine has no
-        // save-completion callback, so persist opportunistically on the way out).
-        var _persist = function(){ try { FS.syncfs(false, function(){}); } catch(e){} };
+        // Serialize snapshots and batch synchronous writes at the next event
+        // turn. A write during an active sync queues another snapshot, so the
+        // newest card bytes cannot be dropped or overwritten by an older sync.
+        var persistPending = false, persistRunning = false, persistTimer = null;
+        function persistCard(){
+          persistTimer = null;
+          if (persistRunning || !persistPending) return;
+          persistPending = false; persistRunning = true;
+          FS.syncfs(false, function(error){
+            persistRunning = false;
+            if (error) console.error('SaveGames persistence failed', error);
+            if (persistPending) persistCard();
+          });
+        }
+        var _persist = Module.dd2PersistCard = function(){
+          persistPending = true;
+          if (!persistRunning && persistTimer === null) persistTimer = setTimeout(persistCard, 0);
+        };
         document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='hidden') _persist(); });
         window.addEventListener('pagehide', _persist);
         window.addEventListener('beforeunload', _persist);

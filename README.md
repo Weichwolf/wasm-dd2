@@ -269,10 +269,24 @@ checkpoint). Cases include real values, negative WORDs and discarded upper
 halves. Removing only patch 848 rejects the overwritten car and widened loads.
 GDB is required in addition to the replay component dependencies. These API
 boundary comparisons do not run the original file browser or complete player;
-full save/load behavior, replay trajectories and original audio still require
-acceptance. The current real browser save test already verifies the saved
-nonzero car, complete script and car order; it exposes lost card persistence
-after normal page navigation, which still needs correction.
+full original save/load behavior, replay trajectories and original audio still
+require acceptance.
+
+`make verify-browser-replay-save` exercises actual Select Car/practice/Retire/
+Yes/Save Replay/name entry, normal page navigation, File Manager loading and
+natural playback completion. It checks every script/order byte, the complete
+128-KiB card hash before/after restart, RAM/file equality and restoration of
+the previous frontend configuration. It also cancels then confirms deletion
+and checks the deleted card after another restart. The test performs no engine
+or file writes and never calls `syncfs` itself. Its report uses a fresh directory
+under `/tmp/wasm-dd2/`; `BROWSER_REPLAY_SAVE_OUTPUT` can supply that path.
+
+The browser now persists actual card writes while the original card FILE remains
+open. Writes are batched at the next event turn; asynchronous IndexedDB snapshots
+are serialized and a write during an active sync queues another snapshot.
+The previous unload-only shell loses the named replay on ordinary navigation
+and is rejected by the same test. Whole original menu/player video/audio and
+the corresponding native window save/load flow still need acceptance.
 
 Menu graphics can be compared over complete 64-frame highlight cycles. This
 checks every indexed pixel and palette byte at presentation, including the

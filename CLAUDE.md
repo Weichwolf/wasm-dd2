@@ -35,6 +35,31 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Browser card persistence now observes actual writes to the session's open
+  SaveGames FILE, batches them at the next event turn and serializes IndexedDB
+  snapshots. Writes during an active sync queue another snapshot. The former
+  unload-only shell lost completed saves when page navigation destroyed the
+  asynchronous operation; SDK autoPersist-on-close is insufficient because the
+  original keeps this FILE open. No engine save behavior or file bytes change.
+  make verify-browser-replay-save exercises real Select Car/practice/Retire/Yes/
+  Save Replay/name "A"/normal navigation/File Manager/load/natural completion.
+  Saved/reloaded/cancelled-delete cards match across all 131072 bytes by SHA256
+  857e8b07df0def4f6add2e3fe8a4485c7d9ec5cf7ab2aa66b1161842861f0ba7;
+  confirmed-delete/reloaded cards match SHA256
+  3ba7da877411fbde5c0b12561fb3d0e14008e118d6213d04778994bf0246e115.
+  Every card file byte matches engine RAM; complete script/order and stored
+  nonzero car1 match loaded playback. It advances through 34 observed rendered
+  phases, finishes naturally and restores the prior frontend car/mode/type/
+  car count. No test state/file writes or forced syncfs. Runtime errors: none
+  (browser-replay-save-delete-persist/report.json). The identical final test
+  rejects the saved-card loss in an immutable old-shell build with the same
+  patch-848 engine (browser-card-persist-full-old-negative/report.json).
+  Current browser HTML SHA256
+  9356a7e03df6a0b9c00bf4d156635e18e31d8e957cd888dd202c75bc7a49f22a;
+  WASM remains 9a7453c5f1c1be7e18c06c4f5231e7b3375876fb18edb0761ae03b679143f6cd.
+  This establishes this browser save/load/delete flow, not full original menu/
+  player A/V acceptance. Native window save/load and overwrite/full-card cases
+  still need checks. Earlier marker-based persistence QA is narrower evidence.
 - Patch 848 restores replay metadata WORD stores, signed WORD loads and the
   unsigned WORD file discriminator. Original packing's final magic store must
   preserve the selected car; Load_Card_File must ignore the adjacent car WORD.
@@ -50,7 +75,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   replay-metadata-848-reviewed/report.json; original aggregate SHA256
   5ae73bc7ebdc71d347aa15289f80663cd59f2d6c6d65e554f2ce5669ba746986.
   This is component acceptance, not original full-menu save/load or A/V parity.
-  The real browser Select Car/practice/Retire/Yes/Save Replay/name entry test
+  The pre-persistence-fix browser Select Car/practice/Retire/Yes/Save Replay/name entry test
   saves car1, every script/order byte and matching card RAM/disk successfully,
   then rejects because the named replay disappears on ordinary navigation
   (browser-replay-save-848-first/report.json). The old marker persistence test
