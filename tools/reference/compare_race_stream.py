@@ -115,7 +115,9 @@ def main():
             'diagnostic_first_scene_x_checks':len([i for i in r.get('diagnostic_image_frames',[]) if i<len(rows)])}
         if a.attract_history:result['preceding_demo_levels']=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
         report['targets'].append(result);(out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
-        if failures:raise RuntimeError(f'{name}: complete original stream differs ({len(failures)} records); first {failures[:2]}')
+        if failures:
+            print(f'FAIL {name} vs actual original: {len(failures)} differing records; first {failures[:2]}',flush=True)
+            continue
         # This must reject a real corrupted first capture byte, including the
         # often-excluded countdown endpoint. Restore accepted artifact exactly.
         path=directory/f'f{rows[0]["flip"]:05d}.bin';accepted=path.read_bytes();changed=bytearray(accepted);changed[0]^=1
@@ -133,5 +135,9 @@ def main():
             result[f'negative_{field}_rejected']=True
         print(f'PASS {name} vs actual original: {len(rows)} entire racing-loop frames/palettes, all {count} clock returns exact; first-pixel corruption rejected',flush=True)
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    rejected=[target for target in report['targets'] if not target['pass']]
+    if rejected:
+        raise RuntimeError('complete original stream differs: '+', '.join(
+            f'{target["target"]} ({len(target["failures"])} records)' for target in rejected))
 
 if __name__=='__main__':main()

@@ -82,7 +82,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   mismatch (dd2-original-race-l3-tunnel-history-reviewed/native/run.log).
   Explicitly matching the observed initial seed/blink gives exact clock/RNG
   phases but rejects frame 566 (cf234/ticks470): 25 pixels along a narrow
-  edge differ (dd2-original-race-l3-tunnel-direct-reviewed/report.json).
+  edge differ on BOTH targets
+  (dd2-original-race-l3-tunnel-both-direct-reviewed/report.json).
+  The comparator collects both framebuffer failure reports before rejecting
+  the run; a native pixel failure no longer hides WASM evidence. Its passing
+  L5 regression retains all 1235 frames/13907 clocks/2990 RNG records and
+  negative pixel/state checks (dd2-original-race-l5-collect-failures-regression-reviewed).
+  A second independently observed L3 loop matches every byte on both ports:
+  1497 frames/22021 clocks/1948 calculated RNG calls, all 17 scenery-x checks
+  and negative mutations (dd2-original-race-l3-edge-direct-reviewed).
+  This separate passing run initializes observed seed=2300983881/blink=30
+  once; it does not resolve the first capture's seed=738116801/blink=14 edge.
   Prefix clock/state equivalence cannot be claimed from that test.
   Complete original racing audio, remaining races/modes and physical output
   clocks remain open; whole-game acceptance is still unproved.
