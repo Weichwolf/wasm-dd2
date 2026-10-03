@@ -35,6 +35,39 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Full preceding API inputs are now supported by --race-full-history plus
+  --attract-history: tools/race_history_gdb.py uses at most four read-only
+  hardware breakpoints to observe global Watcom rand from frontend seed 1,
+  all preceding racing clocks and the selected racing video. Runtime "all"
+  RNG mode always REQUIRES the calculated initial seed; it never initializes
+  from a reference. An optional output-only level filter avoids dumping prior
+  videos and stops only after a target racing frame has actually been logged.
+  The fresh original L6 capture passes native AND WASM: 1403 frames/palettes,
+  154599 clocks (135578 in six preceding demos), all 25198 global RNG calls,
+  actual preceding sequence [9,7,3,1,1,7], all observed prefix entry fields,
+  and first-pixel/RNG/blink/prefix/entry mutation negatives
+  (dd2-original-l6-full-history-inputs-reviewed;
+  dd2-original-l6-full-history-comparison-v1-reviewed).
+  This early capture omitted target pre-physics RNG entry metadata; the
+  comparator checks its observed first_state and clock, not an inferred RNG
+  count. Every global RNG record and presented RNG phase is still exact.
+  Subsequent captures also record target_entry with its measured RNG count.
+  The fresh L9 full-input capture also passes both ports: 1005 target frames,
+  18475 clocks, empty preceding prefix, measured target entry and all global
+  seed-1 RNG calls (dd2-original-l9-full-history-inputs-reviewed;
+  dd2-original-l9-full-history-comparison-reviewed).
+  Only target video is checked; prior video, physical clocks and original
+  racing audio remain outside this proof. The old 1371-frame L6 natural-
+  history capture also still passes both targets with the new shims
+  (dd2-original-l6-history-api-legacy-images-reviewed).
+  Strict random transport fixtures pass all 28 native-ASan/UBSan/WASM cases,
+  including all-level seed-1 records across levels 0/9/7/6 and wrong-initial,
+  truncated/partial/leftover/multiplier negatives
+  (dd2-random-full-history-transport-reviewed). These four boot records were
+  also independently observed in the fresh original global trace.
+  Strict clock wrap/repeat/extent fixtures pass all eight cases on both
+  targets (dd2-clock-full-history-transport-reviewed); all 182 exact patches
+  still apply (dd2-check-history-api.log).
 - The first L3 stream's 25 wrong pixels are fully explained by inherited
   debris vertices, with an unchanged control on the actual patch-845 native
   binary. Original Update_Debris 0x42469a..0x4246a9 masks animation to 7 bits

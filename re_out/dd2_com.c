@@ -6,6 +6,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dd2_native.h"
+/* Optional diagnostic output filter: calculate preceding demos normally but
+ * save only the selected racing loop. Init_Game/fades retain quit=1 between
+ * demos; accepted race frames begin after Play_Game resets it to zero. */
+static unsigned dd2_race_capture_level(void){
+    static int initialized;
+    static unsigned selected;
+    if(!initialized){
+        const char* value=getenv("DD2_RACE_CAPTURE_LEVEL");initialized=1;
+        if(value){
+            char* end;unsigned long level=strtoul(value,&end,10);
+            if(!*value || *end || level<1 || level>10){
+                fprintf(stderr,"[race-stream] invalid capture level\n");exit(1);
+            }
+            selected=(unsigned)level;
+        }
+    }
+    return selected;
+}
+static int dd2_race_capture_frame(void){
+    unsigned level=dd2_race_capture_level();
+    extern unsigned dd2_tick_replay_calls(void);
+    return !level || (*(unsigned*)(unsigned long)0x936ff4u==level &&
+        dd2_tick_replay_calls() && !*(int*)(unsigned long)0x7746acu);
+}
 static unsigned char g_pixels[640*512];   /* 8-bit indexed surface store (PSX-style) */
 
 /* interface objects: a single word holding the vtable pointer (the decompile derefs *iface = vtable) */
@@ -126,13 +150,17 @@ static int ids_flip(int t,int a,int b){
        Each accepted record identifies an actual pending presentation. */
     {
         const char* logpath=getenv("DD2_RACE_STREAM");
-        if(logpath){
+        if(logpath && (!dd2_race_capture_level() ||
+                *(unsigned*)(unsigned long)0x936ff4u==dd2_race_capture_level())){
             extern unsigned dd2_tick_replay_calls(void),dd2_random_replay_calls(void);
+            static int race_started;
             unsigned calls=dd2_tick_replay_calls();
-            if(calls && *(int*)(unsigned long)0x7746acu && getenv("DD2_RACE_STOP_AFTER_CAPTURE")){
+            if(calls && *(int*)(unsigned long)0x7746acu && getenv("DD2_RACE_STOP_AFTER_CAPTURE") &&
+                    (!dd2_race_capture_level() || race_started)){
                 fprintf(stderr,"[race-stream] target racing loop finished\n");exit(0);
             }
             if(calls && !*(int*)(unsigned long)0x7746acu){
+                race_started=1;
                 static FILE* log;
                 if(!log){log=fopen(logpath,"w");if(!log){fprintf(stderr,"Cannot open race stream log\n");exit(1);}}
                 fprintf(log,"{\"flip\":%d,\"level\":%d,\"cf\":%d,\"ticks\":%d,\"countdown\":%d,\"frame_skip\":%d,\"quit\":%d,\"clock_calls\":%u,\"rng_calls\":%u,\"demo_flash\":%d}\n",
@@ -143,7 +171,7 @@ static int ids_flip(int t,int a,int b){
         }
     }
     const char* dir = getenv("DD2_FRAMEDIR");
-    if(dir){
+    if(dir && dd2_race_capture_frame()){
         /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 640x480 8-bit framebuffer (dd2h)
            (where ALL decompiled rasterizers draw; this is the faithful bit-exact comparison
            surface — identical buffer in reference dd2h.exe). */

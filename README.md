@@ -303,6 +303,16 @@ level sequence to match and reject an extra preceding demo. These entry records
 do not capture the preceding races' complete clocks or establish full-prefix
 timing equivalence.
 
+Add `--race-full-history` to `RACE_CAPTURE_ARGS` to record every preceding
+race's clock inputs and all Watcom random calls from the frontend, including
+demo selection. Compare this capture with `--attract-history`. Both ports
+calculate the global random stream from boot seed 1, replay all preceding
+clock inputs and check the observed demo entry states. No inherited engine
+state is copied. Only the selected racing loop's video is captured and checked;
+this mode still excludes original audio and physical output clocks. A fresh
+L6 capture passes both ports after the actual sequence [9,7,3,1,1,7], with
+1403 target frames, 154599 total clock inputs and 25198 global random calls.
+
 For the older L3 capture, a controlled native experiment isolates the effect
 of retained debris vertices:
 

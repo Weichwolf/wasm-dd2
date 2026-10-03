@@ -98,6 +98,16 @@ unsigned GetTickCount(void){
             dd2_tick_failed=1;fprintf(stderr,"[clock-replay] %s\n",n?"partial tick record":"clock input exhausted");exit(1);
         }
         dd2_virtual_ms=(unsigned)bytes[0]|((unsigned)bytes[1]<<8)|((unsigned)bytes[2]<<16)|((unsigned)bytes[3]<<24);
+        /* Full-history entries are calculated from all preceding API inputs;
+         * logging them never substitutes engine state from a reference. */
+        if(getenv("DD2_RACE_FULL_HISTORY") &&
+                *(unsigned*)(uintptr_t)0x7746c0==0 && *(unsigned*)(uintptr_t)0x46385c==1){
+            extern unsigned dd2_random_replay_calls(void);
+            fprintf(stderr,"[clock-replay] history-entry {\"level\":%u,\"cf\":%u,\"ticks\":0,\"countdown\":%d,\"frame_skip\":%d,\"quit\":%d,\"demo_flash\":%u,\"initial_clock\":%u,\"clock_offset\":%u,\"rng_calls\":%u}\n",
+                *(unsigned*)(uintptr_t)0x936ff4,*(unsigned*)(uintptr_t)0x462ff0,
+                *(int*)(uintptr_t)0x784298,*(int*)(uintptr_t)0x7746b8,*(int*)(uintptr_t)0x7746ac,
+                *(unsigned*)(uintptr_t)0x4652a0,dd2_virtual_ms,dd2_tick_calls,dd2_random_replay_calls());
+        }
         dd2_tick_calls++;return dd2_virtual_ms;
     }
     if(!getenv("DD2_REALTIME")) dd2_virtual_ms += 16;
@@ -113,14 +123,15 @@ void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers
  * at 0x456cde; srand 0x456cdf. The old 0x456afc/0x456b1f/MSVC comment
  * identified unrelated CRT code in this supported binary.
  * Every normal call retains the existing seed*0x41c64e6d+0x3039 algorithm.
- * Optional verification initializes the private RNG from the first actual
- * original pre-seed, then COMPUTES and checks every stored post-seed/return;
- * it never substitutes recorded values for subsequent random results. */
+ * Optional level-scoped verification initializes the private RNG from the
+ * first original pre-seed unless REQUIRE_INITIAL is set. Full-history "all"
+ * mode always requires the naturally calculated seed. Both modes COMPUTE and
+ * check every post-seed/return, never substituting later recorded values. */
 static unsigned _dd2_rand_seed = 1;
 unsigned g_rand_calls = 0;
 static FILE* dd2_random_file;
 static unsigned dd2_random_calls,dd2_random_level;
-static int dd2_random_init,dd2_random_failed;
+static int dd2_random_init,dd2_random_failed,dd2_random_all;
 static const char* dd2_random_path;
 unsigned dd2_random_replay_calls(void){return dd2_random_calls;}
 static void dd2_random_close(void){
@@ -141,13 +152,16 @@ int rand(void){
         dd2_random_init=1;dd2_random_path=getenv("DD2_RANDOM_REFERENCE");
         if(dd2_random_path){
             const char* level=getenv("DD2_RANDOM_LEVEL");char* end=NULL;
-            dd2_random_level=level?(unsigned)strtoul(level,&end,10):0;
-            if(!level || !*level || *end || dd2_random_level<1 || dd2_random_level>10){
-                fprintf(stderr,"[random-reference] requires an exact level in 1..10\n");exit(1);
+            dd2_random_all=level && !strcmp(level,"all");
+            if(!dd2_random_all){
+                dd2_random_level=level?(unsigned)strtoul(level,&end,10):0;
+                if(!level || !*level || *end || dd2_random_level<1 || dd2_random_level>10){
+                    fprintf(stderr,"[random-reference] requires an exact level in 1..10 or all\n");exit(1);
+                }
             }
         }
     }
-    if(dd2_random_path && *(unsigned*)(uintptr_t)0x936ff4==dd2_random_level){
+    if(dd2_random_path && (dd2_random_all || *(unsigned*)(uintptr_t)0x936ff4==dd2_random_level)){
         size_t count;
         if(!dd2_random_file){
             dd2_random_file=fopen(dd2_random_path,"rb");
@@ -159,7 +173,7 @@ int rand(void){
             dd2_random_failed=1;fprintf(stderr,"[random-reference] %s\n",count?"partial random record":"random reference exhausted");exit(1);
         }
         if(!dd2_random_calls){
-            if(getenv("DD2_RANDOM_REQUIRE_INITIAL")){
+            if(dd2_random_all || getenv("DD2_RANDOM_REQUIRE_INITIAL")){
                 if(_dd2_rand_seed!=dd2_le_word(record)){
                     dd2_random_failed=1;fprintf(stderr,"[random-reference] calculated initial seed differs\n");exit(1);
                 }

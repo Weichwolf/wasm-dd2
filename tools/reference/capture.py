@@ -109,6 +109,7 @@ def main():
     parser.add_argument("--race-images",type=int,nargs="+",default=[],help="also dump original engine memory at these racing presentation indices for diagnostics")
     parser.add_argument("--race-image-counters",type=int,nargs="+",default=[],help="also dump original engine memory at every presentation of these cf counters (0..700)")
     parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
+    parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
@@ -131,6 +132,7 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.race_full_history and not args.race_stream:parser.error('--race-full-history requires --race-stream')
     if args.race_level!=9 and not args.race_stream:parser.error('--race-level requires --race-stream')
     if args.race_images and (not args.race_stream or min(args.race_images)<0):parser.error('--race-images requires --race-stream and nonnegative indices')
     if args.race_image_counters and (not args.race_stream or any(i not in range(701) for i in args.race_image_counters)):
@@ -282,7 +284,7 @@ def run(game, output, args):
                     ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.race_stream:
-                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters)
+                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history)
                             return
                         if args.mode=="audio":
                             end = time.monotonic() + args.audio_tail
@@ -346,11 +348,13 @@ def run(game, output, args):
                 xserver.wait(timeout=5)
 
 
-def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_counters=()):
+def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_counters=(),full_history=False):
     script=output/"race.gdb"
+    module,function=('race_history_gdb','record_history') if full_history else ('race_stream_gdb','record_race')
+    options='' if full_history else 'random_trace=True,'
     script.write_text("\n".join(["set pagination off","set auto-solib-add off",f"attach {pid}",
         "python",f"import sys; sys.path.insert(0,{str(ROOT/'tools')!r})",
-        "from race_stream_gdb import record_race",f"record_race({str(output)!r},{level},random_trace=True,image_frames={image_frames!r},image_counters={image_counters!r})",
+        f"from {module} import {function}",f"{function}({str(output)!r},{level},{options}image_frames={image_frames!r},image_counters={image_counters!r})",
         "end","detach","quit"])+"\n")
     with (output/"race-gdb.log").open("wb") as log:
         subprocess.run(["gdb","--nx","-q","-batch","-x",str(script)],env=env,

@@ -27,6 +27,26 @@ def compare_prefix(reference,actual):
     if original==actual:return []
     return [{'error':'preceding demo sequence differs','original':original,'port':actual}]
 
+def compare_history_entries(reference,actual):
+    target=reference.get('target_entry')
+    if target is None:
+        # Early full-input captures saved the target's first_state separately
+        # without its pre-physics RNG count. Check only observed fields here;
+        # the entire global random trace and presented RNG phases still match.
+        target=dict(reference['first_state'],clock_offset=reference['prefix_clock_calls'],
+            initial_clock=struct.unpack_from('<I',(reference['_root']/'ticks.bin').read_bytes(),reference['prefix_clock_calls']*4)[0])
+    expected=[*reference['preceding_demos'],target]
+    keys=(*FIELDS[:-1],'demo_flash','initial_clock','clock_offset','rng_calls')
+    failures=[]
+    if len(expected)!=len(actual):
+        failures.append({'error':'history entry count differs','original':len(expected),'port':len(actual)})
+    for index,(original,port) in enumerate(zip(expected,actual)):
+        observed=[key for key in keys if key in original]
+        if any(original[key]!=port.get(key) for key in observed):
+            failures.append({'error':'calculated history entry differs','index':index,
+                'original':{key:original[key] for key in observed},'port':port})
+    return failures
+
 def compare(reference,actual_root,rows):
     failures=[];frames=reference['frames']
     fields=(*FIELDS,'rng_calls') if 'rng_calls' in reference else FIELDS
@@ -63,6 +83,21 @@ def main():
     p.add_argument('--attract-history',action='store_true',help='run the real frontend and preceding demos; require naturally calculated initial RNG/blink states')
     a=p.parse_args();root=a.capture.resolve()/'race';out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     r=json.loads((root/'race.json').read_text());ticks=root/'ticks.bin'
+    full_history=r.get('complete_history_api_inputs') is True
+    prefix_count=r.get('prefix_clock_calls',0) if full_history else 0
+    if full_history:
+        if not a.attract_history:raise RuntimeError('full history inputs require --attract-history')
+        entries=r.get('preceding_demos',[]);offset=0
+        for entry in entries:
+            if (entry.get('clock_offset')!=offset or entry.get('clock_end',0)<=offset or
+                    entry.get('ticks')!=0 or entry.get('quit')!=0 or
+                    entry.get('level') not in range(1,11) or entry.get('final_state',{}).get('quit')!=1):
+                raise RuntimeError('incomplete original prefix clock manifest')
+            offset=entry['clock_end']
+        if (offset!=prefix_count or r.get('rng_initial_seed')!=1 or
+                ('target_entry' in r and (r['target_entry'].get('clock_offset')!=prefix_count or
+                r['target_entry']['level']!=r['level']))):
+            raise RuntimeError('inconsistent complete history input extent')
     if r.get('exe_modified') is not False or r.get('exe_sha256')!=EXE_SHA or hashlib.sha256((ROOT/'DestructionDerby2/dd2h.exe').read_bytes()).hexdigest()!=EXE_SHA:
         raise RuntimeError('supported unmodified original required')
     frames=r['frames'];count=r['clock_calls']
@@ -70,7 +105,7 @@ def main():
         not frames or [row['index'] for row in frames]!=list(range(len(frames))) or
         [row['prefix'] for row in frames]!=[f'frame{i:05d}' for i in range(len(frames))] or
         r['final_state']['quit']!=1 or r['first_state']['ticks']!=0 or ticks.stat().st_size!=count*4 or
-        frames[0]['clock_calls']!=1 or any(row['quit'] or row['level']!=r['level'] for row in frames) or
+        frames[0]['clock_calls']!=prefix_count+1 or any(row['quit'] or row['level']!=r['level'] for row in frames) or
         any(row['clock_calls']>=count for row in frames) or
         any(frames[i]['clock_calls']<=frames[i-1]['clock_calls'] for i in range(1,len(frames)))):
         raise RuntimeError('incomplete/inconsistent original loop/clock manifest')
@@ -92,6 +127,11 @@ def main():
         if 'rng_calls' not in r or 'demo_flash' not in r['first_state']:raise RuntimeError('attract history requires recorded random and blink states')
         random_env.update(DD2_TICK_LEVEL=str(r['level']),DD2_RACE_STOP_AFTER_CAPTURE='1',
             DD2_RACE_FLASH_REQUIRE='1',DD2_RANDOM_REQUIRE_INITIAL='1',DD2_FE='1')
+        if full_history:
+            random_env.pop('DD2_TICK_LEVEL')
+            initial=r['preceding_demos'][0] if r['preceding_demos'] else r['first_state']
+            random_env.update(DD2_RANDOM_LEVEL='all',DD2_RACE_FULL_HISTORY='1',
+                DD2_RACE_CAPTURE_LEVEL=str(r['level']),DD2_RACE_FLASH_INITIAL=str(initial['demo_flash']))
     r['_root']=root
     image_counters={frames[index]['cf'] for index in r.get('diagnostic_image_frames',[]) if index<len(frames)}
     if image_counters:random_env.update(DD2_IMGDUMP=','.join(map(str,sorted(image_counters))),DD2_IMGDUMP_FLIP='1')
@@ -101,6 +141,8 @@ def main():
         'level':r['level'],'attract_history':a.attract_history,'initial_rng_and_blink':
             'calculated by preceding real demos; checked, never initialized from reference' if a.attract_history else 'initialized once from observed original',
         'targets':[]}
+    report['complete_history_api_inputs']=full_history
+    report['prefix_clock_calls']=prefix_count
     env={k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     for name,command,artifact in [('native',[str(a.native.resolve())],a.native),('wasm',[a.node,str(a.wasm.resolve()),'fe' if a.attract_history else str(r['level'])],a.wasm.with_suffix('.wasm'))]:
         directory=out/name;directory.mkdir();log=directory/'run.log'
@@ -117,11 +159,16 @@ def main():
         if any(row['flip']<=rows[i-1]['flip'] for i,row in enumerate(rows) if i):raise RuntimeError('port presentation indices not increasing')
         failures=compare(r,directory,rows)
         preceding=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
+        if full_history:
+            history_entries=[json.loads(value) for value in re.findall(r'\[clock-replay\] history-entry (\{[^\n]+\})',text)]
+            failures.extend(compare_history_entries(r,history_entries))
+            preceding=[entry['level'] for entry in history_entries[:-1]]
         if a.attract_history:failures.extend(compare_prefix(r,preceding))
         result={'target':name,'binary_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'pass':not failures,'frames':len(rows),
             'framebuffer_bytes':len(rows)*307200,'palette_bytes':len(rows)*1024,'failures':failures,
             'diagnostic_first_scene_x_checks':len([i for i in r.get('diagnostic_image_frames',[]) if i<len(rows)])}
         if a.attract_history:result['preceding_demo_levels']=preceding
+        if full_history:result['history_entries']=history_entries
         if 'preceding_demos' in r:result['original_preceding_demo_levels']=[entry['level'] for entry in r['preceding_demos']]
         report['targets'].append(result);(out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         if failures:
@@ -135,6 +182,12 @@ def main():
             if bad!=[{'index':0,'error':'bin bytes differ','port_bytes':307200,'first_difference':0}]:raise RuntimeError('corrupted first original-comparison frame was not rejected exactly')
         finally:path.write_bytes(accepted)
         result['negative_first_pixel_rejected']=True
+        if full_history:
+            changed=[dict(entry) for entry in history_entries];changed[0]['demo_flash']+=1
+            bad=compare_history_entries(r,changed)
+            if len(bad)!=1 or bad[0]['error']!='calculated history entry differs' or bad[0]['index']!=0:
+                raise RuntimeError('changed calculated prefix entry was not rejected')
+            result['negative_history_entry_rejected']=True
         if a.attract_history and 'preceding_demos' in r:
             changed=[*preceding,1]
             if compare_prefix(r,changed)!=[{'error':'preceding demo sequence differs',

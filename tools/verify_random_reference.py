@@ -58,6 +58,30 @@ def main():
             elif run.returncode or json.loads(run.stdout)!={'calculated_original_returns':4,'level_gate':True} or '[random-reference] consumed=4 complete' not in run.stderr:
                 raise RuntimeError(f'{target}: actual original arithmetic/reference check failed')
             report['cases'].append({'target':target,'case':name,'pass':True})
+        # Independently specified boot-seed fixture spans frontend level 0
+        # and multiple real levels. Full-history mode must never initialize
+        # its seed from a reference, even without REQUIRE_INITIAL being set.
+        boot_records=[(1,1103527590,16838),(1103527590,2524885223,5758),
+            (2524885223,662824084,10113),(662824084,3295386429,17515)]
+        boot=b''.join(struct.pack('<III',*row) for row in boot_records)
+        wrong_seed=bytearray(boot);wrong_seed[0]^=1
+        boot_cases=[('all-exact',boot,None),('all-wrong-initial',bytes(wrong_seed),'calculated initial seed differs'),
+            ('all-exhausted',boot[:12],'random reference exhausted'),
+            ('all-partial',boot[:5],'partial random record'),
+            ('all-leftover',boot+boot[:12],'unconsumed random records'),
+            ('all-multiplier-mutation',boot,'calculated random state/result differs')]
+        for name,data,error in boot_cases:
+            path=out/f'{target}-{name}.random';path.write_bytes(data)
+            executable=mutated if name=='all-multiplier-mutation' else binary
+            command=[str(executable)] if target=='native' else ['node',str(executable)]
+            run=subprocess.run(command,env={**env,'DD2_RANDOM_LEVEL':'all','DD2_RANDOM_REFERENCE':str(path)},
+                capture_output=True,text=True,timeout=20)
+            (out/f'{target}-{name}.log').write_text(run.stdout+run.stderr)
+            if error:
+                if run.returncode!=1 or error not in run.stderr:raise RuntimeError(f'{target}/{name}: intended all-history rejection missing')
+            elif run.returncode or json.loads(run.stdout)!={'calculated_boot_returns':4,'all_levels':True} or '[random-reference] consumed=4 complete' not in run.stderr:
+                raise RuntimeError(f'{target}: all-history RNG not calculated from boot seed')
+            report['cases'].append({'target':target,'case':name,'pass':True})
         print(f'PASS {target}: actual original random states/returns calculated, level gated; malformed inputs and multiplier mutation rejected',flush=True)
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
 
