@@ -11,12 +11,19 @@ import struct
 import gdb
 
 
-def record_history(output, level, image_frames=(), image_counters=(), physics_trace=False):
+def record_history(output, level, image_frames=(), image_counters=(), physics_trace=False, step_window=(), step_levels=()):
     directory = Path(output) / 'race'
     directory.mkdir()
     inferior = gdb.selected_inferior()
     ticks, random, frames, images, preceding = [], [], [], [], []
     callers = []
+    steps = []
+    step = None
+    step_pc = None
+    step_car = None
+    step_finished = False
+    step_completed = 0
+    step_levels = tuple(step_levels) or (level,)
     physics_layout = [dict(name='car primitives/dynamics', address=0x78a520, size=20*0x27c),
                       dict(name='car render FD', address=0x792690, size=20*44),
                       dict(name='car state', address=0x792a00, size=20*0x1b2),
@@ -73,8 +80,30 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
             rng_pc = next_rng
             rng = breakpoint(rng_pc)
             continue
+        if step and pc == step_pc:
+            current = state()
+            if pc == 0x442e0c:
+                esp = int(gdb.parse_and_eval('$esp')) & 0xffffffff
+                if int.from_bytes(read(esp,4),'little') != 0x423d6e:
+                    raise RuntimeError('unexpected original Car_Movement caller')
+                step_car = int.from_bytes(read(esp+4,4),'little')
+                phase = 'before Car_Movement'
+                next_step = 0x423d6e
+            else:
+                phase = 'after Car_Movement'
+                next_step = 0x442e0c
+            prefix = f'step{len(steps):05d}'
+            (directory / f'{prefix}.cars').write_bytes(b''.join(read(row['address'],row['size']) for row in physics_layout))
+            steps.append(dict(current,index=len(steps),prefix=prefix,car=step_car,phase=phase,
+                              clock_calls=len(ticks),rng_calls=len(random)))
+            step.delete()
+            step_pc = next_step
+            condition = (f'*(int*)0x462ff0 >= {step_window[0]} && *(int*)0x462ff0 <= {step_window[1]}') if next_step == 0x442e0c else None
+            step = breakpoint(step_pc,condition)
+            continue
         if pc == 0x423c2d and initial:
             current = state()
+            step_finished = False
             if current['level'] not in range(1, 11) or current['ticks'] or current['quit']:
                 raise RuntimeError('invalid original demo entry')
             target = current['level'] == level
@@ -118,6 +147,21 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
             current = state()
             if current['level'] != current_entry['level'] or current['quit'] or integer(0x46385c) != 1:
                 raise RuntimeError('wrong/inactive original target demo render')
+            # Reuse the end-of-demo hardware slot only inside this small window.
+            # Draw, clock and RNG observations remain enabled: at most four HW
+            # breakpoints, no software traps or inferior memory/register writes.
+            if step_window and current['level'] in step_levels and not step_finished:
+                if step and current['cf'] > step_window[1]:
+                    step.delete()
+                    step = None
+                    end = breakpoint(0x42404a)
+                    step_finished = True
+                    step_completed += 1
+                elif not step and current['cf'] >= step_window[0]-4:
+                    end.delete()
+                    end = None
+                    step_pc = 0x442e0c
+                    step = breakpoint(step_pc,f'*(int*)0x462ff0 >= {step_window[0]} && *(int*)0x462ff0 <= {step_window[1]}')
             if not target:
                 index=len(current_entry['physics_frames'])
                 prefix=f'preceding-cars/demo{len(preceding):03d}/frame{index:05d}'
@@ -171,5 +215,9 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
                   rng_calls=len(random), rng_initial_seed=random[0][0], rng_final_seed=random[-1][1],
                   diagnostic_image_frames=images, preceding_demos=preceding)
     if physics_trace:result['physics_layout']=physics_layout
+    if step_window:
+        if not steps or step or not step_completed:
+            raise RuntimeError('incomplete requested Car_Movement observation window')
+        result.update(physics_steps=steps,physics_step_window=list(step_window),physics_step_levels=list(step_levels),physics_step_windows_complete=step_completed)
     (directory / 'race.json').write_text(json.dumps(result, indent=2) + '\n')
     print(f'Original complete history inputs: {len(preceding)} preceding demos, {len(frames)} target frames', flush=True)

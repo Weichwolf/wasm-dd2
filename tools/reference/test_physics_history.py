@@ -46,5 +46,18 @@ class PhysicsHistoryTests(unittest.TestCase):
         self.assertEqual(compare_callers(originals,changed,definitions)['index'],0)
         self.assertEqual(compare_callers(originals,[],definitions)['error'],'random caller count differs')
 
+    def test_movement_stage_and_car_identity_are_required(self):
+        with tempfile.TemporaryDirectory(prefix='dd2-motion-test-',dir='/tmp') as temporary:
+            root=Path(temporary)
+            layout=[dict(name='handling',address=0x792a00,size=20*4)]
+            expected=dict(index=0,prefix='step00000',level=8,cf=160,ticks=320,clock_calls=45000,
+                          rng_calls=16600,phase='before Car_Movement',car=0)
+            (root/'step00000.cars').write_bytes(bytes(80))
+            reference=dict(physics_layout=layout,frames=[expected])
+            self.assertIsNone(compare_cars(reference,[dict(expected)],root,root))
+            for field,value in (('phase','after Car_Movement'),('car',1),('rng_calls',16601)):
+                changed=dict(expected);changed[field]=value
+                self.assertEqual(compare_cars(reference,[changed],root,root)['error'],'car checkpoint phase differs')
+
 
 if __name__=='__main__':unittest.main()

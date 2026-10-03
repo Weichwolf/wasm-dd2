@@ -20,7 +20,8 @@ from artifacts import prepare_output, run_bounded, discard_frames
 def compare_cars(reference, frames, source, output):
     layout = reference['physics_layout']
     for expected, actual in zip(reference['frames'], frames):
-        if any(expected[key] != actual[key] for key in ('level', 'cf', 'ticks', 'clock_calls')):
+        if any(expected[key] != actual[key] for key in ('level', 'cf', 'ticks', 'clock_calls',
+                   *(['car','phase','rng_calls'] if 'phase' in expected else []))):
             return dict(index=actual['index'], error='car checkpoint phase differs', original=expected, native=actual)
         original = (source / f'{expected["prefix"]}.cars').read_bytes()
         prefix=actual.get('prefix',f'frame{actual["index"]:05d}')
@@ -36,7 +37,8 @@ def compare_cars(reference, frames, source, output):
                                 clock_calls=actual['clock_calls'],
                                 region=row['name'], address=hex(row['address']+remaining),
                                 car=remaining//(row['size']//20),field_offset=hex(remaining%(row['size']//20)),
-                                original=original[offset], native=port[offset])
+                                original=original[offset], native=port[offset],
+                                **(dict(phase=actual['phase'],movement_car=actual['car']) if 'phase' in actual else {}))
                 remaining -= row['size']
     if len(reference['frames']) != len(frames):
         return dict(index=min(len(reference['frames']),len(frames)), error='car checkpoint count differs',
@@ -75,6 +77,60 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     level = reference['level']
     layout = reference['physics_layout']
+    motion = ''
+    if reference.get('physics_steps'):
+        first_clock,last_clock = reference['physics_steps'][0]['clock_calls'],reference['physics_steps'][-1]['clock_calls']
+        movement_levels=sorted({row['level'] for row in reference['physics_steps']})
+        cf_start,cf_end=reference['physics_step_window']
+        motion = f'''
+steps=[]
+motion_pending=None
+def motion_snapshot(phase,car):
+    row=dict(index=len(steps),prefix=f'step{{len(steps):05d}}',phase=phase,car=car,
+             level=word(0x936ff4),cf=word(0x462ff0),ticks=word(0x7746c0),
+             clock_calls=int(gdb.parse_and_eval('dd2_tick_calls')),rng_calls=int(gdb.parse_and_eval('dd2_random_calls')))
+    out.joinpath(row['prefix']+'.cars').write_bytes(b''.join(gdb.selected_inferior().read_memory(region['address'],region['size']).tobytes() for region in layout))
+    steps.append(row)
+class MotionReturn(gdb.Breakpoint):
+    def __init__(self,pc,car):
+        super().__init__('*'+hex(pc),type=gdb.BP_HARDWARE_BREAKPOINT,internal=True)
+        self.car=car
+    def stop(self):
+        global motion_pending
+        motion_snapshot('after Car_Movement',self.car)
+        motion_pending=('entry',)
+        return True
+class Motion(gdb.Breakpoint):
+    def stop(self):
+        global motion_pending
+        if word(0x936ff4) in {movement_levels!r} and {cf_start}<=word(0x462ff0)<={cf_end} and {first_clock}<=int(gdb.parse_and_eval('dd2_tick_calls'))<={last_clock} and word(0x46385c)==1:
+            car=int(gdb.parse_and_eval('param_1'))
+            motion_snapshot('before Car_Movement',car)
+            motion_pending=(car,int(gdb.newest_frame().older().pc()))
+            return True
+        return False
+motion_entry=Motion('*'+hex(int(gdb.parse_and_eval('&Car_Movement'))),type=gdb.BP_HARDWARE_BREAKPOINT,internal=True)
+def observe_motion():
+    global motion_pending
+    motion_return=None
+    while True:
+        gdb.execute('continue')
+        if not gdb.selected_inferior().pid:
+            break
+        if motion_pending is None:
+            raise RuntimeError('unexpected native observer stop')
+        # Change breakpoint locations outside stop callbacks. Entry and return
+        # share one hardware slot, including when rand has several locations.
+        if motion_pending==('entry',):
+            motion_return.delete()
+            motion_return=None
+            motion_entry.enabled=True
+        else:
+            car,pc=motion_pending
+            motion_entry.enabled=False
+            motion_return=MotionReturn(pc,car)
+        motion_pending=None
+'''
     script = f'''set pagination off
 set confirm off
 starti
@@ -111,12 +167,14 @@ class Random(gdb.Breakpoint):
         return False
 Present('ids_flip',type=gdb.BP_HARDWARE_BREAKPOINT,internal=True)
 Random('rand',type=gdb.BP_HARDWARE_BREAKPOINT,internal=True)
+{motion}
 end
-continue
+{'python\nobserve_motion()\nend' if motion else 'continue'}
 python
 out.joinpath('frames.json').write_text(json.dumps(frames,indent=2)+'\\n')
 out.joinpath('all-frames.json').write_text(json.dumps(all_frames,indent=2)+'\\n')
 out.joinpath('random-callers.jsonl').write_text(''.join(json.dumps(row)+'\\n' for row in callers))
+{'out.joinpath("steps.json").write_text(json.dumps(steps,indent=2))' if motion else ''}
 end
 quit
 '''
@@ -134,7 +192,9 @@ quit
                         str(args.native.resolve())], cwd=ROOT / 'DestructionDerby2', env=env,
                        directory=out,stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout, check=True)
     text = (out / 'gdb.log').read_text()
-    if 'Traceback' in text or not (out / 'frames.json').is_file():
+    if (any(error in text for error in ('Traceback', 'Python Exception', 'Cannot insert hardware breakpoint',
+                                       'Could not insert hardware breakpoints')) or
+            not (out / 'frames.json').is_file()):
         raise RuntimeError('native observer failed; inspect gdb.log')
     frames = json.loads((out / 'frames.json').read_text())
     all_frames = json.loads((out / 'all-frames.json').read_text())
@@ -156,6 +216,11 @@ quit
                   complete_original_or_wasm_acceptance=False)
     report['first_car_difference'] = compare_cars(reference, frames, source, out)
     report['first_random_caller_difference'] = compare_callers(originals, callers, definitions)
+    if motion:
+        measured_steps=json.loads((out/'steps.json').read_text())
+        report['original_car_movement_checkpoints']=len(reference['physics_steps'])
+        report['native_car_movement_checkpoints']=len(measured_steps)
+        report['first_car_movement_difference']=compare_cars(dict(reference,frames=reference['physics_steps']),measured_steps,source,out)
     if all('physics_frames' in row for row in reference['preceding_demos']):
         prefix_frames=[frame for row in reference['preceding_demos'] for frame in row['physics_frames']]
         full_reference=dict(reference,frames=[*prefix_frames,*reference['frames']])
@@ -186,6 +251,7 @@ quit
     if (report['engine_loop_complete'] and report['first_car_difference'] is None and
             report['first_random_caller_difference'] is None and
             report.get('first_all_history_car_difference') is None and
+            report.get('first_car_movement_difference') is None and
             len(frames) == len(reference['frames']) and len(callers) == len(originals)):
         discard_frames(out)
     print(json.dumps(report,indent=2))

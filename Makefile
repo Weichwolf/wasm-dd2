@@ -203,6 +203,9 @@ verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHA
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
 
+verify-corner-lanes: patch ## check BYTE corner FD writes and reject old neighbor corruption on both targets
+	python3 $(ROOT)/tools/verify_corner_lanes.py
+
 verify-audio-observer: ## check 32/64-bit ALSA sample clocks and exact accepted-write capture; no port parity claim
 	python3 $(ROOT)/tools/reference/test_audio.py
 

@@ -114,6 +114,10 @@ def main():
     parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
     parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
     parser.add_argument("--race-physics",action="store_true",help="also record all preceding/target car-state checkpoints and global random callers; requires --race-full-history")
+    parser.add_argument('--race-step-window',type=int,nargs=2,metavar=('START_CF','END_CF'),default=[],
+                        help='observe every Car_Movement entry/return in this small target counter window; requires --race-physics')
+    parser.add_argument('--race-step-levels',type=int,nargs='+',choices=range(1,11),default=[],
+                        help='also observe the step window in preceding demos of these levels; requires --race-step-window')
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
@@ -138,6 +142,9 @@ def main():
     args = parser.parse_args()
     if args.race_full_history and not args.race_stream:parser.error('--race-full-history requires --race-stream')
     if args.race_physics and not args.race_full_history:parser.error('--race-physics requires --race-full-history')
+    if args.race_step_window and (not args.race_physics or not 4 <= args.race_step_window[0] <= args.race_step_window[1] <= 690):
+        parser.error('--race-step-window requires --race-physics and 4 <= START_CF <= END_CF <= 690')
+    if args.race_step_levels and not args.race_step_window:parser.error('--race-step-levels requires --race-step-window')
     if args.race_level!=9 and not args.race_stream:parser.error('--race-level requires --race-stream')
     if args.race_images and (not args.race_stream or min(args.race_images)<0):parser.error('--race-images requires --race-stream and nonnegative indices')
     if args.race_image_counters and (not args.race_stream or any(i not in range(701) for i in args.race_image_counters)):
@@ -289,7 +296,7 @@ def run(game, output, args):
                     ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.race_stream:
-                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics)
+                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics,args.race_step_window,args.race_step_levels)
                             return
                         if args.mode=="audio":
                             end = time.monotonic() + args.audio_tail
@@ -353,11 +360,11 @@ def run(game, output, args):
                 xserver.wait(timeout=5)
 
 
-def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_counters=(),full_history=False,physics_trace=False):
+def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_counters=(),full_history=False,physics_trace=False,step_window=(),step_levels=()):
     script=output/"race.gdb"
     module,function=('race_history_gdb','record_history') if full_history else ('race_stream_gdb','record_race')
     options='' if full_history else 'random_trace=True,'
-    tail=f',physics_trace={physics_trace!r}' if full_history else ''
+    tail=f',physics_trace={physics_trace!r},step_window={step_window!r},step_levels={step_levels!r}' if full_history else ''
     script.write_text("\n".join(["set pagination off","set auto-solib-add off",f"attach {pid}",
         "python",f"import sys; sys.path.insert(0,{str(ROOT/'tools')!r})",
         f"from {module} import {function}",f"{function}({str(output)!r},{level},{options}image_frames={image_frames!r},image_counters={image_counters!r}{tail})",

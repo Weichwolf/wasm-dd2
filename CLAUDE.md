@@ -35,6 +35,37 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 846 restores the eight original BYTE stores in Get_Corner_Positions
+  (0x43ca98..0x43cabb). The last wrongly widened store at 0x79263e overwrote
+  grounded_count[0] at 0x792640, preventing its 100-step recovery. The old
+  native first differs intrinsically in a preceding L10 at cf138/t278, car0
+  mode5 versus original mode0, before the RNG caller mismatch at cf151/t302.
+  Native/WASM store fixtures preserve every neighbor and the recovery counter;
+  reversing only patch 846 makes both fixtures reject with grounded_count=0.
+  Reproduce with make verify-corner-lanes (Native ASan/UBSan + WASM).
+- Fresh sealed original L8 full-history capture now PASSES BOTH corrected ports:
+  all 625 racing pictures/palettes, 191480 actual global clocks and 48418 RNG
+  calls; all ten preceding demos [9,7,3,7,10,1,3,6,4,1] and observed entry
+  states are calculated naturally. Pixel/history/RNG/blink mutation negatives
+  pass (/tmp/wasm-dd2/l8-original-video-846/report.json). Native separately
+  matches all 12710 car checkpoints and all 5280 Car_Movement entry/return
+  checkpoints (cf145..210), plus every measured RNG caller/phase; changed car
+  byte/caller negatives pass (native-l8-car-movement-846-complete/report.json).
+  Original/car states are never copied into the engine. Hardware entry/return
+  observations share one slot; observer Python/hardware insertion failures
+  reject the run. This establishes this captured racing render loop and native
+  car-state diagnosis, not full original racing audio/physical-clock parity.
+- With patch 846 all ten default demos also pass Native/WASM: 15255 frames,
+  palettes, all RNG/flip logs and effects/CD/mixed/music PCM bytes; successful
+  raw captures deleted (/tmp/wasm-dd2/parity-846/results.json). All 183 patches
+  apply with zero fuzz. Current binaries: Native
+  ae3b4d7c8e522203e59d23fc4d7080ab2db56ea9629a9376403afb4e872fca5b,
+  Node WASM a833f5d262f1cbc9db2be86cedb6e803658cc1e23c17566123937f3a74883202,
+  rebuilt browser a8ba88a3b08898e04267ffd6a6008829e2861387c4833d59977031f8ea6f0002.
+  Browser real Championship/name entry/race/Retire/Yes/View League passes all
+  four populated divisions and returns to results without runtime errors
+  (/tmp/wasm-dd2/browser-champ-846.log). Successful raw captures removed.
+  Older L8/L10 rejection notes below describe pre-846 runs, not current acceptance.
 - The full-history car observer also records every preceding demo presentation
   and localizes the first literal byte, car index, field offset and phase across
   the entire history. Truncated checkpoint/caller traces are rejected. A fresh
@@ -42,19 +73,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   actual prefix [9,7], 3190 total car checkpoints, 1038 target frames, 54725
   clocks and 21774 global RNG calls. Native matches the first 2399 complete
   checkpoints (61894200 literal car bytes), then differs at L8 cf162/ticks326:
-  primitive tag 0x78a522 and physical position 0x78a744, render FD 0x792690,
+  body-vertex Y 0x78a522 and physical position 0x78a744, render FD 0x792690,
   handling yaw velocity 0x792a04 and wheel FD 0x794be8. Previous cf158/ticks318
   is exact. The first RNG caller mismatch is later at global index16932:
   Original Sparks cf200/t401 versus Native FUN_00425444 cf201/t403. Both video
   comparisons reject with 897 target frames and 873 failure records each;
-  there is no L8 acceptance or engine fix yet. Target-only observations could
+  this pre-846 run had no L8 acceptance. Target-only observations could
   not exclude inherited prefix errors; this full-history trace now excludes
   that explanation for the measured initial L8 physical divergence.
 - User-requested storage cleanup: all 668 GiB of ignored historical verification
   artifacts were deleted. Earlier artifact names below describe past runs; those
   raw captures/reports are no longer present and must be recaptured for new checks.
-  Keep new captures/logs under /tmp/wasm-dd2, never in the repository. This machine
-  has a 16 GiB /tmp tmpfs. Main racing capture/comparison subprocesses stop above
+  Keep new captures/logs under /tmp/wasm-dd2, never in the repository. The required budget
+  assumes a 16 GiB /tmp tmpfs. Main racing capture/comparison subprocesses stop above
   2 GiB output or below 1 GiB free, without accepting truncated data. Successful
   race comparisons delete raw port dumps after writing reports. Old logs over
   one hour are cleaned before/after main commands; open logs are preserved.
@@ -65,7 +96,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   0x792690 (20*44), handling 0x792a00 (20*0x1b2), wheels 0x794be8 (20*0xb0).
   Global RNG caller addresses are read from original ESP at 0x456cc6; actual
   Watcom rand has no outstanding pushes there (verified 0x456cbc..0x456cde).
-  tools/reference/trace_native_physics.py observes Native using ONLY two
+  tools/reference/trace_native_physics.py observes Native using read-only
   hardware breakpoints after starti; no engine memory/register writes.
   Fresh L9 control matches all 401 checkpoints/10345800 bytes and all 6948
   caller functions/level/cf/tick phases from real boot seed 1, with changed
