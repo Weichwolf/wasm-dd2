@@ -29,6 +29,7 @@ def main():
     reference = args.reference.resolve()
     meta = json.loads((reference / 'history.json').read_text())
     normal_arena=meta.get('normal_arena') is True
+    full_video = meta.get('full_video') is True
     valid_keys=(meta['keys']==NORMAL_ARENA_KEYS and meta.get('natural_finish') is True) if normal_arena else meta['keys'] in (KEYS,KEYS[:17])
     if WORK not in reference.parents or meta['exe_modified'] is not False or meta['exe_sha256'] != EXE or not valid_keys:
         raise ValueError('Supported actual original history required')
@@ -44,9 +45,17 @@ def main():
         DD2_TICK_REPLAY=str(reference / 'ticks.bin'), DD2_RANDOM_REFERENCE=str(reference / 'random.bin'),
         DD2_RANDOM_LEVEL='all', DD2_RANDOM_REQUIRE_INITIAL='1')
     script = output / 'history.gdb'
+    phase_gate = ''
+    if full_video:
+        first_phase = meta['presentations'][0]['phase']
+        if not normal_arena or not 0 <= first_phase < 64 or meta.get('presentation_boundary') != 'PutDispEnv':
+            raise ValueError('Full video requires a valid observed main-menu blink phase')
+        # Stop on the previous normal presentation. The recorder resumes through
+        # the next real pad poll/draw, matching the original first phase.
+        phase_gate = f' && *(int*)0x4699cc == {(first_phase - 1) % 64}'
     script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\nset disable-randomization off\nstarti\n'+
-        'hbreak *Draw_All\ncondition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0\ncontinue\ndelete 1\npython\n'+
-        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r})\nend\n'+
+        ('hbreak *PutDispEnv\n' if full_video else 'hbreak *Draw_All\n')+'condition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0'+phase_gate+'\ncontinue\ndelete 1\npython\n'+
+        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r},full_video={full_video!r})\nend\n'+
         'printf "NATIVE_CLOCK_CONSUMED=%u\\n", dd2_tick_replay_calls()\nprintf "NATIVE_RANDOM_CONSUMED=%u\\n", dd2_random_replay_calls()\nkill\nquit\n')
     with tempfile.TemporaryDirectory(prefix='native-champ-history-assets-', dir=WORK) as tmp:
         game = Path(tmp)

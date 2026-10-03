@@ -114,13 +114,13 @@ async function tap(page,key,timing=null,raceStart=null){
     'ENV.DD2_TICK_REPLAY="/original-ticks.bin";ENV.DD2_RANDOM_REFERENCE="/original-random.bin";ENV.DD2_RANDOM_LEVEL="all";ENV.DD2_RANDOM_REQUIRE_INITIAL="1";});</script>':'';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+apiHook+marker)});
   });
-  await page.addInitScript(({rngLayout,apiKeys,normalArena})=>{
+  await page.addInitScript(({rngLayout,apiKeys,normalArena,fullVideo,firstPhase})=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
    window.__rngObservations=[];window.__rngError=null;
    window.__stablePhysicsFrames=0;let previousPhysics=null;
    const seeds=[1];let previousRng=null;
-   window.__apiHistory=apiKeys?{active:false,done:false,stage:'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[]}:null;
+   window.__apiHistory=apiKeys?{active:false,done:false,stage:fullVideo?'align':'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[],presentations:[]}:null;
    const present=CanvasRenderingContext2D.prototype.putImageData;
    const readText=(a,n)=>{let text='';for(let i=0;i<n&&HEAPU8[a+i];i++)text+=String.fromCharCode(HEAPU8[a+i]);return text;};
    const encode=(a,n)=>{let text='';for(let i=0;i<n;i+=16384)text+=String.fromCharCode(...HEAPU8.subarray(a+i,a+Math.min(i+16384,n)));return btoa(text);};
@@ -144,8 +144,13 @@ async function tap(page,key,timing=null,raceStart=null){
     window.__slabReadyFrames=HEAP16[0x46996c>>1]===0?window.__slabReadyFrames+1:0;
     const history=window.__apiHistory;
     let recordHistory=false;
+    if(history&&history.active&&history.stage==='align'&&physical.level===0&&HEAPU32[0x940010>>2]===0x4696b0&&HEAP32[0x4699cc>>2]===firstPhase){
+     // Wait for the normal 64-frame blink cycle; never set its engine counter.
+     history.stage='settle';history.steady=0;
+    }
+    const recordAll=history&&history.active&&fullVideo&&!history.done&&history.stage!=='align';
     const recordRace=history&&history.active&&normalArena&&physical.level>=8&&physical.level<=12&&physical.ticks>0&&physical.quit===0&&HEAPU32[rngLayout.clock_counter_address>>2]>0;
-    if(recordRace)window.__captureNext=true;
+    if(recordRace||recordAll)window.__captureNext=true;
     if(history&&history.active&&!history.done){
      history.lastStack=new Error('Actual API-history presentation').stack;
      const masks=HEAPU16[0x754448>>1]|HEAPU16[0x75444a>>1];
@@ -203,6 +208,7 @@ async function tap(page,key,timing=null,raceStart=null){
      window.__captureNext=false;
     }
     if(recordRace)history.raceFrames.push(window.__snapshot);
+    if(recordAll)history.presentations.push({...window.__snapshot,game:!!recordRace});
     if(recordHistory){
      history.shots.push(window.__snapshot);
      if(normalArena&&history.index===apiKeys.length){
@@ -228,7 +234,9 @@ async function tap(page,key,timing=null,raceStart=null){
     }
     return result;
    };
-  },{rngLayout,apiKeys:apiReference&&apiReference.meta.keys,normalArena:apiReference&&apiReference.meta.normal_arena});
+  },{rngLayout,apiKeys:apiReference&&apiReference.meta.keys,normalArena:apiReference&&apiReference.meta.normal_arena,
+     fullVideo:apiReference&&apiReference.meta.full_video,
+     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null});
   await boot(page,server);
   if(rngLayout){
    const first=await page.evaluate(()=>window.__rngObservations[0]);
@@ -262,16 +270,18 @@ async function tap(page,key,timing=null,raceStart=null){
     fs.writeFileSync(path.join(directory,'checkpoint.json'),JSON.stringify(shot,null,2));
    }
    if(apiReference.meta.normal_arena){
-    const n=await page.evaluate(()=>window.__apiHistory.raceFrames.length),frames=[];
-    for(let i=0;i<n;i++){
-     const shot=await page.evaluate(i=>window.__apiHistory.raceFrames[i],i);assert.equal(shot.canvas_mismatches,0);
-     const prefix='race'+String(i).padStart(5,'0');
-     for(const [region,suffix,size] of [['framebuf','bin',307200],['palette','pal',1024]]){
-      const raw=Buffer.from(shot[region],'base64');assert.equal(raw.length,size);fs.writeFileSync(path.join(output,prefix+'.'+suffix),raw);delete shot[region];
+    for(const [property,stem,filename] of [['raceFrames','race','race-frames.json'],...(apiReference.meta.full_video?[['presentations','present','presentations.json']]:[])]){
+     const n=await page.evaluate(property=>window.__apiHistory[property].length,property),frames=[];
+     for(let i=0;i<n;i++){
+      const shot=await page.evaluate(({property,i})=>window.__apiHistory[property][i],{property,i});assert.equal(shot.canvas_mismatches,0);
+      const prefix=stem+String(i).padStart(5,'0');
+      for(const [region,suffix,size] of [['framebuf','bin',307200],['palette','pal',1024]]){
+       const raw=Buffer.from(shot[region],'base64');assert.equal(raw.length,size);fs.writeFileSync(path.join(output,prefix+'.'+suffix),raw);delete shot[region];
+      }
+      frames.push({...shot,index:i,prefix});
      }
-     frames.push({...shot,index:i,prefix});
+     fs.writeFileSync(path.join(output,filename),JSON.stringify(frames,null,2));
     }
-    fs.writeFileSync(path.join(output,'race-frames.json'),JSON.stringify(frames,null,2));
    }
    const ended=JSON.parse(fs.readFileSync(path.join(output,apiReference.meta.checkpoints.at(-1),'checkpoint.json')));
    assert.equal(ended.api_calls.clock,apiReference.meta.clock_calls,'Actual clock-input extent differs');
@@ -286,6 +296,8 @@ async function tap(page,key,timing=null,raceStart=null){
    fs.writeFileSync(path.join(output,'navigation.json'),JSON.stringify({keys:apiReference.meta.keys,checkpoints:apiReference.meta.checkpoints,
     input:'browser keyboard events',initial_save_sha256:apiReference.meta.initial_save_sha256,wasm_sha256:rngLayout.wasm_sha256,
     normal_arena:apiReference.meta.normal_arena===true,
+    full_video:apiReference.meta.full_video===true,
+    reference_presentation_boundary:apiReference.meta.presentation_boundary||null,
     scope:'Actual production WASM, autonomous normal DOM key sequence and original clock/RNG inputs; no later engine state injection or physical A/V parity claim',
     api_reference:{clock_calls:ended.api_calls.clock,computed_rng_calls:ended.api_calls.random,api_sha256:apiReference.api_sha256},
     input_observations:await page.evaluate(()=>window.__apiHistory.inputs)},null,2));

@@ -4,7 +4,8 @@ Real X11 input drives five retirements or a natural Total Destruction finish.
 The normal arena records indexed pictures at each racing Draw_All entry;
 other paths capture only requested navigation pictures. Debugger stops affect
 time; recorded API returns are explicit inputs, not physical-clock acceptance.
-Loading/fades and chronological audio are not accepted by this recorder.
+Optional full video records PutDispEnv entries, including loading/fades and
+Swap_Buffers. Chronological audio is not accepted by this recorder.
 """
 import json
 import hashlib
@@ -18,7 +19,7 @@ import gdb
 from verify_champ_season import ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS, validate_end
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False):
     root = Path(output) / 'history'
     root.mkdir()
     inferior = gdb.selected_inferior()
@@ -39,10 +40,11 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     start_time = time.monotonic()
     keys = NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
     race_frames = []
+    presentations = []
     final_race = None
     command = ['xdotool', 'search', '--name', 'PC-DD2', 'windowfocus']
     original = target == 'original'
-    draw_pc = 0x420c9c if original else int(gdb.parse_and_eval('&Draw_All'))
+    draw_pc = (0x412ca0 if full_video else 0x420c9c) if original else int(gdb.parse_and_eval('&PutDispEnv' if full_video else '&Draw_All'))
     pad_pc = 0x422da4 if original else int(gdb.parse_and_eval('&FUN_00422da4'))
     rng_entry = 0x456cc6 if original else int(gdb.parse_and_eval('&rand'))
 
@@ -61,6 +63,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     frame_skip=integer(0x7746b8), quit=integer(0x7746ac),
                     race=integer(0x93dec8), season=integer(0x93dec0),
                     finished=integer(0x795df4), retired=integer(0x9376a8), damage=integer(0x792a76),
+                    phase=integer(0x4699cc),
                     poly_list=word(0x940010), clock_calls=len(clocks),
                     rng_calls=len(rng), pad_polls=len(pads), draws=draws)
 
@@ -110,7 +113,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         directory.mkdir()
         value = {key: integer(address) for key, address in ADDRESSES.items()}
         text = lambda address, size: read(address, size).split(b'\0')[0].decode('ascii')
-        value.update(stage=target+' Draw_All entry', exe_modified=False if original else None, exe_sha256=EXE if original else None,
+        value.update(stage=target+(' PutDispEnv entry' if full_video else ' Draw_All entry'), exe_modified=False if original else None, exe_sha256=EXE if original else None,
             observed=state(), cars=[dict(name=text(0x93dee0 + i * 54, 16),
                 values=list(struct.unpack('<7h', read(0x93def0 + i * 54, 14)))) for i in range(20)],
             rows=[dict(name=text(0x940290 + i * 26, 26), points=text(0x940240 + i * 16, 16)) for i in range(5)])
@@ -203,10 +206,17 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             elif pc == draw_pc:
                 draws += 1
                 caller = word(int(gdb.parse_and_eval('$esp')) & 0xffffffff)
+                present_caller = caller
                 if original:
+                    if full_video and caller == 0x420cc2:
+                        # At PutDispEnv entry ebp still belongs to Draw_All.
+                        caller = word((int(gdb.parse_and_eval('$ebp')) & 0xffffffff) + 4)
                     game_caller = caller == 0x423fe2
                 else:
-                    block = gdb.block_for_pc(caller)
+                    owner = gdb.newest_frame().older()
+                    if full_video and owner and owner.name() == 'Draw_All':
+                        owner = owner.older()
+                    block = gdb.block_for_pc(int(owner.pc()) if full_video and owner else caller)
                     while block and block.function is None:
                         block = block.superblock
                     game_caller = bool(block and block.function.name == 'Play_Game')
@@ -226,7 +236,18 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                         framebuffer_sha256=hashlib.sha256(raw).hexdigest(), palette_sha256=hashlib.sha256(palette).hexdigest()))
                     if len(race_frames) % 100 == 0:
                         print(f'{target} normal arena: {len(race_frames)} frames, ticks={value["ticks"]}, damage={value["damage"]}',flush=True)
-                event('Draw_All', caller=hex(caller), slab=int.from_bytes(read(0x46996c, 2), 'little', signed=True))
+                if full_video:
+                    value = state()
+                    filename = f'present{len(presentations):05d}'
+                    raw = read(0x700450, 307200)
+                    palette = read(0x700050, 1024)
+                    (root / (filename + '.bin')).write_bytes(raw)
+                    (root / (filename + '.pal')).write_bytes(palette)
+                    presentations.append(dict(value, index=len(presentations), prefix=filename,
+                        caller=hex(caller), present_caller=hex(present_caller), game=game_caller,
+                        framebuffer_sha256=hashlib.sha256(raw).hexdigest(),
+                        palette_sha256=hashlib.sha256(palette).hexdigest()))
+                event('PutDispEnv' if full_video else 'Draw_All', caller=hex(caller), slab=int.from_bytes(read(0x46996c, 2), 'little', signed=True))
                 if stage == 'drive' and integer(0x7746ac):
                     final_race = state()
                     if integer(0x795df4) <= 14 or integer(0x9376a8):
@@ -275,6 +296,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             observed_play_draw_delay_ms=game_frame_delay_ms,
             complete_retirement_season=not normal_arena and steps == 95, normal_arena=normal_arena,
             natural_finish=bool(final_race), final_race=final_race, race_frames=race_frames,
+            full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,
             elapsed_seconds=time.monotonic() - start_time), indent=2) + '\n')
     finally:
         timeline.close()

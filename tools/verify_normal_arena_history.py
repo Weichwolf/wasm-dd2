@@ -3,8 +3,10 @@
 
 Exact indexed racing Draw_All-entry/platform pictures, result images, game states and
 calculated RNG at recorded original clock inputs. Browser canvas conversion is
-checked by the recorder. Loading/fades, physical clocks and PCM are excluded;
-this is one input trace, not whole-game or all-mode acceptance.
+checked by the recorder. Default capture excludes loading/fades; --full-video
+includes every captured menu/loading/fade presentation at PutDispEnv. Physical
+clocks and PCM are excluded. This is one input trace, not whole-game or all-mode
+acceptance.
 """
 import argparse
 import hashlib
@@ -77,7 +79,7 @@ def exact_bytes(a, b, size):
     return a == b
 
 
-def compare_frames(original, target, reference, frames, seeds, browser=False):
+def compare_frames(original, target, reference, frames, seeds, browser=False, full=False, pad_offset=0):
     if len(frames) != len(reference):
         raise ValueError('Racing draw extent differs')
     differences, hashes = [], []
@@ -85,6 +87,8 @@ def compare_frames(original, target, reference, frames, seeds, browser=False):
         if b['index'] != index or b['prefix'] != a['prefix']:
             raise ValueError('Reordered racing frames')
         state = [key for key in STATE if a[key] != b[key]]
+        if full:
+            state += [key for key in ('phase', 'game') if a[key] != b[key]]
         if browser:
             if b['canvas_mismatches'] != 0:
                 state.append('canvas_mismatches')
@@ -93,7 +97,9 @@ def compare_frames(original, target, reference, frames, seeds, browser=False):
             if b['rng'] != {'count': a['rng_calls'], 'seed': seeds[a['rng_calls']]}:
                 state.append('calculated_rng')
         else:
-            state += [key for key in ('clock_calls', 'rng_calls', 'pad_polls', 'draws') if a[key] != b[key]]
+            state += [key for key in ('clock_calls', 'rng_calls', 'draws') if a[key] != b[key]]
+            if a['pad_polls'] != b['pad_polls'] - pad_offset:
+                state.append('pad_polls')
         if state:
             differences.append(dict(index=index, region='state', fields=state))
         record = dict(index=index, original={}, actual={})
@@ -132,6 +138,7 @@ def main():
     for name in ('original', 'native', 'browser', 'report'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--before-report', type=Path, help='retained failing pre-fix comparison with identical reference images/API inputs')
+    parser.add_argument('--full-video', action='store_true', help='also compare every captured menu/loading/fade picture and blink phase')
     parser.add_argument('--clean', action='store_true')
     args = parser.parse_args()
     for name in ('original', 'native', 'browser', 'report'):
@@ -177,13 +184,39 @@ def main():
                   initial_save_sha256=om['initial_save_sha256'], native_sha256=nm['binary_sha256'],
                   wasm_sha256=nav['wasm_sha256'], api_inputs=api, racing_frames=len(om['race_frames']),
                   natural_finish=True, retired=False, targets={})
+    if args.full_video:
+        if om.get('full_video') is not True or nm.get('full_video') is not True or nav.get('full_video') is not True:
+            raise ValueError('All three actual captures must include full menu/loading/fade video')
+        if om.get('presentation_boundary') != 'PutDispEnv' or nm.get('presentation_boundary') != 'PutDispEnv' or nav.get('reference_presentation_boundary') != 'PutDispEnv':
+            raise ValueError('Actual original/native PutDispEnv boundary including Swap_Buffers required')
+        if len(om['presentations']) != om['draws'] or len(nm['presentations']) != nm['draws']:
+            raise ValueError('Incomplete original/native presentation stream')
+        report['full_video_scope'] = 'Every PutDispEnv-entry/platform picture, including Swap_Buffers loading progress, from the observed initial main-menu blink phase through 16 face-on Practice Over result pictures. Intro/earlier startup, physical clocks and PCM excluded.'
+        report['presentation_frames'] = len(om['presentations'])
+        # pad_polls is this debugger's observation count, not engine memory.
+        # Attaching between ReadPad and the first Flip observes zero initial
+        # polls; starting before that frame observes one. Compare every later
+        # poll relative to that first recorded boundary, without discarding any
+        # input event or allowing a subsequent extra/missing poll.
+        original_start = om['presentations'][0]['pad_polls']
+        native_start = nm['presentations'][0]['pad_polls']
+        if original_start not in (0, 1) or native_start not in (0, 1):
+            raise ValueError('Unexpected initial debugger pad-observation extent')
+        report['native_pad_observation_origin'] = dict(original=original_start, native=native_start,
+            offset=native_start-original_start, method='All subsequent debugger poll counts compared relative to the first presentation; no engine counters or inputs changed')
     for target, root, frames in [('native', args.native, nm['race_frames']),
                                   ('browser', args.browser, load(args.browser / 'race-frames.json'))]:
-        differences, hashes = compare_frames(args.original, root, om['race_frames'], frames, seeds, target == 'browser')
+        pad_offset = report['native_pad_observation_origin']['offset'] if args.full_video and target == 'native' else 0
+        differences, hashes = compare_frames(args.original, root, om['race_frames'], frames, seeds, target == 'browser', pad_offset=pad_offset)
         point_differences, point_images = compare_checkpoints(args.original, root)
         differences.extend(point_differences)
         report['targets'][target] = dict(pass_=not differences, differences=differences,
                                          racing_image_hashes=hashes, checkpoint_image_hashes=point_images)
+        if args.full_video:
+            full_frames = nm['presentations'] if target == 'native' else load(root / 'presentations.json')
+            full_differences, full_hashes = compare_frames(args.original, root, om['presentations'], full_frames, seeds, target == 'browser', True, pad_offset)
+            report['targets'][target].update(full_video_differences=full_differences, presentation_image_hashes=full_hashes)
+            report['targets'][target]['pass_'] = not differences and not full_differences
     report['pass_'] = all(target['pass_'] for target in report['targets'].values())
     if args.before_report:
         before_path = args.before_report.resolve()
@@ -228,17 +261,30 @@ def main():
             negatives[key] = True
         else:
             negatives[key] = False
+    if args.full_video:
+        original_first = om['presentations'][:1]
+        native_first = dict(nm['presentations'][0])
+        native_first['phase'] = (native_first['phase'] + 1) % 64
+        damaged, _ = compare_frames(args.original, args.native, original_first, [native_first], seeds, full=True, pad_offset=report['native_pad_observation_origin']['offset'])
+        negatives['changed_menu_phase'] = any('phase' in row.get('fields', []) for row in damaged)
+        browser_first = dict(load(args.browser / 'presentations.json')[0])
+        browser_first['api_calls'] = dict(browser_first['api_calls'], clock=browser_first['api_calls']['clock'] + 1)
+        damaged, _ = compare_frames(args.original, args.browser, original_first, [browser_first], seeds, True, True)
+        negatives['changed_presentation_api_extent'] = any('api_calls' in row.get('fields', []) for row in damaged)
     report['negative_cases'] = negatives
     if not all(negatives.values()):
         raise ValueError('Comparator accepted invalid evidence')
     args.report.write_text(json.dumps(report, indent=2) + '\n')
     print('PASS' if report['pass_'] else 'FAIL', 'normal arena:', report['racing_frames'], 'frames;',
           {target: len(value['differences']) for target, value in report['targets'].items()})
+    if args.full_video:
+        print('Complete menu/loading/fade presentations:', report['presentation_frames'],
+              {target: len(value['full_video_differences']) for target, value in report['targets'].items()})
     if args.clean and report['pass_']:
         opened = open_files()
         files = []
         for root in (args.original, args.native, args.browser):
-            for pattern in ('race*.bin', 'race*.pal', 'step*/framebuf.bin', 'step*/palette.bin'):
+            for pattern in ('race*.bin', 'race*.pal', 'present*.bin', 'present*.pal', 'step*/framebuf.bin', 'step*/palette.bin'):
                 for path in root.glob(pattern):
                     stat = path.stat()
                     if path.is_symlink() or (stat.st_dev, stat.st_ino) in opened:

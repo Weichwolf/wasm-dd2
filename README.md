@@ -223,6 +223,29 @@ palettes, flip/RNG logs and effects/CD/mixed/music PCM. The report is
 `/tmp/wasm-dd2/parity-timer-digits-853.json`; this regression compares the ports,
 without establishing complete original racing audio parity.
 
+The extended arena capture adds `--normal-arena-full-video` to the original
+command and `--full-video` to the comparator. Native and browser detect this
+recording and wait through the normal 64-frame main-menu blink cycle to reach
+the original's initial phase; they never write its counter. Full capture stops
+at actual original/native `PutDispEnv` entries, including the 24 loading-progress
+presentations from `Swap_Buffers` that a `Draw_All`-only recorder misses.
+The production browser records and checks every corresponding canvas update.
+
+The fresh extended trace matches all 1,323 indexed pictures and palettes on both
+ports, including menu transitions, loading progress, 957 racing presentations,
+the final racing picture, fade and 16 steady result pictures. All observed game
+states, blink phases and per-picture clock/RNG extents match at 8,046 recorded
+clock returns and 14,912 independently calculated random values. Changed menu
+phases and API extents are rejected in addition to the other corruptions above.
+The debugger's initial pad-observation count is zero for an attach after that
+frame's poll and one for an attach before it; every subsequent poll is compared
+relative to this explicitly reported starting boundary. Input events and engine
+counters are unchanged. Reports are
+`/tmp/wasm-dd2/normal-arena-full-present-853-verified.json` and the earlier failed
+boundary diagnosis `/tmp/wasm-dd2/normal-arena-full-draw-anchor-853-diagnosis.json`.
+The check starts in the main menu: earlier startup/intro, chronological racing
+PCM, physical timing and all other input traces still need separate acceptance.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo
