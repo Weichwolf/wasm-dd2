@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-native-quit verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-keyboard verify-browser-keyboard verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-native-quit verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-keyboard verify-browser-keyboard verify-browser-keyboard-negative verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -76,8 +76,11 @@ verify-native-sdl: ## verify actual renderer/X11 pixels, accepted audio and SDL 
 verify-keyboard: ## compare actual Wine USER32 modifier/Alt/F10 messages with native SDL and WASM
 	python3 $(ROOT)/tools/verify_keyboard.py $(KEYBOARD_ARGS)
 
-verify-browser-keyboard: web ## real browser modifier/F10 release and press through normal intro to menus
+verify-browser-keyboard: web ## trusted browser named-key release/press through normal intro to menus
 	$(NODE) $(ROOT)/tools/browser/qa_keyboard.js $(ROOT)/web/dd2 $(BROWSER_KEYBOARD_OUTPUT)
+
+verify-browser-keyboard-negative: web ## reject the genuine old shell key filter using the same trusted-browser test
+	$(NODE) $(ROOT)/tools/browser/qa_keyboard_negative.js $(ROOT)/web/dd2 $(BROWSER_KEYBOARD_NEGATIVE_OUTPUT)
 
 verify-sound-device: ## compare actual Wine device lifetimes and exact native/WASM PCM across closed movie epochs
 	python3 $(ROOT)/tools/verify_sound_device.py $(SOUND_DEVICE_ARGS)

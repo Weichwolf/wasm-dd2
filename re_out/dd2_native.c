@@ -40,6 +40,7 @@ static unsigned native_vk(SDL_Scancode key){
     if(key>=SDL_SCANCODE_A && key<=SDL_SCANCODE_Z)return 0x41u+key-SDL_SCANCODE_A;
     if(key>=SDL_SCANCODE_1 && key<=SDL_SCANCODE_9)return 0x31u+key-SDL_SCANCODE_1;
     if(key>=SDL_SCANCODE_F1 && key<=SDL_SCANCODE_F12)return 0x70u+key-SDL_SCANCODE_F1;
+    if(key>=SDL_SCANCODE_F13 && key<=SDL_SCANCODE_F24)return 0x7cu+key-SDL_SCANCODE_F13;
     switch(key){
     case SDL_SCANCODE_0:return 0x30;
     case SDL_SCANCODE_RETURN:case SDL_SCANCODE_KP_ENTER:return 0x0d;

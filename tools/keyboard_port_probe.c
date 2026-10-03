@@ -37,7 +37,7 @@ static SDL_Scancode physical_key(unsigned vk){
     case 0xa2:return SDL_SCANCODE_LCTRL;case 0xa3:return SDL_SCANCODE_RCTRL;
     case 0xa4:return SDL_SCANCODE_LALT;case 0xa5:return SDL_SCANCODE_RALT;
     case 0x41:return SDL_SCANCODE_A;case 0x79:return SDL_SCANCODE_F10;
-    default:require(0,"unknown physical fixture key");return SDL_SCANCODE_UNKNOWN;
+    default:{SDL_Scancode code=SDL_GetScancodeFromName(events[step].code);require(code!=SDL_SCANCODE_UNKNOWN,"unknown physical fixture key");return code;}
     }
 }
 #endif
@@ -50,6 +50,11 @@ int main(int argc,char** argv){
 #ifdef DD2_KEYBOARD_SDL
     if(!strcmp(argv[1],"sdl")){dd2_native_init();require(dd2_native_enabled(),"SDL window");dd2_native_poll();}
 #endif
+    {
+        static const char* invalid[]={NULL,"","F0","F25","F99","F01","F1x","F-1"};
+        unsigned i;
+        for(i=0;i<sizeof(invalid)/sizeof(invalid[0]);i++)require(dd2_browser_key_event(invalid[i],1)==0 && seen==0,"invalid browser code must not dispatch a key");
+    }
     printf("[");
     for(step=0;step<sizeof(events)/sizeof(events[0]);step++){
         unsigned before=seen;

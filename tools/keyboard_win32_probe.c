@@ -1,6 +1,8 @@
 /* Observe genuine USER32 SendInput -> keyboard messages and GetKeyState.
  * Record both modifier sides, releasing one while the other remains down.
- * No engine/window messages or state are injected directly. */
+ * No engine/window messages or state are injected directly. F13-F24 use
+ * SendInput virtual keys: this Wine layout has no scan mapping for them.
+ * The fixture does not claim a physical F13-F24 keyboard/Windows layout. */
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,11 +35,15 @@ int main(void){
         if(events[step].key==VK_LSHIFT)input.ki.wScan=0x2a;
         if(events[step].key==VK_RSHIFT)input.ki.wScan=0x36;
         input.ki.dwFlags=KEYEVENTF_SCANCODE | (events[step].down?0:KEYEVENTF_KEYUP);
+        if(events[step].key>=VK_F13 && events[step].key<=VK_F24)
+            input.ki.dwFlags&=~KEYEVENTF_SCANCODE;
+        else require(input.ki.wScan!=0,"declared key has a real Wine layout scan mapping");
         /* Wine10 server/queue.c normalizes every right modifier, including
          * Shift, from this input flag. It removes the extended bit from the
          * delivered Shift message. This declares that fixture transport;
          * it is not evidence about a physical Windows keyboard scan. */
-        if(events[step].key==VK_RSHIFT || events[step].key==VK_RCONTROL || events[step].key==VK_RMENU)input.ki.dwFlags|=KEYEVENTF_EXTENDEDKEY;
+        if(events[step].key==VK_RSHIFT || events[step].key==VK_RCONTROL || events[step].key==VK_RMENU ||
+           (events[step].key>=VK_PRIOR && events[step].key<=VK_DOWN) || events[step].key==VK_INSERT || events[step].key==VK_DELETE)input.ki.dwFlags|=KEYEVENTF_EXTENDEDKEY;
         require(SendInput(1,&input,sizeof(input))==1,"send physical key");
         do{
             /* Observe the original keyboard messages independently of the

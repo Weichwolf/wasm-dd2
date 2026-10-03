@@ -81,10 +81,11 @@
           catch(e){ /* not ready yet */ }
         };
         // The original rebind scan list permits 39 VKs (letters, digits,
-        // Space/Left/Right). Modifiers and F10 also reach its general window
+        // Space/Left/Right). Other named keys also reach its general window
         // procedure, including intro/outro cancellation on keydown.
-        var handled = {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Enter:1,Escape:1,Space:1,F1:1,F2:1,F10:1,
+        var handled = {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Enter:1,Escape:1,Space:1,Backspace:1,Tab:1,PageUp:1,PageDown:1,Home:1,End:1,Insert:1,Delete:1,
           ShiftLeft:1,ShiftRight:1,ControlLeft:1,ControlRight:1,AltLeft:1,AltRight:1};
+        for (var _f=1;_f<=24;_f++) handled['F'+_f]=1;
         for (var _c=65;_c<=90;_c++) handled['Key'+String.fromCharCode(_c)]=1;   // KeyA..KeyZ
         for (var _d=0;_d<=9;_d++)   handled['Digit'+_d]=1;                       // Digit0..Digit9
         window.addEventListener('keydown', function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 1); } });

@@ -35,6 +35,35 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Function/editing/navigation keys now also reach the original window
+  procedure: browser F1-F24, Backspace/Tab/PageUp/PageDown/Home/End/Insert/
+  Delete, and native SDL F13-F24 (F1-F12/editing/navigation were already
+  mapped there). The original 39-key rebind scan list is unchanged.
+  dd2-keyboard-named-user32-virtual-reviewed/report.json extends the genuine
+  USER32 comparison to 104 transitions on all five transports, with native
+  direct fixtures under ASan/UBSan. Malformed/unmapped function-key codes
+  must dispatch no message. F13-F24 use declared SendInput virtual keys:
+  this Wine layout maps their scans to zero, so scan-mode input would deliver
+  VK_VOLUME_MUTE instead. The rejected scan-mode run is retained separately
+  (dd2-keyboard-named-user32-reviewed). No physical F13-F24 claim is made.
+  Numeric VKs follow Winuser.h/the Microsoft virtual-key table:
+  https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes.
+- dd2-browser-named-keys-reviewed/report.json passes 14 normal-startup intro
+  release/press/context-close/main-menu cases, including F3/F12/F24/Home/Tab/
+  Delete/Backspace. All 104 shell transitions have DOM isTrusted=true;
+  Debian Playwright1.38 lacks F13-F24 names, so those events use Chromium's
+  real Input.dispatchKeyEvent protocol. The actual 66cbff7 shell filter,
+  with current unchanged WASM, drops 58 transitions and is rejected by the
+  same bridge assertion (dd2-browser-named-negative-final-reviewed/report.json).
+  make verify-browser-keyboard-negative
+  BROWSER_KEYBOARD_NEGATIVE_OUTPUT=<fresh-dir> reproduces this negative.
+  L9/L10 full-frame/palette/RNG/effects/final-mix/music/CD comparisons still
+  pass (dd2-parity-named-keys-reviewed/results.json). Node WASM is byte-
+  identical to the prior 325e3bd artifact; its headless linker removes the
+  unused browser-key mapper. The current canonical native is
+  6bbb360ad8434bf9f481dcc45a4c5ee54be0372cb1006a300f653314a0cdfea6; current browser WASM
+  3d95102fa4214f81614fcbaba591ea22e09ce8646dacb8730e7e1c86253e2ca3. Earlier complete-ten-level
+  reports below identify their own native/browser artifact hashes.
 - The committed modifier fix (325e3bd) also passes all ten complete
   native/WASM demos: 15255 frames/palettes, every RNG/flip log, effects/final
   mix/music byte and CD source byte match (dd2-parity-keyboard-reviewed/

@@ -72,9 +72,21 @@ unsigned int dd2_browser_key_to_vk(const char* code)
     if (!strcmp(code,"Enter"))      return VK_RETURN;
     if (!strcmp(code,"Escape"))     return VK_ESCAPE;
     if (!strcmp(code,"Space"))      return VK_SPACE;
-    if (!strcmp(code,"F1"))         return VK_F1;
-    if (!strcmp(code,"F2"))         return VK_F2;
-    if (!strcmp(code,"F10"))        return 0x79;
+    if (code[0]=='F' && code[1]>='1' && code[1]<='9') {
+        unsigned int number=(unsigned)(code[1]-'0');
+        if (code[2]>='0' && code[2]<='9' && code[3]==0)
+            number=number*10+(unsigned)(code[2]-'0');
+        else if (code[2]!=0) return 0;
+        return number<=24 ? 0x6fu+number : 0;
+    }
+    if (!strcmp(code,"Backspace")) return 0x08;
+    if (!strcmp(code,"Tab"))       return 0x09;
+    if (!strcmp(code,"PageUp"))    return 0x21;
+    if (!strcmp(code,"PageDown"))  return 0x22;
+    if (!strcmp(code,"End"))       return 0x23;
+    if (!strcmp(code,"Home"))      return 0x24;
+    if (!strcmp(code,"Insert"))    return 0x2d;
+    if (!strcmp(code,"Delete"))    return 0x2e;
     if (!strcmp(code,"ShiftLeft"))  return 0xa0;
     if (!strcmp(code,"ShiftRight")) return 0xa1;
     if (!strcmp(code,"ControlLeft")) return 0xa2;

@@ -2,13 +2,15 @@
 """Compare production modifier messages/state with a genuine Wine USER32 oracle.
 
 Scope: high-bit pressed states, generic modifier VKs, event direction/count and
-KEY/SYSKEY classes for declared side-specific transitions. This is not physical
+KEY/SYSKEY classes for declared transitions (scan input for mapped keys; virtual input for
+F13-F24, which lack scans in the Wine reference layout). This is not physical
 Windows layout, scan-code/lparam, character, AltGr or original full-game proof.
 """
 import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 from verify_sound_cursor import wine_probe
@@ -29,12 +31,13 @@ def main():
     exe=out/'user32.exe'
     subprocess.run([args.mingw,'-Wall','-Wextra','-Werror',str(ROOT/'tools/keyboard_win32_probe.c'),'-o',str(exe)],check=True)
     reference=wine_probe(exe,out,env)
-    if len(reference)!=40 or [row['step'] for row in reference]!=list(range(40)):
+    count=len(re.findall(r'\{0x[0-9a-f]+,[01],"[^"]+"\}',(ROOT/'tools/keyboard_events.h').read_text()))
+    if count!=104 or len(reference)!=count or [row['step'] for row in reference]!=list(range(count)):
         raise RuntimeError('USER32 reference lost/duplicated physical transitions')
     if reference[2]['message']!=257 or reference[2]['shift']!=[1,0,1]:
         raise RuntimeError('USER32 oracle did not exercise release with the other Shift held')
     (out/'user32.json').write_text(json.dumps(reference,indent=2)+'\n')
-    print('PASS actual Wine USER32: 40 physical transitions, held opposite modifiers, Alt/Ctrl/F10/repeat',flush=True)
+    print(f'PASS actual Wine USER32: {count} transitions, modifiers/Alt/Ctrl/repeat, F1-F24 and eight editing/navigation keys',flush=True)
     report={'scope':__doc__,'wine_version':subprocess.check_output(['wine','--version'],env=env,text=True).strip(),
             'reference_exe_sha256':sha(exe),'sources':{},'records':len(reference),'targets':[]}
     for name in ['tools/keyboard_events.h','tools/keyboard_win32_probe.c','tools/keyboard_port_probe.c','re_out/dd2_input.c','re_out/dd2_native.c']:
@@ -59,7 +62,7 @@ def main():
         if actual!=reference:
             raise RuntimeError(f'{target}: window messages or physical/generic pressed states differ from actual USER32')
         report['targets'].append(target)
-        print(f'PASS {target}: all 40 USER32 records exact',flush=True)
+        print(f'PASS {target}: all {count} USER32 records exact',flush=True)
     # Reproduce the pre-fix platform+bridge, rather than a hypothetical change:
     # the very first physical modifier produces two engine messages.
     old_input,old_native=out/'old-input.c',out/'old-native.c'
