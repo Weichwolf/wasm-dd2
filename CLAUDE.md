@@ -35,6 +35,20 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Native replay window QA now passes through actual X11 keyboard input and
+  three normal intro/frontend startups: Select Car/practice/Retire/Yes/Save
+  Replay/name A/process restart/File Manager/load/natural playback, then
+  cancelled/confirmed deletion and another process restart. Every byte of
+  the 128-KiB card equals engine RAM and survives restart; complete saved and
+  loaded script/order bytes match. Playback advances through 60 observed
+  presentation counters, applies acceleration, ends naturally and restores
+  the prior car/mode/type/car count. No engine/file writes by the tester; only
+  the game's real save path changes the isolated card. Successful private
+  game/card removed; report native-replay-make/report.json. make
+  verify-native-replay reproduces this check, using Native SHA256
+  23ac6a9bfe9cb26284aece1405cc7dbbf326cb2860f5f117ac41734e3c1d25ac.
+  This establishes this native functional flow, not original complete player
+  video/audio equivalence. Overwrite/full-card cases still need acceptance.
 - Browser card persistence now observes actual writes to the session's open
   SaveGames FILE, batches them at the next event turn and serializes IndexedDB
   snapshots. Writes during an active sync queue another snapshot. The former

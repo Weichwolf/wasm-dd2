@@ -285,8 +285,18 @@ The browser now persists actual card writes while the original card FILE remains
 open. Writes are batched at the next event turn; asynchronous IndexedDB snapshots
 are serialized and a write during an active sync queues another snapshot.
 The previous unload-only shell loses the named replay on ordinary navigation
-and is rejected by the same test. Whole original menu/player video/audio and
-the corresponding native window save/load flow still need acceptance.
+and is rejected by the same test.
+
+`make verify-native-replay` exercises the same save/restart/load/playback and
+cancelled/confirmed deletion flow in the real native SDL window, using X11 keys.
+It boots the normal intro/frontend three times, checks the entire 128-KiB card
+against engine RAM, compares complete saved/loaded script/order bytes, requires
+natural playback and restores the previous frontend configuration. A private
+game directory prevents changing provisioned/user saves and is removed after
+successful checks. `NATIVE_REPLAY_ARGS='--output /tmp/wasm-dd2/fresh-native-replay'`
+selects the report path; Xvfb and xdotool are required. This is functional native
+window acceptance. Whole original menu/player video/audio and overwrite/full-card
+behavior still need checks.
 
 Menu graphics can be compared over complete 64-frame highlight cycles. This
 checks every indexed pixel and palette byte at presentation, including the
