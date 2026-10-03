@@ -33,7 +33,7 @@ def digest(data):
 
 
 class NativeUI:
-    def __init__(self, binary, game, output, display, number):
+    def __init__(self, binary, game, output, display, number, limit=240):
         self.binary, self.game, self.output = binary, game, output
         self.table = symbols(binary)
         self.env = {k: v for k, v in os.environ.items() if not k.startswith('DD2_')}
@@ -44,6 +44,7 @@ class NativeUI:
                                         stdout=self.log, stderr=self.log)
         self.memory = None
         self.started = time.monotonic()
+        self.limit = limit
 
     def read(self, address, count):
         if self.memory is None:
@@ -78,8 +79,8 @@ class NativeUI:
         while time.monotonic() < deadline:
             if self.process.poll() is not None:
                 raise RuntimeError(f'native exited: {self.process.returncode}')
-            if time.monotonic() - self.started > 240:
-                raise RuntimeError('native replay verification exceeded 240 seconds')
+            if time.monotonic() - self.started > self.limit:
+                raise RuntimeError('native replay verification exceeded its time limit')
             check_space(self.output)
             try:
                 result = predicate()
@@ -140,6 +141,21 @@ class NativeUI:
         held, pressed = struct.unpack('<HH', self.read(0x754448, 4))
         return held | pressed
 
+    def select_block(self, slot):
+        self.key('Return')
+        for code in ['Down'] * (slot // 3) + ['Right'] * (slot % 3):
+            self.key(code)
+        require(self.integer(0x774680) == slot, 'native block selection differs')
+        self.key('Return')
+
+    def enter_name(self, letter, replace=False):
+        if replace:
+            for code in ['Down', 'Down', 'Return', 'Up', 'Up']:
+                self.key(code)
+        row, column = divmod(ord(letter) - ord('A'), 13)
+        for code in ['Right'] * column + ['Down'] * row + ['Return'] + ['Down'] * (2-row) + ['Right', 'Return']:
+            self.key(code)
+
     def card(self):
         data = (self.game / 'SaveGames').read_bytes()
         require(len(data) == 0x20000, 'native card size')
@@ -170,6 +186,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, default=Path('/tmp/dd2_native'))
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--full-card', action='store_true', help='fill all 15 slots and test full-card last-slot overwrite and navigation')
     args = parser.parse_args()
     WORK.mkdir(parents=True, exist_ok=True)
     out = prepare_output(args.output or tempfile.mkdtemp(prefix='native-replay-', dir=WORK))
@@ -188,7 +205,8 @@ def main():
                                        stdout=subprocess.PIPE, stderr=log)
             number = display.stdout.readline().decode().strip()
             require(bool(number), 'Xvfb failed to start')
-            ui = NativeUI(binary, game, out, ':' + number, 1); ui.boot()
+            limit = 600 if args.full_card else 240
+            ui = NativeUI(binary, game, out, ':' + number, 1, limit); ui.boot()
             report['initial'] = ui.card()
             for code in ['Right', 'Return', 'Right', 'Return']:
                 ui.key(code)
@@ -197,11 +215,11 @@ def main():
                 ui.key(code)
             require('Go!' in ui.text(0x46975c), 'native Go selection failed')
             ui.key('Return'); ui.wait(lambda: 1 <= ui.integer(0x936ff4) <= 10 and ui.integer(0x7746c0) > 0)
-            ui.wait(lambda: ui.integer(0x784298) < 1)
+            ui.wait(lambda: ui.integer(0x784298) < 1, timeout=60)
             ui.edge('a', True); time.sleep(3); ui.edge('a', False)
             for code in ['Escape', 'Down', 'Down', 'Down', 'Return', 'Up', 'Return']:
                 ui.key(code)
-            require('View Replay' in ui.text(0x46a508), 'native Practice Over missing')
+            ui.wait(lambda: 'View Replay' in ui.text(0x46a508) and ui.integer(0x7746ac) == 1, timeout=30)
             report['recorded'] = ui.state(); script = ui.read(0x9376b0, 0x1c00); order = ui.read(0x795c28, 20)
             report['script_sha256'], report['order_sha256'] = digest(script), digest(order)
             ui.key('Right'); require('Save Replay' in ui.text(0x46a508), 'native Save Replay missing')
@@ -231,7 +249,34 @@ def main():
             require(len(report['saved']['slots']) == 1 and report['saved']['slots'][0]['name'] == 'B', 'native overwrite did not rename the same card entry')
             new_payload = (game / 'SaveGames').read_bytes()[0x2000:0x2000 + PACKED_BYTES]
             require(new_payload == payload, 'native overwrite changed the replay payload')
-            ui.stop(); ui = NativeUI(binary, game, out, ':' + number, 2); ui.boot()
+            if args.full_card:
+                for slot, name in enumerate('ACDEFGHIJKLMNO', 1):
+                    ui.select_block(slot); ui.enter_name(name)
+                    ui.wait(lambda slot=slot: (game / 'SaveGames').read_bytes()[slot*0x200] == 1)
+                    card = ui.card()
+                    require(len(card['slots']) == slot+1 and card['slots'][slot]['name'] == name,
+                            'native filling card saved wrong slot/name')
+                    stored = (game / 'SaveGames').read_bytes()[0x2000+slot*0x2000:0x2000+slot*0x2000+PACKED_BYTES]
+                    require(stored == payload, 'native full-card replay payload differs')
+                    print('Native populated slot', slot, name, flush=True)
+                report['full_card'] = ui.card()
+                ui.key('Return')
+                for code in ['Down'] * 4 + ['Right'] * 2 + ['Down', 'Right', 'Down', 'Right']:
+                    ui.key(code)
+                require(ui.integer(0x774680) == 14, 'native full-card navigation exceeded last slot')
+                ui.key('Return'); require('Overwrite File' in ui.text(0x4672ac), 'native full-card overwrite missing')
+                ui.key('Escape'); report['full_card_cancelled'] = ui.card()
+                require(report['full_card_cancelled'] == report['full_card'], 'native cancelled full-card overwrite changed data')
+                ui.select_block(14); ui.key('Left'); ui.key('Return'); ui.enter_name('P', replace=True)
+                ui.wait(lambda: (game / 'SaveGames').read_bytes()[14*0x200+4:14*0x200+6] == b'P\0')
+                report['full_card_overwritten'] = ui.card()
+                require(len(report['full_card_overwritten']['slots']) == 15 and
+                        report['full_card_overwritten']['slots'][14]['name'] == 'P', 'native full-card last-slot overwrite failed')
+                require(report['full_card_overwritten']['slots'][:14] == report['full_card']['slots'][:14], 'native full-card overwrite changed other entries')
+                require((game / 'SaveGames').read_bytes()[0x2000+14*0x2000:0x2000+14*0x2000+PACKED_BYTES] == payload,
+                        'native full-card overwrite changed replay payload')
+                report['saved'] = report['full_card_overwritten']
+            ui.stop(); ui = NativeUI(binary, game, out, ':' + number, 2, limit); ui.boot()
             report['reloaded'] = ui.card(); require(report['reloaded'] == report['saved'], 'native card did not survive process restart')
             before = ui.state(); report['before_loading'] = before
             for code in ['Right', 'Right', 'Right', 'Return', 'Return', 'Return']:
@@ -264,8 +309,10 @@ def main():
             for code in ['Return', 'Return', 'Left', 'Return']:
                 ui.key(code)
             ui.wait(lambda: (game / 'SaveGames').read_bytes()[0] == 0)
-            report['deleted'] = ui.card(); require(not report['deleted']['slots'], 'native deletion failed')
-            ui.stop(); ui = NativeUI(binary, game, out, ':' + number, 3); ui.boot()
+            report['deleted'] = ui.card()
+            require(len(report['deleted']['slots']) == len(report['saved']['slots'])-1 and
+                    all(slot['index'] != 0 for slot in report['deleted']['slots']), 'native deletion failed')
+            ui.stop(); ui = NativeUI(binary, game, out, ':' + number, 3, limit); ui.boot()
             report['deleted_reloaded'] = ui.card()
             require(report['deleted_reloaded'] == report['deleted'], 'native deletion did not survive restart')
             report['pass_'] = True

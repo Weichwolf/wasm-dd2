@@ -35,6 +35,23 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Native optional full-card replay QA now passes with real X11 inputs: all 15
+  entries carry the exact complete replay payload, last-slot navigation clips at
+  14, cancelled overwrite preserves the complete card, confirmed overwrite
+  renames O to P without altering the other 14 entries or replay bytes. The
+  full card survives process restart, slot0 B loads/plays naturally and restores
+  frontend configuration; cancelled deletion preserves all entries, confirmed
+  deletion leaves the other 14 unchanged across another process restart.
+  native-card-full-state-waits/report.json: pass, 22 observed playback phases;
+  full/cancelled SHA256 fd8918fe891ca34eeb0b15dd2bfa9355051201f18ddc618eedae6d014164de09,
+  overwritten/reloaded d109fc1602643aee4c142f3cd1923b91772585eef20ac6ccf1f13693b1517e6a,
+  deleted/reloaded 8659708be40cabd1062b6a6150a811a6ebdf93ea1449f87ce724c496676d88ab.
+  Countdown and Practice Over readiness are actual state predicates, not a
+  fixed post-key delay. Browser full-card acceptance is still in diagnosis:
+  its camera-intro phase progresses slowly and its countdown did not complete
+  in 60s. The observed CD request completes in 0.12s. Prior one-slot browser
+  success remains narrower evidence. No full original card-menu/player A/V
+  parity claim.
 - Real native and browser replay QA also passes cancelled/confirmed overwrite.
   Cancelling preserves the whole card; confirming renames entry A to B in the
   same slot with the complete replay payload unchanged, then preserves it after

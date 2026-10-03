@@ -296,9 +296,21 @@ against engine RAM, compares complete saved/loaded script/order bytes, requires
 natural playback and restores the previous frontend configuration. A private
 game directory prevents changing provisioned/user saves and is removed after
 successful checks. `NATIVE_REPLAY_ARGS='--output /tmp/wasm-dd2/fresh-native-replay'`
-selects the report path; Xvfb and xdotool are required. This is functional native
-window acceptance. Whole original menu/player video/audio and complete full-card menu
-behavior still need checks.
+selects the report path; Xvfb and xdotool are required.
+
+The native real-menu test accepts `--full-card` to fill all 15 slots, compare every
+complete replay payload, check navigation at slot 14, cancel then confirm its
+overwrite, reload the full card, play a saved replay naturally, delete slot 0
+and verify the remaining 14 entries after another restart:
+
+```sh
+make verify-native-replay NATIVE_REPLAY_ARGS='--full-card'
+```
+
+The native test waits for the actual countdown completion and Practice Over state;
+slow rendering cannot make a fixed post-key delay establish those transitions.
+This is a functional native check. Whole original memory-card menus and complete
+player video/audio equivalence still require acceptance.
 
 `make verify-card` compares seven actual card functions with unmodified original
 x86 over 26 explicit cases: empty/full/sparse cards, first free blocks 0/7/14,
