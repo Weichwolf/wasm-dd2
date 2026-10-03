@@ -129,6 +129,9 @@ static int ids_flip(int t,int a,int b){
         if(logpath){
             extern unsigned dd2_tick_replay_calls(void),dd2_random_replay_calls(void);
             unsigned calls=dd2_tick_replay_calls();
+            if(calls && *(int*)(unsigned long)0x7746acu && getenv("DD2_RACE_STOP_AFTER_CAPTURE")){
+                fprintf(stderr,"[race-stream] target racing loop finished\n");exit(0);
+            }
             if(calls && !*(int*)(unsigned long)0x7746acu){
                 static FILE* log;
                 if(!log){log=fopen(logpath,"w");if(!log){fprintf(stderr,"Cannot open race stream log\n");exit(1);}}
@@ -176,7 +179,11 @@ static int ids_flip(int t,int a,int b){
             { int m=0; const char* p=il;
               while(*p){ int v=0,seen=0; while(*p>='0'&&*p<='9'){v=v*10+(*p-'0');p++;seen=1;}
                 if(seen&&v==cf) m=1; while(*p&&*p!=','&&(*p<'0'||*p>'9')) p++; if(*p==',')p++; }
-              if(m){ char nm3[256]; sprintf(nm3,"%s/img%05d_%d.bin", dir, cf, flipno);
+              if(m){ char nm3[256];
+                /* cf resets at the green light. Per-presentation names retain
+                   both occurrences for complete original race diagnostics. */
+                if(getenv("DD2_IMGDUMP_FLIP"))sprintf(nm3,"%s/imagef%05d.bin",dir,g_frameno);
+                else sprintf(nm3,"%s/img%05d_%d.bin", dir, cf, flipno);
                 FILE* h=fopen(nm3,"wb"); if(h){ fwrite((void*)(unsigned long)0x400000u,1,0x580400,h); fclose(h);} } } } }
         /* secondary: the DDraw primary (HUD-only until the _screenbuffer->primary Blt is wired) */
         if(getenv("DD2_GPDUMP")){ sprintf(nm,"%s/gp%05d.bin", dir, g_frameno);

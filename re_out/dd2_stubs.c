@@ -43,6 +43,8 @@ unsigned dd2_platform_ms(void){
 static FILE* dd2_tick_file;
 static unsigned dd2_tick_calls;
 static int dd2_tick_init,dd2_tick_failed;
+static const char* dd2_tick_path;
+static unsigned dd2_tick_level;
 unsigned dd2_tick_replay_calls(void){return dd2_tick_calls;}
 static void dd2_tick_close(void){
     if(!dd2_tick_file)return;
@@ -54,10 +56,24 @@ static void dd2_tick_close(void){
 }
 unsigned GetTickCount(void){
     if(!dd2_tick_init){
-        const char* path=getenv("DD2_TICK_REPLAY");dd2_tick_init=1;
-        if(path){
+        dd2_tick_path=getenv("DD2_TICK_REPLAY");dd2_tick_init=1;
+        if(dd2_tick_path){
             if(getenv("DD2_REALTIME")){fprintf(stderr,"[clock-replay] requires headless clock mode\n");exit(1);}
-            dd2_tick_file=fopen(path,"rb");
+            {
+                const char* level=getenv("DD2_TICK_LEVEL");
+                if(level){char* end;unsigned long value=strtoul(level,&end,10);
+                    if(!*level || *end || value<1 || value>10){fprintf(stderr,"[clock-replay] invalid target level\n");exit(1);}
+                    dd2_tick_level=(unsigned)value;
+                }
+            }
+        }
+    }
+    if(dd2_tick_path && !dd2_tick_file){
+        if(dd2_tick_level && *(unsigned*)(uintptr_t)0x936ff4!=dd2_tick_level){
+            if(*(unsigned*)(uintptr_t)0x7746c0==0 && *(unsigned*)(uintptr_t)0x46385c==1)
+                fprintf(stderr,"[clock-replay] warmup level=%u\n",*(unsigned*)(uintptr_t)0x936ff4);
+        }else{
+            dd2_tick_file=fopen(dd2_tick_path,"rb");
             if(!dd2_tick_file){fprintf(stderr,"[clock-replay] cannot open clock input\n");exit(1);}
             /* Later original attract races inherit the DEMO MODE blink counter.
              * A fixed-level headless run starts from the boot image instead.
@@ -68,7 +84,9 @@ unsigned GetTickCount(void){
                 if(flash){
                     char* end;unsigned long value=strtoul(flash,&end,10);
                     if(!*flash || *end || value>80){fprintf(stderr,"[clock-replay] invalid initial demo flash state\n");exit(1);}
-                    *(unsigned*)(uintptr_t)0x4652a0=(unsigned)value;
+                    if(getenv("DD2_RACE_FLASH_REQUIRE")){
+                        if(*(unsigned*)(uintptr_t)0x4652a0!=(unsigned)value){fprintf(stderr,"[clock-replay] calculated initial demo flash differs\n");exit(1);}
+                    }else *(unsigned*)(uintptr_t)0x4652a0=(unsigned)value;
                 }
             }
             atexit(dd2_tick_close);
@@ -140,7 +158,13 @@ int rand(void){
         if(count!=12){
             dd2_random_failed=1;fprintf(stderr,"[random-reference] %s\n",count?"partial random record":"random reference exhausted");exit(1);
         }
-        if(!dd2_random_calls)_dd2_rand_seed=dd2_le_word(record);
+        if(!dd2_random_calls){
+            if(getenv("DD2_RANDOM_REQUIRE_INITIAL")){
+                if(_dd2_rand_seed!=dd2_le_word(record)){
+                    dd2_random_failed=1;fprintf(stderr,"[random-reference] calculated initial seed differs\n");exit(1);
+                }
+            }else _dd2_rand_seed=dd2_le_word(record);
+        }
         verify=1;
     }
     before=_dd2_rand_seed;after=before*0x41c64e6dU+0x3039U;value=(after>>16)&0x7fffu;

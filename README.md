@@ -285,7 +285,13 @@ make verify-reference-race-stream RACE_REFERENCE=third_party/verification-artifa
 make verify-random-reference RANDOM_REFERENCE_ARGS='--output third_party/verification-artifacts/fresh-random-check'
 ```
 
-The ports match the observed initial RNG seed and inherited DEMO MODE blink
+Add `RACE_COMPARISON_ARGS='--attract-history'` to run the real frontend and
+preceding demos. That mode requires the naturally calculated initial RNG seed
+and blink counter to match; neither is overwritten from the reference. Only
+the selected race receives the recorded clock. The complete L6 capture also
+passes on native/WASM after the real L9 demo in this mode.
+
+By default, the ports match the observed initial RNG seed and inherited DEMO MODE blink
 counter once, then calculate every subsequent random result/state and blink
 phase themselves. Every presented framebuffer/palette byte and clock/random
 call phase is compared literally, including the countdown and final rendered
@@ -296,7 +302,10 @@ supported CRT is Watcom (`rand` at 0x456cbc), with multiplier 0x41c64e6d and
 increment 0x3039; earlier MSVC/address comments were incorrect.
 
 `--race-images INDEX...` additionally saves original engine memory at selected
-presentation indices for diagnosis. Captures and original assets remain ignored
+presentation indices for diagnosis. `--race-image-counters CF...` saves every
+presentation of selected counters, including both occurrences of counter zero
+across the green-light reset. Port diagnostic filenames use presentation
+indices so these occurrences cannot overwrite one another. Captures and original assets remain ignored
 by Git. Debugger stops affect elapsed time, so replaying the observed API clock
 is an explicit comparison input. These checks cover the captured racing render
 loop; initialization/fades, original racing audio, other modes and physical or

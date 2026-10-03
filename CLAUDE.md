@@ -35,6 +35,32 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The reference comparator now supports --attract-history: real frontend and
+  preceding demos calculate initial RNG/blink states, which are required to
+  match rather than initialized from the recording. L6 passes both targets
+  after the real L9 demo: all 1371 frames/palettes, 15980 clock returns, 1860
+  calculated RNG calls and eleven scenery checkpoints
+  (dd2-original-race-l6-history-comparison-reviewed/report.json). The new
+  clock/RNG fixture runs pass on native ASan/UBSan and WASM
+  (dd2-{clock,random}-attract-history-reviewed/report.json). All ten default
+  native/WASM runs still pass: 15255 full frames/palettes and all audio,
+  RNG/flip and CD bytes (dd2-parity-attract-history-reviewed/results.json).
+  --race-image-counters records every occurrence of selected cf values;
+  per-presentation port image names retain the countdown-reset occurrences.
+  Existing L9 full-loop regression remains exact on both targets (1499 frames;
+  dd2-original-race-l9-history-instrument-regression-reviewed).
+- A second L5 capture has 1435 frames, 21128 clock returns and 3005 RNG calls.
+  Its real preceding demos [9,6] naturally produce initial seed=365994542 and
+  blink=35. Native matches all clock/RNG/blink phases and all 19 scenery-x
+  snapshots, but six presented images at cf547..549 differ
+  (dd2-original-race-l5-history-comparison-reviewed/report.json). Positions
+  and animation fields of the smoke particles match; their depth-cued shades
+  differ because the prior global __otz differs. The original OT also contains
+  debris primitive 0x778110, missing in the port. Lens-flare commands and
+  active color/texture tables match with the real attract history. Feeding
+  the original frame1158 OT/image into the native renderer reproduces every
+  byte of original frame1159 (dd2-l5-original-raster-input-reviewed). This is
+  a controlled renderer-input test, not complete original game acceptance.
 - After patch 842, all ten default native/WASM demo runs again match exactly:
   15255 complete presented frames/palettes, every RNG/flip record and every
   effects/final-mix/music/CD byte, without reference clock/RNG files
@@ -60,7 +86,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   dd2-original-race-l5-rng-reviewed has 1235 frames, 13907 actual clock
   returns, 2990 actual random calls and initial seed=365994542/blink=35.
   Native computes every random state/return and matches the clock/blink
-  phases, but seven presented images differ: cf547..549 (mostly lens flare)
+  phases, but seven presented images differ: cf547..549 (smoke shading)
   and the final cf700 frame. Preserve the failed report
   dd2-original-race-l5-word-comparison-reviewed for investigation.
   Complete original racing audio, all races/modes and physical output

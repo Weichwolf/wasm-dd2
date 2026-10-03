@@ -41,9 +41,8 @@ def compare(reference,actual_root,rows):
         if index in reference.get('diagnostic_image_frames',[]):
             # Narrow diagnostic for patch 842; engine images contain host API
             # pointers and cannot be compared as an entire address space.
-            occurrence=sum(row['cf']==actual['cf'] for row in rows[:index])
             original=(reference['_root']/f'{expected["prefix"]}.image').read_bytes()
-            port=(actual_root/f'img{actual["cf"]:05d}_{occurrence}.bin').read_bytes()
+            port=(actual_root/f'imagef{actual["flip"]:05d}.bin').read_bytes()
             if len(original)!=0x580400 or len(port)!=0x580400:raise RuntimeError('incomplete diagnostic engine image')
             offset=0x789358-0x400000
             if original[offset:offset+2]!=port[offset:offset+2]:
@@ -55,6 +54,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--capture',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--native',type=Path,default=Path('/tmp/dd2_native'))
     p.add_argument('--wasm',type=Path,default=Path('/tmp/lvltest/dd2run.js'));p.add_argument('--node',default='node');p.add_argument('--timeout',type=float,default=120)
+    p.add_argument('--attract-history',action='store_true',help='run the real frontend and preceding demos; require naturally calculated initial RNG/blink states')
     a=p.parse_args();root=a.capture.resolve()/'race';out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     r=json.loads((root/'race.json').read_text());ticks=root/'ticks.bin'
     if r.get('exe_modified') is not False or r.get('exe_sha256')!=EXE_SHA or hashlib.sha256((ROOT/'DestructionDerby2/dd2h.exe').read_bytes()).hexdigest()!=EXE_SHA:
@@ -82,30 +82,38 @@ def main():
                 (i and before!=records[i-1][1]) for i,(before,after,value) in enumerate(records)):
             raise RuntimeError('inconsistent original random state/return records')
         random_env.update(DD2_RANDOM_REFERENCE=str(random),DD2_RANDOM_LEVEL=str(r['level']))
+    if a.attract_history:
+        if 'rng_calls' not in r or 'demo_flash' not in r['first_state']:raise RuntimeError('attract history requires recorded random and blink states')
+        random_env.update(DD2_TICK_LEVEL=str(r['level']),DD2_RACE_STOP_AFTER_CAPTURE='1',
+            DD2_RACE_FLASH_REQUIRE='1',DD2_RANDOM_REQUIRE_INITIAL='1',DD2_FE='1')
     r['_root']=root
     image_counters={frames[index]['cf'] for index in r.get('diagnostic_image_frames',[]) if index<len(frames)}
-    if image_counters:random_env['DD2_IMGDUMP']=','.join(map(str,sorted(image_counters)))
+    if image_counters:random_env.update(DD2_IMGDUMP=','.join(map(str,sorted(image_counters))),DD2_IMGDUMP_FLIP='1')
     report={'scope':__doc__,'original_exe_sha256':EXE_SHA,'original_clock_sha256':hashlib.sha256(ticks.read_bytes()).hexdigest(),
         'original_frames':len(frames),'original_clock_calls':count,'original_rng_calls':r.get('rng_calls'),
         'original_initial_state':r['first_state'],'original_random_sha256':hashlib.sha256(random.read_bytes()).hexdigest() if 'rng_calls' in r else None,
-        'level':r['level'],'targets':[]}
+        'level':r['level'],'attract_history':a.attract_history,'initial_rng_and_blink':
+            'calculated by preceding real demos; checked, never initialized from reference' if a.attract_history else 'initialized once from observed original',
+        'targets':[]}
     env={k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
-    for name,command,artifact in [('native',[str(a.native.resolve())],a.native),('wasm',[a.node,str(a.wasm.resolve()),str(r['level'])],a.wasm.with_suffix('.wasm'))]:
+    for name,command,artifact in [('native',[str(a.native.resolve())],a.native),('wasm',[a.node,str(a.wasm.resolve()),'fe' if a.attract_history else str(r['level'])],a.wasm.with_suffix('.wasm'))]:
         directory=out/name;directory.mkdir();log=directory/'run.log'
         with log.open('w') as stream:
-            run=subprocess.run(command,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,'DD2_LEVEL':str(r['level']),'DD2_SOUND':'1',
+            run=subprocess.run(command,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,**({} if a.attract_history else {'DD2_LEVEL':str(r['level'])}),'DD2_SOUND':'1',
                 'DD2_TICK_REPLAY':str(ticks),'DD2_RACE_STREAM':str(directory/'race.jsonl'),
                 'DD2_FRAMEDIR':str(directory),'DD2_PALDUMP':'1'},stdout=stream,stderr=subprocess.STDOUT,timeout=a.timeout)
         text=log.read_text()
         if run.returncode or f'[clock-replay] consumed={count} complete' not in text or re.search(r'SIGSEGV|SIGBUS|RuntimeError|FATAL|abort',text):
             raise RuntimeError(f'{name}: engine or exact clock-consumption failure; see {log}')
         if 'rng_calls' in r and f'[random-reference] consumed={r["rng_calls"]} complete' not in text:raise RuntimeError(f'{name}: incomplete original random trace consumption')
+        if a.attract_history and '[race-stream] target racing loop finished' not in text:raise RuntimeError(f'{name}: target attract loop not completed')
         rows=[json.loads(line) for line in (directory/'race.jsonl').read_text().splitlines()]
         if any(row['flip']<=rows[i-1]['flip'] for i,row in enumerate(rows) if i):raise RuntimeError('port presentation indices not increasing')
         failures=compare(r,directory,rows)
         result={'target':name,'binary_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'pass':not failures,'frames':len(rows),
             'framebuffer_bytes':len(rows)*307200,'palette_bytes':len(rows)*1024,'failures':failures,
             'diagnostic_first_scene_x_checks':len([i for i in r.get('diagnostic_image_frames',[]) if i<len(rows)])}
+        if a.attract_history:result['preceding_demo_levels']=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
         report['targets'].append(result);(out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         if failures:raise RuntimeError(f'{name}: complete original stream differs ({len(failures)} records); first {failures[:2]}')
         # This must reject a real corrupted first capture byte, including the

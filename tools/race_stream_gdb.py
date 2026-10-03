@@ -12,9 +12,9 @@ import struct
 import gdb
 
 
-def record_race(output,level,random_trace=False,image_frames=()):
+def record_race(output,level,random_trace=False,image_frames=(),image_counters=()):
     directory=Path(output)/'race';directory.mkdir()
-    ticks=[];frames=[];random=[];complete=False
+    ticks=[];frames=[];random=[];saved_images=[];complete=False
     inferior=gdb.selected_inferior()
     def read(address,size):return bytes(inferior.read_memory(address,size))
     def integer(address):return int.from_bytes(read(address,4),'little',signed=True)
@@ -77,8 +77,9 @@ def record_race(output,level,random_trace=False,image_frames=()):
             prefix=f'frame{len(frames):05d}'
             (directory/f'{prefix}.bin').write_bytes(read(0x700450,307200))
             (directory/f'{prefix}.pal').write_bytes(read(0x700050,1024))
-            if len(frames) in image_frames:
+            if len(frames) in image_frames or current['cf'] in image_counters:
                 (directory/f'{prefix}.image').write_bytes(read(0x400000,0x580400))
+                saved_images.append(len(frames))
             current.update(index=len(frames),prefix=prefix,clock_calls=len(ticks))
             if random_trace:current['rng_calls']=len(random)
             frames.append(current)
@@ -102,7 +103,7 @@ def record_race(output,level,random_trace=False,image_frames=()):
         'complete_racing_loop':True,'breakpoints':'hardware only; no inferior memory/register writes',
         'clock_source':'actual GetTickCount return EAX at original engine call sites',
         'first_state':first_state,'final_state':final_state,'clock_calls':len(ticks),'frames':frames,
-        'diagnostic_image_frames':list(image_frames)}
+        'diagnostic_image_frames':saved_images}
     if random_trace:
         if not random or rng_pc!=0x456cc6:raise RuntimeError('incomplete original random calls')
         (directory/'random.bin').write_bytes(b''.join(struct.pack('<III',row['before'],row['after'],row['return']) for row in random))

@@ -83,7 +83,7 @@ refcapture-race-stream: ## complete selected original attract loop, clock/random
 	python3 $(ROOT)/tools/reference/capture.py --race-stream $(RACE_CAPTURE_ARGS)
 
 verify-reference-race-stream: native wasm ## compare every captured original racing-loop frame/palette and calculated RNG/blink states at identical API times
-	python3 $(ROOT)/tools/reference/compare_race_stream.py --capture $(RACE_REFERENCE) --output $(RACE_COMPARISON) --native $(NATIVE) --wasm $(OUTJS) --node $(NODE)
+	python3 $(ROOT)/tools/reference/compare_race_stream.py --capture $(RACE_REFERENCE) --output $(RACE_COMPARISON) --native $(NATIVE) --wasm $(OUTJS) --node $(NODE) $(RACE_COMPARISON_ARGS)
 
 verify-keyboard: ## compare actual Wine USER32 modifier/Alt/F10 messages with native SDL and WASM
 	python3 $(ROOT)/tools/verify_keyboard.py $(KEYBOARD_ARGS)
