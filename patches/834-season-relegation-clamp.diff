@@ -1,5 +1,17 @@
 DELIBERATE PLAYABILITY DEVIATION (834): clamp championship season >= 0 on relegation
 
+2026-10-03 correction to the historical diagnosis below: patch 851 identifies
+the actual cause of the real retire-all-five failure. Check_League_Standing
+read league/rank as DWORDs instead of the original WORDs, so league=3/rank=4
+returned relegation (3), not elimination (5). A fresh unmodified original full
+season retires all five and returns to the frontend WITHOUT underflow or crash.
+The old claim below that the same normal input crashes the original is disproved.
+The explicit user-sanctioned clamp is retained, but is not needed for this real
+input path once 851 restores the original classifier. Case 3 can still underflow
+an inconsistent fixture with season=0 and a last-place rank in a higher league;
+that is the deliberate deviation, not evidence of an original retire-all defect.
+The remainder records the superseded port diagnosis and original authorization.
+
 *** THIS IS AN INTENTIONAL DEVIATION FROM dd2h.exe, NOT A FAITHFUL RECONSTRUCTION. ***
 It is the ONLY sanctioned deviation in the tree and is applied on explicit user request
 ("fixen") after the alternative (leave-faithful) was considered.

@@ -204,6 +204,13 @@ verify-track-selection: ## capture/compare road and bowl menus; TRACK_SELECTION_
 verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHAMPBROWSER and CHAMPNATIVE captures
 	python3 $(ROOT)/tools/verify_champ_names.py --node $(NODE) $(if $(CHAMPREF),--reference $(CHAMPREF)) $(if $(CHAMPBROWSER),--browser $(CHAMPBROWSER)) $(if $(CHAMPNATIVE),--native-capture $(CHAMPNATIVE))
 
+.PHONY: verify-league-standing verify-champ-season
+verify-league-standing: patch ## compare all outcome classifications with original x86; LEAGUE_STANDING_ARGS required
+	python3 $(ROOT)/tools/verify_league_standing.py $(LEAGUE_STANDING_ARGS)
+
+verify-champ-season: ## actual full Retire/Yes season capture/compare; CHAMP_SEASON_ARGS required
+	python3 $(ROOT)/tools/verify_champ_season.py $(CHAMP_SEASON_ARGS)
+
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
 

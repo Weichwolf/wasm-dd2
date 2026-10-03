@@ -35,6 +35,27 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 851 restores Check_League_Standing's two WORD loads (league @0x93def2,
+  rank @0x93def4; literal 66-prefix instructions @0x44c92c..0x44c96f). DWORD
+  league included rank=4, misclassifying bottom-division elimination as relegation;
+  patch 834 then masked this by restarting season 0. The actual original retires
+  all five races and eliminates the player without underflow/crash. The original
+  bug attribution in the historical patch-834 diagnosis is disproved and annotated;
+  its explicitly sanctioned inconsistent-state clamp remains.
+  Actual original-x86/Native/WASM component runs match all 210 classifications,
+  including nonzero adjacent points and WORD boundaries; old DWORD variants fail
+  (league-standing-words-851-verified/report.json). Native real keyboard-bridge
+  navigation now matches all five race standings, 100 names/points, 20 full league
+  images/palettes and final elimination. The live browser also completes all five
+  Retire/Yes races and eliminates correctly, but its strict original comparison
+  remains FAILED at races 4/5 (different computer points; first 12 league images
+  match). Keep champ-season-standing-fixed-851.json as a failed full gate; do not
+  turn native/component proof into full browser parity. A focused input observer
+  records browser frame_skip=6/8 versus 1 in reference/native snapshots; attempting
+  to schedule at original counters can skip the input point and a matching counter
+  still has different physics ticks. Full input/clock/RNG scheduling needs diagnosis.
+  All ten rebuilt native/Node demos remain byte-exact (15,255 frames, all palettes,
+  RNG/Flip logs and generated PCM; parity-league-standing-fixed-851.json).
 - Track Select road/bowl navigation now matches the original over all seven/four
   previews at default unlock limits 4/1: 29 checkpoints x 64 presentations per
   case, 3,712 full framebuffer/palette pairs per target, actual browser canvas
@@ -1818,19 +1839,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   bugs (non-dispatch; found via QA agents + native ASan/interactive repro): 827 Keyboard-config
   renderer crash (string symbol typed int** deref'd as pointer), 828 Name Entry accepted no
   letters (name buffers int** not char** -> chars 4 bytes apart), 829 Keyboard rebind never
-  advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830-833 CHAMPIONSHIP
-  fully working (830 driving crash = Sort_Leagues loop-bound artifact; 831 season-end sibling
-  Reset_League_Info; 832 "View League" between-race trap = raw &LAB_00453c00 fn-ptr store; 833
-  season-end wild-write = Reset_League_Info uninitialized aiStack_5c -> FUN_0044c9c0 OOB). Full
-  5-race season + standings + View League + season end all work. 834 = the retire-ALL-5-races
-  edge (relegate out of division 0 -> Do_End_Of_Season_Stuff case 3 `_current_season--` from 0
-  to -1 -> OOB level read @&DAT_0046758c[-1] -> crash): the ORIGINAL dd2h.exe has this same
-  latent bug (asm `decl 0x93dec0`, NO clamp; only reachable via the abnormal all-retired path).
-  Fixed on explicit user request as the ONE SANCTIONED DELIBERATE DEVIATION in the tree (patch
-  834 header flags it): clamp `if (0 < _current_season)` so a bottom-division relegation keeps
-  season 0. Off the attract, so verify/verify-wasm 10/10 + L9 702/702 nat<->wasm unaffected;
-  native repro DD2_SEASONEND (forces division-0 relegation -> season stays 0). [Supersedes the
-  prior "leave faithful / do-not-fix" note for this path.]
+  advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830-833 repaired several
+  championship failures (Sort_Leagues/Reset_League_Info bounds, View League dispatch,
+  initialized sorting storage). The earlier "fully working" verdict exceeded these
+  checks. Ordinary finishes, promotion/relegation and subsequent seasons remain open.
+  The patch-834 retire-all original-crash attribution is disproved: original WORD
+  classification returns elimination 5 for league=3/rank=4 and exits without decrement.
+  The port's DWORD league load included rank and returned relegation 3 instead;
+  patch 851 repairs that actual cause. The user-sanctioned season>=0 clamp remains
+  the explicit deviation for an inconsistent season/league fixture, but is not on
+  the genuine bottom-division elimination path. DD2_SEASONEND forces that fixture;
+  it does not prove that real original retirement input underflows the season.
   Test infra: tools/browser/fepass.js (17/17 label-verified full pass: every FE screen + race
   lifecycle + championship, with page.on('crash') detection) + native DD2_FETEST/DD2_KBTEST/
   DD2_CHAMP/DD2_SEASONEND/DD2_KBREBIND2 repro modes. A 3-agent QA sweep (qa_ttmp/qa_fetree/qa_edge)

@@ -116,6 +116,42 @@ palette, selection-state and phase-sequence checks reject on each target.
 Successful raw images are removed after the report retains their hashes and
 navigation states. Current reports: `/tmp/wasm-dd2/track-{road,bowl}-verified-851.json`.
 
+Patch 851 corrects championship outcome classification: the original reads the
+league and rank as WORDs, while the port read overlapping DWORDs. Last place in
+division 4 therefore returned relegation instead of elimination and restarted
+the bottom season. Both ports now finish the five-race Retire/Yes path by returning
+to the frontend as the original does. This also restores the other classification
+branches when neighboring temporary points are nonzero.
+
+`make verify-league-standing LEAGUE_STANDING_ARGS='--output /tmp/wasm-dd2/fresh-standing-check'`
+compares 210 explicit packed-field cases with actual unmodified original x86 on
+native/WASM and rejects the old DWORD aliases. The original full five-race run
+also matches native's cumulative standings, all 100 league names/points and
+20 complete league framebuffer/palette pairs. The live browser completes the
+same retirement/elimination flow, but its strict original comparison remains
+open: the first 12 league images match; races 4/5 have different computer points.
+The browser's live simulation batches and pause times differ. A complete original
+input/clock/RNG recording is required to diagnose this; matching a visible counter
+alone does not establish matching physics. Chronological video/audio, ordinary
+race finishes, promotion and other seasons are not accepted by this test.
+
+```sh
+make clean-logs
+make verify-champ-season CHAMP_SEASON_ARGS='capture --target original --output /tmp/wasm-dd2/season-original'
+make verify-champ-season CHAMP_SEASON_ARGS='capture --target native --output /tmp/wasm-dd2/season-native'
+make verify-champ-season CHAMP_SEASON_ARGS='capture --target browser --output /tmp/wasm-dd2/season-browser'
+make verify-champ-season CHAMP_SEASON_ARGS='compare --original /tmp/wasm-dd2/season-original --native /tmp/wasm-dd2/season-native --browser /tmp/wasm-dd2/season-browser --report /tmp/wasm-dd2/season-report.json --negative --clean'
+make clean-logs
+```
+
+The full comparator stays strict and currently fails for the live browser run;
+`--clean` removes raw captures only if both targets pass. Browser `capture` also
+supports `--reference <original-capture> --stop-after-pause` as a focused input
+diagnosis, with observations saved before teardown; this is not a full-season
+acceptance run. The historical patch-834 original-crash diagnosis was wrong:
+the unmodified original eliminates this player and never decrements the season.
+Its user-sanctioned clamp remains for an inconsistent season/league state.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo
@@ -265,8 +301,10 @@ The native/WASM score-builder comparison uses captured original standings as an
 explicit fixture; browser and native captures exercise live championships. The
 native helper calls the normal `dd2_key_event` bridge for one pad poll per key
 and checks the real renderer output; native window-system input and hardware audio
-are not exercised. Full seasons, promotion/relegation and complete streams still
-need acceptance checks. Use fresh capture directories; stale output is rejected.
+are not exercised. Ordinary race finishes, promotion/relegation and complete
+chronological streams still need acceptance checks. The five-race retirement
+case above covers elimination; its browser clock/RNG comparison remains open.
+Use fresh capture directories; stale output is rejected.
 
 Patch 847 restores the original replay script's WORD packets and two-byte cursor
 steps. DWORD cursors skipped a packet whenever the control changed, leaving
