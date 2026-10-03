@@ -46,6 +46,9 @@ def state(pid):
         return {"pid": pid, "level": struct.unpack("<i", read(0x936FF4, 4))[0],
                 "cf": struct.unpack("<i", read(0x462FF0, 4))[0],
                 "screen": read(0x460005, 1)[0],
+                "screen_diagnostic": "byte of cached CLUT pointer; not a screen identifier",
+                "cd": {name: struct.unpack("<I", read(address, 4))[0] for name,address in
+                       (("enabled",0x462d74),("playing",0x462d70),("from",0x74f174),("to",0x74f178))},
                 "movie": struct.unpack("<i", read(0x462CD4, 4))[0]}
 
 
@@ -181,7 +184,7 @@ def main():
         run(game, output, args)
         if args.audio:
             # Successful capture and scoped process cleanup completed.
-            report=summarize_audio(output/"audio")
+            report=summarize_audio(output/"audio",require_played=args.audio_device=="clock")
             if any(stream["rate"] != args.audio_rate for stream in report["streams"]):
                 raise RuntimeError("Committed reference audio rate differs from requested virtual device")
             report.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=args.audio_rate,

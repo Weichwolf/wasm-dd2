@@ -1,4 +1,4 @@
-"""Build the scoped ALSA observer and validate its exact accepted-write captures."""
+"""Build scoped ALSA capture and validate accepted/virtual-device played PCM."""
 import hashlib
 import json
 from pathlib import Path
@@ -29,7 +29,73 @@ def build_audio(output):
     return libraries
 
 
-def summarize_audio(directory,*,write=True):
+def summarize_played_audio(directory, *, required=False):
+    """Validate device-consumed extents; keep every pause/XRUN gap explicit."""
+    if (directory/"error.txt").exists():
+        raise RuntimeError((directory/"error.txt").read_text())
+    logs = sorted(directory.glob("played-*.jsonl"))
+    if required and not logs:
+        raise ValueError("Missing virtual-device playback capture")
+    if {log.with_suffix(".pcm") for log in logs} != set(directory.glob("played-*.pcm")):
+        raise ValueError("Missing played PCM file or journal")
+    streams = []
+    for log in logs:
+        events = [json.loads(line) for line in log.read_text().splitlines()]
+        if not events or events[0].get("event") != "format" or events[0].get("kind") != "virtual-device-played":
+            raise ValueError("Missing virtual-device played format")
+        info = events[0]
+        for key in ("time_ns", "rate", "channels", "frame_bytes", "buffer_frames"):
+            if type(info[key]) is not int or info[key] <= 0:
+                raise ValueError("Invalid played format")
+        widths = {"FLOAT_LE": 4, "S16_LE": 2}
+        if info["format"] not in widths or info["frame_bytes"] != widths[info["format"]]*info["channels"]:
+            raise ValueError("Invalid played frame size")
+        total, last_time, last_end = 0, info["time_ns"], 0
+        segments = []
+        for index, event in enumerate(events[1:], 1):
+            if type(event["time_ns"]) is not int or event["time_ns"] < last_time:
+                raise ValueError("Non-monotonic played timestamps")
+            last_time = event["time_ns"]
+            if event["event"] == "played":
+                for key in ("frames", "offset_frames", "source_begin", "source_end", "boundary_frames", "sample_begin_ns", "sample_end_ns"):
+                    if type(event[key]) is not int or event[key] < 0:
+                        raise ValueError("Invalid played extent")
+                frames, begin, end = event["frames"], event["sample_begin_ns"], event["sample_end_ns"]
+                if not 0 < frames <= info["buffer_frames"] or event["offset_frames"] != total:
+                    raise ValueError("Invalid played PCM offset/count")
+                boundary = event["boundary_frames"]
+                if not boundary or event["source_begin"] >= boundary or event["source_end"] != (event["source_begin"]+frames)%boundary:
+                    raise ValueError("Invalid played source pointers")
+                if not last_end <= begin < end <= last_time:
+                    raise ValueError("Overlapping/future played sample interval")
+                ns = frames*1_000_000_000
+                if not ns//info["rate"] <= end-begin <= (ns+info["rate"]-1)//info["rate"]:
+                    raise ValueError("Played interval differs from sample rate")
+                if segments and begin == segments[-1]["end_ns"]:
+                    segments[-1]["frames"] += frames
+                    segments[-1]["end_ns"] = end
+                else:
+                    segments.append({"offset_frames": total, "frames": frames, "begin_ns": begin, "end_ns": end})
+                total += frames
+                last_end = end
+            elif event["event"] in ("start", "stop", "prepare", "xrun", "close"):
+                if type(event["played_frames"]) is not int or event["played_frames"] != total:
+                    raise ValueError("Incorrect played transport extent")
+                if event["event"] == "close" and index != len(events)-1:
+                    raise ValueError("Events after played close")
+            else:
+                raise ValueError("Unknown played event")
+        pcm = log.with_suffix(".pcm")
+        if pcm.stat().st_size != total*info["frame_bytes"]:
+            raise ValueError("Played PCM size differs from consumed extents")
+        with pcm.open("rb") as file:
+            sha = hashlib.file_digest(file, "sha256").hexdigest()
+        streams.append({**info, "file": pcm.name, "events": log.name, "played_frames": total,
+                        "sha256": sha, "closed": events[-1]["event"] == "close", "segments": segments})
+    return streams
+
+
+def summarize_audio(directory,*,write=True,require_played=False):
     if (directory/"error.txt").exists():
         raise RuntimeError((directory/"error.txt").read_text())
     streams=[]
@@ -75,6 +141,9 @@ def summarize_audio(directory,*,write=True):
         raise ValueError("Selected process produced no captured ALSA frames")
     report={"scope":"actual Wine ALSA accepted PCM; transport/timing alignment and port comparison pending",
             "streams":streams}
+    report["played_streams"] = summarize_played_audio(directory, required=require_played)
+    if report["played_streams"]:
+        report["scope"] = "actual accepted PCM and virtual-device consumed PCM with explicit clock gaps; complete original/port output and timing comparison pending"
     if write:
         (directory/"summary.json").write_text(json.dumps(report,indent=2)+"\n")
     return report

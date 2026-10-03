@@ -1,6 +1,6 @@
 /* A private virtual PCM device with a monotonic real-time sample clock.
  * Unlike ALSA null, its playback buffer drains only at the negotiated rate.
- * It discards device samples; wine_audio.c observes the real mixer's writes.
+ * wine_audio.c observes mixer writes; played_audio.h records consumed samples.
  * ALSA's ioplug handles buffer bounds/rewinds; pointer reports clock underruns.
  */
 #define _GNU_SOURCE
@@ -12,10 +12,12 @@
 #include <sys/timerfd.h>
 #include <time.h>
 #include <unistd.h>
+#include "played_audio.h"
 typedef struct {
     snd_pcm_ioplug_t io;
     uint64_t epoch,position,boundary;
     int running;
+    PlayedAudio played;
 } Device;
 static uint64_t now_ns(void){
     struct timespec ts;clock_gettime(CLOCK_MONOTONIC,&ts);
@@ -33,11 +35,16 @@ static int start(snd_pcm_ioplug_t *io){
     timer.it_value.tv_sec=timer.it_interval.tv_sec=(time_t)(ns/1000000000);
     timer.it_value.tv_nsec=timer.it_interval.tv_nsec=(long)(ns%1000000000);
     device->epoch=now_ns();device->running=1;
+    played_event(&device->played,"start",device->epoch,io);
     return timerfd_settime(io->poll_fd,0,&timer,NULL)<0?-errno:0;
 }
 static int stop(snd_pcm_ioplug_t *io){
     Device *device=io->private_data;struct itimerspec timer={0};
-    device->position=position(device);device->running=0;
+    uint64_t current=position(device);
+    if(device->running)played_until(&device->played,io,current%device->boundary,
+        device->boundary,device->epoch,device->position,now_ns());
+    device->position=current;device->running=0;
+    played_event(&device->played,"stop",now_ns(),io);
     return timerfd_settime(io->poll_fd,0,&timer,NULL)<0?-errno:0;
 }
 static snd_pcm_sframes_t pointer(snd_pcm_ioplug_t *io){
@@ -48,17 +55,28 @@ static snd_pcm_sframes_t pointer(snd_pcm_ioplug_t *io){
     uint64_t queued=available<=io->buffer_size?io->buffer_size-available:0;
     if(io->state==SND_PCM_STATE_RUNNING && advance>queued){
         struct itimerspec timer={0};
+        played_until(&device->played,io,io->appl_ptr,device->boundary,
+            device->epoch,device->position,now_ns());
+        played_event(&device->played,"xrun",now_ns(),io);
         device->position=io->appl_ptr;device->running=0;
         timerfd_settime(io->poll_fd,0,&timer,NULL);
         return -EPIPE;
     }
     if(io->state==SND_PCM_STATE_DRAINING && advance>queued)
         current=io->appl_ptr;
+    if(device->running)played_until(&device->played,io,current,device->boundary,
+        device->epoch,device->position,now_ns());
     return (snd_pcm_sframes_t)current;
 }
 static int prepare(snd_pcm_ioplug_t *io){
     Device *device=io->private_data;
+    /* ALSA resets appl_ptr before this callback. A running prepare therefore
+     * loses the queued extent; reject such a capture instead of inventing PCM. */
+    if(device->running && device->played.events)
+        played_error(&device->played,"Active prepare reset makes the previous queued extent unobservable");
     stop(io);device->position=0;device->epoch=0;
+    device->played.last=0;
+    played_event(&device->played,"prepare",now_ns(),io);
     return 0;
 }
 static int sw_params(snd_pcm_ioplug_t *io,snd_pcm_sw_params_t *params){
@@ -69,11 +87,25 @@ static int sw_params(snd_pcm_ioplug_t *io,snd_pcm_sw_params_t *params){
 }
 static snd_pcm_sframes_t transfer(snd_pcm_ioplug_t *io,const snd_pcm_channel_area_t *areas,
                                   snd_pcm_uframes_t offset,snd_pcm_uframes_t size){
-    (void)io;(void)areas;(void)offset;return (snd_pcm_sframes_t)size;
+    Device *device=io->private_data;
+    played_write(&device->played,io,areas,offset,size);
+    return (snd_pcm_sframes_t)size;
 }
 static int pause_device(snd_pcm_ioplug_t *io,int paused){return paused?stop(io):start(io);}
 static int close_device(snd_pcm_ioplug_t *io){
+    Device *device=io->private_data;
+    played_close(&device->played,now_ns(),io);
     close(io->poll_fd);free(io->private_data);return 0;
+}
+static int hardware_params(snd_pcm_ioplug_t *io,snd_pcm_hw_params_t *params){
+    Device *device=io->private_data;(void)params;
+    played_open(&device->played,now_ns(),io);
+    return 0;
+}
+static int hardware_free(snd_pcm_ioplug_t *io){
+    Device *device=io->private_data;
+    played_close(&device->played,now_ns(),io);
+    return 0;
 }
 static int poll_revents(snd_pcm_ioplug_t *io,struct pollfd *fds,unsigned count,unsigned short *revents){
     uint64_t expirations;
@@ -87,7 +119,8 @@ static int poll_revents(snd_pcm_ioplug_t *io,struct pollfd *fds,unsigned count,u
 }
 static const snd_pcm_ioplug_callback_t callbacks={
     .start=start,.stop=stop,.pointer=pointer,.transfer=transfer,.close=close_device,
-    .prepare=prepare,.sw_params=sw_params,.pause=pause_device,.poll_revents=poll_revents
+    .prepare=prepare,.sw_params=sw_params,.pause=pause_device,.poll_revents=poll_revents,
+    .hw_params=hardware_params,.hw_free=hardware_free
 };
 SND_PCM_PLUGIN_DEFINE_FUNC(dd2clock){
     Device *device;int result;

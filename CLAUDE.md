@@ -30,11 +30,26 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - Reference capture (Stage-2 bit-verify): `make refcapture` (private prefix in
   `/tmp/wasm-dd2/wine-reference/`; needs xvfb; polls /proc/PID/mem, then captures at
   Draw_All entry using a GDB hardware breakpoint).
-- Original accepted PCM: `python3 tools/reference/capture.py --mode audio --audio
-  --audio-tail 3 --output /tmp/fresh-original-audio` (no debugger). Observer/clock
+- Original accepted/consumed PCM: `python3 tools/reference/capture.py --mode audio --audio
+  --audio-tail 3 --output /tmp/wasm-dd2/fresh-original-audio` (no debugger). Observer/clock
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Clocked original-audio capture now records device-consumed PCM separately
+  from accepted writes, preserving sample-time intervals and pause/XRUN gaps.
+  Real ALSA tests pass both process widths, Float32/S16 and all three supported
+  device rates: 12 cases, 2416664 exact bytes against independent known patterns
+  and frozen ALSA delay counters, covering replacement/rewind, partial drop,
+  pause/resume, drain, ring wrap and underrun. All 18 damaged playback recordings
+  reject, as do active prepare resets whose queued extent ALSA makes unobservable.
+  make verify-audio-observer AUDIO_OBSERVER_ARGS='--output /tmp/wasm-dd2/fresh-audio-observer'
+  reproduces this check; audio-played-verified-final/report.json records the run.
+  Successful raw test PCM removed after report. Two unmodified dd2h.exe runs
+  produce valid consumed journals; the retained original-played-audio-cd-state
+  capture is still needed to diagnose the startup mixed prefix. Later menu PCM
+  includes exact track13 source spans, but early mixed samples have another
+  unidentified source. Neither recorder checks nor those source spans establish
+  complete original/native/WASM mixed audio, timing or hardware equivalence.
 - Browser mixer now uses -O2 -fno-strict-aliasing, matching the native shim's
   compiler settings; reconstructed engine units remain -O0 and no fast-math
   is enabled. The unoptimized browser had slow camera-intro runs that failed

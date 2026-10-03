@@ -222,8 +222,8 @@ verify-native-replay: native ## real X11 replay save/overwrite/process restart/l
 verify-card: patch ## compare empty/full/sparse card operations and complete block/directory bytes with original x86
 	python3 $(ROOT)/tools/verify_card.py $(CARD_ARGS)
 
-verify-audio-observer: ## check 32/64-bit ALSA sample clocks and exact accepted-write capture; no port parity claim
-	python3 $(ROOT)/tools/reference/test_audio.py
+verify-audio-observer: ## check exact accepted/consumed PCM and 32/64-bit sample clocks; no port parity claim
+	python3 $(ROOT)/tools/reference/test_audio.py $(AUDIO_OBSERVER_ARGS)
 
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh

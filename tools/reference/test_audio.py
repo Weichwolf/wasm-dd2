@@ -8,12 +8,96 @@ import subprocess
 import tempfile
 import shutil
 import sys
-from audio import build_audio, summarize_audio
+import argparse
+from contextlib import ExitStack
+from audio import build_audio, summarize_audio, summarize_played_audio
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from artifacts import WORK, prepare_output, check_space
+
+
+def playback_checks(root, bits, library, config):
+    binary=root/f"playback{bits}"
+    subprocess.run(["gcc",f"-m{bits}","-O2","-Wall","-Wextra","-Werror",
+                    str(Path(__file__).with_name("audio_playback_test.c")),
+                    "-Wl,-l:libasound.so.2","-o",str(binary)],check=True)
+    results=[]
+    for rate in (22050,44100,48000):
+        for format in ("float","s16"):
+            capture=root/f"played-{bits}-{rate}-{format}";capture.mkdir()
+            expected=root/f"expected-{bits}-{rate}-{format}.pcm"
+            env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
+            env.update(ALSA_CONFIG_PATH=str(config),DD2_AUDIO_CAPTURE=str(capture),
+                       DD2_AUDIO_RATE=str(rate),LD_PRELOAD=str(library/"dd2_audio.so"))
+            run=subprocess.run([str(binary),format,str(expected)],env=env,check=True,
+                               timeout=10,capture_output=True,text=True)
+            settings=json.loads(run.stdout)
+            report=summarize_audio(capture,require_played=True)
+            if len(report["played_streams"])!=1:raise RuntimeError("Expected one consumed stream")
+            stream=report["played_streams"][0]
+            actual=(capture/stream["file"]).read_bytes()
+            if actual!=expected.read_bytes():raise RuntimeError("Device-consumed PCM differs from independent ALSA counter/pattern oracle")
+            if stream["played_frames"]!=settings["expected_frames"] or not stream["closed"]:
+                raise RuntimeError("Incorrect closed played extent")
+            if report["streams"][0]["accepted_frames"]<=stream["played_frames"] or len(stream["segments"])<5:
+                raise RuntimeError("Lost discarded samples or pause/transport gaps")
+            events=[json.loads(line) for line in (capture/stream["events"]).read_text().splitlines()]
+            if not any(e["event"]=="xrun" for e in events):raise RuntimeError("Missing device underrun boundary")
+            # Deliberately damage real recordings. Frame order and timing must
+            # not become a successful report from partial or corrupt evidence.
+            if rate==44100 and format=="float":
+                for defect in ("truncated","missing-journal","offset","source-end","interval",
+                               "overlap","future","close-count","unknown-event"):
+                    broken=root/f"played-{bits}-broken-{defect}";shutil.copytree(capture,broken)
+                    journal=broken/stream["events"];pcm=broken/stream["file"]
+                    data=[json.loads(line) for line in journal.read_text().splitlines()]
+                    played=[e for e in data if e["event"]=="played"]
+                    if defect=="truncated":pcm.write_bytes(pcm.read_bytes()[:-1])
+                    elif defect=="missing-journal":journal.unlink()
+                    else:
+                        if defect=="offset":played[0]["offset_frames"]+=1
+                        elif defect=="source-end":played[0]["source_end"]+=1
+                        elif defect=="interval":played[0]["sample_end_ns"]-=100000
+                        elif defect=="overlap":played[1]["sample_begin_ns"]=played[0]["sample_end_ns"]-1
+                        elif defect=="future":played[0]["sample_end_ns"]=played[0]["time_ns"]+1
+                        elif defect=="close-count":data[-1]["played_frames"]+=1
+                        else:data[1]["event"]="unexpected"
+                        journal.write_text("".join(json.dumps(e)+"\n" for e in data))
+                    try:summarize_played_audio(broken,required=True)
+                    except (ValueError,RuntimeError):pass
+                    else:raise RuntimeError(f"Accepted broken played capture: {defect}")
+                changed=bytearray(actual);changed[len(changed)//2]^=1
+                if bytes(changed)==expected.read_bytes():raise RuntimeError("Played payload mutation escaped exact comparison")
+            results.append({"bits":bits,"format":format,"rate":rate,"settings":settings,
+                            "accepted_frames":report["streams"][0]["accepted_frames"],"played":stream})
+            check_space(root)
+            print(f"PASS {bits}-bit {format}/{rate}Hz consumed PCM: {len(actual)} exact bytes, rewind/drop/pause/drain/wrap/XRUN",flush=True)
+    capture=root/f"played-{bits}-outside";capture.mkdir()
+    env.update(DD2_AUDIO_CAPTURE=str(capture))
+    subprocess.run([str(binary),"s16",str(root/f"expected-{bits}-outside.pcm"),"outside"],env=env,check=True,timeout=10,capture_output=True)
+    if any(capture.iterdir()):raise RuntimeError("Captured unrelated virtual-device process")
+    capture=root/f"played-{bits}-active-prepare";capture.mkdir()
+    env.update(DD2_AUDIO_CAPTURE=str(capture))
+    subprocess.run([str(binary),"s16",str(root/f"expected-{bits}-active-prepare.pcm"),"active-prepare"],env=env,check=True,timeout=10,capture_output=True)
+    try:summarize_audio(capture,require_played=True)
+    except RuntimeError as error:
+        if "Active prepare reset" not in str(error):raise
+    else:raise RuntimeError("Accepted an unobservable active prepare reset")
+    return results
 
 
 def main():
-    with tempfile.TemporaryDirectory(prefix="dd2-audio-observer-test-") as tmp:
-        root=Path(tmp)
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output",type=Path)
+    args=parser.parse_args()
+    WORK.mkdir(parents=True,exist_ok=True)
+    with ExitStack() as stack:
+        if args.output:
+            root=prepare_output(args.output)
+            if WORK.resolve() not in root.parents:parser.error("output must remain inside /tmp/wasm-dd2")
+            root.mkdir(parents=True,exist_ok=False)
+        else:
+            root=Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="audio-observer-test-",dir=WORK)))
+        playback_results=[]
         libraries=build_audio(root/"libraries")
         config=root/"asound.conf"
         config.write_text("pcm.!default { type null }\n")
@@ -29,6 +113,7 @@ def main():
             clock_env.update(ALSA_CONFIG_PATH=str(clock_config),DD2_AUDIO_RATE="44100")
             subprocess.run([str(clock_binary)],env=clock_env,check=True,timeout=10)
             print(f"PASS {bits}-bit clocked device: sample-rate clock and transport")
+            playback_results.extend(playback_checks(root,bits,library,clock_config))
             binary=root/f"test{bits}"
             subprocess.run(["gcc",f"-m{bits}","-Wall","-Wextra","-Werror",
                             str(Path(__file__).with_name("audio_observer_test.c")),
@@ -93,6 +178,12 @@ def main():
         if rejected.returncode!=2 or "use a fresh directory" not in rejected.stderr:
             raise RuntimeError("Capture launcher failed to reject reused audio output")
         print("PASS reused audio output rejected before launching Wine")
+        (root/"report.json").write_text(json.dumps({"scope":"Real 32/64-bit ALSA capture/device acceptance with independent known sample patterns and frozen delay counters; complete original A/V comparison pending",
+            "pass":True,"played_cases":playback_results,"played_corruption_cases":18,
+            "active_prepare_rejected":True},indent=2)+"\n")
+        for path in root.rglob("*"):
+            if path.is_file() and not path.is_symlink() and path.suffix in (".pcm",".bin"):
+                path.unlink()
 
 
 if __name__=="__main__":

@@ -502,15 +502,20 @@ debugger, through a private ALSA device with a monotonic sample clock. On Debian
 GCC multilib toolchain. The observer and device build for both process widths:
 
 ```sh
-make verify-audio-observer
+make verify-audio-observer AUDIO_OBSERVER_ARGS='--output /tmp/wasm-dd2/fresh-audio-observer'
 python3 tools/reference/capture.py --mode audio --audio --audio-rate 44100 \
-  --audio-tail 3 --output /tmp/fresh-original-audio
+  --audio-tail 3 --output /tmp/wasm-dd2/fresh-original-audio
 ```
 
 `audio/summary.json` records the actual committed format, frame counts and PCM
 hashes; the tested original selects stereo Float32 at 44100Hz. Each stream's
 `.jsonl` journal records accepted/failed writes, monotonic call bounds and
-transport events; its `.pcm` contains only accepted bytes. `audio/engine.jsonl`
+transport events; its `stream-*.pcm` contains only accepted bytes. The clocked
+device also writes `played-*.pcm` containing the exact queued samples it consumes,
+with `played-*.jsonl` recording their sample-time intervals and transport edges.
+Rewound/replaced and dropped samples are excluded from this second stream.
+The summary's `played_streams` retain explicit pause/underrun gaps: concatenated
+PCM alone is not a continuous playback timeline. `audio/engine.jsonl`
 records bounded, non-atomic observations of the live engine. The capture starts
 at process launch and can include the intro and automatic transition from the
 menu to the attract demo. The EXE and engine memory remain unmodified; no GDB
@@ -520,11 +525,22 @@ PCM files outside Git.
 The ALSA device's clock, polling, manual start, pause/resume, rewind, prepare
 reset and underrun pass real 32/64-bit ALSA tests with exact timestamp-derived
 sample bounds. Observer tests check exact accepted bytes, failed-write exclusion,
-process isolation and rejection of damaged captures. A live reference accepted
+process isolation and rejection of damaged captures. Consumed-output tests cover
+Float32 and S16 stereo at 22050/44100/48000Hz on both process widths, comparing
+known sample patterns and independently frozen ALSA delay counters through
+rewind, replacement, partial drop, pause/resume, drain, ring wrap and underrun.
+Eighteen damaged consumed-stream recordings are rejected. Preparing an actively
+running device resets ALSA's application pointer before the plugin callback;
+that currently unobservable extent explicitly invalidates the capture. It is
+not silently accepted. Successful tests write their report before removing raw
+PCM. Two bounded unmodified original runs also produce validated consumed streams;
+this verifies capture structure, not original/port audio equality.
+A live reference accepted
 3.100 seconds of PCM over 3.060 seconds of wall time. The old ALSA null device
 accepted 9.263 seconds over 2.573 seconds; `--audio-device null` remains a diagnostic
-option and is unsuitable for timing acceptance. Accepted PCM includes queued
-data; drops/rewinds must be applied before constructing a playback timeline.
+option and is unsuitable for timing acceptance; it has no consumed-stream recorder.
+Accepted PCM includes queued data, while the clocked device's consumed stream
+records what remains after drops/rewinds.
 `--audio` also works with video/navigation captures, whose debugger stops can
 cause audio underruns. Full original/native/WASM mixed PCM comparison, playback
 alignment and Windows hardware equivalence remain open acceptance work.
