@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT/'tools/reference'))
 from capture import state, menu_ready
 
 
-def capture(binary, output):
+def capture(binary, output, audio_clock=None):
     output = prepare_output(output)
     if WORK not in output.parents:
         raise ValueError('Menu diagnostics must be under /tmp/wasm-dd2/')
@@ -39,6 +39,9 @@ def capture(binary, output):
             (game/asset.name).symlink_to(asset, target_is_directory=asset.is_dir())
     table = symbols(binary)
     env = {k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
+    if audio_clock:
+        env['DD2_AUDIO_FRAME_CLOCK']=str(audio_clock)
+        env['DD2_AUDIO_CLOCK_REPORT']=str(output/'clock-complete.json')
     display = process = None
     with (output/'run.log').open('wb') as log:
         try:
@@ -82,10 +85,13 @@ def capture(binary, output):
             wait(lambda s:s['movie']==0)
             subprocess.run(['xdotool','keyup','Escape'],env=env,check=True)
             start = wait(menu_ready)
-            deadline = time.monotonic()+0.3
-            while time.monotonic()<deadline:
-                check_space(output)
-                time.sleep(0.01)
+            if audio_clock:
+                wait(lambda s:(output/'clock-complete.json').is_file(),60)
+            else:
+                deadline = time.monotonic()+0.3
+                while time.monotonic()<deadline:
+                    check_space(output)
+                    time.sleep(0.01)
             end = observed()
             if not menu_ready(end):
                 raise RuntimeError('Capture left the actual main menu startup scope')
@@ -94,6 +100,9 @@ def capture(binary, output):
                           binary=str(binary),binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                           intro=intro,start_state=start,end_state=end,
                           engine_state_writes=False)
+            if audio_clock:
+                result['device_clock']=json.loads((output/'clock-complete.json').read_text())
+                result['device_clock_sha256']=hashlib.sha256(audio_clock.read_bytes()).hexdigest()
             (output/'checkpoint.json').write_text(json.dumps(result,indent=2)+'\n')
             return result
         finally:
@@ -111,5 +120,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary',type=Path,default=Path('/tmp/dd2_native'))
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--audio-clock',type=Path,help='observed device progress at original presentations')
     args = parser.parse_args()
-    print(json.dumps(capture(args.binary.resolve(), args.output),indent=2))
+    print(json.dumps(capture(args.binary.resolve(), args.output,
+                            args.audio_clock.resolve() if args.audio_clock else None),indent=2))

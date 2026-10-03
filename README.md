@@ -598,6 +598,41 @@ equivalence of the complete application remain open. `DD2_SNDLOG=<path>` selects
 the port log; `DD2_SNDLOG=1` uses `/tmp/wasm-dd2/sound.log`. Build diagnostics now
 also live in `/tmp/wasm-dd2/{native,node,browser}-build/`.
 
+For an actual engine PCM comparison, export the observed device clock and run
+both normal application entries with that clock:
+
+```sh
+python3 tools/reference/menu_device_clock.py --capture /tmp/wasm-dd2/original-startup --mix-report /tmp/wasm-dd2/original-mix/report.json --output /tmp/wasm-dd2/device-clock/clock.bin
+python3 tools/capture_native_menu_startup.py --audio-clock /tmp/wasm-dd2/device-clock/clock.bin --output /tmp/wasm-dd2/native-clock-startup
+node tools/browser/capture_menu_startup.js web/dd2 /tmp/wasm-dd2/browser-clock-startup /tmp/wasm-dd2/device-clock/clock.bin
+make verify-menu-engine-audio MENU_ENGINE_AUDIO_ARGS='--original /tmp/wasm-dd2/original-startup --mix-report /tmp/wasm-dd2/original-mix/report.json --clock /tmp/wasm-dd2/device-clock/clock.bin --native /tmp/wasm-dd2/native-clock-startup --browser /tmp/wasm-dd2/browser-clock-startup --output /tmp/wasm-dd2/engine-audio-report --negative-runs'
+```
+
+`DD2_AUDIO_FRAME_CLOCK` supplies only device progress: the original's primary
+mixer block counts plus the separately consumed probe, indexed by actual
+presentation calls and bounded by the accepted device extent. It does not
+supply sound controls, source data, RNG or engine state. The selected menu
+device epoch is recorded independently; preceding device output is excluded.
+Repeated clock entries represent presentations without another audio block.
+The exporter requires the Flip-derived positions to locate both traced source
+starts exactly, and rejects an ambiguous trace instead of adjusting positions.
+The production device checks header, rate, extent and monotonicity, then writes
+`DD2_AUDIO_CLOCK_REPORT` when the observed window is complete. The capture
+controller ends the run at that declared boundary.
+
+The checker compares every actual C mixed byte with the original accepted
+stream, and its entire independently consumed prefix, without Python source
+recomposition. In the first recording, both real native and browser engine
+runs matched 1,192,376 accepted bytes and 1,178,272 consumed bytes. Eight
+additional actual native runs reject five damaged clock inputs and three
+same-length outputs with either/both sources one sample late. Successful raw
+port PCM is deleted after writing the report. A second independently recorded
+clock (1,648 presentations rather than 1,072) also matched both actual engines:
+1,139,120 accepted bytes and 1,125,016 consumed bytes, with different source
+sample start positions. This is a bounded menu-device
+audio proof with observed timing; the intro device, full video, live scheduling,
+racing audio and physical sinks still need their complete comparisons.
+
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
 directory. For example:

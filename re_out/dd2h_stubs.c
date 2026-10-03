@@ -208,6 +208,47 @@ static void* g_dsb_vtbl[32];
 static int ds_clock_init;
 static unsigned ds_last_ms,ds_remainder;
 static uint64_t ds_rendered_frames;
+static unsigned ds_device_epoch;
+/* Optional observed device clock for full application comparisons. Entries
+   give cumulative output frames at completed presentations in one device
+   epoch. Only time is supplied: engine source selection/controls stay intact.
+   Clock input is independent of PCM and may repeat while no block is mixed. */
+static uint64_t* ds_observed_clock;
+static unsigned ds_observed_count,ds_observed_epoch,ds_observed_index;
+static int ds_observed_init,ds_observed_complete;
+static const char* ds_observed_path;
+static void ds_observed_error(const char* reason){
+    fprintf(stderr,"DD2_AUDIO_FRAME_CLOCK: %s\n",reason);exit(1);
+}
+static unsigned ds_observed_u32(const unsigned char* p){
+    return (unsigned)p[0]|(unsigned)p[1]<<8|(unsigned)p[2]<<16|(unsigned)p[3]<<24;
+}
+static int ds_observed_load(unsigned rate){
+    if(!ds_observed_init){
+        unsigned char header[24];FILE* input;unsigned i;
+        ds_observed_init=1;ds_observed_path=getenv("DD2_AUDIO_FRAME_CLOCK");
+        if(!ds_observed_path)return 0;
+        input=fopen(ds_observed_path,"rb");
+        if(!input)ds_observed_error("cannot open clock input");
+        if(fread(header,1,sizeof(header),input)!=sizeof(header) || memcmp(header,"DD2AC01",8))
+            ds_observed_error("invalid clock header");
+        ds_observed_epoch=ds_observed_u32(header+12);
+        ds_observed_count=ds_observed_u32(header+16);
+        if(ds_observed_u32(header+8)!=rate || !ds_observed_epoch || ds_observed_epoch>100 ||
+           !ds_observed_count || ds_observed_count>100000 || ds_observed_u32(header+20))
+            ds_observed_error("invalid rate, epoch or extent");
+        ds_observed_clock=(uint64_t*)malloc((size_t)ds_observed_count*8);
+        if(!ds_observed_clock || fread(ds_observed_clock,8,ds_observed_count,input)!=ds_observed_count ||
+           fgetc(input)!=EOF)ds_observed_error("incomplete/extra clock records");
+        fclose(input);
+        for(i=0;i<ds_observed_count;i++){
+            if(ds_observed_clock[i]>(uint64_t)rate*600 || (i && ds_observed_clock[i]<ds_observed_clock[i-1]))
+                ds_observed_error("non-monotonic or excessive device extent");
+        }
+        if(!ds_observed_clock[ds_observed_count-1])ds_observed_error("empty device extent");
+    }
+    return ds_observed_clock!=NULL;
+}
 #ifdef DD2_BROWSER
 void dd2_audio_stop(void);
 #endif
@@ -237,11 +278,36 @@ void dd2_snd_mix_flip(void);
 /* A real DirectSound device keeps playing in menus and advances up to each
    control/query call. Flush elapsed samples before changing its buffer state. */
 static void ds_realtime_pump(void){
-    if(getenv("DD2_REALTIME")) dd2_snd_mix_flip();
+    if(getenv("DD2_REALTIME") || getenv("DD2_AUDIO_FRAME_CLOCK")) dd2_snd_mix_flip();
 }
 /* Component fixtures do not link the presentation shim. The weak query keeps
    their logs explicit (-1), without adding a fake presentation counter. */
 extern int dd2_frame_count(void) __attribute__((weak));
+static uint64_t ds_observed_pending(void){
+    uint64_t target;int flip;
+    if(ds_device_epoch<ds_observed_epoch)return 0;
+    if(ds_device_epoch!=ds_observed_epoch)ds_observed_error("unexpected later device epoch");
+    if(!dd2_frame_count || (flip=dd2_frame_count())<0)ds_observed_error("requires actual presentations");
+    ds_observed_index=(unsigned)flip<ds_observed_count?(unsigned)flip:ds_observed_count-1;
+    target=ds_observed_clock[ds_observed_index];
+    if(target<ds_rendered_frames)ds_observed_error("device clock moved backwards");
+    return target-ds_rendered_frames;
+}
+static void ds_observed_finish(void){
+    const char* setting;char* path;FILE* report;
+    if(!ds_observed_clock || ds_observed_complete || ds_device_epoch!=ds_observed_epoch ||
+       ds_observed_index!=ds_observed_count-1 || ds_rendered_frames!=ds_observed_clock[ds_observed_index])return;
+    setting=getenv("DD2_AUDIO_CLOCK_REPORT");
+    path=(char*)malloc(strlen(setting?setting:ds_observed_path)+6);
+    if(!path)ds_observed_error("cannot allocate report path");
+    strcpy(path,setting?setting:ds_observed_path);if(!setting)strcat(path,".json");
+    report=fopen(path,"w");
+    if(!report)ds_observed_error("cannot open completion report");
+    fprintf(report,"{\"complete\":true,\"epoch\":%u,\"entries\":%u,\"frames\":%llu,\"completed_flips\":%d}\n",
+        ds_device_epoch,ds_observed_count,(unsigned long long)ds_rendered_frames,dd2_frame_count());
+    if(fclose(report))ds_observed_error("cannot write completion report");
+    free(path);ds_observed_complete=1;
+}
 static FILE* snd_log(void){ static FILE* f; static int init;
     if(!init){ const char* path=getenv("DD2_SNDLOG"); init=1;
         if(path && *path){
@@ -414,7 +480,7 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     device=(DSDevice*)calloc(1,sizeof(DSDevice));
     if(!device){*b=0;return (int)0x8007000eu;}
     device->vtbl=g_dsnd_vtbl;device->references=1;
-    if(!g_ds_devices && !g_ds_music_buffers){ds_clock_init=0;ds_remainder=0;}
+    if(!g_ds_devices && !g_ds_music_buffers){ds_clock_init=0;ds_remainder=0;ds_device_epoch++;}
     g_ds_devices++;
     { int i; for(i=0;i<32;i++){ g_dsnd_vtbl[i]=(void*)&ds_ok; g_dsb_vtbl[i]=(void*)&ds_ok; } }
     g_dsnd_vtbl[0x04/4]=(void*)&ds_addref;
@@ -615,6 +681,7 @@ void dd2_snd_mix_flip(void){
     int cf,dt,i,t;
     unsigned rate=ds_device_rate(),tick_frames=rate/25;
     int realtime = getenv("DD2_REALTIME") != NULL;
+    int observed = ds_observed_load(rate);
     static int mix_out = -1;
     if(ds_mixing)return;
 #ifdef DD2_BROWSER
@@ -623,7 +690,13 @@ void dd2_snd_mix_flip(void){
 #ifdef DD2_NATIVE_SDL
     if(mix_out<0)mix_out=dd2_native_enabled();
 #endif
-    if(realtime){
+    if(observed){
+        if(!g_ds_devices && !g_ds_music_buffers)return;
+        pending=ds_observed_pending();
+        if(!pending){ds_observed_finish();return;}
+        dt=(int)((pending+tick_frames-1)/tick_frames);
+        realtime=1;
+    }else if(realtime){
         unsigned now=dd2_platform_ms(), elapsed;
         /* A released device has no output clock. Reopening after a movie
          * starts a new epoch, instead of queuing the entire idle interval. */
@@ -691,4 +764,5 @@ void dd2_snd_mix_flip(void){
     if(mixed_capture)fflush(mixed_capture);
     if(music_capture)fflush(music_capture);
     ds_mixing=0;
+    ds_observed_finish();
 }
