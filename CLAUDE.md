@@ -91,9 +91,17 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   A second independently observed L3 loop matches every byte on both ports:
   1497 frames/22021 clocks/1948 calculated RNG calls, all 17 scenery-x checks
   and negative mutations (dd2-original-race-l3-edge-direct-reviewed).
-  This separate passing run initializes observed seed=2300983881/blink=30
-  once; it does not resolve the first capture's seed=738116801/blink=14 edge.
-  Prefix clock/state equivalence cannot be claimed from that test.
+  The real frontend history [9,6,5,2] also passes this complete second loop
+  on BOTH ports, with naturally calculated seed=2300983881/blink=30 checked
+  without injection (dd2-original-race-l3-edge-history-reviewed).
+  The first capture starts at RNG sequence step 59712 from seed 1, whereas
+  the accepted second starts at step 12920. Its different prior history is
+  not reconstructed yet; that capture's seed=738116801/blink=14 edge remains
+  rejected. A controlled native renderer replay of its port OT reproduces
+  all port pixels exactly; the narrow discrepancy is behind actual debris
+  primitives rather than a native/WASM renderer disagreement
+  (dd2-l3-edge-painter-trace-reviewed). No original command image was captured
+  at that first loop's cf234, so its engine-versus-renderer cause remains open.
   Complete original racing audio, remaining races/modes and physical output
   clocks remain open; whole-game acceptance is still unproved.
 - Patch 843 restores Update_Debris' signed-WORD translation after camera
