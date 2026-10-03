@@ -208,6 +208,10 @@ verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHA
 verify-league-standing: patch ## compare all outcome classifications with original x86; LEAGUE_STANDING_ARGS required
 	python3 $(ROOT)/tools/verify_league_standing.py $(LEAGUE_STANDING_ARGS)
 
+.PHONY: verify-season-transition
+verify-season-transition: patch ## original-x86 transfers/reset/statistics/unlocks; SEASON_TRANSITION_ARGS required
+	python3 $(ROOT)/tools/verify_season_transition.py $(SEASON_TRANSITION_ARGS)
+
 verify-champ-season: ## actual full Retire/Yes season capture/compare; CHAMP_SEASON_ARGS required
 	python3 $(ROOT)/tools/verify_champ_season.py $(CHAMP_SEASON_ARGS)
 

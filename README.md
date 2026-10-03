@@ -152,6 +152,31 @@ acceptance run. The historical patch-834 original-crash diagnosis was wrong:
 the unmodified original eliminates this player and never decrements the season.
 Its user-sanctioned clamp remains for an inconsistent season/league state.
 
+Patch 852 repairs championship promotion/relegation: the port confused the
+driver loop counter with the stored last-place driver of the top division.
+It consequently wrote league/rank into car index 20, outside the 20-driver
+table, and left duplicate/missing ranks for the next season. The patch restores
+the original independent counter and all six stored transfer indices. It also
+removes patch 833's artificial sorting-array initialization: the original reset
+zeros points, preserving league membership, and valid transfers fill every slot.
+
+`make verify-season-transition SEASON_TRANSITION_ARGS='--output /tmp/wasm-dd2/fresh-season-transition'`
+compares 6,240 explicit component cases with actual original x86: all human
+league/rank positions, eight driver permutations per position, point ties/order,
+five statistics-history slots and existing/new unlock limits. Native and WASM
+match complete targeted standings, statistics, scalar fields and surrounding
+guards. The old code fails all 480 transfers and 4,320 continuing-season cases;
+its write beyond the driver table is explicitly rejected. This proves these
+functions on the supplied inputs; ordinary race finishes, earned promotions,
+live subsequent seasons and their full chronological A/V still need acceptance.
+All ten rebuilt native/Node demos remain exact (15,255 frames and generated PCM).
+A fresh native retirement run again matches all 20 original league images;
+the fresh browser completes elimination but fails the strict points/image gate
+across all five races with different independently observed pause times. Reports
+are `/tmp/wasm-dd2/season-transition-fixed-852-final/report.json`,
+`/tmp/wasm-dd2/parity-season-transition-852.json` and
+`/tmp/wasm-dd2/champ-season-standing-fixed-852.json` (last report remains failed).
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo

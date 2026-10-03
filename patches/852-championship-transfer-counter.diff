@@ -1,0 +1,76 @@
+Restore independent transfer storage and car loop counter @0044c884.
+
+Original eax counts drivers 0..19 (xor @44c88f, inc @44c8d8). Six distinct
+stack slots ebp-18..ebp-4 store the bottom driver of leagues 0..2 and top
+driver of leagues 1..3; cmp rank+league*5,4 stores eax at ebp-18 @44c8ad.
+Ghidra merged eax with local_28[0] and lost that store. The port therefore
+relegated index 20 into the gap after the 20-car championship table instead
+of relegating league 0's actual last driver. Promotion of league 1's leader
+then duplicates a league-0 rank, leaving a hole when Reset_League_Info sorts.
+Separate the counter and restore that first store; preserve all six original
+WORD league/rank stores and their order @44c8f1..44c916.
+
+Remove patch 833's artificial zero-fill from Reset_League_Info. Original
+@44c49f zeros POINTS (def0), not league (def2); its valid permutation fills
+all 20 sorting slots. The earlier original-stack-garbage attribution was
+wrong and concealed the transfer corruption. The faithful sort bound from
+831 stays. No new guard, fallback standings, initialization or league policy.
+Explicit 20-driver fixture compares actual original x86 and extracted C;
+whole ordinary races/seasons and chronological A/V need separate acceptance.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -38142,9 +38142,7 @@
+   int iVar2;
+   int *piVar3;
+   int aiStack_5c [20];
+-  int _si;
+-  
+-  for (_si = 0; _si < 20; _si = _si + 1) aiStack_5c[_si] = 0;  /* the reset zeros the league words -> the fall-through fill collides all cars into league 0, leaving aiStack_5c[5..19] uninitialized; FUN_0044c9c0 then reads those as garbage car indices -> OOB write @0x93def4-idx*0x36. The original relied on benign x86 stack garbage; init deterministically (car 0 -> in-bounds write; the reset standings are placeholder, repopulated by the new season's races). */
++  
+   iVar2 = 0;
+   do {
+     iVar1 = iVar2 + 0x36;
+@@ -38453,31 +38451,33 @@
+   int iVar3;
+   int iVar4;
+   int local_28 [6];
++  int driver;
+   
+   iVar2 = 0;
+-  local_28[0] = 0;
++  driver = 0;
+   do {
+     iVar1 = (*(int *)(&DAT_0093def2 + iVar2) >> 0x10) + (*(int *)(iVar2 + 0x93def0) >> 0x10) * 5;
+     if (iVar1 == 4) {
++      local_28[0] = driver;
+     }
+     if (iVar1 == 9) {
+-      local_28[1] = local_28[0];
++      local_28[1] = driver;
+     }
+     if (iVar1 == 0xe) {
+-      local_28[2] = local_28[0];
++      local_28[2] = driver;
+     }
+     if (iVar1 == 5) {
+-      local_28[3] = local_28[0];
++      local_28[3] = driver;
+     }
+     if (iVar1 == 10) {
+-      local_28[4] = local_28[0];
++      local_28[4] = driver;
+     }
+     if (iVar1 == 0xf) {
+-      local_28[5] = local_28[0];
+-    }
+-    local_28[0] = local_28[0] + 1;
++      local_28[5] = driver;
++    }
++    driver = driver + 1;
+     iVar2 = iVar2 + 0x36;
+-  } while (local_28[0] < 0x14);
++  } while (driver < 0x14);
+   iVar1 = 0;
+   iVar2 = 0;
+   do {

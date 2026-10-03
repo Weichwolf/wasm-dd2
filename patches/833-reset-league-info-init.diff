@@ -1,5 +1,12 @@
 FIX CHAMPIONSHIP season-end crash (833): Reset_League_Info uninitialized aiStack_5c
 
+2026-10-03 correction: the original reset writes WORD points @0x93def0, not
+league @0x93def2. With a valid standings permutation all sorting slots are
+filled. Patch 852 identifies the real corrupting predecessor: the port's
+merged transfer counter relegated car index 20 and left duplicate/missing
+league ranks. It restores that transfer and removes this artificial zero-fill.
+The original-stack-garbage attribution below is disproved; retained as history.
+
 The final QA-loop finding: completing a full 5-race Championship season crashed the browser
 renderer (silent page crash, no WASM RuntimeError; reliable). Instrumentation was a heisenbug
 (printf changed the layout and hid it) -- a layout-sensitive memory corruption. Traced (SEDBG

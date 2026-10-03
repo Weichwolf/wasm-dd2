@@ -35,6 +35,33 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 852 restores Promote_And_Relegate's independent eax driver counter
+  and six stack transfer slots. The decompile merged the counter into slot 0,
+  lost the cmp==4 store @44c8ad, and relegated driver 20 outside the 20-car
+  table. This left duplicate/missing league ranks before the next reset.
+  Remove 833's artificial zero-fill: actual reset @44c49f zeros points def0,
+  not league def2; every sort slot is filled by a valid permutation. Historical
+  833 original-stack-garbage attribution is disproved and annotated.
+  Original mapped unmodified x86, actual native C and WASM match 6,240 explicit
+  component cases over transfer/reset/sort/end (all human ranks/divisions,
+  eight driver permutations, ties/order, five history slots, unlock limits).
+  Complete targeted standings/statistics/scalars/guards match; old variants
+  fail 480 transfers and 4,320 continuing seasons, including observed car-20
+  overwrite @0x93e32a. Guard damage/truncation reject. Report under
+  /tmp/wasm-dd2/season-transition-fixed-852-final/report.json; successful raw removed.
+  Ordinary finishes, earned promotion, live subsequent seasons and original
+  chronological A/V remain open. This component proof does not resolve the
+  live browser clock/RNG differences recorded below.
+  Rebuilt all three ports: ten native/Node demos remain exact (15,255 frames,
+  palettes, RNG/Flip and PCM; parity-season-transition-852.json). Fresh native
+  five-retirement navigation matches all standings and 20 original league
+  framebuffer/palette pairs again. Fresh browser navigation also eliminates,
+  but its independently timed run during concurrent regressions fails the
+  strict original gate with 46 differences across all five races; retain
+  champ-season-standing-fixed-852.json as FAILED. Its pause counters differ
+  from reference/native (champ-season-852-clock-observations.json). These
+  observations do not establish the causal RNG path; record actual clock,
+  input-poll and RNG call history next.
 - Patch 851 restores Check_League_Standing's two WORD loads (league @0x93def2,
   rank @0x93def4; literal 66-prefix instructions @0x44c92c..0x44c96f). DWORD
   league included rank=4, misclassifying bottom-division elimination as relegation;
@@ -1840,8 +1867,9 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   renderer crash (string symbol typed int** deref'd as pointer), 828 Name Entry accepted no
   letters (name buffers int** not char** -> chars 4 bytes apart), 829 Keyboard rebind never
   advanced (GetKeyState stubbed 0 + only ~13 keys forwarded), 830-833 repaired several
-  championship failures (Sort_Leagues/Reset_League_Info bounds, View League dispatch,
-  initialized sorting storage). The earlier "fully working" verdict exceeded these
+  championship failures (Sort_Leagues/Reset_League_Info bounds, View League dispatch).
+  The 833 sorting-array initialization is superseded by 852's faithful transfer
+  reconstruction; reset zeros points, not leagues. The earlier "fully working" verdict exceeded these
   checks. Ordinary finishes, promotion/relegation and subsequent seasons remain open.
   The patch-834 retire-all original-crash attribution is disproved: original WORD
   classification returns elimination 5 for league=3/rank=4 and exits without decrement.
