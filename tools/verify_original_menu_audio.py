@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Compare complete bounded original menu-device PCM with production port sources.
 
-Offsets are inferred from exact source patterns. This diagnoses original mixing
-and FIR bytes, including the startup effect/CD overlap; it does not prove live
+Offsets come from original mixer blocks and the consumed ALSA probe. This
+diagnoses original mixing and FIR bytes, including startup effect/CD overlap,
+without searching PCM for an alignment. It does not prove live
 original/port start times, identical-input behavior, intro output or physical DAC
 equivalence. Every captured menu-device sample is compared, including silence.
 """
@@ -24,8 +25,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools/reference'))
 from audio import summarize_audio
 from capture import EXE_SHA256
+from mixer_timeline import original_menu_timeline
 SCOPE = ('Complete bounded original menu-device PCM with independently rendered '
-         'production port sources; inferred source offsets, live input/clock and '
+         'production port sources at independently traced sample positions; live input/clock and '
          'intro/hardware equivalence pending')
 
 
@@ -90,13 +92,6 @@ def trace_sources(path):
                 effect=effect,cd=cd,plays=plays)
 
 
-def unique_offset(payload, pattern):
-    position = payload.find(pattern)
-    if position<0 or position%8 or payload.find(pattern,position+1)>=0:
-        raise ValueError('Missing, unaligned or ambiguous source pattern')
-    return position//8
-
-
 def compare_pcm(actual, expected):
     if len(actual)!=len(expected):raise ValueError('Partial/truncated original menu PCM')
     if actual!=expected:
@@ -104,16 +99,12 @@ def compare_pcm(actual, expected):
         raise ValueError(f'Original menu mix differs at byte {first}, frame {first//8}')
 
 
-def recompose(original, effect, music):
+def recompose(original, effect, music, starts):
     if not original or len(original)%8 or len(effect)%8 or len(music)%8:
         raise ValueError('Missing or partial stereo Float32 source')
-    start = unique_offset(original,effect[:512])
-    probe = len(original)//8-1000
-    if probe<0:raise ValueError('Original window too short')
-    cd_frame = unique_offset(music,original[probe*8:(probe+64)*8])
-    cd_start = probe-cd_frame
+    start,cd_start = starts['effect'],starts['cd']
     if not start<cd_start<len(original)//8 or cd_start+len(music)//8<len(original)//8:
-        raise ValueError('Invalid inferred source order/extent')
+        raise ValueError('Invalid traced source order/extent')
     rendered = bytearray(len(original))
     for frame in range(len(original)//8):
         fx = struct.unpack_from('<ff',effect,(frame-start)*8) if start<=frame<start+len(effect)//8 else (0.0,0.0)
@@ -155,6 +146,10 @@ def main():
     if (stream['format'],stream['rate'],stream['channels'],stream['frame_bytes'])!=('FLOAT_LE',44100,2,8):
         raise ValueError('Unexpected actual menu output format')
     original = (capture/'audio'/stream['file']).read_bytes()
+    accepted_stream = summary['streams'][-1]
+    accepted = (capture/'audio'/accepted_stream['file']).read_bytes()
+    timeline = original_menu_timeline(capture/'wine.log',trace,capture/'audio'/stream['events'],
+                                     capture/'audio'/accepted_stream['events'],stream,accepted_stream)
     raw,source = source_wave(args.game_dir)
     (output/'slab.raw').write_bytes(raw)
     cdda = array('h');cdda.frombytes((args.game_dir/'Redbook/track13.cdda').read_bytes())
@@ -173,14 +168,18 @@ def main():
             '-sGLOBAL_BASE=10485760','--pre-js',str(ROOT/'tools/node_env.js'),'-o',str(js)],check=True)
         commands.append(('wasm-'+optimization,[args.node,str(js)]))
     report = dict(scope=SCOPE,pass_=False,exe_sha256=EXE_SHA256,source=source,
-                  original_capture=str(capture),original_device=stream,original_api=trace,targets={})
+                  original_capture=str(capture),original_device=stream,original_api=trace,
+                  original_timeline=timeline,targets={})
     for target,command in commands:
         pcm = output/f'{target}.pcm'
         run = subprocess.run([*command,str(output/'slab.raw'),str(pcm)],check=True,text=True,capture_output=True,timeout=30)
         effect = pcm.read_bytes()
         if len(effect)!=66150*8 or not effect[:512].strip(b'\0') or any(effect[52000*8:]):
             raise ValueError('Incomplete source render/completion')
-        result = recompose(original,effect,music)
+        result = recompose(original,effect,music,timeline['starts'])
+        result['accepted'] = recompose(accepted,effect,music,timeline['starts'])
+        if accepted[:len(original)]!=original:
+            raise ValueError('Consumed samples differ from the independently validated accepted FIFO prefix')
         result['controls'] = json.loads(run.stdout)
         result['source_render_sha256'] = digest(effect)
         report['targets'][target] = result
@@ -192,13 +191,44 @@ def main():
     for name,frame in [('prefix',0),('effect',offsets['effect_start_frames']+32),
                        ('overlap',offsets['cd_start_frames']+4000),('tail',len(original)//8-1)]:
         damaged = bytearray(original);damaged[frame*8+4]^=1
-        try:recompose(damaged,effect,music)
+        try:recompose(damaged,effect,music,timeline['starts'])
         except ValueError:pass
         else:raise RuntimeError('Accepted changed '+name)
-    try:recompose(original[:-1],effect,music)
+    try:recompose(original[:-1],effect,music,timeline['starts'])
     except ValueError:pass
     else:raise RuntimeError('Accepted truncated output')
-    report.update(pass_=True,corruption_cases=5)
+    for name in ('effect','cd','both'):
+        shifted = dict(timeline['starts'])
+        for source in ('effect','cd'):
+            if name in (source,'both'):shifted[source]+=1
+        try:recompose(original,effect,music,shifted)
+        except ValueError:pass
+        else:raise RuntimeError('Accepted a one-sample source shift: '+name)
+    # Damage the actual recorded clock metadata. The complete comparison must
+    # reject even a legal-sized block count whose changed prefix shifts both
+    # starts; looking up a new match in PCM would hide this error.
+    lines = (capture/'wine.log').read_text().splitlines()
+    first_block = timeline['blocks'][0]['line']-1
+    cursor = next(i for i,line in enumerate(lines) if 'DSOUND_MixInBuffer sec_mixpos=0/6314' in line)
+    bad_log = output/'damaged-mixer.log'
+    for name in ('missing-primary-block','short-primary-block','source-cursor','source-size','missing-source-cursor'):
+        changed = list(lines)
+        if name=='missing-primary-block':del changed[first_block]
+        elif name=='short-primary-block':
+            changed[first_block] = changed[first_block].replace(
+                f"(frames {timeline['blocks'][0]['frames']})",f"(frames {timeline['blocks'][0]['frames']-1})")
+        elif name=='source-cursor':changed[cursor] = changed[cursor].replace('sec_mixpos=0/6314','sec_mixpos=1/6314')
+        elif name=='source-size':changed[cursor] = changed[cursor].replace('/6314','/6315')
+        else:del changed[cursor]
+        bad_log.write_text('\n'.join(changed)+'\n')
+        try:
+            damaged = original_menu_timeline(bad_log,trace,capture/'audio'/stream['events'],
+                                            capture/'audio'/accepted_stream['events'],stream,accepted_stream)
+            recompose(original,effect,music,damaged['starts'])
+        except ValueError:pass
+        else:raise RuntimeError('Accepted damaged actual mixer timeline: '+name)
+    bad_log.unlink()
+    report.update(pass_=True,corruption_cases=5,source_shift_cases=3,mixer_metadata_corruption_cases=5)
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened = open_files()
     completed = [output/'slab.raw',*output.glob('*.pcm')]
@@ -207,7 +237,7 @@ def main():
     for path in completed:
         stat = path.stat()
         if (stat.st_dev,stat.st_ino) not in opened:path.unlink()
-    print('Source offsets were inferred; original/port live start-time equality remains unproven.',flush=True)
+    print('Source positions come from mixer/device events; original/port live input scheduling remains unproven.',flush=True)
 
 
 if __name__=='__main__':

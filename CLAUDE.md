@@ -35,6 +35,21 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Original menu mixer starts are now derived from actual primary block counts
+  and the independently consumed ALSA probe; the checker no longer searches
+  any PCM pattern for alignment. Literal event-derived positions match all
+  three earlier reports (FX/CD: 14199/17346, 20776/27827, 15651/19920).
+  Two new unmodified original runs pass Native/WASM O0/O2 at those independently
+  observed device positions. original-menu-mix-event-timeline-final/report.json
+  compares all 1199184 consumed bytes and the complete accepted FIFO prefix/
+  queued tail; every original source cursor and creation order validates.
+  Three one-sample source shifts, five damaged mixer timelines and all five
+  damaged full PCM cases reject. Trace records retain every primary block,
+  source cursor, played sample-time start and both software/device queue sizes.
+  Successful raw comparisons are removed after the report. This is full
+  bounded source/mixer output at recorded original device positions, not a
+  live port game run with identical original input/API scheduling or A/V timing.
+  Original movie/racing audio, full live scheduling and game acceptance remain open.
 - Original capture readiness now reads actual Main Menu poly_list @0x940010
   and restart_cd_audio @0x467420 after startup, instead of comparing a cached
   CLUT pointer byte with 201. Literal EXE stores/call order are confirmed at

@@ -557,13 +557,20 @@ with `--wine-debug=-all,+timestamp,+dsound`. The trace must show the actual
 BANK1 index42 mono8 slab effect (11025Hz source, 5512Hz playback, volume -1,
 centered pan, one shot) followed by looping CD13. Native, WASM O0 and browser
 mixer settings O2 all reproduce the complete recorded window, including initial
-silence and effect/CD overlap. Source start offsets are inferred from exact
-patterns; this diagnoses complete sample values in the bounded window, not
-identical-input live start timing or intro/hardware output. All bytes remain in
+silence and effect/CD overlap. Source start positions now come independently
+from cumulative original `DSOUND_MixToPrimary` block counts and the device's
+separately consumed rate-probe prefix. The checker never searches PCM for an
+alignment. It validates every original effect/CD cursor, creation order,
+accepted FIFO prefix and remaining software/device queues, then compares all
+accepted and consumed bytes. This diagnoses complete sample values at recorded
+device positions in the bounded window; identical-input live port scheduling
+and intro/hardware output still need acceptance. All bytes remain in
 the comparison; damaged prefix, effect, overlap, right-channel tail and truncated
-PCM reject. The check also rejects a recording that enters the attract race,
+PCM reject. One-sample shifts of either/both sources and five damaged original
+mixer timelines also reject. The check rejects a recording that enters the attract race,
 instead of fitting the racing sources into this two-source menu check. Tracing
-changes execution timing. Reports retain the inferred offsets and device time
+changes execution timing. Reports retain actual mixer blocks, source cursors,
+queue extents, independently derived starts and consumed device time
 segments; successful generated source PCM is removed after the report.
 Automatically recorded original raw PCM is also removed after successful
 comparison; recordings supplied with `--capture` belong to the caller. Failed
