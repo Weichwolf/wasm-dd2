@@ -67,8 +67,25 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   Native 7102b62a5cb1b6b96109f0e9678ad66c93f59373cb05d41bea06f5f24d15bae0;
   Node WASM 2c3ae23fcd2d243c09a17c2099107f1bd4bfe840807f0e13f0c75e816e583325;
   browser WASM 84c84d51c7280d0f84b3fbc7699b575855e0e385542f7a5eef918a0444c4e3e8.
-  The first independent L1 capture, L2/L3/L4 regressions and all-ten-demo
-  parity are still running; do not infer their final results from this entry.
+  The first independent L1 capture also now passes both ports literally:
+  1371 frames/22653 clocks/2458 RNG records after the real frontend history
+  (dd2-original-race-l1-camera-byte-first-history-reviewed).
+  Full original L2/L3/L4 regressions pass both ports: 1433/1497/812 frames,
+  10116/22021/9425 clocks and 938/1948/2040 RNG records with naturally
+  calculated initial states (dd2-original-race-l{2,3,4}-camera-byte-regression-reviewed).
+  The new L9 capture passes both actual 845 builds as well, including its
+  recorded empty prefix and negative prefix checks
+  (dd2-original-race-l9-camera-byte-regression-reviewed).
+  All ten default demos pass 15255 complete frames/palettes and every
+  effects/mixed/music/CD/RNG/flip byte on native/WASM
+  (dd2-parity-camera-byte-reviewed/results.json). Canonical /tmp/dd2_native
+  and /tmp/lvltest/dd2run.* now contain these verified artifacts.
+  Browser Championship/name entry/live-race/Retire/Yes/all four populated
+  divisions/return-to-results also passes on the new build
+  (dd2-browser-champ-camera-byte-reviewed). The L7 narrow direct-state test
+  still rejects the same six images after 845
+  (dd2-original-race-l7-camera-byte-direct-reviewed); no full L7 acceptance
+  or resolution of its differing prior clock/history is claimed.
 - New original race captures record actual preceding demo entries at the
   original first GetTickCount return using read-only hardware breakpoints.
   The comparator checks the recorded level sequence when --attract-history
