@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 
 from artifacts import WORK, prepare_output, run_bounded
-from verify_champ_season import EXE, KEYS, NORMAL_ARENA_KEYS
+from verify_champ_season import EXE, KEYS, NORMAL_ARENA_KEYS, NATURAL_CHAMP_KEYS, NATURAL_CHAMP_ACTIONS
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,8 +29,9 @@ def main():
     reference = args.reference.resolve()
     meta = json.loads((reference / 'history.json').read_text())
     normal_arena=meta.get('normal_arena') is True
+    natural_champ=meta.get('natural_championship') is True
     full_video = meta.get('full_video') is True
-    valid_keys=(meta['keys']==NORMAL_ARENA_KEYS and meta.get('natural_finish') is True) if normal_arena else meta['keys'] in (KEYS,KEYS[:17])
+    valid_keys=(meta['keys']==NATURAL_CHAMP_KEYS and meta.get('natural_finish') is True and meta.get('actions')==NATURAL_CHAMP_ACTIONS) if natural_champ else (meta['keys']==NORMAL_ARENA_KEYS and meta.get('natural_finish') is True) if normal_arena else meta['keys'] in (KEYS,KEYS[:17])
     if WORK not in reference.parents or meta['exe_modified'] is not False or meta['exe_sha256'] != EXE or not valid_keys:
         raise ValueError('Supported actual original history required')
     for name, size in [('ticks.bin', meta['clock_calls'] * 4), ('random.bin', meta['rng_calls'] * 12)]:
@@ -55,7 +56,7 @@ def main():
         phase_gate = f' && *(int*)0x4699cc == {(first_phase - 1) % 64}'
     script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\nset disable-randomization off\nstarti\n'+
         ('hbreak *PutDispEnv\n' if full_video else 'hbreak *Draw_All\n')+'condition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0'+phase_gate+'\ncontinue\ndelete 1\npython\n'+
-        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r},full_video={full_video!r})\nend\n'+
+        f'import sys, json\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r},full_video={full_video!r},natural_champ={natural_champ!r},driving_reference=json.load(open({str(reference / "history.json")!r})).get("driving_inputs"))\nend\n'+
         'printf "NATIVE_CLOCK_CONSUMED=%u\\n", dd2_tick_replay_calls()\nprintf "NATIVE_RANDOM_CONSUMED=%u\\n", dd2_random_replay_calls()\nkill\nquit\n')
     with tempfile.TemporaryDirectory(prefix='native-champ-history-assets-', dir=WORK) as tmp:
         game = Path(tmp)
@@ -69,7 +70,7 @@ def main():
             raise ValueError('Initial save differs from original')
         with (output / 'gdb.log').open('w') as log:
             run_bounded(['gdb', '--nx', '-q', '-batch', '-x', str(script), str(args.binary.resolve())],
-                        directory=output, cwd=game, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=420, check=True)
+                        directory=output, cwd=game, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=1500 if natural_champ else 420, check=True)
     log = (output / 'gdb.log').read_text()
     if f'NATIVE_CLOCK_CONSUMED={meta["clock_calls"]}\n' not in log or f'NATIVE_RANDOM_CONSUMED={meta["rng_calls"]}\n' not in log:
         raise RuntimeError('Actual native API-input extent differs')

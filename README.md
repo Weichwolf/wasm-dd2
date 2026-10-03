@@ -246,6 +246,47 @@ boundary diagnosis `/tmp/wasm-dd2/normal-arena-full-draw-anchor-853-diagnosis.js
 The check starts in the main menu: earlier startup/intro, chronological racing
 PCM, physical timing and all other input traces still need separate acceptance.
 
+The first Wrecking championship race now also has an original/native/browser
+comparison without Retire. The original receives real X11 keys from a read-only
+road follower; both ports replay its recorded transitions at the same racing
+presentations. The accepted trace ends with a destroyed player in lap two, shows
+all four league pages and starts the next actual race on level 2. All 834 racing
+pictures/palettes, result and league images, cumulative standings and game/API
+states match both ports at 6,187 original clock returns and 6,542 calculated RNG
+calls. The report is `/tmp/wasm-dd2/natural-champ-854-release-verified.json`.
+This proves that one destruction/result/continuation path; completed laps,
+wins, a complete natural season, other menu/loading/fade video and racing PCM
+still need separate acceptance.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode menu --champ-history \
+  --natural-champ-history --timeout 1500 --output /tmp/wasm-dd2/natural-champ-original
+python3 tools/capture_native_champ_history.py \
+  --reference /tmp/wasm-dd2/natural-champ-original/history \
+  --output /tmp/wasm-dd2/natural-champ-native
+node tools/browser/capture_champ_season.js web/dd2 /tmp/wasm-dd2/natural-champ-browser \
+  --api-reference=/tmp/wasm-dd2/natural-champ-original/history \
+  --rng-layout=/tmp/wasm-dd2/browser-timer-853-layout/layout.json
+python3 tools/verify_natural_champ_history.py \
+  --original /tmp/wasm-dd2/natural-champ-original/history \
+  --native /tmp/wasm-dd2/natural-champ-native/history \
+  --browser /tmp/wasm-dd2/natural-champ-browser \
+  --report /tmp/wasm-dd2/natural-champ-verified.json --clean
+make clean-logs
+```
+
+Use fresh output directories and a discovered RNG layout matching the browser
+binary. Racing images are stored with lossless zlib and decoded for literal byte
+comparison; successful raw/compressed pictures are deleted after the report.
+The browser drains a bounded picture queue at normal Asyncify presentation
+yields and holds the final yield callback while the observer writes its report.
+It never sets engine counters or changes recorded API returns. The driver
+releases held gameplay keys in the last racing picture, before `Setup_Pad(0)`
+remaps A's flag to menu Return: releasing A after the remap leaves that flag held
+in the original and loses the first Enter edge. Driving-transition timing,
+corrupt pixels, incomplete/trailing zlib and non-natural exits are rejected.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo

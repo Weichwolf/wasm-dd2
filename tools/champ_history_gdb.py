@@ -1,8 +1,9 @@
 """Original championship/normal-arena history using four read-only hardware slots.
 
-Real X11 input drives five retirements or a natural Total Destruction finish.
-The normal arena records indexed pictures at each racing Draw_All entry;
-other paths capture only requested navigation pictures. Debugger stops affect
+Real X11 input drives five retirements, a natural Total Destruction finish or
+the first Wrecking championship race, league pages and next actual race start.
+Natural player races record indexed pictures at each racing Draw_All entry;
+championship racing images use lossless zlib to bound storage. Debugger stops affect
 time; recorded API returns are explicit inputs, not physical-clock acceptance.
 Optional full video records PutDispEnv entries, including loading/fades and
 Swap_Buffers. Chronological audio is not accepted by this recorder.
@@ -13,13 +14,17 @@ from pathlib import Path
 import struct
 import subprocess
 import time
+import zlib
 
 import gdb
 
-from verify_champ_season import ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS, validate_end
+from verify_champ_season import ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS, NATURAL_CHAMP_ACTIONS, NATURAL_CHAMP_KEYS, validate_end
+from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None):
+    if natural_champ and (normal_arena or full_video):
+        raise ValueError('Natural championship uses its own bounded racing capture')
     root = Path(output) / 'history'
     root.mkdir()
     inferior = gdb.selected_inferior()
@@ -38,7 +43,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     held_polls = 0
     held_counts = []
     start_time = time.monotonic()
-    keys = NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
+    keys = NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
+    actions = NATURAL_CHAMP_ACTIONS if natural_champ else keys
+    driving_inputs = []
+    driving_cursor = 0
+    driving_held = []
+    last_control_tick = None
+    keyboard_driver = KeyboardDriver()
+    finish_controls_released = False
     race_frames = []
     presentations = []
     final_race = None
@@ -72,8 +84,8 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     def event(kind, **extra):
         nonlocal event_index
         event_index += 1
-        if event_index > 100000:
-            raise RuntimeError('Championship history exceeded 100,000 observations')
+        if event_index > (300000 if natural_champ else 100000):
+            raise RuntimeError('Championship history exceeded its bounded observation limit')
         row = dict(index=event_index, kind=kind, **state(), **extra)
         timeline.write(json.dumps(row) + '\n')
         timeline.flush()
@@ -92,7 +104,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             subprocess.run([*command, 'keydown' if down else 'keyup', key],
                            check=True, timeout=5, stdout=subprocess.DEVNULL)
         else:
-            vk = dict(Return=0x0d, Escape=0x1b, Up=0x26, Down=0x28, Left=0x25, Right=0x27)[key]
+            vk = dict(Return=0x0d, Escape=0x1b, Up=0x26, Down=0x28, Left=0x25, Right=0x27, a=0x41, z=0x5a)[key]
             gdb.execute(f'call (void)dd2_key_event({vk}, {int(down)})')
         event('key', key=key, down=down, action=key_index)
 
@@ -108,7 +120,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         return flags[index]
 
     def snapshot():
-        name = f'step{key_index:02d}-'+('natural-finish' if normal_arena and key_index > len(keys) else keys[key_index - 1] if key_index else 'boot')
+        name = f'step{key_index:02d}-'+('natural-finish' if normal_arena and key_index > len(keys) else actions[key_index - 1] if key_index else 'boot')
         directory = root / name
         directory.mkdir()
         value = {key: integer(address) for key, address in ADDRESSES.items()}
@@ -119,18 +131,27 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             rows=[dict(name=text(0x940290 + i * 26, 26), points=text(0x940240 + i * 16, 16)) for i in range(5)])
         # Check the actual path rather than publishing a complete-looking trace
         # after a key was consumed on the wrong screen.
-        if not normal_arena and key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78:
+        if not normal_arena and not natural_champ and key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78:
             race = (key_index - 10) // 17
             if (value['level'], value['race']) != ((1, 2, 5, 7, 10)[race], race):
                 raise RuntimeError('Wrong actual championship race start')
-        if not normal_arena and key_index >= 17 and (key_index - 17) % 17 == 0:
+        if not normal_arena and not natural_champ and key_index >= 17 and (key_index - 17) % 17 == 0:
             race = (key_index - 17) // 17
             if (value['level'], value['race'], value['poly_list']) != (15, race + 1, 0x46bf38 if race < 4 else 0x46ae44):
                 raise RuntimeError('Wrong actual championship result screen')
-        if not normal_arena and key_index == 95:
+        if not normal_arena and not natural_champ and key_index == 95:
             validate_end(value)
         if normal_arena and key_index > len(keys) and (value['poly_list'] != 0x46a468 or integer(0x795df4) <= 14 or integer(0x9376a8)):
             raise RuntimeError('Normal arena did not naturally reach Practice_Over')
+        if natural_champ:
+            if key_index in (10, 21) and (value['level'],value['race'],value['quit']) != ((1,0,0) if key_index==10 else (2,1,0)):
+                raise RuntimeError('Wrong naturally continued championship race start')
+            if key_index == 11 and (value['level'],value['race'],value['poly_list'],value['stats']) != (15,1,0x46bf38,1):
+                raise RuntimeError('Natural first championship result did not reach season statistics')
+            if 13<=key_index<=17 and (value['poly_list'],value['division'])!=(0x46ab30,(key_index-13)%4):
+                raise RuntimeError('Natural championship input did not reach the requested league page')
+            if integer(0x9376a8):
+                raise RuntimeError('Natural championship trace must never Retire')
         for filename, address, size in [('framebuf.bin', 0x700450, 307200), ('palette.bin', 0x700050, 1024)]:
             (directory / filename).write_bytes(read(address, size))
         (directory / 'checkpoint.json').write_text(json.dumps(value, indent=2) + '\n')
@@ -188,7 +209,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 if stage == 'down' and read(key_flag, 1) != b'\0':
                     held_polls = 1
                     if original:
-                        send(keys[key_index - 1], False)
+                        send(actions[key_index - 1], False)
                         stage = 'release'
                     else:
                         # Clear the native bridge after this real poll executes,
@@ -225,12 +246,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 # This diagnoses the original's naturally adaptive rest loop.
                 if game_frame_delay_ms and game_caller:
                     time.sleep(game_frame_delay_ms / 1000)
-                if normal_arena and game_caller:
+                if (normal_arena or natural_champ) and game_caller:
+                    if len(race_frames) >= (30000 if natural_champ else 5900):
+                        raise RuntimeError('Racing capture reached the bounded per-run image limit')
                     value = state()
                     filename = f'race{len(race_frames):05d}'
                     raw = read(0x700450, 307200)
                     palette = read(0x700050, 1024)
-                    (root / (filename+'.bin')).write_bytes(raw)
+                    (root / (filename+('.bin.z' if natural_champ else '.bin'))).write_bytes(zlib.compress(raw,6) if natural_champ else raw)
                     (root / (filename+'.pal')).write_bytes(palette)
                     race_frames.append(dict(value, index=len(race_frames), prefix=filename,
                         framebuffer_sha256=hashlib.sha256(raw).hexdigest(), palette_sha256=hashlib.sha256(palette).hexdigest()))
@@ -250,24 +273,63 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 event('PutDispEnv' if full_video else 'Draw_All', caller=hex(caller), slab=int.from_bytes(read(0x46996c, 2), 'little', signed=True))
                 if stage == 'drive' and integer(0x7746ac):
                     final_race = state()
+                    if natural_champ:
+                        final_race.update(driver=driver_metrics(read))
                     if integer(0x795df4) <= 14 or integer(0x9376a8):
                         raise RuntimeError('Arena left gameplay without natural finish')
-                    send('Up', False);send('Right', False)
+                    if natural_champ:
+                        if original:
+                            for key in list(driving_held):
+                                send(key,False)
+                                driving_inputs.append(dict(frame=len(race_frames)-1,key=key,down=False,finish=True))
+                            driving_held.clear()
+                    else:
+                        send('Up', False);send('Right', False)
                     stage = 'settle';steady = 0
+                if natural_champ:
+                    frame = len(race_frames)-1
+                    if not original and driving_reference:
+                        while driving_cursor < len(driving_reference) and driving_reference[driving_cursor]['frame'] == frame and (bool(integer(0x7746ac)) if driving_reference[driving_cursor].get('finish') else game_caller):
+                            transition=driving_reference[driving_cursor]
+                            send(transition['key'],transition['down']);driving_inputs.append(transition)
+                            driving_cursor+=1
+                    elif stage == 'drive' and game_caller and integer(0x795df4)>14:
+                        # Release the real keys before Play_Game's rest batch
+                        # and Setup_Pad(0) remap A's flag to menu Return. A late
+                        # A release after that remap cannot clear that flag.
+                        for key in list(driving_held):
+                            send(key,False);driving_inputs.append(dict(frame=frame,key=key,down=False))
+                        driving_held.clear();finish_controls_released=True
+                    elif stage == 'drive' and game_caller and not finish_controls_released and integer(0x784298)<0:
+                        tick=integer(0x7746c0)
+                        if last_control_tick is None or tick-last_control_tick>=6:
+                            observed=keyboard_driver.controls(read,tick);wanted=observed['wanted']
+                            for key in list(driving_held):
+                                if key not in wanted:
+                                    send(key,False);driving_inputs.append(dict(frame=frame,key=key,down=False))
+                                    driving_held.remove(key)
+                            for key in wanted:
+                                if key not in driving_held:
+                                    send(key,True);driving_inputs.append(dict(frame=frame,key=key,down=True))
+                                    driving_held.append(key)
+                            event('driver',**observed)
+                            last_control_tick=tick
                 if stage == 'held':
-                    send(keys[key_index - 1], False)
+                    send(actions[key_index - 1], False)
                     stage = 'release'
                 if stage != 'settle':
                     continue
-                race_start = (key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
+                race_start = (key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
                 if race_start:
                     ready = game_caller and integer(0x7746ac) == 0
                 else:
-                    ready = read(0x46996c, 2) == b'\0\0' and (not normal_arena or key_index <= len(keys) or word(0x940010) == 0x46a468)
+                    ready = read(0x46996c, 2) == b'\0\0' and (not normal_arena or key_index <= len(keys) or word(0x940010) == 0x46a468) and (not natural_champ or key_index!=11 or word(0x940010)==0x46bf38)
                 steady = steady + 1 if ready else 0
                 if steady < (2 if race_start else 16):
                     continue
                 snapshot()
+                if natural_champ and key_index == 10:
+                    key_index+=1;stage='drive';continue
                 if normal_arena and key_index == len(keys):
                     if integer(0x4673f8)!=2 or integer(0x4673f4)!=2 or integer(0x936ff4)<8:
                         raise RuntimeError('Wrong actual Total Destruction arena')
@@ -277,16 +339,18 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     continue
                 if normal_arena and key_index > len(keys):
                     break
-                if key_index == len(keys):
+                if key_index == len(actions):
                     break
                 key_index += 1
-                key_flag = flag_for(keys[key_index - 1])
+                key_flag = flag_for(actions[key_index - 1])
                 stage = 'down'
-                send(keys[key_index - 1], True)
+                send(actions[key_index - 1], True)
             else:
                 raise RuntimeError(f'Unexpected original history stop: {pc:x}')
         if not rng or rng[0][0] != 1 or rng_pc != rng_entry or clock_pc != clock_entry:
             raise RuntimeError('Incomplete original RNG/clock entry-to-return pairs')
+        if natural_champ and not original and driving_cursor!=len(driving_reference):
+            raise RuntimeError('Recorded original driving input extent differs')
         (root / 'ticks.bin').write_bytes(b''.join(struct.pack('<I', value) for value in clocks))
         (root / 'random.bin').write_bytes(b''.join(struct.pack('<III', *row) for row in rng))
         (root / 'history.json').write_text(json.dumps(dict(scope=__doc__.strip() if original else 'Actual native keyboard-bridge championship trace; calculated RNG and recorded clock inputs; no physical sink/whole-game parity claim',
@@ -294,7 +358,9 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             target=target,input='real X11 keys' if original else 'dd2_key_event', acknowledged_keys=True, held_pad_polls=held_counts,
             clock_calls=len(clocks), rng_calls=len(rng), pad_polls=len(pads), draws=draws,
             observed_play_draw_delay_ms=game_frame_delay_ms,
-            complete_retirement_season=not normal_arena and steps == 95, normal_arena=normal_arena,
+            complete_retirement_season=not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
+            natural_championship=natural_champ, actions=actions, driving_inputs=driving_inputs,
+            racing_image_format='indexed-zlib' if natural_champ else 'indexed-raw',
             natural_finish=bool(final_race), final_race=final_race, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,
             elapsed_seconds=time.monotonic() - start_time), indent=2) + '\n')

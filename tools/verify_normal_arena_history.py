@@ -13,6 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import zlib
 
 from artifacts import WORK, open_files, prepare_output
 from verify_champ_history import recorded_apis
@@ -79,6 +80,26 @@ def exact_bytes(a, b, size):
     return a == b
 
 
+def picture(root, prefix, suffix, size):
+    raw = root / (prefix + suffix)
+    compressed = root / (prefix + suffix + '.z')
+    if raw.exists() == compressed.exists():
+        raise ValueError('Exactly one raw or losslessly compressed picture is required')
+    if raw.exists():
+        data = raw.read_bytes()
+    else:
+        packed = compressed.read_bytes()
+        if len(packed) > size + 1024:
+            raise ValueError('Oversized compressed capture')
+        decoder = zlib.decompressobj()
+        data = decoder.decompress(packed, size + 1)
+        if not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+            raise ValueError('Incomplete or trailing compressed capture data')
+    if len(data) != size:
+        raise ValueError('Incomplete framebuffer/palette')
+    return data
+
+
 def compare_frames(original, target, reference, frames, seeds, browser=False, full=False, pad_offset=0):
     if len(frames) != len(reference):
         raise ValueError('Racing draw extent differs')
@@ -104,8 +125,8 @@ def compare_frames(original, target, reference, frames, seeds, browser=False, fu
             differences.append(dict(index=index, region='state', fields=state))
         record = dict(index=index, original={}, actual={})
         for suffix, size, key in (('.bin', 307200, 'framebuffer_sha256'), ('.pal', 1024, 'palette_sha256')):
-            left = (original / (a['prefix'] + suffix)).read_bytes()
-            right = (target / (b['prefix'] + suffix)).read_bytes()
+            left = picture(original, a['prefix'], suffix, size)
+            right = picture(target, b['prefix'], suffix, size)
             if digest(left) != a[key] or (not browser and digest(right) != b[key]):
                 raise ValueError('Recorded racing image hash differs')
             if not exact_bytes(left, right, size):
@@ -116,14 +137,15 @@ def compare_frames(original, target, reference, frames, seeds, browser=False, fu
     return differences, hashes
 
 
-def compare_checkpoints(original, actual):
+def compare_checkpoints(original, actual, names=NAMES, image_names=None):
     differences, images = [], []
-    for name in NAMES:
+    image_names=NAMES[-2:] if image_names is None else image_names
+    for name in names:
         a, b = [load(root / name / 'checkpoint.json') for root in (original, actual)]
         fields = [key for key in POINT if a[key] != b[key]]
         if fields:
             differences.append(dict(checkpoint=name, region='state', fields=fields))
-        if name in NAMES[-2:]:
+        if name in image_names:
             for filename, size in (('framebuf.bin', 307200), ('palette.bin', 1024)):
                 left, right = [(root / name / filename).read_bytes() for root in (original, actual)]
                 if not exact_bytes(left, right, size):

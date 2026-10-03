@@ -133,6 +133,7 @@ def main():
     parser.add_argument('--champ-history-steps',type=int,choices=(17,95),default=95,help='17 stops after first result for diagnosis; 95 completes the retirement path')
     parser.add_argument('--champ-history-frame-delay-ms',type=int,default=0,help='diagnostic elapsed-time delay at real Play_Game draw entries; 0..250, no clock/frame-skip/state writes')
     parser.add_argument('--normal-arena-history',action='store_true',help='actual Total Destruction player arena, Up+Right inputs until natural finish; requires --champ-history')
+    parser.add_argument('--natural-champ-history',action='store_true',help='drive the first Wrecking championship race without Retire, show all four leagues, start race two; read-only road follower and recorded real X11 keys')
     parser.add_argument('--normal-arena-full-video',action='store_true',help='also capture every menu/loading/fade PutDispEnv presentation including Swap_Buffers; requires --normal-arena-history')
     parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
     parser.add_argument("--race-physics",action="store_true",help="also record all preceding/target car-state checkpoints and global random callers; requires --race-full-history")
@@ -172,6 +173,8 @@ def main():
         parser.error('--normal-arena-history requires --champ-history with default steps')
     if args.normal_arena_full_video and not args.normal_arena_history:
         parser.error('--normal-arena-full-video requires --normal-arena-history')
+    if args.natural_champ_history and (not args.champ_history or args.normal_arena_history or args.champ_history_steps!=95):
+        parser.error('--natural-champ-history requires --champ-history and no other history sequence')
     if args.mode=='startup' and (args.audio or args.keys is not None or args.frames or args.race_stream or
                                 args.menu_cycle or not 64<=args.startup_frames<=512):
         parser.error('startup mode requires 64..512 first presentations, no audio/navigation/race capture')
@@ -338,7 +341,7 @@ def run(game, output, args):
                     ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.champ_history:
-                            capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256,args.champ_history_frame_delay_ms,args.normal_arena_history,args.normal_arena_full_video)
+                            capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256,args.champ_history_frame_delay_ms,args.normal_arena_history,args.normal_arena_full_video,args.natural_champ_history)
                             return
                         if args.race_stream:
                             capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics,args.race_step_window,args.race_step_levels)
@@ -440,15 +443,15 @@ def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_cou
     print(f"Original racing loop captured: {len(result['frames'])} frames, {result['clock_calls']} actual tick returns",flush=True)
 
 
-def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256,frame_delay_ms=0,normal_arena=False,full_video=False):
+def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256,frame_delay_ms=0,normal_arena=False,full_video=False,natural_champ=False):
     script=output/'history.gdb'
-    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n'+f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\n'+f'record_champ_history({str(output)!r},{steps},game_frame_delay_ms={frame_delay_ms},normal_arena={normal_arena!r},full_video={full_video!r})\nend\ndetach\nquit\n')
+    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n'+f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\n'+f'record_champ_history({str(output)!r},{steps},game_frame_delay_ms={frame_delay_ms},normal_arena={normal_arena!r},full_video={full_video!r},natural_champ={natural_champ!r})\nend\ndetach\nquit\n')
     with (output/'history.log').open('w') as log:
         run_bounded(['gdb','--nx','-q','-batch','-x',str(script)],directory=output,env=env,
                     stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
     history=output/'history/history.json'
     meta=json.loads(history.read_text())
-    if len(meta['keys'])!=(9 if normal_arena else steps) or len(meta['checkpoints'])!=(11 if normal_arena else steps+1):
+    if len(meta['keys'])!=(20 if natural_champ else 9 if normal_arena else steps) or len(meta['checkpoints'])!=(22 if natural_champ else 11 if normal_arena else steps+1):
         raise RuntimeError('Incomplete original championship history')
     meta['initial_save_sha256']=initial_save_sha256
     history.write_text(json.dumps(meta,indent=2)+'\n')
