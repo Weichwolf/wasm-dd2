@@ -287,6 +287,20 @@ remaps A's flag to menu Return: releasing A after the remap leaves that flag hel
 in the original and loses the first Enter edge. Driving-transition timing,
 corrupt pixels, incomplete/trailing zlib and non-natural exits are rejected.
 
+The browser recorder also observes the actual player position, speed, lap,
+destruction and completed-lap flag at the first presentation after gameplay
+ends. The verifier compares this observation with the original's final player
+state. Use `--require-completed-laps --require-player-points` on
+`verify_natural_champ_history.py` to require a surviving regular finisher and
+positive points earned by the player, including their cumulative league score.
+These gates reject the accepted destruction trace above. The new browser finish
+observer was regressed against that trace: all 834 uncompressed racing picture
+and palette hashes, seven checkpoint pictures and all 22 checkpoint states
+match the retained original evidence. Its report is
+`/tmp/wasm-dd2/natural-champ-browser-855-finish-observer-regression-verified.json`.
+Regular ten-lap finishes and positive player result/continuation parity remain
+unaccepted until a complete original/native/browser capture passes those gates.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo

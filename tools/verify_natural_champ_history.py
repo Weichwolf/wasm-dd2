@@ -102,10 +102,24 @@ def history(root, target):
     return meta,random,ticks
 
 
+def completion_requirements(driver, before, result, completed_laps=False, player_points=False):
+    if completed_laps and (driver['finished_laps']!=1 or driver['dead']!=0):
+        raise ValueError('Regular finish with completed laps and a surviving player required')
+    a,b=before['cars'][0],result['cars'][0]
+    if a['name']!=b['name'] or b['values'][0]!=a['values'][0]+b['values'][6]:
+        raise ValueError('Player identity or cumulative race score differs')
+    if player_points and b['values'][6]<=0:
+        raise ValueError('Positive points earned by the actual player required')
+    return dict(name=b['name'],points_before=a['values'][0],race_points=b['values'][6],
+                points_after=b['values'][0])
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('original','native','browser','report'):parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--clean',action='store_true')
+    parser.add_argument('--require-completed-laps',action='store_true',help='reject destruction or an unfinished player')
+    parser.add_argument('--require-player-points',action='store_true',help='reject a player who earned zero race points')
     args=parser.parse_args()
     for name in ('original','native','browser','report'):
         path=getattr(args,name).resolve()
@@ -119,6 +133,11 @@ def main():
     if any(nm['final_race'][key]!=om['final_race'][key] for key in (*STATE,'driver')):
         raise ValueError('Native actual natural finish differs')
     nav=load(args.browser/'navigation.json');observer=load(args.browser/'rng-observations.json')
+    if (nav.get('final_driver') is not None or args.require_completed_laps) and nav.get('final_driver')!=om['final_race']['driver']:
+        raise ValueError('Browser observed actual player finish differs')
+    original_before,original_result=[load(args.original/NAMES[i]/'checkpoint.json') for i in (10,11)]
+    player_result=completion_requirements(om['final_race']['driver'],original_before,original_result,
+                                          args.require_completed_laps,args.require_player_points)
     api=dict(clock_calls=om['clock_calls'],computed_rng_calls=om['rng_calls'],api_sha256=dict(clock=digest(ticks),random=digest(random)))
     if (nav.get('natural_championship') is not True or nav['keys']!=NATURAL_CHAMP_KEYS
             or nav['actions']!=NATURAL_CHAMP_ACTIONS or nav['checkpoints']!=NAMES
@@ -142,6 +161,9 @@ def main():
     report=dict(scope=__doc__.strip(),original_exe_sha256=EXE,initial_save_sha256=om['initial_save_sha256'],
                 native_sha256=nm['binary_sha256'],wasm_sha256=nav['wasm_sha256'],api_inputs=api,
                 racing_frames=len(om['race_frames']),natural_finish=True,retired=False,
+                final_driver=om['final_race']['driver'],browser_final_driver=nav.get('final_driver'),
+                player_result=player_result,
+                required_completion=dict(completed_laps=args.require_completed_laps,positive_player_points=args.require_player_points),
                 field_notes={'damage':'Historical recorder field at 0x792a76 is planar speed magnitude, not body damage; new driver metrics use planar_speed.'},
                 ending='destroyed' if om['final_race']['driver']['dead']==1 else 'completed_laps',targets={})
     for target,root,frames in [('native',args.native,nm['race_frames']),('browser',args.browser,load(args.browser/'race-frames.json'))]:
@@ -151,6 +173,8 @@ def main():
         point_diff,images=compare_checkpoints(args.original,root,NAMES,IMAGE_NAMES);differences.extend(point_diff)
         points=[load(root/name/'checkpoint.json') for name in NAMES]
         before,result,started=points[10],points[11],points[21]
+        if completion_requirements(om['final_race']['driver'],before,result,args.require_completed_laps,args.require_player_points)!=player_result:
+            raise ValueError('Port player score differs from original')
         if (result['level'],result['race'],result['poly_list'],result['stats'],result['retire_confirm'])!=(15,1,0x46bf38,1,0):
             raise ValueError('First natural championship result was not reached')
         for a,b in zip(before['cars'],result['cars']):
@@ -168,6 +192,15 @@ def main():
     report['pass_']=all(row['pass_'] for row in report['targets'].values())
     sample=picture(args.original,om['race_frames'][1]['prefix'],'.bin',307200)
     negatives=dict(changed_pixel=not exact_bytes(sample,bytes([sample[0]^1])+sample[1:],307200))
+    for key,driver,before,result in [
+        ('destroyed_regular_finish',dict(om['final_race']['driver'],dead=1),original_before,original_result),
+        ('incomplete_laps',dict(om['final_race']['driver'],dead=0,finished_laps=0),original_before,original_result),
+        ('zero_player_points',dict(om['final_race']['driver'],dead=0,finished_laps=1),copy.deepcopy(original_before),copy.deepcopy(original_result))]:
+        if key=='zero_player_points':
+            result['cars'][0]['values'][6]=0;result['cars'][0]['values'][0]=before['cars'][0]['values'][0]
+        try:completion_requirements(driver,before,result,True,True)
+        except ValueError:negatives[key]=True
+        else:negatives[key]=False
     moved=copy.deepcopy(om);moved['driving_inputs'][0]['frame']+=1
     original_events=[json.loads(line) for line in (args.original/'events.jsonl').read_text().splitlines()]
     try:validate_driving_inputs(moved,original_events)

@@ -173,6 +173,13 @@ async function tap(page,key,timing=null,raceStart=null){
      history.lastStack=new Error('Actual API-history presentation').stack;
      const masks=HEAPU16[0x754448>>1]|HEAPU16[0x75444a>>1];
      if(history.stage==='drive'&&physical.quit){
+      if(naturalChamp){
+       const readInt=address=>new DataView(HEAPU8.buffer).getInt32(address,true);
+       history.finalDriver={speed:readInt(0x792a7a),heading:HEAPU16[0x78a792>>1]&4095,
+        position:[readInt(0x78a744),readInt(0x78a74c)],lap:HEAPU16[0x795c48>>1],
+        lap_progress:HEAPU16[0x795c4a>>1],dead:readInt(0x792ac6),
+        planar_speed:readInt(0x792a76),finished_laps:HEAPU16[0x795c52>>1]};
+      }
       for(const code of naturalChamp?[]:['ArrowUp','ArrowRight']){
        window.dispatchEvent(new KeyboardEvent('keyup',{code}));history.inputs.push({action:history.index,code,down:false,level:physical.level,ticks:physical.ticks});
       }
@@ -368,6 +375,7 @@ async function tap(page,key,timing=null,raceStart=null){
     input:'browser keyboard events',initial_save_sha256:apiReference.meta.initial_save_sha256,wasm_sha256:rngLayout.wasm_sha256,
     normal_arena:apiReference.meta.normal_arena===true,
     natural_championship:apiReference.meta.natural_championship===true,
+    final_driver:await page.evaluate(()=>window.__apiHistory.finalDriver||null),
     actions:apiReference.meta.actions,
     racing_image_format:streaming?'indexed-zlib':'indexed-raw',
     observer_stop:streaming?'Normal Asyncify presentation yield callback held after the final checkpoint; engine state and API returns untouched':null,
