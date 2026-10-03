@@ -35,6 +35,40 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 845 restores the signed BYTE camera lane at 0x77cf3a. Original
+  0x429294..0x42929f tests the signed byte; 0x42946f..0x42947a sign-extends
+  the same byte from an overlapping DWORD for the right-wall clamp.
+  At actual L1 cf596/ticks1193, bytes 03 ff 00 00 mean lane 3; the port's
+  old int alias read 65283, skipped the clamp and left camera bump=0 instead
+  of 32. Car 4's physical state and calculated RNG already matched.
+  The detailed independent L1 original capture now matches BOTH targets:
+  all 1403 frames/palettes, 23640 clocks, 2458 calculated RNG records,
+  naturally calculated seed=872332370/blink=58 and the actually observed
+  preceding sequence [9,6,5,2,3,4,9,9,2]. All 31 scenery checkpoints,
+  negative first-pixel/state/prefix mutations and 31 full snapshots of six
+  named camera/car regions match literally
+  (dd2-original-race-l1-camera-byte-history-reviewed;
+  dd2-l1-camera-byte-state-reviewed). The actual old WASM fails on the same
+  inputs with exactly eight wrong images while fixed native passes
+  (dd2-original-race-l1-camera-old-wasm-negative-reviewed).
+  Full original L5/L6 regressions pass both ports: 1235/1371 frames,
+  13907/15980 clocks and 2990/1860 RNG records
+  (dd2-original-race-l{5,6}-camera-byte-regression-reviewed).
+  The newly captured original L9 loop also passes fixed native and pre-845
+  WASM: 972 frames/17256 clocks, actually recorded empty prefix and negative
+  prefix mutations (dd2-original-race-l9-prefix-history-reviewed).
+  Native normal intro/menu/CD/controller/live-race/pause/restart passes
+  3072000 renderer pixels and 9332264 accepted mixed bytes
+  (dd2-native-camera-byte-startup-reviewed). Browser gesture/full/skip starts
+  pass 1071513600 canvas pixels, 6039616 exact Wine source PCM bytes per case
+  and all 900/1048/1012 submitted shared buffers, reaching a real menu/race
+  (dd2-browser-camera-byte-startup-reviewed). These are submitted-byte
+  checks, not complete original physical/audio-clock proof.
+  Native 7102b62a5cb1b6b96109f0e9678ad66c93f59373cb05d41bea06f5f24d15bae0;
+  Node WASM 2c3ae23fcd2d243c09a17c2099107f1bd4bfe840807f0e13f0c75e816e583325;
+  browser WASM 84c84d51c7280d0f84b3fbc7699b575855e0e385542f7a5eef918a0444c4e3e8.
+  The first independent L1 capture, L2/L3/L4 regressions and all-ten-demo
+  parity are still running; do not infer their final results from this entry.
 - New original race captures record actual preceding demo entries at the
   original first GetTickCount return using read-only hardware breakpoints.
   The comparator checks the recorded level sequence when --attract-history
@@ -44,13 +78,14 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   The sequence checker separately rejects this actual 19-entry port history
   and an extra-demo mutation (dd2-original-prefix-metadata-check-reviewed).
   Entry observations are not complete prefix clocks or full-prefix proof.
-- L1 is still rejected: the full 1371-frame/22653-clock/2458-RNG capture
+- Before patch 845, L1 was rejected: the full 1371-frame/22653-clock/2458-RNG capture
   has 9 differing images in direct initial-state matching. Real native/WASM
   history [9,6,5,2,3,4,9,9,2] naturally calculates seed=872332370/blink=58,
   matches all state/clock/RNG phases and 9 scenery checkpoints, and removes
   the one-pixel cf438 difference, but 8 images at cf596..602 still differ
   (dd2-original-race-l1-tunnel-{direct,history}-reviewed). A detailed original
-  camera/command capture around those counters is running.
+  camera/command capture around those counters enabled the signed-byte fix
+  documented above.
   L7 direct initial-state matching also remains rejected: both targets have
   6 differing images despite exact clock/RNG/blink phases over 1147 frames,
   21711 clocks and 4726 RNG calls (dd2-original-race-l7-tunnel-direct-reviewed).

@@ -1,0 +1,28 @@
+Preserve the original signed-BYTE camera lane field at 0x77cf3a.
+
+FUN_00428a8c tests the camera's lane against the last strip lane before
+clamping it to the track wall. Original 0x429294 loads BYTE [0x77cf3a]
+into AH; TEST AH,AH / JG at 0x42929d..0x42929f is a signed-byte test.
+The right-wall branch loads DWORD [0x77cf37] at 0x42946f, then SAR EDX,24
+at 0x42947a: this is the same field, sign-extended from BYTE 0x77cf3a.
+Ghidra's int alias read three adjacent structure bytes as part of the lane.
+
+Actual original L1 cf596/ticks1193 has bytes 03 ff 00 00 at 0x77cf3a.
+Both ports' old alias read 65283 rather than lane 3, missing the original
+right-wall clamp and camera bump (0x463ef0: original=32, port=0). Camera
+x/z differ by 6/5 world units while car 4's physical position, input clock
+and all calculated random states agree. The next presented image and seven
+more at cf596..602 differ broadly. Read exactly the original signed byte;
+the two camera uses have the same signed semantics as the proven loads.
+
+--- a/dd2_symbols.h
++++ b/dd2_symbols.h
+@@ -1438,7 +1438,7 @@
+ #define DAT_00463ef8 (*(int*)GIMG(0x00463ef8))
+ #define DAT_00463f08 (*(int*)GIMG(0x00463f08))
+ #define DAT_00792a7a (*(undefined1*)GIMG(0x00792a7a))
+-#define DAT_0077cf3a (*(int*)GIMG(0x0077cf3a))
++#define DAT_0077cf3a (*(signed char*)GIMG(0x0077cf3a))
+ #define DAT_0077cf37 (*(int*)GIMG(0x0077cf37))
+ #define DAT_0077cf38 (*(unsigned char*)GIMG(0x0077cf38))
+ #define DAT_0077cf00 (*(int*)GIMG(0x0077cf00))
