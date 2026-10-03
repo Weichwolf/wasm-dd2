@@ -1,5 +1,6 @@
-// Actual five-race Retire/Yes championship path. No engine state writes.
-// This is the retirement case, not normal race completion or full A/V parity.
+// Actual five-race Retire/Yes path or naturally finished Total Destruction arena.
+// Clock/RNG inputs are explicit in --api-reference mode; no later engine writes.
+// Passing this recorder validates API/input extent, not original image/PCM parity.
 const assert=require('assert'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const {serve,boot,chromium}=require('./felib');
 const output=path.resolve(process.argv[3]||'');
@@ -19,9 +20,10 @@ if(apiOption){
  const root=path.resolve(apiOption.slice('--api-reference='.length));assert(root.startsWith('/tmp/wasm-dd2/'));
  const meta=JSON.parse(fs.readFileSync(path.join(root,'history.json')));
  assert(meta.exe_modified===false&&meta.exe_sha256==='0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2');
- assert(meta.complete_retirement_season&&meta.acknowledged_keys&&meta.keys.length===95);
- const expectedKeys=['Return','Return','Return','Return','Up','Left','Return','Down','Down','Return'];
- for(let race=0;race<5;race++)expectedKeys.push('Escape','Down','Down','Down','Return','Up','Return','Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
+ const normalArena=meta.normal_arena===true;
+ assert(meta.acknowledged_keys&&(normalArena?meta.natural_finish:meta.complete_retirement_season));
+ const expectedKeys=normalArena?['Return','Right','Right','Return','Right','Return','Down','Down','Return']:['Return','Return','Return','Return','Up','Left','Return','Down','Down','Return'];
+ if(!normalArena)for(let race=0;race<5;race++)expectedKeys.push('Escape','Down','Down','Down','Return','Up','Return','Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
  assert.deepEqual(meta.keys,expectedKeys,'Actual complete championship input sequence required');
  assert.equal(meta.initial_save_sha256,crypto.createHash('sha256').update(save).digest('hex'));
  const ticks=fs.readFileSync(path.join(root,'ticks.bin')),random=fs.readFileSync(path.join(root,'random.bin'));
@@ -112,13 +114,13 @@ async function tap(page,key,timing=null,raceStart=null){
     'ENV.DD2_TICK_REPLAY="/original-ticks.bin";ENV.DD2_RANDOM_REFERENCE="/original-random.bin";ENV.DD2_RANDOM_LEVEL="all";ENV.DD2_RANDOM_REQUIRE_INITIAL="1";});</script>':'';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+apiHook+marker)});
   });
-  await page.addInitScript(({rngLayout,apiKeys})=>{
+  await page.addInitScript(({rngLayout,apiKeys,normalArena})=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
    window.__rngObservations=[];window.__rngError=null;
    window.__stablePhysicsFrames=0;let previousPhysics=null;
    const seeds=[1];let previousRng=null;
-   window.__apiHistory=apiKeys?{active:false,done:false,stage:'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null}:null;
+   window.__apiHistory=apiKeys?{active:false,done:false,stage:'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[]}:null;
    const present=CanvasRenderingContext2D.prototype.putImageData;
    const readText=(a,n)=>{let text='';for(let i=0;i<n&&HEAPU8[a+i];i++)text+=String.fromCharCode(HEAPU8[a+i]);return text;};
    const encode=(a,n)=>{let text='';for(let i=0;i<n;i+=16384)text+=String.fromCharCode(...HEAPU8.subarray(a+i,a+Math.min(i+16384,n)));return btoa(text);};
@@ -142,17 +144,25 @@ async function tap(page,key,timing=null,raceStart=null){
     window.__slabReadyFrames=HEAP16[0x46996c>>1]===0?window.__slabReadyFrames+1:0;
     const history=window.__apiHistory;
     let recordHistory=false;
+    const recordRace=history&&history.active&&normalArena&&physical.level>=8&&physical.level<=12&&physical.ticks>0&&physical.quit===0&&HEAPU32[rngLayout.clock_counter_address>>2]>0;
+    if(recordRace)window.__captureNext=true;
     if(history&&history.active&&!history.done){
      history.lastStack=new Error('Actual API-history presentation').stack;
      const masks=HEAPU16[0x754448>>1]|HEAPU16[0x75444a>>1];
+     if(history.stage==='drive'&&physical.quit){
+      for(const code of ['ArrowUp','ArrowRight']){
+       window.dispatchEvent(new KeyboardEvent('keyup',{code}));history.inputs.push({action:history.index,code,down:false,level:physical.level,ticks:physical.ticks});
+      }
+      history.stage='settle';history.steady=0;
+     }
      if(history.stage==='down'&&((masks&history.mask)||physical.level!==history.keyLevel)){
       window.dispatchEvent(new KeyboardEvent('keyup',{code:history.code}));
       history.inputs.push({action:history.index,code:history.code,down:false,level:physical.level,ticks:physical.ticks});
       history.stage='release';
      }else if(history.stage==='release'&&(masks&history.mask)===0){history.stage='settle';history.steady=0;}
      if(history.stage==='settle'){
-      const go=history.index>=10&&history.index<=78&&(history.index-10)%17===0;
-      const ready=go?physical.level===[1,2,5,7,10][(history.index-10)/17]&&physical.quit===0&&physical.ticks>0:HEAP16[0x46996c>>1]===0;
+      const go=normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
+      const ready=go?(normalArena?physical.level>=8&&physical.level<=12:physical.level===[1,2,5,7,10][(history.index-10)/17])&&physical.quit===0&&physical.ticks>0:HEAP16[0x46996c>>1]===0&&(!normalArena||history.index<=apiKeys.length||HEAPU32[0x940010>>2]===0x46a468);
       history.steady=ready?history.steady+1:0;
       if(history.steady>=(go?2:16)){recordHistory=true;window.__captureNext=true;}
      }
@@ -180,6 +190,7 @@ async function tap(page,key,timing=null,raceStart=null){
      }
      window.__snapshot={stage:'browser platform present',canvas_mismatches:mismatches,
       level:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],ticks:HEAP32[0x7746c0>>2],quit:HEAP32[0x7746ac>>2],
+      countdown:HEAP32[0x784298>>2],frame_skip:HEAP32[0x7746b8>>2],finished:HEAP32[0x795df4>>2],retired:HEAP32[0x9376a8>>2],damage:new DataView(HEAPU8.buffer).getInt32(0x792a76,true),
       poly_list:HEAPU32[0x940010>>2],race_type:HEAP32[0x4673f4>>2],race_mode:HEAP32[0x4673f8>>2],
       race:HEAP32[0x93dec8>>2],season:HEAP32[0x93dec0>>2],num_races:HEAP32[0x467654>>2],
       division:HEAP32[0x46ad00>>2],stats:HEAP32[0x46741c>>2],actual_season:HEAP32[0x4682f4>>2],
@@ -191,9 +202,17 @@ async function tap(page,key,timing=null,raceStart=null){
       api_calls:apiKeys?{clock:HEAPU32[rngLayout.clock_counter_address>>2],random:HEAPU32[rngLayout.random_replay_counter_address>>2]}:null};
      window.__captureNext=false;
     }
+    if(recordRace)history.raceFrames.push(window.__snapshot);
     if(recordHistory){
      history.shots.push(window.__snapshot);
-     if(history.index===history.keys.length){history.done=true;}
+     if(normalArena&&history.index===apiKeys.length){
+      history.index++;history.stage='drive';history.steady=0;
+      for(const code of ['ArrowUp','ArrowRight']){
+       history.inputs.push({action:history.index,code,down:true,level:physical.level,ticks:physical.ticks});
+       window.dispatchEvent(new KeyboardEvent('keydown',{code}));
+      }
+     }
+     else if(history.index===history.keys.length+(normalArena?1:0)){history.done=true;}
      else{
       const key=history.keys[history.index++];
       history.code={Return:'Enter',Escape:'Escape',Up:'ArrowUp',Down:'ArrowDown',Left:'ArrowLeft',Right:'ArrowRight'}[key];
@@ -209,7 +228,7 @@ async function tap(page,key,timing=null,raceStart=null){
     }
     return result;
    };
-  },{rngLayout,apiKeys:apiReference&&apiReference.meta.keys});
+  },{rngLayout,apiKeys:apiReference&&apiReference.meta.keys,normalArena:apiReference&&apiReference.meta.normal_arena});
   await boot(page,server);
   if(rngLayout){
    const first=await page.evaluate(()=>window.__rngObservations[0]);
@@ -225,13 +244,13 @@ async function tap(page,key,timing=null,raceStart=null){
     if(progress.error)throw new Error(progress.error);
     assert.deepEqual(errors,[],'Browser error during actual API-input sequence');
     if(progress.done)break;
-    if(progress.index!==lastIndex){lastIndex=progress.index;lastChange=Date.now();}
+    if(progress.index!==lastIndex||progress.stage==='drive'){lastIndex=progress.index;lastChange=Date.now();}
     if(Date.now()-lastChange>30000)throw new Error('Browser API-input sequence stopped advancing; see api-progress.json');
     if(Date.now()>=deadline)throw new Error('Browser API-input sequence timed out');
     await page.waitForTimeout(1000);
    }
    assert.equal(await page.evaluate(()=>window.__apiHistory.error||window.__rngError),null);
-   const total=await page.evaluate(()=>window.__apiHistory.shots.length);assert.equal(total,96);
+   const total=await page.evaluate(()=>window.__apiHistory.shots.length);assert.equal(total,apiReference.meta.checkpoints.length);
    for(let i=0;i<total;i++){
     const name=apiReference.meta.checkpoints[i],directory=path.join(output,name);fs.mkdirSync(directory);
     const shot=await page.evaluate(i=>window.__apiHistory.shots[i],i);
@@ -242,20 +261,36 @@ async function tap(page,key,timing=null,raceStart=null){
     }
     fs.writeFileSync(path.join(directory,'checkpoint.json'),JSON.stringify(shot,null,2));
    }
+   if(apiReference.meta.normal_arena){
+    const n=await page.evaluate(()=>window.__apiHistory.raceFrames.length),frames=[];
+    for(let i=0;i<n;i++){
+     const shot=await page.evaluate(i=>window.__apiHistory.raceFrames[i],i);assert.equal(shot.canvas_mismatches,0);
+     const prefix='race'+String(i).padStart(5,'0');
+     for(const [region,suffix,size] of [['framebuf','bin',307200],['palette','pal',1024]]){
+      const raw=Buffer.from(shot[region],'base64');assert.equal(raw.length,size);fs.writeFileSync(path.join(output,prefix+'.'+suffix),raw);delete shot[region];
+     }
+     frames.push({...shot,index:i,prefix});
+    }
+    fs.writeFileSync(path.join(output,'race-frames.json'),JSON.stringify(frames,null,2));
+   }
    const ended=JSON.parse(fs.readFileSync(path.join(output,apiReference.meta.checkpoints.at(-1),'checkpoint.json')));
    assert.equal(ended.api_calls.clock,apiReference.meta.clock_calls,'Actual clock-input extent differs');
    assert.equal(ended.api_calls.random,apiReference.meta.rng_calls,'Actual computed RNG-input extent differs');
    assert.equal(ended.rng.count,apiReference.meta.rng_calls);
-   assert.equal(ended.level,0);assert.equal(ended.race,5);assert.equal(ended.season,0);
-   assert.equal(ended.cars[0].values[1],3);assert.equal(ended.cars[0].values[2],4);
+   if(apiReference.meta.normal_arena){assert.equal(ended.poly_list,0x46a468);assert(ended.finished>14);assert.equal(ended.retired,0);}
+   else{
+    assert.equal(ended.level,0);assert.equal(ended.race,5);assert.equal(ended.season,0);
+    assert.equal(ended.cars[0].values[1],3);assert.equal(ended.cars[0].values[2],4);
+   }
    assert.deepEqual(errors,[]);
    fs.writeFileSync(path.join(output,'navigation.json'),JSON.stringify({keys:apiReference.meta.keys,checkpoints:apiReference.meta.checkpoints,
     input:'browser keyboard events',initial_save_sha256:apiReference.meta.initial_save_sha256,wasm_sha256:rngLayout.wasm_sha256,
+    normal_arena:apiReference.meta.normal_arena===true,
     scope:'Actual production WASM, autonomous normal DOM key sequence and original clock/RNG inputs; no later engine state injection or physical A/V parity claim',
     api_reference:{clock_calls:ended.api_calls.clock,computed_rng_calls:ended.api_calls.random,api_sha256:apiReference.api_sha256},
     input_observations:await page.evaluate(()=>window.__apiHistory.inputs)},null,2));
    fs.writeFileSync(path.join(output,'rng-observations.json'),JSON.stringify({layout:rngLayout,observations:await page.evaluate(()=>window.__rngObservations)},null,2));
-   console.log('PASS actual browser complete championship API/input history:',ended.api_calls);
+   console.log('PASS actual browser '+(apiReference.meta.normal_arena?'natural arena':'complete championship')+' API/input history (image comparison separate):',ended.api_calls);
    return;
   }
   await capture(page,null);

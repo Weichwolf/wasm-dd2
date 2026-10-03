@@ -21,6 +21,7 @@ EXE='0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2'
 KEYS=['Return']*4+['Up','Left','Return','Down','Down','Return']+[
     'Escape','Down','Down','Down','Return','Up','Return','Right','Return',
     'Right','Right','Right','Right','Escape','Down','Down','Return']*5
+NORMAL_ARENA_KEYS=['Return','Right','Right','Return','Right','Return','Down','Down','Return']
 INPUTS={'original':'real X11 keys','native':'dd2_key_event','browser':'browser keyboard events'}
 ADDRESSES=dict(level=0x936ff4,cf=0x462ff0,ticks=0x7746c0,quit=0x7746ac,poly_list=0x940010,
     race_type=0x4673f4,race_mode=0x4673f8,race=0x93dec8,season=0x93dec0,num_races=0x467654,

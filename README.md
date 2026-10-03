@@ -177,6 +177,52 @@ are `/tmp/wasm-dd2/season-transition-fixed-852-final/report.json`,
 `/tmp/wasm-dd2/parity-season-transition-852.json` and
 `/tmp/wasm-dd2/champ-season-standing-fixed-852.json` (last report remains failed).
 
+Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
+split the minute digits from a four-element array, while the sprite loop still
+read six elements; native and WASM displayed stack garbage in the first pair.
+The patch restores the original contiguous stores and reverse digit traversal.
+
+The natural arena comparison drives the actual original with X11 keys, selects
+Total Destruction on arena 10 and holds Up/Right until the normal finish, without
+Retire or engine-state injection. Native uses the normal keyboard bridge;
+the production browser uses DOM keyboard events and checks actual canvas pixels.
+All calculated RNG triples are checked against the original from boot seed 1;
+recorded original clock returns are explicit inputs. Both targets match all
+516 indexed racing Draw_All-entry/platform pictures and palettes, 11 navigation
+states, race-ready/result pictures and the natural completion state, consuming
+3,624 clock values and 15,018 independently calculated random values. The
+pre-fix native and browser recordings each fail 503 racing pictures and the
+race-ready picture. Changed pixels/palettes, Retire, unfinished races and changed
+or truncated random evidence are rejected. This accepts this arena input trace;
+loading/fades, physical timing, chronological PCM and other races remain open.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode menu --champ-history --normal-arena-history --timeout 420 --output /tmp/wasm-dd2/arena-original
+python3 tools/capture_native_champ_history.py --reference /tmp/wasm-dd2/arena-original/history --output /tmp/wasm-dd2/arena-native
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/arena-wasm-layout
+node tools/browser/capture_champ_season.js web/dd2 /tmp/wasm-dd2/arena-browser --api-reference=/tmp/wasm-dd2/arena-original/history --rng-layout=/tmp/wasm-dd2/arena-wasm-layout/layout.json
+make verify-normal-arena-history NORMAL_ARENA_HISTORY_ARGS='--original /tmp/wasm-dd2/arena-original/history --native /tmp/wasm-dd2/arena-native/history --browser /tmp/wasm-dd2/arena-browser --report /tmp/wasm-dd2/arena-report.json --clean'
+make clean-logs
+```
+
+Use fresh directories and build native, Node and browser sequentially first.
+The report retains exact image hashes and deletes successful raw pictures with
+`--clean`, after checking that no process has them open. `--before-report` also
+validates a retained failing baseline against identical original image/API
+provenance. Current evidence is
+`/tmp/wasm-dd2/normal-arena-timer-digits-853-verified.json`.
+The rebuilt browser also passes the controlled five-retirement original API
+comparison (44 clock returns, 2,610 random calculations, 96 checkpoints, five
+complete standings and 20 retained original league-image hashes), recorded in
+`/tmp/wasm-dd2/champ-browser-api-timer-853-verified.json`. The earlier live-clock
+browser comparison remains a separate failed case; its post-Retire Steam calls
+were traced to the original's timing-dependent rest loop rather than removed.
+All ten rebuilt native/Node demos also match exactly: 15,255 presented pictures,
+palettes, flip/RNG logs and effects/CD/mixed/music PCM. The report is
+`/tmp/wasm-dd2/parity-timer-digits-853.json`; this regression compares the ports,
+without establishing complete original racing audio parity.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo

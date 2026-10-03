@@ -225,6 +225,10 @@ verify-browser-champ-history: ## actual browser/original API checkpoint and reta
 verify-champ-rest-loop: ## actual original/browser post-Retire Steam caller diagnosis; CHAMP_REST_LOOP_ARGS required
 	python3 $(ROOT)/tools/verify_champ_rest_loop.py $(CHAMP_REST_LOOP_ARGS)
 
+.PHONY: verify-normal-arena-history
+verify-normal-arena-history: ## exact natural arena pictures/API states against original; NORMAL_ARENA_HISTORY_ARGS required
+	python3 $(ROOT)/tools/verify_normal_arena_history.py $(NORMAL_ARENA_HISTORY_ARGS)
+
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
 

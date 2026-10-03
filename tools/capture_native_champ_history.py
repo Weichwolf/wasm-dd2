@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 
 from artifacts import WORK, prepare_output, run_bounded
-from verify_champ_season import EXE, KEYS
+from verify_champ_season import EXE, KEYS, NORMAL_ARENA_KEYS
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,7 +28,9 @@ def main():
     args = parser.parse_args()
     reference = args.reference.resolve()
     meta = json.loads((reference / 'history.json').read_text())
-    if WORK not in reference.parents or meta['exe_modified'] is not False or meta['exe_sha256'] != EXE or meta['keys'] not in (KEYS, KEYS[:17]):
+    normal_arena=meta.get('normal_arena') is True
+    valid_keys=(meta['keys']==NORMAL_ARENA_KEYS and meta.get('natural_finish') is True) if normal_arena else meta['keys'] in (KEYS,KEYS[:17])
+    if WORK not in reference.parents or meta['exe_modified'] is not False or meta['exe_sha256'] != EXE or not valid_keys:
         raise ValueError('Supported actual original history required')
     for name, size in [('ticks.bin', meta['clock_calls'] * 4), ('random.bin', meta['rng_calls'] * 12)]:
         if (reference / name).stat().st_size != size:
@@ -44,7 +46,7 @@ def main():
     script = output / 'history.gdb'
     script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\nset disable-randomization off\nstarti\n'+
         'hbreak *Draw_All\ncondition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0\ncontinue\ndelete 1\npython\n'+
-        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native")\nend\n'+
+        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r})\nend\n'+
         'printf "NATIVE_CLOCK_CONSUMED=%u\\n", dd2_tick_replay_calls()\nprintf "NATIVE_RANDOM_CONSUMED=%u\\n", dd2_random_replay_calls()\nkill\nquit\n')
     with tempfile.TemporaryDirectory(prefix='native-champ-history-assets-', dir=WORK) as tmp:
         game = Path(tmp)
