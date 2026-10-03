@@ -35,6 +35,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- After the original race-stream/clock-replay instrumentation, all ten
+  ordinary demo runs still match between native/WASM: 15255 complete
+  presented frames/palettes, every RNG/flip record and every effects/final-
+  mix/music/CD byte (dd2-parity-clock-stream-reviewed/results.json).
+  The ordinary default and interactive paths are checked without a clock
+  replay file. Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.* now use
+  the verified builds: native f8e3cf2d365ff9e1d22372f771d7b622b36c1621e127aaf6c615e91f513c604b;
+  Node WASM 17f0bcd4e2f644c0427da99682f0716774facb78e4dc1d3e20fb694de6c19eca.
+  Browser normal full/skip/gesture startup proof uses WASM
+  b4f28c8f4527a640f9b1848579167e3cedd8ce915e0e8f9331761962981da296. Prior reports below retain
+  their own artifact hashes and narrower scopes. Complete original audio,
+  initialization/fades, all other original races/modes and physical output
+  timing still require acceptance; the active whole-game goal is unproved.
 - The complete first original L9 racing render loop is now compared directly,
   not only at sparse cf checkpoints. The unmodified supported dd2h.exe runs
   normally under Wine; three read-only hardware breakpoints record every
