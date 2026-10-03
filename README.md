@@ -318,6 +318,21 @@ The comparator records partial results for both targets after an engine exit
 or deadline and rejects incomplete clock/RNG consumption and missing diagnostic
 images. A failure in the first target does not skip the second target.
 
+For a read-only native physics diagnosis, add `--race-physics` to a full-history
+capture. It saves all 20 cars' primitive/dynamics, render, handling and wheel
+records at every selected race presentation and records every original random
+caller's return address and engine phase. Run the native observer with:
+
+```sh
+python3 tools/reference/trace_native_physics.py --capture third_party/verification-artifacts/original-physics-capture --output third_party/verification-artifacts/fresh-native-physics
+```
+
+The observer uses two native hardware breakpoints and compares measured states;
+it copies no engine state. A fresh L9 control matches all 401 car checkpoints
+(10345800 bytes) and all 6948 random callers/phases. Changed first car bytes
+and caller names are rejected. This diagnoses native physics; use the separate
+video comparator for native/WASM framebuffer acceptance.
+
 For the older L3 capture, a controlled native experiment isolates the effect
 of retained debris vertices:
 

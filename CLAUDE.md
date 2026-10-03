@@ -35,6 +35,30 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- --race-physics now records all 20 cars at every target presentation under
+  full original API history: primitive/dynamics 0x78a520 (20*0x27c), render FD
+  0x792690 (20*44), handling 0x792a00 (20*0x1b2), wheels 0x794be8 (20*0xb0).
+  Global RNG caller addresses are read from original ESP at 0x456cc6; actual
+  Watcom rand has no outstanding pushes there (verified 0x456cbc..0x456cde).
+  tools/reference/trace_native_physics.py observes Native using ONLY two
+  hardware breakpoints after starti; no engine memory/register writes.
+  Fresh L9 control matches all 401 checkpoints/10345800 bytes and all 6948
+  caller functions/level/cf/tick phases from real boot seed 1, with changed
+  first car byte/caller-name negatives rejected and accepted native artifacts
+  restored (dd2-original-l9-physics-callers-reviewed;
+  dd2-native-l9-physics-callers-controls-reviewed/report.json).
+  Separate full video comparison also passes BOTH ports: all 401 pictures/
+  palettes, 5131 clocks, 6948 RNG records and every phase/prefix/pixel negative
+  (dd2-original-l9-physics-video-reviewed). This native physics diagnosis is
+  not full original physical/audio-clock or WASM physics acceptance.
+  The first full original L10 capture is complete: 378 target frames,
+  476890 clocks (472790 in 33 prior demos), 130536 global RNG calls, natural
+  target blink42/entry RNG count118657. Both ports REJECT: they first diverge
+  in the preceding L8 and select L10 after 18 prior demos instead of 33,
+  with 1339 target frames and unconsumed clock/RNG inputs (763 rejection
+  records each; dd2-original-l10-full-history-inputs-reviewed;
+  dd2-original-l10-full-history-comparison-reviewed). This does not isolate
+  an intrinsic L10 bug: its target initial state/history already differs.
 - The fresh FULL-input original L8 capture remains rejected on BOTH ports,
   not just in direct initial-state matching: 1028 original frames, 58168
   clocks, actual prefix [9,7], all observed initial entry states calculated.

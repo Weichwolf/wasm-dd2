@@ -11,11 +11,16 @@ import struct
 import gdb
 
 
-def record_history(output, level, image_frames=(), image_counters=()):
+def record_history(output, level, image_frames=(), image_counters=(), physics_trace=False):
     directory = Path(output) / 'race'
     directory.mkdir()
     inferior = gdb.selected_inferior()
     ticks, random, frames, images, preceding = [], [], [], [], []
+    callers = []
+    physics_layout = [dict(name='car primitives/dynamics', address=0x78a520, size=20*0x27c),
+                      dict(name='car render FD', address=0x792690, size=20*44),
+                      dict(name='car state', address=0x792a00, size=20*0x1b2),
+                      dict(name='car wheel FD', address=0x794be8, size=20*0xb0)]
     kind = gdb.BP_HARDWARE_BREAKPOINT
 
     def read(address, size):
@@ -56,6 +61,10 @@ def record_history(output, level, image_frames=(), image_counters=()):
             if pc == 0x456cc6:
                 rng_pointer = value
                 rng_before = int.from_bytes(read(rng_pointer, 4), 'little')
+                if physics_trace:
+                    esp = int(gdb.parse_and_eval('$esp')) & 0xffffffff
+                    callers.append(dict(index=len(random), caller=int.from_bytes(read(esp,4),'little'),
+                                        level=integer(0x936ff4), cf=integer(0x462ff0), ticks=integer(0x7746c0)))
                 next_rng = 0x456cde
             else:
                 random.append((rng_before, int.from_bytes(read(rng_pointer, 4), 'little'), value))
@@ -108,6 +117,8 @@ def record_history(output, level, image_frames=(), image_counters=()):
             prefix = f'frame{index:05d}'
             (directory / f'{prefix}.bin').write_bytes(read(0x700450, 307200))
             (directory / f'{prefix}.pal').write_bytes(read(0x700050, 1024))
+            if physics_trace:
+                (directory / f'{prefix}.cars').write_bytes(b''.join(read(row['address'],row['size']) for row in physics_layout))
             if index in image_frames or current['cf'] in image_counters:
                 (directory / f'{prefix}.image').write_bytes(read(0x400000, 0x580400))
                 images.append(index)
@@ -134,6 +145,9 @@ def record_history(output, level, image_frames=(), image_counters=()):
         raise RuntimeError('complete original history from boot seed 1 required')
     (directory / 'ticks.bin').write_bytes(b''.join(struct.pack('<I', value) for value in ticks))
     (directory / 'random.bin').write_bytes(b''.join(struct.pack('<III', *row) for row in random))
+    if physics_trace:
+        if len(callers)!=len(random):raise RuntimeError('incomplete original random caller trace')
+        (directory / 'random-callers.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in callers))
     result = dict(stage='Draw_All entry / pending presentation', scope=__doc__, level=level,
                   complete_racing_loop=True, complete_history_api_inputs=True,
                   breakpoints='hardware only; no inferior memory/register writes',
@@ -144,5 +158,6 @@ def record_history(output, level, image_frames=(), image_counters=()):
                   clock_calls=len(ticks), prefix_clock_calls=prefix_clock_calls,
                   rng_calls=len(random), rng_initial_seed=random[0][0], rng_final_seed=random[-1][1],
                   diagnostic_image_frames=images, preceding_demos=preceding)
+    if physics_trace:result['physics_layout']=physics_layout
     (directory / 'race.json').write_text(json.dumps(result, indent=2) + '\n')
     print(f'Original complete history inputs: {len(preceding)} preceding demos, {len(frames)} target frames', flush=True)
