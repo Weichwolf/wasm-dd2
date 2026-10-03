@@ -82,6 +82,40 @@ its split stack locals caused the previous 137-frame discrepancy. Menu behavior,
 full championships, other menu actions and complete comparisons with the running original
 remain open acceptance work.
 
+Track Select has a reproducible original/native/browser comparison for all seven
+road previews and four bowl previews with the default four-road/one-bowl unlock
+state. Each case uses 28 real navigation actions and records 64 consecutive
+presentations at each of its 29 checkpoints. All 3,712 complete framebuffer and
+palette pairs match the unmodified original on each port; the browser also
+checks every actual canvas pixel. The gate checks track/mode/type, screen list,
+unlock limits, lock flag and the track saved for cancellation. It covers locked
+confirmation, wraps, confirmation/cancellation/reopening and F1/F2 shortcuts.
+It pairs by the observed highlight counter and does not prove chronological
+transitions, race launch, earned unlocks, live timing or audio.
+
+The original retains its lock flag after cancelling a locked preview: opening
+the restored unlocked track and pressing Enter still leaves the menu open.
+Changing the track clears/recomputes the flag. Both ports reproduce this
+observed original behavior; this test does not repair that original defect.
+
+Capture each case (`road` and `bowl`) on all three targets using fresh directories:
+
+```sh
+make clean-logs
+make verify-track-selection TRACK_SELECTION_ARGS='capture --case road --target original --output /tmp/wasm-dd2/track-road-original'
+make verify-track-selection TRACK_SELECTION_ARGS='capture --case road --target native --output /tmp/wasm-dd2/track-road-native'
+make verify-track-selection TRACK_SELECTION_ARGS='capture --case road --target browser --output /tmp/wasm-dd2/track-road-browser'
+make verify-track-selection TRACK_SELECTION_ARGS='compare --case road --original /tmp/wasm-dd2/track-road-original --native /tmp/wasm-dd2/track-road-native --browser /tmp/wasm-dd2/track-road-browser --report /tmp/wasm-dd2/track-road-report.json --negative --clean'
+make clean-logs
+```
+
+Original input uses acknowledged X11 keys; native uses the normal headless
+`dd2_key_event` bridge; browser uses DOM keyboard events. All start from the same
+supplied SaveGames bytes, with no engine-state writes. Seven damaged image,
+palette, selection-state and phase-sequence checks reject on each target.
+Successful raw images are removed after the report retains their hashes and
+navigation states. Current reports: `/tmp/wasm-dd2/track-{road,bowl}-verified-851.json`.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo

@@ -42,6 +42,12 @@ def record_cycle(output, frames, entry, hardware=False, already_at_entry=False):
                        "car_angles": [int.from_bytes(read(0x468eb4+2*i, 2), "little", signed=True)
                                       for i in range(3)],
                        "poly_list": int.from_bytes(read(0x940010, 4), "little")})
+        result[-1].update({name: int.from_bytes(read(address, size), "little", signed=size == 4)
+                           for name, address, size in (
+                               ("race_mode", 0x4673f8, 4), ("race_type", 0x4673f4, 4),
+                               ("race_track", 0x4673fc, 4), ("playable_tracks", 0x467404, 4),
+                               ("playable_bowls", 0x467408, 4), ("track_locked", 0x46a920, 1),
+                               ("saved_track", 0x940224, 4))})
         check_space(output)
     enter.delete()
     (directory / "cycle.json").write_text(json.dumps({

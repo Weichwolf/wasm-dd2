@@ -41,7 +41,10 @@ async function capture(page,index,key){
    fs.writeFileSync(path.join(directory,`${prefix}-${region}.bin`),data);
   }
   metadata.push({index:i,prefix,phase:frame.phase,cf:frame.cf,level:frame.level,canvas_mismatches:frame.canvas_mismatches,
-   race_car:frame.race_car,car_angles:frame.car_angles,poly_list:frame.poly_list});
+   race_car:frame.race_car,car_angles:frame.car_angles,poly_list:frame.poly_list,
+   race_mode:frame.race_mode,race_type:frame.race_type,race_track:frame.race_track,
+   playable_tracks:frame.playable_tracks,playable_bowls:frame.playable_bowls,
+   track_locked:frame.track_locked,saved_track:frame.saved_track});
  }
  fs.writeFileSync(path.join(directory,'cycle.json'),JSON.stringify({stage:'browser platform present',frames:metadata,scope:'complete rendered cycle with observed car pose; audio and wall-clock timing not compared'},null,2));
  await page.screenshot({path:path.join(output,name,'screenshot.png')});
@@ -84,6 +87,9 @@ async function capture(page,index,key){
       }
       window.__cycle.push({phase:HEAP32[0x4699cc>>2],cf:HEAP32[0x462ff0>>2],level:HEAP32[0x936ff4>>2],
        race_car:HEAP32[0x467400>>2],car_angles:[0,1,2].map(i=>HEAP16[(0x468eb4>>1)+i]),poly_list:HEAPU32[0x940010>>2],
+       race_mode:HEAP32[0x4673f8>>2],race_type:HEAP32[0x4673f4>>2],race_track:HEAP32[0x4673fc>>2],
+       playable_tracks:HEAP32[0x467404>>2],playable_bowls:HEAP32[0x467408>>2],
+       track_locked:HEAPU8[0x46a920],saved_track:HEAP32[0x940224>>2],
        framebuf:encode(0x700450,307200),palette:encode(0x700050,1024),canvas_mismatches:mismatches});
       if(window.__cycle.length===limit)window.__cycleCapture=false;
      }

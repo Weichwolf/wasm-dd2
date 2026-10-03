@@ -197,6 +197,10 @@ verify-sound-resample: ## check complete waveforms against real Wine FIR hashes 
 verify-menu-cycles: ## compare all 64 presented phases; MCREF, MCNATIVE/MCBROWSER, MCREPORT required
 	python3 $(ROOT)/tools/verify_menu_cycles.py --reference $(MCREF) $(if $(MCNATIVE),--native $(MCNATIVE)) $(if $(MCBROWSER),--browser $(MCBROWSER)) --report $(MCREPORT)
 
+.PHONY: verify-track-selection
+verify-track-selection: ## capture/compare road and bowl menus; TRACK_SELECTION_ARGS required
+	python3 $(ROOT)/tools/verify_track_selection.py $(TRACK_SELECTION_ARGS)
+
 verify-champ-names: patch ## check naming/score builders; optional CHAMPREF, CHAMPBROWSER and CHAMPNATIVE captures
 	python3 $(ROOT)/tools/verify_champ_names.py --node $(NODE) $(if $(CHAMPREF),--reference $(CHAMPREF)) $(if $(CHAMPBROWSER),--browser $(CHAMPBROWSER)) $(if $(CHAMPNATIVE),--native-capture $(CHAMPNATIVE))
 

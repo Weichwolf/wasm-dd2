@@ -35,6 +35,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Track Select road/bowl navigation now matches the original over all seven/four
+  previews at default unlock limits 4/1: 29 checkpoints x 64 presentations per
+  case, 3,712 full framebuffer/palette pairs per target, actual browser canvas
+  readback, same initial SaveGames. Track/mode/type/poly list/lock/limits/saved
+  track validate alongside images; wraps, locked confirmations, cancel/reopen
+  and F1/F2 shortcuts are included. Seven damaged capture cases reject per
+  target. `make verify-track-selection` captures and compares both cases;
+  reports track-{road,bowl}-verified-851.json retain hashes/states, raw images
+  removed. No engine correction in this change. Pairing uses observed highlight
+  phases: transitions, live input/audio timing, earned unlocks and racing remain
+  open. Real original capture confirms its stale lock flag after cancel: opening
+  the restored unlocked track then Enter stays in Select_Track until a track
+  change recomputes the flag. Both ports reproduce this original defect.
 - Patch 850 removes 15 added face-handler address filters which rejected the
   actual frontend OT at 0x935ff0. Car Select lost 44 quads despite all 171
   transformed vertices being byte-identical. Targeted pose {640,1920,592}
