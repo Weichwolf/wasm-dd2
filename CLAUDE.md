@@ -35,6 +35,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The completed movie-MCI builds also pass all ten complete sound-enabled
+  demos: 15255 presented frames, every framebuffer/palette, RNG/flip log,
+  effects/final-mix/music-summand byte and raw CD source byte match between
+  native and WASM. Full results are retained in
+  third_party/verification-artifacts/dd2-parity-mci-movie-reviewed/results.json.
+  Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now use these
+  verified builds; native SHA
+  93abecf8d7de24e8bede1c56235f540d94eeea95c8916fecc77718110d0728c9.
+  This is cross-port regression evidence, not complete original-game parity.
 - Actual engine Play_Movie now has an AVI MCI device, SDL movie texture/PCM16
   device and browser canvas/source-rate AudioContext. DD2_MOVIE=INTRO.AVI or
   OUTRO.AVI runs the real Init_Application/Sound_Remove/Set_Draw_Mode/Play_Movie
