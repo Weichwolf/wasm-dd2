@@ -35,6 +35,51 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 843 restores Update_Debris' signed-WORD translation after camera
+  rotation, as proved by original 0x42485c..0x424882. At L5 cf546/ticks1094
+  slot 116's rotated z=-32775 must wrap to 32761. Retaining the full int
+  incorrectly culled primitive 0x778110 and changed the last global __otz
+  from 32239 to 23730, which also shaded visible smoke 101 instead of 126.
+  Both independently recorded complete L5 loops now match every native/WASM
+  framebuffer/palette byte and clock/RNG/blink phase: 1235 frames/13907
+  clocks/2990 RNG calls in dd2-original-race-l5-debris-direct-reviewed, and
+  1435 frames/21128 clocks/3005 RNG calls in
+  dd2-original-race-l5-debris-history-reviewed. The latter naturally derives
+  initial seed/blink through real demos [9,6], compares all 19 scenery
+  snapshots and rejects first-pixel/RNG/blink corruption. The original
+  debris xy, __otz and all three visible smoke shades now also match in
+  both targets' frame1158 engine images. No renderer or state injection fix.
+  L6 natural-history (1371 frames/15980 clocks/1860 RNG calls) and L9
+  (1499 frames/18931 clocks) regressions pass on both final artifacts:
+  dd2-original-race-l{6,9}-debris-regression-reviewed/report.json.
+  Native artifact 69974c5e4266e61921bbb1bc2cd4827410f14a7e0e2617098a43713750cd47a8;
+  Node WASM 9be2f3a62605b68cff68ba7f11f500270c7e35986035dc05db7ff56e50c63193;
+  browser WASM 43f3f904adf73d2b9e48ad8c0f31ec2dba1772040f398e3be753446eacefa309.
+  All ten default native/WASM demos also pass: 15255 complete frames/palettes,
+  every RNG/flip record and all effects/mixed/music/CD bytes, without
+  reference files (dd2-parity-debris-word-reviewed/results.json). Canonical
+  /tmp/dd2_native and /tmp/lvltest/dd2run.* use these verified artifacts.
+  Normal browser gesture/full/skip intro -> menu -> live race also passes:
+  1022668800 exact canvas pixels, 6039616 exact original source PCM bytes
+  per case and all 918/951/977 submitted shared buffers
+  (dd2-browser-debris-word-startup-reviewed/report.json). Native normal
+  intro/menu/CD/controller/race/pause/restart passes 3072000 renderer pixels
+  and 7519928 accepted mixed bytes (dd2-native-debris-word-startup-reviewed).
+  Championship selection/name/Retire/Yes -> results -> View League shows all
+  four populated divisions on this browser build
+  (dd2-browser-debris-word-champ-trace-reviewed/scores.json). The original
+  fixed-delay navigation test first missed a key during an animation;
+  navigation synchronization needs repair, not another engine correction.
+- Next actual-original L2 loop is still NOT accepted. The unmodified capture
+  dd2-original-race-l2-stream-reviewed has 1433 frames, 10116 actual clock
+  returns, 938 RNG calls and initial seed=473895114/blink=73. The real
+  native history [9,6,5] naturally produces that seed/blink and matches all
+  state phases and all nine scenery checkpoints, but 16 framebuffer images
+  differ at cf419..479, including a visible car-shadow difference. Preserve
+  dd2-original-race-l2-debris-history-reviewed/report.json. A second L2
+  capture records detailed engine images around those counters for diagnosis.
+  Original complete racing audio, other races/modes and physical output
+  clocks remain open. Full whole-game acceptance is still unproved.
 - The reference comparator now supports --attract-history: real frontend and
   preceding demos calculate initial RNG/blink states, which are required to
   match rather than initialized from the recording. L6 passes both targets
@@ -49,7 +94,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   per-presentation port image names retain the countdown-reset occurrences.
   Existing L9 full-loop regression remains exact on both targets (1499 frames;
   dd2-original-race-l9-history-instrument-regression-reviewed).
-- A second L5 capture has 1435 frames, 21128 clock returns and 3005 RNG calls.
+- Before patch 843, a second L5 capture had 1435 frames, 21128 clock returns and 3005 RNG calls.
   Its real preceding demos [9,6] naturally produce initial seed=365994542 and
   blink=35. Native matches all clock/RNG/blink phases and all 19 scenery-x
   snapshots, but six presented images at cf547..549 differ
@@ -82,7 +127,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   The real pre-842 WASM artifact is rejected on the same L6 original input:
   22 wrong frames and all 11 wrong first-scene x snapshots; exact clock/RNG
   consumption still passes (dd2-original-race-l6-old-wasm-negative-reviewed).
-- The next complete actual-original L5 capture is NOT accepted yet.
+- The first complete actual-original L5 capture failed before patch 843.
   dd2-original-race-l5-rng-reviewed has 1235 frames, 13907 actual clock
   returns, 2990 actual random calls and initial seed=365994542/blink=35.
   Native computes every random state/return and matches the clock/blink
