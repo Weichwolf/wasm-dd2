@@ -35,6 +35,15 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Championship browser navigation now waits for the actual slab transition
+  and engine input consumption rather than releasing at an arbitrary next
+  presentation. Both normal speed and 3x-throttled menu selection/name entry
+  reach a live championship race, Retire/Yes, View League, all four populated
+  divisions and return to results without browser errors
+  (dd2-browser-champ-steady-slab-{normal,slow-menus}-reviewed).
+  Racing runs at normal speed in both accepted tests; an earlier whole-run
+  3x-throttle diagnostic hung at loading and is not accepted. This change is
+  test synchronization only, not an engine fix or new original score proof.
 - Patch 844 maps all six L2/L4 tunnel color-vector sRam aliases to the
   actual signed WORDs in scene_colour_vectors, instead of zeroed host stubs.
   The original reads these overlapping fields at current_level*8 plus
@@ -71,8 +80,10 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   investigation. Its initial RNG does not match the default-clock preceding
   port demos; strict natural-history comparison correctly rejects that
   mismatch (dd2-original-race-l3-tunnel-history-reviewed/native/run.log).
-  A comparison with explicitly matched observed initial state is separate;
-  prefix clock/state equivalence cannot be claimed from that test.
+  Explicitly matching the observed initial seed/blink gives exact clock/RNG
+  phases but rejects frame 566 (cf234/ticks470): 25 pixels along a narrow
+  edge differ (dd2-original-race-l3-tunnel-direct-reviewed/report.json).
+  Prefix clock/state equivalence cannot be claimed from that test.
   Complete original racing audio, remaining races/modes and physical output
   clocks remain open; whole-game acceptance is still unproved.
 - Patch 843 restores Update_Debris' signed-WORD translation after camera

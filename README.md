@@ -194,7 +194,12 @@ all 20 names/points, all 307200
 framebuffer pixels per page, and all 1024 palette bytes per page.
 `node tools/browser/qa_champ_scores.js web/dd2 /tmp/fresh-champ-browser` exercises
 that flow and saves the score data, raw pixels/palettes and screenshots. It releases
-keys after one presented frame; long held keys skipped pause items in older tests.
+keys after a presentation confirms that the engine polled their control bits.
+It waits for 16 face-on slab presentations before menu input, because the
+transition also polls controls but ignores navigation. `--slow-menus` repeats
+the selection/name-entry flow with 3x CPU throttling, restoring normal speed
+before the realtime race. Both modes cover Retire/Yes and all four divisions;
+the test has a five-minute deadline for an unresponsive browser.
 
 `make verify-champ-names` tests the real engine's naming code on native/WASM with
 1/2/5/10 human drivers. For the original reference and browser comparison:

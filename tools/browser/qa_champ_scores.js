@@ -1,47 +1,88 @@
 // Reach championship results through actual selection, name entry and retirement.
-// Release navigation keys after one presented frame: Pause_Mode reads held bits
-// every iteration, so the old 140ms helper skipped menu items and confirmed No.
+// Wait for the slab transition to finish, then release navigation keys after
+// the engine polls them. Animation frames poll but ignore menu actions;
+// Pause_Mode reads held bits each iteration.
 const assert=require('assert'),fs=require('fs'),path=require('path');
 const {serve,boot,menuLabel,waitRace,rd,chromium}=require('./felib');
 const output=process.argv[3] ? path.resolve(process.argv[3]) : fs.mkdtempSync('/tmp/dd2-champ-scores-');
 if(fs.existsSync(output) && fs.readdirSync(output).length)throw new Error('Output directory must be empty; use a fresh capture directory');
 fs.mkdirSync(output,{recursive:true});
 async function tap(page,code,settle=450){
- await page.evaluate(code=>{
-  window.__releaseKey=code;
+ const paused=await page.evaluate(()=>HEAPU8[0x460005]===89);
+ if(!paused)await page.waitForFunction(()=>window.__slabReadyFrames>=16,null,{timeout:15000});
+ const mask={Enter:paused?0x1:0x4000,Escape:0x1008,ArrowUp:0x10,ArrowDown:0x40,ArrowLeft:0x80,ArrowRight:0x20}[code];
+ assert(mask,'unknown navigation key');
+ // A previous held/pressed bit can persist throughout an animation. Wait for
+ // a fresh control poll with that bit clear before pressing it again.
+ await page.waitForFunction(mask=>((HEAPU16[0x754448>>1]|HEAPU16[0x75444a>>1])&mask)===0,mask,{timeout:15000});
+ await page.evaluate(({code,mask})=>{
+  window.__releaseKey={code,mask,level:HEAP32[0x936ff4>>2]};
   window.dispatchEvent(new KeyboardEvent('keydown',{code}));
- },code);
- await page.waitForFunction(()=>window.__releaseKey===null,null,{timeout:3000});
+ },{code,mask});
+ await page.waitForFunction(()=>window.__releaseKey===null,null,{timeout:15000});
  await page.waitForTimeout(settle);
 }
 const state=page=>page.evaluate(()=>({type:HEAP32[0x4673f4>>2],level:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],screen:HEAPU8[0x460005],stats:HEAP32[0x46741c>>2]}));
 (async()=>{
  const server=serve(path.resolve(process.argv[2]||'web/dd2'));await new Promise(r=>server.listen(0,r));
- let browser;
+ let browser, menuThrottle, watchdog;
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
+  watchdog=setTimeout(()=>{
+   console.error('Championship navigation exceeded its five-minute deadline');
+   process.exitCode=1;
+   browser.close().catch(()=>{});
+   setTimeout(()=>process.exit(1),5000).unref();
+  },300000);
   const page=await browser.newPage({viewport:{width:700,height:560}}),errors=[];
+  if(process.argv[4]==='--slow-menus'){
+   menuThrottle=await page.context().newCDPSession(page);
+   await menuThrottle.send('Emulation.setCPUThrottlingRate',{rate:3});
+  }
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
    window.__releaseKey=null;
+   window.__slabReadyFrames=0;
    const present=CanvasRenderingContext2D.prototype.putImageData;
    CanvasRenderingContext2D.prototype.putImageData=function(...args){
     const result=present.apply(this,args);
-    if(this.canvas.id==='canvas' && window.__releaseKey){
-     const code=window.__releaseKey;window.__releaseKey=null;
+    if(this.canvas.id==='canvas' && typeof HEAP16!=='undefined'){
+     // The on-transition ends with four zero-angle bounce samples; the
+     // longest Button_Pressed sequence before an off-transition is eleven
+     // frames. Sixteen steady face-on presentations exclude both intervals.
+     window.__slabReadyFrames=HEAP16[0x46996c>>1]===0?window.__slabReadyFrames+1:0;
+    }
+    if(this.canvas.id==='canvas' && window.__releaseKey &&
+       (((HEAPU16[0x754448>>1]|HEAPU16[0x75444a>>1])&window.__releaseKey.mask) ||
+        HEAP32[0x936ff4>>2]!==window.__releaseKey.level)){
+     // Retire/Yes restores the saved pad before returning; the next
+     // presentation is already in the results level with that bit cleared.
+     const {code}=window.__releaseKey;window.__releaseKey=null;
      window.dispatchEvent(new KeyboardEvent('keyup',{code}));
     }
     return result;
    };
   });
   await boot(page,server);
-  for(const code of ['Enter','Enter','Enter','Enter','ArrowUp','ArrowLeft','Enter'])await tap(page,code,700);
+  console.log('Frontend ready');
+  for(const code of ['Enter','Enter','Enter','Enter'])await tap(page,code,700);
+  await page.waitForFunction(()=>HEAP16[0x469f34>>1]===48 && HEAP16[0x469f36>>1]===123,null,{timeout:15000});
+  await tap(page,'ArrowUp',700);
+  await page.waitForFunction(()=>HEAP16[0x469f36>>1]===191,null,{timeout:15000});
+  await tap(page,'ArrowLeft',700);
+  await page.waitForFunction(()=>HEAP16[0x469f34>>1]===256,null,{timeout:15000});
+  await tap(page,'Enter',700);
+  await page.waitForFunction(()=>HEAP32[0x4673f4>>2]===4,null,{timeout:15000});
   assert((await state(page)).type===4,'name confirmation did not select championship');
+  console.log('Championship name confirmed');
   await tap(page,'ArrowDown');await tap(page,'ArrowDown');
   assert((await menuLabel(page)).includes('Go!'),'Go selection failed');
+  // Stress the slab navigation separately from the realtime racing clock.
+  if(menuThrottle)await menuThrottle.send('Emulation.setCPUThrottlingRate',{rate:1});
   await tap(page,'Enter',1500);
   assert((await waitRace(page,25000)).launched,'championship race did not start');
   assert((await state(page)).stats===1,'race did not initialize season statistics');
+  console.log('Championship race started');
   await tap(page,'Escape');
   await page.screenshot({path:path.join(output,'paused.png')});
   for(const code of ['ArrowDown','ArrowDown','ArrowDown','Enter'])await tap(page,code);
@@ -88,5 +129,5 @@ const state=page=>page.evaluate(()=>({type:HEAP32[0x4673f4>>2],level:HEAP32[0x93
   assert.deepEqual(errors,[],'browser runtime errors');
   console.log('PASS championship selection, real Retire/Yes and all four populated score divisions');
   console.log('Artifacts:',output);
- }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
+ }finally{clearTimeout(watchdog);if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
