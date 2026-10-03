@@ -298,6 +298,20 @@ selects the report path; Xvfb and xdotool are required. This is functional nativ
 window acceptance. Whole original menu/player video/audio and overwrite/full-card
 behavior still need checks.
 
+`make verify-card` compares seven actual card functions with unmodified original
+x86 over 26 explicit cases: empty/full/sparse cards, first free blocks 0/7/14,
+reserved flags, missing/dormant names, duplicate-name exemptions and first
+configuration selection. Each native/WASM comparison covers all 131072 card
+bytes, every directory row, guards, complete 8192-byte source/loaded blocks and
+the return value or external seek boundary (148040 bytes total). Read-only
+hardware breakpoints stop original execution before file seeking or at the
+fixture return marker; original code/registers are never changed. Mutated guard,
+directory, first/last payload and outcome bytes, and truncated checkpoints fail.
+This establishes component conformance, including refusal to save a full card;
+it does not run the complete original memory-card menu or establish host file
+persistence. Reports use `/tmp/wasm-dd2/`, and successful raw checkpoints are
+discarded. GDB, 32-bit GCC, Emscripten and Node are required.
+
 Menu graphics can be compared over complete 64-frame highlight cycles. This
 checks every indexed pixel and palette byte at presentation, including the
 browser's canvas conversion; it uses no pixel mask or tolerance. For the path

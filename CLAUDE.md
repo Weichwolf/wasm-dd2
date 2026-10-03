@@ -35,6 +35,19 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Card component conformance now passes on both ports against actual unmodified
+  x86 SaveCardFile/DeleteFileMC/LoadCardFiles/LoadCardFile/DupFileCheck/
+  FirstSavedGame/FUN_0042366c. All 26 cases compare 148040 bytes each: complete
+  128-KiB card, every directory row, source/loaded 8-KiB blocks, neighbors and
+  outcome. Empty/full/sparse cards, first free slots0/7/14, reserved flags,
+  absent/dormant names, duplicate exemptions and config selection are covered.
+  Literal original execution stops at read-only hardware breakpoints before
+  external seek (arguments checked) or at the fixture return marker; no code/
+  register writes. Full cards return zero unchanged on all three implementations.
+  Changed guard/directory/first+last payload/outcome bytes and truncated input
+  reject. make verify-card; card-original-reviewed/report.json; original aggregate
+  SHA256 e85635e562795268739341c36a279f6dbe6a8cf5768cc720c3b9badf0600e902.
+  This is component acceptance, not original full card-menu or file I/O parity.
 - Native replay window QA now passes through actual X11 keyboard input and
   three normal intro/frontend startups: Select Car/practice/Retire/Yes/Save
   Replay/name A/process restart/File Manager/load/natural playback, then
