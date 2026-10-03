@@ -18,8 +18,9 @@ GAME="${GAME:-$ROOT/DestructionDerby2}"
 OUT="${OUT:-/tmp/refstream}"
 LVL="${LVL:-2}"
 NFRAMES="${NFRAMES:-64}"
-export WINEPREFIX="${WINEPREFIX:-$ROOT/.wine-dd2}"
+export WINEPREFIX="${WINEPREFIX:-/tmp/wasm-dd2/legacy-wine}"
 export WINEARCH=win32
+mkdir -p "$WINEPREFIX"
 mkdir -p "$OUT"
 [ -f "$WINEPREFIX/drive_c/windows/system32/kernel32.dll" ] || { echo "init win32 prefix..."; wineboot --init >/dev/null 2>&1; }
 cd "$GAME"

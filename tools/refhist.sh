@@ -6,8 +6,9 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="${GAME:-$ROOT/DestructionDerby2}"
 LVL="${LVL:-2}"
-export WINEPREFIX="${WINEPREFIX:-$ROOT/.wine-dd2}"
+export WINEPREFIX="${WINEPREFIX:-/tmp/wasm-dd2/legacy-wine}"
 export WINEARCH=win32
+mkdir -p "$WINEPREFIX"
 cd "$GAME"
 timeout "${RUNSEC:-1400}" xvfb-run -a -s "-screen 0 640x480x16" wine dd2h.exe >/tmp/refhist_wine.log 2>&1 &
 echo "waiting for level $LVL ..."

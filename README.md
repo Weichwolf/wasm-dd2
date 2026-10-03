@@ -264,7 +264,7 @@ sudo apt install wine wine32:i386 gdb xvfb xauth
 ```
 
 `make refcapture` runs the unmodified Windows EXE in a private 32-bit Wine prefix
-under `third_party/wine-reference/`, with an isolated copy of `SaveGames`. A Linux
+under `/tmp/wasm-dd2/wine-reference/`, with an isolated copy of `SaveGames`. A Linux
 CD device adapter exposes the provisioned disc TOC and exact CDDA sector reads
 through Wine's normal MCI/DirectSound driver. It needs no physical CD drive and
 does not patch the EXE or engine memory. `make verify-cdrom` checks all TOC entries,
@@ -280,14 +280,23 @@ transport clock. See [Wine's Q-channel conversion](https://github.com/wine-mirro
 Live pause/resume timing still needs a valid transport reference before complete
 original audio acceptance.
 
+Verification captures and logs belong under `/tmp/wasm-dd2/`. Never store
+them in this repository. On this machine `/tmp` is a 16 GiB tmpfs. Racing
+capture/comparison subprocesses stop above 2 GiB of output or below 1 GiB
+free space. Successful race comparisons discard raw port frames after writing
+their JSON report; failed captures remain for the current diagnosis. Delete
+completed original captures when that diagnosis is finished. Old logs (over
+one hour) are cleaned before/after the main capture and verification commands;
+open logs are preserved. Run `make clean-logs` for the same cleanup manually.
+
 Complete original racing-loop captures also record every actual game clock
 return and Watcom random call using read-only hardware breakpoints. For a later
 naturally selected attract race (the rotation starts 9, 6, 5, 2, 3, 4):
 
 ```sh
-make refcapture-race-stream RACE_CAPTURE_ARGS='--race-level 6 --timeout 360 --output third_party/verification-artifacts/fresh-original-l6'
-make verify-reference-race-stream RACE_REFERENCE=third_party/verification-artifacts/fresh-original-l6 RACE_COMPARISON=third_party/verification-artifacts/fresh-comparison-l6
-make verify-random-reference RANDOM_REFERENCE_ARGS='--output third_party/verification-artifacts/fresh-random-check'
+make refcapture-race-stream RACE_CAPTURE_ARGS='--race-level 6 --timeout 360 --output /tmp/wasm-dd2/fresh-original-l6'
+make verify-reference-race-stream RACE_REFERENCE=/tmp/wasm-dd2/fresh-original-l6 RACE_COMPARISON=/tmp/wasm-dd2/fresh-comparison-l6
+make verify-random-reference RANDOM_REFERENCE_ARGS='--output /tmp/wasm-dd2/fresh-random-check'
 ```
 
 Add `RACE_COMPARISON_ARGS='--attract-history'` to run the real frontend and
@@ -324,7 +333,7 @@ records at every selected race presentation and records every original random
 caller's return address and engine phase. Run the native observer with:
 
 ```sh
-python3 tools/reference/trace_native_physics.py --capture third_party/verification-artifacts/original-physics-capture --output third_party/verification-artifacts/fresh-native-physics
+python3 tools/reference/trace_native_physics.py --capture /tmp/wasm-dd2/original-physics-capture --output /tmp/wasm-dd2/fresh-native-physics
 ```
 
 The observer uses two native hardware breakpoints and compares measured states;
@@ -337,7 +346,7 @@ For the older L3 capture, a controlled native experiment isolates the effect
 of retained debris vertices:
 
 ```sh
-python3 tools/reference/diagnose_debris_history.py --capture third_party/verification-artifacts/dd2-original-race-l3-stream-reviewed --output third_party/verification-artifacts/fresh-l3-debris-controls --slot 30
+python3 tools/reference/diagnose_debris_history.py --capture /tmp/wasm-dd2/dd2-original-race-l3-stream-reviewed --output /tmp/wasm-dd2/fresh-l3-debris-controls --slot 30
 ```
 
 It first runs the unchanged port, then uses GDB to copy only the inactive

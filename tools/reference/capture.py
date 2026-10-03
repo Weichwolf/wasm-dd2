@@ -15,12 +15,15 @@ import shutil
 import signal
 import struct
 import subprocess
+import sys
 import time
 from cdrom import build_cdrom
 from audio import build_audio, summarize_audio
 
 ROOT = Path(__file__).resolve().parents[2]
-WORK = ROOT / "third_party" / "wine-reference"
+sys.path.insert(0, str(ROOT / 'tools'))
+from artifacts import WORK as ARTIFACTS, prepare_output, run_bounded
+WORK = ARTIFACTS / 'wine-reference'
 EXE_SHA256 = "0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2"
 
 
@@ -98,7 +101,7 @@ def capture(pid, output, env, frame, menu, timeout, navigation=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-dir", type=Path, default=ROOT / "DestructionDerby2")
-    parser.add_argument("--output", type=Path, default=Path("/tmp/dd2-reference"))
+    parser.add_argument("--output", type=Path, default=ARTIFACTS / 'reference')
     parser.add_argument("--mode", choices=("menu", "attract", "audio"), default="attract")
     frames = parser.add_mutually_exclusive_group()
     frames.add_argument("--frame", type=int, default=150)
@@ -160,7 +163,7 @@ def main():
         parser.error("--audio-tail must be in [0,30] and requires --audio")
     if args.mode=="audio" and (not args.audio or args.audio_tail<=0):
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
-    game, output = args.game_dir.resolve(), args.output.resolve()
+    game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
     if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race"))
             or any(output.glob("step*/checkpoint.json")) or any(output.glob("frame*/checkpoint.json"))):
@@ -360,8 +363,8 @@ def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_cou
         f"from {module} import {function}",f"{function}({str(output)!r},{level},{options}image_frames={image_frames!r},image_counters={image_counters!r}{tail})",
         "end","detach","quit"])+"\n")
     with (output/"race-gdb.log").open("wb") as log:
-        subprocess.run(["gdb","--nx","-q","-batch","-x",str(script)],env=env,
-            stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+        run_bounded(["gdb","--nx","-q","-batch","-x",str(script)],env=env,
+            directory=output,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
     result=json.loads((output/"race/race.json").read_text())
     result.update(exe_modified=False,exe_sha256=EXE_SHA256)
     (output/"race/race.json").write_text(json.dumps(result,indent=2)+"\n")

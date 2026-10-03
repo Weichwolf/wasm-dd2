@@ -14,6 +14,7 @@ import re
 import subprocess
 
 from compare_race_stream import EXE_SHA, ROOT
+from artifacts import prepare_output, run_bounded, discard_frames
 
 
 def compare_cars(reference, frames, source, output):
@@ -61,7 +62,7 @@ def main():
             reference.get('exe_sha256') != EXE_SHA or
             hashlib.sha256((ROOT / 'DestructionDerby2/dd2h.exe').read_bytes()).hexdigest() != EXE_SHA):
         raise RuntimeError('supported unmodified original --race-physics capture required')
-    out = args.output.resolve()
+    out = prepare_output(args.output)
     out.mkdir(parents=True, exist_ok=False)
     level = reference['level']
     layout = reference['physics_layout']
@@ -114,9 +115,9 @@ quit
                DD2_RACE_CAPTURE_LEVEL=str(level), DD2_RACE_STOP_AFTER_CAPTURE='1',
                DD2_RACE_STREAM=str(out / 'race.jsonl'))
     with (out / 'gdb.log').open('w') as log:
-        subprocess.run(['gdb', '--nx', '-q', '-batch', '-x', str(out / 'trace.gdb'),
+        run_bounded(['gdb', '--nx', '-q', '-batch', '-x', str(out / 'trace.gdb'),
                         str(args.native.resolve())], cwd=ROOT / 'DestructionDerby2', env=env,
-                       stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout, check=True)
+                       directory=out,stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout, check=True)
     text = (out / 'gdb.log').read_text()
     if 'Traceback' in text or not (out / 'frames.json').is_file():
         raise RuntimeError('native observer failed; inspect gdb.log')
@@ -159,6 +160,11 @@ quit
             raise RuntimeError('changed first native random caller was not rejected')
         report['negative_first_random_caller_rejected'] = True
     (out / 'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    if (report['engine_loop_complete'] and report['first_car_difference'] is None and
+            report['first_random_caller_difference'] is None and
+            report.get('first_all_history_car_difference') is None and
+            len(frames) == len(reference['frames']) and len(callers) == len(originals)):
+        discard_frames(out)
     print(json.dumps(report,indent=2))
 
 

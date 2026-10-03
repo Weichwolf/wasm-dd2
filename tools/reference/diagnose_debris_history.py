@@ -46,7 +46,8 @@ def main():
     vertices = image[address - 0x400000:address - 0x400000 + 24]
     if not any(vertices):
         raise RuntimeError('original retained vertices must be nonzero')
-    output = args.output.resolve()
+    from artifacts import prepare_output
+    output = prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=False)
     reference['_root'] = reference_root
     report = {'scope': __doc__, 'original_exe_sha256': EXE_SHA,

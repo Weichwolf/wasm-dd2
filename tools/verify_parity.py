@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from artifacts import WORK, prepare_output, run_bounded
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -23,11 +24,12 @@ def main():
     parser.add_argument("--wasm", default="/tmp/lvltest/dd2run.js")
     parser.add_argument("--node", default="node")
     parser.add_argument("--levels", type=int, nargs="+", default=list(range(1, 11)))
-    parser.add_argument("--logs", type=Path, default=Path("/tmp/dd2-parity"))
+    parser.add_argument("--logs", type=Path, default=WORK / 'parity')
     parser.add_argument("--timeout", type=float, default=180)
     args = parser.parse_args()
     if any(level not in range(1, 11) for level in args.levels):
         parser.error("levels must be between 1 and 10")
+    args.logs = prepare_output(args.logs)
     args.logs.mkdir(parents=True, exist_ok=True)
     results = []
     for level in args.levels:
@@ -44,11 +46,11 @@ def main():
             cmd = [args.native] if target == "native" else [args.node, args.wasm, str(level)]
             with (capture / f"{target}.log").open("wb") as output:
                 try:
-                    run = subprocess.run(cmd, cwd=ROOT / "DestructionDerby2", env=env,
+                    run = run_bounded(cmd, directory=args.logs,cwd=ROOT / "DestructionDerby2", env=env,
                                          stdout=output, stderr=subprocess.STDOUT, timeout=args.timeout)
                     if run.returncode:
                         failures.append(f"{target} exit {run.returncode}")
-                except (OSError, subprocess.TimeoutExpired) as exc:
+                except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
                     failures.append(f"{target}: {exc}")
         native = capture / "native"
         wasm = capture / "wasm"

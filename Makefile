@@ -16,6 +16,9 @@ NODE    := $(firstword $(wildcard $(HOME)/Git/emsdk/node/*/bin/node) node)
 GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
+RACE_REFERENCE ?= /tmp/wasm-dd2/reference
+RACE_COMPARISON ?= /tmp/wasm-dd2/comparison
+LOG_MAX_AGE ?= 3600
 
 .PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-native-quit verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-keyboard verify-browser-keyboard verify-browser-keyboard-negative verify-clock-replay verify-random-reference refcapture-race-stream verify-reference-race-stream verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
@@ -208,3 +211,7 @@ refcapture: ## capture original at Draw_All entry under private Wine with a veri
 
 clean: ## remove generated build/ and outputs
 	rm -rf $(ROOT)/build $(OUTJS) $(OUTJS:.js=.wasm)
+
+.PHONY: clean-logs
+clean-logs: ## remove logs older than one hour, preserving open files
+	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)

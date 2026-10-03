@@ -17,7 +17,10 @@ from pathlib import Path
 import re
 import struct
 import subprocess
+import sys
 ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+from artifacts import prepare_output, run_bounded, discard_frames
 EXE_SHA='0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2'
 FIELDS=('level','cf','ticks','countdown','frame_skip','quit','clock_calls')
 
@@ -85,7 +88,7 @@ def main():
     p.add_argument('--output',type=Path,required=True);p.add_argument('--native',type=Path,default=Path('/tmp/dd2_native'))
     p.add_argument('--wasm',type=Path,default=Path('/tmp/lvltest/dd2run.js'));p.add_argument('--node',default='node');p.add_argument('--timeout',type=float,default=120)
     p.add_argument('--attract-history',action='store_true',help='run the real frontend and preceding demos; require naturally calculated initial RNG/blink states')
-    a=p.parse_args();root=a.capture.resolve()/'race';out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    a=p.parse_args();root=a.capture.resolve()/'race';out=prepare_output(a.output);out.mkdir(parents=True,exist_ok=False)
     r=json.loads((root/'race.json').read_text());ticks=root/'ticks.bin'
     full_history=r.get('complete_history_api_inputs') is True
     prefix_count=r.get('prefix_clock_calls',0) if full_history else 0
@@ -150,22 +153,25 @@ def main():
     env={k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     for name,command,artifact in [('native',[str(a.native.resolve())],a.native),('wasm',[a.node,str(a.wasm.resolve()),'fe' if a.attract_history else str(r['level'])],a.wasm.with_suffix('.wasm'))]:
         directory=out/name;directory.mkdir();log=directory/'run.log'
-        timed_out=False;returncode=None
+        timed_out=False;returncode=None;execution_error=None
         with log.open('w') as stream:
             try:
-                run=subprocess.run(command,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,**({} if a.attract_history else {'DD2_LEVEL':str(r['level'])}),'DD2_SOUND':'1',
+                run=run_bounded(command,directory=out,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,**({} if a.attract_history else {'DD2_LEVEL':str(r['level'])}),'DD2_SOUND':'1',
                     'DD2_TICK_REPLAY':str(ticks),'DD2_RACE_STREAM':str(directory/'race.jsonl'),
                     'DD2_FRAMEDIR':str(directory),'DD2_PALDUMP':'1'},stdout=stream,stderr=subprocess.STDOUT,timeout=a.timeout)
                 returncode=run.returncode
             except subprocess.TimeoutExpired:
                 timed_out=True
+            except (OSError, RuntimeError) as exc:
+                execution_error=str(exc)
         text=log.read_text()
         failures=[]
         clock_complete=f'[clock-replay] consumed={count} complete' in text
         random_complete='rng_calls' not in r or f'[random-reference] consumed={r["rng_calls"]} complete' in text
         loop_complete=not a.attract_history or '[race-stream] target racing loop finished' in text
-        if timed_out or returncode or not clock_complete or not random_complete or not loop_complete or re.search(r'SIGSEGV|SIGBUS|RuntimeError|FATAL|abort',text):
+        if execution_error or timed_out or returncode or not clock_complete or not random_complete or not loop_complete or re.search(r'SIGSEGV|SIGBUS|RuntimeError|FATAL|abort',text):
             failures.append({'error':'engine or exact input-consumption failure','returncode':returncode,
+                'execution_error':execution_error,
                 'timed_out':timed_out,'clock_complete':clock_complete,'random_complete':random_complete,
                 'target_loop_complete':loop_complete,'log':str(log)})
         rows_path=directory/'race.jsonl'
@@ -217,6 +223,7 @@ def main():
                 raise RuntimeError(f'changed first {field} phase was not rejected')
             result[f'negative_{field}_rejected']=True
         print(f'PASS {name} vs actual original: {len(rows)} entire racing-loop frames/palettes, all {count} clock returns exact; first-pixel corruption rejected',flush=True)
+        discard_frames(directory)
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     rejected=[target for target in report['targets'] if not target['pass']]
     if rejected:

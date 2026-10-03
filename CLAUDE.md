@@ -28,13 +28,23 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 - Native debug: `make native NATIVE=/tmp/dd2h_na`, run from `DestructionDerby2/` as
   `env -u DD2_NOSEGV DD2_LEVEL=N /tmp/dd2h_na`; symbolize with `addr2line -f -e`.
 - Reference capture (Stage-2 bit-verify): `make refcapture` (private prefix in
-  `third_party/wine-reference/`; needs xvfb; polls /proc/PID/mem, then captures at
+  `/tmp/wasm-dd2/wine-reference/`; needs xvfb; polls /proc/PID/mem, then captures at
   Draw_All entry using a GDB hardware breakpoint).
 - Original accepted PCM: `python3 tools/reference/capture.py --mode audio --audio
   --audio-tail 3 --output /tmp/fresh-original-audio` (no debugger). Observer/clock
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- User-requested storage cleanup: all 668 GiB of ignored historical verification
+  artifacts were deleted. Earlier artifact names below describe past runs; those
+  raw captures/reports are no longer present and must be recaptured for new checks.
+  Keep new captures/logs under /tmp/wasm-dd2, never in the repository. This machine
+  has a 16 GiB /tmp tmpfs. Main racing capture/comparison subprocesses stop above
+  2 GiB output or below 1 GiB free, without accepting truncated data. Successful
+  race comparisons delete raw port dumps after writing reports. Old logs over
+  one hour are cleaned before/after main commands; open logs are preserved.
+  make clean-logs performs the same cleanup explicitly. Original assets and
+  build dependencies remain provisioned and ignored. See AGENTS.md.
 - --race-physics now records all 20 cars at every target presentation under
   full original API history: primitive/dynamics 0x78a520 (20*0x27c), render FD
   0x792690 (20*44), handling 0x792a00 (20*0x1b2), wheels 0x794be8 (20*0xb0).
@@ -1510,5 +1520,5 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
 ## Conventions
 - Faithful reconstruction — no approximations/band-aids. Commit progress; verify BOTH targets after every change.
 - `dd2_image.bin` (memory snapshot, loaded at 0x400000) must be present in `DestructionDerby2/` at run time.
-- Wine gotchas: NEVER `pkill -f dd2h.exe` (kills own shell) → use `pkill -x`; win32 prefix = repo-local `.wine-dd2/`.
+- Wine gotchas: NEVER `pkill -f dd2h.exe` (kills own shell) → use `pkill -x`; win32 prefixes belong under `/tmp/wasm-dd2/`.
 - Full pre-2026-07-01 investigation history is in git history + `/tmp/CLAUDE_full_backup.md`.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Unmodified Windows reference with a verified virtual CD and scoped cleanup.
-# All Wine processes belong to third_party/wine-reference/prefix. No global pkill.
+# All Wine processes belong to /tmp/wasm-dd2/wine-reference/prefix. No global pkill.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 if [ "${LVL:-9}" != 9 ]; then
@@ -9,7 +9,7 @@ if [ "${LVL:-9}" != 9 ]; then
 fi
 exec python3 "$ROOT/tools/reference/capture.py" \
     --game-dir "${GAME:-$ROOT/DestructionDerby2}" \
-    --output "${OUT:-/tmp/dd2-reference}" \
+    --output "${OUT:-/tmp/wasm-dd2/reference}" \
     --mode "${REFMODE:-attract}" \
     --frame "${FRMIN:-150}" \
     --timeout "${RUNSEC:-90}"

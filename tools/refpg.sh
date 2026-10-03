@@ -7,8 +7,9 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GAME="${GAME:-$ROOT/DestructionDerby2}"
 OUT="${OUT:-/tmp/refpg}"
-export WINEPREFIX="${WINEPREFIX:-$ROOT/.wine-dd2}"
+export WINEPREFIX="${WINEPREFIX:-/tmp/wasm-dd2/legacy-wine}"
 export WINEARCH=win32
+mkdir -p "$WINEPREFIX"
 mkdir -p "$OUT"
 cd "$GAME"
 timeout "${RUNSEC:-400}" xvfb-run -a -s "-screen 0 640x480x16" wine dd2h.exe >/tmp/refpg_wine.log 2>&1 &

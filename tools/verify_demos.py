@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from artifacts import WORK, prepare_output
 
 ROOT = Path(__file__).resolve().parent.parent
 ERROR = re.compile(r"abort|RuntimeError|exception thrown|SIGSEGV|SIGBUS|SIGFPE|FATAL", re.I)
@@ -23,7 +24,7 @@ def main():
     parser.add_argument("--logs", type=Path)
     parser.add_argument("--timeout", type=float, default=120)
     args = parser.parse_args()
-    logs = args.logs or Path(f"/tmp/dd2-verify-{args.target}")
+    logs = prepare_output(args.logs or WORK / f'verify-{args.target}')
     logs.mkdir(parents=True, exist_ok=True)
     results = []
     for level in range(1, 11):
