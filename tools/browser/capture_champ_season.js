@@ -9,6 +9,9 @@ fs.mkdirSync(output,{recursive:true});
 const build=path.resolve(process.argv[2]||'web/dd2');
 const save=fs.readFileSync(path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
 const timingOption=process.argv.slice(4).find(value=>value.startsWith('--reference='));
+const rngOption=process.argv.slice(4).find(value=>value.startsWith('--rng-layout='));
+const rngLayout=rngOption?JSON.parse(fs.readFileSync(path.resolve(rngOption.slice('--rng-layout='.length)))):null;
+if(rngLayout)assert.equal(rngLayout.wasm_sha256,crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),'RNG layout belongs to another binary');
 let referenceTiming=null;
 if(timingOption){
  const root=path.resolve(timingOption.slice('--reference='.length));assert(root.startsWith('/tmp/wasm-dd2/'));
@@ -39,7 +42,7 @@ async function capture(page,key){
  fs.writeFileSync(path.join(directory,'checkpoint.json'),JSON.stringify(shot,null,2));
  checkpoints.push(name);return shot;
 }
-async function tap(page,key,timing=null){
+async function tap(page,key,timing=null,raceStart=null){
  const level=await page.evaluate(()=>HEAP32[0x936ff4>>2]);
  const racing=level>=1&&level<=12;
  if(!racing)await page.waitForFunction(()=>window.__slabReadyFrames>=16,null,{timeout:15000});
@@ -57,7 +60,10 @@ async function tap(page,key,timing=null){
   assert.equal(await page.evaluate(()=>window.__scheduleError),null,'original input point was skipped');
  }
  await page.waitForFunction(()=>window.__releaseKey===null,null,{timeout:15000});
- await page.waitForTimeout(700);keys.push(key);
+ await page.waitForTimeout(700);
+ if(raceStart!==null)await page.waitForFunction(level=>HEAP32[0x936ff4>>2]===level&&HEAP32[0x7746ac>>2]===0&&HEAP32[0x7746c0>>2]>0,raceStart,{timeout:15000});
+ if(key==='Escape'&&racing)await page.waitForFunction(()=>window.__stablePhysicsFrames>=16&&HEAP32[0x7746ac>>2]===0&&HEAP32[0x7746c0>>2]>0,null,{timeout:15000});
+ keys.push(key);
  const shot=await capture(page,key);
  if(timing)assert.equal(shot.cf,timing.cf,'pause did not occur at the observed original frame counter');
  return shot;
@@ -76,15 +82,32 @@ async function tap(page,key,timing=null){
     'Uint8Array.from(atob('+JSON.stringify(save.toString('base64'))+'),c=>c.charCodeAt(0)));done(error);});};});</script>';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+marker)});
   });
-  await page.addInitScript(()=>{
+  await page.addInitScript(rngLayout=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
+   window.__rngObservations=[];window.__rngError=null;
+   window.__stablePhysicsFrames=0;let previousPhysics=null;
+   const seeds=[1];let previousRng=null;
    const present=CanvasRenderingContext2D.prototype.putImageData;
    const readText=(a,n)=>{let text='';for(let i=0;i<n&&HEAPU8[a+i];i++)text+=String.fromCharCode(HEAPU8[a+i]);return text;};
    const encode=(a,n)=>{let text='';for(let i=0;i<n;i+=16384)text+=String.fromCharCode(...HEAPU8.subarray(a+i,a+Math.min(i+16384,n)));return btoa(text);};
    CanvasRenderingContext2D.prototype.putImageData=function(...args){
     const result=present.apply(this,args);
     if(this.canvas.id!=='canvas'||typeof HEAP16==='undefined')return result;
+    const physical={level:HEAP32[0x936ff4>>2],ticks:HEAP32[0x7746c0>>2],quit:HEAP32[0x7746ac>>2]};
+    window.__stablePhysicsFrames=physical.level>=1&&physical.level<=12&&physical.ticks>0&&physical.quit===0&&previousPhysics&&previousPhysics.level===physical.level&&previousPhysics.ticks===physical.ticks?window.__stablePhysicsFrames+1:0;
+    previousPhysics=physical;
+    let rngState=null;
+    if(rngLayout){
+     const count=HEAPU32[rngLayout.counter_address>>2],seed=HEAPU32[rngLayout.seed_address>>2];
+     if(count>100000)window.__rngError='RNG observation exceeded 100,000 calls';
+     else{
+      while(seeds.length<=count)seeds.push((Math.imul(seeds.at(-1),1103515245)+12345)>>>0);
+      if(seed!==seeds[count])window.__rngError='Actual RNG seed differs from the LCG at the observed counter';
+     }
+     rngState={count,seed};
+     if(count!==previousRng){window.__rngObservations.push({...rngState,level:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],ticks:HEAP32[0x7746c0>>2],race:HEAP32[0x93dec8>>2]});previousRng=count;}
+    }
     window.__slabReadyFrames=HEAP16[0x46996c>>1]===0?window.__slabReadyFrames+1:0;
     if(window.__scheduledInput){
      const pending=window.__scheduledInput,cf=HEAP32[0x462ff0>>2];
@@ -116,28 +139,35 @@ async function tap(page,key,timing=null){
       cars:Array.from({length:20},(_,i)=>({name:readText(0x93dee0+i*54,16),
        values:Array.from({length:7},(_,n)=>HEAP16[(0x93def0+i*54>>1)+n])})),
       rows:Array.from({length:5},(_,i)=>({name:readText(0x940290+i*26,26),points:readText(0x940240+i*16,16)})),
-      framebuf:encode(0x700450,307200),palette:encode(0x700050,1024)};
+      framebuf:encode(0x700450,307200),palette:encode(0x700050,1024),rng:rngState};
      window.__captureNext=false;
     }
     return result;
    };
-  });
+  },rngLayout);
   await boot(page,server);
+  if(rngLayout){
+   const first=await page.evaluate(()=>window.__rngObservations[0]);
+   assert(first&&first.count===0&&first.seed===1,'RNG layout did not observe the actual boot seed/counter');
+  }
   assert(Buffer.from(await page.evaluate(()=>Array.from(Module.FS.readFile('/SaveGames')))).equals(save));
   await capture(page,null);
   for(const key of ['Return','Return','Return','Return','Up','Left','Return','Down','Down'])await tap(page,key);
   let previous=Array(20).fill(0);
   const races=[];
   for(let race=0;race<5;race++){
-   const started=await tap(page,'Return');
+   const started=await tap(page,'Return',null,[1,2,5,7,10][race]);
    assert.equal(started.level,[1,2,5,7,10][race],'wrong championship race');assert.equal(started.race,race);
+   assert.equal(started.quit,0);assert(started.ticks>0,'captured loading instead of actual gameplay');
    await tap(page,'Escape',referenceTiming&&referenceTiming[race]);
    if(process.argv.includes('--stop-after-pause')){
     fs.writeFileSync(path.join(output,'diagnosis.json'),JSON.stringify({scope:'Focused actual pause-input scheduling diagnosis; not full-season acceptance',
      referenceTiming,observed:await page.evaluate(()=>({inputs:window.__inputObservations,frames:window.__scheduledFrames}))},null,2));
     return;
    }
-   for(const key of ['Down','Down','Down','Return','Up'])await tap(page,key);
+   for(const key of ['Down','Down','Down'])await tap(page,key);
+   const confirmation=await tap(page,'Return');assert.equal(confirmation.retire_confirm,1,'Retire confirmation was not selected');
+   await tap(page,'Up');
    const result=await tap(page,'Return');
    assert.equal(result.level,15);assert.equal(result.race,race+1);assert.equal(result.num_races,5);
    assert.equal(result.poly_list,race<4?0x46bf38:0x46ae44,'wrong result/end-of-season screen');
@@ -164,6 +194,10 @@ async function tap(page,key,timing=null){
   assert.equal(ended.race,5);assert.equal(ended.season,0);
   assert.equal(ended.cars[0].values[1],3);assert.equal(ended.cars[0].values[2],4);
   assert.deepEqual(errors,[],'browser errors');
+  if(rngLayout){
+   assert.equal(await page.evaluate(()=>window.__rngError),null,'RNG observer failed');
+   fs.writeFileSync(path.join(output,'rng-observations.json'),JSON.stringify({scope:'Read-only actual production WASM seed/counter observations; no causal caller trace or parity claim',layout:rngLayout,observations:await page.evaluate(()=>window.__rngObservations)},null,2));
+  }
   fs.writeFileSync(path.join(output,'navigation.json'),JSON.stringify({keys,checkpoints,input:'browser keyboard events',
    initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex'),
    wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),
@@ -174,7 +208,7 @@ async function tap(page,key,timing=null){
  }catch(error){
   if(browser){
    const pages=browser.contexts().flatMap(context=>context.pages());
-   const observed=pages.length?await pages[0].evaluate(()=>({error:window.__scheduleError,inputs:window.__inputObservations,frames:window.__scheduledFrames})).catch(()=>null):null;
+   const observed=pages.length?await pages[0].evaluate(()=>({error:window.__scheduleError,inputs:window.__inputObservations,frames:window.__scheduledFrames,rng_error:window.__rngError,rng:window.__rngObservations})).catch(()=>null):null;
    fs.writeFileSync(path.join(output,'diagnosis.json'),JSON.stringify({scope:'Failed actual UI/input diagnosis; no acceptance claim',error:error.message,referenceTiming,observed},null,2));
   }
   throw error;

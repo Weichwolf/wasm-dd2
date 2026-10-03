@@ -35,6 +35,34 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Actual championship API history is now recorded with four read-only hardware
+  breakpoints, real original X11 inputs and 96 targeted checkpoints, without
+  full memory images. Capture with `python3 tools/reference/capture.py --mode menu
+  --champ-history --timeout 420 --output /tmp/wasm-dd2/fresh-original-history`;
+  `--champ-history-steps 17` stops after the first result for diagnosis.
+  `python3 tools/capture_native_champ_history.py --reference <original>/history
+  --output /tmp/wasm-dd2/fresh-native-history` replays every actual clock return
+  and checks each independently computed RNG before/after/return from seed 1.
+  The full retirement trace matches all 44 clock returns, 2,610 RNG triples,
+  five complete standings and 20 complete league framebuffers/palettes. This
+  is a controlled API-input comparison, not physical-clock or full A/V parity.
+  Locate production browser RNG telemetry with `python3 tools/wasm_rng_layout.py
+  --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/fresh-rng-layout`; pass its
+  `layout.json` to the browser season capture using `--rng-layout=<path>`.
+  The observer validates the binary hash and actual LCG seed/counter without
+  modifying the WASM or heap. The browser driver now waits for actual gameplay
+  and accepted pause: a real previous capture sent Escape during loading,
+  which the verifier rejects explicitly. A fresh complete browser run still
+  consumes two additional random calls after each of the first two Retire/Yes
+  confirmations (2,614 total versus 2,610), and fails all five standings and
+  league-image comparisons. Their causal callers remain open.
+  `make verify-champ-history CHAMP_HISTORY_ARGS='--original <original>/history
+  --native <native>/history --browser <browser> --before-browser <failed-loading>
+  --report /tmp/wasm-dd2/fresh-history-report.json --clean'` writes explicit
+  native success/browser failure, hashes and four negative checks. Successful
+  original/native raw images are deleted; tiny API recordings remain for the
+  open browser timing diagnosis. Current report: champ-history-rng-853.json;
+  853 labels the diagnostic run, not an engine patch.
 - Patch 852 restores Promote_And_Relegate's independent eax driver counter
   and six stack transfer slots. The decompile merged the counter into slot 0,
   lost the cmp==4 store @44c8ad, and relegated driver 20 outside the 20-car

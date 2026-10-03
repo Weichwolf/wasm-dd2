@@ -58,6 +58,11 @@ def validate_end(ended):
         raise ValueError('Bottom-division elimination did not return to the frontend')
 
 
+def validate_race_start(started,level,race):
+    if (started['level'],started['race'],started['race_type'],started['num_races'])!=(level,race,4,5) or started['quit']!=0 or started['ticks']<=0:
+        raise ValueError('Actual championship gameplay has not started')
+
+
 def load(root,target):
     root=work(root);check_space(root);nav=json.loads((root/'navigation.json').read_text())
     names=[f"step{i:02d}-{key or 'boot'}" for i,key in enumerate([None,*KEYS])]
@@ -69,8 +74,7 @@ def load(root,target):
     previous=[0]*20;races=[];pages={}
     for race,level in enumerate((1,2,5,7,10)):
         start=10+race*17;started,confirmation,result=states[start],states[start+5],states[start+7]
-        if (started['level'],started['race'],started['race_type'],started['num_races'])!=(level,race,4,5):
-            raise ValueError('Actual championship race did not start')
+        validate_race_start(started,level,race)
         if confirmation['retire_confirm']!=1:raise ValueError('Actual Retire confirmation missing')
         screen=0x46bf38 if race<4 else 0x46ae44
         if (result['level'],result['race'],result['poly_list'],result['stats'])!=(15,race+1,screen,1):
@@ -133,11 +137,11 @@ def capture(args):
     if output.exists() and any(output.iterdir()):raise ValueError('Use a fresh output directory')
     if args.target=='browser':
         output.mkdir(parents=True,exist_ok=True)
-        options=(['--reference='+str(work(args.reference))] if args.reference else [])+(['--stop-after-pause'] if args.stop_after_pause else [])
+        options=(['--reference='+str(work(args.reference))] if args.reference else [])+(['--stop-after-pause'] if args.stop_after_pause else [])+(['--rng-layout='+str(work(args.rng_layout))] if args.rng_layout else [])
         run_bounded(['node',str(ROOT/'tools/browser/capture_champ_season.js'),str(ROOT/'web/dd2'),str(output),*options],
                     directory=output,timeout=420,check=True,cwd=ROOT)
     else:
-        if args.reference or args.stop_after_pause:raise ValueError('Input scheduling diagnosis requires browser capture')
+        if args.reference or args.stop_after_pause or args.rng_layout:raise ValueError('Input/RNG diagnosis requires browser capture')
         script='reference/capture.py' if args.target=='original' else 'capture_native_menu.py'
         command=[sys.executable,str(ROOT/'tools'/script),'--output',str(output),'--timeout','420','--keys',*KEYS]
         if args.target=='original':command+=['--mode','menu','--acknowledged-key']
@@ -149,6 +153,7 @@ def main():
     cap=commands.add_parser('capture');cap.add_argument('--target',choices=INPUTS,required=True);cap.add_argument('--output',type=Path,required=True)
     cap.add_argument('--reference',type=Path,help='browser-only diagnostic: schedule pauses at independently captured original counters')
     cap.add_argument('--stop-after-pause',action='store_true',help='browser-only focused input diagnosis; not full-season acceptance')
+    cap.add_argument('--rng-layout',type=Path,help='browser-only read-only seed/counter layout from this actual WASM binary')
     gate=commands.add_parser('compare')
     for target in INPUTS:gate.add_argument('--'+target,type=Path,required=True)
     gate.add_argument('--report',type=Path,required=True);gate.add_argument('--negative',action='store_true');gate.add_argument('--clean',action='store_true')

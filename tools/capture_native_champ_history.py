@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Native real keyboard-bridge championship history with strict original API inputs.
+
+Replays actual GetTickCount returns and independently verifies each calculated
+random before/after/return. No later engine-state, seed or framebuffer injection.
+This does not exercise physical window-system input or audio/video sinks.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+from artifacts import WORK, prepare_output, run_bounded
+from verify_champ_season import EXE, KEYS
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--reference', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--binary', type=Path, default=Path('/tmp/dd2_native'))
+    args = parser.parse_args()
+    reference = args.reference.resolve()
+    meta = json.loads((reference / 'history.json').read_text())
+    if WORK not in reference.parents or meta['exe_modified'] is not False or meta['exe_sha256'] != EXE or meta['keys'] not in (KEYS, KEYS[:17]):
+        raise ValueError('Supported actual original history required')
+    for name, size in [('ticks.bin', meta['clock_calls'] * 4), ('random.bin', meta['rng_calls'] * 12)]:
+        if (reference / name).stat().st_size != size:
+            raise ValueError('Incomplete reference API input')
+    output = prepare_output(args.output)
+    if WORK not in output.parents or output.exists():
+        parser.error('Use a fresh output directory under /tmp/wasm-dd2/')
+    output.mkdir(parents=True)
+    env = {key: value for key, value in os.environ.items() if not key.startswith('DD2_')}
+    env.update(DD2_FE='1', DD2_SOUND='1', DD2_NOSEGV='1',
+        DD2_TICK_REPLAY=str(reference / 'ticks.bin'), DD2_RANDOM_REFERENCE=str(reference / 'random.bin'),
+        DD2_RANDOM_LEVEL='all', DD2_RANDOM_REQUIRE_INITIAL='1')
+    script = output / 'history.gdb'
+    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\nset disable-randomization off\nstarti\n'+
+        'hbreak *Draw_All\ncondition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0\ncontinue\ndelete 1\npython\n'+
+        f'import sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native")\nend\n'+
+        'printf "NATIVE_CLOCK_CONSUMED=%u\\n", dd2_tick_replay_calls()\nprintf "NATIVE_RANDOM_CONSUMED=%u\\n", dd2_random_replay_calls()\nkill\nquit\n')
+    with tempfile.TemporaryDirectory(prefix='native-champ-history-assets-', dir=WORK) as tmp:
+        game = Path(tmp)
+        for asset in (ROOT / 'DestructionDerby2').iterdir():
+            if asset.name == 'SaveGames':
+                shutil.copyfile(asset, game / asset.name)
+            else:
+                (game / asset.name).symlink_to(asset, target_is_directory=asset.is_dir())
+        save_sha = hashlib.sha256((game / 'SaveGames').read_bytes()).hexdigest()
+        if save_sha != meta['initial_save_sha256']:
+            raise ValueError('Initial save differs from original')
+        with (output / 'gdb.log').open('w') as log:
+            run_bounded(['gdb', '--nx', '-q', '-batch', '-x', str(script), str(args.binary.resolve())],
+                        directory=output, cwd=game, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=420, check=True)
+    log = (output / 'gdb.log').read_text()
+    if f'NATIVE_CLOCK_CONSUMED={meta["clock_calls"]}\n' not in log or f'NATIVE_RANDOM_CONSUMED={meta["rng_calls"]}\n' not in log:
+        raise RuntimeError('Actual native API-input extent differs')
+    native = output / 'history/history.json'
+    result = json.loads(native.read_text())
+    result.update(initial_save_sha256=save_sha, binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
+                  api_inputs='actual original clock returns; every computed RNG triple checked, initial seed required')
+    native.write_text(json.dumps(result, indent=2) + '\n')
+    print('Native championship API/input history complete:', output)
+
+
+if __name__ == '__main__':
+    main()

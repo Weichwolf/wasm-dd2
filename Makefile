@@ -215,6 +215,10 @@ verify-season-transition: patch ## original-x86 transfers/reset/statistics/unloc
 verify-champ-season: ## actual full Retire/Yes season capture/compare; CHAMP_SEASON_ARGS required
 	python3 $(ROOT)/tools/verify_champ_season.py $(CHAMP_SEASON_ARGS)
 
+.PHONY: verify-champ-history
+verify-champ-history: ## compare actual championship API histories; CHAMP_HISTORY_ARGS required; browser failure remains diagnostic
+	python3 $(ROOT)/tools/verify_champ_history.py $(CHAMP_HISTORY_ARGS)
+
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
 

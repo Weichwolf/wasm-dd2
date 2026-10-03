@@ -129,6 +129,8 @@ def main():
     parser.add_argument("--race-images",type=int,nargs="+",default=[],help="also dump original engine memory at these racing presentation indices for diagnostics")
     parser.add_argument("--race-image-counters",type=int,nargs="+",default=[],help="also dump original engine memory at every presentation of these cf counters (0..700)")
     parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
+    parser.add_argument('--champ-history',action='store_true',help='record actual five-retirement championship clock/RNG/input history; real X11 keys, read-only hardware breakpoints')
+    parser.add_argument('--champ-history-steps',type=int,choices=(17,95),default=95,help='17 stops after first result for diagnosis; 95 completes the retirement path')
     parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
     parser.add_argument("--race-physics",action="store_true",help="also record all preceding/target car-state checkpoints and global random callers; requires --race-full-history")
     parser.add_argument('--race-step-window',type=int,nargs=2,metavar=('START_CF','END_CF'),default=[],
@@ -157,6 +159,10 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.champ_history and (args.mode!='menu' or args.audio or args.keys is not None or args.frames or args.race_stream or args.menu_cycle):
+        parser.error('--champ-history requires menu mode, no audio/other capture sequence')
+    if args.champ_history_steps!=95 and not args.champ_history:
+        parser.error('--champ-history-steps requires --champ-history')
     if args.mode=='startup' and (args.audio or args.keys is not None or args.frames or args.race_stream or
                                 args.menu_cycle or not 64<=args.startup_frames<=512):
         parser.error('startup mode requires 64..512 first presentations, no audio/navigation/race capture')
@@ -194,7 +200,7 @@ def main():
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup"))
+    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup", "history"))
             or any(output.glob("step*/checkpoint.json")) or any(output.glob("frame*/checkpoint.json"))):
         parser.error("output already contains a capture; use a fresh directory")
     WORK.mkdir(parents=True, exist_ok=True)
@@ -322,6 +328,9 @@ def run(game, output, args):
                         last_escape = now
                     ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
+                        if args.champ_history:
+                            capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256)
+                            return
                         if args.race_stream:
                             capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics,args.race_step_window,args.race_step_levels)
                             return
@@ -420,6 +429,20 @@ def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_cou
     result.update(exe_modified=False,exe_sha256=EXE_SHA256)
     (output/"race/race.json").write_text(json.dumps(result,indent=2)+"\n")
     print(f"Original racing loop captured: {len(result['frames'])} frames, {result['clock_calls']} actual tick returns",flush=True)
+
+
+def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256):
+    script=output/'history.gdb'
+    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n'+f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\n'+f'record_champ_history({str(output)!r},{steps})\nend\ndetach\nquit\n')
+    with (output/'history.log').open('w') as log:
+        run_bounded(['gdb','--nx','-q','-batch','-x',str(script)],directory=output,env=env,
+                    stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+    history=output/'history/history.json'
+    meta=json.loads(history.read_text())
+    if len(meta['keys'])!=steps or len(meta['checkpoints'])!=steps+1:
+        raise RuntimeError('Incomplete original championship history')
+    meta['initial_save_sha256']=initial_save_sha256
+    history.write_text(json.dumps(meta,indent=2)+'\n')
 
 
 def key_acknowledged(pid, output, env, key, timeout):
