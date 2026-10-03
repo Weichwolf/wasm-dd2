@@ -35,6 +35,29 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The first L3 stream's 25 wrong pixels are fully explained by inherited
+  debris vertices, with an unchanged control on the actual patch-845 native
+  binary. Original Update_Debris 0x42469a..0x4246a9 masks animation to 7 bits
+  and skips the vertex copy when it becomes zero. Init_Debris/Setup_Debris
+  retain the slot's old vertices. Slot 30 first spawns with animation zero
+  at cf234/ticks469; the direct cold-start harness has zero vertices while
+  the original retains [(49,22,-17),(-11,110,-7),(-77,-48,-28)].
+  tools/reference/diagnose_debris_history.py runs both native controls:
+  unchanged = exactly one wrong frame, index 566, 25 pixels; copying ONLY
+  the inactive slot's 24 vertex bytes before the first GetTickCount = all
+  1243 frames/palettes, 13181 clocks, 1948 calculated RNG records and all
+  diagnostic scenery checkpoints exact
+  (dd2-l3-retained-slot30-controls-reviewed/report.json).
+  This is a controlled initial-state diagnosis, NOT naturally calculated
+  history acceptance, a WASM diagnostic, or an engine correction. No vertex
+  reset/copy patch was added. Original files/process were never modified.
+  Complete preceding clock inputs remain necessary to calculate this state.
+  Fresh original L8 capture contains 846 frames/10983 clocks/9585 RNG calls
+  and the actual prior sequence [9,6,5,2,3,4,9,9,2,1,2,1,9,5,6]
+  (dd2-original-race-l8-prefix-stream-reviewed). Both natural-history and
+  direct-state native runs reject RNG exhaustion, with unconsumed clocks;
+  direct-state RNG phase first differs at frame 235, cf115/ticks232
+  (4839 port calls versus 4837 original). No complete L8 acceptance claimed.
 - Patch 845 restores the signed BYTE camera lane at 0x77cf3a. Original
   0x429294..0x42929f tests the signed byte; 0x42946f..0x42947a sign-extends
   the same byte from an overlapping DWORD for the right-wall clamp.

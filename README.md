@@ -303,6 +303,20 @@ level sequence to match and reject an extra preceding demo. These entry records
 do not capture the preceding races' complete clocks or establish full-prefix
 timing equivalence.
 
+For the older L3 capture, a controlled native experiment isolates the effect
+of retained debris vertices:
+
+```sh
+python3 tools/reference/diagnose_debris_history.py --capture third_party/verification-artifacts/dd2-original-race-l3-stream-reviewed --output third_party/verification-artifacts/fresh-l3-debris-controls --slot 30
+```
+
+It first runs the unchanged port, then uses GDB to copy only the inactive
+slot's 24 vertex bytes before the first race clock call. The unchanged run
+differs by 25 pixels in one frame; the controlled run matches all 1243 frames.
+This diagnoses missing inherited initial state in the direct harness. It does
+not establish naturally calculated history or WASM acceptance. The original
+executable and reference captures remain untouched.
+
 By default, the ports match the observed initial RNG seed and inherited DEMO MODE blink
 counter once, then calculate every subsequent random result/state and blink
 phase themselves. Every presented framebuffer/palette byte and clock/random
