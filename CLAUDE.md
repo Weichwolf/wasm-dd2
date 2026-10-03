@@ -35,6 +35,26 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- New original race captures record actual preceding demo entries at the
+  original first GetTickCount return using read-only hardware breakpoints.
+  The comparator checks the recorded level sequence when --attract-history
+  is used. The actual L7 capture contains 17 prior entries
+  [9,6,5,2,3,4,9,9,2,1,2,1,9,5,6,8,2]; the default-clock native history adds
+  [4,1] before reaching L7 and correctly fails its initial RNG check.
+  The sequence checker separately rejects this actual 19-entry port history
+  and an extra-demo mutation (dd2-original-prefix-metadata-check-reviewed).
+  Entry observations are not complete prefix clocks or full-prefix proof.
+- L1 is still rejected: the full 1371-frame/22653-clock/2458-RNG capture
+  has 9 differing images in direct initial-state matching. Real native/WASM
+  history [9,6,5,2,3,4,9,9,2] naturally calculates seed=872332370/blink=58,
+  matches all state/clock/RNG phases and 9 scenery checkpoints, and removes
+  the one-pixel cf438 difference, but 8 images at cf596..602 still differ
+  (dd2-original-race-l1-tunnel-{direct,history}-reviewed). A detailed original
+  camera/command capture around those counters is running.
+  L7 direct initial-state matching also remains rejected: both targets have
+  6 differing images despite exact clock/RNG/blink phases over 1147 frames,
+  21711 clocks and 4726 RNG calls (dd2-original-race-l7-tunnel-direct-reviewed).
+  It excludes the recorded real prefix and is not full original acceptance.
 - Championship browser navigation now waits for the actual slab transition
   and engine input consumption rather than releasing at an arbitrary next
   presentation. Both normal speed and 3x-throttled menu selection/name entry

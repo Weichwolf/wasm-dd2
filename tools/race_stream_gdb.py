@@ -14,7 +14,7 @@ import gdb
 
 def record_race(output,level,random_trace=False,image_frames=(),image_counters=()):
     directory=Path(output)/'race';directory.mkdir()
-    ticks=[];frames=[];random=[];saved_images=[];complete=False
+    ticks=[];frames=[];random=[];saved_images=[];preceding_demos=[];complete=False
     inferior=gdb.selected_inferior()
     def read(address,size):return bytes(inferior.read_memory(address,size))
     def integer(address):return int.from_bytes(read(address,4),'little',signed=True)
@@ -45,12 +45,26 @@ def record_race(output,level,random_trace=False,image_frames=(),image_counters=(
         rng=gdb.Breakpoint(f'*0x{rng_pc:x}',type=kind);rng.silent=True
         rng.condition=f'*(int*)0x936ff4 == {level} && *(int*)0x46385c == 1'
     initial=gdb.Breakpoint('*0x423c2d',type=kind);initial.silent=True
-    initial.condition=f'*(int*)0x936ff4 == {level} && *(int*)0x46385c == 1'
+    # Record the actual prior demo sequence instead of inferring it from a
+    # default-clock port run. Only the selected loop's complete clock is
+    # captured; these preceding entry observations do not prove its full prefix.
+    initial.condition='*(int*)0x46385c == 1'
     while True:
         gdb.execute('continue')
         pc=int(gdb.parse_and_eval('$pc'))
-        if not random_stop(pc):break
-    if int(gdb.parse_and_eval('$pc'))!=0x423c2d:raise RuntimeError('first game GetTickCount return not reached')
+        if random_stop(pc):continue
+        if pc!=0x423c2d:raise RuntimeError('first game GetTickCount return not reached')
+        current=state()
+        if current['level']==level:break
+        if current['level'] not in range(1,11) or current['ticks']!=0 or current['quit']:
+            raise RuntimeError('invalid preceding demo entry')
+        entry={**current,'initial_clock':int(gdb.parse_and_eval('$eax'))&0xffffffff}
+        preceding_demos.append(entry)
+        # Keep observations even when a selected track is not reached within
+        # the external capture deadline. This partial log is not acceptance.
+        with (directory/'preceding-demos.jsonl').open('a') as log:
+            log.write(json.dumps(entry)+'\n')
+        print(f'Original preceding demo: level={current["level"]}',flush=True)
     initial.delete()
     first_state=state()
     ticks.append(int(gdb.parse_and_eval('$eax'))&0xffffffff)
@@ -103,7 +117,7 @@ def record_race(output,level,random_trace=False,image_frames=(),image_counters=(
         'complete_racing_loop':True,'breakpoints':'hardware only; no inferior memory/register writes',
         'clock_source':'actual GetTickCount return EAX at original engine call sites',
         'first_state':first_state,'final_state':final_state,'clock_calls':len(ticks),'frames':frames,
-        'diagnostic_image_frames':saved_images}
+        'diagnostic_image_frames':saved_images,'preceding_demos':preceding_demos}
     if random_trace:
         if not random or rng_pc!=0x456cc6:raise RuntimeError('incomplete original random calls')
         (directory/'random.bin').write_bytes(b''.join(struct.pack('<III',row['before'],row['after'],row['return']) for row in random))

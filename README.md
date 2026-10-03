@@ -295,6 +295,13 @@ preceding demos. That mode requires the naturally calculated initial RNG seed
 and blink counter to match; neither is overwritten from the reference. Only
 the selected race receives the recorded clock. The complete L6 capture also
 passes on native/WASM after the real L9 demo in this mode.
+New captures also record each preceding demo at its original first game-clock
+return, using a read-only hardware breakpoint. The completed manifest contains
+`preceding_demos`; `preceding-demos.jsonl` retains these entry observations even
+if the capture times out. Attract-history comparisons require the recorded
+level sequence to match and reject an extra preceding demo. These entry records
+do not capture the preceding races' complete clocks or establish full-prefix
+timing equivalence.
 
 By default, the ports match the observed initial RNG seed and inherited DEMO MODE blink
 counter once, then calculate every subsequent random result/state and blink

@@ -21,6 +21,12 @@ ROOT=Path(__file__).resolve().parents[2]
 EXE_SHA='0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2'
 FIELDS=('level','cf','ticks','countdown','frame_skip','quit','clock_calls')
 
+def compare_prefix(reference,actual):
+    if 'preceding_demos' not in reference:return []
+    original=[entry['level'] for entry in reference['preceding_demos']]
+    if original==actual:return []
+    return [{'error':'preceding demo sequence differs','original':original,'port':actual}]
+
 def compare(reference,actual_root,rows):
     failures=[];frames=reference['frames']
     fields=(*FIELDS,'rng_calls') if 'rng_calls' in reference else FIELDS
@@ -110,10 +116,13 @@ def main():
         rows=[json.loads(line) for line in (directory/'race.jsonl').read_text().splitlines()]
         if any(row['flip']<=rows[i-1]['flip'] for i,row in enumerate(rows) if i):raise RuntimeError('port presentation indices not increasing')
         failures=compare(r,directory,rows)
+        preceding=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
+        if a.attract_history:failures.extend(compare_prefix(r,preceding))
         result={'target':name,'binary_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'pass':not failures,'frames':len(rows),
             'framebuffer_bytes':len(rows)*307200,'palette_bytes':len(rows)*1024,'failures':failures,
             'diagnostic_first_scene_x_checks':len([i for i in r.get('diagnostic_image_frames',[]) if i<len(rows)])}
-        if a.attract_history:result['preceding_demo_levels']=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
+        if a.attract_history:result['preceding_demo_levels']=preceding
+        if 'preceding_demos' in r:result['original_preceding_demo_levels']=[entry['level'] for entry in r['preceding_demos']]
         report['targets'].append(result);(out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
         if failures:
             print(f'FAIL {name} vs actual original: {len(failures)} differing records; first {failures[:2]}',flush=True)
@@ -126,6 +135,12 @@ def main():
             if bad!=[{'index':0,'error':'bin bytes differ','port_bytes':307200,'first_difference':0}]:raise RuntimeError('corrupted first original-comparison frame was not rejected exactly')
         finally:path.write_bytes(accepted)
         result['negative_first_pixel_rejected']=True
+        if a.attract_history and 'preceding_demos' in r:
+            changed=[*preceding,1]
+            if compare_prefix(r,changed)!=[{'error':'preceding demo sequence differs',
+                    'original':preceding,'port':changed}]:
+                raise RuntimeError('changed preceding demo sequence was not rejected exactly')
+            result['negative_preceding_demo_sequence_rejected']=True
         for field in ['rng_calls','demo_flash']:
             if field not in frames[0]:continue
             altered=[dict(row) for row in rows];altered[0][field]+=1
