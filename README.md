@@ -298,19 +298,28 @@ game directory prevents changing provisioned/user saves and is removed after
 successful checks. `NATIVE_REPLAY_ARGS='--output /tmp/wasm-dd2/fresh-native-replay'`
 selects the report path; Xvfb and xdotool are required.
 
-The native real-menu test accepts `--full-card` to fill all 15 slots, compare every
+Both real-menu tests accept `--full-card` to fill all 15 slots, compare every
 complete replay payload, check navigation at slot 14, cancel then confirm its
 overwrite, reload the full card, play a saved replay naturally, delete slot 0
 and verify the remaining 14 entries after another restart:
 
 ```sh
 make verify-native-replay NATIVE_REPLAY_ARGS='--full-card'
+make verify-browser-replay-save BROWSER_REPLAY_SAVE_ARGS='--full-card'
 ```
 
-The native test waits for the actual countdown completion and Practice Over state;
+The tests wait for the actual countdown completion and Practice Over state;
 slow rendering cannot make a fixed post-key delay establish those transitions.
-This is a functional native check. Whole original memory-card menus and complete
+These are functional port checks. Whole original memory-card menus and complete
 player video/audio equivalence still require acceptance.
+
+The browser build optimizes the handwritten DirectSound mixer with `-O2
+-fno-strict-aliasing`, as the native build does, while retaining the reconstructed
+engine at `-O0`. This reduces mixer processing cost without fast-math or altered
+PCM. `make verify-sound-resample SOUND_RESAMPLE_ARGS='--wasm-optimization O2'`
+checks the browser compiler settings against the recorded complete Wine PCM
+waveforms and actual CPU x87 arithmetic. The browser CD-menu check also writes
+a report under `/tmp/wasm-dd2/` and removes successful raw captures.
 
 `make verify-card` compares seven actual card functions with unmodified original
 x86 over 26 explicit cases: empty/full/sparse cards, first free blocks 0/7/14,

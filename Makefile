@@ -214,7 +214,7 @@ verify-replay-metadata: patch ## compare packed replay bytes/load setup with ori
 	python3 $(ROOT)/tools/verify_replay_metadata.py $(REPLAY_METADATA_ARGS)
 
 verify-browser-replay-save: web ## real replay save/overwrite/restart/load/playback and cancelled/confirmed deletion
-	$(NODE) $(ROOT)/tools/browser/qa_replay_save.js $(ROOT)/web/dd2 $(BROWSER_REPLAY_SAVE_OUTPUT)
+	$(NODE) $(ROOT)/tools/browser/qa_replay_save.js $(ROOT)/web/dd2 $(if $(BROWSER_REPLAY_SAVE_OUTPUT),$(BROWSER_REPLAY_SAVE_OUTPUT),"") $(BROWSER_REPLAY_SAVE_ARGS)
 
 verify-native-replay: native ## real X11 replay save/overwrite/process restart/load/playback and cancelled/confirmed deletion
 	python3 $(ROOT)/tools/verify_native_replay.py --binary $(NATIVE) $(NATIVE_REPLAY_ARGS)

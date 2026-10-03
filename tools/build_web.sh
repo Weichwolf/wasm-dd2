@@ -23,7 +23,13 @@ UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2
 OBJS=""; err=0
 for u in $UNITS; do
   c="$ROOT/build/$u.c"; o="/tmp/web_$u.o"
-  emcc -c $F "$c" -o "$o" 2>/tmp/wcc_err.txt || true
+  UNIT_FLAGS=()
+  # As in the native build, the exact integer x87 FIR mixer must process
+  # samples faster than its real-time clock. Otherwise its own processing
+  # time grows the next elapsed-time block and starves live race updates.
+  # Keep the reconstructed engine at -O0 and preserve exact arithmetic.
+  case "$u" in dd2h_stubs) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
+  emcc -c $F "${UNIT_FLAGS[@]}" "$c" -o "$o" 2>/tmp/wcc_err.txt || true
   if grep -q 'error:' /tmp/wcc_err.txt; then echo "ERROR compiling $u.c:"; grep 'error:' /tmp/wcc_err.txt | head -5; err=1; fi
   OBJS="$OBJS $o"
 done

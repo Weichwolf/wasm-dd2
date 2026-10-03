@@ -1,8 +1,15 @@
 // Navigate the actual CD-player menu and verify delivered WebAudio PCM, not labels alone.
 const fs=require('fs'),path=require('path'),assert=require('assert');
+const {createHash}=require('crypto');
 const {serve,key,rd,boot,gotoButton,chromium}=require('./felib');
 const build=path.resolve(process.argv[2]||'web/dd2');
-const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
+fs.mkdirSync('/tmp/wasm-dd2',{recursive:true});
+const output=path.resolve(process.argv[3] || `/tmp/wasm-dd2/browser-redbook-${Date.now()}-${process.pid}`);
+assert(output.startsWith('/tmp/wasm-dd2/'),'verification output must use /tmp/wasm-dd2');
+const parent=fs.realpathSync(path.dirname(output));
+assert(parent==='/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'),'verification parent must remain inside /tmp/wasm-dd2');
+fs.mkdirSync(output,{recursive:false});
+const report={scope:'Real browser CD menu controls, track2/3 source PCM and C-to-WebAudio buffer equality; complete original mixed-output/timing acceptance is separate',pass:false,tracks:[]};
 (async()=>{
  const server=serve(build);await new Promise(resolve=>server.listen(0,resolve));
  let browser;
@@ -81,6 +88,9 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   const originalGoto=page.goto.bind(page);
   page.goto=(url,options)=>originalGoto(url+'&cdlog',options);
   await boot(page,server);
+  // Intro audio uses the separate movie sink before the CD menu is opened.
+  // Reject any additional unobserved sink during the actual menu exercise.
+  const priorOtherBuffers=await page.evaluate(()=>__cdTest.otherBuffers);
   assert(await gotoButton(page,'CD Audio Player'),'cannot reach CD player');
   await key(page,'Enter',700);
   // The label is installed before eight rotation and fifteen bounce frames.
@@ -123,6 +133,7 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
    assert(capture.plays.at(-1).frame===0,'Play did not restart at the track beginning');
    assert(capture.rate===44100,'CD AudioContext did not preserve 44100Hz');
    fs.writeFileSync(path.join(output,`track${track}.pcm`),actual);
+   report.tracks.push({track,bytes:actual.length,sha256:createHash('sha256').update(actual).digest('hex')});
    console.log(`PASS browser track${track}: ${actual.length} exact CD source bytes in the shared mixer`);
   }
   await playAndCompare(2);
@@ -141,9 +152,18 @@ const output='/tmp/dd2-browser-redbook';fs.mkdirSync(output,{recursive:true});
   await cdKey('ArrowRight',400);await cdKey('ArrowRight',400);await cdKey('Enter',700);
   await page.screenshot({path:path.join(output,'stopped.png')});
   const sink=await page.evaluate(()=>({mismatches:__cdTest.mismatches,missing:__cdTest.missingBuffers,other:__cdTest.otherBuffers,buffers:__cdTest.totalBuffers,separateCursor:Module._dd2cdt!==undefined}));
-  assert(sink.buffers>0 && sink.mismatches===0 && sink.missing===0 && sink.other===0 && !sink.separateCursor,'shared WebAudio output differs from the combined C mixer or uses a second sink');
+  sink.priorOtherBuffers=priorOtherBuffers;
+  sink.otherDuringMenu=sink.other-priorOtherBuffers;
+  report.sink=sink;
+  assert(sink.buffers>0 && sink.mismatches===0 && sink.missing===0 && sink.otherDuringMenu===0 && !sink.separateCursor,'shared WebAudio output differs from the combined C mixer or uses a second sink');
   console.log('Shared WebAudio sink:',JSON.stringify(sink));
   assert.deepEqual(errors,[],'browser runtime errors');
+  report.pass=true;
   console.log('PASS CD menu Play/Stop/Next/Prev; no runtime errors');
- }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+ }catch(error){report.error=error.message;throw error;}
+ finally{
+  if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
+  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
+  if(report.pass)for(const name of ['track2.pcm','track3.pcm','stopped.png'])fs.unlinkSync(path.join(output,name));
+ }
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -11,11 +11,25 @@ assert(output.startsWith('/tmp/wasm-dd2/'), 'verification output must use /tmp/w
 const parent = fs.realpathSync(path.dirname(output));
 assert(parent === '/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'), 'verification parent must remain inside /tmp/wasm-dd2');
 fs.mkdirSync(output, {recursive: false});
-const report = {scope: 'Actual browser replay saving, cancelled/confirmed overwrite, full-card persistence, loading, natural playback, configuration restoration and cancelled/confirmed deletion; no complete original video/audio parity claim', pass: false};
+const fullCard = process.argv[4] === '--full-card';
+const report = {scope: 'Actual browser replay saving, cancelled/confirmed overwrite, optional full-card persistence, loading, natural playback, configuration restoration and cancelled/confirmed deletion; no complete original video/audio parity claim', fullCardMode: fullCard, pass: false};
+const selectBlock = async (page, slot) => {
+  await tap(page, 'Enter');
+  for (const code of [...Array(Math.floor(slot/3)).fill('ArrowDown'), ...Array(slot%3).fill('ArrowRight')]) await tap(page, code);
+  assert((await metadata(page)).fileSlot === slot, 'block selection differs');
+  await tap(page, 'Enter');
+};
+const enterName = async (page, letter, replace=false) => {
+  if (replace) for (const code of ['ArrowDown', 'ArrowDown', 'Enter', 'ArrowUp', 'ArrowUp']) await tap(page, code);
+  const index = letter.charCodeAt(0)-65, row = Math.floor(index/13), column = index%13;
+  for (const code of [...Array(column).fill('ArrowRight'), ...Array(row).fill('ArrowDown'), 'Enter',
+    ...Array(2-row).fill('ArrowDown'), 'ArrowRight', 'Enter']) await tap(page, code);
+};
 const metadata = page => page.evaluate(() => ({car: HEAP32[0x467400 >> 2], mode: HEAP32[0x4673f8 >> 2],
   type: HEAP32[0x4673f4 >> 2], season: HEAP32[0x93dec0 >> 2], level: HEAP32[0x936ff4 >> 2],
   replayLevel: HEAP32[0x9392bc >> 2], pad: HEAP32[0x467078 >> 2], end: HEAPU32[0x9392c4 >> 2],
   cars: HEAP32[0x46765c >> 2], replay: HEAP32[0x467074 >> 2], quit: HEAP32[0x7746ac >> 2], ticks: HEAP32[0x7746c0 >> 2],
+  countdown: HEAP32[0x784298 >> 2], cameraIntro: HEAP32[0x77cf74 >> 2], cf: HEAP32[0x462ff0 >> 2],
   fileMode: HEAP32[0x93a318 >> 2], fileSlot: HEAP32[0x774680 >> 2]}));
 const card = page => page.evaluate(async () => {
   const disk = FS.readFile('/SaveGames');
@@ -38,8 +52,12 @@ const card = page => page.evaluate(async () => {
   let browser, watchdog, page; const errors = [];
   try {
     browser = await chromium.launch({args: ['--no-sandbox']});
-    watchdog = setTimeout(() => {process.exitCode = 1; browser.close().catch(() => {});}, 300000);
+    watchdog = setTimeout(() => {process.exitCode = 1; browser.close().catch(() => {});}, fullCard ? 600000 : 300000);
     page = await browser.newPage();
+    report.cdRequests = [];
+    page.on('request', request => { if (request.url().includes('.cdda')) report.cdRequests.push({event: 'request', url: request.url(), time: Date.now()}); });
+    page.on('requestfinished', request => { if (request.url().includes('.cdda')) report.cdRequests.push({event: 'finished', url: request.url(), time: Date.now()}); });
+    page.on('requestfailed', request => { if (request.url().includes('.cdda')) report.cdRequests.push({event: 'failed', url: request.url(), error: request.failure(), time: Date.now()}); });
     page.on('pageerror', error => {errors.push(error.message); console.error('Browser runtime:', error.message);});
     page.on('crash', () => errors.push('renderer crash'));
     await installMenuInput(page);
@@ -69,11 +87,21 @@ const card = page => page.evaluate(async () => {
     await tap(page, 'ArrowLeft'); await tap(page, 'ArrowDown'); await tap(page, 'ArrowDown');
     assert((await menuLabel(page)).includes('Go!'), 'Go selection failed');
     await tap(page, 'Enter', 1000); assert((await waitRace(page)).launched, 'practice did not launch');
-    await page.waitForFunction(() => HEAP32[0x784298 >> 2] < 1, null, {timeout: 15000});
+    report.countdownObservations = [];
+    const countdownDeadline = Date.now()+60000;
+    do {
+      const state = await metadata(page);
+      report.countdownObservations.push({time: Date.now(), ...state});
+      console.log('Countdown', state.countdown, 'camera', state.cameraIntro, 'ticks', state.ticks);
+      if (state.countdown < 1) break;
+      assert(Date.now() < countdownDeadline, 'countdown did not complete');
+      await page.waitForTimeout(1000);
+    } while (true);
     await page.keyboard.down('a'); await page.waitForTimeout(3000); await page.keyboard.up('a');
     await tap(page, 'Escape');
     for (const code of ['ArrowDown', 'ArrowDown', 'ArrowDown', 'Enter', 'ArrowUp', 'Enter']) await tap(page, code);
-    assert((await rd(page, 0x46a508)).includes('View Replay'), 'Practice Over missing');
+    await page.waitForFunction(() => HEAP32[0x7746ac >> 2] === 1 &&
+      UTF8ToString(HEAPU32[0x46a508 >> 2]).includes('View Replay'), null, {timeout: 30000});
     report.recorded = await metadata(page);
     report.script = await page.evaluate(() => Array.from(HEAPU8.subarray(0x9376b0, 0x9392b0)));
     report.order = await page.evaluate(() => Array.from(HEAPU8.subarray(0x795c28, 0x795c3c)));
@@ -113,6 +141,33 @@ const card = page => page.evaluate(async () => {
     report.saved = await card(page);
     assert(report.saved.slots.length === 1 && report.saved.slots[0].name === 'B', 'overwrite did not rename the same card entry');
     assert.deepEqual(report.saved.slots[0].packed, saved.packed, 'overwrite changed the replay payload');
+    if (fullCard) {
+      for (const [index, letter] of Array.from('ACDEFGHIJKLMNO').entries()) {
+        const slot = index+1;
+        await selectBlock(page, slot); await enterName(page, letter);
+        await page.waitForFunction(slot => FS.readFile('/SaveGames')[slot*0x200] === 1, slot, {timeout: 15000});
+        const stored = await card(page);
+        assert(stored.engineMatchesFile, 'full-card disk bytes differ from engine');
+        assert(stored.slots.length === slot+1 && stored.slots[slot].name === letter, 'filling card saved wrong slot/name');
+        assert.deepEqual(stored.slots[slot].packed, saved.packed, 'full-card replay payload differs');
+        console.log('Browser populated slot', slot, letter);
+      }
+      report.fullCard = await card(page);
+      await tap(page, 'Enter');
+      for (const code of ['ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowRight', 'ArrowDown', 'ArrowRight', 'ArrowDown', 'ArrowRight']) await tap(page, code);
+      assert((await metadata(page)).fileSlot === 14, 'full-card navigation exceeded last slot');
+      await tap(page, 'Enter'); assert((await rd(page, 0x4672ac)).includes('Overwrite File'), 'full-card overwrite missing');
+      await tap(page, 'Escape'); report.fullCardCancelled = await card(page);
+      assert.deepEqual(report.fullCardCancelled, report.fullCard, 'cancelled full-card overwrite changed data');
+      await selectBlock(page, 14); await tap(page, 'ArrowLeft'); await tap(page, 'Enter'); await enterName(page, 'P', true);
+      await page.waitForFunction(() => FS.readFile('/SaveGames')[14*0x200+4] === 80, null, {timeout: 15000});
+      report.fullCardOverwritten = await card(page);
+      assert(report.fullCardOverwritten.slots.length === 15 && report.fullCardOverwritten.slots[14].name === 'P', 'full-card last-slot overwrite failed');
+      assert.deepEqual(report.fullCardOverwritten.slots.slice(0,14), report.fullCard.slots.slice(0,14), 'full-card overwrite changed other entries');
+      assert.deepEqual(report.fullCardOverwritten.slots[14].packed, saved.packed, 'full-card overwrite changed replay payload');
+      assert(report.fullCardOverwritten.engineMatchesFile, 'overwritten full-card disk bytes differ from engine');
+      report.saved = report.fullCardOverwritten;
+    }
     // Normal navigation away invokes the production pagehide/unload persistence.
     // The test never calls syncfs or writes either the card or engine memory.
     await page.goto('about:blank');
@@ -155,7 +210,8 @@ const card = page => page.evaluate(async () => {
     await tap(page, 'ArrowLeft'); await tap(page, 'Enter');
     await page.waitForFunction(() => FS.readFile('/SaveGames')[0] === 0, null, {timeout: 15000});
     report.deleted = await card(page);
-    assert(report.deleted.slots.length === 0 && report.deleted.engineMatchesFile, 'confirmed deletion did not update card disk/RAM');
+    assert(report.deleted.slots.length === report.saved.slots.length-1 && report.deleted.slots.every(slot => slot.index !== 0) &&
+      report.deleted.engineMatchesFile, 'confirmed deletion did not update card disk/RAM');
     await page.goto('about:blank'); await boot(page, server);
     report.deletedReloaded = await card(page);
     assert.deepEqual(report.deletedReloaded, report.deleted, 'confirmed deletion did not survive page navigation');
@@ -175,8 +231,10 @@ const card = page => page.evaluate(async () => {
     if (report.pass) {
       const summarize = bytes => ({bytes: bytes.length, sha256: createHash('sha256').update(Buffer.from(bytes)).digest('hex')});
       report.script = summarize(report.script);
-      for (const name of ['initial', 'firstSaved', 'cancelledOverwrite', 'saved', 'reloaded', 'cancelledDeletion', 'deleted', 'deletedReloaded']) {
-        for (const slot of report[name].slots) {
+      const cards = new Set(['initial', 'firstSaved', 'cancelledOverwrite', 'saved', 'reloaded', 'cancelledDeletion', 'deleted', 'deletedReloaded',
+        ...(fullCard ? ['fullCard', 'fullCardCancelled', 'fullCardOverwritten'] : [])].map(name => report[name]));
+      for (const stored of cards) {
+        for (const slot of stored.slots) {
           slot.header = slot.packed.slice(0, 18);
           slot.payload = summarize(slot.packed);
           delete slot.packed;

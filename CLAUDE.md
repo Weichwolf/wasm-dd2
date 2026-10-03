@@ -35,6 +35,41 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Browser mixer now uses -O2 -fno-strict-aliasing, matching the native shim's
+  compiler settings; reconstructed engine units remain -O0 and no fast-math
+  is enabled. The unoptimized browser had slow camera-intro runs that failed
+  15s/60s countdown limits while CD loading finished in 0.12s. A separately
+  profiled unoptimized run also passed, so these failures are not a deterministic
+  semantic negative. Controlled Node mixer runs have identical complete PCM
+  hashes at O0/O2 and median times 0.204s/0.157s including process startup
+  (mixer-optimization-benchmark/report.json); this is a synthetic cost check,
+  not complete original/live browser timing acceptance.
+  Browser-setting FIR tests pass all 24 full waveforms and six short loops at
+  22050/44100/48000 device rates against captured Wine hashes/cycles, plus
+  1084900 software-wide arithmetic results against actual x87 CPU operations
+  (sound-resample-wasm-o2/report.json). Raw successful comparisons removed.
+- Browser optional full-card QA now passes all 15 actual menu saves, clipped
+  last-slot navigation, cancelled/confirmed last-slot overwrite, full-card
+  restart, natural slot0 replay playback/return and cancelled/confirmed deletion
+  retaining the other 14 entries across another restart. All replay payloads
+  and RAM/file bytes match; other slots stay unchanged when overwriting slot14.
+  browser-card-full-mixer-o2/report.json: pass, no runtime errors, 140 observed
+  playback phases; full/cancelled SHA256
+  6b32a72986db6ab6415b950094c001a7da420770ed2e3e16b405f0476fd4814a,
+  overwritten/reloaded b7658b15b760e51b55b8c5c3c2357d898037bced0208e5e2d346bc001ba9a2ab,
+  deleted/reloaded 336fb3a99d96373776d6a16d0763f4c1523ef718bf2e1094c674dcba3a1edc57.
+  Menu audio delivers all 1512 checked buffers exactly from C to WebAudio with
+  no missing/mismatched buffer (browser-menu-audio-mixer-o2.log). CD menu
+  Play/Stop/Next/Prev passes 643860 exact track2/3 source bytes and 4311 exact
+  shared mixer buffers with no additional sink during the menu exercise
+  (browser-redbook-mixer-o2-reviewed/report.json). The CD verifier now accounts
+  for the separate intro sink before the menu and removes successful captures
+  after writing its report under /tmp/wasm-dd2. Candidate and rebuilt canonical
+  browser WASM SHA256 match:
+  609596b66b373daee18dd5ec0de2f9f4e828b3fc4e777c81ccab9fceafac7ad9.
+  HTML remains 9356a7e03df6a0b9c00bf4d156635e18e31d8e957cd888dd202c75bc7a49f22a.
+  These are functional and component checks; full original menu/player A/V
+  equality, original real-time audio and complete game acceptance remain open.
 - Native optional full-card replay QA now passes with real X11 inputs: all 15
   entries carry the exact complete replay payload, last-slot navigation clips at
   14, cancelled overwrite preserves the complete card, confirmed overwrite
@@ -47,11 +82,8 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   overwritten/reloaded d109fc1602643aee4c142f3cd1923b91772585eef20ac6ccf1f13693b1517e6a,
   deleted/reloaded 8659708be40cabd1062b6a6150a811a6ebdf93ea1449f87ce724c496676d88ab.
   Countdown and Practice Over readiness are actual state predicates, not a
-  fixed post-key delay. Browser full-card acceptance is still in diagnosis:
-  its camera-intro phase progresses slowly and its countdown did not complete
-  in 60s. The observed CD request completes in 0.12s. Prior one-slot browser
-  success remains narrower evidence. No full original card-menu/player A/V
-  parity claim.
+  fixed post-key delay. Browser full-card acceptance is recorded above.
+  No full original card-menu/player A/V parity claim.
 - Real native and browser replay QA also passes cancelled/confirmed overwrite.
   Cancelling preserves the whole card; confirming renames entry A to B in the
   same slot with the complete replay payload unchanged, then preserves it after

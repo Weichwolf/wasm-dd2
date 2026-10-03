@@ -76,6 +76,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--node",default="node")
     parser.add_argument("--emcc",default="emcc")
+    parser.add_argument("--wasm-optimization", choices=("O0", "O2"), default="O0",
+                        help="compile the mixer with the headless or browser production settings")
     parser.add_argument("--wine",action="store_true")
     parser.add_argument("--mingw",default="i686-w64-mingw32-gcc")
     parser.add_argument("--output",type=Path)
@@ -97,7 +99,7 @@ def main():
         # Match the production native mixer: exact FIR arithmetic must run
         # faster than its elapsed-time audio clock, without fast-math.
         subprocess.run(["gcc","-m32","-no-pie","-O2","-fno-strict-aliasing",*common,"-o",str(native)],check=True)
-        subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
+        subprocess.run([args.emcc,"-"+args.wasm_optimization,"-fno-strict-aliasing",*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
                         "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
         # This oracle executes actual CPU x87 arithmetic and compares all four
         # operations before its output is used to verify WASM's software model.
@@ -111,7 +113,8 @@ def main():
         if (output/"wide-native.bin").read_bytes()!=(output/"wide-wasm.bin").read_bytes():
             raise RuntimeError("WASM software precision differs from actual x87 oracle")
         report={"scope":"complete synthetic one-shot FIR/format waveforms; preroll reported separately; original full-output/timing parity pending",
-                "wine":args.wine,"x87_cpu_results":1084900,"cases":[],"loops":[]}
+                "wine":args.wine,"wasm_optimization":args.wasm_optimization,
+                "x87_cpu_results":1084900,"cases":[],"loops":[]}
         if args.wine:
             executable=directory/"resample.exe"
             subprocess.run([args.mingw,"-Wall","-Wextra","-Werror",str(source),"-ldsound","-o",str(executable)],check=True)
