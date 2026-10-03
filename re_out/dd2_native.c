@@ -30,7 +30,7 @@ static void native_fail(const char* operation){
 int dd2_native_enabled(void){return native_window!=NULL;}
 static void native_shutdown(void){
     dd2_native_movie_audio_stop();
-    if(native_device)SDL_CloseAudioDevice(native_device);
+    dd2_native_audio_stop();
     if(native_controller)SDL_GameControllerClose(native_controller);
     else if(native_joystick)SDL_JoystickClose(native_joystick);
     SDL_DestroyTexture(native_texture);SDL_DestroyRenderer(native_renderer);
@@ -176,6 +176,10 @@ void dd2_native_audio(const float* pcm,unsigned frames,unsigned rate){
     }
     if(rate!=native_rate){fprintf(stderr,"Native SDL device rate changed during playback\n");exit(1);}
     if(SDL_QueueAudio(native_device,pcm,frames*2*sizeof(float)))native_fail("queue combined audio");
+}
+void dd2_native_audio_stop(void){
+    if(native_device){SDL_ClearQueuedAudio(native_device);SDL_CloseAudioDevice(native_device);native_device=0;}
+    native_rate=0;
 }
 void dd2_native_movie_present(const uint32_t* argb){
     if(!native_window)return;

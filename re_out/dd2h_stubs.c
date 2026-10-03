@@ -199,10 +199,26 @@ typedef struct DSBuf {
 } DSBuf;
 static DSBuf* g_dsbufs[256]; static int g_ndsbufs;
 static unsigned g_ds_music_buffers;
+static unsigned g_ds_devices;
 static int ds_mixing; /* Stream callbacks cannot recursively enter the device mix. */
 static void* g_dsnd_vtbl[32];
-static void* g_dsnd_obj = g_dsnd_vtbl;
+typedef struct DSDevice { void** vtbl; unsigned references; } DSDevice;
 static void* g_dsb_vtbl[32];
+static int ds_clock_init;
+static unsigned ds_last_ms,ds_remainder;
+#ifdef DD2_BROWSER
+void dd2_audio_stop(void);
+#endif
+static void ds_close_idle_device(void){
+    if(g_ds_devices || g_ds_music_buffers)return;
+    ds_clock_init=0;ds_remainder=0;
+#ifdef DD2_NATIVE_SDL
+    dd2_native_audio_stop();
+#endif
+#ifdef DD2_BROWSER
+    dd2_audio_stop();
+#endif
+}
 static unsigned ds_device_rate(void){
     static unsigned rate;
     if(!rate){
@@ -234,7 +250,7 @@ static int dsb_release(DSBuf* b){ unsigned remaining;
     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
     if(b->storage && !--b->storage->references){free(b->storage->pcm);free(b->storage);}
     if(b->stream_read)g_ds_music_buffers--;
-    free(b); return 0; }
+    free(b);ds_close_idle_device(); return 0; }
 static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
     ds_realtime_pump();
     /* Playback state follows actual consumed samples, including seeks and
@@ -357,11 +373,39 @@ static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
 static int ds_setcooplevel(void* t,int hwnd,int level){ (void)t;(void)hwnd;
     SLOG("DS SetCooperativeLevel %d",level); return 0; }
-static int ds_release(void* t){ (void)t; SLOG("DS Release"); return 0; }
+static int ds_addref(DSDevice* device){return (int)++device->references;}
+static int ds_release(DSDevice* device){
+    unsigned remaining;
+    ds_realtime_pump();SLOG("DS Release");
+    remaining=--device->references;
+    if(remaining)return (int)remaining;
+    free(device);
+    if(!--g_ds_devices){
+        int i=0;
+        /* Wine 10 DirectSoundDevice_Release destroys its primary and all
+         * remaining secondary buffers when the final device goes away.
+         * CD streaming buffers belong to the independent MCI device. */
+        while(i<g_ndsbufs){
+            DSBuf* buffer=g_dsbufs[i];
+            if(buffer->stream_read){i++;continue;}
+            buffer->references=1;dsb_release(buffer);
+        }
+        ds_close_idle_device();
+    }
+    return 0;
+}
 static int ds_ok(void){ return 0; }
 int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
+    DSDevice* device;
     if(!getenv("DD2_SOUND")){ if(b)*b=0; return 1; /* DSERR: no sound device (proven default) */ }
+    if(!b)return (int)0x80070057u;
+    device=(DSDevice*)calloc(1,sizeof(DSDevice));
+    if(!device){*b=0;return (int)0x8007000eu;}
+    device->vtbl=g_dsnd_vtbl;device->references=1;
+    if(!g_ds_devices && !g_ds_music_buffers){ds_clock_init=0;ds_remainder=0;}
+    g_ds_devices++;
     { int i; for(i=0;i<32;i++){ g_dsnd_vtbl[i]=(void*)&ds_ok; g_dsb_vtbl[i]=(void*)&ds_ok; } }
+    g_dsnd_vtbl[0x04/4]=(void*)&ds_addref;
     g_dsnd_vtbl[0x08/4]=(void*)&ds_release;
     g_dsnd_vtbl[0x0c/4]=(void*)&ds_createbuffer;
     g_dsnd_vtbl[0x14/4]=(void*)&ds_dupbuffer;
@@ -382,7 +426,7 @@ int DirectSoundCreate(int a,void** b,int c){ (void)a;(void)c;
     g_dsb_vtbl[0x48/4]=(void*)&dsb_stop;
     g_dsb_vtbl[0x4c/4]=(void*)&dsb_unlock;
     g_dsb_vtbl[0x50/4]=(void*)&dsb_restore;
-    if(b)*b=&g_dsnd_obj;
+    *b=device;
     SLOG("DirectSoundCreate -> OK");
     return 0; }
 
@@ -409,6 +453,18 @@ static float dd2_amp_float(int centidb){
     gain=(float)dd2_sound_gain[-centidb]/65535.0f;
     return gain; }
 #ifdef DD2_BROWSER
+EM_JS(void, dd2_audio_stop, (), {
+    var ac=Module._dd2ac;
+    if(!ac)return;
+    if(Module._dd2sources){
+        for(var source of Module._dd2sources){source.onended=null;try{source.stop();}catch(e){}source.disconnect();}
+        Module._dd2sources.clear();
+    }
+    window.removeEventListener('keydown',Module._dd2resume);
+    window.removeEventListener('click',Module._dd2resume);
+    Module._dd2ac=null;Module._dd2t=0;Module._dd2resume=null;
+    ac.close().catch(function(){});
+});
 /* WebAudio sink: schedule each mixed device-rate Float32 stereo tick on a running time
    cursor. Lazy AudioContext (browsers require a user gesture before audio can start). */
 EM_JS(void, dd2_audio_push, (const float* pcm, const float* effects, const float* music, int frames, int rate, int music_frames), {
@@ -419,7 +475,9 @@ EM_JS(void, dd2_audio_push, (const float* pcm, const float* effects, const float
            preserving source rates without a second WebAudio effects resampler. */
         try { Module._dd2ac = new AudioContext({sampleRate:44100}); } catch(e){ return; }
         Module._dd2t = 0;
-        var resume = function(){ if (Module._dd2ac.state==='suspended') Module._dd2ac.resume(); };
+        Module._dd2sources = new Set();
+        var context=Module._dd2ac;
+        var resume = Module._dd2resume = function(){ if (context.state==='suspended') context.resume(); };
         window.addEventListener('keydown', resume); window.addEventListener('click', resume);
     }
     var ac = Module._dd2ac;
@@ -431,6 +489,8 @@ EM_JS(void, dd2_audio_push, (const float* pcm, const float* effects, const float
         r[i] = HEAPF32[(pcm>>2)+i*2+1];
     }
     var src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination);
+    Module._dd2sources.add(src);
+    src.onended=function(){Module._dd2sources.delete(src);src.disconnect();};
     if (Module._dd2t < ac.currentTime) Module._dd2t = ac.currentTime + 0.04;
     src.start(Module._dd2t); Module._dd2t += frames/rate;
 });
@@ -539,8 +599,6 @@ static FILE* ds_capture_open(const char* variable,unsigned rate){
 }
 void dd2_snd_mix_flip(void){
     static int last_cf=-1; static FILE *pf,*mixed_capture,*music_capture; static int pf_init;
-    static int clock_init;
-    static unsigned last_ms, remainder;
     uint64_t pending;
     int cf,dt,i,t;
     unsigned rate=ds_device_rate(),tick_frames=rate/25;
@@ -555,10 +613,13 @@ void dd2_snd_mix_flip(void){
 #endif
     if(realtime){
         unsigned now=dd2_platform_ms(), elapsed;
-        if(!clock_init){ clock_init=1; last_ms=now; return; }
-        elapsed=now-last_ms; last_ms=now;
-        pending=(uint64_t)elapsed*rate+remainder;
-        remainder=(unsigned)(pending%1000); pending/=1000;
+        /* A released device has no output clock. Reopening after a movie
+         * starts a new epoch, instead of queuing the entire idle interval. */
+        if(!g_ds_devices && !g_ds_music_buffers){ds_clock_init=0;ds_remainder=0;return;}
+        if(!ds_clock_init){ ds_clock_init=1; ds_last_ms=now; return; }
+        elapsed=now-ds_last_ms; ds_last_ms=now;
+        pending=(uint64_t)elapsed*rate+ds_remainder;
+        ds_remainder=(unsigned)(pending%1000); pending/=1000;
         if(!pending || (!getenv("DD2_SOUND") && !g_ds_music_buffers && !getenv("DD2_MIXPCM"))) return;
         dt=(int)((pending+tick_frames-1)/tick_frames);
     }else{

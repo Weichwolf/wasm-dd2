@@ -35,6 +35,27 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- DirectSound now has actual per-interface AddRef/Release counts, a shared
+  default-device lifetime and final cleanup of remaining primary/master
+  buffers. The same Win32 probe passes actual Wine; native ASan/UBSan and
+  WASM compare 4224 complete mixed PCM bytes over two device epochs and an
+  independent MCI CD source. A 69991ms closed-device movie interval contributes
+  no audio or stale fractional samples after reopen. Releasing DirectSound
+  while CD remains active preserves the CD source and shared output clock.
+  SDL clears/closes an idle Float32 sink; the browser stops pending sources,
+  removes resume listeners and closes the old AudioContext. A deliberately
+  retained old clock fails the intended actual PCM/sink comparison.
+  make verify-sound-device SOUND_DEVICE_ARGS='--mingw <compiler>
+  --output <fresh-dir>' reproduces
+  third_party/verification-artifacts/dd2-sound-device-specific-negative-reviewed.
+  The existing Wine/native/WASM cursor and duplicate-lifetime probes pass
+  (dd2-sound-cursor-device-reviewed.json and dd2-sound-lifetime-device-reviewed.json).
+  Eight original L9 framebuffer/palette checkpoints still match both new
+  builds. Actual native menus/CD/controller/race/pause pass 3072000 pixels/
+  7580256 mixed bytes; browser CD restart passes 1404 shared buffers/70736
+  resumed source bytes (dd2-native-window-sound-device-reviewed and
+  dd2-browser-redbook-sound-device-reviewed). These are API/controlled-clock
+  and sink-boundary checks, not original movie-to-menu output-clock parity.
 - The completed movie-MCI builds also pass all ten complete sound-enabled
   demos: 15255 presented frames, every framebuffer/palette, RNG/flip log,
   effects/final-mix/music-summand byte and raw CD source byte match between

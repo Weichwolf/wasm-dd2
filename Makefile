@@ -73,6 +73,9 @@ verify: native ## crash-free check: run the demo on all 10 levels (native), prin
 verify-native-sdl: ## verify actual renderer/X11 pixels, accepted audio and SDL keyboard/virtual-controller input
 	python3 $(ROOT)/tools/verify_native_sdl.py $(NATIVE_SDL_ARGS)
 
+verify-sound-device: ## compare actual Wine device lifetimes and exact native/WASM PCM across closed movie epochs
+	python3 $(ROOT)/tools/verify_sound_device.py $(SOUND_DEVICE_ARGS)
+
 verify-native-window: native ## use real X11 keys to test native menus/CD/race/pause and exact rendered/accepted output
 	python3 $(ROOT)/tools/verify_native_window.py --binary $(NATIVE) $(NATIVE_WINDOW_ARGS)
 
