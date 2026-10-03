@@ -8,16 +8,29 @@
 #include <sys/mman.h>
 #include "dd2_native.h"
 
-unsigned char dd2_keystate[256];
+extern unsigned char dd2_keystate[256];
+static unsigned keyboard_messages,last_message,last_vk,last_flags;
 static int present,closes;
 static unsigned padx,pady,padb;
-void dd2_key_event(unsigned vk,int down){dd2_keystate[vk]=down!=0;}
+void Translate_Keypress(unsigned vk,unsigned flags){(void)vk;(void)flags;}
 void dd2_pad_update(int connected,unsigned x,unsigned y,unsigned buttons){present=connected;padx=x;pady=y;padb=buttons;}
-int FUN_004132f0(void* window,unsigned message,unsigned a,unsigned b){(void)window;(void)a;(void)b;if(message==0x10)closes++;return 0;}
+int FUN_004132f0(void* window,unsigned message,unsigned a,unsigned b){
+    (void)window;
+    if(message==0x10)closes++;
+    if(message==0x100 || message==0x101 || message==0x104 || message==0x105){
+        keyboard_messages++;last_message=message;last_vk=a;last_flags=b;
+    }
+    return 0;
+}
 static void require(int ok,const char* reason){if(!ok){fprintf(stderr,"SDL backend fixture: %s (%s)\n",reason,SDL_GetError());exit(1);}}
 static void event(SDL_Scancode code,int down){
+    unsigned before=keyboard_messages;
     SDL_Event e={0};e.type=down?SDL_KEYDOWN:SDL_KEYUP;e.key.keysym.scancode=code;
     require(SDL_PushEvent(&e)==1,"push SDL key");dd2_native_poll();
+    require(keyboard_messages==before+1,"one engine message per SDL key");
+    require((last_flags>>31)==(unsigned)!down,"engine message preserves physical event direction");
+    require(last_message==(down?0x100u:0x101u),"regular SDL key message class");
+    if(code==SDL_SCANCODE_LSHIFT || code==SDL_SCANCODE_RSHIFT)require(last_vk==0x10,"generic Shift VK in engine message");
 }
 static void request(unsigned index){
     char path[4096];FILE* file;
@@ -46,9 +59,13 @@ int main(void){
     event(SDL_SCANCODE_LSHIFT,1);event(SDL_SCANCODE_RSHIFT,1);event(SDL_SCANCODE_LSHIFT,0);
     require(dd2_keystate[0x10] && dd2_keystate[0xa1],"remaining physical shift stays down");
     event(SDL_SCANCODE_RSHIFT,0);require(!dd2_keystate[0x10],"last shift releases generic shift");
-    event(SDL_SCANCODE_A,1);
-    {SDL_Event e={0};e.type=SDL_WINDOWEVENT;e.window.event=SDL_WINDOWEVENT_FOCUS_LOST;SDL_PushEvent(&e);dd2_native_poll();}
-    require(!dd2_keystate[0x41],"focus loss releases held keys");
+    event(SDL_SCANCODE_LSHIFT,1);event(SDL_SCANCODE_RSHIFT,1);event(SDL_SCANCODE_A,1);
+    {
+        unsigned before=keyboard_messages;
+        SDL_Event e={0};e.type=SDL_WINDOWEVENT;e.window.event=SDL_WINDOWEVENT_FOCUS_LOST;SDL_PushEvent(&e);dd2_native_poll();
+        require(keyboard_messages==before+3,"focus cleanup releases physical keys without extra generic modifier events");
+    }
+    require(!dd2_keystate[0x41] && !dd2_keystate[0x10] && !dd2_keystate[0xa0] && !dd2_keystate[0xa1],"focus loss releases held keys and both modifier sides");
     {SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e);dd2_native_poll();}
     require(closes==1,"WM_CLOSE reaches the original window procedure");
     for(step=0;step<2;step++){

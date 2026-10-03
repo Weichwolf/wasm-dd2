@@ -72,7 +72,7 @@ def main():
         executable=directory/"fixture"
         subprocess.run(["gcc","-m32","-no-pie","-DDD2_NATIVE_SDL","-Wall","-Wextra","-Werror",
                         *config("cflags"),f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2_native.c"),
-                        str(ROOT/"tools/native_sdl_test.c"),*config("libs"),"-o",str(executable)],check=True)
+                        str(ROOT/"tools/native_sdl_test.c"),str(ROOT/"re_out/dd2_input.c"),*config("libs"),"-o",str(executable)],check=True)
         env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
         display=process=None
         with (output/"run.log").open("wb") as log:

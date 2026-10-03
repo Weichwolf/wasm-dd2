@@ -27,6 +27,9 @@ def main():
     parser.add_argument("--binary",type=Path,required=True)
     parser.add_argument("--source",type=Path,required=True)
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--skip-only",action="store_true")
+    parser.add_argument("--skip-key",default="d",help="real X11 key used for movie cancellation")
+    parser.add_argument("--release-key",default="Escape",help="real X11 release which must retain playback")
     args=parser.parse_args();output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
     source=json.loads((args.source/"report.json").read_text());binary=args.binary.resolve()
     report={"scope":__doc__,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"cases":[]}
@@ -38,7 +41,7 @@ def main():
             if hashlib.sha256(path.read_bytes()).hexdigest()!=film["avi_sha256"]:raise RuntimeError("Changed original movie")
             name=path.stem.lower();reference=args.source/name/"wine.pcm"
             if hashlib.sha256(reference.read_bytes()).hexdigest()!=film["pcm_sha256"]:raise RuntimeError("Changed Wine PCM")
-            for skip in (False,True):
+            for skip in ((True,) if args.skip_only else (False,True)):
                 case=output/f"{name}-{'skip' if skip else 'full'}";case.mkdir();display=process=memory=None
                 with (case/"run.log").open("w") as log:
                     try:
@@ -59,10 +62,10 @@ def main():
                             memory=open(f"/proc/{process.pid}/mem","rb",buffering=0)
                             def playing():return struct.unpack("<I",os.pread(memory.fileno(),4,0x462cd4))[0]
                             if playing()!=1:raise RuntimeError("Original Movie_Playing flag not active")
-                            subprocess.run(["xdotool","search","--name","Destruction Derby 2","windowfocus","keyup","Escape"],env=control_env,check=True,timeout=5)
+                            subprocess.run(["xdotool","search","--name","Destruction Derby 2","windowfocus","keyup",args.release_key],env=control_env,check=True,timeout=5)
                             time.sleep(0.2)
                             if process.poll() is not None or playing()!=1:raise RuntimeError("Key-up skipped the movie")
-                            subprocess.run(["xdotool","search","--name","Destruction Derby 2","windowfocus","keydown","d"],env=control_env,check=True,timeout=5)
+                            subprocess.run(["xdotool","search","--name","Destruction Derby 2","windowfocus","keydown",args.skip_key],env=control_env,check=True,timeout=5)
                         if process.wait(timeout=100):raise RuntimeError("Actual engine movie failed")
                     finally:
                         if memory:memory.close()
@@ -92,7 +95,7 @@ def main():
                 if [e["frame"] for e in presents]!=list(range(len(presents))):raise RuntimeError("Movie present journal inconsistent")
                 if not skip and len(presents)!=film["metadata"]["frames"]:raise RuntimeError("Incomplete actual movie presentation")
                 if skip and not 26<=len(presents)<film["metadata"]["frames"]:raise RuntimeError("Key-down did not exit active movie")
-                result={"file":film["file"],"skip":skip,"presented_frames":len(presents),"exact_rendered_pixels":len(presents)*307200,"pcm_bytes":offset,"key_up_retained":skip,"key_down_closed":skip}
+                result={"file":film["file"],"skip":skip,"presented_frames":len(presents),"exact_rendered_pixels":len(presents)*307200,"pcm_bytes":offset,"key_up_retained":skip,"key_down_closed":skip,"release_key":args.release_key if skip else None,"skip_key":args.skip_key if skip else None}
                 report["cases"].append(result);(output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
                 print(f"PASS native {name} skip={skip}: {len(presents)} actual SDL frames, every rendered pixel exact, all {offset} accepted PCM bytes exact",flush=True)
 

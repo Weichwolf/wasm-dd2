@@ -80,12 +80,11 @@
           try { Module.ccall('dd2_browser_key_event', 'number', ['string','number'], [code, down]); }
           catch(e){ /* not ready yet */ }
         };
-        // Named non-letter keys the game uses directly.
-        var handled = {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Enter:1,Escape:1,Space:1,F1:1,F2:1};
-        // Forward EVERY letter (KeyA..KeyZ) and digit (Digit0..Digit9): the keyboard-rebind screen
-        // must accept ANY key, and the engine ignores unbound VKs. The old 13-key allowlist dropped
-        // D/Q/E/etc. -> those keys never reached dd2_key_event, so a browser rebind to them failed
-        // (matched the native rebind only for W/A/S/Z). dd2_browser_key_to_vk maps all of these.
+        // The original rebind scan list permits 39 VKs (letters, digits,
+        // Space/Left/Right). Modifiers and F10 also reach its general window
+        // procedure, including intro/outro cancellation on keydown.
+        var handled = {ArrowLeft:1,ArrowRight:1,ArrowUp:1,ArrowDown:1,Enter:1,Escape:1,Space:1,F1:1,F2:1,F10:1,
+          ShiftLeft:1,ShiftRight:1,ControlLeft:1,ControlRight:1,AltLeft:1,AltRight:1};
         for (var _c=65;_c<=90;_c++) handled['Key'+String.fromCharCode(_c)]=1;   // KeyA..KeyZ
         for (var _d=0;_d<=9;_d++)   handled['Digit'+_d]=1;                       // Digit0..Digit9
         window.addEventListener('keydown', function(e){ if(handled[e.code]){ e.preventDefault(); send(e.code, 1); } });

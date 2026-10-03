@@ -35,6 +35,41 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Modifier input now dispatches exactly one generic window message per
+  physical transition while retaining left/right GetKeyState pressed states.
+  Releasing left Shift with right Shift held remains KEYUP, with aggregate
+  Shift still pressed; the old native adapter emitted an extra KEYDOWN and
+  could incorrectly cancel a movie. Alt/Ctrl combinations, single/double Alt,
+  F10 and repeat message classes are checked against genuine Wine10 USER32
+  SendInput/GetKeyState, not a reconstructed expected-value function.
+  dd2-keyboard-user32-final-reviewed/report.json has 40 exact records on
+  native SDL/direct-VK/browser-code and WASM direct-VK/browser-code transports;
+  direct native fixtures also pass ASan/UBSan. Rebuilding the historical
+  941d609 bridge is a runtime negative control: its first modifier emits two
+  messages and fails the same boundary assertion.
+  Reproduce: make verify-keyboard KEYBOARD_ARGS='--mingw <32-bit-compiler>
+  --output <fresh-dir>'. The right-Shift SendInput flag is an explicitly
+  declared Wine10 transport quirk (see keyboard_win32_probe.c). Evidence
+  covers pressed-state high bits, message class/count, generic VK and release
+  direction; physical layouts, scan-code/lparam metadata, character messages
+  and AltGr synthesis are still unproved. Primary message-class reference:
+  https://raw.githubusercontent.com/wine-mirror/wine/wine-10.0/server/queue.c.
+- The browser shell now forwards six side-specific modifiers and F10.
+  dd2-browser-keyboard-reviewed/report.json uses real Chromium key input,
+  normal original startup and all seven keys: keyup retains the intro;
+  keydown closes its real movie AudioContext and reaches the original main
+  menu. All 40 fixture transitions also traverse the actual generated shell.
+  make verify-browser-keyboard BROWSER_KEYBOARD_OUTPUT=<fresh-dir> reproduces
+  it. Native real-X11 Shift checks cover both intro/outro, every presented
+  SDL renderer pixel and all 6039616/6395840 accepted PCM bytes (the complete
+  source is queued even when skipped); keyup retains and keydown closes.
+  tools/verify_native_movie.py --skip-only --release-key Shift_R
+  --skip-key Shift_L selects these cases. The SDL transport fixture now
+  links production dd2_input.c rather than mocking key delivery; its 614400
+  renderer/X11 pixels and 7976 Float32 bytes remain exact.
+  The original rebind poller scans precisely 39 VKs: A-Z, 0-9, Space, Left,
+  Right (original image table @0x4692ec). Earlier historical "ANY key"
+  descriptions below are superseded; modifiers are not newly rebindable.
 - The original-startup builds pass all ten complete cross-port demos:
   15255 frames/palettes, RNG/flip logs and every effects/final-mix/music-
   summand/CD source byte match (dd2-parity-original-boot-reviewed/results.json).

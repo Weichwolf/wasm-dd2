@@ -57,14 +57,6 @@ static unsigned native_vk(SDL_Scancode key){
     default:return 0;
     }
 }
-static void native_key(unsigned vk,int down){
-    unsigned generic=0;
-    dd2_key_event(vk,down);
-    if(vk==0xa0 || vk==0xa1)generic=0x10;
-    if(vk==0xa2 || vk==0xa3)generic=0x11;
-    if(vk==0xa4 || vk==0xa5)generic=0x12;
-    if(generic)dd2_key_event(generic,dd2_keystate[vk&~1u] || dd2_keystate[vk|1u]);
-}
 static void native_pad(void){
     unsigned buttons=0;int index;
     if(!native_joystick || !SDL_JoystickGetAttached(native_joystick)){
@@ -105,10 +97,13 @@ void dd2_native_poll(void){
         if(event.type==SDL_QUIT)FUN_004132f0((void*)1,0x10,0,0);
         if(event.type==SDL_KEYDOWN || event.type==SDL_KEYUP){
             unsigned vk=native_vk(event.key.keysym.scancode);
-            if(vk)native_key(vk,event.type==SDL_KEYDOWN);
+            if(vk)dd2_key_event(vk,event.type==SDL_KEYDOWN);
         }
         if(event.type==SDL_WINDOWEVENT && event.window.event==SDL_WINDOWEVENT_FOCUS_LOST){
             unsigned vk;
+            /* Release physical sides first so aggregate modifier entries do
+             * not generate duplicate transitions during focus cleanup. */
+            for(vk=0xa0;vk<=0xa5;vk++)if(dd2_keystate[vk])dd2_key_event(vk,0);
             for(vk=0;vk<256;vk++)if(dd2_keystate[vk])dd2_key_event(vk,0);
         }
     }

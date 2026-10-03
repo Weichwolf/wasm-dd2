@@ -5,11 +5,11 @@
  *     where (lparam & 0x80000000) != 0 means KEY-UP. It sets the _pad_* boolean globals by
  *     matching vkey against the configurable keymap that Setup_Pad() loads.
  *   - Per frame, Read pads those _pad_* booleans into the control word at _DAT_0071c048.
- * So wiring real input = translate a platform key event to a Windows virtual-key code and call
- * Translate_Keypress. This file is the ONLY thing that needs to change to swap input backends
- * (browser KeyboardEvent, SDL, native evdev, ...). Engine code is untouched.
+ * Translate platform events to Windows virtual-key codes, maintain pressed
+ * states and enter the real window procedure (which also cancels movies).
+ * SDL and browser adapters both use this shared bridge; engine code is untouched.
  *
- * Default active map is Setup_Pad(1) (the "joystick"/keyboard-2 map @0x46757a):
+ * Diagnostic Setup_Pad(1) uses the "joystick"/keyboard-2 map @0x46757a:
  *   ENTER=fire/accept, ESC=back, arrows=steer/accel/brake, F1/F2, SPACE, W/S/A/Z.
  */
 #include <stdint.h>
@@ -32,13 +32,32 @@ enum {
  * key the user pressed to bind; our GetKeyState was stubbed to 0 so rebinding never advanced. */
 unsigned char dd2_keystate[256];
 
-/* Core bridge: feed one key transition to the engine. down!=0 = press, down==0 = release. */
+/* The window receives generic modifier VKs, whereas GetKeyState exposes
+ * both physical sides. Keep those independent of the event direction: a
+ * left release remains KEYUP when the right side is still held.
+ * Message classes also follow the real Wine10 USER32 reference, including
+ * Alt combinations and F10. Only bit31 of lparam is consumed by DD2; this
+ * bridge does not claim scan-code/layout or character-message fidelity. */
+static int alt_pressed;
 void dd2_key_event(unsigned int vk, int down)
 {
-    if (vk < 256) dd2_keystate[vk] = down ? 1 : 0;
-    /* lparam bit 31 set == key-up (WM_KEYUP semantics the engine checks). */
+    unsigned int message=down ? 0x100u : 0x101u, generic=vk;
+    int control=dd2_keystate[0x11], alt=dd2_keystate[0x12];
+    if (vk==0xa4 || vk==0xa5 || vk==0x12) {
+        if (down && !control) { message=0x104u; alt_pressed=1; }
+        else if (!down && alt && alt_pressed) { message=0x105u; alt_pressed=0; }
+    } else if (vk==0xa2 || vk==0xa3 || vk==0x11) {
+        if (!down && alt) { message=0x105u; alt_pressed=0; }
+    } else if (vk==0x79 || (!control && alt)) {
+        message=down ? 0x104u : 0x105u; alt_pressed=0;
+    }
+    if (vk < 256) dd2_keystate[vk]=down ? 1 : 0;
+    if (vk>=0xa0 && vk<=0xa5) {
+        generic=0x10u+(vk-0xa0u)/2;
+        dd2_keystate[generic]=dd2_keystate[vk&~1u] || dd2_keystate[vk|1u];
+    }
     FUN_004132f0((void*)(uintptr_t)*(uint32_t*)(uintptr_t)0x46047c,
-                down ? 0x100u : 0x101u,vk,down ? 0u : 0x80000000u);
+                message,generic,down ? 0u : 0x80000000u);
 }
 
 /* Map a browser KeyboardEvent.code string to a Windows VK code (0 = unmapped/ignore).
@@ -55,9 +74,16 @@ unsigned int dd2_browser_key_to_vk(const char* code)
     if (!strcmp(code,"Space"))      return VK_SPACE;
     if (!strcmp(code,"F1"))         return VK_F1;
     if (!strcmp(code,"F2"))         return VK_F2;
-    /* Generic letter/digit physical keys (VK_A..VK_Z = 0x41.., VK_0..VK_9 = 0x30..). Needed so the
-     * keyboard-rebind screen can bind ANY key -- and harmless for gameplay (unbound VKs are ignored
-     * by Translate_Keypress; only keymap-matched keys set _pad_* bits). Covers KeyA/S/W/Z too. */
+    if (!strcmp(code,"F10"))        return 0x79;
+    if (!strcmp(code,"ShiftLeft"))  return 0xa0;
+    if (!strcmp(code,"ShiftRight")) return 0xa1;
+    if (!strcmp(code,"ControlLeft")) return 0xa2;
+    if (!strcmp(code,"ControlRight")) return 0xa3;
+    if (!strcmp(code,"AltLeft"))    return 0xa4;
+    if (!strcmp(code,"AltRight"))   return 0xa5;
+    /* The original rebind scan list includes all letter/digit physical keys
+     * (VK_A..VK_Z = 0x41.., VK_0..VK_9 = 0x30..); unbound VKs are ignored
+     * by Translate_Keypress; only keymap-matched keys set _pad_* bits. Covers KeyA/S/W/Z too. */
     if (!strncmp(code,"Key",3)   && code[3]>='A' && code[3]<='Z' && code[4]==0) return 0x41u + (unsigned)(code[3]-'A');
     if (!strncmp(code,"Digit",5) && code[5]>='0' && code[5]<='9' && code[6]==0) return 0x30u + (unsigned)(code[5]-'0');
     return 0;
