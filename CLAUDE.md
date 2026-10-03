@@ -35,6 +35,16 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- All ten default demo regressions also pass with the full-history runtime
+  instrumentation: 15255 complete native/WASM frames/palettes and all
+  effects/mixed/music/CD/RNG/flip bytes
+  (dd2-parity-history-api-reviewed/results.json). Canonical /tmp/dd2_native
+  and /tmp/lvltest/dd2run.* have been atomically promoted to the verified
+  full-history builds listed below. Native normal original-intro/menu/CD/
+  boot-time SDL controller/live race/pause/resume/CD sector restart also
+  passes 3072000 actual renderer pixels and 7480768 accepted mixed bytes
+  (dd2-native-history-api-startup-reviewed/report.json). This verifies native
+  sink submissions, not complete original racing/audio-clock equivalence.
 - A fresh original L7 loop now passes BOTH ports with all actual prior API
   inputs: 1115 complete frames/palettes, 39063 clocks (20269 in original L9),
   all 11733 global RNG calls calculated from seed 1, observed prefix [9],
