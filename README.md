@@ -301,6 +301,34 @@ match the retained original evidence. Its report is
 Regular ten-lap finishes and positive player result/continuation parity remain
 unaccepted until a complete original/native/browser capture passes those gates.
 
+For a browser crash that depends on ordinary timing, `diagnose_normal_finish.js`
+can record actual `GetTickCount` import returns and DOM key delivery boundaries
+with `--api-layout=<matching-layout.json>`. It retains the original clock return
+values and checks observed seed/counter checkpoints against the literal LCG.
+`capture_native_api_diagnosis.py` replays those inputs at native presentations
+with strict clock/RNG files and compares the observed states, including player
+position, speed, heading, damage, lap and race points. This is a diagnostic
+comparison between the ports; it does not accept original video or PCM parity.
+The recorder bounds its metadata and saves input/state/error details on failure;
+`--trap-trace` adds a read-only uncaught-exception debugger trace after green.
+
+```sh
+make clean-logs
+node tools/browser/diagnose_normal_finish.js web/dd2 /tmp/wasm-dd2/api-drive \
+  --championship --steady-track --duration=180 \
+  --api-layout=/tmp/wasm-dd2/browser-timer-853-layout/layout.json
+python3 tools/capture_native_api_diagnosis.py \
+  --reference /tmp/wasm-dd2/api-drive --output /tmp/wasm-dd2/api-drive-native
+make clean-logs
+```
+
+Two actual-clock transport/state regressions passed: 6,311 presentations at
+4,910,657 clock reads and 6,993 RNG calls, and 2,939 presentations including
+player motion/damage at 949,760 clock reads and 1,508 RNG calls. Shifted driving
+inputs and changed expected player positions/points are rejected. Reports are
+`/tmp/wasm-dd2/natural-champ-native-856-api-drive/report.json` and
+`/tmp/wasm-dd2/natural-champ-native-856-api-player-drive/report.json`.
+
 Redbook playback now uses the original engine's MCI track selection, Play, Stop,
 resume and repeat calls. Patches 836/837 restore the original contiguous MCI
 parameter blocks and mandatory CD check. The backend reads the original stereo
