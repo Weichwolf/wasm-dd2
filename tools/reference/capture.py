@@ -131,6 +131,7 @@ def main():
     parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
     parser.add_argument('--champ-history',action='store_true',help='record actual five-retirement championship clock/RNG/input history; real X11 keys, read-only hardware breakpoints')
     parser.add_argument('--champ-history-steps',type=int,choices=(17,95),default=95,help='17 stops after first result for diagnosis; 95 completes the retirement path')
+    parser.add_argument('--champ-history-frame-delay-ms',type=int,default=0,help='diagnostic elapsed-time delay at real Play_Game draw entries; 0..250, no clock/frame-skip/state writes')
     parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
     parser.add_argument("--race-physics",action="store_true",help="also record all preceding/target car-state checkpoints and global random callers; requires --race-full-history")
     parser.add_argument('--race-step-window',type=int,nargs=2,metavar=('START_CF','END_CF'),default=[],
@@ -163,6 +164,8 @@ def main():
         parser.error('--champ-history requires menu mode, no audio/other capture sequence')
     if args.champ_history_steps!=95 and not args.champ_history:
         parser.error('--champ-history-steps requires --champ-history')
+    if not 0<=args.champ_history_frame_delay_ms<=250 or (args.champ_history_frame_delay_ms and not args.champ_history):
+        parser.error('--champ-history-frame-delay-ms requires --champ-history and 0..250')
     if args.mode=='startup' and (args.audio or args.keys is not None or args.frames or args.race_stream or
                                 args.menu_cycle or not 64<=args.startup_frames<=512):
         parser.error('startup mode requires 64..512 first presentations, no audio/navigation/race capture')
@@ -329,7 +332,7 @@ def run(game, output, args):
                     ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.champ_history:
-                            capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256)
+                            capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256,args.champ_history_frame_delay_ms)
                             return
                         if args.race_stream:
                             capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics,args.race_step_window,args.race_step_levels)
@@ -431,9 +434,9 @@ def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_cou
     print(f"Original racing loop captured: {len(result['frames'])} frames, {result['clock_calls']} actual tick returns",flush=True)
 
 
-def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256):
+def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256,frame_delay_ms=0):
     script=output/'history.gdb'
-    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n'+f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\n'+f'record_champ_history({str(output)!r},{steps})\nend\ndetach\nquit\n')
+    script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n'+f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\n'+f'record_champ_history({str(output)!r},{steps},game_frame_delay_ms={frame_delay_ms})\nend\ndetach\nquit\n')
     with (output/'history.log').open('w') as log:
         run_bounded(['gdb','--nx','-q','-batch','-x',str(script)],directory=output,env=env,
                     stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)

@@ -35,6 +35,52 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Production browser championship now passes the controlled original API-input
+  retirement comparison: all 44 clock returns, all 2,610 independently computed
+  RNG triples, all 96 observed level/counter/physics/quit/race/menu states, five
+  complete 20-car standings, 100 displayed league rows and 20 original league
+  framebuffer/palette hashes. Original raw images were previously removed after
+  literal native/original verification; this browser gate reuses those retained
+  hashes and checks the API/save provenance explicitly. Three damaged state/API
+  cases reject. Report: champ-browser-original-api-853-provenance-verified.json;
+  successful browser raw images removed. No new engine patch or binary change.
+  Capture with `node tools/browser/capture_champ_season.js web/dd2
+  /tmp/wasm-dd2/fresh-browser-api-history --rng-layout=<fresh-layout.json>
+  --api-reference=<original-history>` (the layout must include actual API counters).
+  The normal DOM key sequence runs at observed presentations, and the existing
+  strict C API readers compute/check each RNG triple and consume every clock
+  record; only external API inputs are supplied. Emscripten preRun callbacks run
+  in reverse registration order: the diagnostic configuration must execute after
+  the normal page enables realtime. A witnessed incorrectly ordered run correctly
+  failed with `[clock-replay] requires headless clock mode`; browser diagnostics
+  now retain its actual console errors and progress instead of waiting silently.
+  `make verify-browser-champ-history BROWSER_CHAMP_HISTORY_ARGS='--original
+  <original-history> --reference-report <prior-champ-history-report> --browser
+  <browser-capture> --report /tmp/wasm-dd2/fresh-browser-report.json --clean'`.
+  This proves selected championship checkpoints under matched API inputs, not
+  every chronological racing frame, physical sinks, PCM or ordinary finishes.
+  The separately timed live-browser comparison below remains a failed comparison.
+- The live-browser extra RNG calls are now causally explained. Optional
+  `--rng-call-trace` on the normal season capture records read-only Chromium
+  debugger stacks in the unchanged production WASM (debugger bytecode SHA checked).
+  Each of the first two Yes confirmations calls Steam twice via Bonnet_Smoke
+  after quit=1, then results/finish each call rand 19 times. The actual original
+  does the same: `--champ-history-steps 17 --champ-history-frame-delay-ms 160`
+  delays two real Play_Game draw entries without writing frame_skip, clocks or
+  engine state. Actual original clock returns naturally select frame_skip=8;
+  its two Steam calls return at 0x436ae4/0x436afa at physics tick 16, quit=1,
+  countdown=100, producing 524 calls instead of 522. Native independently
+  reproduces all eight clock returns and 524 RNG triples, the result framebuffer
+  and palette, and all 20 standings. Those standings also match the actual live
+  browser first race, including human finish=19/rank=3. The browser's result
+  image under its different timing still differs; no full A/V acceptance claim.
+  Original @0x423efd..0x423f12 increments physics/loops to frame_skip before
+  testing quit, so suppressing the remaining physics/Steam would alter the
+  original. This is timing-sensitive original behavior, not an RNG correction.
+  `make verify-champ-rest-loop CHAMP_REST_LOOP_ARGS='--original <paced-history>
+  --native <native-paced-history> --browser <caller-capture> --layout <layout.json>
+  --report /tmp/wasm-dd2/fresh-rest-loop-report.json --clean'`; current report
+  champ-rest-loop-original-853-verified.json, partial first-race diagnosis only.
 - Actual championship API history is now recorded with four read-only hardware
   breakpoints, real original X11 inputs and 96 targeted checkpoints, without
   full memory images. Capture with `python3 tools/reference/capture.py --mode menu
@@ -55,7 +101,8 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   which the verifier rejects explicitly. A fresh complete browser run still
   consumes two additional random calls after each of the first two Retire/Yes
   confirmations (2,614 total versus 2,610), and fails all five standings and
-  league-image comparisons. Their causal callers remain open.
+  league-image comparisons. The later rest-loop diagnosis above identifies their
+  causal callers; the matched API-input browser comparison above now passes.
   `make verify-champ-history CHAMP_HISTORY_ARGS='--original <original>/history
   --native <native>/history --browser <browser> --before-browser <failed-loading>
   --report /tmp/wasm-dd2/fresh-history-report.json --clean'` writes explicit

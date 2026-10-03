@@ -15,7 +15,7 @@ import gdb
 from verify_champ_season import ADDRESSES, EXE, KEYS, validate_end
 
 
-def record_champ_history(output, steps=95, target='original'):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0):
     root = Path(output) / 'history'
     root.mkdir()
     inferior = gdb.selected_inferior()
@@ -195,6 +195,18 @@ def record_champ_history(output, steps=95, target='original'):
             elif pc == draw_pc:
                 draws += 1
                 caller = word(int(gdb.parse_and_eval('$esp')) & 0xffffffff)
+                if original:
+                    game_caller = caller == 0x423fe2
+                else:
+                    block = gdb.block_for_pc(caller)
+                    while block and block.function is None:
+                        block = block.superblock
+                    game_caller = bool(block and block.function.name == 'Play_Game')
+                # Explicitly change elapsed physical time at an observed draw,
+                # without writing frame_skip, clock returns or engine state.
+                # This diagnoses the original's naturally adaptive rest loop.
+                if game_frame_delay_ms and game_caller:
+                    time.sleep(game_frame_delay_ms / 1000)
                 event('Draw_All', caller=hex(caller), slab=int.from_bytes(read(0x46996c, 2), 'little', signed=True))
                 if stage == 'held':
                     send(keys[key_index - 1], False)
@@ -203,13 +215,6 @@ def record_champ_history(output, steps=95, target='original'):
                     continue
                 race_start = key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78
                 if race_start:
-                    if original:
-                        game_caller = caller == 0x423fe2
-                    else:
-                        block = gdb.block_for_pc(caller)
-                        while block and block.function is None:
-                            block = block.superblock
-                        game_caller = bool(block and block.function.name == 'Play_Game')
                     ready = game_caller and integer(0x7746ac) == 0
                 else:
                     ready = read(0x46996c, 2) == b'\0\0'
@@ -233,6 +238,7 @@ def record_champ_history(output, steps=95, target='original'):
             exe_modified=False if original else None, exe_sha256=EXE if original else None, keys=keys, checkpoints=checkpoints,
             target=target,input='real X11 keys' if original else 'dd2_key_event', acknowledged_keys=True, held_pad_polls=held_counts,
             clock_calls=len(clocks), rng_calls=len(rng), pad_polls=len(pads), draws=draws,
+            observed_play_draw_delay_ms=game_frame_delay_ms,
             complete_retirement_season=steps == 95, elapsed_seconds=time.monotonic() - start_time), indent=2) + '\n')
     finally:
         timeline.close()
