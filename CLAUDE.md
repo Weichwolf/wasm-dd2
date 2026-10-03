@@ -35,6 +35,36 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- After patch 842, all ten default native/WASM demo runs again match exactly:
+  15255 complete presented frames/palettes, every RNG/flip record and every
+  effects/final-mix/music/CD byte, without reference clock/RNG files
+  (dd2-parity-scene-word-reviewed/results.json). Canonical /tmp/dd2_native
+  and /tmp/lvltest/dd2run.* now use these verified artifacts:
+  native 44543af8fb7fe94dd5c4c8f9af663d5056467bca8fe794628a62b817e2922444;
+  Node WASM 300dbefd91e28268fa41f2ca7de3bdc973ceb79bf8f0cbd18382443781f34430.
+  Browser normal full/skip/gesture startup also passes with WASM
+  963e9bc82bc4ea43dbe7bfd60269087daf6fa3d6fd5bc701b8dd70a471524c1a:
+  1057382400 exact canvas pixels, 6039616 exact original Wine source PCM
+  bytes per case and all 980/1024/906 submitted shared buffers, then real
+  menu input and a populated 20-car race
+  (dd2-browser-scene-word-startup-reviewed/report.json). Native normal
+  intro/menu/CD/controller/race/pause/restart passes 3072000 renderer
+  pixels and 7540032 accepted mixed bytes
+  (dd2-native-scene-word-startup-reviewed/report.json). Existing final L9
+  actual-original comparison remains exact for all 1499 frames on both
+  corrected artifacts (dd2-original-race-l9-scene-word-regression-reviewed).
+  The real pre-842 WASM artifact is rejected on the same L6 original input:
+  22 wrong frames and all 11 wrong first-scene x snapshots; exact clock/RNG
+  consumption still passes (dd2-original-race-l6-old-wasm-negative-reviewed).
+- The next complete actual-original L5 capture is NOT accepted yet.
+  dd2-original-race-l5-rng-reviewed has 1235 frames, 13907 actual clock
+  returns, 2990 actual random calls and initial seed=365994542/blink=35.
+  Native computes every random state/return and matches the clock/blink
+  phases, but seven presented images differ: cf547..549 (mostly lens flare)
+  and the final cf700 frame. Preserve the failed report
+  dd2-original-race-l5-word-comparison-reviewed for investigation.
+  Complete original racing audio, all races/modes and physical output
+  clocks remain open; the active whole-game goal is still unproved.
 - Patch 842 corrects a second scenery-streaming WORD store missed by patch
   405. The supported original resets its stream flag at 0x789356 with
   `mov WORD [0x789356],cx` (0x430ab8); the translated DWORD store also zeroed
