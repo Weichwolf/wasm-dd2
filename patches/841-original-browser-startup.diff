@@ -1,0 +1,24 @@
+Run the normal browser entry through the original user WinMain sequence.
+The original @0x423ae0 calls Init_Application, pal_flag=0, Play_Intro,
+Init_Main, Init_Front_End, Front_End and Close_Application, then returns 1.
+ddmain @0x423b28 contains exactly the five inner steps; dd2_boot.c wraps it
+with the two application calls. This branch precedes the diagnostic race
+launcher's synthetic initialization and post-frontend state injection.
+Explicit movie/race/demo entries and deterministic Node fixtures stay in
+their diagnostic launcher. This changes the CRT-bypass launcher only.
+
+--- a/dd2_runtime.c
++++ b/dd2_runtime.c
+@@ -91,6 +91,12 @@
+         extern int dd2_movie_run(const char*);
+         return dd2_movie_run(getenv("DD2_MOVIE"));
+     }
++#ifdef DD2_BROWSER
++    if(argc>1 && !strcmp(argv[1],"fe")) {
++        extern int dd2_game_run(void);
++        return dd2_game_run();
++    }
++#endif
+     /* Boot through the real Init_Main @0x445814 (like tools/native_main.c): Init_Controller_,
+        Profile_Init, Sound_Init, VSync+VSyncCallback, InitCardSystem (SaveGames -> card buffer),
+        Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags -- the VAG load fills the audio

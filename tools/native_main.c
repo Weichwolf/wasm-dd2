@@ -195,6 +195,13 @@ int main(void){
         extern int dd2_movie_run(const char*);
         return dd2_movie_run(getenv("DD2_MOVIE"));
     }
+    if(dd2_native_enabled() && getenv("DD2_FE") && !getenv("DD2_LEVEL") &&
+       !getenv("DD2_PLAY") && !getenv("DD2_CHAMP") && !getenv("DD2_INPUTTEST") &&
+       !getenv("DD2_FETEST") && !getenv("DD2_KBTEST") && !getenv("DD2_KBREBIND2") &&
+       !getenv("DD2_SEASONEND")){
+        extern int dd2_game_run(void);
+        return dd2_game_run();
+    }
     /* The original boots through Init_Main @0x445814: Init_Controller_, Profile_Init, Sound_Init,
      * VSync+VSyncCallback, InitCardSystem (loads/creates SaveGames -> card buffer 0x754460),
      * Read_Directory("DIRINFO"), Read_CD_Toc_, Load_Game_Vags. Run the real thing. */

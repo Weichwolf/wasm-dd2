@@ -27,8 +27,7 @@
       print: (...a)=>console.log(...a),
       printErr: (...a)=>console.error(...a),
       preRun: [function(){
-        // Interactive browser defaults: live race with sound. (URL ?demo runs the attract,
-        // ?level=N picks the track; the FE menu flow replaces this once its rendering lands.)
+        // Default: original application/intro/frontend startup with sound.
         var q = new URLSearchParams(location.search);
         ENV.DD2_SOUND = '1';
         if(q.has('movie')) ENV.DD2_MOVIE=q.get('movie') || 'INTRO.AVI';
@@ -38,7 +37,7 @@
         // original ddmain. ?race=N boots straight into a live race, ?demo runs the attract.
         if (q.has('race')) { ENV.DD2_LIVE = '1'; ENV.DD2_LEVEL = q.get('race') || '9'; }
         else if (q.has('demo')) { ENV.DD2_LEVEL = q.get('level') || '9'; }
-        // default: Module.arguments=['fe'] (set below) boots the real front end
+        // default: Module.arguments=['fe'] runs the original WinMain/ddmain sequence.
         // Joystick play (the original's FE controls option): auto-picked when a gamepad is
         // already connected at load, or forced via ?pad. Keyboard stays active alongside.
         var pads = navigator.getGamepads ? navigator.getGamepads() : [];

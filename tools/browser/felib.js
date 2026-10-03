@@ -30,7 +30,10 @@ async function waitRace(page,timeoutMs=25000){
 async function boot(page,server){
   await page.goto(`http://localhost:${server.address().port}/index.html?t=`+Math.floor(performance.now()),{waitUntil:'load'});
   for(let i=0;i<60;i++){if(await alive(page))break;await page.waitForTimeout(1000);}
-  await page.waitForTimeout(8000); await page.click('#canvas');
+  await page.waitForFunction(()=>typeof HEAP32!=='undefined' && HEAP32[0x462cd4>>2]===1 && !!Module._dd2movieSource,null,{timeout:30000});
+  await page.click('#canvas');await page.keyboard.press('Escape');
+  await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0 && !Module._dd2movieSource,null,{timeout:15000});
+  await page.waitForTimeout(8000);
 }
 // Verified fixed key-paths from a fresh boot (spatial menu: 2 rows x 4 cols).
 // top:    Wrecking(race-opts) Select-Car   Select-Track   File-Manager

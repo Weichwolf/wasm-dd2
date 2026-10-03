@@ -35,6 +35,43 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Normal SDL window and default browser startup now use the original user
+  WinMain sequence @0x423ae0: Init_Application, ddmain's pal_flag=0/Play_Intro/
+  Init_Main/Init_Front_End/Front_End, then Close_Application and return1.
+  dd2_boot.c calls the reconstructed engine sequence; patch841 selects it
+  before the browser diagnostic launcher's synthetic post-frontend state.
+  Explicit movie/race/demo entries and headless fixtures remain diagnostics.
+  Native real-X11 tests complete or skip the normal intro, then navigate CD/
+  Configuration, drive a populated race with a virtual SDL controller, pause
+  and restart CD at its exact public sector. Both pass 3072000 renderer pixels
+  and every accepted mixed byte (8396640 skip / 7617304 full), in
+  dd2-native-original-startup-{skip,full}-reviewed/report.json.
+  Browser normal startup passes full, skip and actual required-user-gesture
+  cases: 1712 complete intro frames or 31 skipped frames, all 6039616 submitted
+  source PCM bytes per case and all 1091481600 actual canvas pixels across
+  movie/menu/race. Every 1049/1023/1010 shared Float32 buffer matches C exactly;
+  none is submitted during the movie. The movie context closes, DirectSound
+  restarts at44100 and actual menu keys launch a race with20 cars.
+  Strict autoplay is observed through read-only CDP userGesture:false before
+  the first real click: the document is unactivated, the22050 context suspended
+  and video remains on frame0. Playwright evaluate/waitForFunction otherwise
+  grants user activation; the earlier failed policy fixture is retained in
+  dd2-browser-original-startup-reviewed, while the corrected complete rerun
+  passes in dd2-browser-original-startup-cdp-reviewed/report.json.
+  make verify-browser-startup BROWSER_STARTUP_ARGS='<AVI-proof-dir> <fresh-dir>'
+  and make verify-native-window NATIVE_WINDOW_ARGS='--controller --full-intro
+  --output <fresh-dir>' reproduce these actual startup paths.
+  Seven normal browser menu/Configuration/Audio checkpoints compare all64
+  rendered highlight phases against actual original Draw_All presentations:
+  448 complete framebuffer/palette pairs, zero differences or pixel masks
+  (dd2-browser-config-original-startup-presented-comparison.json). Native SDL
+  boundary checks also pass614400 actual renderer/X11 pixels and7976 accepted
+  Float32 bytes after teaching its read-only observer separate movie versus
+  shared Float32 device lifetimes. Existing eight originalL9 framebuffer/
+  palette checkpoints still match the new native and Node binaries.
+  Source/sink/API checks do not establish complete original movie presentation,
+  driver tails, queued-control timing or physical display/DAC fidelity; those
+  remain open, as do the other whole-game original acceptance requirements.
 - DirectSound now has actual per-interface AddRef/Release counts, a shared
   default-device lifetime and final cleanup of remaining primary/master
   buffers. The same Win32 probe passes actual Wine; native ASan/UBSan and

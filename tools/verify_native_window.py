@@ -39,6 +39,8 @@ def main():
     parser.add_argument("--binary",type=Path,default=Path("/tmp/dd2_native"))
     parser.add_argument("--output",type=Path)
     parser.add_argument("--controller",action="store_true",help="attach a boot-time SDL virtual controller, select it through Configuration and drive it")
+    parser.add_argument("--original-startup",action="store_true",help="require the normal original intro before navigating the frontend")
+    parser.add_argument("--full-intro",action="store_true",help="let the complete normal-startup intro finish before navigating")
     args=parser.parse_args()
     binary=args.binary.resolve()
     if args.output:
@@ -100,6 +102,18 @@ def main():
                     raise RuntimeError(f"Native window condition timed out: {state()}; "
                         f"CD={text(0x469d64)!r}, flip={integer(table['g_frameno'])}, "
                         f"pad={read(0x46303e,20).hex()}, raw={read(0x754448,4).hex()}, slab={read(0x46996c,2).hex()}")
+                intro=None
+                if args.original_startup or args.full_intro:
+                    wait(lambda:integer(0x462cd4)==1)
+                    intro={"actual_movie_flag_seen":True,"full":args.full_intro}
+                    if not args.full_intro:
+                        time.sleep(1)
+                        subprocess.run(["xdotool","search","--name","^Destruction Derby 2$","windowfocus","keydown","Escape"],env=env,check=True)
+                        wait(lambda:integer(0x462cd4)==0)
+                        subprocess.run(["xdotool","keyup","Escape"],env=env,check=True)
+                    else:wait(lambda:integer(0x462cd4)==0,100)
+                    wait(lambda:integer(0x462d68)==1)
+                    intro["directsound_reinitialized"]=True
                 wait(lambda:integer(table["g_frameno"])>=200 and state()["level"]==0 and "Wrecking" in state()["label"])
                 actions={0x469b7c:"View_Statistics",0x469ebc:"FUN_0045220c",
                          0x46aaac:"FUN_00453bd0",0x46af90:"FUN_00453c00",
@@ -238,6 +252,7 @@ def main():
                     raise RuntimeError("Accepted native SDL audio differs from complete C mixed prefix")
                 pixels=validate_frames(output,captures)
                 report={"scope":__doc__,"pass":True,"renderer_pixels":pixels,"captures":captures,
+                        "original_startup":intro,
                         "accepted_audio_bytes":accepted,"race":state(),"input":"actual X11 keyboard -> SDL -> engine", "virtual_controller":args.controller,
                         "binary":str(binary),"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),
                         "cd_restart":{"stopped_position":paused_position,"fractional_frames":paused_position%588,

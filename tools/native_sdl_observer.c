@@ -13,6 +13,8 @@
 static FILE *audio,*journal;
 static uint64_t audio_offset;
 static int audio_initialized;
+static SDL_AudioDeviceID mixed_device;
+static int mixed_metadata;
 static const char* root(void){return getenv("DD2_NATIVE_OBSERVE");}
 static void save(const char* suffix,const void* buffer,size_t bytes){
     char path[4096];FILE* file;
@@ -27,6 +29,10 @@ SDL_AudioDeviceID SDL_OpenAudioDevice(const char* name,int capture,const SDL_Aud
     SDL_AudioDeviceID device=original(name,capture,wanted,actual,changes);
     if(root() && device && !capture){
         char metadata[256];const SDL_AudioSpec* spec=actual?actual:wanted;
+        if(spec->format!=AUDIO_F32LSB){if(mixed_device==device)mixed_device=0;return device;}
+        mixed_device=device;
+        if(mixed_metadata)return device;
+        mixed_metadata=1;
         snprintf(metadata,sizeof(metadata),"{\"rate\":%d,\"format\":%u,\"channels\":%u,\"device\":%u}\n",
             spec->freq,spec->format,spec->channels,device);
         save("audio.json",metadata,strlen(metadata));
@@ -36,7 +42,7 @@ SDL_AudioDeviceID SDL_OpenAudioDevice(const char* name,int capture,const SDL_Aud
 int SDL_QueueAudio(SDL_AudioDeviceID device,const void* pcm,Uint32 bytes){
     int (*original)(SDL_AudioDeviceID,const void*,Uint32)=dlsym(RTLD_NEXT,"SDL_QueueAudio");
     int result=original(device,pcm,bytes);
-    if(root() && !result){
+    if(root() && !result && device==mixed_device){
         if(!audio_initialized){
             char path[4096];audio_initialized=1;
             snprintf(path,sizeof(path),"%s/audio.pcm",root());audio=fopen(path,"wx");
@@ -48,6 +54,11 @@ int SDL_QueueAudio(SDL_AudioDeviceID device,const void* pcm,Uint32 bytes){
         audio_offset+=bytes;fflush(audio);fflush(journal);
     }
     return result;
+}
+void SDL_CloseAudioDevice(SDL_AudioDeviceID device){
+    void (*original)(SDL_AudioDeviceID)=dlsym(RTLD_NEXT,"SDL_CloseAudioDevice");
+    if(mixed_device==device)mixed_device=0;
+    original(device);
 }
 void SDL_RenderPresent(SDL_Renderer* renderer){
     void (*original)(SDL_Renderer*)=dlsym(RTLD_NEXT,"SDL_RenderPresent");

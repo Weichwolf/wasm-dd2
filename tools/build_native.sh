@@ -28,7 +28,7 @@ fi
 # engine units (dd2_runtime EXCLUDED — native_main.c provides main + CRT helpers)
 python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.json" "$ROOT/build/dd2_disc.h"
 
-UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm dd2_movie dd2_movie_platform dd2_movie_surface"
+UNITS="dd2 dd2_dispatch dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm dd2_movie dd2_movie_platform dd2_movie_surface dd2_boot"
 if [ -z "$DD2_BUILD_HEADLESS" ]; then UNITS="$UNITS dd2_native"; fi
 OBJS=""
 for u in $UNITS; do
