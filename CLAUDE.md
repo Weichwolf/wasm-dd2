@@ -35,6 +35,46 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 844 maps all six L2/L4 tunnel color-vector sRam aliases to the
+  actual signed WORDs in scene_colour_vectors, instead of zeroed host stubs.
+  The original reads these overlapping fields at current_level*8 plus
+  0x465922/24/26; 0x42b9c4..0x42ba4c and 0x42ba89..0x42bab2 prove the
+  WORD/sign-extended accesses. At original L2 cf454/ticks910, each constant
+  is 4096 and car 4's interpolated color matrix is 2626, producing shadow
+  opacity 48. The old stub reads produced matrix=0 and opacity=24.
+  Both independent complete original L2 captures now match literally on
+  native/WASM, using naturally calculated initial states after real demos
+  [9,6,5]: 1433 frames/10116 clocks/938 RNG calls and 813 frames/5553
+  clocks/940 RNG calls. Every palette, RNG/blink/clock phase and all 9/28
+  scenery snapshots match; first-pixel and state mutations are rejected
+  (dd2-original-race-l2-tunnel-{stream,images}-reviewed/report.json).
+  The actual pre-844 WASM is rejected on the first capture's same inputs:
+  exactly 16 wrong frames, despite exact clock/RNG consumption and phases
+  (dd2-original-race-l2-old-wasm-negative-reviewed/report.json).
+  L4 also matches every original byte on both ports: 812 frames, 9425 clock
+  returns and 2040 RNG calls, naturally following [9,6,5,2,3], initial
+  seed=3574421218/blink=68 (dd2-original-race-l4-tunnel-history-reviewed).
+  Full L5 regression remains exact (1235 frames/13907 clocks/2990 RNG calls;
+  dd2-original-race-l5-tunnel-regression-reviewed). All ten default demos
+  pass native/WASM parity for 15255 frames/palettes and all audio, RNG/flip
+  and CD bytes (dd2-parity-tunnel-colour-reviewed/results.json).
+  Native 381826d08cb426aac95471d09cdb7894dc993ba245bbcb27f2c392bfb24f92b8;
+  Node WASM 926bc8c59c52e6757b7a0c1e128ba0bb822a434c433042346f417a1af719d832;
+  browser WASM 81ed0a8fc0555c90e7579f280aa8bf2f4fe40c9461c0865d2feb949bf0080144.
+  Normal browser gesture/full/skip -> menu -> live race passes 954777600
+  exact canvas pixels, 6039616 original source PCM bytes per case and all
+  913/925/13059 submitted shared buffers (dd2-browser-tunnel-colour-startup-reviewed).
+  Native intro/menu/CD/controller/race/pause/restart passes 3072000 renderer
+  pixels and 7781704 accepted mixed bytes (dd2-native-tunnel-colour-startup-reviewed).
+  These are submitted-byte checks, not complete original output-clock proof.
+- The new actual L3 capture (1243 frames/13181 clocks) is still under
+  investigation. Its initial RNG does not match the default-clock preceding
+  port demos; strict natural-history comparison correctly rejects that
+  mismatch (dd2-original-race-l3-tunnel-history-reviewed/native/run.log).
+  A comparison with explicitly matched observed initial state is separate;
+  prefix clock/state equivalence cannot be claimed from that test.
+  Complete original racing audio, remaining races/modes and physical output
+  clocks remain open; whole-game acceptance is still unproved.
 - Patch 843 restores Update_Debris' signed-WORD translation after camera
   rotation, as proved by original 0x42485c..0x424882. At L5 cf546/ticks1094
   slot 116's rotated z=-32775 must wrap to 32761. Retaining the full int
@@ -70,7 +110,7 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   (dd2-browser-debris-word-champ-trace-reviewed/scores.json). The original
   fixed-delay navigation test first missed a key during an animation;
   navigation synchronization needs repair, not another engine correction.
-- Next actual-original L2 loop is still NOT accepted. The unmodified capture
+- Before patch 844, the first actual-original L2 loop was NOT accepted. The unmodified capture
   dd2-original-race-l2-stream-reviewed has 1433 frames, 10116 actual clock
   returns, 938 RNG calls and initial seed=473895114/blink=73. The real
   native history [9,6,5] naturally produces that seed/blink and matches all
