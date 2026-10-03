@@ -17,7 +17,7 @@ GAMEDIR := $(ROOT)/DestructionDerby2
 LEVEL   ?= 9
 NATIVE  ?= /tmp/dd2_native
 
-.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
+.PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-native-quit verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
 all: wasm             ## default: patch + WASM build
 
@@ -78,6 +78,9 @@ verify-sound-device: ## compare actual Wine device lifetimes and exact native/WA
 
 verify-native-window: native ## use real X11 keys to test native menus/CD/race/pause and exact rendered/accepted output
 	python3 $(ROOT)/tools/verify_native_window.py --binary $(NATIVE) --original-startup $(NATIVE_WINDOW_ARGS)
+
+verify-native-quit: native ## normal original startup, cancel/confirm Quit, exact renderer pixels and complete SDL stream closure
+	python3 $(ROOT)/tools/verify_native_quit.py --binary $(NATIVE) $(NATIVE_QUIT_ARGS)
 
 verify-browser-pad: web ## check synthetic boot-time controller, steering, player movement, brake and release
 	$(NODE) $(ROOT)/tools/browser/padtest.js $(ROOT)/web/dd2

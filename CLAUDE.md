@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The original-startup builds pass all ten complete cross-port demos:
+  15255 frames/palettes, RNG/flip logs and every effects/final-mix/music-
+  summand/CD source byte match (dd2-parity-original-boot-reviewed/results.json).
+  Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.js/.wasm now use these
+  verified builds. Native SHA
+  46baacc318f0f2be3018a3c0edbef710b271678cff4fb768b8e55dc74dc98751;
+  Node WASM de3d52c174668291b3d50f8fe01304da38345ee6d0a2a1b47f0c195b9bfbe2eb;
+  browser WASM e99d55ea0f82f613340d5d269cba9ce5e0f79d420442070d7204e5f2b35682e3.
+  Normal native Quit also has real-X11 coverage: skip the actual intro,
+  cancel Quit back to the running menu, then confirm Quit. The original
+  user WinMain return1 is preserved, both actual SDL streams close and all
+  116121600 renderer pixels match the submitted texture. No engine writes
+  or shared-save changes are used; the test copies SaveGames first.
+  make verify-native-quit NATIVE_QUIT_ARGS='--output <fresh-dir>' reproduces
+  dd2-native-original-quit-reviewed/report.json. This checks the real cleanup
+  path; complete original output-clock/hardware acceptance remains open.
 - Normal SDL window and default browser startup now use the original user
   WinMain sequence @0x423ae0: Init_Application, ddmain's pal_flag=0/Play_Intro/
   Init_Main/Init_Front_End/Front_End, then Close_Application and return1.
