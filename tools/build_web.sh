@@ -12,6 +12,8 @@ OUTDIR="${1:-$ROOT/web/dd2}"
 mkdir -p "$OUTDIR"
 source "$ROOT/tools/emscripten_env.sh"
 GAME="$ROOT/DestructionDerby2"
+BUILD_TMP=/tmp/wasm-dd2/browser-build
+mkdir -p "$BUILD_TMP"
 
 bash "$ROOT/tools/patch.sh"
 
@@ -22,15 +24,16 @@ python3 "$ROOT/tools/generate_cd_toc.py" "$ROOT/DestructionDerby2/Redbook/disc.j
 UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2_com dd2_filio dd2_input dd2h_stubs dd2_festate dd2_cd dd2_avi dd2_cinepak dd2_msadpcm dd2_movie dd2_movie_platform dd2_movie_surface dd2_boot"
 OBJS=""; err=0
 for u in $UNITS; do
-  c="$ROOT/build/$u.c"; o="/tmp/web_$u.o"
+  c="$ROOT/build/$u.c"; o="$BUILD_TMP/$u.o"
   UNIT_FLAGS=()
   # As in the native build, the exact integer x87 FIR mixer must process
   # samples faster than its real-time clock. Otherwise its own processing
   # time grows the next elapsed-time block and starves live race updates.
   # Keep the reconstructed engine at -O0 and preserve exact arithmetic.
   case "$u" in dd2h_stubs) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
-  emcc -c $F "${UNIT_FLAGS[@]}" "$c" -o "$o" 2>/tmp/wcc_err.txt || true
-  if grep -q 'error:' /tmp/wcc_err.txt; then echo "ERROR compiling $u.c:"; grep 'error:' /tmp/wcc_err.txt | head -5; err=1; fi
+  if ! emcc -c $F "${UNIT_FLAGS[@]}" "$c" -o "$o" 2>"$BUILD_TMP/$u.log"; then
+    echo "ERROR compiling $u.c:"; cat "$BUILD_TMP/$u.log"; err=1
+  fi
   OBJS="$OBJS $o"
 done
 [ "$err" = 1 ] && { echo "build aborted (compile errors)"; exit 1; }
@@ -45,7 +48,7 @@ emcc $OBJS -o "$OUTDIR/index.html" \
   --shell-file "$ROOT/web/shell_port.html" \
   --preload-file "$GAME/Dirinfo@Dirinfo" \
   --preload-file "$GAME/dd2_image.bin@dd2_image.bin" \
-  2>/tmp/wlink_err.txt || { echo "LINK FAILED:"; tail -20 /tmp/wlink_err.txt; exit 1; }
+  2>"$BUILD_TMP/link.log" || { echo "LINK FAILED:"; tail -20 "$BUILD_TMP/link.log"; exit 1; }
 # SaveGames is NOT preloaded: it is IDBFS-backed (shell_port.html mounts /persist and symlinks
 # /SaveGames -> /persist/SaveGames). On a first-ever run the file is absent, so the engine's
 # InitCardSystem @0x423220 recreates a fresh 128KB card from the image baseline (proven native:

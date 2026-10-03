@@ -576,6 +576,28 @@ Automatically recorded original raw PCM is also removed after successful
 comparison; recordings supplied with `--capture` belong to the caller. Failed
 recordings remain available for diagnosis.
 
+The full application startup can also be observed without writing engine state:
+
+```sh
+python3 tools/capture_native_menu_startup.py --output /tmp/wasm-dd2/fresh-native-startup
+node tools/browser/capture_menu_startup.js web/dd2 /tmp/wasm-dd2/fresh-browser-startup
+make verify-menu-startup-controls MENU_STARTUP_ARGS='--original /tmp/wasm-dd2/original-startup --original-mix-report /tmp/wasm-dd2/original-mix/report.json --native /tmp/wasm-dd2/fresh-native-startup --browser /tmp/wasm-dd2/fresh-browser-startup --report /tmp/wasm-dd2/startup-controls/report.json'
+```
+
+The original capture needs `--wine-debug=-all,+timestamp,+dsound,+ddraw`;
+its independent sample report comes from `verify-original-menu-audio` above.
+Both port captures run normal application initialization and skip the real
+intro with keyboard input. The checker verifies the actual loaded sound-bank
+source, playback controls, CD13 menu state and presentation count at each
+source start. In the recorded startup, the slab effect starts after 38 Flips
+and CD after 53 on all three targets. Twenty damaged control sequences reject.
+Wine's CD streaming ring loops internally; the port instead consumes the whole
+finite CD range, so those storage flags are checked separately. Sample offsets
+are reported without declaring them equal: full device timing, PCM and video
+equivalence of the complete application remain open. `DD2_SNDLOG=<path>` selects
+the port log; `DD2_SNDLOG=1` uses `/tmp/wasm-dd2/sound.log`. Build diagnostics now
+also live in `/tmp/wasm-dd2/{native,node,browser}-build/`.
+
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
 directory. For example:

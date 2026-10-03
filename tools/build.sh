@@ -4,6 +4,8 @@
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUTJS="${1:-/tmp/lvltest/dd2run.js}"
+BUILD_TMP=/tmp/wasm-dd2/node-build
+mkdir -p "$BUILD_TMP"
 mkdir -p "$(dirname "$OUTJS")"
 source "$ROOT/tools/emscripten_env.sh"
 
@@ -21,9 +23,10 @@ UNITS="dd2 dd2_dispatch dd2_runtime dd2_buffers dd2_data dd2_win32 dd2_stubs dd2
 OBJS=""
 err=0
 for u in $UNITS; do
-  c="$ROOT/build/$u.c"; o="/tmp/$u.o"
-  emcc -c $F "$c" -o "$o" 2>/tmp/cc_err.txt || true
-  if grep -q 'error:' /tmp/cc_err.txt; then echo "ERROR compiling $u.c:"; grep 'error:' /tmp/cc_err.txt | head -5; err=1; fi
+  c="$ROOT/build/$u.c"; o="$BUILD_TMP/$u.o"
+  if ! emcc -c $F "$c" -o "$o" 2>"$BUILD_TMP/$u.log"; then
+    echo "ERROR compiling $u.c:"; cat "$BUILD_TMP/$u.log"; err=1
+  fi
   OBJS="$OBJS $o"
 done
 [ "$err" = 1 ] && { echo "build aborted (compile errors)"; exit 1; }
@@ -32,5 +35,6 @@ done
 emcc $OBJS -o "$OUTJS" \
   --pre-js "$ROOT/tools/node_env.js" \
   -sGLOBAL_BASE=10485760 -sSTACK_SIZE=16777216 -sINITIAL_MEMORY=268435456 \
-  -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 -sERROR_ON_UNDEFINED_SYMBOLS=0 -sNODERAWFS=1 --emit-symbol-map 2>/dev/null
+  -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 -sERROR_ON_UNDEFINED_SYMBOLS=0 -sNODERAWFS=1 --emit-symbol-map \
+  2>"$BUILD_TMP/link.log"
 echo "built $OUTJS"

@@ -170,8 +170,9 @@ int FUN_0045623b(void* file,long offset,int whence){ return fseek((FILE*)file,of
    (2), SetPan +0x40 (2), SetFrequency +0x44 (2), Stop +0x48 (1), Unlock +0x4c (5), Restore
    +0x50 (1, DSFillSoundBuffer @0x415770).
    Gated behind DD2_SOUND=1: without it DirectSoundCreate keeps returning DSERR (the proven
-   no-sound path all Stage-2 video verification ran on). DD2_SNDLOG=1 logs every call with the
-   engine frame counter @0x462ff0 (deterministic, wallclock-free) for ref alignment.
+   no-sound path all Stage-2 video verification ran on). DD2_SNDLOG=<path> logs calls with the
+   engine counter, completed presentations and rendered device samples. DD2_SNDLOG=1 uses
+   /tmp/wasm-dd2/sound.log; the parent directory must already exist.
    Deterministic playback uses the cf counter (25 engine fps), keeping Sound_Timer's
    GetStatus->Release lifecycle reproducible. Interactive DD2_REALTIME playback uses
    elapsed time, including menus and pause where the race counter is fixed. */
@@ -206,6 +207,7 @@ typedef struct DSDevice { void** vtbl; unsigned references; } DSDevice;
 static void* g_dsb_vtbl[32];
 static int ds_clock_init;
 static unsigned ds_last_ms,ds_remainder;
+static uint64_t ds_rendered_frames;
 #ifdef DD2_BROWSER
 void dd2_audio_stop(void);
 #endif
@@ -237,10 +239,19 @@ void dd2_snd_mix_flip(void);
 static void ds_realtime_pump(void){
     if(getenv("DD2_REALTIME")) dd2_snd_mix_flip();
 }
+/* Component fixtures do not link the presentation shim. The weak query keeps
+   their logs explicit (-1), without adding a fake presentation counter. */
+extern int dd2_frame_count(void) __attribute__((weak));
 static FILE* snd_log(void){ static FILE* f; static int init;
-    if(!init){ init=1; if(getenv("DD2_SNDLOG")) f=fopen("/tmp/dd2_sndlog.txt","w"); }
+    if(!init){ const char* path=getenv("DD2_SNDLOG"); init=1;
+        if(path && *path){
+            if(!strcmp(path,"1"))path="/tmp/wasm-dd2/sound.log";
+            f=fopen(path,"w");
+            if(!f){fprintf(stderr,"Cannot open DD2_SNDLOG: %s\n",path);exit(1);}
+        }
+    }
     return f; }
-#define SLOG(...) do{ FILE* _f=snd_log(); if(_f){ fprintf(_f,"cf%d ",SND_CF); fprintf(_f,__VA_ARGS__); fputc('\n',_f); fflush(_f);} }while(0)
+#define SLOG(...) do{ FILE* _f=snd_log(); if(_f){ fprintf(_f,"cf%d flip%d sample%llu ",SND_CF,dd2_frame_count?dd2_frame_count():-1,(unsigned long long)ds_rendered_frames); fprintf(_f,__VA_ARGS__); fputc('\n',_f); fflush(_f);} }while(0)
 /* --- IDirectSoundBuffer methods --- */
 static int dsb_addref(DSBuf* b){return (int)++b->references;}
 static int dsb_release(DSBuf* b){ unsigned remaining;
@@ -331,6 +342,7 @@ void* dd2_snd_music_create(unsigned frames,DD2SoundRead read,DD2SoundConsume con
     b->channels=2;b->bits=16;b->blockalign=4;b->nAvgBytesPerSec=176400;
     b->stream_read=read;b->stream_consume=consume;b->stream_context=context;
     g_ds_music_buffers++;
+    SLOG("Music Create frames=%u -> %p",frames,(void*)b);
     return b;
 }
 void dd2_snd_music_destroy(void* buffer){if(buffer)dsb_release((DSBuf*)buffer);}
@@ -358,7 +370,7 @@ static int ds_createbuffer(void* t,int* desc,DSBuf** pp,int outer){ (void)t;(voi
     if(b->channels<1) b->channels=1; if(b->blockalign<1) b->blockalign=(b->bits==16?2:1)*b->channels;
     if(b->bits!=16) b->bits=8;
     if(pp)*pp=b;
-    SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d -> %p",desc?desc[1]:0,b->size,b->freq,(void*)b);
+    SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d channels=%d bits=%d -> %p",desc?desc[1]:0,b->size,b->freq,b->channels,b->bits,(void*)b);
     return 0; }
 static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
     DSBuf* b=dsb_new();
@@ -654,6 +666,7 @@ void dd2_snd_mix_flip(void){
         if(pf) fwrite(effects,sizeof(float),frames*2,pf);
         if(mixed_capture)fwrite(out,sizeof(float),frames*2,mixed_capture);
         if(music_capture)fwrite(music,sizeof(float),frames*2,music_capture);
+        ds_rendered_frames += frames;
 #ifdef DD2_BROWSER
         dd2_audio_push(out,effects,music,frames,rate,music_frames);
 #endif

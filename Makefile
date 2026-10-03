@@ -229,6 +229,10 @@ verify-audio-observer: ## check exact accepted/consumed PCM and 32/64-bit sample
 verify-original-menu-audio: ## compare bounded original menu mix at traced sample positions; live input scheduling pending
 	python3 $(ROOT)/tools/verify_original_menu_audio.py --node $(NODE) $(ORIGINAL_MENU_AUDIO_ARGS)
 
+.PHONY: verify-menu-startup-controls
+verify-menu-startup-controls: ## compare actual original/native/browser startup audio calls by presentation; MENU_STARTUP_ARGS supplies captures/report
+	python3 $(ROOT)/tools/verify_menu_startup_controls.py $(MENU_STARTUP_ARGS)
+
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh
 

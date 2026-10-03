@@ -6,6 +6,8 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-/tmp/dd2_native}"
 ASAN="${ASAN:--fsanitize=address}"
+BUILD_TMP=/tmp/wasm-dd2/native-build
+mkdir -p "$BUILD_TMP"
 
 bash "$ROOT/tools/patch.sh" >/dev/null
 
@@ -39,13 +41,13 @@ for u in $UNITS; do
   # engine at -O0; optimize the handwritten mixer/transport shim without
   # fast-math or aliasing assumptions about its Win32 buffer structures.
   case "$u" in dd2h_stubs|dd2_avi|dd2_cinepak|dd2_msadpcm|dd2_movie_surface) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
-  if ! gcc "${F[@]}" "${UNIT_FLAGS[@]}" -c "$ROOT/build/$u.c" -o "/tmp/n_$u.o" 2>"/tmp/ne_$u.txt"; then
-    cat "/tmp/ne_$u.txt";exit 1
+  if ! gcc "${F[@]}" "${UNIT_FLAGS[@]}" -c "$ROOT/build/$u.c" -o "$BUILD_TMP/$u.o" 2>"$BUILD_TMP/$u.log"; then
+    cat "$BUILD_TMP/$u.log";exit 1
   fi
-  OBJS="$OBJS /tmp/n_$u.o"
+  OBJS="$OBJS $BUILD_TMP/$u.o"
 done
-gcc "${F[@]}" -c "$ROOT/tools/native_main.c" -o /tmp/n_main.o
-gcc "${F[@]}" $OBJS /tmp/n_main.o -o "$OUT" -lm "${SDL_LIBS[@]}" \
+gcc "${F[@]}" -c "$ROOT/tools/native_main.c" -o "$BUILD_TMP/main.o" 2>"$BUILD_TMP/main.log"
+gcc "${F[@]}" $OBJS "$BUILD_TMP/main.o" -o "$OUT" -lm "${SDL_LIBS[@]}" \
   -Wl,--version-script="$ROOT/tools/native_symbols.map"
 if [ -n "$DD2_BUILD_HEADLESS" ]; then
   echo "built $OUT (32-bit headless)"
