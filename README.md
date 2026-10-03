@@ -314,6 +314,9 @@ L6 capture passes both ports after the actual sequence [9,7,3,1,1,7], with
 1403 target frames, 154599 total clock inputs and 25198 global random calls.
 A fresh L7 capture also passes both ports after its actual L9 prefix: all
 1115 target frames, 39063 total clock inputs and 11733 global random calls.
+The comparator records partial results for both targets after an engine exit
+or deadline and rejects incomplete clock/RNG consumption and missing diagnostic
+images. A failure in the first target does not skip the second target.
 
 For the older L3 capture, a controlled native experiment isolates the effect
 of retained debris vertices:

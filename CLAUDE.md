@@ -35,6 +35,27 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The fresh FULL-input original L8 capture remains rejected on BOTH ports,
+  not just in direct initial-state matching: 1028 original frames, 58168
+  clocks, actual prefix [9,7], all observed initial entry states calculated.
+  Both ports stop after the same 925 presentations with RNG exhaustion and
+  unconsumed clocks. First presented RNG-phase mismatch is index 264,
+  cf200/ticks402 (original 16952 calls, both ports 16943); the first wrong
+  framebuffer is index 690, cf424/ticks850. These are genuine unresolved
+  engine differences under full prefix API inputs
+  (dd2-original-l8-full-history-inputs-reviewed;
+  dd2-original-l8-full-history-both-rejection-reviewed/report.json).
+  compare_race_stream.py now preserves partial evidence and compares BOTH
+  targets after exit/deadline/clock/RNG/loop failures. Missing port diagnostic
+  images become rejection records instead of masking the second target.
+  Actual L8 fails identically with 894 records per target; a native /usr/bin/
+  false control still allows real WASM to pass all 1005 L9 frames and all
+  input/state/pixel negatives (dd2-original-l9-native-failure-wasm-positive-reviewed).
+  A 1ms deadline independently rejects and records both targets, with no
+  complete loop or accepted input extent claimed
+  (dd2-original-l9-both-timeout-negative-reviewed). A fresh normal L9 rerun
+  also passes both targets with the changed comparator
+  (dd2-original-l9-engine-failure-collection-positive-reviewed).
 - All ten default demo regressions also pass with the full-history runtime
   instrumentation: 15255 complete native/WASM frames/palettes and all
   effects/mixed/music/CD/RNG/flip bytes

@@ -68,8 +68,12 @@ def compare(reference,actual_root,rows):
             # Narrow diagnostic for patch 842; engine images contain host API
             # pointers and cannot be compared as an entire address space.
             original=(reference['_root']/f'{expected["prefix"]}.image').read_bytes()
-            port=(actual_root/f'imagef{actual["flip"]:05d}.bin').read_bytes()
-            if len(original)!=0x580400 or len(port)!=0x580400:raise RuntimeError('incomplete diagnostic engine image')
+            path=actual_root/f'imagef{actual["flip"]:05d}.bin'
+            port=path.read_bytes() if path.is_file() else b''
+            if len(original)!=0x580400:raise RuntimeError('incomplete original diagnostic engine image')
+            if len(port)!=0x580400:
+                failures.append({'index':index,'error':'port diagnostic engine image missing or incomplete','port_bytes':len(port)})
+                continue
             offset=0x789358-0x400000
             if original[offset:offset+2]!=port[offset:offset+2]:
                 failures.append({'index':index,'error':'first scenery object x differs',
@@ -146,18 +150,29 @@ def main():
     env={k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     for name,command,artifact in [('native',[str(a.native.resolve())],a.native),('wasm',[a.node,str(a.wasm.resolve()),'fe' if a.attract_history else str(r['level'])],a.wasm.with_suffix('.wasm'))]:
         directory=out/name;directory.mkdir();log=directory/'run.log'
+        timed_out=False;returncode=None
         with log.open('w') as stream:
-            run=subprocess.run(command,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,**({} if a.attract_history else {'DD2_LEVEL':str(r['level'])}),'DD2_SOUND':'1',
-                'DD2_TICK_REPLAY':str(ticks),'DD2_RACE_STREAM':str(directory/'race.jsonl'),
-                'DD2_FRAMEDIR':str(directory),'DD2_PALDUMP':'1'},stdout=stream,stderr=subprocess.STDOUT,timeout=a.timeout)
+            try:
+                run=subprocess.run(command,cwd=ROOT/'DestructionDerby2',env={**env,**random_env,**({} if a.attract_history else {'DD2_LEVEL':str(r['level'])}),'DD2_SOUND':'1',
+                    'DD2_TICK_REPLAY':str(ticks),'DD2_RACE_STREAM':str(directory/'race.jsonl'),
+                    'DD2_FRAMEDIR':str(directory),'DD2_PALDUMP':'1'},stdout=stream,stderr=subprocess.STDOUT,timeout=a.timeout)
+                returncode=run.returncode
+            except subprocess.TimeoutExpired:
+                timed_out=True
         text=log.read_text()
-        if run.returncode or f'[clock-replay] consumed={count} complete' not in text or re.search(r'SIGSEGV|SIGBUS|RuntimeError|FATAL|abort',text):
-            raise RuntimeError(f'{name}: engine or exact clock-consumption failure; see {log}')
-        if 'rng_calls' in r and f'[random-reference] consumed={r["rng_calls"]} complete' not in text:raise RuntimeError(f'{name}: incomplete original random trace consumption')
-        if a.attract_history and '[race-stream] target racing loop finished' not in text:raise RuntimeError(f'{name}: target attract loop not completed')
-        rows=[json.loads(line) for line in (directory/'race.jsonl').read_text().splitlines()]
-        if any(row['flip']<=rows[i-1]['flip'] for i,row in enumerate(rows) if i):raise RuntimeError('port presentation indices not increasing')
-        failures=compare(r,directory,rows)
+        failures=[]
+        clock_complete=f'[clock-replay] consumed={count} complete' in text
+        random_complete='rng_calls' not in r or f'[random-reference] consumed={r["rng_calls"]} complete' in text
+        loop_complete=not a.attract_history or '[race-stream] target racing loop finished' in text
+        if timed_out or returncode or not clock_complete or not random_complete or not loop_complete or re.search(r'SIGSEGV|SIGBUS|RuntimeError|FATAL|abort',text):
+            failures.append({'error':'engine or exact input-consumption failure','returncode':returncode,
+                'timed_out':timed_out,'clock_complete':clock_complete,'random_complete':random_complete,
+                'target_loop_complete':loop_complete,'log':str(log)})
+        rows_path=directory/'race.jsonl'
+        rows=[json.loads(line) for line in rows_path.read_text().splitlines()] if rows_path.is_file() else []
+        if any(row['flip']<=rows[i-1]['flip'] for i,row in enumerate(rows) if i):
+            failures.append({'error':'port presentation indices not increasing'})
+        failures.extend(compare(r,directory,rows))
         preceding=[int(value) for value in re.findall(r'\[clock-replay\] warmup level=(\d+)',text)]
         if full_history:
             history_entries=[json.loads(value) for value in re.findall(r'\[clock-replay\] history-entry (\{[^\n]+\})',text)]
