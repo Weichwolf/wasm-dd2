@@ -56,6 +56,16 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   resumed source bytes (dd2-native-window-sound-device-reviewed and
   dd2-browser-redbook-sound-device-reviewed). These are API/controlled-clock
   and sink-boundary checks, not original movie-to-menu output-clock parity.
+  These device-lifetime builds also pass the complete ten-level cross-port
+  regression: 15255 frames/palettes, RNG/flip logs and all effects, shared-mix,
+  music-summand and CD source bytes match
+  (dd2-parity-sound-device-reviewed/results.json). Both full and skipped
+  diagnostic films pass again on SDL: 1712/1813 complete frames and every
+  source PCM byte (dd2-native-movie-sound-device-lifetimes-reviewed/report.json).
+  The first post-cleanup film observer incorrectly joined a retired Float32
+  stream to a movie with a reused SDL device ID. Its failed evidence remains
+  in dd2-native-movie-sound-device-reviewed; the corrected verifier selects
+  the actual open/close lifetime and the fresh four-case rerun passes.
 - The completed movie-MCI builds also pass all ten complete sound-enabled
   demos: 15255 presented frames, every framebuffer/palette, RNG/flip log,
   effects/final-mix/music-summand byte and raw CD source byte match between

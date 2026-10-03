@@ -72,7 +72,14 @@ def main():
                 opens=[e for e in events if e["event"]=="open"]
                 movie_devices=[e for e in opens if e["device"] and e["rate"]==22050 and e["format"]==0x8010 and e["channels"]==2]
                 if len(movie_devices)!=1:raise RuntimeError("No unique actual PCM16 stereo movie device")
-                queues=[e for e in events if e["event"]=="queue" and e["device"]==movie_devices[0]["device"]]
+                # SDL can reuse the retired Float32 device ID for the movie.
+                # Only events within this actual open/close lifetime belong
+                # to the movie stream; an integer ID is not a lifetime token.
+                opened=events.index(movie_devices[0])
+                closed=next((i for i in range(opened+1,len(events)) if events[i]["event"]=="close" and events[i]["device"]==movie_devices[0]["device"]),None)
+                if closed is None:raise RuntimeError("Movie device did not close")
+                queues=[e for e in events[opened+1:closed] if e["event"]=="queue" and e["device"]==movie_devices[0]["device"]]
+                if not queues:raise RuntimeError("Movie device accepted no audio")
                 if len({e["stream"] for e in queues})!=1:raise RuntimeError("Movie device/stream reused")
                 stream=queues[0]["stream"];pcm=case/f"stream{stream}.pcm"
                 offset=0
