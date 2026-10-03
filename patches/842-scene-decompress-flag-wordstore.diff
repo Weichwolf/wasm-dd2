@@ -1,0 +1,27 @@
+Preserve the first scenery object's x coordinate when starting a streamed block.
+
+Decrunch_Object_Block@0x430a38 resets the new-stream flag with the original
+instruction 430ab8: 66 89 0d 56 93 78 00 (mov WORD [0x789356],cx; cx=0).
+The adjacent first scene object's local x is a separate WORD at 0x789358.
+Ghidra's int-typed _DAT_00789356 made the reset a DWORD store, zeroing that
+coordinate whenever a later block started loading. Patch 405 already corrected
+the neighboring window stores at 0x789354, but left this flag store untouched.
+
+Observed in a read-only full original L6 capture at cf260: object 0/0 at
+0x7845a0 has the same original shape 0x862154 in both targets, but its local
+position@0x789358 is x=15133 in dd2h.exe and x=0 in the port. The object is
+then wrongly culled, leaving missing scenery pixels around cf252..270 and
+later streaming boundaries. Original clocks, RNG calls, matrix and active
+block numbers match. Preserve the exact WORD write; no coordinate injection.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -21436,7 +21436,7 @@
+   }
+   dec_info = *_level_data + *(int *)(*_level_data + param_1 * 4);
+   *(unsigned short *)&_DAT_00789354 = 0x400;  /* asm: word store (flag @0x789356 written separately below) */
+-  _DAT_00789356 = 0;
++  *(unsigned short *)&_DAT_00789356 = 0;  /* 0x430ab8: WORD; preserve scene x @0x789358 */
+   _decrunch_flag = 1;
+   _DAT_0078934c = *(undefined4 *)(&active_object_blocks + param_2 * 4);
+   _DAT_0078a15c = param_2;

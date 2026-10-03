@@ -35,6 +35,42 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 842 corrects a second scenery-streaming WORD store missed by patch
+  405. The supported original resets its stream flag at 0x789356 with
+  `mov WORD [0x789356],cx` (0x430ab8); the translated DWORD store also zeroed
+  object 0/0's local x at 0x789358. At cf260 the original x is 15133, while
+  the old port has 0, despite identical shape/matrix/active-block state.
+  The resulting culling removed visible scenery around cf252..270 and later
+  streaming boundaries. The fix preserves the original WORD write and
+  injects no coordinate. The old L6 runs fail on 16/22 complete frames;
+  after the fix both independently recorded L6 render loops match literally
+  on native/WASM: 1371 frames/palettes each, all 16316/15980 actual clock
+  returns and all 1860 actual random calls per run. Every frame's clock/RNG
+  call phase, tick/countdown/skip and DEMO MODE blink state also match.
+  dd2-original-race-l6-word-{second-comparison,comparison}-reviewed/report.json
+  retains the proofs. The latter also compares original object x at all
+  eleven observed engine-image checkpoints, including the defective region.
+  Both comparisons reject first-pixel and first RNG/blink-phase corruption.
+  Matching initial state explicitly includes original seed=1038462957 and
+  inherited blink counter=78, once; subsequent values/states are calculated.
+  Default/interactive runs never use those verification-only initializers.
+  This proves captured L6 racing rendering at its debugger-observed API
+  times, not the original race audio, initialization/fades, every other
+  race/mode or physical/undebugged display clocks.
+- Original race capture now selects a naturally occurring attract level
+  with --race-level and observes actual Watcom rand() with a fourth moving
+  hardware breakpoint: 0x456cc6 reads the pre-seed, 0x456cde the stored
+  post-seed and actual returned EAX. All original memory/registers remain
+  unmodified. The old MSVC/address comments were wrong; the implemented
+  seed*0x41c64e6d+0x3039 algorithm already matched this original Watcom CRT.
+  DD2_RANDOM_REFERENCE/LEVEL checks every computed pre/post-seed and return;
+  it seeds the private CRT RNG once rather than replaying random outputs.
+  Native ASan/UBSan and WASM fixtures verify four actual L6 records, level
+  gating, partial/exhausted/leftover rejection, changed pre/post/return
+  rejection and an actual multiplier mutation (16 cases total;
+  dd2-random-state-reference-reviewed/report.json). Strict clock fixtures
+  still pass (dd2-clock-random-state-reviewed/report.json). Full capture can
+  add --race-images INDEX... for narrowly compared diagnostic engine fields.
 - After the original race-stream/clock-replay instrumentation, all ten
   ordinary demo runs still match between native/WASM: 15255 complete
   presented frames/palettes, every RNG/flip record and every effects/final-

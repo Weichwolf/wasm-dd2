@@ -275,6 +275,33 @@ transport clock. See [Wine's Q-channel conversion](https://github.com/wine-mirro
 Live pause/resume timing still needs a valid transport reference before complete
 original audio acceptance.
 
+Complete original racing-loop captures also record every actual game clock
+return and Watcom random call using read-only hardware breakpoints. For a later
+naturally selected attract race (the rotation starts 9, 6, 5, 2, 3, 4):
+
+```sh
+make refcapture-race-stream RACE_CAPTURE_ARGS='--race-level 6 --timeout 360 --output third_party/verification-artifacts/fresh-original-l6'
+make verify-reference-race-stream RACE_REFERENCE=third_party/verification-artifacts/fresh-original-l6 RACE_COMPARISON=third_party/verification-artifacts/fresh-comparison-l6
+make verify-random-reference RANDOM_REFERENCE_ARGS='--output third_party/verification-artifacts/fresh-random-check'
+```
+
+The ports match the observed initial RNG seed and inherited DEMO MODE blink
+counter once, then calculate every subsequent random result/state and blink
+phase themselves. Every presented framebuffer/palette byte and clock/random
+call phase is compared literally, including the countdown and final rendered
+frame. Missing, partial, leftover or changed random records fail; a deliberately
+changed multiplier is also rejected on native ASan/UBSan and WASM. A changed
+first pixel or recorded state phase must fail the game comparison. The actual
+supported CRT is Watcom (`rand` at 0x456cbc), with multiplier 0x41c64e6d and
+increment 0x3039; earlier MSVC/address comments were incorrect.
+
+`--race-images INDEX...` additionally saves original engine memory at selected
+presentation indices for diagnosis. Captures and original assets remain ignored
+by Git. Debugger stops affect elapsed time, so replaying the observed API clock
+is an explicit comparison input. These checks cover the captured racing render
+loop; initialization/fades, original racing audio, other modes and physical or
+undebugged output timing still require acceptance.
+
 Several L9 video checkpoints can be captured from one unmodified attract run
 and compared with one run of each port:
 

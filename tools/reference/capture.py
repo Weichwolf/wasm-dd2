@@ -105,7 +105,9 @@ def main():
     frames.add_argument("--frames", type=int, nargs="+",
                         help="capture increasing race checkpoints in one unmodified attract run")
     parser.add_argument("--timeout", type=float, default=90)
-    parser.add_argument("--race-stream",action="store_true",help="record every first-L9 demo racing-loop frame and actual game clock return using read-only hardware breakpoints")
+    parser.add_argument("--race-level",type=int,choices=range(1,11),default=9,help="wait for this naturally selected attract level; requires --race-stream")
+    parser.add_argument("--race-images",type=int,nargs="+",default=[],help="also dump original engine memory at these racing presentation indices for diagnostics")
+    parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
@@ -128,6 +130,8 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.race_level!=9 and not args.race_stream:parser.error('--race-level requires --race-stream')
+    if args.race_images and (not args.race_stream or min(args.race_images)<0):parser.error('--race-images requires --race-stream and nonnegative indices')
     if args.race_stream and (args.mode!="attract" or args.frames or args.keys is not None or args.audio):
         parser.error("--race-stream requires attract mode, no frame/key sequence and no audio (debugger changes clock timing)")
     if args.frame < 1 or args.timeout <= 0 or not 0 < args.key_hold <= 1:
@@ -275,7 +279,7 @@ def run(game, output, args):
                     ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.race_stream:
-                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()))
+                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images)
                             return
                         if args.mode=="audio":
                             end = time.monotonic() + args.audio_tail
@@ -339,11 +343,11 @@ def run(game, output, args):
                 xserver.wait(timeout=5)
 
 
-def capture_race_stream(pid,output,env,timeout):
+def capture_race_stream(pid,output,env,timeout,level=9,image_frames=()):
     script=output/"race.gdb"
     script.write_text("\n".join(["set pagination off","set auto-solib-add off",f"attach {pid}",
         "python",f"import sys; sys.path.insert(0,{str(ROOT/'tools')!r})",
-        "from race_stream_gdb import record_race",f"record_race({str(output)!r},9)",
+        "from race_stream_gdb import record_race",f"record_race({str(output)!r},{level},random_trace=True,image_frames={image_frames!r})",
         "end","detach","quit"])+"\n")
     with (output/"race-gdb.log").open("wb") as log:
         subprocess.run(["gdb","--nx","-q","-batch","-x",str(script)],env=env,

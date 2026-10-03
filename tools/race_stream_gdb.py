@@ -1,6 +1,6 @@
 """GDB-only read-only racing-loop video and game-clock observer.
 
-Use three hardware breakpoints, never software breakpoints or register/state
+Use at most four hardware breakpoints, never software breakpoints or general-register/state
 writes. One moving breakpoint records the real EAX returned by each engine
 GetTickCount call, including every busy-wait iteration. This debugger changes
 wall-clock timing; ports must replay that observed API input exactly. It is
@@ -12,19 +12,44 @@ import struct
 import gdb
 
 
-def record_race(output,level):
+def record_race(output,level,random_trace=False,image_frames=()):
     directory=Path(output)/'race';directory.mkdir()
-    ticks=[];frames=[];complete=False
+    ticks=[];frames=[];random=[];complete=False
     inferior=gdb.selected_inferior()
     def read(address,size):return bytes(inferior.read_memory(address,size))
     def integer(address):return int.from_bytes(read(address,4),'little',signed=True)
     def state():return {'level':integer(0x936ff4),'cf':integer(0x462ff0),
         'ticks':integer(0x7746c0),'countdown':integer(0x784298),
-        'frame_skip':integer(0x7746b8),'quit':integer(0x7746ac)}
+        'frame_skip':integer(0x7746b8),'quit':integer(0x7746ac),'demo_flash':integer(0x4652a0)}
     kind=gdb.BP_HARDWARE_BREAKPOINT
+    # Verified from the actual supported PE: Watcom rand() begins 456cbc;
+    # at 456cc6 EAX addresses the per-thread seed before the multiply. At
+    # 456cde EAX contains the actual API result and the seed store is complete.
+    rng=None;rng_pc=0x456cc6;rng_pointer=None;rng_before=None
+    def random_stop(pc):
+        nonlocal rng,rng_pc,rng_pointer,rng_before
+        if not random_trace or pc!=rng_pc:return False
+        if pc==0x456cc6:
+            rng_pointer=int(gdb.parse_and_eval('$eax'))&0xffffffff
+            rng_before=int.from_bytes(read(rng_pointer,4),'little')
+            next_pc=0x456cde
+        else:
+            random.append({'before':rng_before,'after':int.from_bytes(read(rng_pointer,4),'little'),
+                'return':int(gdb.parse_and_eval('$eax'))&0xffffffff})
+            next_pc=0x456cc6
+        rng.delete();rng_pc=next_pc
+        rng=gdb.Breakpoint(f'*0x{rng_pc:x}',type=kind);rng.silent=True
+        rng.condition=f'*(int*)0x936ff4 == {level} && *(int*)0x46385c == 1'
+        return True
+    if random_trace:
+        rng=gdb.Breakpoint(f'*0x{rng_pc:x}',type=kind);rng.silent=True
+        rng.condition=f'*(int*)0x936ff4 == {level} && *(int*)0x46385c == 1'
     initial=gdb.Breakpoint('*0x423c2d',type=kind);initial.silent=True
     initial.condition=f'*(int*)0x936ff4 == {level} && *(int*)0x46385c == 1'
-    gdb.execute('continue')
+    while True:
+        gdb.execute('continue')
+        pc=int(gdb.parse_and_eval('$pc'))
+        if not random_stop(pc):break
     if int(gdb.parse_and_eval('$pc'))!=0x423c2d:raise RuntimeError('first game GetTickCount return not reached')
     initial.delete()
     first_state=state()
@@ -39,6 +64,7 @@ def record_race(output,level):
     while True:
         gdb.execute('continue')
         pc=int(gdb.parse_and_eval('$pc'))
+        if random_stop(pc):continue
         if pc==0x42404a:
             final_state=state()
             if final_state['quit']!=1 or int(gdb.parse_and_eval('$edi'))>=0 or integer(0x9376ac)!=0:
@@ -51,7 +77,10 @@ def record_race(output,level):
             prefix=f'frame{len(frames):05d}'
             (directory/f'{prefix}.bin').write_bytes(read(0x700450,307200))
             (directory/f'{prefix}.pal').write_bytes(read(0x700050,1024))
+            if len(frames) in image_frames:
+                (directory/f'{prefix}.image').write_bytes(read(0x400000,0x580400))
             current.update(index=len(frames),prefix=prefix,clock_calls=len(ticks))
+            if random_trace:current['rng_calls']=len(random)
             frames.append(current)
             if len(frames)%100==0:print(f'Original race stream: {len(frames)} frames, {len(ticks)} clock returns, cf={current["cf"]}',flush=True)
             continue
@@ -66,11 +95,18 @@ def record_race(output,level):
             clock.delete();expected=next_clock
             clock=gdb.Breakpoint(f'*0x{expected:x}',type=kind);clock.silent=True
     for breakpoint in (clock,draw,end):breakpoint.delete()
+    if rng:rng.delete()
     if not complete or not frames:raise RuntimeError('incomplete original race loop')
     (directory/'ticks.bin').write_bytes(b''.join(struct.pack('<I',value) for value in ticks))
     result={'stage':'Draw_All entry / pending presentation','scope':__doc__,'level':level,
         'complete_racing_loop':True,'breakpoints':'hardware only; no inferior memory/register writes',
         'clock_source':'actual GetTickCount return EAX at original engine call sites',
-        'first_state':first_state,'final_state':final_state,'clock_calls':len(ticks),'frames':frames}
+        'first_state':first_state,'final_state':final_state,'clock_calls':len(ticks),'frames':frames,
+        'diagnostic_image_frames':list(image_frames)}
+    if random_trace:
+        if not random or rng_pc!=0x456cc6:raise RuntimeError('incomplete original random calls')
+        (directory/'random.bin').write_bytes(b''.join(struct.pack('<III',row['before'],row['after'],row['return']) for row in random))
+        result.update(rng_calls=len(random),rng_initial_seed=random[0]['before'],rng_final_seed=random[-1]['after'],
+            rng_source='actual Watcom rand pre-multiply seed / stored post-seed / returned EAX; hardware breakpoints')
     (directory/'race.json').write_text(json.dumps(result,indent=2)+'\n')
     print(f'Original complete racing loop: {len(frames)} frames, {len(ticks)} actual clock returns',flush=True)

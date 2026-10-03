@@ -127,15 +127,15 @@ static int ids_flip(int t,int a,int b){
     {
         const char* logpath=getenv("DD2_RACE_STREAM");
         if(logpath){
-            extern unsigned dd2_tick_replay_calls(void);
+            extern unsigned dd2_tick_replay_calls(void),dd2_random_replay_calls(void);
             unsigned calls=dd2_tick_replay_calls();
             if(calls && !*(int*)(unsigned long)0x7746acu){
                 static FILE* log;
                 if(!log){log=fopen(logpath,"w");if(!log){fprintf(stderr,"Cannot open race stream log\n");exit(1);}}
-                fprintf(log,"{\"flip\":%d,\"level\":%d,\"cf\":%d,\"ticks\":%d,\"countdown\":%d,\"frame_skip\":%d,\"quit\":%d,\"clock_calls\":%u}\n",
+                fprintf(log,"{\"flip\":%d,\"level\":%d,\"cf\":%d,\"ticks\":%d,\"countdown\":%d,\"frame_skip\":%d,\"quit\":%d,\"clock_calls\":%u,\"rng_calls\":%u,\"demo_flash\":%d}\n",
                     g_frameno,*(int*)(unsigned long)0x936ff4u,*(int*)(unsigned long)0x462ff0u,
                     *(int*)(unsigned long)0x7746c0u,*(int*)(unsigned long)0x784298u,
-                    *(int*)(unsigned long)0x7746b8u,*(int*)(unsigned long)0x7746acu,calls);fflush(log);
+                    *(int*)(unsigned long)0x7746b8u,*(int*)(unsigned long)0x7746acu,calls,dd2_random_replay_calls(),*(int*)(unsigned long)0x4652a0u);fflush(log);
             }
         }
     }

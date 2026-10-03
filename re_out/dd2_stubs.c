@@ -59,6 +59,18 @@ unsigned GetTickCount(void){
             if(getenv("DD2_REALTIME")){fprintf(stderr,"[clock-replay] requires headless clock mode\n");exit(1);}
             dd2_tick_file=fopen(path,"rb");
             if(!dd2_tick_file){fprintf(stderr,"[clock-replay] cannot open clock input\n");exit(1);}
+            /* Later original attract races inherit the DEMO MODE blink counter.
+             * A fixed-level headless run starts from the boot image instead.
+             * Match this explicitly observed initial state ONCE, then let the
+             * original engine update it normally; no subsequent state replay. */
+            {
+                const char* flash=getenv("DD2_RACE_FLASH_INITIAL");
+                if(flash){
+                    char* end;unsigned long value=strtoul(flash,&end,10);
+                    if(!*flash || *end || value>80){fprintf(stderr,"[clock-replay] invalid initial demo flash state\n");exit(1);}
+                    *(unsigned*)(uintptr_t)0x4652a0=(unsigned)value;
+                }
+            }
             atexit(dd2_tick_close);
         }
     }
@@ -78,13 +90,67 @@ void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers
     + offset, FUN_00416688 -> DSLoadSoundBuffer), never real HRSRC handles: identity is the
     faithful Windows behavior for already-mapped memory */ }
 
-/* dd2h's exact CRT rand() LCG, shared by native+WASM so the rand()-seeded attract demo is
-   bit-identical across builds (and dd2h.exe). The decompiled rand/srand (dd2.c @0x456afc/0x456b1f,
-   MSVCRT _threadid-state based) are #if 0'd as "libc CRT"; without this, native links glibc rand()
-   and WASM links musl/emscripten rand() -- different LCGs -> the demo's rand()%level sequence
-   diverges (native vs WASM bit-diff starts exactly at frame 3, the first demo race frame).
-   Matches the decompiled body: seed = seed*0x41c64e6d + 0x3039; return (seed>>16)&0x7fff. */
+/* The supported Watcom CRT's per-thread LCG, verified in dd2h.exe:
+ * rand 0x456cbc, pre-update seed pointer EAX at 0x456cc6, returned EAX
+ * at 0x456cde; srand 0x456cdf. The old 0x456afc/0x456b1f/MSVC comment
+ * identified unrelated CRT code in this supported binary.
+ * Every normal call retains the existing seed*0x41c64e6d+0x3039 algorithm.
+ * Optional verification initializes the private RNG from the first actual
+ * original pre-seed, then COMPUTES and checks every stored post-seed/return;
+ * it never substitutes recorded values for subsequent random results. */
 static unsigned _dd2_rand_seed = 1;
-unsigned g_rand_calls = 0;   /* divergence locator: native-vs-WASM rand() call-count per frame */
-int rand(void){ g_rand_calls++; _dd2_rand_seed = _dd2_rand_seed * 0x41c64e6dU + 0x3039U; return (int)((_dd2_rand_seed >> 0x10) & 0x7fff); }
-void srand(unsigned _Seed){ _dd2_rand_seed = _Seed; }
+unsigned g_rand_calls = 0;
+static FILE* dd2_random_file;
+static unsigned dd2_random_calls,dd2_random_level;
+static int dd2_random_init,dd2_random_failed;
+static const char* dd2_random_path;
+unsigned dd2_random_replay_calls(void){return dd2_random_calls;}
+static void dd2_random_close(void){
+    if(!dd2_random_file)return;
+    if(!dd2_random_failed && fgetc(dd2_random_file)!=EOF){
+        fprintf(stderr,"[random-reference] unconsumed random records\n");fclose(dd2_random_file);dd2_random_file=NULL;exit(1);
+    }
+    fclose(dd2_random_file);dd2_random_file=NULL;
+    if(!dd2_random_failed)fprintf(stderr,"[random-reference] consumed=%u complete\n",dd2_random_calls);
+}
+static unsigned dd2_le_word(const unsigned char* bytes){
+    return (unsigned)bytes[0]|((unsigned)bytes[1]<<8)|((unsigned)bytes[2]<<16)|((unsigned)bytes[3]<<24);
+}
+int rand(void){
+    unsigned before,after,value;
+    unsigned char record[12];int verify=0;
+    if(!dd2_random_init){
+        dd2_random_init=1;dd2_random_path=getenv("DD2_RANDOM_REFERENCE");
+        if(dd2_random_path){
+            const char* level=getenv("DD2_RANDOM_LEVEL");char* end=NULL;
+            dd2_random_level=level?(unsigned)strtoul(level,&end,10):0;
+            if(!level || !*level || *end || dd2_random_level<1 || dd2_random_level>10){
+                fprintf(stderr,"[random-reference] requires an exact level in 1..10\n");exit(1);
+            }
+        }
+    }
+    if(dd2_random_path && *(unsigned*)(uintptr_t)0x936ff4==dd2_random_level){
+        size_t count;
+        if(!dd2_random_file){
+            dd2_random_file=fopen(dd2_random_path,"rb");
+            if(!dd2_random_file){fprintf(stderr,"[random-reference] cannot open random reference\n");exit(1);}
+            atexit(dd2_random_close);
+        }
+        count=fread(record,1,12,dd2_random_file);
+        if(count!=12){
+            dd2_random_failed=1;fprintf(stderr,"[random-reference] %s\n",count?"partial random record":"random reference exhausted");exit(1);
+        }
+        if(!dd2_random_calls)_dd2_rand_seed=dd2_le_word(record);
+        verify=1;
+    }
+    before=_dd2_rand_seed;after=before*0x41c64e6dU+0x3039U;value=(after>>16)&0x7fffu;
+    _dd2_rand_seed=after;g_rand_calls++;
+    if(verify){
+        if(before!=dd2_le_word(record) || after!=dd2_le_word(record+4) || value!=dd2_le_word(record+8)){
+            dd2_random_failed=1;fprintf(stderr,"[random-reference] calculated random state/result differs at call %u\n",dd2_random_calls);exit(1);
+        }
+        dd2_random_calls++;
+    }
+    return (int)value;
+}
+void srand(unsigned seed){_dd2_rand_seed=seed;}
