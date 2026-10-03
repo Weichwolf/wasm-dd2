@@ -35,6 +35,35 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 847 restores WORD replay packets, two-byte cursor steps and the WORD
+  termination store. All 384 component checkpoints (15896 bytes each) match
+  literal unmodified original x86 Record_Event/Terminate_Replay/
+  Terminate_Replay_Bodge/Control_Car_Replay on Native and WASM. Reversing only
+  this patch rejects both targets at checkpoint 2, offset 2 (359 differences);
+  changed first bytes and incomplete checkpoints are rejected too. Original
+  checkpoint SHA256: 2f6dde8c6f18d8fe541a114478e2a1624e1930eab363fa7b81a634edca78feae.
+  Reproduce with make verify-replay; report replay-847-reviewed/report.json.
+  Browser practice recording/Retire/Yes/View Replay naturally finishes without
+  runtime errors (27 live and 23 playback observations); seven common physics
+  ticks have identical positions for all 20 cars. This is a limited diagnostic,
+  not complete original replay video/audio parity. The old patch-846 browser
+  is rejected for zero-length gap packets (browser-replay-old-cursor-negative).
+  Shared browser race detection now uses advancing physical ticks and actual
+  level/quit state: byte 0x460005 is a cached CLUT pointer, not a screen ID.
+  Championship selection/name entry/race/Retire/Yes/View League still passes
+  all four populated score divisions (browser-champ-847.log/scores.json).
+  Replay save/load remains unverified; original packing at 0x44ab98 contains
+  WORD metadata stores that are still widened in the reconstructed symbols.
+- Patch 847 retains complete original L10 video acceptance: all 502 target
+  frames/palettes, 116131 global clocks and 39538 global RNG calls, with all
+  comparison negatives passing (l10-original-video-847/report.json). All ten
+  default Native/WASM demos also pass: 15255 frames/palettes and every RNG/flip
+  and effects/CD/mixed/music PCM byte (parity-847/results.json). These internal
+  audio regressions do not establish complete original racing audio parity.
+  All 184 patches apply with zero fuzz. Verified binaries: Native
+  bcfb4f18e23f7f1dfe2ab9030e45ba262d36b0df56d053696642c8aa7e9dafa6,
+  Node WASM 06fe1e399e3b878a70804f5daab1a7ddacb283e97be4f88732e381eb86ef7b09,
+  browser 1a0fc17a1b5b2dafdba2d7a32c508fc3e0f1e4a11fa797719282e9f98291e986.
 - Fresh complete original L10 full-history capture now PASSES BOTH patch-846
   ports: all 502 racing pictures/palettes, 116131 actual global clock returns
   (106831 in preceding demos [9,7,8,3,1,3]) and all 39538 calculated global

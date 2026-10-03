@@ -234,6 +234,31 @@ and checks the real renderer output; native window-system input and hardware aud
 are not exercised. Full seasons, promotion/relegation and complete streams still
 need acceptance checks. Use fresh capture directories; stale output is rejected.
 
+Patch 847 restores the original replay script's WORD packets and two-byte cursor
+steps. DWORD cursors skipped a packet whenever the control changed, leaving
+zero-repeat gaps; playback then read the gaps. The termination helper also
+overwrote the next packet with a DWORD store.
+
+```sh
+make verify-replay
+node tools/browser/qa_replay.js web/dd2 /tmp/wasm-dd2/fresh-browser-replay
+```
+
+The component check executes four actual original x86 functions from the verified
+unmodified executable with explicit inputs and compares all 384 script/car-state
+checkpoints with native/WASM. Reversing only patch 847 rejects both targets at the
+first skipped WORD; changed first bytes and truncated checkpoints also fail.
+It requires 32-bit GCC, Emscripten and Node, writes bounded output under
+`/tmp/wasm-dd2/`, and deletes successful raw comparisons after writing the report.
+The browser check drives a real practice race, records changing acceleration and
+steering, chooses Retire/Yes/View Replay, and waits for natural playback completion.
+The old browser build is rejected for zero-length packets. Shared browser race
+launch detection uses advancing physics ticks, level and quit state: byte
+0x460005 belongs to a cached texture CLUT pointer and is not a screen identifier.
+Recorded/replayed positions at common ticks are diagnostic observations, not
+complete original replay video/audio acceptance. Replay save/load, complete
+trajectories and original audio still require checks.
+
 Menu graphics can be compared over complete 64-frame highlight cycles. This
 checks every indexed pixel and palette byte at presentation, including the
 browser's canvas conversion; it uses no pixel mask or tolerance. For the path

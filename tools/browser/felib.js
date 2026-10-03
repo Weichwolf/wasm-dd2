@@ -9,20 +9,19 @@ const key=async(page,c,post=520)=>{await page.evaluate(cc=>window.dispatchEvent(
 const alive=(page)=>page.evaluate(()=>typeof HEAP32!=='undefined').catch(()=>false);
 const rd=(page,va)=>page.evaluate(a=>{const q=HEAPU32[a>>2];if(!(q>0x400000&&q<0x980000))return'';let s='';for(let i=0;i<48;i++){const c=HEAPU8[q+i];if(!c)break;s+=String.fromCharCode(c);}return s;},va).catch(()=>'ERR');
 const menuLabel=(page)=>rd(page,0x46975c);   // main-menu selected button
-// Race launch state. sb=screen byte @0x460005 (89 = in-race), lvl=current level @0x936ff4,
-// cf=engine frame counter @0x462ff0 (must be advancing for a live race).
-const raceState=(page)=>page.evaluate(()=>({sb:HEAPU8[0x460005],lvl:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],rt:HEAP32[0x4673f4>>2],nc:HEAP32[0x46765c>>2]})).catch(()=>({sb:-1,lvl:-1,cf:-1,rt:-1,nc:-1}));
-// Robust launch predicate (qa_ttmp finding: single-sample `sb!=201` false-passes on transient
-// dialog/loading frames — sb=41 flickers mid-race). Poll up to timeoutMs for the in-race screen
-// sb==89 seen TWICE with the engine frame counter advancing. Returns {launched, ...lastState}.
+// 0x460005 is a byte of the rasterizer's cached CLUT pointer, not a screen ID.
+// Keep sb as a legacy diagnostic; use the actual Play_Game level/quit/physics state.
+const raceState=(page)=>page.evaluate(()=>({sb:HEAPU8[0x460005],lvl:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],rt:HEAP32[0x4673f4>>2],nc:HEAP32[0x46765c>>2],ticks:HEAP32[0x7746c0>>2],quit:HEAP32[0x7746ac>>2],demo:HEAP32[0x46385c>>2],replay:HEAP32[0x467074>>2]})).catch(()=>({sb:-1,lvl:-1,cf:-1,rt:-1,nc:-1,ticks:-1,quit:-1,demo:-1,replay:-1}));
+// Require two consecutive increases of the physics tick in the same live level.
+// Loading, dialogs and pauses cannot pass from a stale cf or texture-cache byte.
 async function waitRace(page,timeoutMs=25000){
-  let prevCf=-1, hits=0, last=null;
-  const t0=Date.now===undefined?0:0; // Date.now unused; loop-bounded below
+  let previous=null, hits=0, last=null;
   for(let i=0;i<Math.ceil(timeoutMs/1000);i++){
     const s=await raceState(page); last=s;
-    if(s.sb===89 && s.lvl>0 && s.cf>prevCf){ if(++hits>=2) return {launched:true,...s}; }
+    if(s.lvl>=1 && s.lvl<=12 && s.quit===0 && s.demo===0 && s.ticks>0 &&
+       previous && previous.lvl===s.lvl && previous.quit===0 && s.ticks>previous.ticks){ if(++hits>=2) return {launched:true,...s}; }
     else hits=0;
-    prevCf=s.cf;
+    previous=s;
     await page.waitForTimeout(1000);
   }
   return {launched:false,...(last||{})};
