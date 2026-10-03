@@ -312,6 +312,8 @@ state is copied. Only the selected racing loop's video is captured and checked;
 this mode still excludes original audio and physical output clocks. A fresh
 L6 capture passes both ports after the actual sequence [9,7,3,1,1,7], with
 1403 target frames, 154599 total clock inputs and 25198 global random calls.
+A fresh L7 capture also passes both ports after its actual L9 prefix: all
+1115 target frames, 39063 total clock inputs and 11733 global random calls.
 
 For the older L3 capture, a controlled native experiment isolates the effect
 of retained debris vertices:

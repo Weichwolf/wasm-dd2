@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- A fresh original L7 loop now passes BOTH ports with all actual prior API
+  inputs: 1115 complete frames/palettes, 39063 clocks (20269 in original L9),
+  all 11733 global RNG calls calculated from seed 1, observed prefix [9],
+  naturally calculated target blink=77 and target entry RNG phase=7491.
+  All 16 scenery image checkpoints and pixel/RNG/blink/prefix/entry mutation
+  negatives pass (dd2-original-l7-full-history-inputs-reviewed;
+  dd2-original-l7-full-history-comparison-reviewed).
+  This proves this full-input L7 capture; the six rejected images in the old
+  direct-state L7 capture remain a separate unresolved history diagnostic.
+  The rebuilt browser also passes actual Championship/name entry/live race/
+  Retire/Yes/all four populated score divisions/return to results
+  (dd2-browser-champ-history-api-reviewed).
+  Full-history instrumentation builds: native
+  ba31d796011f7629c1d3f4c01fb51a0d31639959ccbd20ac644edbca60af34a3;
+  Node WASM 68fa2ce46a031f2e63800a475ef68cba2aa36ef1c43529e72e944612fe11d94b;
+  browser WASM 82593f6f86392b39ceb1791ad902df8fe15d1cddc4c942228e20942465bdbbbb.
 - Full preceding API inputs are now supported by --race-full-history plus
   --attract-history: tools/race_history_gdb.py uses at most four read-only
   hardware breakpoints to observe global Watcom rand from frontend seed 1,
