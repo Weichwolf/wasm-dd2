@@ -35,6 +35,42 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The complete first original L9 racing render loop is now compared directly,
+  not only at sparse cf checkpoints. The unmodified supported dd2h.exe runs
+  normally under Wine; three read-only hardware breakpoints record every
+  racing-loop Draw_All pending presentation and every actual GetTickCount
+  return, including the busy wait. Ports replay those exact external API
+  inputs. dd2-original-race-stream-reviewed/race/race.json has 1499 frames
+  from countdown start through the final rendered cf700 endpoint, followed
+  by the original budget-exhaustion exit (quit=1, no user quit). The clock
+  contains 18931 actual returned DWORDs. Both ports match every frame and
+  palette byte and every render's cf/ticks/countdown/frame_skip/clock-call
+  phase: 460492800 framebuffer bytes and 1534976 palette bytes per port.
+  dd2-original-race-stream-comparison-reviewed/report.json also requires
+  exact clock consumption and rejects a deliberately changed first pixel.
+  This proves the entire captured racing render loop at matched observed
+  API timing; Init_Game/loading/fades, original race audio, other levels/
+  modes and physical/undebugged output clocks still require acceptance.
+  Native artifact f8e3cf2d365ff9e1d22372f771d7b622b36c1621e127aaf6c615e91f513c604b;
+  Node WASM 17f0bcd4e2f644c0427da99682f0716774facb78e4dc1d3e20fb694de6c19eca.
+  Reproduce with make refcapture-race-stream
+  RACE_CAPTURE_ARGS='--timeout 240 --output <fresh-original-dir>', then
+  make verify-reference-race-stream RACE_REFERENCE=<original-dir>
+  RACE_COMPARISON=<fresh-comparison-dir>. Captures stay under ignored
+  third_party/verification-artifacts; no original pixels/assets enter Git.
+- DD2_TICK_REPLAY is a strict, optional headless verification input: one
+  little-endian DWORD per game GetTickCount call, no engine-state replacement
+  or pixel injection. Default and interactive clocks keep their existing
+  behavior. Missing/partial/leftover clock data fails rather than falling
+  back to a synthetic clock; DD2_REALTIME cannot be combined with replay.
+  make verify-clock-replay CLOCK_REPLAY_ARGS='--output <fresh-dir>' checks
+  uint32 wrap/repeated values and all three extent failures on native
+  ASan/UBSan and WASM (dd2-clock-replay-reviewed/report.json). Normal real-
+  X11 startup/menu/CD/controller/race/pause/restart passes 3072000 renderer
+  pixels and 7489584 accepted mixed bytes. Browser normal gesture/full/skip
+  startup passes 1080115200 canvas pixels, 6039616 exact source PCM bytes
+  per case and all 997/960/1040 submitted shared buffers, then real menu/race
+  controls (dd2-{native,browser}-clock-replay-startup-reviewed/report.json).
 - Function/editing/navigation keys now also reach the original window
   procedure: browser F1-F24, Backspace/Tab/PageUp/PageDown/Home/End/Insert/
   Delete, and native SDL F13-F24 (F1-F12/editing/navigation were already

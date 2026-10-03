@@ -120,6 +120,25 @@ static int ids_flip(int t,int a,int b){
 #ifdef DD2_NATIVE_SDL
     dd2_native_present((const unsigned char*)(unsigned long)0x700450u,g_palette);
 #endif
+    /* Complete race-loop comparison against the real original, with its
+       observed GetTickCount inputs replayed in the headless port. Init_Game
+       presentations precede the first clock read; post-race fades have quit=1.
+       Each accepted record identifies an actual pending presentation. */
+    {
+        const char* logpath=getenv("DD2_RACE_STREAM");
+        if(logpath){
+            extern unsigned dd2_tick_replay_calls(void);
+            unsigned calls=dd2_tick_replay_calls();
+            if(calls && !*(int*)(unsigned long)0x7746acu){
+                static FILE* log;
+                if(!log){log=fopen(logpath,"w");if(!log){fprintf(stderr,"Cannot open race stream log\n");exit(1);}}
+                fprintf(log,"{\"flip\":%d,\"level\":%d,\"cf\":%d,\"ticks\":%d,\"countdown\":%d,\"frame_skip\":%d,\"quit\":%d,\"clock_calls\":%u}\n",
+                    g_frameno,*(int*)(unsigned long)0x936ff4u,*(int*)(unsigned long)0x462ff0u,
+                    *(int*)(unsigned long)0x7746c0u,*(int*)(unsigned long)0x784298u,
+                    *(int*)(unsigned long)0x7746b8u,*(int*)(unsigned long)0x7746acu,calls);fflush(log);
+            }
+        }
+    }
     const char* dir = getenv("DD2_FRAMEDIR");
     if(dir){
         /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 640x480 8-bit framebuffer (dd2h)

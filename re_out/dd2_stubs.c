@@ -34,10 +34,46 @@ unsigned dd2_platform_ms(void){
     }
     return dd2_virtual_ms;
 }
+/* Optional read-only reference clock input for headless original comparisons.
+ * Each little-endian DWORD is one actual GetTickCount return captured from
+ * the original. Replaying does not substitute engine states or frame data.
+ * Strict extent checks reject changed control flow, truncation and leftovers.
+ * Original hardware breakpoints change elapsed time; that observed timing is
+ * an explicit input, not an undebugged/physical-clock acceptance claim. */
+static FILE* dd2_tick_file;
+static unsigned dd2_tick_calls;
+static int dd2_tick_init,dd2_tick_failed;
+unsigned dd2_tick_replay_calls(void){return dd2_tick_calls;}
+static void dd2_tick_close(void){
+    if(!dd2_tick_file)return;
+    if(!dd2_tick_failed && fgetc(dd2_tick_file)!=EOF){
+        fprintf(stderr,"[clock-replay] unconsumed tick records\n");fclose(dd2_tick_file);dd2_tick_file=NULL;exit(1);
+    }
+    fclose(dd2_tick_file);dd2_tick_file=NULL;
+    if(!dd2_tick_failed)fprintf(stderr,"[clock-replay] consumed=%u complete\n",dd2_tick_calls);
+}
 unsigned GetTickCount(void){
+    if(!dd2_tick_init){
+        const char* path=getenv("DD2_TICK_REPLAY");dd2_tick_init=1;
+        if(path){
+            if(getenv("DD2_REALTIME")){fprintf(stderr,"[clock-replay] requires headless clock mode\n");exit(1);}
+            dd2_tick_file=fopen(path,"rb");
+            if(!dd2_tick_file){fprintf(stderr,"[clock-replay] cannot open clock input\n");exit(1);}
+            atexit(dd2_tick_close);
+        }
+    }
+    if(dd2_tick_file){
+        unsigned char bytes[4];size_t n=fread(bytes,1,4,dd2_tick_file);
+        if(n!=4){
+            dd2_tick_failed=1;fprintf(stderr,"[clock-replay] %s\n",n?"partial tick record":"clock input exhausted");exit(1);
+        }
+        dd2_virtual_ms=(unsigned)bytes[0]|((unsigned)bytes[1]<<8)|((unsigned)bytes[2]<<16)|((unsigned)bytes[3]<<24);
+        dd2_tick_calls++;return dd2_virtual_ms;
+    }
     if(!getenv("DD2_REALTIME")) dd2_virtual_ms += 16;
     return dd2_platform_ms();
 }
+
 void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers (sound-bank blob
     + offset, FUN_00416688 -> DSLoadSoundBuffer), never real HRSRC handles: identity is the
     faithful Windows behavior for already-mapped memory */ }

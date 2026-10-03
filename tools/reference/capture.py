@@ -105,6 +105,7 @@ def main():
     frames.add_argument("--frames", type=int, nargs="+",
                         help="capture increasing race checkpoints in one unmodified attract run")
     parser.add_argument("--timeout", type=float, default=90)
+    parser.add_argument("--race-stream",action="store_true",help="record every first-L9 demo racing-loop frame and actual game clock return using read-only hardware breakpoints")
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
@@ -127,6 +128,8 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.race_stream and (args.mode!="attract" or args.frames or args.keys is not None or args.audio):
+        parser.error("--race-stream requires attract mode, no frame/key sequence and no audio (debugger changes clock timing)")
     if args.frame < 1 or args.timeout <= 0 or not 0 < args.key_hold <= 1:
         parser.error("frame/timeout must be positive and key hold must be in (0,1]")
     # Play_Game budgets 1500 physics steps; current_frame divides steps by two
@@ -148,7 +151,7 @@ def main():
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     game, output = args.game_dir.resolve(), args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json"))
+    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race"))
             or any(output.glob("step*/checkpoint.json")) or any(output.glob("frame*/checkpoint.json"))):
         parser.error("output already contains a capture; use a fresh directory")
     WORK.mkdir(parents=True, exist_ok=True)
@@ -269,8 +272,11 @@ def run(game, output, args):
                         subprocess.run(["xdotool", "search", "--name", "PC-DD2", "windowfocus", "key", "Escape"],
                                        env=env, stdout=subprocess.DEVNULL, stderr=wine_log, timeout=5)
                         last_escape = now
-                    ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") else current["level"] == 9 and current["cf"] > 0
+                    ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
+                        if args.race_stream:
+                            capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()))
+                            return
                         if args.mode=="audio":
                             end = time.monotonic() + args.audio_tail
                             while time.monotonic() < end:
@@ -331,6 +337,21 @@ def run(game, output, args):
             if xserver:
                 xserver.terminate()
                 xserver.wait(timeout=5)
+
+
+def capture_race_stream(pid,output,env,timeout):
+    script=output/"race.gdb"
+    script.write_text("\n".join(["set pagination off","set auto-solib-add off",f"attach {pid}",
+        "python",f"import sys; sys.path.insert(0,{str(ROOT/'tools')!r})",
+        "from race_stream_gdb import record_race",f"record_race({str(output)!r},9)",
+        "end","detach","quit"])+"\n")
+    with (output/"race-gdb.log").open("wb") as log:
+        subprocess.run(["gdb","--nx","-q","-batch","-x",str(script)],env=env,
+            stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+    result=json.loads((output/"race/race.json").read_text())
+    result.update(exe_modified=False,exe_sha256=EXE_SHA256)
+    (output/"race/race.json").write_text(json.dumps(result,indent=2)+"\n")
+    print(f"Original racing loop captured: {len(result['frames'])} frames, {result['clock_calls']} actual tick returns",flush=True)
 
 
 def key_acknowledged(pid, output, env, key, timeout):
