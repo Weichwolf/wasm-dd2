@@ -35,6 +35,18 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Fresh complete original L10 full-history capture now PASSES BOTH patch-846
+  ports: all 502 racing pictures/palettes, 116131 actual global clock returns
+  (106831 in preceding demos [9,7,8,3,1,3]) and all 39538 calculated global
+  RNG calls. Every observed entry field, prefix sequence and pixel/RNG/blink
+  negative passes (/tmp/wasm-dd2/l10-original-video-846/report.json).
+  Native separately matches all 7709 preceding/target car checkpoints and
+  every RNG caller/phase, with changed car-byte/caller negatives rejected
+  (/tmp/wasm-dd2/native-l10-physics-846/report.json). No copied engine state.
+  This proves this entire captured racing render loop, not original racing
+  audio, loading/fades or physical output clocks. The earlier 1800s dense L10
+  attempt timed out after 40 preceding demos and 202 target frames; it was
+  never accepted and its raw output was deleted before this successful run.
 - Patch 846 restores the eight original BYTE stores in Get_Corner_Positions
   (0x43ca98..0x43cabb). The last wrongly widened store at 0x79263e overwrote
   grounded_count[0] at 0x792640, preventing its 100-step recovery. The old

@@ -336,8 +336,12 @@ caller's return address and engine phase. Run the native observer with:
 python3 tools/reference/trace_native_physics.py --capture /tmp/wasm-dd2/original-physics-capture --output /tmp/wasm-dd2/fresh-native-physics
 ```
 
-The observer uses two native hardware breakpoints and compares measured states;
-it copies no engine state. A fresh L9 control matches all 401 car checkpoints
+The observer uses native hardware breakpoints and compares measured states;
+it copies no engine state. Add `--race-step-window START_CF END_CF` to the original
+capture to observe every Car_Movement entry and return in a small counter window.
+Optional `--race-step-levels 8 10` includes those windows in preceding demos too.
+Entry/return observations reuse one hardware slot, and debugger or breakpoint
+insertion errors reject the run. A fresh L9 control matches all 401 car checkpoints
 (10345800 bytes) and all 6948 random callers/phases. Changed first car bytes
 and caller names are rejected. This diagnoses native physics; use the separate
 video comparator for native/WASM framebuffer acceptance.
