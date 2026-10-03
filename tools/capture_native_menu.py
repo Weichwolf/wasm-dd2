@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from artifacts import WORK, prepare_output, run_bounded
 
 ROOT = Path(__file__).resolve().parents[1]
 KEYS = {"Left": 0x25, "Right": 0x27, "Up": 0x26, "Down": 0x28,
@@ -79,12 +80,14 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--keys", nargs="+", choices=KEYS, required=True)
     parser.add_argument("--settle-frames", type=int, default=60)
-    parser.add_argument("--menu-cycle", type=int, choices=(0,64), default=0)
+    parser.add_argument("--menu-cycle", type=int, choices=(0,64,256), default=0)
     parser.add_argument("--timeout", type=float, default=90)
     args = parser.parse_args()
     if args.settle_frames < 1 or args.timeout <= 0:
         parser.error("settle frames and timeout must be positive")
-    output, binary, game = args.output.resolve(), args.binary.resolve(), args.game_dir.resolve()
+    output, binary, game = prepare_output(args.output), args.binary.resolve(), args.game_dir.resolve()
+    if WORK not in output.parents:
+        parser.error("verification output must be under /tmp/wasm-dd2/")
     if output.exists() and any(output.iterdir()):
         parser.error("output must be empty; use a fresh capture directory")
     if not binary.is_file():
@@ -98,7 +101,7 @@ def main():
     script = output / "capture.gdb"
     script.write_text("set pagination off\nset confirm off\nset auto-solib-add off\npython\nexec(" +
                       repr(parameters + GDB_DRIVER) + ")\nend\nquit\n")
-    with tempfile.TemporaryDirectory(prefix="dd2-native-menu-assets-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="native-menu-assets-",dir=WORK) as tmp:
         rundir = Path(tmp)
         for asset in game.iterdir():
             destination = rundir / asset.name
@@ -106,8 +109,9 @@ def main():
                 shutil.copyfile(asset, destination)
             else:
                 destination.symlink_to(asset, target_is_directory=asset.is_dir())
+        initial_save_sha256=hashlib.sha256((rundir/"SaveGames").read_bytes()).hexdigest()
         with (output / "gdb.log").open("wb") as log:
-            subprocess.run(["gdb", "--nx", "-q", "-batch", "-x", str(script), str(binary)],
+            run_bounded(["gdb", "--nx", "-q", "-batch", "-x", str(script), str(binary)],directory=output,
                            cwd=rundir, env=env, stdout=log, stderr=subprocess.STDOUT,
                            timeout=args.timeout, check=True)
     checkpoints = [f"step{i:02d}-{key or 'boot'}" for i, key in enumerate([None, *args.keys])]
@@ -116,6 +120,7 @@ def main():
             raise RuntimeError(f"Missing native checkpoint: {name}")
     (output / "navigation.json").write_text(json.dumps({
         "keys": args.keys, "checkpoints": checkpoints, "input": "dd2_key_event",
+        "initial_save_sha256": initial_save_sha256,
         "settle_frames": args.settle_frames, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "scope": "native headless frontend; window-system input and hardware audio not exercised"
     }, indent=2)+"\n")

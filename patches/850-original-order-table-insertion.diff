@@ -1,0 +1,195 @@
+Restore original order-table insertions for all mapped game addresses
+
+The added uintptr bounds in patches 235..265 silently discarded valid
+primitives when the order table lay above 0x900000. Actual Car Select uses
+OT base 0x935ff0: at pose {640,1920,592}, the original queues 98 car
+primitives, whereas native queues 54, missing all 38 FT4 and six 0x1c
+quads. All 171 transformed vertices (2736 bytes) match literally.
+Original 0x41a6e6..0x41a6ea unconditionally reads the depth bucket and
+links the primitive after its actual flag/backface tests; no address
+range filter exists. Remove these extra insertion guards throughout
+the face handlers, retaining the original visibility/depth calculations
+and exact three-store link sequence. Do not enlarge the invented range.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -7411,11 +7411,9 @@
+         puVar5 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -7491,11 +7489,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -7570,11 +7566,9 @@
+         puVar5 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -7650,11 +7644,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 6;
+@@ -8080,11 +8072,9 @@
+       puVar5 = (undefined4 *)
+                (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) * 4
+                + iVar4);
+-      if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+       uVar2 = *puVar5;
+       *puVar5 = local_14;
+       *local_14 = uVar2;
+-      }
+       __rgb0 = (uint)*(byte *)(local_18 + 4);
+       gte_dpcs();
+       *(undefined1 *)(local_14 + 1) = _rgb0;
+@@ -8446,11 +8436,9 @@
+           puVar7 = (undefined4 *)
+                    (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2)
+                     * 4 + iVar4);
+-          if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+           uVar2 = *puVar7;
+           *puVar7 = puStack_14;
+           *puStack_14 = uVar2;
+-          }
+           iVar6 = _DAT_0074c548;
+           iVar9 = __opz;
+         }
+@@ -8622,11 +8610,9 @@
+         _gprim1[6] = iVar8;
+         _gprim1[8] = iVar10;
+         puVar5 = (undefined4 *)(iVar4 * 4 + iVar3);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = _gprim1;
+         *_gprim1 = uVar2;
+-        }
+       }
+     }
+     _gprim1 = _gprim1 + 10;
+@@ -9002,11 +8988,9 @@
+         puVar6[6] = iVar9;
+         puVar6[8] = iVar11;
+         puVar5 = (undefined4 *)(iVar4 * 4 + iVar3);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puVar6;
+         *puVar6 = uVar2;
+-        }
+         __rgb0 = (uint)*(byte *)(iStack_20 + 4);
+         gte_dpcs();
+         *(undefined1 *)(puVar6 + 1) = _rgb0;
+@@ -9085,11 +9069,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+         __rgb0 = (uint)*(byte *)(piStack_18 + 1);
+         __vr3 = __vr2;
+         _DAT_0074c4f4 = _DAT_0074c4e4;
+@@ -9544,11 +9526,9 @@
+         puVar5 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -9624,11 +9604,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -9704,11 +9682,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -9784,11 +9760,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 9;
+@@ -10398,11 +10372,9 @@
+         puVar5 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar5 >= 0x400000u && (uintptr_t)puVar5 < 0x900000u) {
+         uVar2 = *puVar5;
+         *puVar5 = puStack_14;
+         *puStack_14 = uVar2;
+-        }
+       }
+     }
+     puStack_14 = puStack_14 + 0xd;
+@@ -10685,11 +10657,9 @@
+         puVar7 = (undefined4 *)
+                  (((int)((__otz + (__otz >> 0x1f) * -4) - (uint)((__otz >> 0x1f) << 1 < 0)) >> 2) *
+                   4 + iVar4);
+-        if ((uintptr_t)puVar7 >= 0x400000u && (uintptr_t)puVar7 < 0x900000u) {
+         uVar2 = *puVar7;
+         *puVar7 = local_14;
+         *local_14 = uVar2;
+-        }
+         __rgb0 = (uint)*(byte *)(local_18 + 4);
+         __vr3 = __vr2;
+         _DAT_0074c4f4 = _DAT_0074c4e4;

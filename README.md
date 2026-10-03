@@ -192,7 +192,7 @@ run through Championship, name entry, Go, Pause/Retire/Yes and View League now
 matches the original in both native and browser rendering on all four divisions:
 all 20 names/points, all 307200
 framebuffer pixels per page, and all 1024 palette bytes per page.
-`node tools/browser/qa_champ_scores.js web/dd2 /tmp/fresh-champ-browser` exercises
+`node tools/browser/qa_champ_scores.js web/dd2 /tmp/wasm-dd2/fresh-champ-browser` exercises
 that flow and saves the score data, raw pixels/palettes and screenshots. It releases
 keys after a presentation confirms that the engine polled their control bits.
 It waits for 16 face-on slab presentations before menu input, because the
@@ -206,21 +206,21 @@ the test has a five-minute deadline for an unresponsive browser.
 
 ```sh
 python3 tools/reference/capture.py --mode menu --acknowledged-key --timeout 150 \
-  --output /tmp/fresh-champ-original --keys Return Return Return Return Up Left \
+  --output /tmp/wasm-dd2/fresh-champ-original --keys Return Return Return Return Up Left \
   Return Down Down Return Escape Down Down Down Return Up Return Right Return Right Right Right
-make verify-champ-names CHAMPREF=/tmp/fresh-champ-original \
-  CHAMPBROWSER=/tmp/fresh-champ-browser/scores.json
+make verify-champ-names CHAMPREF=/tmp/wasm-dd2/fresh-champ-original \
+  CHAMPBROWSER=/tmp/wasm-dd2/fresh-champ-browser/scores.json
 ```
 
 For the native full frontend (requires a debug build and GDB):
 
 ```sh
 ASAN=' ' bash tools/build_native.sh /tmp/dd2_native
-python3 tools/capture_native_menu.py --output /tmp/fresh-champ-native --keys \
+python3 tools/capture_native_menu.py --output /tmp/wasm-dd2/fresh-champ-native --keys \
   Return Return Return Return Up Left Return Down Down Return Escape Down Down Down \
   Return Up Return Right Return Right Right Right
-make verify-champ-names CHAMPREF=/tmp/fresh-champ-original \
-  CHAMPBROWSER=/tmp/fresh-champ-browser/scores.json CHAMPNATIVE=/tmp/fresh-champ-native
+make verify-champ-names CHAMPREF=/tmp/wasm-dd2/fresh-champ-original \
+  CHAMPBROWSER=/tmp/wasm-dd2/fresh-champ-browser/scores.json CHAMPNATIVE=/tmp/wasm-dd2/fresh-champ-native
 ```
 
 The reference sends real X11 key events and uses hardware breakpoints to let each
@@ -342,13 +342,13 @@ Main Menu -> Configuration -> Audio Volume:
 
 ```sh
 python3 tools/reference/capture.py --mode menu --acknowledged-key --menu-cycle 64 \
-  --timeout 150 --output /tmp/fresh-original-cycle --keys Down Right Right Return Right Return
+  --timeout 150 --output /tmp/wasm-dd2/fresh-original-cycle --keys Down Right Right Return Right Return
 python3 tools/capture_native_menu.py --menu-cycle 64 --timeout 150 \
-  --output /tmp/fresh-native-cycle --keys Down Right Right Return Right Return
-node tools/browser/capture_menu_cycle.js web/dd2 /tmp/fresh-browser-cycle \
+  --output /tmp/wasm-dd2/fresh-native-cycle --keys Down Right Right Return Right Return
+node tools/browser/capture_menu_cycle.js web/dd2 /tmp/wasm-dd2/fresh-browser-cycle \
   Down Right Right Return Right Return
-make verify-menu-cycles MCREF=/tmp/fresh-original-cycle MCNATIVE=/tmp/fresh-native-cycle \
-  MCBROWSER=/tmp/fresh-browser-cycle MCREPORT=/tmp/fresh-cycle-report.json
+make verify-menu-cycles MCREF=/tmp/wasm-dd2/fresh-original-cycle MCNATIVE=/tmp/wasm-dd2/fresh-native-cycle \
+  MCBROWSER=/tmp/wasm-dd2/fresh-browser-cycle MCREPORT=/tmp/wasm-dd2/fresh-cycle-report.json
 ```
 
 All seven checkpoints on this path match the original on both ports: 448 frames
@@ -356,6 +356,39 @@ per target. `Draw_All` presents the existing framebuffer before rasterizing the
 next image, so reference/native captures stop at entry. Pairing by the recorded
 highlight counter aligns this specific animation. It does not establish wall-clock
 timing, other animations, input-repeat timing or audio-stream equality.
+
+Patch 850 fixes missing body panels and wheels in Car Select. Added address
+filters in old face handlers rejected order-table buckets above `0x900000`,
+while the actual frontend table begins at `0x935ff0`. At one measured Rookie
+pose, the original queued 98 car primitives and the ports only 54; all 171
+transformed vertices already matched. Removing the 15 added insertion filters
+restores the original visibility tests and unconditional list insertion.
+
+The car preview rotates independently of the 64-step menu colour counter.
+Use 256 presentations for a complete model rotation and pair by the observed
+car identity and 12-bit angles. This compares every framebuffer/palette byte
+without fitting images or masking pixels; it is a renderer component check,
+and does not prove chronological video, input timing or audio equality:
+
+```sh
+make native web
+make clean-logs
+python3 tools/reference/capture.py --mode menu --acknowledged-key --menu-cycle 256 --timeout 180 --output /tmp/wasm-dd2/original-car-preview --keys Right Return Right Right Return Return
+python3 tools/capture_native_menu.py --menu-cycle 256 --timeout 180 --output /tmp/wasm-dd2/native-car-preview --keys Right Return Right Right Return Return
+node tools/browser/capture_menu_cycle.js web/dd2 /tmp/wasm-dd2/browser-car-preview --cycle-frames=256 Right Return Right Right Return Return
+make verify-car-preview CAR_PREVIEW_ARGS='--original /tmp/wasm-dd2/original-car-preview --native /tmp/wasm-dd2/native-car-preview --browser /tmp/wasm-dd2/browser-car-preview --report /tmp/wasm-dd2/car-preview-report.json --negative --clean'
+make clean-logs
+```
+
+The path selects Rookie, Amateur and Pro, confirms Pro and opens the selection
+again. All four rotations match the original on both ports: 1,024 complete
+frames and palettes per target, with actual browser canvas pixels checked.
+The checker also rejects damaged pixels/palettes and swapped neighboring pose
+images. `--clean` removes compared raw car frames after saving hashes/report.
+Native uses its keyboard bridge under GDB; the original uses acknowledged X11
+input, and the browser uses DOM keyboard events. Both ports start with the same
+supplied save file. All ten native/Node demos still match each other after the
+fix (15,255 frames and all palettes, RNG/Flip logs and generated PCM bytes).
 
 Comparing with the Windows original also needs 32-bit Wine, GDB and Xvfb. On Debian:
 ```sh

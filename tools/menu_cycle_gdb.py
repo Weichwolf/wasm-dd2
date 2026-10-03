@@ -1,5 +1,7 @@
 """GDB-only renderer-cycle capture for original and native executables.
 
+64 presentations cover the highlight counter; 256 cover the car rotation.
+
 Original breakpoints are hardware-only. Draw_All first copies/presents the
 existing framebuffer (PutDrawEnv/PutDispEnv), then rasterizes the current OT
 (DrawOTag). Capture entry, matching what the browser's Flip actually presents.
@@ -9,6 +11,7 @@ Original calls: 0x420cb8 -> 0x412bf4, 0x420cbd -> 0x412ca0,
 import json
 from pathlib import Path
 import gdb
+from artifacts import check_space
 
 
 def record_cycle(output, frames, entry, hardware=False, already_at_entry=False):
@@ -34,10 +37,15 @@ def record_cycle(output, frames, entry, hardware=False, already_at_entry=False):
         (directory / f"{prefix}-framebuf.bin").write_bytes(read(0x700450, 307200))
         (directory / f"{prefix}-palette.bin").write_bytes(read(0x700050, 1024))
         result.append({"index": index, "phase": phase, "cf": cf, "level": level,
-                       "prefix": prefix})
+                       "prefix": prefix,
+                       "race_car": int.from_bytes(read(0x467400, 4), "little", signed=True),
+                       "car_angles": [int.from_bytes(read(0x468eb4+2*i, 2), "little", signed=True)
+                                      for i in range(3)],
+                       "poly_list": int.from_bytes(read(0x940010, 4), "little")})
+        check_space(output)
     enter.delete()
     (directory / "cycle.json").write_text(json.dumps({
         "stage": "Draw_All entry / pending presentation", "frames": result,
-        "scope": "complete rendered highlight cycle; audio and wall-clock timing not compared"
+        "scope": "complete rendered cycle with observed car pose; audio and wall-clock timing not compared"
     }, indent=2)+"\n")
     print(f"Rendered cycle: {len(result)} frames -> {directory}", flush=True)

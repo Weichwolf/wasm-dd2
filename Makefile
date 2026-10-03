@@ -241,6 +241,10 @@ verify-menu-engine-audio: ## compare real frontend PCM at the independently obse
 verify-startup-video: ## compare first actual frontend frames/palettes with original successful Flips; STARTUP_VIDEO_ARGS supplies captures/report
 	python3 $(ROOT)/tools/verify_startup_video.py $(STARTUP_VIDEO_ARGS)
 
+.PHONY: verify-car-preview
+verify-car-preview: ## compare whole car preview rotations by observed model pose; CAR_PREVIEW_ARGS supplies captures/report
+	python3 $(ROOT)/tools/verify_car_preview.py $(CAR_PREVIEW_ARGS)
+
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh
 

@@ -146,8 +146,8 @@ def main():
                         help="seconds per held key; record this for timing comparisons")
     parser.add_argument("--acknowledged-key", action="store_true",
                         help="wait for real key press/release at pad polls and record held poll counts")
-    parser.add_argument("--menu-cycle", type=int, choices=(0,64), default=0,
-                        help="capture a complete rendered highlight cycle at every menu checkpoint")
+    parser.add_argument("--menu-cycle", type=int, choices=(0,64,256), default=0,
+                        help="capture 64 highlight or 256 car-rotation presentations at each menu checkpoint")
     parser.add_argument("--audio", action="store_true",
                         help="observe original Wine ALSA accepted PCM, with committed format and transport events")
     parser.add_argument("--audio-rate", type=int, choices=(22050,44100,48000), default=44100,
@@ -340,7 +340,7 @@ def run(game, output, args):
                             (output/"checkpoint.json").write_text(json.dumps(result,indent=2)+"\n")
                             return
                         if args.keys is not None:
-                            navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log, args.menu_cycle)
+                            navigate(pid, output, env, args.keys, args.key_hold, args.acknowledged_key, deadline, wine_log, args.menu_cycle, initial_save_sha256)
                             if args.audio_tail:
                                 time.sleep(args.audio_tail)
                             return
@@ -488,7 +488,7 @@ def capture_cycle(pid, output, env, frames, timeout):
         raise RuntimeError("Incomplete original rendered cycle")
 
 
-def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log, cycle_frames=0):
+def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log, cycle_frames=0, initial_save_sha256=None):
     """Read-only checkpoints after real input; no EXE or engine-state writes."""
     sequence = [None, *keys]
     held_polls = []
@@ -513,6 +513,7 @@ def navigate(pid, output, env, keys, key_hold, acknowledged, deadline, wine_log,
     (output / "navigation.json").write_text(json.dumps({"keys": keys,
         "key_hold_seconds": None if acknowledged else key_hold,
         "acknowledged_keys": acknowledged, "held_pad_polls": held_polls, "input": "real X11 keys",
+        "initial_save_sha256": initial_save_sha256,
         "checkpoints": [f"step{i:02d}-{key or 'boot'}" for i, key in enumerate(sequence)],
         "scope": "menu checkpoints; timing alignment and full parity pending"}, indent=2)+"\n")
 

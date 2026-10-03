@@ -35,6 +35,20 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 850 removes 15 added face-handler address filters which rejected the
+  actual frontend OT at 0x935ff0. Car Select lost 44 quads despite all 171
+  transformed vertices being byte-identical. Targeted pose {640,1920,592}
+  captures now show all 98 original car primitives linked literally in native.
+  Native/browser match 1,024 complete framebuffer/palette pairs with the
+  original over Rookie, Amateur, Pro and confirmed/reopened Pro. Pairing uses
+  independently observed periodic model angles, not image fitting or the menu
+  colour counter; this proves renderer output for those poses, not full
+  chronological video/audio or input timing. Three damaged pixel/palette/pose
+  cases reject on each target. See all-car-preview-fixed-850.json and
+  car-preview-primitive-diagnosis-850.json under /tmp/wasm-dd2/.
+  All ten native/Node demos still match (15,255 frames, palettes, RNG/Flip logs,
+  effects/CD/mixed/music bytes; parity-car-ot-fixed-850.json). Captures use the
+  same supplied initial SaveGames file; successful raw comparisons are removed.
 - Patch 849 restores the original packed loading-bar primitive widths: command
   bytes at 0x93de77/0x93de9b and sixteen X/Y words. The former DWORD command
   store cleared X0=64, painting 815 incorrect pixels in each startup frame
