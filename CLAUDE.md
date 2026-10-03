@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The committed modifier fix (325e3bd) also passes all ten complete
+  native/WASM demos: 15255 frames/palettes, every RNG/flip log, effects/final
+  mix/music byte and CD source byte match (dd2-parity-keyboard-reviewed/
+  results.json). Each level has 10569888 effects/final-mix/music bytes and
+  4939200 raw CD bytes. Canonical /tmp/dd2_native and /tmp/lvltest/dd2run.*
+  now point to these tested builds: native
+  c37fc4c0d40791a425f25a54cbe5fb510fa9afc710fc8c10749313134410efa4,
+  Node WASM 8d170dfaee580a3270acdd071b562054c9939144ad88059f78a0675d192b5b04;
+  the seven-key browser startup proof uses WASM
+  a5cca12c1e6befa98de5abaa7c6152f3d0908b2239110ee051bc89617e79469a.
+  This is full cross-port demo evidence; full original clocks and hardware
+  comparisons remain open. The SDL fixture additionally verifies that focus
+  cleanup of both Shift sides plus A emits exactly three physical releases
+  and leaves all corresponding states clear (dd2-native-sdl-keyboard-focus-
+  reviewed/report.json). Existing older original-startup reports below
+  retain their historical binary hashes and remain separate proof runs.
 - Modifier input now dispatches exactly one generic window message per
   physical transition while retaining left/right GetKeyState pressed states.
   Releasing left Shift with right Shift held remains KEYUP, with aggregate
