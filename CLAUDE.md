@@ -35,6 +35,22 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Original capture readiness now reads actual Main Menu poly_list @0x940010
+  and restart_cd_audio @0x467420 after startup, instead of comparing a cached
+  CLUT pointer byte with 201. Literal EXE stores/call order are confirmed at
+  0x450fec, 0x4502f6 and 0x450347. An unmodified live run observes three old
+  false positives during slab startup (restart1/CD stopped), then the new
+  ready state with CD13 playing. Start/end and all 148 ready observations are
+  recorded under original-menu-mix-real-phase-first/readiness-report.json.
+  Its complete 1277280 menu-device PCM bytes match Native, WASM O0 and O2,
+  with all five damaged full-stream cases rejected. This validates capture
+  phase and complete aligned sample values, not live original/port clocks.
+  Successful auto-recorded original raw PCM now also cleans up after its
+  comparison report; failed/supplied captures remain for the caller's diagnosis.
+  A second fresh run (original-menu-mix-real-phase-final/report.json) also passes
+  all three mixers and five damaged-stream checks: 1199480 exact bytes per target.
+  It starts/ends in the actual menu with CD13 playing and removes all its original
+  raw PCM after the report. Completed earlier slab/CD diagnostics' raws removed.
 - Complete bounded original menu-device PCM now matches independent Native,
   WASM O0 and browser-mixer O2 source renders: all 1157048 bytes in
   original-menu-mix-verified-final/report.json, including initial silence,
@@ -45,8 +61,8 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   the expected Float32 mix; offsets are inferred from unique source patterns.
   Five damaged full-stream cases reject through the actual recomposition check.
   A fresh three-second run reaches the attract race and correctly rejects the
-  two-source menu check (original-menu-mix-verified-fresh). Its evidence exposes
-  the old cached-CLUT readiness proxy; actual menu phase/timing remains to fix.
+  two-source menu check (original-menu-mix-verified-fresh). Its evidence exposed
+  the then-old cached-CLUT readiness proxy; the phase correction is recorded above.
   make verify-original-menu-audio ORIGINAL_MENU_AUDIO_ARGS='--output /tmp/wasm-dd2/fresh-menu-mix'
   captures/checks a new run; --capture can use an existing traced audio capture.
   This proves the recorded window's sample values after inferred alignment,
@@ -61,10 +77,10 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   make verify-audio-observer AUDIO_OBSERVER_ARGS='--output /tmp/wasm-dd2/fresh-audio-observer'
   reproduces this check; audio-played-verified-final/report.json records the run.
   Successful raw test PCM removed after report. Two unmodified dd2h.exe runs
-  produce valid consumed journals; the retained original-played-audio-cd-state
-  capture is still needed to diagnose the startup mixed prefix. Later menu PCM
-  includes exact track13 source spans, but early mixed samples have another
-  unidentified source. Neither recorder checks nor those source spans establish
+  produce valid consumed journals; the original-played-audio-cd-state
+  capture initially exposed the startup mixed prefix. Later menu PCM includes
+  exact track13 source spans; the complete slab/CD diagnosis is recorded above.
+  Neither recorder checks nor those source spans establish
   complete original/native/WASM mixed audio, timing or hardware equivalence.
 - Browser mixer now uses -O2 -fno-strict-aliasing, matching the native shim's
   compiler settings; reconstructed engine units remain -O0 and no fast-math

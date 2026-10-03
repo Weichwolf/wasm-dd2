@@ -201,7 +201,10 @@ def main():
     report.update(pass_=True,corruption_cases=5)
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened = open_files()
-    for path in [output/'slab.raw',*output.glob('*.pcm')]:
+    completed = [output/'slab.raw',*output.glob('*.pcm')]
+    if not args.capture:
+        completed.extend((capture/'audio').glob('*.pcm'))
+    for path in completed:
         stat = path.stat()
         if (stat.st_dev,stat.st_ino) not in opened:path.unlink()
     print('Source offsets were inferred; original/port live start-time equality remains unproven.',flush=True)

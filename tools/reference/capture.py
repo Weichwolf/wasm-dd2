@@ -47,9 +47,21 @@ def state(pid):
                 "cf": struct.unpack("<i", read(0x462FF0, 4))[0],
                 "screen": read(0x460005, 1)[0],
                 "screen_diagnostic": "byte of cached CLUT pointer; not a screen identifier",
+                "menu": {name: struct.unpack("<I", read(address, 4))[0] for name,address in
+                         (("poly_list",0x940010),("restart_cd_audio",0x467420))},
                 "cd": {name: struct.unpack("<I", read(address, 4))[0] for name,address in
                        (("enabled",0x462d74),("playing",0x462d70),("from",0x74f174),("to",0x74f178))},
                 "movie": struct.unpack("<i", read(0x462CD4, 4))[0]}
+
+
+def menu_ready(current):
+    # Original FUN_00450fe0 @0x450fec stores the active polygon-list pointer
+    # at 0x940010. Front_End @0x4502f6 selects Main Menu (0x4696b0), then
+    # rotates the slab, starts CD and clears restart_cd_audio at 0x450347.
+    # The cached CLUT pointer byte previously tested here changes while drawing;
+    # it can look ready during loading and identifies neither a menu nor a phase.
+    return (current['level']==0 and current['movie']==0 and
+            current['menu']==dict(poly_list=0x4696b0,restart_cd_audio=0))
 
 
 def capture(pid, output, env, frame, menu, timeout, navigation=False):
@@ -296,7 +308,7 @@ def run(game, output, args):
                         subprocess.run(["xdotool", "search", "--name", "PC-DD2", "windowfocus", "key", "Escape"],
                                        env=env, stdout=subprocess.DEVNULL, stderr=wine_log, timeout=5)
                         last_escape = now
-                    ready = (current["screen"] == 201 and current["level"] == 0) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
+                    ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if args.race_stream:
                             capture_race_stream(pid,output,env,max(1,deadline-time.monotonic()),args.race_level,args.race_images,args.race_image_counters,args.race_full_history,args.race_physics,args.race_step_window,args.race_step_levels)
@@ -309,6 +321,7 @@ def run(game, output, args):
                                 observe_state(pid)
                                 time.sleep(min(0.02, max(0, end-time.monotonic())))
                             result={"mode":"audio","phase":"live engine; no debugger", "start_state":current,
+                                    "readiness":"Main Menu polygon list with frontend startup/CD restart completed; bounded non-atomic observations",
                                     "end_state":observe_state(pid),"exe_modified":False,"exe_sha256":EXE_SHA256,
                                     "state_observations":"audio/engine.jsonl; bounded non-atomic reads, may include attract",
                                     "audio_comparison":"pending"}

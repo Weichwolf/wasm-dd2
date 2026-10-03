@@ -521,6 +521,10 @@ at process launch and can include the intro and automatic transition from the
 menu to the attract demo. The EXE and engine memory remain unmodified; no GDB
 stops occur in audio mode. Use fresh output directories and keep these original
 PCM files outside Git.
+The bounded audio tail now starts when the original selects its Main Menu
+polygon list and clears the startup/CD restart flag after the slab animation.
+The retained legacy `screen` field is a byte of a cached CLUT pointer, not a
+screen identifier, and does not determine capture readiness.
 
 The ALSA device's clock, polling, manual start, pause/resume, rewind, prepare
 reset and underrun pass real 32/64-bit ALSA tests with exact timestamp-derived
@@ -561,6 +565,9 @@ PCM reject. The check also rejects a recording that enters the attract race,
 instead of fitting the racing sources into this two-source menu check. Tracing
 changes execution timing. Reports retain the inferred offsets and device time
 segments; successful generated source PCM is removed after the report.
+Automatically recorded original raw PCM is also removed after successful
+comparison; recordings supplied with `--capture` belong to the caller. Failed
+recordings remain available for diagnosis.
 
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
