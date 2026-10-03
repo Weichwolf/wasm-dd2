@@ -329,7 +329,7 @@ images. A failure in the first target does not skip the second target.
 
 For a read-only native physics diagnosis, add `--race-physics` to a full-history
 capture. It saves all 20 cars' primitive/dynamics, render, handling and wheel
-records at every selected race presentation and records every original random
+records at every preceding and selected race presentation and records every original random
 caller's return address and engine phase. Run the native observer with:
 
 ```sh

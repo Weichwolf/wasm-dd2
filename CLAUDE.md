@@ -35,6 +35,21 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- The full-history car observer also records every preceding demo presentation
+  and localizes the first literal byte, car index, field offset and phase across
+  the entire history. Truncated checkpoint/caller traces are rejected. A fresh
+  original L8 capture under /tmp/wasm-dd2/original-l8-history-physics records
+  actual prefix [9,7], 3190 total car checkpoints, 1038 target frames, 54725
+  clocks and 21774 global RNG calls. Native matches the first 2399 complete
+  checkpoints (61894200 literal car bytes), then differs at L8 cf162/ticks326:
+  primitive tag 0x78a522 and physical position 0x78a744, render FD 0x792690,
+  handling yaw velocity 0x792a04 and wheel FD 0x794be8. Previous cf158/ticks318
+  is exact. The first RNG caller mismatch is later at global index16932:
+  Original Sparks cf200/t401 versus Native FUN_00425444 cf201/t403. Both video
+  comparisons reject with 897 target frames and 873 failure records each;
+  there is no L8 acceptance or engine fix yet. Target-only observations could
+  not exclude inherited prefix errors; this full-history trace now excludes
+  that explanation for the measured initial L8 physical divergence.
 - User-requested storage cleanup: all 668 GiB of ignored historical verification
   artifacts were deleted. Earlier artifact names below describe past runs; those
   raw captures/reports are no longer present and must be recaptured for new checks.

@@ -23,7 +23,8 @@ def compare_cars(reference, frames, source, output):
         if any(expected[key] != actual[key] for key in ('level', 'cf', 'ticks', 'clock_calls')):
             return dict(index=actual['index'], error='car checkpoint phase differs', original=expected, native=actual)
         original = (source / f'{expected["prefix"]}.cars').read_bytes()
-        port = (output / f'frame{actual["index"]:05d}.cars').read_bytes()
+        prefix=actual.get('prefix',f'frame{actual["index"]:05d}')
+        port = (output / f'{prefix}.cars').read_bytes()
         if len(original) != sum(row['size'] for row in layout) or len(port) != len(original):
             raise RuntimeError('incomplete car-state checkpoint')
         if original != port:
@@ -31,10 +32,15 @@ def compare_cars(reference, frames, source, output):
             remaining = offset
             for row in layout:
                 if remaining < row['size']:
-                    return dict(index=actual['index'], cf=actual['cf'], ticks=actual['ticks'],
+                    return dict(index=actual['index'], level=actual['level'], cf=actual['cf'], ticks=actual['ticks'],
+                                clock_calls=actual['clock_calls'],
                                 region=row['name'], address=hex(row['address']+remaining),
+                                car=remaining//(row['size']//20),field_offset=hex(remaining%(row['size']//20)),
                                 original=original[offset], native=port[offset])
                 remaining -= row['size']
+    if len(reference['frames']) != len(frames):
+        return dict(index=min(len(reference['frames']),len(frames)), error='car checkpoint count differs',
+                    original=len(reference['frames']), native=len(frames))
     return None
 
 
@@ -45,6 +51,9 @@ def compare_callers(originals, callers, definitions):
         if (function != str(port['function']).rstrip('_') or
                 any(original[key] != port[key] for key in ('level', 'cf', 'ticks'))):
             return dict(index=port['index'], original=dict(original, function=function), native=port)
+    if len(originals) != len(callers):
+        return dict(index=min(len(originals),len(callers)), error='random caller count differs',
+                    original=len(originals), native=len(callers))
     return None
 
 
@@ -74,20 +83,25 @@ import gdb, json
 from pathlib import Path
 out = Path({str(out)!r})
 layout = {layout!r}
-frames, callers = [], []
+frames, all_frames, callers = [], [], []
 def word(address):
     return int.from_bytes(gdb.selected_inferior().read_memory(address,4).tobytes(),'little',signed=True)
 class Present(gdb.Breakpoint):
     def stop(self):
-        if word(0x936ff4)!={level} or word(0x7746ac) or int(gdb.parse_and_eval('dd2_tick_calls'))<={reference['prefix_clock_calls']}:
+        if not 1<=word(0x936ff4)<=10 or word(0x7746ac) or word(0x46385c)!=1 or not int(gdb.parse_and_eval('dd2_tick_calls')):
             return False
-        index=len(frames)
         data=b''.join(gdb.selected_inferior().read_memory(row['address'],row['size']).tobytes() for row in layout)
-        out.joinpath(f'frame{{index:05d}}.cars').write_bytes(data)
-        frames.append(dict(index=index,flip=int(gdb.parse_and_eval('g_frameno')),level=word(0x936ff4),
+        row=dict(index=len(all_frames),prefix=f'allframe{{len(all_frames):05d}}',
+                           flip=int(gdb.parse_and_eval('g_frameno')),level=word(0x936ff4),
                            cf=word(0x462ff0),ticks=word(0x7746c0),
                            clock_calls=int(gdb.parse_and_eval('dd2_tick_calls')),
-                           rng_calls=int(gdb.parse_and_eval('dd2_random_calls'))))
+                           rng_calls=int(gdb.parse_and_eval('dd2_random_calls')))
+        out.joinpath(row['prefix']+'.cars').write_bytes(data)
+        all_frames.append(row)
+        if row['level']=={level}:
+            index=len(frames)
+            out.joinpath(f'frame{{index:05d}}.cars').write_bytes(data)
+            frames.append(dict(row,index=index,prefix=f'frame{{index:05d}}'))
         return False
 class Random(gdb.Breakpoint):
     def stop(self):
@@ -101,6 +115,7 @@ end
 continue
 python
 out.joinpath('frames.json').write_text(json.dumps(frames,indent=2)+'\\n')
+out.joinpath('all-frames.json').write_text(json.dumps(all_frames,indent=2)+'\\n')
 out.joinpath('random-callers.jsonl').write_text(''.join(json.dumps(row)+'\\n' for row in callers))
 end
 quit
@@ -122,9 +137,10 @@ quit
     if 'Traceback' in text or not (out / 'frames.json').is_file():
         raise RuntimeError('native observer failed; inspect gdb.log')
     frames = json.loads((out / 'frames.json').read_text())
+    all_frames = json.loads((out / 'all-frames.json').read_text())
     callers = [json.loads(line) for line in (out / 'random-callers.jsonl').read_text().splitlines()]
-    if not frames or not callers:
-        raise RuntimeError('native observer did not reach the selected racing loop')
+    if not callers:
+        raise RuntimeError('native observer did not reach the frontend random calls')
     originals = [json.loads(line) for line in (source / 'random-callers.jsonl').read_text().splitlines()]
     if [row['index'] for row in callers] != list(range(len(callers))):
         raise RuntimeError('native random observation lost calls')
@@ -135,10 +151,17 @@ quit
                   original_frames=len(reference['frames']), native_frames=len(frames),
                   original_rng_calls=len(originals), native_rng_calls=len(callers),
                   engine_loop_complete='[race-stream] target racing loop finished' in text,
+                  target_racing_frames_observed=bool(frames),
                   first_car_difference=None, first_random_caller_difference=None,
                   complete_original_or_wasm_acceptance=False)
     report['first_car_difference'] = compare_cars(reference, frames, source, out)
     report['first_random_caller_difference'] = compare_callers(originals, callers, definitions)
+    if all('physics_frames' in row for row in reference['preceding_demos']):
+        prefix_frames=[frame for row in reference['preceding_demos'] for frame in row['physics_frames']]
+        full_reference=dict(reference,frames=[*prefix_frames,*reference['frames']])
+        report['original_all_car_checkpoints']=len(full_reference['frames'])
+        report['native_all_car_checkpoints']=len(all_frames)
+        report['first_all_history_car_difference']=compare_cars(full_reference,all_frames,source,out)
     if report['first_car_difference'] is None and len(frames) == len(reference['frames']):
         path = out / 'frame00000.cars'
         accepted = path.read_bytes()

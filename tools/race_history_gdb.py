@@ -88,8 +88,11 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
             expected = 0x424007
             clock = breakpoint(expected)
             end = breakpoint(0x42404a)
-            if target:
+            if target or physics_trace:
                 draw = breakpoint(0x420c9c, '*(unsigned int*)$esp == 0x423fe2')
+            if physics_trace and not target:
+                current_entry['physics_frames']=[]
+                (directory / 'preceding-cars' / f'demo{len(preceding):03d}').mkdir(parents=True)
             print(f'Original history race: level={current["level"]}, clock offset={current_entry["clock_offset"]}', flush=True)
             continue
         if pc == 0x42404a and end:
@@ -99,8 +102,10 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
             clock.delete()
             end.delete()
             clock = end = None
-            if target:
+            if draw:
                 draw.delete()
+                draw = None
+            if target:
                 final_state = current
                 break
             current_entry.update(final_state=current, clock_end=len(ticks), rng_end=len(random))
@@ -111,8 +116,15 @@ def record_history(output, level, image_frames=(), image_counters=(), physics_tr
             continue
         if pc == 0x420c9c and draw:
             current = state()
-            if current['level'] != level or current['quit'] or integer(0x46385c) != 1:
+            if current['level'] != current_entry['level'] or current['quit'] or integer(0x46385c) != 1:
                 raise RuntimeError('wrong/inactive original target demo render')
+            if not target:
+                index=len(current_entry['physics_frames'])
+                prefix=f'preceding-cars/demo{len(preceding):03d}/frame{index:05d}'
+                (directory / f'{prefix}.cars').write_bytes(b''.join(read(row['address'],row['size']) for row in physics_layout))
+                current_entry['physics_frames'].append(dict(current,index=index,prefix=prefix,
+                    clock_calls=len(ticks),rng_calls=len(random)))
+                continue
             index = len(frames)
             prefix = f'frame{index:05d}'
             (directory / f'{prefix}.bin').write_bytes(read(0x700450, 307200))

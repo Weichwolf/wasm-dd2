@@ -113,7 +113,7 @@ def main():
     parser.add_argument("--race-image-counters",type=int,nargs="+",default=[],help="also dump original engine memory at every presentation of these cf counters (0..700)")
     parser.add_argument("--race-stream",action="store_true",help="record every selected demo racing-loop frame and actual game clock/random return using read-only hardware breakpoints")
     parser.add_argument("--race-full-history",action="store_true",help="also record every preceding race clock and all random calls from the frontend; requires --race-stream")
-    parser.add_argument("--race-physics",action="store_true",help="also record every target car-state checkpoint and global random caller; requires --race-full-history")
+    parser.add_argument("--race-physics",action="store_true",help="also record all preceding/target car-state checkpoints and global random callers; requires --race-full-history")
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
