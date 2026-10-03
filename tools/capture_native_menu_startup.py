@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT/'tools/reference'))
 from capture import state, menu_ready
 
 
-def capture(binary, output, audio_clock=None):
+def capture(binary, output, audio_clock=None, video_frames=0):
     output = prepare_output(output)
     if WORK not in output.parents:
         raise ValueError('Menu diagnostics must be under /tmp/wasm-dd2/')
@@ -39,6 +39,12 @@ def capture(binary, output, audio_clock=None):
             (game/asset.name).symlink_to(asset, target_is_directory=asset.is_dir())
     table = symbols(binary)
     env = {k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
+    save_sha256=hashlib.sha256((game/'SaveGames').read_bytes()).hexdigest()
+    if video_frames:
+        (output/'startup').mkdir()
+        env.update(DD2_FRAMEDIR=str(output/'startup'),DD2_PALDUMP='1',
+                   DD2_PRESENT_LOG=str(output/'startup/presentations.jsonl'),
+                   DD2_VIDEO_CAPTURE_LIMIT=str(video_frames))
     if audio_clock:
         env['DD2_AUDIO_FRAME_CLOCK']=str(audio_clock)
         env['DD2_AUDIO_CLOCK_REPORT']=str(output/'clock-complete.json')
@@ -85,7 +91,9 @@ def capture(binary, output, audio_clock=None):
             wait(lambda s:s['movie']==0)
             subprocess.run(['xdotool','keyup','Escape'],env=env,check=True)
             start = wait(menu_ready)
-            if audio_clock:
+            if video_frames:
+                wait(lambda s:s['completed_flips']>=video_frames,60)
+            elif audio_clock:
                 wait(lambda s:(output/'clock-complete.json').is_file(),60)
             else:
                 deadline = time.monotonic()+0.3
@@ -100,6 +108,18 @@ def capture(binary, output, audio_clock=None):
                           binary=str(binary),binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                           intro=intro,start_state=start,end_state=end,
                           engine_state_writes=False)
+            result['initial_save_sha256']=save_sha256
+            if video_frames:
+                records=[json.loads(line) for line in (output/'startup/presentations.jsonl').read_text().splitlines()]
+                if [row['index'] for row in records]!=list(range(video_frames)):
+                    raise RuntimeError('Incomplete first-presentation capture')
+                for row in records:
+                    row['prefix']=f"f{row['index']:05d}"
+                (output/'startup/startup.json').write_text(json.dumps(dict(frames=records,
+                    stage='Native primary Flip / actual platform presentation',
+                    initial_movie_observed=True,intro_skip=True,input='real X11 Escape',
+                    engine_state_writes=False,initial_save_sha256=save_sha256,
+                    binary_sha256=result['binary_sha256'],scope='First frontend presentations; audio/live timing excluded'),indent=2)+'\n')
             if audio_clock:
                 result['device_clock']=json.loads((output/'clock-complete.json').read_text())
                 result['device_clock_sha256']=hashlib.sha256(audio_clock.read_bytes()).hexdigest()
@@ -121,6 +141,9 @@ if __name__ == '__main__':
     parser.add_argument('--binary',type=Path,default=Path('/tmp/dd2_native'))
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--audio-clock',type=Path,help='observed device progress at original presentations')
+    parser.add_argument('--video-frames',type=int,default=0,help='capture the first 64..512 game presentations')
     args = parser.parse_args()
+    if args.video_frames and (not 64<=args.video_frames<=512 or args.audio_clock):
+        parser.error('--video-frames requires 64..512 presentations and no audio clock replay')
     print(json.dumps(capture(args.binary.resolve(), args.output,
-                            args.audio_clock.resolve() if args.audio_clock else None),indent=2))
+                            args.audio_clock.resolve() if args.audio_clock else None,args.video_frames),indent=2))

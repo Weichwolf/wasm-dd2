@@ -237,6 +237,10 @@ verify-menu-startup-controls: ## compare actual original/native/browser startup 
 verify-menu-engine-audio: ## compare real frontend PCM at the independently observed original device clock; MENU_ENGINE_AUDIO_ARGS supplies captures/clock/output
 	python3 $(ROOT)/tools/verify_menu_engine_audio.py $(MENU_ENGINE_AUDIO_ARGS)
 
+.PHONY: verify-startup-video
+verify-startup-video: ## compare first actual frontend frames/palettes with original successful Flips; STARTUP_VIDEO_ARGS supplies captures/report
+	python3 $(ROOT)/tools/verify_startup_video.py $(STARTUP_VIDEO_ARGS)
+
 refcapture: ## capture original at Draw_All entry under private Wine with a verified virtual audio CD
 	bash $(ROOT)/tools/refcapture.sh
 

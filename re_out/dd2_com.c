@@ -74,6 +74,21 @@ static int ids_lock(int t,int rect,int* desc,int flags,int ev){
 #include <stdio.h>
 #include <stdlib.h>
 static int g_frameno = 0;
+/* Bound diagnostic output while the actual game continues normally. At most
+   5,000 indexed frames/palettes fit below the 2-GiB verification budget. */
+static unsigned dd2_video_capture_limit(void){
+    static int initialized;static unsigned limit;
+    if(!initialized){
+        const char* value=getenv("DD2_VIDEO_CAPTURE_LIMIT");initialized=1;
+        if(value){char* end;unsigned long parsed=strtoul(value,&end,10);
+            if(!*value || *end || !parsed || parsed>5000){
+                fprintf(stderr,"Invalid DD2_VIDEO_CAPTURE_LIMIT (1..5000 required)\n");exit(1);
+            }
+            limit=(unsigned)parsed;
+        }
+    }
+    return limit;
+}
 extern unsigned char g_palette[256*4];  /* defined below; captured DDraw palette (RGBA-ish per entry) */
 #ifdef DD2_BROWSER
 #include <emscripten.h>
@@ -171,7 +186,8 @@ static int ids_flip(int t,int a,int b){
         }
     }
     const char* dir = getenv("DD2_FRAMEDIR");
-    if(dir && dd2_race_capture_frame()){
+    if(dir && dd2_race_capture_frame() &&
+       (!dd2_video_capture_limit() || (unsigned)g_frameno<dd2_video_capture_limit())){
         /* PRIMARY frame = _screenbuffer @0x700450, the engine's real 640x480 8-bit framebuffer (dd2h)
            (where ALL decompiled rasterizers draw; this is the faithful bit-exact comparison
            surface — identical buffer in reference dd2h.exe). */
@@ -199,6 +215,13 @@ static int ids_flip(int t,int a,int b){
             if(!fl){ sprintf(nm4,"%s/fliplog.txt", dir); fl=fopen(nm4,"w"); }
             if(fl){ extern unsigned g_rand_calls;
                 fprintf(fl,"%d %u\n",*(int*)(unsigned long)0x462ff0u,g_rand_calls); fflush(fl); } }
+        if(getenv("DD2_PRESENT_LOG")){static FILE* log;
+            if(!log){log=fopen(getenv("DD2_PRESENT_LOG"),"w");if(!log){fprintf(stderr,"Cannot open presentation log\n");exit(1);}}
+            fprintf(log,"{\"index\":%d,\"cf\":%d,\"level\":%d,\"poly_list\":%u,\"restart_cd_audio\":%d,\"cd_playing\":%d,\"highlight_phase\":%d}\n",
+                g_frameno,*(int*)(unsigned long)0x462ff0u,*(int*)(unsigned long)0x936ff4u,
+                *(unsigned*)(unsigned long)0x940010u,*(int*)(unsigned long)0x467420u,
+                *(int*)(unsigned long)0x462d70u,*(int*)(unsigned long)0x4699ccu);fflush(log);
+        }
         /* DD2_IMGDUMP=<cf-list "a,b,c">: full memory image @0x400000 (0x580400 bytes) per listed cf,
            written once per cf at flip time -- platform-neutral state-divergence bisect (nat vs wasm). */
         { const char* il=getenv("DD2_IMGDUMP");

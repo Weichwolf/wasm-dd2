@@ -633,6 +633,38 @@ sample start positions. This is a bounded menu-device
 audio proof with observed timing; the intro device, full video, live scheduling,
 racing audio and physical sinks still need their complete comparisons.
 
+The first frontend video presentations can be compared from normal application
+initialization, including loading, the slab transition and a full settled menu
+highlight cycle. Build native and browser outputs first, then use fresh capture
+directories and the same supplied `DestructionDerby2/SaveGames` input:
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode startup --output /tmp/wasm-dd2/original-first-video --timeout 90
+python3 tools/capture_native_menu_startup.py --video-frames 128 --output /tmp/wasm-dd2/native-first-video
+node tools/browser/capture_menu_startup.js web/dd2 /tmp/wasm-dd2/browser-first-video --video-frames=128
+make verify-startup-video STARTUP_VIDEO_ARGS='--original /tmp/wasm-dd2/original-first-video/startup --native /tmp/wasm-dd2/native-first-video/startup --browser /tmp/wasm-dd2/browser-first-video/startup --output /tmp/wasm-dd2/first-video-report.json --negative --clean'
+make clean-logs
+```
+
+The original recorder uses one hardware breakpoint at the successful primary
+Flip return (`0x412cc1`); both ports record actual platform presentations, and
+the browser also checks every canvas pixel against the indexed image/palette.
+Intro skipping uses real keyboard input; observers do not write engine state.
+The checker compares every indexed byte and palette byte in chronological
+order, checks initial save hashes and presentation state, and rejects damaged
+loading/transition/menu frames, palettes and shifted sequences. Each 128-frame
+capture uses about 38 MiB; `--clean` removes successful raw frame files after
+writing provenance and hashes to the report.
+
+This comparison found a loading-bar error in both ports: frames 10–19 each had
+815 incorrect pixels left of the bar. Patch 849 restores the original byte
+command and word coordinate stores in the packed primitives; a four-byte
+command assignment had overwritten the first X coordinate. With the patch,
+all 128 frames and palettes match the original in both native and browser
+captures. This proves the recorded frontend video sequence only; intro output,
+audio/video synchronization, racing and live display timing remain open.
+
 The capture stops at `Draw_All` entry using a hardware breakpoint and saves the
 original image, framebuffer, palette and checkpoint metadata to a fresh output
 directory. For example:

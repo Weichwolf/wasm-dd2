@@ -35,6 +35,24 @@ definition a bug. **Code is the truth** — verify every claim against `Destruct
   calibration: `make verify-audio-observer`; needs ALSA headers and 32/64-bit runtimes.
 
 ## Current acceptance check (2026-10-03, Debian 13)
+- Patch 849 restores the original packed loading-bar primitive widths: command
+  bytes at 0x93de77/0x93de9b and sixteen X/Y words. The former DWORD command
+  store cleared X0=64, painting 815 incorrect pixels in each startup frame
+  10..19 on both ports. Two independently recorded original first-128-Flip
+  sequences are identical, and fixed native/browser captures match every
+  indexed byte and palette byte, with all browser canvas pixels checked.
+  Real Escape input skips the actual movie; no engine memory/register writes
+  or frame alignment. Six damaged capture cases reject per target.
+  `make verify-startup-video` checks loading, slab transitions and a complete
+  settled highlight cycle; reports are startup-video-loading-{before,fixed,
+  fixed-fresh}.json under /tmp/wasm-dd2/. Completed raw captures were removed.
+  This is frontend video acceptance; intro, racing, live timing and complete
+  audio/video synchronization remain unproved.
+  Ten-level native/Node regression passes all 15,255 frames/palettes, RNG/Flip
+  logs and effects/CD/mixed/music PCM (parity-loading-progress-fixed/results.json).
+  Native/browser replay of the retained original menu device clock also keeps
+  all source anchors and the previously verified 1,192,376-byte PCM hashes
+  (startup-clock-loading-regression.json; original raw PCM already deleted).
 - Original menu mixer starts are now derived from actual primary block counts
   and the independently consumed ALSA probe; the checker no longer searches
   any PCM pattern for alignment. Literal event-derived positions match all

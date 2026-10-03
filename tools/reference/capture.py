@@ -117,7 +117,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-dir", type=Path, default=ROOT / "DestructionDerby2")
     parser.add_argument("--output", type=Path, default=ARTIFACTS / 'reference')
-    parser.add_argument("--mode", choices=("menu", "attract", "audio"), default="attract")
+    parser.add_argument("--mode", choices=("menu", "attract", "audio", "startup"), default="attract")
+    parser.add_argument('--startup-frames',type=int,default=128,
+                        help='record this many first actual frontend presentations in startup mode (64..512)')
     frames = parser.add_mutually_exclusive_group()
     frames.add_argument("--frame", type=int, default=150)
     frames.add_argument("--frames", type=int, nargs="+",
@@ -155,6 +157,11 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.mode=='startup' and (args.audio or args.keys is not None or args.frames or args.race_stream or
+                                args.menu_cycle or not 64<=args.startup_frames<=512):
+        parser.error('startup mode requires 64..512 first presentations, no audio/navigation/race capture')
+    if args.mode!='startup' and args.startup_frames!=128:
+        parser.error('--startup-frames requires --mode startup')
     if args.race_full_history and not args.race_stream:parser.error('--race-full-history requires --race-stream')
     if args.race_physics and not args.race_full_history:parser.error('--race-physics requires --race-full-history')
     if args.race_step_window and (not args.race_physics or not 4 <= args.race_step_window[0] <= args.race_step_window[1] <= 690):
@@ -187,7 +194,7 @@ def main():
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race"))
+    if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup"))
             or any(output.glob("step*/checkpoint.json")) or any(output.glob("frame*/checkpoint.json"))):
         parser.error("output already contains a capture; use a fresh directory")
     WORK.mkdir(parents=True, exist_ok=True)
@@ -225,6 +232,7 @@ def run(game, output, args):
             if destination.exists():
                 raise RuntimeError(f"Unexpected reference asset at {destination}")
             destination.symlink_to(file, target_is_directory=file.is_dir())
+    initial_save_sha256=hashlib.sha256((rundir/"SaveGames").read_bytes()).hexdigest()
     device = WORK / "cdrom-device"
     device.touch()
     alsa = WORK / "asound.conf"
@@ -304,6 +312,10 @@ def run(game, output, args):
                     if now - last_report >= 5:
                         print(json.dumps(current), flush=True)
                         last_report = now
+                    if args.mode=='startup' and current['movie']:
+                        capture_startup_video(pid,output,env,args.startup_frames,not args.keep_movie,
+                                              max(1,deadline-time.monotonic()),initial_save_sha256)
+                        return
                     if current["movie"] and not args.keep_movie and now - last_escape >= 2:
                         subprocess.run(["xdotool", "search", "--name", "PC-DD2", "windowfocus", "key", "Escape"],
                                        env=env, stdout=subprocess.DEVNULL, stderr=wine_log, timeout=5)
@@ -374,6 +386,22 @@ def run(game, output, args):
             if xserver:
                 xserver.terminate()
                 xserver.wait(timeout=5)
+
+
+def capture_startup_video(pid,output,env,frames,skip_movie,timeout,initial_save_sha256):
+    script=output/'startup.gdb'
+    script.write_text('\n'.join(['set pagination off','set auto-solib-add off',f'attach {pid}',
+        'python',f'import sys;sys.path.insert(0,{str(ROOT/"tools")!r})',
+        'from startup_video_gdb import record_startup',
+        f'record_startup({str(output)!r},{frames},{skip_movie!r})','end','detach','quit'])+'\n')
+    with (output/'startup-gdb.log').open('wb') as log:
+        run_bounded(['gdb','--nx','-q','-batch','-x',str(script)],env=env,directory=output,
+                    stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+    path=output/'startup/startup.json'
+    result=json.loads(path.read_text())
+    result.update(exe_modified=False,exe_sha256=EXE_SHA256,
+                  initial_save_sha256=initial_save_sha256)
+    path.write_text(json.dumps(result,indent=2)+'\n')
 
 
 def capture_race_stream(pid,output,env,timeout,level=9,image_frames=(),image_counters=(),full_history=False,physics_trace=False,step_window=(),step_levels=()):
