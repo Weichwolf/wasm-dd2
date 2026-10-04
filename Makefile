@@ -129,6 +129,10 @@ verify-highlight: patch ## compare all ten pit-camera highlight areas and model 
 verify-pit-camera: patch ## compare live/replay pit-camera wrap, signed offsets and model guards with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_pit_camera.py" $(PIT_CAMERA_ARGS)'
 
+.PHONY: verify-print-number
+verify-print-number: patch ## compare numeric text commands and cursor/guard bytes with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_print_number.py" $(PRINT_NUMBER_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

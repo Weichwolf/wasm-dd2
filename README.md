@@ -289,6 +289,17 @@ unsigned section or offset fails 300 cases each; the incorrect left-table stride
 fails 1,500 cases. This component proof does not establish full-season parity;
 the complete original/native/browser comparison must pass separately.
 
+Patch 856 restores the numeric text parser's byte character classification and
+Watcom's wrapping 32-bit decimal conversion. The old DWORD table lookup treated
+`117` as zero and advanced the source cursor incorrectly; glibc's 32-bit `atoi`
+also saturated `9876543210` instead of returning the original wrapped DWORD.
+`make verify-print-number PRINT_NUMBER_ARGS='--output /tmp/wasm-dd2/fresh-print-number'`
+compares 849 cases with unchanged original x86, native, native ASan and WASM.
+All first-byte values, three starting positions, signed/overflow boundaries,
+delimiters and the original ten-character bound are covered. Values, cursors and
+source/destination guards match; the old table stride fails 234 cases on each
+port. This component proof does not establish full text-rendering or menu parity.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,
