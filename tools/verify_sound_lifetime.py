@@ -9,6 +9,8 @@ import struct
 import subprocess
 import tempfile
 from verify_sound_cursor import wine_probe
+from artifacts import WORK, prepare_output
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT=Path(__file__).resolve().parent.parent
 SOURCE=ROOT/"tools/sound_lifetime_test.c"
@@ -20,9 +22,14 @@ def main():
     parser.add_argument("--mingw",default="i686-w64-mingw32-gcc")
     parser.add_argument("--node",default="node")
     parser.add_argument("--emcc",default="emcc")
-    parser.add_argument("--asan",action="store_true")
+    parser.add_argument("--asan",action="store_true",help="compatibility option; ASan is always verified")
     parser.add_argument("--report",type=Path)
+    parser.add_argument("--output",type=Path)
+    add_backend_arguments(parser)
     args=parser.parse_args()
+    if args.report and args.report.exists():parser.error('report already exists; use a fresh path')
+    if args.report and WORK not in prepare_output(args.report).parents:
+        parser.error('report must be inside /tmp/wasm-dd2/')
     expected={"shared_source_frames":64,"addref":2,"release_retained":1,"final_release":0}
     samples=[-12345 if i==32 else i*201-6201 for i in range(64)]
     pcm=b"".join(struct.pack("<ff",samples[(17+i)%64]/32768,samples[(17+i)%64]/32768) for i in range(441))
@@ -30,14 +37,11 @@ def main():
     env["DD2_SND_RATE"]="44100"
     report={"scope":__doc__,"api":expected,"controlled_pcm_bytes":len(pcm),"targets":[],
             "fixture_source_sha256":hashlib.sha256(SOURCE.read_bytes()).hexdigest()}
-    with tempfile.TemporaryDirectory(prefix="dd2-lifetime-") as tmp:
+    WORK.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="sound-lifetime-",dir=WORK) as tmp:
         directory=Path(tmp)
-        common=["-std=gnu99","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
-                f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2h_stubs.c"),str(SOURCE),"-Wl,--gc-sections"]
-        native,wasm=directory/"native",directory/"wasm.js"
-        subprocess.run(["gcc","-m32","-no-pie",*(["-fsanitize=address","-g"] if args.asan else []),*common,"-o",str(native)],check=True)
-        subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
-                        "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
+        output=output_directory(args,directory)
+        targets,report['backend']=compile_backends(args,directory,SOURCE,ROOT/'DestructionDerby2')
         if args.wine:
             executable=directory/"lifetime.exe"
             subprocess.run([args.mingw,"-Wall","-Wextra","-Werror",str(SOURCE),"-ldsound","-o",str(executable)],check=True)
@@ -47,13 +51,14 @@ def main():
             if actual!=expected:raise RuntimeError("Actual Wine COM/source lifetime differs")
             report["wine"]=actual
             print("PASS actual Wine: source sharing, independent cursors, surviving duplicates and AddRef/Release",flush=True)
-        for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
-            output=directory/f"{target}.pcm"
-            run=subprocess.run([*command,str(output)],env=env,stdout=subprocess.PIPE,text=True,check=True,timeout=30)
-            if json.loads(run.stdout)!=expected or output.read_bytes()!=pcm:
+        for target,command in targets:
+            capture=output/f"{target}.pcm"
+            run=subprocess.run([*command,str(capture)],env=env,stdout=subprocess.PIPE,text=True,check=True,timeout=30)
+            if json.loads(run.stdout)!=expected or capture.read_bytes()!=pcm:
                 raise RuntimeError(f"{target}: lifetime/API/controlled PCM differs")
             report["targets"].append({"target":target,"pcm_bytes":len(pcm)})
             print(f"PASS {target}: released original, duplicate mutations and {len(pcm)} exact surviving-source PCM bytes",flush=True)
+        finish_report(output,report,args.clean)
     if args.report:args.report.write_text(json.dumps(report,indent=2)+"\n")
 
 

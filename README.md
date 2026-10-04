@@ -716,6 +716,24 @@ seek/repeated Play/Stop/resume/end/short-loop sequences match 2992 known Float32
 exactly on each target. The Wine check uses a separate API fixture, not the game
 EXE, and does not establish original mixed PCM or timing equality.
 
+`make verify-sound-lifetime` checks duplicate sample ownership and COM
+references against actual Wine, then verifies native, native ASan and Node/WASM
+with the patched `build/` backend at `-O2`. It releases the original and two
+duplicates, locks/mutates their shared samples, confirms independent cursors,
+and checks all 3528 controlled Float32 playback bytes from the surviving
+duplicate. `--output`, `--source-root` and `--clean` have the same meanings as
+the cursor check. The report retains backend/fixture/executable hashes and
+Wine's version; builds and private Wine files remain under `/tmp/wasm-dd2/`.
+The production/Wine run passed in
+`/tmp/wasm-dd2/sound-lifetime-885-production-wine/report.json`. This API/source
+fixture does not establish full original game audio or physical timing parity.
+
+```sh
+make clean-logs
+make verify-sound-lifetime SOUND_LIFETIME_ARGS='--wine --mingw <32-bit compiler> --output /tmp/wasm-dd2/sound-lifetime --clean'
+make clean-logs
+```
+
 Effects now retain Float32 precision through mixing and WebAudio delivery. The
 old Q15 gain and per-buffer 16-bit clipping differed from actual Wine output:
 at volume -600 a constant 0.5 source produced 0.2505798340 instead of
