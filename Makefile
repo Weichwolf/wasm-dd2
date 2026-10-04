@@ -91,6 +91,10 @@ verify-multimedia-timers: patch ## verify original activation/independent timer 
 verify-original-timer-callbacks: ## verify forwarding observer and original callback counters; ORIGINAL_TIMER_CALLBACK_ARGS required
 	python3 $(ROOT)/tools/verify_original_timer_callbacks.py $(ORIGINAL_TIMER_CALLBACK_ARGS)
 
+.PHONY: verify-engine-audio
+verify-engine-audio: ## compare actual native/browser engine PCM with observed original services; ENGINE_AUDIO_ARGS required
+	python3 $(ROOT)/tools/verify_engine_audio.py $(ENGINE_AUDIO_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 

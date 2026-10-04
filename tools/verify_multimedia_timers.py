@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import struct
+import shutil
 import subprocess
 import sys
 
@@ -32,11 +33,18 @@ def verify(original,output):
     current=ROOT/'build/dd2h_stubs.c'
     window=ROOT/'build/dd2_win32.c'
     baseline=output/'old-stubs.c'
-    # Reconstruct the precise previous unit from the inverse first-file diff.
-    first=(ROOT/'patches/863-independent-multimedia-timers.diff').read_text().split('--- a/dd2_win32.c')[0]
-    old_diff=output/'old.diff';old_diff.write_text(first)
-    run_bounded(['patch','-R','-p1','--fuzz=0','--output='+str(baseline),str(current),str(old_diff)],
-                directory=output,timeout=10,check=True,stdout=subprocess.DEVNULL)
+    # Build the actual pre-863 unit from the ordered series. Reversing 863 on
+    # today's unit fails when later patches legitimately edit timer methods.
+    old_directory=output/'before-863';old_directory.mkdir()
+    for pattern in ('*.c','*.h'):
+        for file in (ROOT/'re_out').glob(pattern):shutil.copyfile(file,old_directory/file.name)
+    for file in sorted((ROOT/'patches').glob('*.diff')):
+        if int(file.name.split('-',1)[0])>=863:break
+        with file.open('rb') as patch:
+            run_bounded(['patch','-p1','-s','-F0','--fuzz=0','-d',str(old_directory)],
+                        directory=output,timeout=10,check=True,stdin=patch,stdout=subprocess.DEVNULL)
+    shutil.copyfile(old_directory/'dd2h_stubs.c',baseline)
+    shutil.rmtree(old_directory)
     mutants={'old-timers':baseline}
     skip=output/'skip-replay.c'
     text=current.read_text()
@@ -124,7 +132,7 @@ def verify(original,output):
     report=dict(scope=__doc__.strip(),pass_=True,original=source,targets=results,negative_cases=negatives,
                 source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [current,window,ROOT/'tools/multimedia_timer_test.c']})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
-    for path in [baseline,skip,old_diff,old_window,window_diff,clock,positive]:path.unlink()
+    for path in [baseline,skip,old_window,window_diff,clock,positive]:path.unlink()
     for path in [output/'clock.bin.json']:path.unlink(missing_ok=True)
     check_space(output)
     return report

@@ -1,0 +1,455 @@
+Add independently observed mixer-source and callback service inputs.
+
+The original captures changes between sources within one primary block.
+Per-presentation sample progress cannot reproduce these interleavings.
+The optional service input schedules actual mix steps and original callbacks;
+all buffer controls come from the live engine, with recorded fields used only
+as assertions. Ordinary playback retains its existing clock behavior.
+
+--- a/dd2h_stubs.c
++++ b/dd2h_stubs.c
+@@ -138,13 +138,17 @@
+ static unsigned dd2_mmtimer_ms(void){
+     return getenv("DD2_REALTIME") ? dd2_platform_ms() : dd2_audio_ms();
+ }
++int dd2_audio_service_enabled(void);
++void dd2_audio_service_pump(void);
++static void ds_service_timer(unsigned,unsigned,unsigned,unsigned,unsigned,unsigned,unsigned,unsigned);
+ int timeKillEvent(int id){
+     unsigned i;
+     i=(unsigned)id%16;
+     if(dd2_timers[i].id==(unsigned)id){
+         if(dd2_timers[i].id)g_dd2_mmtimer_active--;
+-        dd2_timers[i].id=0;return 0;
+-    }
++        dd2_timers[i].id=0;ds_service_timer(12,(unsigned)id,0,0,0,0,0,0);return 0;
++    }
++    ds_service_timer(12,(unsigned)id,0,0,0,0,0,97);
+     return 97; /* TIMERR_NOCANDO: an absent/stale ID cannot cancel another timer. */
+ }
+ int timeSetEvent(int period,int resolution,void* callback,int user,int flags){
+@@ -159,6 +163,7 @@
+         dd2_timers[i].period=(unsigned)period;
+         dd2_timers[i].last=dd2_mmtimer_ms();
+         g_dd2_mmtimer_active++;
++        ds_service_timer(11,dd2_timers[i].id,(unsigned)period,(unsigned)resolution,(unsigned)flags,(unsigned)user,(unsigned)(uintptr_t)callback,0);
+         return (int)dd2_timers[i].id;
+     }
+     return 0;
+@@ -167,7 +172,7 @@
+     static int polling;
+     unsigned now,i;
+     extern void FUN_0041345c(void);
+-    if(polling)return;
++    if(dd2_audio_service_enabled() || polling)return;
+     polling=1;now=dd2_mmtimer_ms();
+     for(;;){
+         int due=-1;unsigned oldest=0;
+@@ -234,6 +239,11 @@
+     DD2SoundConsume stream_consume;
+     void* stream_context;
+ } DSBuf;
++typedef struct DD2AudioServiceTag DD2AudioServiceTag;
++static void ds_service_created(DSBuf*,DSBuf*);
++static void ds_service_released(DSBuf*,unsigned);
++static void* ds_service_api(unsigned,DSBuf*,int);
++static void ds_service_assert_status(void*,unsigned);
+ static DSBuf* g_dsbufs[256]; static int g_ndsbufs;
+ static unsigned g_ds_music_buffers;
+ static unsigned g_ds_devices;
+@@ -314,6 +324,7 @@
+ /* A real DirectSound device keeps playing in menus and advances up to each
+    control/query call. Flush elapsed samples before changing its buffer state. */
+ static void ds_realtime_pump(void){
++    if(dd2_audio_service_enabled())return;
+     if(getenv("DD2_REALTIME") || getenv("DD2_AUDIO_FRAME_CLOCK")) dd2_snd_mix_flip();
+ }
+ /* Component fixtures do not link the presentation shim. The weak query keeps
+@@ -358,19 +369,20 @@
+ static int dsb_addref(DSBuf* b){return (int)++b->references;}
+ static int dsb_release(DSBuf* b){ unsigned remaining;
+     ds_realtime_pump(); SLOG("DSB %p Release",(void*)b);
+-    remaining=--b->references;
++    remaining=--b->references;ds_service_released(b,remaining);
+     if(remaining)return (int)remaining;
+     { int i; for(i=0;i<g_ndsbufs;i++) if(g_dsbufs[i]==b){ g_dsbufs[i]=g_dsbufs[--g_ndsbufs]; break; } }
+     if(b->storage && !--b->storage->references){free(b->storage->pcm);free(b->storage);}
+     if(b->stream_read)g_ds_music_buffers--;
+     free(b);ds_close_idle_device(); return 0; }
+ static int dsb_getstatus(DSBuf* b,unsigned* st){ unsigned s=0;
++    void* observed=ds_service_api(10,b,0);
+     ds_realtime_pump();
+     /* Playback state follows actual consumed samples, including seeks and
+        frequency changes; an estimated cf duration can stop a live buffer. */
+     if(!st)return (int)0x80070057u;
+     if(b->playing)s=b->looping?0x5:0x1; /* PLAYING|LOOPING */
+-    *st=s; SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
++    *st=s;ds_service_assert_status(observed,s); SLOG("DSB %p GetStatus -> %u",(void*)b,s); return 0; }
+ static int dsb_getpos(DSBuf* b,unsigned* play,unsigned* write){
+     unsigned pos;
+     ds_realtime_pump();
+@@ -392,6 +404,7 @@
+ static int dsb_unlock(DSBuf* b,void* p1,unsigned s1,void* p2,unsigned s2){
+     (void)p1;(void)p2; SLOG("DSB %p Unlock %u/%u",(void*)b,s1,s2); return 0; }
+ static int dsb_play(DSBuf* b,int r1,int r2,int flags){ (void)r1;(void)r2;
++    ds_service_api(8,b,flags);
+     ds_realtime_pump();
+     /* DirectSound Play starts/resumes at the current cursor; a repeated Play
+        only replaces flags. Play_Sound in dd2h.exe explicitly seeks zero first
+@@ -400,8 +413,9 @@
+     if(!b->playing)b->play_cf=SND_CF;
+     b->playing=1; b->looping=(flags&1);
+     SLOG("DSB %p Play flags=%d freq=%d vol=%d pan=%d",(void*)b,flags,b->freq,b->vol,b->pan); return 0; }
+-static int dsb_stop(DSBuf* b){ ds_realtime_pump(); b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
++static int dsb_stop(DSBuf* b){ ds_service_api(9,b,0);ds_realtime_pump(); b->playing=0; SLOG("DSB %p Stop",(void*)b); return 0; }
+ static int dsb_setpos(DSBuf* b,unsigned pos){
++    ds_service_api(4,b,(int)pos);
+     /* Byte offsets are aligned down to complete source frames. Wine's real
+        stopped-buffer API probe verifies alignment and invalid-offset errors.
+        https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418076(v=vs.85) */
+@@ -410,15 +424,15 @@
+     /* Wine SetCurrentPosition changes sec_mixpos and retains freqAccNum. */
+     b->position=pos/(unsigned)b->blockalign;
+     SLOG("DSB %p SetCurrentPosition %u",(void*)b,pos); return 0; }
+-static int dsb_setvolume(DSBuf* b,int v){ ds_realtime_pump();
++static int dsb_setvolume(DSBuf* b,int v){ ds_service_api(6,b,v);ds_realtime_pump();
+     if(!(b->flags&0x80))return (int)0x8878001eu;
+     if(v>0 || v<-10000)return (int)0x80070057u;
+     b->vol=v; SLOG("DSB %p SetVolume %d",(void*)b,v); return 0; }
+-static int dsb_setpan(DSBuf* b,int p){ ds_realtime_pump();
++static int dsb_setpan(DSBuf* b,int p){ ds_service_api(5,b,p);ds_realtime_pump();
+     if(p<-10000 || p>10000)return (int)0x80070057u;
+     if(!(b->flags&0x40))return (int)0x8878001eu;
+     b->pan=p; SLOG("DSB %p SetPan %d",(void*)b,p); return 0; }
+-static int dsb_setfreq(DSBuf* b,int f){ ds_realtime_pump();
++static int dsb_setfreq(DSBuf* b,int f){ ds_service_api(7,b,f);ds_realtime_pump();
+     if((b->flags&1) || !(b->flags&0x20))return (int)0x8878001eu;
+     if(f==0)f=b->original_freq; /* DSBFREQUENCY_ORIGINAL */
+     if(f<100 || f>200000)return (int)0x80070057u;
+@@ -443,7 +457,7 @@
+     b=dsb_new();b->size=frames*4;b->freq=b->original_freq=44100;
+     b->channels=2;b->bits=16;b->blockalign=4;b->nAvgBytesPerSec=176400;
+     b->stream_read=read;b->stream_consume=consume;b->stream_context=context;
+-    g_ds_music_buffers++;
++    g_ds_music_buffers++;ds_service_created(b,NULL);
+     SLOG("Music Create frames=%u -> %p",frames,(void*)b);
+     return b;
+ }
+@@ -479,7 +493,7 @@
+     b->original_freq=b->freq;
+     if(b->channels<1) b->channels=1; if(b->blockalign<1) b->blockalign=(b->bits==16?2:1)*b->channels;
+     if(b->bits!=16) b->bits=8;
+-    if(pp)*pp=b;
++    if(pp)*pp=b;ds_service_created(b,NULL);
+     SLOG("DS CreateSoundBuffer flags=%#x bytes=%u freq=%d channels=%d bits=%d -> %p",desc?desc[1]:0,b->size,b->freq,b->channels,b->bits,(void*)b);
+     return 0; }
+ static int ds_dupbuffer(void* t,DSBuf* src,DSBuf** pp){ (void)t;
+@@ -493,7 +507,7 @@
+     /* Wine Duplicate copies freqAccNum before resetting only sec_mixpos. */
+     b->phase=src->phase;
+     b->channels=src->channels; b->bits=src->bits; b->blockalign=src->blockalign;
+-    if(pp)*pp=b;
++    if(pp)*pp=b;ds_service_created(b,src);
+     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }
+ static int ds_setcooplevel(void* t,int hwnd,int level){ (void)t;(void)hwnd;
+     SLOG("DS SetCooperativeLevel %d",level); return 0; }
+@@ -721,6 +735,8 @@
+     }
+     return pcm;
+ }
++#include "dd2_audio_service.h"
++
+ void dd2_snd_mix_flip(void){
+     static int last_cf=-1; static FILE *pf,*mixed_capture,*music_capture; static int pf_init;
+     uint64_t pending;
+@@ -730,6 +746,7 @@
+     int observed = ds_observed_load(rate);
+     static int mix_out = -1;
+     static unsigned timer_remainder;
++    if(dd2_audio_service_enabled()){dd2_audio_service_pump();return;}
+     if(ds_mixing)return;
+ #ifdef DD2_BROWSER
+     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
+--- a/dd2_stubs.c
++++ b/dd2_stubs.c
+@@ -54,7 +54,9 @@
+     fclose(dd2_tick_file);dd2_tick_file=NULL;
+     if(!dd2_tick_failed)fprintf(stderr,"[clock-replay] consumed=%u complete\n",dd2_tick_calls);
+ }
++extern void dd2_audio_service_pump(void) __attribute__((weak));
+ unsigned GetTickCount(void){
++    if(dd2_audio_service_pump)dd2_audio_service_pump();
+     if(!dd2_tick_init){
+         dd2_tick_path=getenv("DD2_TICK_REPLAY");dd2_tick_init=1;
+         if(dd2_tick_path){
+@@ -108,7 +110,9 @@
+                 *(int*)(uintptr_t)0x784298,*(int*)(uintptr_t)0x7746b8,*(int*)(uintptr_t)0x7746ac,
+                 *(unsigned*)(uintptr_t)0x4652a0,dd2_virtual_ms,dd2_tick_calls,dd2_random_replay_calls());
+         }
+-        dd2_tick_calls++;return dd2_virtual_ms;
++        dd2_tick_calls++;
++        if(dd2_audio_service_pump)dd2_audio_service_pump();
++        return dd2_virtual_ms;
+     }
+     if(!getenv("DD2_REALTIME")) dd2_virtual_ms += 16;
+     return dd2_platform_ms();
+--- a/dd2_com.c
++++ b/dd2_com.c
+@@ -306,6 +306,7 @@
+         if(rf!=last_rf){ fprintf(stderr,"[RFLOG] frame=%d race_finished=%d active_cars=%d quit=%d\n", g_frameno, rf, ac, qf); last_rf=rf; }
+     }
+     g_frameno++;
++    {extern void dd2_audio_service_pump(void);dd2_audio_service_pump();}
+     return 0;
+ }
+ int dd2_frame_count(void){ return g_frameno; }
+--- /dev/null
++++ b/dd2_audio_service.h
+@@ -0,0 +1,247 @@
++/* Observed service inputs for full-engine audio comparisons. Source API
++ * values/status/cursors/gains are assertions, never state supplied to buffers.
++ * The engine executes its own controls and reconstructed timer callback.
++ * Ordinary interactive and deterministic playback keep their existing path. */
++typedef struct {
++    unsigned kind,sid,args[6],flip,ticks,context,line;
++} DD2AudioService;
++static DD2AudioService* ds_services;
++static unsigned ds_service_count,ds_service_index,ds_service_context;
++static unsigned ds_service_epoch,ds_service_probe,ds_service_source_count;
++static unsigned ds_service_clock_limit,ds_service_flip_limit;
++static unsigned ds_service_frames,ds_service_callbacks;
++static uint64_t ds_service_limit;
++static DSBuf* ds_service_sources[256];
++static float *ds_service_mix,*ds_service_effects,*ds_service_music;
++static unsigned ds_service_init,ds_service_finished,ds_service_emitter_init;
++static FILE *ds_service_pcm,*ds_service_effect_pcm,*ds_service_music_pcm;
++extern unsigned dd2_tick_replay_calls(void) __attribute__((weak));
++static void ds_service_error(const char* reason){
++    fprintf(stderr,"DD2_AUDIO_SERVICES: event=%u kind=%u line=%u: %s\n",ds_service_index,
++        ds_service_index<ds_service_count?ds_services[ds_service_index].kind:0,
++        ds_service_index<ds_service_count?ds_services[ds_service_index].line:0,reason);exit(1);
++}
++int dd2_audio_service_enabled(void){
++    if(!ds_service_init){
++        const char* setting=getenv("DD2_AUDIO_SERVICES");FILE* input;unsigned char header[40];unsigned i;
++        ds_service_init=1;if(!setting)return 0;
++        if(getenv("DD2_REALTIME") || getenv("DD2_AUDIO_FRAME_CLOCK"))ds_service_error("conflicting clock modes");
++        input=fopen(setting,"rb");if(!input)ds_service_error("cannot open service input");
++        if(fread(header,1,40,input)!=40 || memcmp(header,"DD2AS01",8) || ds_observed_u32(header+8)!=ds_device_rate())
++            ds_service_error("invalid service header/rate");
++        ds_service_count=ds_observed_u32(header+12);ds_service_epoch=ds_observed_u32(header+16);
++        ds_service_probe=ds_observed_u32(header+20);
++        ds_service_limit=(uint64_t)ds_observed_u32(header+24)|((uint64_t)ds_observed_u32(header+28)<<32);
++        ds_service_clock_limit=ds_observed_u32(header+32);ds_service_flip_limit=ds_observed_u32(header+36);
++        if(!ds_service_count || ds_service_count>1000000 || !ds_service_epoch || ds_service_epoch>100 ||
++           !ds_service_limit || ds_service_limit>(uint64_t)ds_device_rate()*600 || ds_service_probe>ds_service_limit ||
++           !ds_service_clock_limit || !ds_service_flip_limit)
++            ds_service_error("invalid service extent");
++        ds_services=(DD2AudioService*)malloc((size_t)ds_service_count*sizeof(*ds_services));
++        if(!ds_services || sizeof(*ds_services)!=48 || fread(ds_services,48,ds_service_count,input)!=ds_service_count || fgetc(input)!=EOF)
++            ds_service_error("incomplete/extra service records");
++        fclose(input);
++        for(i=0;i<ds_service_count;i++){
++            unsigned kind=ds_services[i].kind;
++            if(!((kind>=1 && kind<=12) || (kind>=20 && kind<=22) || (kind>=30 && kind<=32)) ||
++               ds_services[i].sid>=256 || !ds_services[i].line ||
++               ds_services[i].ticks>ds_service_clock_limit || ds_services[i].flip>ds_service_flip_limit ||
++               ds_services[i].context>=256 ||
++               (i && ds_services[i].line<ds_services[i-1].line))ds_service_error("malformed service record");
++        }
++    }
++    return ds_services!=NULL;
++}
++static void ds_service_emit(float* combined,float* effects,float* music,unsigned frames){
++    unsigned written=frames;
++    if(ds_rendered_frames>=ds_service_limit)written=0;
++    else if((uint64_t)written>ds_service_limit-ds_rendered_frames)written=(unsigned)(ds_service_limit-ds_rendered_frames);
++    if(!ds_service_emitter_init){
++        ds_service_emitter_init=1;
++        ds_service_pcm=ds_capture_open("DD2_MIXPCM",ds_device_rate());
++        ds_service_effect_pcm=ds_capture_open("DD2_SNDPCM",ds_device_rate());
++        ds_service_music_pcm=ds_capture_open("DD2_MUSICPCM",ds_device_rate());
++    }
++    if(ds_service_pcm && fwrite(combined,8,written,ds_service_pcm)!=written)ds_service_error("incomplete combined output");
++    if(ds_service_effect_pcm && fwrite(effects,8,written,ds_service_effect_pcm)!=written)ds_service_error("incomplete effects output");
++    if(ds_service_music_pcm && fwrite(music,8,written,ds_service_music_pcm)!=written)ds_service_error("incomplete music output");
++#ifdef DD2_NATIVE_SDL
++    if(dd2_native_enabled() && written)dd2_native_audio(combined,written,ds_device_rate());
++#endif
++#ifdef DD2_BROWSER
++    if(written)dd2_audio_push(combined,effects,music,written,ds_device_rate(),written);
++#endif
++    ds_rendered_frames+=frames;
++}
++static void ds_service_complete(void){
++    const char* path;FILE* report;
++    if(ds_service_index!=ds_service_count || ds_service_finished)return;
++    if(ds_service_mix || ds_service_context || ds_rendered_frames<ds_service_limit)ds_service_error("incomplete service output");
++    if(ds_service_pcm)fflush(ds_service_pcm);
++    if(ds_service_effect_pcm)fflush(ds_service_effect_pcm);
++    if(ds_service_music_pcm)fflush(ds_service_music_pcm);
++    path=getenv("DD2_AUDIO_SERVICE_REPORT");
++    if(!path)ds_service_error("completion report required");
++    report=fopen(path,"w");if(!report)ds_service_error("cannot create completion report");
++    fprintf(report,"{\"complete\":true,\"epoch\":%u,\"events\":%u,\"frames\":%llu,\"rendered_frames\":%llu,\"callbacks\":%u,\"completed_flips\":%d}\n",
++        ds_service_epoch,ds_service_count,(unsigned long long)ds_service_limit,
++        (unsigned long long)ds_rendered_frames,ds_service_callbacks,dd2_frame_count());
++    if(fclose(report))ds_service_error("cannot close completion report");ds_service_finished=1;
++#ifdef DD2_BROWSER
++    /* Give the external observer a normal Asyncify yield at the exact bounded
++       endpoint, before the engine requests a clock value beyond the capture. */
++    emscripten_sleep(0);
++#endif
++}
++static void ds_service_advance(void){
++    if(!dd2_audio_service_enabled())return;
++    while(ds_service_index<ds_service_count){
++        DD2AudioService* e=&ds_services[ds_service_index];
++        unsigned ticks=dd2_tick_replay_calls?dd2_tick_replay_calls():0;
++        int flip=dd2_frame_count?dd2_frame_count():-1;
++        if(e->kind<=12 || e->kind==31 || e->kind==32)break;
++        if(!ds_service_context && (flip<0 || e->flip>(unsigned)flip || e->ticks>ticks))break;
++        ds_service_index++;
++        if(e->kind==20){
++            unsigned frames=e->args[0];
++            if(ds_device_epoch!=ds_service_epoch || ds_service_mix || !frames || frames>65536)
++                ds_service_error("primary block epoch/extent differs");
++            if(!ds_rendered_frames && ds_service_probe){
++                float* zero=(float*)calloc((size_t)ds_service_probe*2,sizeof(float));
++                if(!zero)ds_service_error("cannot allocate rate probe");
++                ds_service_emit(zero,zero,zero,ds_service_probe);free(zero);
++            }
++            ds_service_frames=frames;
++            ds_service_mix=(float*)calloc((size_t)frames*2,sizeof(float));
++            ds_service_effects=(float*)calloc((size_t)frames*2,sizeof(float));
++            ds_service_music=(float*)calloc((size_t)frames*2,sizeof(float));
++            if(!ds_service_mix || !ds_service_effects || !ds_service_music)ds_service_error("cannot allocate primary block");
++        }else if(e->kind==21){
++            DSBuf* b=ds_service_sources[e->sid];
++            unsigned cursor;
++            if(!ds_service_mix || !b || !b->playing || e->args[4]!=ds_service_frames)
++                ds_service_error("actual source/block playback differs");
++            cursor=b->position*(unsigned)b->blockalign;
++            if(b->stream_read)cursor%=e->args[5];
++            if(cursor!=e->args[0] || (!b->stream_read && (unsigned)b->looping!=e->args[1]))
++                ds_service_error("independently advanced source cursor/loop differs");
++            if(e->args[2]!=0xffffffffu){
++                volatile float left=(float)e->args[2]/65535.0f,right=(float)e->args[3]/65535.0f;
++                if(dd2_amp_float(b->vol-(b->pan>0?b->pan:0))!=left ||
++                   dd2_amp_float(b->vol+(b->pan<0?b->pan:0))!=right)
++                    ds_service_error("engine-calculated mix gain differs");
++            }else if(dd2_amp_float(b->vol-(b->pan>0?b->pan:0))!=0 ||
++                     dd2_amp_float(b->vol+(b->pan<0?b->pan:0))!=0)ds_service_error("unobserved audible gain");
++            ds_mix_buffer(b,ds_service_mix,ds_service_effects,ds_service_music,(int)ds_service_frames);
++        }else if(e->kind==22){
++            if(!ds_service_mix)ds_service_error("primary end without begin");
++            ds_service_emit(ds_service_mix,ds_service_effects,ds_service_music,ds_service_frames);
++            free(ds_service_mix);free(ds_service_effects);free(ds_service_music);
++            ds_service_mix=ds_service_effects=ds_service_music=NULL;
++        }else if(e->kind==30){
++            DD2AudioService* end;
++            extern void FUN_0041345c(void);
++            if(ds_service_context || dd2_timers[e->sid%16].id!=e->sid)
++                ds_service_error("callback has no live engine timer");
++            ds_service_context=e->sid;
++            FUN_0041345c();ds_service_callbacks++;
++            ds_service_advance();
++            if(ds_service_index==ds_service_count)ds_service_error("unreturned callback");
++            end=&ds_services[ds_service_index];
++            if(end->kind!=31 || end->sid!=ds_service_context)ds_service_error("callback left unmatched API calls");
++            ds_service_index++;ds_service_context=0;
++        }else ds_service_error("unsupported automatic service");
++    }
++    ds_service_complete();
++}
++void dd2_audio_service_pump(void){ds_service_advance();}
++static unsigned ds_service_sid(DSBuf* b){
++    unsigned i;for(i=0;i<ds_service_source_count;i++)if(ds_service_sources[i]==b)return i;
++    return 0xffffffffu;
++}
++static void ds_service_gate_position(DD2AudioService* e){
++    if(!ds_service_context && (e->flip!=(unsigned)dd2_frame_count() ||
++        e->ticks!=(dd2_tick_replay_calls?dd2_tick_replay_calls():0)))
++        ds_service_error("engine API clock/presentation position differs");
++}
++static void* ds_service_api(unsigned kind,DSBuf* b,int control_value){
++    DD2AudioService* e;unsigned sid;
++    if(!dd2_audio_service_enabled() || !b || !b->size)return NULL;
++    ds_service_advance();
++    if(ds_service_index==ds_service_count)ds_service_error("API after bounded input completion");
++    e=&ds_services[ds_service_index];sid=ds_service_sid(b);
++    ds_service_gate_position(e);
++    if(e->kind!=kind || e->sid!=sid || e->context!=ds_service_context){
++        fprintf(stderr,"actual API kind=%u sid=%u context=%u\n",kind,sid,ds_service_context);
++        ds_service_error("engine API order differs");
++    }
++    if(kind==8 && b->stream_read){
++        /* Wine's MCI transport plays a looping CD ring; our transport plays
++           the independently loaded finite track. Verify each representation
++           without copying the ring's loop flag into the finite source. */
++        if(control_value!=0 || e->args[0]!=1)ds_service_error("CD transport playback representation differs");
++    }else if(kind>=4 && kind<=9 && e->args[0]!=(unsigned)control_value)
++        ds_service_error("engine-calculated API argument differs");
++    ds_service_index++;
++    if(kind>=5 && kind<=7 && ds_service_index<ds_service_count){
++        DD2AudioService* next=&ds_services[ds_service_index];
++        /* Only changed controls have a separate original commit. */
++        if(next->kind>12){
++            unsigned i;
++            for(i=ds_service_index;i<ds_service_count;i++){
++                DD2AudioService* c=&ds_services[i];
++                if(c->kind<=12 || c->kind==31)break;
++                if(c->kind==32 && c->sid==sid && c->args[0]==kind){
++                    ds_service_advance();c=&ds_services[ds_service_index];
++                    if(c->kind!=32 || c->sid!=sid || c->args[0]!=kind || c->args[1]!=(unsigned)control_value)
++                        ds_service_error("control commit differs");
++                    ds_service_index++;break;
++                }
++            }
++        }
++    }
++    return e;
++}
++static void ds_service_created(DSBuf* b,DSBuf* parent){
++    DD2AudioService* e;unsigned sid;
++    if(!dd2_audio_service_enabled() || !b->size)return;
++    ds_service_advance();if(ds_service_index==ds_service_count)ds_service_error("unexpected source creation");
++    e=&ds_services[ds_service_index];sid=ds_service_source_count;
++    ds_service_gate_position(e);
++    if(sid>=256 || e->sid!=sid || e->kind!=(parent?2u:1u) || e->context!=ds_service_context)
++        ds_service_error("engine source lifetime differs");
++    if(parent){if(ds_service_sid(parent)!=e->args[0])ds_service_error("engine duplicate parent differs");}
++    else if((!b->stream_read && (b->size!=e->args[0] || b->flags!=e->args[1])) ||
++            (unsigned)b->freq!=e->args[2] || (unsigned)b->channels!=e->args[3] ||
++            (unsigned)b->bits!=e->args[4] || (unsigned)b->blockalign!=e->args[5])ds_service_error("engine source format differs");
++    ds_service_sources[ds_service_source_count++]=b;ds_service_index++;
++}
++static void ds_service_released(DSBuf* b,unsigned remaining){
++    DD2AudioService* e;unsigned sid;
++    if(!dd2_audio_service_enabled() || !b->size)return;
++    if(b->stream_read){
++        ds_service_advance();
++        if(ds_service_index<ds_service_count && ds_services[ds_service_index].kind==9){
++            ds_service_api(9,b,0);b->playing=0;
++        }
++    }
++    e=ds_service_api(3,b,0);if(e && e->args[0]!=remaining)ds_service_error("engine release reference count differs");
++    if(!remaining){sid=ds_service_sid(b);ds_service_sources[sid]=NULL;}
++}
++static void ds_service_timer(unsigned kind,unsigned id,unsigned period,unsigned resolution,unsigned flags,unsigned user,unsigned callback,unsigned result){
++    DD2AudioService* e;
++    if(!dd2_audio_service_enabled())return;
++    ds_service_advance();if(ds_service_index==ds_service_count)ds_service_error("unexpected timer API");
++    e=&ds_services[ds_service_index];
++    ds_service_gate_position(e);
++    if(e->kind!=kind || e->sid!=id || e->context!=ds_service_context)ds_service_error("engine timer identity differs");
++    if(kind==11 && (e->args[0]!=period || e->args[1]!=resolution || e->args[2]!=flags ||
++                   e->args[3]!=user || e->args[4]!=callback))ds_service_error("engine timer arguments differ");
++    if(kind==12 && e->args[0]!=result)ds_service_error("engine timer cancellation result differs");
++    ds_service_index++;
++}
++
++static void ds_service_assert_status(void* observation,unsigned actual){
++    DD2AudioService* e=(DD2AudioService*)observation;
++    if(e && e->args[0]!=actual)ds_service_error("independently calculated playback status differs");
++}

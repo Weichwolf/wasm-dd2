@@ -1192,6 +1192,54 @@ service ordering within mixer blocks; the per-presentation device input does
 not establish full engine audio equivalence. Capture timings and the first
 remaining difference vary between runs.
 
+The optional `DD2_AUDIO_SERVICES` comparison input preserves the observed
+ordering of individual source mixing steps, control commits and actual timer
+callbacks within primary blocks. The real application executes its own engine
+controls and callback body; recorded API values, statuses, cursors and gains
+are assertions. Main-thread API calls must also occur at the original clock
+and presentation positions. Wine's looping CD ring and the port's finite CD
+track are checked as separate storage representations. Interactive playback
+uses its existing clock path; this input does not establish interactive timing
+or other scenarios' audio/video equivalence.
+
+One actual startup/frontend/level-9 attract window now passes on native,
+native ASan and the browser: 16,889 observed services, 98 source lifetimes and
+100 callbacks produce all 7,108,480 accepted PCM bytes and the 7,094,376-byte
+played prefix exactly like the unmodified original. All 2,009 WebAudio buffers
+match the C mix without missing or dropped buffers. Eleven damaged input cases
+are rejected, including cursor/gain changes, moved API calls and missing/wrong
+callbacks; gain and callback mutations also run in the actual browser. This
+proves that bounded trace with observed service timing. Other audio scenarios,
+interactive scheduling and video remain separate requirements.
+
+Export inputs from one original capture that has passed the clock, callback
+observer and chronological mixer checks, then run both actual applications:
+
+```sh
+make clean-logs
+python3 tools/reference/engine_audio_services.py --capture /tmp/wasm-dd2/original \
+  --mixer /tmp/wasm-dd2/mixer-comparison --output /tmp/wasm-dd2/audio-services
+make native NATIVE=/tmp/wasm-dd2/audio-native
+python3 tools/capture_native_engine_audio.py --binary /tmp/wasm-dd2/audio-native \
+  --services /tmp/wasm-dd2/audio-services/services.bin \
+  --clock /tmp/wasm-dd2/original/game-clock/ticks.bin --output /tmp/wasm-dd2/audio-native-capture
+bash tools/build_web.sh /tmp/wasm-dd2/audio-browser
+node tools/browser/capture_engine_audio.js /tmp/wasm-dd2/audio-browser \
+  /tmp/wasm-dd2/audio-browser-capture /tmp/wasm-dd2/audio-services/services.bin \
+  /tmp/wasm-dd2/original/game-clock/ticks.bin
+make verify-engine-audio ENGINE_AUDIO_ARGS='--original /tmp/wasm-dd2/original --mixer /tmp/wasm-dd2/mixer-comparison --services /tmp/wasm-dd2/audio-services/services.bin --native /tmp/wasm-dd2/audio-native-capture --browser /tmp/wasm-dd2/audio-browser-capture --binary /tmp/wasm-dd2/audio-native --browser-build /tmp/wasm-dd2/audio-browser --negative-runs --output /tmp/wasm-dd2/engine-audio-comparison'
+make clean-logs
+```
+
+The verifier independently rebuilds the service input from the original trace,
+compares every accepted PCM byte and the played prefix, and requires exact
+WebAudio buffer delivery without dropped buffers. Negative runs exercise the
+actual native application with damaged input, source cursors/gains, control
+values, API positions and timer callbacks. `--native-asan` can additionally
+check an actual application capture made with AddressSanitizer. Successful raw
+PCM is removed after its comparison report is written. Browser observation
+stops at a normal Asyncify yield after the bounded input completes.
+
 ```sh
 make clean-logs
 make verify-native-sdl-clock NATIVE_SDL_CLOCK_ARGS='--output /tmp/wasm-dd2/native-sdl-clock'
