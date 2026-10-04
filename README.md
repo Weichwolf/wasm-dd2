@@ -1014,6 +1014,37 @@ make verify-statistics-ui STATISTICS_UI_ARGS='compare --fixture /tmp/wasm-dd2/st
 make clean-logs
 ```
 
+Patch 871 maps the lap-record table height to the original signed WORD at
+`0x46956a`. Its prior host-only global stayed zero, so the dark table background
+vanished after the correctly rendered entry rotation. The original steady loop
+loads this field with DWORD/SAR-16; the packed rectangle is (-120,-38,232,95).
+
+The same actual-menu tools accept `--scenario tools/lap_records_ui.json`
+(the optional fourth browser argument). This scenario checks all five displayed
+records on all seven road tracks against the original configuration's saved
+fastest laps, both wrap directions, preserved selection on reopening and the
+unchanged complete configuration/card. Nineteen states and nine full menu cycles
+require 576 exact indexed/palette pairs per target, including actual canvas
+conversion. A real pre-871 executable supplies the missing-background regression.
+The verified run is recorded in
+`/tmp/wasm-dd2/lap-records-877-final-verified.json`: Native, Native with ASan and
+WASM pass all 19 states and 576 frame/palette comparisons each; 64 negative
+checks reject altered output and the actual pre-fix background.
+The check covers the displayed saved records and settled menus; earning a new
+record, other result tables, chronological racing A/V and physical timing remain
+separate requirements.
+
+```sh
+make clean-logs
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --scenario tools/lap_records_ui.json --target original --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/laps-original'
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --scenario tools/lap_records_ui.json --target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/laps-native'
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --scenario tools/lap_records_ui.json --target native --binary /tmp/dd2_asan --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/laps-asan'
+make capture-browser-statistics-ui BROWSER_STATISTICS_UI_ARGS='web/dd2 /tmp/wasm-dd2/laps-browser /tmp/wasm-dd2/stats-fixture tools/lap_records_ui.json'
+make verify-statistics-ui STATISTICS_UI_ARGS='baseline --scenario tools/lap_records_ui.json --fixture /tmp/wasm-dd2/stats-fixture --original /tmp/wasm-dd2/laps-original --binary /tmp/dd2_native_before_871 --output /tmp/wasm-dd2/laps-before'
+make verify-statistics-ui STATISTICS_UI_ARGS='compare --scenario tools/lap_records_ui.json --fixture /tmp/wasm-dd2/stats-fixture --original /tmp/wasm-dd2/laps-original --native /tmp/wasm-dd2/laps-native --asan /tmp/wasm-dd2/laps-asan --browser /tmp/wasm-dd2/laps-browser --before /tmp/wasm-dd2/laps-before/report.json --report /tmp/wasm-dd2/laps-verified.json --clean'
+make clean-logs
+```
+
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,
 then uses Retire / Yes and Save Replay to create a real `0x2020` card. All

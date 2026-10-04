@@ -146,6 +146,10 @@ def displayed(ui, action):
     if 'championship' in action:
         row.update(championship=ui.integer(0x467bf4), caption=raw_text(ui,0x93e390,32),
                    standings=[raw_text(ui,0x93e3b0+i*32,32) for i in range(20)])
+    if 'laps' in action:
+        row.update(laps=ui.integer(0x469560),caption=ui.text(0x4693e0),
+                   records=[dict(driver=raw_text(ui,0x93feb0+i*32,32),
+                                 time=raw_text(ui,0x93ff50+i*32,32)) for i in range(5)])
     return row
 
 
@@ -180,6 +184,17 @@ def check_point(row, action, saved):
                 'wrong championship season')
         require(row['standings'] == [jl+stats[620+i*16:636+i*16].split(b'\0')[0].decode('ascii')
                                      for i in range(20)], 'displayed championship standings differ from saved payload')
+    if 'laps' in action:
+        track = action['laps']; require(row['laps'] == track, 'wrong selected lap-times track')
+        records = bytes.fromhex(saved['fastest'])[track*80:(track+1)*80]
+        expected = []
+        for i in range(5):
+            data = records[i*16:(i+1)*16]
+            minutes, seconds, fraction = struct.unpack('<HHH',data[10:16])
+            expected.append(dict(driver=jl+data[:10].split(b'\0')[0].decode('ascii'),
+                                 time=jl+f'{minutes}:{seconds:02d}:{(fraction*100)>>16:02d}'))
+        require(row['records'] == expected and row['caption'],
+                'displayed lap records differ from original saved data')
 
 
 def validate(report, saved, initial):
@@ -242,12 +257,15 @@ def baseline(args):
     out, game = setup(args,initial)
     report = dict(scope='Actual native pre-correction statistics table captures, rejected by the original frame comparison. A regression baseline, not original parity.',
                   operation='baseline',target='native',pass_=False,engine_state_writes=False,
-                  initial_card_sha256=digest(initial),binary_sha256=digest(args.binary.read_bytes()),points=[])
+                  initial_card_sha256=digest(initial),plan_sha256=digest(PLAN_FILE.read_bytes()),
+                  binary_sha256=digest(args.binary.read_bytes()),points=[])
     def action(ui):
         require(snapshot(ui) == saved, 'baseline did not load original statistics')
-        for name, keys in [('driver-00',['Down','Right','Return','Return','Return']),
-                           ('track-00',['Escape','Right','Return']),
-                           ('championship',['Escape','Right','Return'])]:
+        actions = PLAN.get('baseline_actions', [dict(checkpoint=name, keys=keys) for name,keys in
+                    [('driver-00',['Down','Right','Return','Return','Return']),
+                     ('track-00',['Escape','Right','Return']),('championship',['Escape','Right','Return'])]])
+        for action in actions:
+            name, keys = action['checkpoint'], action['keys']
             for code in keys: ui.key(code)
             plan = next(action for action in POINTS if action['checkpoint'] == name)
             ui.wait(lambda: ui.integer(0x940010) == plan['menu']); ui.settled()
@@ -277,7 +295,7 @@ def baseline(args):
     opened = open_files()
     for file in out.glob('*/cycle/*.bin'):
         stat = file.stat(); require((stat.st_dev,stat.st_ino) not in opened, 'baseline capture still open'); file.unlink()
-    print('Actual old executable: all three missing backgrounds rejected',flush=True)
+    print('Actual old executable:',len(report['points']),'missing backgrounds rejected',flush=True)
 
 
 def compare(args):
@@ -311,10 +329,11 @@ def compare(args):
                     try: match_frame(*source[0],candidate[0][0],changed,False)
                     except RuntimeError: negatives.append(dict(target=target,case=left['name']+'-'+str(region)))
                     else: raise RuntimeError('altered statistics frame accepted')
-        for name in ['driver-00','track-00','championship']:
+        for name in PLAN.get('negative_checkpoints',['driver-00','track-00','championship']):
             changed = copy.deepcopy(actual)
             row = next(row for row in changed['checkpoints'] if row['name'] == name)
-            if 'standings' in row: row['standings'][0] += 'X'
+            if 'records' in row: row['records'][0]['time'] += 'X'
+            elif 'standings' in row: row['standings'][0] += 'X'
             else: row['seasons'][0]['dnf'] += 'X'
             try: validate(changed,saved,initial)
             except RuntimeError: negatives.append(dict(target=target,case=name+'-statistics'))
@@ -323,10 +342,13 @@ def compare(args):
     before = json.loads(args.before.read_text())
     require(before['pass_'] and before['operation'] == 'baseline' and not before['engine_state_writes']
             and before['initial_card_sha256'] == digest(initial) and
+            before['plan_sha256'] == digest(PLAN_FILE.read_bytes()) and
             before['binary_sha256'] != targets['native']['capture']['binary_sha256'],
             'distinct actual pre-correction executable required')
-    require([row['name'] for row in before['points']] == ['driver-00','track-00','championship'],
-            'all three pre-correction table backgrounds required')
+    require([row['name'] for row in before['points']] ==
+            [row['checkpoint'] for row in PLAN.get('baseline_actions',
+              [dict(checkpoint=name) for name in ['driver-00','track-00','championship']])],
+            'all pre-correction table backgrounds required')
     for row in before['points']:
         source = next(point for point in original['checkpoints'] if point['name'] == row['name'])
         state, pair = cycle_frames(source['cycle'],False)[0]
@@ -354,6 +376,7 @@ def compare(args):
 
 
 def main():
+    global PLAN_FILE, PLAN, POINTS
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='operation', required=True)
     producer = commands.add_parser('generate')
@@ -364,14 +387,18 @@ def main():
     cap.add_argument('--target', choices=['original','native'], required=True)
     cap.add_argument('--binary', type=Path, default=Path('/tmp/dd2_native'))
     cap.add_argument('--output', type=Path, required=True)
+    cap.add_argument('--scenario',type=Path,default=PLAN_FILE)
     old = commands.add_parser('baseline')
     for name in ['fixture','original','binary','output']: old.add_argument('--'+name,type=Path,required=True)
+    old.add_argument('--scenario',type=Path,default=PLAN_FILE)
     cmp = commands.add_parser('compare')
     for name in ['fixture','original','native','asan','browser','report']:
         cmp.add_argument('--'+name,type=Path,required=True)
     cmp.add_argument('--before',type=Path,required=True,help='observed pre-correction statistics frames')
     cmp.add_argument('--clean',action='store_true')
+    cmp.add_argument('--scenario',type=Path,default=PLAN_FILE)
     args = parser.parse_args()
+    PLAN_FILE = getattr(args,'scenario',PLAN_FILE).resolve(); PLAN = json.loads(PLAN_FILE.read_text()); POINTS = PLAN['actions']
     {'generate':generate,'capture':capture,'compare':compare,'baseline':baseline}[args.operation](args)
 
 

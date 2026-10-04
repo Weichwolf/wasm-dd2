@@ -1,0 +1,18 @@
+Restore the lap-record rectangle height's original image WORD.
+
+View_BestLaps @0x44ffc0 loads DWORD [0x469568] then SAR 16 at
+0x4500bc..0x4500c4: this is the signed height WORD at 0x46956a.
+Its original descriptor is (-120,-38,232,95). The decompiler's sRam0046956a
+had only a host global declaration/definition and no GIMG alias, so the steady
+menu passed zero height to Draw_Semi_Trans_Poly. Rotation already reads the
+same packed descriptor correctly; the table background vanished after entry.
+
+Map that missing symbol to the actual short in the original game image.
+The lap-record menu comparison checks all seven road tracks and reopening
+through real keys, using a configuration produced and loaded by the original.
+
+--- a/dd2_symbols.h
++++ b/dd2_symbols.h
+@@ -257,1 +257,1 @@
+-extern int sRam0046956a;
++#define sRam0046956a (*(short*)GIMG(0x0046956a))

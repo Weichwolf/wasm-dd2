@@ -1,0 +1,203 @@
+{
+  "scope": "Actual lap-record menus after normal loading of original-produced configuration; all seven road tracks, both wrap directions, preserved selection on reopening, unchanged saved/card data. Every displayed record is checked against saved fastest-lap data; nine full 64-phase menu cycles and actual browser canvas are compared. No new lap record, chronological racing A/V or physical output/timing claim.",
+  "actions": [
+    {
+      "checkpoint": "information",
+      "keys": [
+        "Down",
+        "Right",
+        "Return"
+      ],
+      "menu": 4627108,
+      "cycle": true,
+      "label": "View Statistics",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "lap-times-category",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4627108,
+      "cycle": true,
+      "label": "View Lap Times",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "lap-00",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 0
+    },
+    {
+      "checkpoint": "lap-left-wrap",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 6
+    },
+    {
+      "checkpoint": "lap-right-wrap",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 0
+    },
+    {
+      "checkpoint": "lap-01",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 1
+    },
+    {
+      "checkpoint": "lap-02",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 2
+    },
+    {
+      "checkpoint": "lap-03",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 3
+    },
+    {
+      "checkpoint": "lap-04",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 4
+    },
+    {
+      "checkpoint": "lap-05",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 5
+    },
+    {
+      "checkpoint": "lap-06",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": true,
+      "laps": 6
+    },
+    {
+      "checkpoint": "lap-right-wrap-again",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 0
+    },
+    {
+      "checkpoint": "lap-left-wrap-again",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 6
+    },
+    {
+      "checkpoint": "lap-reopened",
+      "keys": [
+        "Escape",
+        "Return"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 6
+    },
+    {
+      "checkpoint": "information-return",
+      "keys": [
+        "Escape"
+      ],
+      "menu": 4627108,
+      "cycle": false,
+      "label": "View Lap Times",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "statistics-category-return",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4627108,
+      "cycle": false,
+      "label": "View Statistics",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "lap-times-category-return",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4627108,
+      "cycle": false,
+      "label": "View Lap Times",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "lap-reopened-again",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4625296,
+      "cycle": false,
+      "laps": 6
+    },
+    {
+      "checkpoint": "frontend-return",
+      "keys": [
+        "Escape",
+        "Escape"
+      ],
+      "menu": 4626096,
+      "cycle": false,
+      "label": "Information",
+      "label_address": 4626268
+    }
+  ],
+  "baseline_actions": [
+    {
+      "checkpoint": "lap-00",
+      "keys": [
+        "Down",
+        "Right",
+        "Return",
+        "Right",
+        "Return"
+      ]
+    }
+  ],
+  "negative_checkpoints": [
+    "lap-00",
+    "lap-left-wrap",
+    "lap-01"
+  ]
+}

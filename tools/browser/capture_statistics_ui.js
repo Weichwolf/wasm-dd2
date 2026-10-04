@@ -3,7 +3,7 @@ const assert = require('assert'), fs = require('fs'), path = require('path');
 const {createHash} = require('crypto');
 const {serve, boot, chromium} = require('./felib');
 const {installMenuInput} = require('./menu_input');
-assert(process.argv.length === 5, 'usage: BUILD OUTPUT ORIGINAL_STATISTICS_FIXTURE');
+assert(process.argv.length === 5 || process.argv.length === 6, 'usage: BUILD OUTPUT ORIGINAL_STATISTICS_FIXTURE [SCENARIO]');
 const build = path.resolve(process.argv[2]), output = path.resolve(process.argv[3]);
 const fixture = path.resolve(process.argv[4]);
 assert(output.startsWith('/tmp/wasm-dd2/'), 'verification captures belong in /tmp/wasm-dd2');
@@ -11,7 +11,7 @@ const parent = fs.realpathSync(path.dirname(output));
 assert(parent === '/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'), 'output parent escapes work area');
 fs.mkdirSync(output);
 const sha = data => createHash('sha256').update(data).digest('hex');
-const planBytes = fs.readFileSync(path.join(__dirname,'../statistics_ui.json'));
+const planBytes = fs.readFileSync(process.argv[5] || path.join(__dirname,'../statistics_ui.json'));
 const plan = JSON.parse(planBytes), layout = JSON.parse(fs.readFileSync(path.join(__dirname,'../championship_save_layout.json')));
 const producer = JSON.parse(fs.readFileSync(path.join(fixture,'report.json')));
 const card = fs.readFileSync(path.join(fixture,'original.card'));
@@ -75,6 +75,8 @@ async function displayed(page, action) {
           .map(([name,base,stride]) => [name,raw(base+i*stride)])))});
     if ('championship' in action) Object.assign(row,{championship:HEAP32[0x467bf4>>2],caption:raw(0x93e390),
       standings:Array.from({length:20},(_,i) => raw(0x93e3b0+i*32))});
+    if ('laps' in action) Object.assign(row,{laps:HEAP32[0x469560>>2],caption:text(0x4693e0),
+      records:Array.from({length:5},(_,i) => ({driver:raw(0x93feb0+i*32),time:raw(0x93ff50+i*32)}))});
     return row;
   },action);
 }
@@ -144,7 +146,7 @@ async function captureCycle(page, action) {
       for (const code of action.keys) await key(page,code);
       await ready(page,action.menu);
       const row = await displayed(page,action);
-      for (const name of ['driver','track','championship']) if (name in action) assert(row[name] === action[name], 'wrong '+name);
+      for (const name of ['driver','track','championship','laps']) if (name in action) assert(row[name] === action[name], 'wrong '+name);
       if ('label' in action) assert(row.label.includes(action.label), 'wrong selected statistics category');
       if (action.cycle) row.cycle = await captureCycle(page,action);
       report.checkpoints.push(row); console.log('Statistics checkpoint',row.name);
