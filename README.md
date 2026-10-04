@@ -1167,6 +1167,20 @@ make clean-logs
 Use a fresh output directory for each run. Callback observation can be combined
 with game-clock tracing; it is separate from the registration relay mode.
 
+One callback-capable reference run validates 100 actual callbacks against 987
+read-only original counter observations. Its chronological mixer comparison
+matches all 7,108,480 accepted PCM bytes on native, native ASan and WASM. That
+comparison still supplies recorded original controls to the mixer component.
+The actual native application baseline matches original clock-call positions
+at all 892 captured racing presentations, but its PCM differs at frame
+100,626: the first racing ambient source starts at frame 101,067 instead of
+100,626. Later it stops a source that the original timer has already cleared.
+The same reference contains 137 changed controls affecting a source mixed
+later within an already started primary block. These observations require
+service ordering within mixer blocks; the per-presentation device input does
+not establish full engine audio equivalence. Capture timings and the first
+remaining difference vary between runs.
+
 ```sh
 make clean-logs
 make verify-native-sdl-clock NATIVE_SDL_CLOCK_ARGS='--output /tmp/wasm-dd2/native-sdl-clock'
