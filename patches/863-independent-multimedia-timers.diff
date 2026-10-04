@@ -1,0 +1,198 @@
+Restore original application activation and independent multimedia timers.
+
+Unmodified dd2h.exe Wine relay observes ShowWindow -> WM_ACTIVATEAPP timer
+registration (return site 0x4133d8, ID 16), followed by Init_Application's
+registration (0x412a9d, ID 33). The old window shim emitted no activation,
+all registrations returned 1, and any cancellation stopped every timer.
+
+Use distinct live IDs and cancel only the requested timer. Deterministic
+and observed-device runs advance timers by elapsed sample time, including
+menus, instead of a fitted engine-frame phase. This fixes missing timer
+polling in observed-device mode; per-presentation device time remains coarse
+and does not establish original engine audio/control scheduling parity.
+
+--- a/dd2h_stubs.c
++++ b/dd2h_stubs.c
+@@ -126,27 +126,63 @@
+ int SetStdHandle(int a,int b){ (void)a;(void)b; return 0; }
+ int timeBeginPeriod(int a){ (void)a; return 0; }
+ int timeEndPeriod(int a){ (void)a; return 0; }
+-/* mm-timer: the game registers ONE periodic 400ms timer whose callback is the reconstructed
+-   FUN_0041345c (patch 730, drives Sound_Timer_). Deterministic driver: dd2_snd_mix_flip fires
+-   it every 10 engine frames (= 400ms at 25 engine fps) instead of wallclock. */
++/* Preserve the two independent game timers: ShowWindow activation registers
++   one, then Init_Application registers another. Original Wine relay observes
++   callers 0x4133d8 and 0x412a9d and IDs 16/33. Cancelling the stored second ID
++   must not cancel the first. The original callback is reconstructed in 730. */
+ int g_dd2_mmtimer_active = 0;
+-static unsigned dd2_timer_ms;
+-int timeKillEvent(int a){ (void)a; g_dd2_mmtimer_active = 0; return 0; }
+-int timeSetEvent(int a,int b,void* c,int d,int e){ (void)b;(void)c;(void)d;(void)e;
+-    if(a==400) { g_dd2_mmtimer_active = 1; dd2_timer_ms = dd2_platform_ms(); }
+-    return 1; }
+-
+-/* Interactive timer continues in menus and pause, where current_frame stays
+-   fixed. Deterministic demos retain the existing cf/phase-5 timer below. */
+-void dd2_mmtimer_poll(void) {
+-    unsigned now;
++typedef struct { unsigned id,period,last; } DD2MMTimer;
++static DD2MMTimer dd2_timers[16];
++static unsigned dd2_timer_generation;
++extern unsigned dd2_audio_ms(void);
++static unsigned dd2_mmtimer_ms(void){
++    return getenv("DD2_REALTIME") ? dd2_platform_ms() : dd2_audio_ms();
++}
++int timeKillEvent(int id){
++    unsigned i;
++    i=(unsigned)id%16;
++    if(dd2_timers[i].id==(unsigned)id){
++        if(dd2_timers[i].id)g_dd2_mmtimer_active--;
++        dd2_timers[i].id=0;return 0;
++    }
++    return 97; /* TIMERR_NOCANDO: an absent/stale ID cannot cancel another timer. */
++}
++int timeSetEvent(int period,int resolution,void* callback,int user,int flags){
++    unsigned i;
++    (void)resolution;(void)user;
++    /* The engine only requests its reconstructed periodic function callback. */
++    if(period<=0 || period>65535 || !callback || flags!=1)return 0;
++    for(i=0;i<16;i++)if(!dd2_timers[i].id){
++        dd2_timers[i].id=(16*(++dd2_timer_generation)+i)&0xffffu;
++        if(!dd2_timers[i].id)
++            dd2_timers[i].id=(16*(++dd2_timer_generation)+i)&0xffffu;
++        dd2_timers[i].period=(unsigned)period;
++        dd2_timers[i].last=dd2_mmtimer_ms();
++        g_dd2_mmtimer_active++;
++        return (int)dd2_timers[i].id;
++    }
++    return 0;
++}
++void dd2_mmtimer_poll(void){
++    static int polling;
++    unsigned now,i;
+     extern void FUN_0041345c(void);
+-    if (!getenv("DD2_REALTIME") || !g_dd2_mmtimer_active) return;
+-    now = dd2_platform_ms();
+-    while ((unsigned)(now-dd2_timer_ms) >= 400) {
+-        dd2_timer_ms += 400;
++    if(polling)return;
++    polling=1;now=dd2_mmtimer_ms();
++    for(;;){
++        int due=-1;unsigned oldest=0;
++        for(i=0;i<16;i++)if(dd2_timers[i].id){
++            unsigned elapsed=now-dd2_timers[i].last;
++            if(elapsed>=dd2_timers[i].period &&
++                    (due<0 || elapsed-dd2_timers[i].period>oldest)){
++                due=(int)i;oldest=elapsed-dd2_timers[i].period;
++            }
++        }
++        if(due<0)break;
++        dd2_timers[due].last+=dd2_timers[due].period;
+         FUN_0041345c();
+     }
++    polling=0;
+ }
+ 
+ #include <stdio.h>
+@@ -685,6 +721,7 @@
+     int realtime = getenv("DD2_REALTIME") != NULL;
+     int observed = ds_observed_load(rate);
+     static int mix_out = -1;
++    static unsigned timer_remainder;
+     if(ds_mixing)return;
+ #ifdef DD2_BROWSER
+     if(mix_out<0) mix_out = 1;            /* browser: always produce PCM for the WebAudio sink */
+@@ -714,7 +751,9 @@
+         if(last_cf<0){ last_cf=cf; return; }
+         dt=cf-last_cf; last_cf=cf;
+         if(dt<=0||dt>250) return;
+-        if(!getenv("DD2_SOUND") && !g_ds_music_buffers && !getenv("DD2_MIXPCM")) { dd2_audio_virtual_ms += (unsigned)dt*40; return; }
++        if(!getenv("DD2_SOUND") && !g_ds_music_buffers && !getenv("DD2_MIXPCM")) {
++            dd2_audio_virtual_ms += (unsigned)dt*40;dd2_mmtimer_poll();return;
++        }
+         pending=(uint64_t)dt*tick_frames;
+     }
+     ds_mixing=1;
+@@ -750,17 +789,15 @@
+ #endif
+         pending-=frames;
+         if(!realtime) dd2_audio_virtual_ms += 40;
+-        /* deterministic mm-timer: 400ms period = every 10 engine frames (patch 730 callback).
+-           Fired AFTER this tick's buffer advance -- the original's timer thread is asynchronous
+-           and sees playback positions of audio already played by the end of the tick. Phase 5:
+-           the original's fire phase is wallclock (registration time) with inherent one-period
+-           jitter; reconstructed from the sound-enabled reference (cf128/cf256 retriggers need
+-           their channel freed before cf128/cf256; the blocking one-shots exhaust at mixer
+-           tick 125/255 under our flip-quantized Play starts -- sub-tick start offsets shift
+-           end positions by <1 tick vs wallclock, so the phase absorbs that quantization). */
+-        { extern int g_dd2_mmtimer_active; extern void FUN_0041345c(void);
+-          int tick_cf = last_cf - dt + 1 + t;
+-          if(!getenv("DD2_REALTIME") && g_dd2_mmtimer_active && tick_cf % 10 == 5) FUN_0041345c(); }
++        if(observed){
++            uint64_t elapsed=(uint64_t)frames*1000+timer_remainder;
++            dd2_audio_virtual_ms+=(unsigned)(elapsed/rate);
++            timer_remainder=(unsigned)(elapsed%rate);
++        }
++        /* Replay timers follow elapsed audio/device time, including menus
++           whose engine counter stays fixed. Keep fractional sample time;
++           busy-wait GetTickCount calls do not advance this device clock. */
++        if(!getenv("DD2_REALTIME"))dd2_mmtimer_poll();
+     }
+     if(pf) fflush(pf);
+     if(mixed_capture)fflush(mixed_capture);
+--- a/dd2_win32.c
++++ b/dd2_win32.c
+@@ -1,17 +1,34 @@
+ /* Win32 USER32/GDI shim stubs with correct arg counts (WASM enforces call signatures).
+    All args i32 in wasm32; handle-returners give non-null, GetMessage=0 ends the loop. */
+ #include <stdio.h>
++#include <stdint.h>
+ #include "dd2_native.h"
+ #include "dd2_movie.h"
+ #include "dd2_movie_platform.h"
+-void* CreateWindowExA(int a,int b,int c,int d,int e,int f,int g,int h,int i,int j,int k,int l){ return (void*)1; }
++/* USER32 sends WM_ACTIVATEAPP while showing the registered RMPE window,
++   before Init_Application's explicit timer registration. */
++static int (*dd2_window_proc)(void*,unsigned,unsigned,unsigned);
++static int dd2_window_created,dd2_window_visible;
++void* CreateWindowExA(int a,int b,int c,int d,int e,int f,int g,int h,int i,int j,int k,int l){
++    dd2_window_created=1;dd2_window_visible=0;return (void*)1;
++}
+ void* CreateSolidBrush(int c){ return (void*)1; }
+ void* LoadCursorA(int a,int b){ return (void*)1; }
+ void* LoadIconA(int a,int b){ return (void*)1; }
+-int RegisterClassA(int a){ return 1; }
++int RegisterClassA(int a){
++    if(!a)return 0;
++    dd2_window_proc=*(int (**)(void*,unsigned,unsigned,unsigned))((uintptr_t)(unsigned)a+4);
++    return 1;
++}
+ int DefWindowProcA(int a,int b,int c,int d){ return 0; }
+ int DeleteObject(int a){ return 1; }
+-int DestroyWindow(int a){ return 1; }
++int DestroyWindow(int a){
++    if(a!=1 || !dd2_window_created)return 0;
++    if(dd2_window_visible && dd2_window_proc)dd2_window_proc((void*)1,0x1c,0,0);
++    dd2_window_visible=0;dd2_window_created=0;
++    if(dd2_window_proc)dd2_window_proc((void*)1,2,0,0);
++    return 1;
++}
+ int DispatchMessageA(int a){ return 0; }
+ int GetMessageA(int a,int b,int c,int d){ return 0; }
+ int MessageBoxA(int a,const char* text,const char* caption,int d){ (void)a;(void)d; fprintf(stderr,"[MessageBox] %s: %s\n",caption?caption:"",text?text:""); return 1; }
+@@ -22,7 +39,14 @@
+ }
+ void PostQuitMessage(int a){ }
+ int ShowCursor(int a){ return 0; }
+-int ShowWindow(int a,int b){ return 1; }
++int ShowWindow(int a,int b){
++    int previous=dd2_window_visible;
++    if(a!=1 || !dd2_window_created)return 0;
++    dd2_window_visible=b!=0;
++    if(previous!=dd2_window_visible && dd2_window_proc)
++        dd2_window_proc((void*)1,0x1c,(unsigned)dd2_window_visible,0);
++    return previous;
++}
+ int TranslateMessage(int a){ return 0; }
+ int UpdateWindow(int a){ return 1; }
+ int WaitMessage(void){ return 1; }

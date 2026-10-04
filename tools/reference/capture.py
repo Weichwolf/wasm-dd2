@@ -146,6 +146,8 @@ def main():
     parser.add_argument("--trace-cd", action="store_true")
     parser.add_argument('--trace-game-clock', action='store_true',
                         help='export actual engine GetTickCount returns through filtered Wine relay; audio mode only, no debugger')
+    parser.add_argument('--trace-multimedia-timer', action='store_true',
+                        help='observe original timer registrations and window activation through Wine relay; audio mode only')
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
     parser.add_argument("--keep-movie", action="store_true",
@@ -218,10 +220,12 @@ def main():
         parser.error("--audio-tail must be in [0,30] and requires --audio")
     if args.mode=="audio" and (not args.audio or args.audio_tail<=0):
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
-    if args.trace_game_clock:
+    if args.trace_game_clock or args.trace_multimedia_timer:
         if args.mode != 'audio':
-            parser.error('--trace-game-clock requires audio mode without debugger stops')
+            parser.error('clock/timer tracing requires audio mode without debugger stops')
         args.wine_debug += ',+timestamp,+relay'
+        if args.trace_multimedia_timer:
+            args.wine_debug += ',+mmtime'
     game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
     if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup", "history"))
@@ -331,9 +335,16 @@ def run(game, output, args):
                 link.symlink_to(target)
             settings = [(r"HKLM\Software\Wine\Drives", "d:", "cdrom"),
                         (r"HKCU\Software\Wine\Drivers", "Audio", "alsa")]
-            if args.trace_game_clock:
+            if args.trace_game_clock or args.trace_multimedia_timer:
+                relay = []
+                if args.trace_game_clock:
+                    relay.extend(['kernel32.GetTickCount', 'kernelbase.GetTickCount'])
+                if args.trace_multimedia_timer:
+                    relay.extend(['winmm.timeSetEvent', 'winmm.timeKillEvent', 'winmm.timeBeginPeriod',
+                                  'winmm.timeEndPeriod', 'user32.CreateWindowExA', 'user32.ShowWindow',
+                                  'user32.UpdateWindow'])
                 settings.extend([(r'HKCU\Software\Wine\Debug', 'RelayInclude',
-                                  'kernel32.GetTickCount;kernelbase.GetTickCount'),
+                                  ';'.join(relay)),
                                  (r'HKCU\Software\Wine\Debug', 'RelayFromInclude', 'dd2h.exe')])
             for key, value, data in settings:
                 subprocess.run(["wine", "reg", "add", key, "/v", value, "/t", "REG_SZ", "/d", data, "/f"],

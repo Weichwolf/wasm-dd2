@@ -1091,6 +1091,46 @@ also reaches level 9/cf404 with identical original clock-call positions at all
 89,161; per-presentation device input and multimedia timer scheduling need
 further comparison. This is not racing audio/video acceptance.
 
+Patch 863 restores the original game-window activation and its independent
+multimedia timers. An undebugged original relay records `ShowWindow` calling
+`timeSetEvent` at return site `0x4133d8` (ID 16), before `Init_Application`
+registers another at `0x412a9d` (ID 33). Cancelling the stored second ID leaves
+the first running. The previous USER32 shim emitted no activation, collapsed
+all timer IDs to 1 and cancelled all timers together. Recorded-device mode
+also skipped the timer, leaving completed one-shot channels occupied.
+
+Timers now follow elapsed real or audio-device time, including menus with a
+fixed engine frame counter, and preserve fractional sample time. The old
+fitted frame-counter phase is removed. The registration trace and
+[Wine 10 timer implementation](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/winmm/time.c)
+establish separate IDs, cancellation and WORD-sized generation behavior.
+The transport fixture tests production USER32/timer/mixer code on native,
+native ASan and WASM: staggered deadlines across clock wrap, independent
+cancellation/reactivation, WORD ID wrap, reentrant polling and fixed-menu-frame
+observed sample progress. It also rejects the previous timer implementation,
+missing USER32 activation, skipped replay polling and six damaged original
+registration traces.
+
+The actual native application diagnosis now matches the first 1,156 mono
+sound control calls at their original presentation positions, compared with
+five before this correction. Later source-control timing and full PCM still
+differ; the observed device input currently has only presentation resolution.
+This is not full engine audio/video acceptance. Reproduce timer evidence and
+transport checks with a fresh capture:
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode audio --audio --trace-cd \
+  --trace-multimedia-timer --audio-tail 20 --timeout 120 \
+  --wine-debug=-all,+dsound,+ddraw --output /tmp/wasm-dd2/original-timers
+make verify-multimedia-timers MULTIMEDIA_TIMER_ARGS='--original /tmp/wasm-dd2/original-timers --output /tmp/wasm-dd2/timer-transport'
+make clean-logs
+```
+
+`--trace-multimedia-timer` can also be combined with `--trace-game-clock`.
+Relay timestamps and tracing overhead remain explicit input limitations;
+registration evidence does not observe every timer callback.
+
 ```sh
 make clean-logs
 make verify-native-sdl-clock NATIVE_SDL_CLOCK_ARGS='--output /tmp/wasm-dd2/native-sdl-clock'
