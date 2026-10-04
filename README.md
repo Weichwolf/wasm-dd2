@@ -624,8 +624,32 @@ buffer bit. `BROWSER_RESTART_OUTPUT=<empty dir>` retains its report/source/PNG.
 Both checks exercise a fractional stopped sector, so the preceding incorrect
 sample-cursor restart cannot pass merely by stopping at an aligned sector.
 `node tools/browser/qa_redbook.js web/dd2`
-navigates the CD-player menu with real keyboard input, checks Play/Stop/Next/Prev,
-and compares the submitted WebAudio buffers from tracks 2/3 with their CDDA files.
+navigates the production CD-player menu with acknowledged synthetic DOM keys,
+checks Play/Stop/Next/Prev and both selection boundaries, and compares fresh
+source prefixes from all 17 selectable physical tracks (2 through 18) with
+their CDDA files. Every submitted shared WebAudio buffer must also match the
+combined C mixer bit for bit, without a second audio sink. The original
+executable's actual Next action at `0x452230` supplies the maximum selection
+index of 16; the verifier records its bytes and the original/build hashes.
+Physical track 19 is covered by the full backend check above, but is not
+selectable in the original CD-player menu. `--tracks=18` selects a smaller
+diagnostic run while retaining the track 2/3 control sequence; adding
+`--deny-track=18` serves that file as HTTP 404 to check rejection of missing
+audio. These options follow the build directory and output directory:
+
+```sh
+make clean-logs
+node tools/browser/qa_redbook.js web/dd2 /tmp/wasm-dd2/browser-redbook-menu
+make clean-logs
+```
+
+The complete menu run passed in
+`/tmp/wasm-dd2/browser-redbook-882-work/all-menu/report.json`: 5,477,396 exact
+source PCM bytes across 17 prefixes and 11,175 exact shared WebAudio buffers.
+The separate missing-track run against the same build rejected track 18's
+HTTP 404, left playback stopped, and retained its failure report in
+`/tmp/wasm-dd2/browser-redbook-882-work/unavailable-track/report.json`.
+Successful raw PCM and screenshots are removed after writing the report.
 These checks establish exact source PCM and exercised controls. They do not yet
 establish mixed hardware-output parity or original pause/resume timing.
 
