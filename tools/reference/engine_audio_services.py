@@ -140,14 +140,26 @@ def export(capture,mixer,output):
                 while call_index<clock['calls'] and struct.unpack_from('<I',mem,16+call_index*32+20)[0]<e['line']:call_index+=1
                 e['clock_calls']=call_index;e['flip']=event_flip[e['line']]
                 if e['flip'] is None:raise ValueError('Missing original event presentation position')
-    # The bounded capture has no main-thread sound control nested in a callback.
-    # Reject a trace that would require two independently suspended C callers.
-    inside=None
+    # Preserve both callers in the literal order. The production service
+    # scheduler keeps the callback continuation while main APIs execute.
+    # Reject malformed contexts and overlapping timer callbacks; neither a
+    # recorded status nor an API value substitutes for either caller's work.
+    inside=None;interleaved=[]
     for e in events:
-        if e['kind']==30:inside=e['source']
-        elif e['kind']==31:inside=None
-        elif inside and (1<=e['kind']<=12 or e['kind']==32) and e['context']!=inside:
-            raise ValueError('Concurrent main sound API inside callback requires additional caller scheduling')
+        if e['kind']==30:
+            if inside or e['context'] or not e['source']:
+                raise ValueError('Overlapping or malformed original callback begin')
+            inside=e['source']
+        elif e['kind']==31:
+            if not inside or e['source']!=inside or e['context']!=inside:
+                raise ValueError('Original callback end/context differs')
+            inside=None
+        else:
+            if e['context'] and e['context']!=inside:
+                raise ValueError('Original API outside its callback context')
+            if inside and (1<=e['kind']<=12 or e['kind']==32) and not e['context']:
+                interleaved.append(dict(line=e['line'],kind=e['kind'],source=e['source'],callback=inside))
+    if inside:raise ValueError('Unreturned original callback')
     device=proof['original_device'];accepted=device['accepted_frames']
     header=struct.pack('<8s8I',b'DD2AS01\0',44100,len(events),2,proof['probe_frames'],accepted&0xffffffff,accepted>>32,clock['calls'],flip)
     body=b''.join(ROW.pack(e['kind'],e['source'],*(list(x&0xffffffff for x in e['args'])+[0]*6)[:6],e['flip'],e['clock_calls'],e['context'],e['line']) for e in events)
@@ -156,6 +168,7 @@ def export(capture,mixer,output):
                 original_exe_sha256=proof['original_exe_sha256'],mixer_component_report=str(mixer/'report.json'),
                 clock_sha256=clock['ticks_sha256'],events=len(events),sources=len(timeline['sources']),
                 frames=accepted,probe_frames=proof['probe_frames'],callbacks=sum(e['kind']==30 for e in events),
+                interleaved_main_apis=interleaved,
                 assertions='API arguments/status/cursors/gains are checked; never applied from the input',
                 port_comparison='pending')
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')

@@ -1480,6 +1480,38 @@ track are checked as separate storage representations. Interactive playback
 uses its existing clock path; this input does not establish interactive timing
 or other scenarios' audio/video equivalence.
 
+Patch 869 extends that comparison input to main-thread sound APIs inside a
+timer callback's observed lifetime. The real original replay contains SetPan,
+SetVolume and SetFrequency between a callback's begin and its GetStatus call.
+The exporter retains all three operations and both callback markers in their
+literal order, with the same trace/clock provenance. Overlapping callbacks,
+unknown contexts and unmatched begin/end records reject.
+
+The port preserves the executing callback's own C continuation while the main
+engine supplies intervening calls. Native uses `ucontext` with ASan stack-switch
+annotations; browser builds use
+[Emscripten fibers and Asyncify](https://emscripten.org/docs/api_reference/fiber.h.html).
+Inputs without interleaving retain the existing inline callback path. The
+synchronous Node build rejects interleaved service inputs explicitly; the
+focused WASM test enables fibers with `DD2_AUDIO_FIBERS` and Asyncify.
+
+`verify-audio-callback-interleave` checks 512 callback executions per native,
+ASan and WASM target. Its four controlled sequences exercise suspension before
+and between callback APIs and before callback completion. Main and nested
+callback locals must survive, every callback must execute exactly once, and
+playback statuses must follow the port's own stop/play operations. Fifteen
+damaged API/status/context cases reject; the prior inline scheduler also fails
+on native and WASM. These are scheduling tests, not a complete replay-engine
+PCM comparison. The actual startup/attract PCM regression remains a separate
+check; complete replay keyboard scheduling and chronological engine PCM are
+still required.
+
+```sh
+make clean-logs
+make verify-audio-callback-interleave AUDIO_CALLBACK_INTERLEAVE_ARGS='--output /tmp/wasm-dd2/callback-interleave-check'
+make clean-logs
+```
+
 One actual startup/frontend/level-9 attract window now passes on native,
 native ASan and the browser: 16,889 observed services, 98 source lifetimes and
 100 callbacks produce all 7,108,480 accepted PCM bytes and the 7,094,376-byte

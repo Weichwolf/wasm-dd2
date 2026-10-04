@@ -74,10 +74,18 @@ def mutations(raw):
     yield 'play-presentation',changed(find(8),8),'engine API clock/presentation position differs'
     yield 'source-cursor',changed(mono_mix,2),'independently advanced source cursor/loop differs'
     yield 'source-gain',changed(mono_mix,4),'engine-calculated mix gain differs'
-    yield 'callback-id',changed(callback,1,1),'callback has no live engine timer'
+    callback_end=next(i for i in range(callback+1,len(records)) if records[i][0]==31)
+    rows=[list(row) for row in records];wrong_id=rows[callback][1]+1
+    rows[callback][1]=wrong_id
+    for i in range(callback+1,callback_end+1):
+        if rows[i][10]:rows[i][10]=wrong_id
+    rows[callback_end][1]=wrong_id
+    yield 'callback-id',raw[:40]+b''.join(ROW.pack(*row) for row in rows),'callback has no live engine timer'
     rows=[row for i,row in enumerate(records) if i!=callback]
     header=bytearray(raw[:40]);struct.pack_into('<I',header,12,len(rows))
-    yield 'missing-callback',bytes(header)+b''.join(ROW.pack(*row) for row in rows),'engine API clock/presentation position differs'
+    reason=('API outside its callback context' if any(row[10] for row in records[callback+1:callback_end])
+            else 'unmatched callback end')
+    yield 'missing-callback',bytes(header)+b''.join(ROW.pack(*row) for row in rows),reason
 
 def verify(args):
     output=prepare_output(args.output)
