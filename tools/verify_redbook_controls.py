@@ -15,6 +15,8 @@ import subprocess
 import sys
 import tempfile
 from verify_sound_cursor import wine_probe
+from artifacts import WORK, check_space
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/redbook_controls_test.c"
@@ -29,6 +31,7 @@ def main():
     parser.add_argument("--wine", action="store_true")
     parser.add_argument("--mingw", default="i686-w64-mingw32-gcc")
     parser.add_argument("--output", type=Path)
+    add_backend_arguments(parser)
     args = parser.parse_args()
     env = {k: v for k, v in os.environ.items() if not k.startswith("DD2_")}
     game = ROOT / "DestructionDerby2"
@@ -41,10 +44,10 @@ def main():
     report = {"scope": __doc__, "records": expected,
               "fixture_source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
               "targets": []}
-    with tempfile.TemporaryDirectory(prefix="dd2-cd-controls-") as tmp:
+    WORK.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="redbook-cd-controls-", dir=WORK) as tmp:
         directory = Path(tmp)
-        output = args.output.resolve() if args.output else directory / "results"
-        output.mkdir(parents=True, exist_ok=False)
+        output = output_directory(args, directory)
         if args.wine:
             executable = output / "controls.exe"
             subprocess.run([args.mingw, "-Wall", "-Wextra", "-Werror", str(SOURCE),
@@ -64,14 +67,7 @@ def main():
             print("PASS real Wine: all 11 drained/live MCI transport records", flush=True)
         subprocess.run([sys.executable, str(ROOT / "tools/generate_cd_toc.py"),
                         str(game / "Redbook/disc.json"), str(directory / "dd2_disc.h")], check=True)
-        common = ["-std=gnu99", "-w", "-DDD2_NO_FOPEN_WRAP", "-ffunction-sections", "-fdata-sections",
-                  f"-I{directory}", f"-I{ROOT / 're_out'}", str(ROOT / "re_out/dd2_cd.c"),
-                  str(ROOT / "re_out/dd2h_stubs.c"), str(SOURCE), "-Wl,--gc-sections"]
-        native, wasm = directory / "native", directory / "wasm.js"
-        subprocess.run(["gcc", "-m32", "-no-pie", *common, "-o", str(native)], check=True)
-        subprocess.run([args.emcc, *common, "-sNODERAWFS=1", "-sEXIT_RUNTIME=1",
-                        "-sGLOBAL_BASE=10485760", "--pre-js", str(ROOT / "tools/node_env.js"),
-                        "-o", str(wasm)], check=True)
+        backends, report["backend"] = compile_backends(args, directory, SOURCE, game)
         raw = (game / "Redbook/track02.cdda").read_bytes()
         short = raw[6*44100*4:6*44100*4+8*2352]
         source = short + raw[:7938*4]
@@ -86,14 +82,15 @@ def main():
         report["controlled_source_sha256"] = hashlib.sha256(source).hexdigest()
         report["controlled_mixed_pcm_bytes"] = len(mixed)
         report["controlled_mixed_sha256"] = hashlib.sha256(mixed).hexdigest()
-        for target, command in (("native", [str(native)]), ("wasm", [args.node, str(wasm)])):
+        for target, command in backends:
             capture = output / f"{target}.pcm"
             device = output / f"{target}-mixed.pcm"
             music = output / f"{target}-music.pcm"
             result = subprocess.run(command, env={**env, "DD2_CDPCM": str(capture),
                                     "DD2_MIXPCM": str(device), "DD2_MUSICPCM": str(music)},
                                     capture_output=True, text=True, timeout=30)
-            if result.returncode:
+            check_space(output)
+            if result.returncode or "AddressSanitizer" in result.stderr or "runtime error:" in result.stderr:
                 raise RuntimeError(f"{target} failed ({result.returncode}): {result.stderr}")
             actual = json.loads(result.stdout)
             (output / f"{target}-records.json").write_text(json.dumps(actual, indent=2)+"\n")
@@ -110,7 +107,7 @@ def main():
             report["targets"].append(target)
             print(f"PASS {target}: 11 transport records, {len(source)} source and "
                   f"{len(mixed)} complete mixed/music PCM bytes exact", flush=True)
-        (output / "report.json").write_text(json.dumps(report, indent=2)+"\n")
+        finish_report(output, report, args.clean)
 
 
 if __name__ == "__main__":

@@ -51,6 +51,9 @@ def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type n
             return json.loads(result.stdout)
         finally:
             subprocess.run(["wineserver", "-k"], env=env, stdout=log, stderr=log, timeout=10)
+            # Component verifiers may remove this private prefix immediately
+            # afterward; wait until its server and clients release their files.
+            subprocess.run(["wineserver", "-w"], env=env, stdout=log, stderr=log, timeout=10, check=True)
             display.terminate()
             display.wait(timeout=5)
 

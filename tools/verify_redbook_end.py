@@ -18,6 +18,8 @@ import subprocess
 import sys
 import tempfile
 from verify_sound_cursor import wine_probe
+from artifacts import WORK, check_space
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT=Path(__file__).resolve().parent.parent
 SOURCE=ROOT/"tools/redbook_end_test.c"
@@ -81,6 +83,7 @@ def main():
     parser.add_argument("--emcc",default="emcc")
     parser.add_argument("--node",default="node")
     parser.add_argument("--output",type=Path)
+    add_backend_arguments(parser)
     args=parser.parse_args()
     game=ROOT/"DestructionDerby2"
     env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
@@ -99,10 +102,10 @@ def main():
             "initial_wait_ms":200,"range_wait_ms":1500},"targets":[],
             "fixture_source_sha256":hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
             "controlled_source_pcm_bytes":len(source),"controlled_mix_pcm_bytes":len(mixed)}
-    with tempfile.TemporaryDirectory(prefix="dd2-cd-end-") as tmp:
+    WORK.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="redbook-cd-end-", dir=WORK) as tmp:
         directory=Path(tmp)
-        output=args.output.resolve() if args.output else directory/"results"
-        output.mkdir(parents=True,exist_ok=False)
+        output = output_directory(args, directory)
         if args.wine:
             executable=output/"end.exe"
             subprocess.run([args.mingw,"-Wall","-Wextra","-Werror",str(SOURCE),
@@ -143,18 +146,13 @@ def main():
                   f"short_stop_delayed={report['wine']['short_range_stop_delayed']}",flush=True)
         subprocess.run([sys.executable,str(ROOT/"tools/generate_cd_toc.py"),str(game/"Redbook/disc.json"),
                         str(directory/"dd2_disc.h")],check=True)
-        common=["-std=gnu99","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
-                f"-I{directory}",f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2_cd.c"),
-                str(ROOT/"re_out/dd2h_stubs.c"),str(SOURCE),"-Wl,--gc-sections"]
-        native,wasm=directory/"native",directory/"wasm.js"
-        subprocess.run(["gcc","-m32","-no-pie",*common,"-o",str(native)],check=True)
-        subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
-                        "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
-        for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
+        backends, report["backend"] = compile_backends(args, directory, SOURCE, game)
+        for target,command in backends:
             pcm=output/f"{target}-source.pcm";mix=output/f"{target}-mixed.pcm"
             run=subprocess.run(command,env={**env,"DD2_CDPCM":str(pcm),"DD2_MIXPCM":str(mix)},
                                capture_output=True,text=True,timeout=30)
-            if run.returncode or json.loads(run.stdout)!=expected:
+            check_space(output)
+            if run.returncode or "AddressSanitizer" in run.stderr or "runtime error:" in run.stderr or json.loads(run.stdout)!=expected:
                 raise RuntimeError(f"{target}: controlled finite-range records differ: {run.stdout} {run.stderr}")
             if pcm.read_bytes()!=source or mix.read_bytes()!=mixed:
                 raise RuntimeError(f"{target}: complete CD source or mixed stream differs")
@@ -164,7 +162,7 @@ def main():
             (output/f"{target}-records.json").write_text(run.stdout)
             report["targets"].append(target)
             print(f"PASS {target}: eight complete ranges, {len(source)} source and {len(mixed)} mixed bytes exact",flush=True)
-        (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
+        finish_report(output, report, args.clean)
 
 
 if __name__=="__main__":

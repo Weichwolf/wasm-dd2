@@ -572,6 +572,15 @@ make clean-logs
 
 The verified report is `/tmp/wasm-dd2/redbook-full-disc-880-shared/report.json`;
 successful raw PCM was removed after writing it.
+
+The controls, restart and finite-range verifiers also compile the patched
+`build/` backend at `-O2` for native, native ASan and Node/WASM. Their reports
+record the fixture, backend sources, generated disc TOC and executable hashes.
+`--source-root` selects another prepared backend; `--clean` deletes successful
+port and Wine raw PCM after writing the report. Temporary builds, private Wine
+prefixes and captures stay under `/tmp/wasm-dd2/`. Wine's private server is
+waited out before its prefix or capture files are removed.
+
 `make verify-redbook-controls` checks drained/live Pause/Resume and repeated
 controls against 11 transport-state records and 50568 exact source PCM bytes.
 Both complete mixed/music streams also match 515088 exact Float32 bytes,
@@ -589,6 +598,24 @@ also captures Wine's actual mixer with an explicit hardware Q snapshot. Both
 literal source starts must match byte for byte; altered PCM and the old
 within-sector restart are rejected. Queued control edges and the live game's
 transport clock remain outside this fixture's proof.
+
+The production-backend checks and actual Wine probes passed in
+`/tmp/wasm-dd2/redbook-{controls,restart,end}-881-wine/report.json`.
+The finite-range probe reports Wine's missing tails and delayed short-range
+stop explicitly; these driver observations do not establish complete
+Wine/port range or game audio parity. To repeat the component checks with a
+fresh output directory for each run:
+
+```sh
+make clean-logs
+make verify-redbook-controls REDBOOK_CONTROLS_ARGS='--wine --output /tmp/wasm-dd2/redbook-controls --clean'
+make verify-redbook-restart REDBOOK_RESTART_ARGS='--wine --output /tmp/wasm-dd2/redbook-restart --clean'
+make verify-redbook-end REDBOOK_END_ARGS='--wine --output /tmp/wasm-dd2/redbook-end --clean'
+make clean-logs
+```
+
+Use `--mingw <32-bit compiler>` if the compiler is outside `PATH`.
+
 Native window QA also pauses/resumes a real race through X11, checks the
 public sector and actual resumed source bytes, and verifies the accepted SDL
 mix. `make verify-browser-redbook-restart` checks the live browser keyboard
