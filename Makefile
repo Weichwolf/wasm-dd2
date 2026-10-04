@@ -120,6 +120,13 @@ verify-championship-save: ## generate/compare actual original championship cards
 capture-browser-championship-save: ## load an original championship card through production IDBFS and real keys; BROWSER_CHAMPIONSHIP_SAVE_ARGS required
 	node $(ROOT)/tools/browser/capture_championship_save.js $(BROWSER_CHAMPIONSHIP_SAVE_ARGS)
 
+.PHONY: verify-original-replay capture-browser-original-replay
+verify-original-replay: ## generate/compare real original replay cards and natural playback; ORIGINAL_REPLAY_ARGS required
+	python3 $(ROOT)/tools/verify_original_replay.py $(ORIGINAL_REPLAY_ARGS)
+
+capture-browser-original-replay: ## load a real original replay through IDBFS and trusted keys; BROWSER_ORIGINAL_REPLAY_ARGS required
+	node $(ROOT)/tools/browser/capture_original_replay.js $(BROWSER_ORIGINAL_REPLAY_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 

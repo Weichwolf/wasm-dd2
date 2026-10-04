@@ -978,6 +978,34 @@ make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='compare --fixture /tmp/was
 make clean-logs
 ```
 
+The original-replay check records an actual Stock Car practice run with car 1
+on track 1 in the unmodified original, holds acceleration after the countdown,
+then uses Retire / Yes and Save Replay to create a real `0x2020` card. All
+7,206 payload bytes must match the original's live metadata, recorded input
+tape and car order. Original, native, AddressSanitizer and browser captures
+start with that same complete card as a file input. The browser seeds IndexedDB
+before engine startup and uses trusted Playwright keys and normal IDBFS loading.
+
+Loading through File Manager must restore every replay metadata field, the
+complete input tape and car order, apply recorded acceleration after the
+countdown, reach the tape terminal naturally, and restore the prior frontend
+choices. The complete card must remain unchanged. Two selected card-menu cycles
+compare all 128 framebuffers and palettes per target; the browser also checks
+the actual canvas pixels. Changed metadata, missing acceleration, premature
+completion, changed tape/order/settings/card state and changed pixels/palettes
+are rejected. These checks cover this actual replay save/load route; complete
+chronological racing video/PCM, every tape and replay controls remain open.
+
+```sh
+make clean-logs
+make verify-original-replay ORIGINAL_REPLAY_ARGS='generate --output /tmp/wasm-dd2/replay-fixture'
+make verify-original-replay ORIGINAL_REPLAY_ARGS='capture --target original --fixture /tmp/wasm-dd2/replay-fixture --output /tmp/wasm-dd2/replay-original'
+make verify-original-replay ORIGINAL_REPLAY_ARGS='capture --target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/replay-fixture --reference /tmp/wasm-dd2/replay-original --output /tmp/wasm-dd2/replay-native'
+make capture-browser-original-replay BROWSER_ORIGINAL_REPLAY_ARGS='web/dd2 /tmp/wasm-dd2/replay-browser /tmp/wasm-dd2/replay-fixture /tmp/wasm-dd2/replay-original'
+make verify-original-replay ORIGINAL_REPLAY_ARGS='compare --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/replay-original --native /tmp/wasm-dd2/replay-native --browser /tmp/wasm-dd2/replay-browser --report /tmp/wasm-dd2/replay-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie
