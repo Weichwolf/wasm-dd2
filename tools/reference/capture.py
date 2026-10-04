@@ -38,12 +38,12 @@ def original_pid(prefix):
     return None
 
 
-def state(pid):
+def state(pid,observe_timers=False):
     with open(f"/proc/{pid}/mem", "rb", buffering=0) as memory:
         def read(address, size):
             memory.seek(address)
             return memory.read(size)
-        return {"pid": pid, "level": struct.unpack("<i", read(0x936FF4, 4))[0],
+        result = {"pid": pid, "level": struct.unpack("<i", read(0x936FF4, 4))[0],
                 "cf": struct.unpack("<i", read(0x462FF0, 4))[0],
                 "screen": read(0x460005, 1)[0],
                 "screen_diagnostic": "byte of cached CLUT pointer; not a screen identifier",
@@ -52,6 +52,10 @@ def state(pid):
                 "cd": {name: struct.unpack("<I", read(address, 4))[0] for name,address in
                        (("enabled",0x462d74),("playing",0x462d70),("from",0x74f174),("to",0x74f178))},
                 "movie": struct.unpack("<i", read(0x462CD4, 4))[0]}
+        if observe_timers:
+            result['timer']={name:struct.unpack('<I',read(address,4))[0] for name,address in
+                             [('stored_id',0x460474),('fires',0x460484)]}
+        return result
 
 
 def menu_ready(current):
@@ -148,6 +152,8 @@ def main():
                         help='export actual engine GetTickCount returns through filtered Wine relay; audio mode only, no debugger')
     parser.add_argument('--trace-multimedia-timer', action='store_true',
                         help='observe original timer registrations and window activation through Wine relay; audio mode only')
+    parser.add_argument('--trace-timer-callbacks',action='store_true',
+                        help='observe actual original callbacks through a forwarding Wine API observer; audio mode only, logging changes timing')
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
     parser.add_argument("--keep-movie", action="store_true",
@@ -226,6 +232,10 @@ def main():
         args.wine_debug += ',+timestamp,+relay'
         if args.trace_multimedia_timer:
             args.wine_debug += ',+mmtime'
+    if args.trace_timer_callbacks:
+        if args.mode!='audio' or args.trace_multimedia_timer:
+            parser.error('--trace-timer-callbacks requires audio mode; registration relay and forwarding observer are separate modes')
+        args.wine_debug+=',+timestamp,+debugstr'
     game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
     if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup", "history"))
@@ -252,6 +262,14 @@ def main():
             check_space(output)
             print('Original engine clock captured without debugger:', clock['calls'],
                   'returns,', clock['completed_flips'], 'presentations', flush=True)
+        if args.trace_timer_callbacks:
+            from timer_callbacks import original_report
+            if original_pid(WORK/'prefix') is not None:
+                raise RuntimeError('Original still running after scoped callback capture')
+            callbacks=original_report(output,game/'dd2h.exe',allow_terminal=True)
+            (output/'timer-callbacks.json').write_text(json.dumps(callbacks,indent=2)+'\n')
+            print('Original callbacks observed:',len(callbacks['completed_callbacks']),
+                  'with',len(callbacks['counter_checks']),'read-only counter checks',flush=True)
 
 
 def run(game, output, args):
@@ -264,6 +282,10 @@ def run(game, output, args):
         raise RuntimeError("A reference is already running in this private Wine prefix")
     rundir = WORK / "game"
     rundir.mkdir(exist_ok=True)
+    for name in ('winmm.dll','winmm_real.dll','_winmm_real.dll'):
+        previous=rundir/name
+        if previous.is_symlink():previous.unlink()
+        elif previous.exists():raise RuntimeError('Unexpected previous timer observer file: '+str(previous))
     for file in game.iterdir():
         destination = rundir / file.name
         if file.name == "SaveGames":
@@ -296,6 +318,16 @@ def run(game, output, args):
             alsa.write_text(f'pcm_type.dd2clock {{ lib {library} }}\npcm.!default {{ type dd2clock }}\n')
     if args.trace_cd:
         env["DD2_CD_TRACE"] = "1"
+    if args.trace_timer_callbacks:
+        from timer_observer import build
+        observer=WORK/'timer-observer'
+        metadata=build(observer)
+        (output/'timer-observer-build.json').write_text(json.dumps(metadata,indent=2)+'\n')
+        shutil.copyfile(observer/'winmm.dll',output/'timer-observer.dll')
+        for name in ('winmm.dll','_winmm_real.dll'):
+            (rundir/name).symlink_to(observer/name)
+        env['WINEDLLOVERRIDES']='winmm=n;_winmm_real=n'
+        env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
     wine = None
     xserver = None
     engine_log = (output / "audio/engine.jsonl").open("x") if args.audio else None
@@ -305,10 +337,15 @@ def run(game, output, args):
         # atomic snapshots or a claim to have sampled every engine frame.
         check_space(output)
         before = time.monotonic_ns()
-        current = state(pid)
+        raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
+        current = state(pid,observe_timers=args.trace_timer_callbacks)
+        raw_after = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
         after = time.monotonic_ns()
         if engine_log:
             engine_log.write(json.dumps({"read_begin_ns": before, "read_end_ns": after,
+                                         **({'qpc_clock':'CLOCK_MONOTONIC_RAW',
+                                             'read_begin_raw_ns':raw_before,'read_end_raw_ns':raw_after}
+                                            if args.trace_timer_callbacks else {}),
                                          **current}) + "\n")
             engine_log.flush()
         return current

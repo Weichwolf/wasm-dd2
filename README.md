@@ -1131,6 +1131,42 @@ make clean-logs
 Relay timestamps and tracing overhead remain explicit input limitations;
 registration evidence does not observe every timer callback.
 
+For actual callback ordering, `--trace-timer-callbacks` builds a private
+forwarding `winmm.dll` with clang, lld-link and llvm-dlltool. All 189 installed
+Wine exports retain their names/ordinals; only `timeSetEvent` and
+`timeKillEvent` are wrapped. The installed Wine implementation executes the
+real timers and each original callback retains its arguments. Every backend
+section byte is unchanged. The private backend copy only neutralizes the
+16-byte Wine builtin marker in its non-executable DOS stub so it can load
+under an alias. The game executable is unchanged. The observer is scoped to
+the private reference Wine process.
+
+Binary records and inline trace markers identify callback begin/end among
+sound API and mixer calls. Read-only observations of the original callback
+counter are bracketed with `CLOCK_MONOTONIC_RAW`, the Linux Wine QPC domain
+([Wine source](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/ntdll/unix/sync.c)).
+The existing audio observations retain their separate `CLOCK_MONOTONIC`
+intervals. No offset is fitted and no engine state is written. The verifier
+checks each counter against completed/started callbacks, direct Wine and
+observer timer probes, callback arguments, independent cancellation, all
+forwarder targets and deliberately damaged journals, markers and counters.
+Logging changes timing; these are original service observations, not complete
+port audio/video acceptance. Controls can change between individual sources
+inside one original mix block, so a per-presentation device clock alone is
+insufficient for the full audio comparison.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode audio --audio --trace-cd \
+  --trace-game-clock --trace-timer-callbacks --audio-tail 20 --timeout 120 \
+  --wine-debug=-all,+dsound,+ddraw --output /tmp/wasm-dd2/original-callbacks
+make verify-original-timer-callbacks ORIGINAL_TIMER_CALLBACK_ARGS='--capture /tmp/wasm-dd2/original-callbacks --output /tmp/wasm-dd2/callback-verification'
+make clean-logs
+```
+
+Use a fresh output directory for each run. Callback observation can be combined
+with game-clock tracing; it is separate from the registration relay mode.
+
 ```sh
 make clean-logs
 make verify-native-sdl-clock NATIVE_SDL_CLOCK_ARGS='--output /tmp/wasm-dd2/native-sdl-clock'

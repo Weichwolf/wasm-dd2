@@ -87,6 +87,10 @@ verify-native-sdl-clock: patch ## verify recorded/live clocks through actual SDL
 verify-multimedia-timers: patch ## verify original activation/independent timer lifetimes in native/ASan/WASM; MULTIMEDIA_TIMER_ARGS required
 	python3 $(ROOT)/tools/verify_multimedia_timers.py $(MULTIMEDIA_TIMER_ARGS)
 
+.PHONY: verify-original-timer-callbacks
+verify-original-timer-callbacks: ## verify forwarding observer and original callback counters; ORIGINAL_TIMER_CALLBACK_ARGS required
+	python3 $(ROOT)/tools/verify_original_timer_callbacks.py $(ORIGINAL_TIMER_CALLBACK_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 
