@@ -991,6 +991,37 @@ Automatically recorded original raw PCM is also removed after successful
 comparison; recordings supplied with `--capture` belong to the caller. Failed
 recordings remain available for diagnosis.
 
+Patch 861 preserves the fractional source cursor when duplicating a sound.
+The actual Wine original copies freqAccNum and resets only the integral cursor
+and playback state. Resetting the fraction made a naturally duplicated racing
+collision sound advance to byte 158 instead of 159 under the same controls.
+`verify-original-race-audio` replays actual source lifetimes, duplication,
+seeks, changing pan/volume/frequency, CD sector/ring writes and primary block
+extents through the production source mixer. Original cursor and gain values
+are assertions, with no waveform alignment or cursor/phase injection.
+Changed controls are ordered by their actual locked Recalc completion, rather
+than the earlier API-entry log. The virtual CD observer records each successful
+read's sector range and monotonic interval when `--trace-cd` is enabled.
+
+The bounded original menu-to-level-9 run, including CD13 to CD10 and a played
+duplicate, matches all 10,864,208 accepted PCM bytes on native, native ASan and
+WASM. All 1,356,263 independently consumed stereo frames also match; empty-FIFO
+underrun/reset boundaries and queued samples stay explicit. Both ports reject
+the old zero duplicate phase. The report is
+`/tmp/wasm-dd2/race-mixer-861-components-final/report.json`. This is a mixer
+component comparison using original controls and sectors, not identical-input
+engine scheduling, browser sink timing or full game A/V parity. The capture
+must reach the race and exercise a naturally played duplicate.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode audio --audio --trace-cd \
+  --audio-tail 30 --timeout 120 --wine-debug=-all,+timestamp,+dsound \
+  --output /tmp/wasm-dd2/fresh-original-race-audio
+make verify-original-race-audio ORIGINAL_RACE_AUDIO_ARGS='--capture /tmp/wasm-dd2/fresh-original-race-audio --output /tmp/wasm-dd2/fresh-race-mixer'
+make clean-logs
+```
+
 The full application startup can also be observed without writing engine state:
 
 ```sh

@@ -1,0 +1,19 @@
+Original Wine 10 IDirectSoundBufferImpl_Duplicate copies the source buffer
+including freqAccNum, then resets state and sec_mixpos. RecalcFormat keeps
+that fractional phase at the same device rate. The port previously reset
+phase through calloc. A real original racing duplicate then reaches byte
+159 while the port reaches 158 under the same controls and primary blocks.
+Preserve phase while retaining a stopped duplicate and zero integral cursor.
+Source: https://raw.githubusercontent.com/wine-mirror/wine/wine-10.0/dlls/dsound/buffer.c
+
+--- a/dd2h_stubs.c
++++ b/dd2h_stubs.c
+@@ -446,6 +446,8 @@
+     b->storage=src->storage;if(b->storage)b->storage->references++;
+     b->pcm=src->pcm; b->size=src->size; b->freq=src->freq; b->nAvgBytesPerSec=src->nAvgBytesPerSec;
+     b->original_freq=src->original_freq;b->flags=src->flags;b->vol=src->vol;b->pan=src->pan;
++    /* Wine Duplicate copies freqAccNum before resetting only sec_mixpos. */
++    b->phase=src->phase;
+     b->channels=src->channels; b->bits=src->bits; b->blockalign=src->blockalign;
+     if(pp)*pp=b;
+     SLOG("DS DuplicateSoundBuffer %p -> %p",(void*)src,(void*)b); return 0; }

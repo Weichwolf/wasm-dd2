@@ -149,6 +149,10 @@ verify-champ-menu-fields: patch ## compare championship menu packed WORD fields 
 verify-duplicate-font: patch ## compare copied font metadata and all glyphs with original x86 call chains
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_duplicate_font.py" $(DUPLICATE_FONT_ARGS)'
 
+.PHONY: verify-original-race-audio
+verify-original-race-audio: patch ## compare chronological original racing PCM, source controls and CD ring writes with production mixing
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_original_race_audio.py" $(ORIGINAL_RACE_AUDIO_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

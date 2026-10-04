@@ -13,14 +13,22 @@
 #include <linux/cdrom.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <time.h>
 #include <unistd.h>
 #include "toc.h"
 
 static int failure(int error) { errno = error; return -1; }
+
+static uint64_t monotonic_ns(void) {
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now)) return 0;
+    return (uint64_t)now.tv_sec * 1000000000u + (unsigned)now.tv_nsec;
+}
 
 static void to_msf(union cdrom_addr *address, int sector) {
     sector += CD_MSF_OFFSET;
@@ -31,6 +39,8 @@ static void to_msf(union cdrom_addr *address, int sector) {
 
 static int read_audio(const char *root, struct cdrom_read_audio *read) {
     int at, left = read->nframes;
+    int first;
+    uint64_t begin;
     unsigned char *out = read->buf;
     if (left < 0 || !out) return failure(EINVAL);
     if (read->addr_format == CDROM_LBA) at = read->addr.lba;
@@ -42,6 +52,8 @@ static int read_audio(const char *root, struct cdrom_read_audio *read) {
     } else return failure(EINVAL);
     if (at < starts[1] || at >= starts[TRACK_COUNT] ||
         left > starts[TRACK_COUNT] - at) return failure(EINVAL);
+    first = at;
+    begin = getenv("DD2_CD_TRACE") ? monotonic_ns() : 0;
     while (left > 0) {
         int track = 1, count, input, length;
         size_t done = 0, bytes;
@@ -70,6 +82,10 @@ static int read_audio(const char *root, struct cdrom_read_audio *read) {
         left -= count;
         out += bytes;
     }
+    if (begin)
+        fprintf(stderr, "[VCD READ] lba=%d sectors=%d begin_ns=%llu end_ns=%llu\n",
+                first, read->nframes, (unsigned long long)begin,
+                (unsigned long long)monotonic_ns());
     return 0;
 }
 
