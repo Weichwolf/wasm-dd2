@@ -848,6 +848,50 @@ make verify-configuration-persistence CONFIGURATION_PERSISTENCE_ARGS='compare --
 make clean-logs
 ```
 
+Patch 866 restores packed WORD coordinates and underline lengths in the card
+menus. The incorrect DWORD assignments erased adjacent coordinates or colour
+bytes; the Save underline alone differed at 488 pixels. It also reconstructs
+the original contiguous 24-byte tick/cross descriptors in confirmations and
+the pair of 40-byte, double-buffered sprites in the Please Wait routine. The
+latter overflowed a separated local array while saving under AddressSanitizer.
+Each layout is derived from the original x86 stores, copies and stack offsets.
+
+The configuration/card UI scenario uses genuine X11 or trusted Playwright keys
+and four complete process startups with an isolated card. It exercises slider
+minimum/maximum saturation, preview, commit and cancellation, saving two named
+configurations, overwrite/name cancellation, overwrite/rename, manual loading,
+automatic first-configuration loading and cancelled/confirmed deletion. Every
+checkpoint compares all 128 KiB of card data with the original and checks the
+stored, working and actual master SFX volume separately. The original loads a
+muted configuration without immediately updating the initialized master volume;
+the observer records that behavior rather than assuming those fields are equal.
+
+Selected settled menu images cover all 64 slab-highlight phases. Confirmation
+dialogs also have an independent selected-card counter (+20 modulo 255, period
+51). The target observers select the original's observed counter pairs, reading
+only small counters at intervening presentations and retaining just 64 complete
+framebuffer/palette pairs per checkpoint. Every byte is compared; browser
+captures additionally compare every actual canvas pixel. No engine state is
+written, no image fitting or pixel masking is used. This is a selected-renderer
+and functionality comparison; chronological video/PCM, physical scheduling,
+every intermediate slider level and full-card/duplicate-name errors remain
+separate requirements.
+
+The verified native, native ASan and browser runs each match 22 checkpoints and
+704 complete framebuffer/palette pairs against the original. All four native
+ASan sessions finish without a sanitizer diagnostic. Eighty-seven changed-state,
+pixel, palette and independent-card-phase cases are rejected by the comparator.
+
+```sh
+make clean-logs
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='capture --target original --output /tmp/wasm-dd2/card-original'
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='capture --target native --binary /tmp/dd2_native --reference /tmp/wasm-dd2/card-original --output /tmp/wasm-dd2/card-native'
+make capture-browser-configuration-card-ui BROWSER_CONFIGURATION_CARD_UI_ARGS='web/dd2 /tmp/wasm-dd2/card-browser /tmp/wasm-dd2/card-original'
+# Optionally capture the same scenario with an ASan native binary, then add --asan to compare.
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='compare --original /tmp/wasm-dd2/card-original --native /tmp/wasm-dd2/card-native --browser /tmp/wasm-dd2/card-browser --report /tmp/wasm-dd2/card-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie

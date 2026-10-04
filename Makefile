@@ -106,6 +106,13 @@ verify-configuration-persistence: ## capture/compare actual saved configuration,
 capture-browser-configuration-persistence: ## capture actual browser configuration save, Chromium restart and remapped racing input; BROWSER_CONFIGURATION_ARGS required
 	node $(ROOT)/tools/browser/capture_configuration_persistence.js $(BROWSER_CONFIGURATION_ARGS)
 
+.PHONY: verify-configuration-card-ui capture-browser-configuration-card-ui
+verify-configuration-card-ui: ## capture/compare live volume/card UI and exact selected menu images; CONFIGURATION_CARD_UI_ARGS required
+	python3 $(ROOT)/tools/verify_configuration_card_ui.py $(CONFIGURATION_CARD_UI_ARGS)
+
+capture-browser-configuration-card-ui: ## capture live browser volume/card UI across Chromium restarts; BROWSER_CONFIGURATION_CARD_UI_ARGS required
+	node $(ROOT)/tools/browser/capture_configuration_card_ui.js $(BROWSER_CONFIGURATION_CARD_UI_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 
