@@ -673,13 +673,22 @@ seeks zero when starting a new effect (`dd2h.exe` at 0x415e19-0x415e21).
 ```sh
 make verify-sound-cursor
 # Optional real DirectSound API reference; requires 32-bit MinGW, Wine and Xvfb:
-make verify-sound-cursor SOUND_CURSOR_ARGS='--wine --mingw i686-w64-mingw32-gcc'
+make verify-sound-cursor SOUND_CURSOR_ARGS='--wine --mingw i686-w64-mingw32-gcc --output /tmp/wasm-dd2/sound-cursor --clean'
 ```
 
-Both ports match all 14 stopped-buffer cursor/error records from real Wine
+The cursor verifier compiles the patched production backend from `build/` at
+`-O2` for native, native ASan and Node/WASM. Run `make patch` first if needed;
+`--source-root` selects another prepared backend. Its report records source,
+fixture, resampling-reference and executable hashes. `--output` retains a
+fresh report directory under `/tmp/wasm-dd2/`, and `--clean` removes successful
+raw PCM after writing that report. Builds and private Wine files also stay
+under `/tmp/wasm-dd2/`. The production/Wine run passed in
+`/tmp/wasm-dd2/sound-cursor-883-production-wine/report.json`.
+
+All three targets match all 14 stopped-buffer cursor/error records from real Wine
 DirectSound, including stereo frame alignment and invalid offsets. Controlled
 seek/repeated Play/Stop/resume/end/short-loop sequences match 2992 known Float32 PCM bytes
-exactly on both ports. The Wine check uses a separate API fixture, not the game
+exactly on each target. The Wine check uses a separate API fixture, not the game
 EXE, and does not establish original mixed PCM or timing equality.
 
 Effects now retain Float32 precision through mixing and WebAudio delivery. The

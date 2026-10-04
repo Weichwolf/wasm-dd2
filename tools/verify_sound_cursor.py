@@ -5,12 +5,16 @@
 DirectSound. This API fixture is not original dd2h.exe mixed-output acceptance.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 import struct
 import subprocess
 import tempfile
+
+from artifacts import WORK, prepare_output
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/sound_cursor_test.c"
@@ -78,9 +82,13 @@ def main():
     parser.add_argument("--wine", action="store_true")
     parser.add_argument("--mingw", default="i686-w64-mingw32-gcc")
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--output", type=Path)
+    add_backend_arguments(parser)
     args = parser.parse_args()
     if args.report and args.report.exists():
         parser.error("report already exists; use a fresh path")
+    if args.report and WORK not in prepare_output(args.report).parents:
+        parser.error("report must be inside /tmp/wasm-dd2/")
     env = {key: value for key, value in os.environ.items() if not key.startswith("DD2_")}
     env["DD2_SND_RATE"]="22050" # This controlled cursor/PCM fixture uses this device rate.
     expected = expected_positions()
@@ -92,15 +100,14 @@ def main():
     cycle=bytes.fromhex(next(c["cycle_hex"] for c in reference["loops"] if c["frequency"]==176400))
     pcm+=cycle*22
     report = {"scope": "stopped DirectSound API fixture and controlled port PCM; full original mix parity pending",
-              "positions": expected, "controlled_pcm_bytes": len(pcm), "targets": [], "wine": False}
-    with tempfile.TemporaryDirectory(prefix="dd2-sound-cursor-") as tmp:
+              "positions": expected, "controlled_pcm_bytes": len(pcm), "targets": [], "wine": False,
+              "fixture_source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
+              "resample_reference_sha256": hashlib.sha256((ROOT/"tools/reference/sound_resample_wine10.json").read_bytes()).hexdigest()}
+    WORK.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="sound-cursor-", dir=WORK) as tmp:
         directory = Path(tmp)
-        common = ["-std=gnu89", "-w", "-DDD2_NO_FOPEN_WRAP", "-ffunction-sections", "-fdata-sections",
-                  f"-I{ROOT / 're_out'}", str(ROOT / "re_out/dd2h_stubs.c"), str(SOURCE), "-Wl,--gc-sections"]
-        native, wasm = directory / "native", directory / "wasm.js"
-        subprocess.run(["gcc", "-m32", "-no-pie", *common, "-o", str(native)], check=True)
-        subprocess.run([args.emcc, *common, "-sNODERAWFS=1", "-sEXIT_RUNTIME=1",
-                        "-sGLOBAL_BASE=10485760", "--pre-js", str(ROOT/"tools/node_env.js"), "-o", str(wasm)], check=True)
+        output = output_directory(args, directory)
+        targets, report['backend'] = compile_backends(args, directory, SOURCE, ROOT/'DestructionDerby2')
         # Establish real API evidence before running the port comparison.
         if args.wine:
             executable = directory / "cursor.exe"
@@ -110,19 +117,21 @@ def main():
             if actual != expected:
                 raise RuntimeError(f"Wine stopped cursor contract differs: {actual}")
             report["wine"] = True
+            report['wine_executable_sha256'] = hashlib.sha256(executable.read_bytes()).hexdigest()
             print("PASS real Wine DirectSound: all 14 stopped cursor records", flush=True)
-        for target, command in (("native", [str(native)]), ("wasm", [args.node, str(wasm)])):
-            output = directory / f"{target}.pcm"
-            result = subprocess.run([*command, str(output)], env=env, capture_output=True,
+        for target, command in targets:
+            capture = output / f"{target}.pcm"
+            result = subprocess.run([*command, str(capture)], env=env, capture_output=True,
                                     text=True, timeout=30)
             if result.returncode:
                 raise RuntimeError(f"{target} failed ({result.returncode}): {result.stderr}")
             if json.loads(result.stdout) != expected:
                 raise RuntimeError(f"{target} stopped cursor contract differs")
-            if output.read_bytes() != pcm:
+            if capture.read_bytes() != pcm:
                 raise RuntimeError(f"{target} seek/repeated Play/Stop/resume/end PCM differs")
             report["targets"].append(target)
             print(f"PASS {target}: all 14 cursor records and {len(pcm)} exact PCM bytes", flush=True)
+        finish_report(output, report, args.clean)
     if args.report:
         args.report.write_text(json.dumps(report, indent=2) + "\n")
 
