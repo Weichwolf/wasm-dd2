@@ -154,6 +154,9 @@ def main():
                         help='observe original timer registrations and window activation through Wine relay; audio mode only')
     parser.add_argument('--trace-timer-callbacks',action='store_true',
                         help='observe actual original callbacks through a forwarding Wine API observer; audio mode only, logging changes timing')
+    parser.add_argument('--trace-video',action='store_true',help='observe actual successful DirectDraw uploads and palettes')
+    parser.add_argument('--video-archive',action='store_true',help='archive closed video blocks losslessly instead of retaining raw frames')
+    parser.add_argument('--video-max-frames',type=int,default=4096,help='bounded presentation count; at most 60000 with --video-archive')
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
     parser.add_argument("--keep-movie", action="store_true",
@@ -176,6 +179,10 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.video_archive and not args.trace_video:
+        parser.error('--video-archive requires --trace-video')
+    if not 1<=args.video_max_frames<=(60000 if args.video_archive else 4096):
+        parser.error('video presentation budget requires 1..4096, or 1..60000 with --video-archive')
     if args.champ_history and (args.mode!='menu' or args.audio or args.keys is not None or args.frames or args.race_stream or args.menu_cycle):
         parser.error('--champ-history requires menu mode, no audio/other capture sequence')
     if args.champ_history_steps!=95 and not args.champ_history:
@@ -334,6 +341,7 @@ def run(game, output, args, on_menu=None):
             (rundir/name).symlink_to(observer/name)
         env['WINEDLLOVERRIDES']='winmm=n;_winmm_real=n'
         env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
+    video_collector=None
     if getattr(args,'trace_video',False):
         from ddraw_video_observer import build
         observer=WORK/'video-observer'
@@ -344,6 +352,11 @@ def run(game, output, args, on_menu=None):
             (rundir/name).symlink_to(observer/name)
         env['WINEDLLOVERRIDES']=env.get('WINEDLLOVERRIDES','')+';ddraw=n;_ddraw_real=n'
         env['DD2_VIDEO_CAPTURE']='Z:'+str(output/'video.bin').replace('/','\\')
+        env['DD2_VIDEO_MAX_FRAMES']=str(getattr(args,'video_max_frames',4096))
+        if getattr(args,'video_archive',False):
+            from video_archive import Collector
+            env['DD2_VIDEO_CHUNK_FRAMES']='128'
+            video_collector=Collector(output).start()
     wine = None
     xserver = None
     engine_log = (output / "audio/engine.jsonl").open("x") if args.audio else None
@@ -352,6 +365,7 @@ def run(game, output, args, on_menu=None):
         # These are bounded, read-only observations of a running process, not
         # atomic snapshots or a claim to have sampled every engine frame.
         check_space(output)
+        if video_collector:video_collector.check()
         before = time.monotonic_ns()
         raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
         current = state(pid,observe_timers=args.trace_timer_callbacks)
@@ -505,9 +519,13 @@ def run(game, output, args, on_menu=None):
             if wine and wine.poll() is None:
                 os.killpg(wine.pid, signal.SIGTERM)
                 wine.wait(timeout=10)
+            # A killed launcher does not prove all Wine clients released files.
+            subprocess.run(["wineserver", "-w"],env=env,stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL,timeout=10,check=True)
             if xserver:
                 xserver.terminate()
                 xserver.wait(timeout=5)
+            if video_collector:video_collector.finish()
 
 
 def capture_startup_video(pid,output,env,frames,skip_movie,timeout,initial_save_sha256):

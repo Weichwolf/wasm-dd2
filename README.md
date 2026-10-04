@@ -1943,6 +1943,25 @@ presentations after the final audio service are outside the joint window.
 Capture raw video is bounded to 4,096 frames (under 1.2 GiB); successful raw port
 images and PCM are deleted after writing the joint report.
 
+Original captures can now use `--video-archive --video-max-frames 60000` together
+with `--trace-video`. The observer closes and renames blocks of at most 128
+records. A host collector compresses each closed block with zlib, verifies the
+written artifact against every original byte, and removes only closed raw files.
+The final partial block is checked after the dedicated Wine server exits.
+Python verification and the browser's Node reader retain literal comparisons,
+with only one decoded block cached. The 2-GiB run budget still applies; exceeding
+it fails the capture rather than dropping frames.
+
+`make verify-video-archive VIDEO_ARCHIVE_ARGS='--output /tmp/wasm-dd2/fresh-video-archive'`
+exercises actual Wine DirectDraw with a separate synthetic executable. It passed
+4,101 presentations: all 1,268,750,976 record bytes, pixels and both palettes were
+checked in Python and read identically in Node. Eight damaged-storage or
+unsafe-cleanup cases were rejected; six were also rejected by Node. The synthetic
+patterns compressed to 11,590,254 bytes, which does not predict game compression.
+Report: `/tmp/wasm-dd2/video-archive-892-wine/report.json`. This is storage evidence,
+not original game parity. Native replay capture still has its 4,096-frame limit;
+long-running port output needs incremental comparison before a full-race proof.
+
 To capture this evidence, add `--trace-video` to the original command together
 with `--trace-keyboard --keep-movie`, then export its video after the original
 capture completes. Use a fresh directory for each run:

@@ -405,6 +405,10 @@ verify-menu-engine-audio: ## compare real frontend PCM at the independently obse
 verify-startup-video: ## compare first actual frontend frames/palettes with original successful Flips; STARTUP_VIDEO_ARGS supplies captures/report
 	python3 $(ROOT)/tools/verify_startup_video.py $(STARTUP_VIDEO_ARGS)
 
+.PHONY: verify-video-archive
+verify-video-archive: ## verify lossless closed-block video storage through actual Wine DirectDraw; VIDEO_ARCHIVE_ARGS required
+	python3 $(ROOT)/tools/verify_video_archive.py $(VIDEO_ARCHIVE_ARGS)
+
 .PHONY: verify-car-preview
 verify-car-preview: ## compare whole car preview rotations by observed model pose; CAR_PREVIEW_ARGS supplies captures/report
 	python3 $(ROOT)/tools/verify_car_preview.py $(CAR_PREVIEW_ARGS)

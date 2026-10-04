@@ -12,6 +12,7 @@ from pathlib import Path
 
 from PIL import Image
 from reference.video_frames import observe,BYTES,HEADER
+from reference.video_archive import Records
 from verify_configuration_persistence import require
 
 FIELDS=('flip','level','cf','movie','poly_list','restart_cd_audio','ticks','replay','quit','script_cursor','clock_calls')
@@ -50,9 +51,9 @@ def verify(original,reference,targets,services):
         results[name]=dict(pass_=True,frames=end,bytes_per_frame=307200,palette_bytes_per_frame=1024,
             actual_canvas=name=='browser',per_frame_clock_observed=name=='browser',excluded_after_audio_endpoint=len(frames)-end,
             frame_hashes=[])
-    with (original/'video.bin').open('rb') as raw:
+    with Records(original) as raw:
         for index in range(end):
-            record=raw.read(BYTES);require(len(record)==BYTES,'original video truncated')
+            record=raw[index];require(len(record)==BYTES,'original video truncated')
             pixels=record[HEADER.size:HEADER.size+307200];palette=record[HEADER.size+307200:HEADER.size+308224]
             expected=source['frames'][index]
             image=Image.frombytes('P',(640,480),pixels)

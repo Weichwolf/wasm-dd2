@@ -38,7 +38,8 @@ def build(output,system=SYSTEM_DDRAW):
         elif name:definitions.append(f'  {name}=ddraw_real.{name} @{ordinal}')
         else:definitions.append(f'  ordinal_{ordinal}=ddraw_real.#{ordinal} @{ordinal} NONAME')
     (output/'ddraw.def').write_text('\n'.join(definitions)+'\n')
-    (output/'kernel32.def').write_text('LIBRARY kernel32.dll\nEXPORTS\n'+''.join(f'  {name}@{size}\n' for name,size in KERNEL.items()))
+    kernel={**KERNEL,'CloseHandle':4,'MoveFileA':8}
+    (output/'kernel32.def').write_text('LIBRARY kernel32.dll\nEXPORTS\n'+''.join(f'  {name}@{size}\n' for name,size in kernel.items()))
     subprocess.run(['llvm-dlltool','-m','i386','-k','-d',str(output/'kernel32.def'),'-l',str(output/'kernel32.lib')],check=True)
     assembly=['.def @feat.00; .scl 3; .type 0; .endef','.set @feat.00, 1','.text'];declarations=[];initializers=[]
     for kind,count in [('draw',23),('surface',36)]:
@@ -70,7 +71,8 @@ def build(output,system=SYSTEM_DDRAW):
                 unchanged_sections=sections,exports=exports,observer_exports=actual,
                 source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs},
                 observer_sha256=hashlib.sha256((output/'ddraw.dll').read_bytes()).hexdigest(),
-                record_bytes=128+307200+1024+1024,maximum_frames=4096)
+                record_bytes=128+307200+1024+1024,maximum_frames=4096,
+                archive_maximum_frames=60000,archive_maximum_chunk_frames=128)
     (output/'build.json').write_text(json.dumps(report,indent=2)+'\n');check_space(output)
     return report
 

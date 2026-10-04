@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from artifacts import WORK,check_space
 from reference.game_clock import EXE,RETURN,SITES
+from reference.video_archive import Records
 
 HEADER=struct.Struct('<32I')
 BYTES=HEADER.size+307200+2048
@@ -32,8 +33,10 @@ def observe(capture):
         build['record_bytes']!=BYTES or build['observer_sha256']!=hashlib.sha256((capture/'video-observer.dll').read_bytes()).hexdigest()):
         raise ValueError('Successful unchanged original and verified video observer required')
     frames=[];sha=hashlib.sha256();previous_qpc=0
-    with (capture/'video.bin').open('rb') as file:
-        while raw:=file.read(BYTES):
+    archive_manifest=None
+    with Records(capture) as records:
+        archive_manifest=records.manifest
+        for raw in records:
             sha.update(raw)
             if len(raw)!=BYTES:raise ValueError('Incomplete original video record')
             v=HEADER.unpack_from(raw);number=len(frames)+1;qpc=v[6]+(v[7]<<32)
@@ -51,7 +54,10 @@ def observe(capture):
                 framebuffer_sha256=hashlib.sha256(pixels).hexdigest(),palette_sha256=hashlib.sha256(palette).hexdigest(),
                 device_palette_observed=not v[24],device_palette_result=v[24],
                 device_palette_sha256=hashlib.sha256(device).hexdigest() if not v[24] else None))
-    if not frames or len(frames)>4096:raise ValueError('Empty/unbounded original video')
+    limit=build.get('archive_maximum_frames',0) if archive_manifest else 4096
+    if not frames or len(frames)>limit:raise ValueError('Empty/unbounded original video')
+    if archive_manifest and archive_manifest['raw_sha256']!=sha.hexdigest():
+        raise ValueError('Original video archive whole-stream digest differs')
     seen=flips=calls=0;trace=hashlib.sha256()
     with (capture/'wine.log').open('rb') as lines:
         for number,raw in enumerate(lines,1):
@@ -72,12 +78,15 @@ def observe(capture):
     if (not racing or any(f['level']!=1 or (not f['replay'] and
         (not f['quit'] or f['script_cursor']!=terminal)) for f in racing) or frames[-1]['script_cursor']!=terminal):
         raise ValueError('Complete original replay racing video/terminal required')
-    return dict(scope=__doc__.strip(),pass_=True,capture_directory=str(capture.resolve()),original_exe_sha256=EXE,trace_sha256=trace.hexdigest(),
+    report=dict(scope=__doc__.strip(),pass_=True,capture_directory=str(capture.resolve()),original_exe_sha256=EXE,trace_sha256=trace.hexdigest(),
         video_sha256=sha.hexdigest(),game_clock_sha256=clock['ticks_sha256'],observer_sha256=build['observer_sha256'],record_bytes=BYTES,
         frames=frames,frame_count=len(frames),racing_frames=len(racing),
         attached_device_palettes=sum(f['device_palette_observed'] for f in frames),
         missing_device_palette_frames=[f['index'] for f in frames if not f['device_palette_observed']],
         debugger=False,engine_state_writes=False,port_comparison='pending')
+    if archive_manifest:
+        report['video_archive_manifest_sha256']=hashlib.sha256((capture/'video-archive/manifest.json').read_bytes()).hexdigest()
+    return report
 
 
 if __name__=='__main__':

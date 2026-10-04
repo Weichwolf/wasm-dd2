@@ -16,7 +16,8 @@ if(fixtureArg){
  const layout=layoutArg?JSON.parse(fs.readFileSync(path.resolve(layoutArg))):null;
  const video=videoArg?JSON.parse(fs.readFileSync(path.resolve(videoArg))):null;
  if(video)assert(video.pass_ && video.debugger===false && video.engine_state_writes===false &&
-  video.game_clock_sha256===hash(clock) && video.frame_count===video.frames.length && video.frame_count<=4096 && layout,
+  video.game_clock_sha256===hash(clock) && video.frame_count===video.frames.length &&
+  video.frame_count<=(video.video_archive_manifest_sha256?60000:4096) && layout,
   'actual original video/clock observation required');
  if(layout)assert(layout.wasm_sha256===hash(fs.readFileSync(path.join(build,'index.wasm'))) &&
   Number.isInteger(layout.clock_counter_address) && layout.clock_counter_address>=10485760,'actual WASM clock layout differs');
@@ -51,14 +52,12 @@ budget();
   browser=await chromium.launch({args:['--no-sandbox']});
   const page=await browser.newPage(),errors=[];
   if(replay?.video){
-   const filename=path.join(path.resolve(replay.video.capture_directory),'video.bin');
-   assert(filename.startsWith('/tmp/wasm-dd2/'),'original video escapes temporary workspace');
-   videoFile=fs.openSync(filename,'r');
+   const {VideoRecords}=require('./video_record_reader');
+   videoFile=new VideoRecords(path.resolve(replay.video.capture_directory),replay.video);
    assert(replay.video.record_bytes===128+307200+2048,'actual original video record format differs');
    await page.exposeFunction('__compareEngineVideo',(index,pixels,palette)=>{
     assert(Number.isInteger(index) && index>=0 && index<replay.video.frame_count,'invalid browser video index');
-    const expected=Buffer.alloc(307200+1024);
-    assert(fs.readSync(videoFile,expected,0,expected.length,index*replay.video.record_bytes+128)===expected.length,'incomplete original video');
+    const expected=videoFile.record(index).subarray(128,128+307200+1024);
     assert(Buffer.concat([Buffer.from(pixels,'base64'),Buffer.from(palette,'base64')]).equals(expected),`actual browser video bytes differ at frame ${index}`);
     return true;
    });
@@ -313,5 +312,5 @@ budget();
    }catch(captureError){console.error('failure observation:',captureError.message);}
   }
   throw error;
- }finally{if(browser)await browser.close();if(videoFile!==undefined)fs.closeSync(videoFile);await new Promise(resolve=>server.close(resolve));}
+ }finally{if(browser)await browser.close();if(videoFile!==undefined)videoFile.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
