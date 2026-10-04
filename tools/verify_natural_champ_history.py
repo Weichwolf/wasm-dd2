@@ -18,7 +18,8 @@ from artifacts import WORK, open_files, prepare_output
 from verify_champ_history import recorded_apis
 from verify_champ_season import EXE, NATURAL_CHAMP_KEYS, NATURAL_CHAMP_ACTIONS
 from verify_normal_arena_history import (STATE, compare_frames, compare_checkpoints,
-                                        digest, exact_bytes, picture, natural)
+                                        digest, exact_bytes, picture, natural,
+                                        validate_racing_timeline)
 
 NAMES=['step00-boot',*[f'step{i:02d}-{key}' for i,key in enumerate(NATURAL_CHAMP_ACTIONS,1)]]
 IMAGE_NAMES=[NAMES[i] for i in (10,11,13,14,15,16,21)]
@@ -86,6 +87,7 @@ def history(root, target):
         raise ValueError('Capture must start at the first actual player race picture')
     if any(row['retired'] for row in frames) or [row['level'] for row in frames[-2:]]!=[2,2]:
         raise ValueError('Natural completion followed by actual second race required')
+    validate_racing_timeline(meta,events,target)
     held=set();previous=-1
     for row in meta['driving_inputs']:
         frame=row['frame'];key=row['key']

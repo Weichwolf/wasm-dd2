@@ -312,6 +312,18 @@ remaps A's flag to menu Return: releasing A after the remap leaves that flag hel
 in the original and loses the first Enter edge. Driving-transition timing,
 corrupt pixels, incomplete/trailing zlib and non-natural exits are rejected.
 
+Racing acceptance also checks the complete original/native drawing timeline:
+every observed gameplay draw must have exactly one racing-manifest entry in the
+same order and at the same observed game/API state. At native `PutDispEnv`, the
+recorder's observed owner stack distinguishes gameplay from frontend/loading
+draws. The check accepts the retained 4,314-picture championship histories and
+the 957/917-picture arena histories, including their 1,323/1,259 full
+presentation streams. Missing, duplicate or reordered racing entries, changed
+API counts and altered platform observations reject. These are retained-history
+verifier regressions, not new complete-season or audio acceptance. Their reports
+are `/tmp/wasm-dd2/racing-timeline-855-verified.json` and
+`/tmp/wasm-dd2/racing-timeline-855-arena-regression.json`.
+
 The browser recorder also observes the actual player position, speed, lap,
 destruction and completed-lap flag at the first presentation after gameplay
 ends. The verifier compares this observation with the original's final player

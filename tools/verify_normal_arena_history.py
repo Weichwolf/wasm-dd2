@@ -45,6 +45,42 @@ def natural(state):
         raise ValueError('Natural completion without Retire required')
 
 
+def validate_racing_timeline(meta, events, target):
+    """Require every observed gameplay draw, in order, in the racing manifest."""
+    putdisp = meta.get('presentation_boundary') == 'PutDispEnv'
+    kind = 'PutDispEnv' if putdisp else 'Draw_All'
+    draws = [row for row in events if row['kind'] == kind]
+    if len(draws) != meta['draws'] or [row['draws'] for row in draws] != list(range(1, meta['draws'] + 1)):
+        raise ValueError('Incomplete chronological drawing observation stream')
+    frames = meta['race_frames']
+    if not frames:
+        raise ValueError('Actual racing presentations required')
+    first = next((row for row in draws if row['draws'] == frames[0]['draws']), None)
+    if first is None:
+        raise ValueError('First racing picture has no actual drawing observation')
+    keys = (*STATE, 'clock_calls', 'rng_calls', 'draws', 'pad_polls')
+    if putdisp and target == 'native':
+        # PutDispEnv's native return address belongs to Draw_All on both
+        # frontend and racing calls. The recorder also observes its owner's
+        # actual stack frame and records that classification at every yield.
+        presentations = meta['presentations']
+        if len(presentations) != len(draws):
+            raise ValueError('Complete native platform presentation stream required')
+        for picture, event in zip(presentations, draws):
+            if (type(picture['game']) is not bool or picture['caller'] != event['caller']
+                    or any(picture[key] != event[key] for key in keys)):
+                raise ValueError('Platform presentation does not match its actual drawing observation')
+        game = [event for picture, event in zip(presentations, draws) if picture['game']]
+    else:
+        caller = '0x423fe2' if target == 'original' else first['caller']
+        game = [row for row in draws if row['caller'] == caller]
+    if len(game) != len(frames):
+        raise ValueError('Racing manifest does not cover every actual gameplay draw')
+    for frame, event in zip(frames, game):
+        if any(frame[key] != event[key] for key in keys):
+            raise ValueError('Racing picture was omitted, reordered or moved to another observed draw')
+
+
 def history(root, target):
     meta = load(root / 'history.json')
     if (meta.get('normal_arena') is not True or meta.get('natural_finish') is not True
@@ -71,6 +107,7 @@ def history(root, target):
         raise ValueError('Complete ordered racing frame stream required')
     if frames[0]['cf'] != 0 or frames[0]['ticks'] != 2 or any(frame['retired'] for frame in frames):
         raise ValueError('Stream must start at actual racing draw and never Retire')
+    validate_racing_timeline(meta, events, target)
     return meta, random, ticks
 
 
