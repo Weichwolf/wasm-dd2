@@ -158,7 +158,8 @@ def main():
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
     parser.add_argument("--keep-movie", action="store_true",
                         help="play the original intro through completion during reference capture")
-    parser.add_argument("--keys", nargs="*", choices=("Left", "Right", "Up", "Down", "Return", "Escape", "F1", "F2"),
+    from menu_keys import KEYS
+    parser.add_argument("--keys", nargs="*", choices=KEYS,
                         help="navigate from the initial menu with real X11 keys; capture after each action")
     parser.add_argument("--key-hold", type=float, default=0.14,
                         help="seconds per held key; record this for timing comparisons")
@@ -535,8 +536,9 @@ def capture_champ_history(pid,output,env,timeout,steps,initial_save_sha256,frame
 def key_acknowledged(pid, output, env, key, timeout):
     # Translate_Keypress @0x423050 matches active map bytes @0x46302c and
     # sets these byte flags. ReadPad @0x422da4 consumes them. No memory writes.
-    vkeys = {"Left": 0x25, "Right": 0x27, "Up": 0x26, "Down": 0x28,
-             "Return": 0x0d, "Escape": 0x1b, "F1": 0x70, "F2": 0x71}
+    from menu_keys import KEYS as vkeys, NAVIGATION_KEYS
+    if key not in NAVIGATION_KEYS:
+        return binding_key_acknowledged(pid,output,env,key,vkeys[key],timeout)
     flags = [0x46303f, 0x463040, 0x463043, 0x463046, 0x463044, 0x463045,
              0x463048, 0x46304a, 0x463047, 0x463049, 0x46304b, 0x46304e, 0x46304c, 0x46304d]
     with open(f"/proc/{pid}/mem", "rb", buffering=0) as memory:
@@ -580,6 +582,38 @@ def key_acknowledged(pid, output, env, key, timeout):
     if held < 1:
         raise RuntimeError("Original did not observe a held key")
     return held
+
+
+def binding_key_acknowledged(pid,output,env,key,vkey,timeout):
+    # Unmapped keys have no pad flag. Observe the original binding attempt
+    # and its actual return, then the real key-up window message and return.
+    # After the fifth accepted binding the original stops polling GetKeyState;
+    # its latch therefore cannot acknowledge that final key's release.
+    if state(pid)['menu']['poly_list']!=0x469298:
+        raise RuntimeError('Raw binding keys require the original keyboard configuration screen')
+    command=['xdotool','search','--name','PC-DD2','windowfocus']
+    commands=['set pagination off','set auto-solib-add off',f'attach {pid}',
+              'hbreak *0x44fd80',f'condition 1 *(unsigned*)($esp+8)=={vkey}',
+              'python import subprocess',
+              f'python subprocess.run({command+["keydown",key]!r},check=True,timeout=5,stdout=subprocess.DEVNULL)',
+              'continue','set $bind_slot=*(unsigned*)($esp+4)','set $bind_return=*(unsigned*)$esp',
+              'delete 1','hbreak *$bind_return','continue',
+              'printf "KEY_BIND_SLOT=%d\\n",$bind_slot','printf "KEY_BIND_RESULT=%d\\n",$eax','delete 2',
+              'hbreak *0x4132f0',f'condition 3 *(unsigned*)($esp+8)==0x101 && *(unsigned*)($esp+12)=={vkey}',
+              f'python subprocess.run({command+["keyup",key]!r},check=True,timeout=5,stdout=subprocess.DEVNULL)',
+              'continue','set $release_return=*(unsigned*)$esp','delete 3','hbreak *$release_return','continue',
+              'printf "KEY_BIND_RELEASED=1\\n"','detach','quit']
+    script=output/'input.gdb';script.write_text('\n'.join(commands)+'\n')
+    with (output/'input.log').open('wb') as log:
+        subprocess.run(['gdb','--nx','-q','-batch','-x',str(script)],env=env,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+    text=(output/'input.log').read_text()
+    if not all(marker in text for marker in ('KEY_BIND_SLOT=','KEY_BIND_RESULT=','KEY_BIND_RELEASED=1')):
+        raise RuntimeError('Original did not consume the binding attempt and real key release')
+    (output/'binding-input.json').write_text(json.dumps(dict(key=key,vkey=vkey,
+        slot=int(next(line.split('=',1)[1] for line in text.splitlines() if line.startswith('KEY_BIND_SLOT='))),
+        result=int(next(line.split('=',1)[1] for line in text.splitlines() if line.startswith('KEY_BIND_RESULT='))),
+        input='actual X11 key -> original binding function -> real key-up window message',engine_state_writes=False),indent=2)+'\n')
+    return 1 # one observed edge/attempt; raw key holds do not repeat bindings
 
 
 def capture_cycle(pid, output, env, frames, timeout):

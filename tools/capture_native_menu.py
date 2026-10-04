@@ -14,10 +14,9 @@ import shutil
 import subprocess
 import tempfile
 from artifacts import WORK, prepare_output, run_bounded
+from menu_keys import KEYS
 
 ROOT = Path(__file__).resolve().parents[1]
-KEYS = {"Left": 0x25, "Right": 0x27, "Up": 0x26, "Down": 0x28,
-        "Return": 0x0d, "Escape": 0x1b, "F1": 0x70, "F2": 0x71}
 GDB_DRIVER = r'''
 import gdb, json, struct
 from pathlib import Path

@@ -95,6 +95,10 @@ verify-original-timer-callbacks: ## verify forwarding observer and original call
 verify-engine-audio: ## compare actual native/browser engine PCM with observed original services; ENGINE_AUDIO_ARGS required
 	python3 $(ROOT)/tools/verify_engine_audio.py $(ENGINE_AUDIO_ARGS)
 
+.PHONY: verify-keyboard-binding-menu
+verify-keyboard-binding-menu: ## capture/compare actual original/native/browser key bindings and exact menu cycles; KEYBOARD_BINDING_MENU_ARGS required
+	python3 $(ROOT)/tools/verify_keyboard_binding_menu.py $(KEYBOARD_BINDING_MENU_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 

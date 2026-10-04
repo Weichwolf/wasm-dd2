@@ -2,7 +2,9 @@
 // No engine-state writes; each input is released after a presented frame.
 const assert=require('assert'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const {serve,boot,chromium}=require('./felib');
-const codes={Left:'ArrowLeft',Right:'ArrowRight',Up:'ArrowUp',Down:'ArrowDown',Return:'Enter',Escape:'Escape',F1:'F1',F2:'F2'};
+const codes={Left:'ArrowLeft',Right:'ArrowRight',Up:'ArrowUp',Down:'ArrowDown',Return:'Enter',Escape:'Escape',F1:'F1',F2:'F2',Space:'Space',
+ ...Object.fromEntries(Array.from({length:26},(_,i)=>[String.fromCharCode(65+i),'Key'+String.fromCharCode(65+i)])),
+ ...Object.fromEntries(Array.from({length:10},(_,i)=>[String(i),'Digit'+i]))};
 const output=process.argv[3] && path.resolve(process.argv[3]),options=process.argv.slice(4);
 const cycleOption=options.find(value=>value.startsWith('--cycle-frames='));
 const cycleFrames=cycleOption?Number(cycleOption.split('=')[1]):64;
@@ -44,7 +46,8 @@ async function capture(page,index,key){
    race_car:frame.race_car,car_angles:frame.car_angles,poly_list:frame.poly_list,
    race_mode:frame.race_mode,race_type:frame.race_type,race_track:frame.race_track,
    playable_tracks:frame.playable_tracks,playable_bowls:frame.playable_bowls,
-   track_locked:frame.track_locked,saved_track:frame.saved_track});
+   track_locked:frame.track_locked,saved_track:frame.saved_track,
+   keyboard_binding:frame.keyboard_binding});
  }
  fs.writeFileSync(path.join(directory,'cycle.json'),JSON.stringify({stage:'browser platform present',frames:metadata,scope:'complete rendered cycle with observed car pose; audio and wall-clock timing not compared'},null,2));
  await page.screenshot({path:path.join(output,name,'screenshot.png')});
@@ -90,6 +93,9 @@ async function capture(page,index,key){
        race_mode:HEAP32[0x4673f8>>2],race_type:HEAP32[0x4673f4>>2],race_track:HEAP32[0x4673fc>>2],
        playable_tracks:HEAP32[0x467404>>2],playable_bowls:HEAP32[0x467408>>2],
        track_locked:HEAPU8[0x46a920],saved_track:HEAP32[0x940224>>2],
+       keyboard_binding:{saved:Array.from(HEAPU8.subarray(0x46757a,0x46758c)),
+        working:Array.from(HEAPU8.subarray(0x93fd90,0x93fda2)),
+        active:Array.from(HEAPU8.subarray(0x46302c,0x46303a)),pad_option:HEAP32[0x467414>>2]},
        framebuf:encode(0x700450,307200),palette:encode(0x700050,1024),canvas_mismatches:mismatches});
       if(window.__cycle.length===limit)window.__cycleCapture=false;
      }

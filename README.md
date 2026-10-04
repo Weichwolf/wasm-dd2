@@ -793,6 +793,31 @@ next image, so reference/native captures stop at entry. Pairing by the recorded
 highlight counter aligns this specific animation. It does not establish wall-clock
 timing, other animations, input-repeat timing or audio-stream equality.
 
+The Configuration -> Control Method -> Keyboard path now has a separate
+original/native/browser comparison. It assigns five distinct keys, rejects four
+duplicate attempts, confirms the complete map, cancels a partial replacement,
+and reopens the screen to verify the committed map. All 27 checkpoint states
+and 1,728 complete framebuffer/palette pairs match the original on each port;
+browser captures also check the actual canvas pixels. Fourteen changed-map,
+cancel/reopen, active-map, pixel and palette cases are rejected.
+
+Unmapped original keys are acknowledged at the actual binding function and
+its return, followed by the real key-up window message and return. This avoids
+depending on a pad flag or the final binding's retained GetKeyState latch.
+Native input uses the normal `dd2_key_event` bridge, and browser input uses the
+production DOM keyboard handler. This check covers settled menu states and
+highlight cycles; transition video, audio, physical input timing, subsequent
+racing with the new map and persistence remain separate requirements.
+
+```sh
+make clean-logs
+make verify-keyboard-binding-menu KEYBOARD_BINDING_MENU_ARGS='capture --target original --output /tmp/wasm-dd2/keyboard-original'
+make verify-keyboard-binding-menu KEYBOARD_BINDING_MENU_ARGS='capture --target native --binary /tmp/dd2_native --output /tmp/wasm-dd2/keyboard-native'
+make verify-keyboard-binding-menu KEYBOARD_BINDING_MENU_ARGS='capture --target browser --build web/dd2 --output /tmp/wasm-dd2/keyboard-browser'
+make verify-keyboard-binding-menu KEYBOARD_BINDING_MENU_ARGS='compare --original /tmp/wasm-dd2/keyboard-original --native /tmp/wasm-dd2/keyboard-native --browser /tmp/wasm-dd2/keyboard-browser --report /tmp/wasm-dd2/keyboard-report.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie
