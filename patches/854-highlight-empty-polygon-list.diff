@@ -1,0 +1,25 @@
+Restore the original empty polygon-list terminator in Highlight_Area.
+
+Original dd2h.exe @43b704 reads byte 43a7b0 (ff); @43b70c stores it
+at ebp-4 before selecting the triangle/quad highlight index lists.
+Areas 1, 3, 6, 8 and 9 use this local empty list for one polygon
+type. Ghidra omitted the initialization because its source lies in
+the executable text section. The port instead traversed uninitialized
+stack bytes as signed polygon indices, overwriting model vertices,
+polygon headers and indices when the pit camera highlighted the car.
+The recorded regular championship race reaches this path at cf10605:
+native corrupts geometry and intermittently crashes in face handlers;
+browser WASM traps in FUN_0041ff98's indirect polygon dispatch.
+Restore only the literal original terminator; keep all original list
+selection, signed indexing, RGB writes and polygon traversal intact.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -27628,6 +27628,7 @@
+   char local_14 [4];
+   
+   local_20 = (char *)0x0;
++  local_14[0] = -1;  /* asm 43b704/43b70c: byte 43a7b0 = ff -> empty list @[ebp-4] */
+   local_1c = (char *)0x0;
+   iVar3 = 0;
+   switch(param_2) {

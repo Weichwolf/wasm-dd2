@@ -258,6 +258,31 @@ This proves that one destruction/result/continuation path; completed laps,
 wins, a complete natural season, other menu/loading/fade video and racing PCM
 still need separate acceptance.
 
+Patch 854 restores the original empty polygon-list marker in `Highlight_Area`,
+used by the pit camera. Original instructions at `43b704/43b70c` copy byte
+`43a7b0 = ff` into the local list. The decompile omitted that store, so highlight
+areas with an empty triangle or quad list traversed stack bytes as polygon
+indices. The regular championship reference exposed overwritten model vertices
+and polygon data, intermittent native renderer crashes, and a browser WASM
+indirect-dispatch trap in `FUN_0041ff98` at game frame 10605.
+
+`make verify-highlight HIGHLIGHT_ARGS='--output /tmp/wasm-dd2/fresh-highlight'`
+executes the unmodified original x86 function and the actual native/WASM C
+function on all ten valid areas and four RGB values. All 40 complete model and
+guard snapshots match; changing the empty list into a finite nonempty list fails
+exactly the 20 cases that use it. Damaged guards and truncated output also reject.
+The report is `/tmp/wasm-dd2/highlight-854-components-final/report.json`.
+This is a component check, not a complete pit UI or audio/video proof.
+
+Both corrected native and browser engines complete the new regular ten-lap
+first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
+palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,
+selected result/league images, standings and the next actual race start match.
+The report is `/tmp/wasm-dd2/natural-champ-highlight-854-regular-verified.json`;
+both `--require-completed-laps` and `--require-player-points` were enforced.
+Successful raw pictures were removed after writing the report. Complete seasons,
+wins, other menu/loading/fade video, racing PCM and physical timing remain open.
+
 ```sh
 make clean-logs
 python3 tools/reference/capture.py --mode menu --champ-history \

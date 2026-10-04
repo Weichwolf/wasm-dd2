@@ -370,6 +370,44 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             natural_finish=bool(final_race), final_race=final_race, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,
             elapsed_seconds=time.monotonic() - start_time), indent=2) + '\n')
+    except Exception as failure:
+        # Keep one bounded causal checkpoint before batch GDB closes the
+        # inferior. A failed trace must never resemble a completed comparison.
+        diagnostic = dict(scope='Incomplete capture failure checkpoint; no parity or completed-race acceptance',
+            target=target,error=str(failure),state=state(),racing_frames=len(race_frames),
+            pc=hex(int(gdb.parse_and_eval('$pc')) & 0xffffffff),
+            stack=gdb.execute('bt',to_string=True),locals=gdb.execute('info locals',to_string=True),
+            registers=gdb.execute('info registers',to_string=True),regions={})
+        regions=[('render-globals',0x74c520,0x1d0),('rot-points',0x74f1c0,16384),
+                 ('rot-flags',0x7531c0,4096),('framebuf',0x700450,307200),('palette',0x700050,1024),
+                 ('order-table',word(0x7541c4),16384)]
+        if not original:
+            for name,variables,size in [('polygon',('iStack_18','piStack_14'),48),
+                                        ('primitive',('puStack_14','puStack_18'),40)]:
+                for variable in variables:
+                    try:
+                        regions.append((name,int(gdb.parse_and_eval(variable)) & 0xffffffff,size))
+                        break
+                    except gdb.error:pass
+            frame=gdb.newest_frame()
+            while frame:
+                if frame.name()=='FUN_0041ff98':
+                    object_address=int(frame.read_var('param_1')) & 0xffffffff
+                    shape=word(object_address+4)
+                    regions.extend([('object',object_address,28),('shape',shape,44)])
+                    vertices=int.from_bytes(read(shape+10,2),'little')
+                    if 0<vertices<=2048:
+                        regions.append(('input-vertices',word(shape+32),vertices*8))
+                    break
+                frame=frame.older()
+        for name,address,size in regions:
+            try:
+                raw=read(address,size);filename='failure-'+name+'.bin';(root/filename).write_bytes(raw)
+                diagnostic['regions'][name]=dict(address=hex(address),size=size,file=filename,sha256=hashlib.sha256(raw).hexdigest())
+            except gdb.MemoryError as error:
+                diagnostic['regions'][name]=dict(address=hex(address),size=size,error=str(error))
+        (root/'failure.json').write_text(json.dumps(diagnostic,indent=2)+'\n')
+        raise
     finally:
         timeline.close()
         for point in points:

@@ -121,6 +121,10 @@ verify-wasm: wasm ## crash-free check: run the WASM demo (node) on all 10 levels
 verify-parity: native wasm ## compare all presented frames, palettes, RNG/flip logs and PCM bytes on ten demos
 	python3 $(ROOT)/tools/verify_parity.py --native $(NATIVE) --node $(NODE) --wasm $(OUTJS)
 
+.PHONY: verify-highlight
+verify-highlight: patch ## compare all ten pit-camera highlight areas and model guards with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_highlight.py" $(HIGHLIGHT_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

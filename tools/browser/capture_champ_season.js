@@ -96,10 +96,11 @@ async function tap(page,key,timing=null,raceStart=null){
 }
 (async()=>{
  const server=serve(build);await new Promise(resolve=>server.listen(0,resolve));let browser,tracer;
+ const errors=[],errorDetails=[];
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
-  const page=await browser.newPage({viewport:{width:700,height:560}}),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>errors.push('page crashed'));
+  const page=await browser.newPage({viewport:{width:700,height:560}});
+  page.on('pageerror',e=>{errors.push(e.message);errorDetails.push({message:e.message,stack:e.stack});});page.on('crash',()=>errors.push('page crashed'));
   if(apiReference)page.on('console',message=>{
    const text=message.text();fs.appendFileSync(path.join(output,'browser.log'),message.type()+': '+text+'\n');
    if(text.includes('program exited (with status: 1)')||/^\[(clock-replay|random-reference)\].*(requires|exhausted|partial|cannot|differs|invalid|unconsumed)/.test(text))errors.push(text);
@@ -456,7 +457,8 @@ async function tap(page,key,timing=null,raceStart=null){
    const pages=browser.contexts().flatMap(context=>context.pages());
    const observed=pages.length?await pages[0].evaluate(()=>({error:window.__scheduleError,inputs:window.__inputObservations,frames:window.__scheduledFrames,rng_error:window.__rngError,rng:window.__rngObservations,
     api:window.__apiHistory?{index:window.__apiHistory.index,stage:window.__apiHistory.stage,steady:window.__apiHistory.steady,checkpoints:window.__apiHistory.shots.length,inputs:window.__apiHistory.inputs}:null})).catch(()=>null):null;
-   fs.writeFileSync(path.join(output,'diagnosis.json'),JSON.stringify({scope:'Failed actual UI/input diagnosis; no acceptance claim',error:error.message,referenceTiming,observed},null,2));
+   fs.writeFileSync(path.join(output,'diagnosis.json'),JSON.stringify({scope:'Failed actual UI/input diagnosis; no acceptance claim',error:{message:error.message,stack:error.stack},errors,errorDetails,referenceTiming,observed,
+    wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex')},null,2));
   }
   throw error;
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
