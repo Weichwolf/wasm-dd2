@@ -125,6 +125,10 @@ verify-parity: native wasm ## compare all presented frames, palettes, RNG/flip l
 verify-highlight: patch ## compare all ten pit-camera highlight areas and model guards with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_highlight.py" $(HIGHLIGHT_ARGS)'
 
+.PHONY: verify-pit-camera
+verify-pit-camera: patch ## compare live/replay pit-camera wrap, signed offsets and model guards with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_pit_camera.py" $(PIT_CAMERA_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

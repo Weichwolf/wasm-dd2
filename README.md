@@ -274,6 +274,21 @@ exactly the 20 cases that use it. Damaged guards and truncated output also rejec
 The report is `/tmp/wasm-dd2/highlight-854-components-final/report.json`.
 This is a component check, not a complete pit UI or audio/video proof.
 
+Patch 855 restores the signed pit-camera section and WORD offset. Moving left
+from section zero now wraps to section five and decrements the revolution count,
+as in the original. Both live controls and replay read the left-offset WORD at
+`0x464a68 + section * 4`. The previous unsigned section underflowed to
+`0xffffffff` during the fourth natural championship race on level seven;
+the first different picture was racing capture 18,388, before RNG counts diverged.
+
+`make verify-pit-camera PIT_CAMERA_ARGS='--output /tmp/wasm-dd2/fresh-pit-camera'`
+compares unchanged original x86 with native/WASM controls in 3,600 explicit
+cases, including all sections, both directions, signed angle/offset boundaries,
+replay packets and complete model guards. All outputs match. Reintroducing the
+unsigned section or offset fails 300 cases each; the incorrect left-table stride
+fails 1,500 cases. This component proof does not establish full-season parity;
+the complete original/native/browser comparison must pass separately.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,
