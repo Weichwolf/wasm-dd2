@@ -26,6 +26,20 @@ PLAN = json.loads(PLAN_FILE.read_text())
 POINTS = [action for session in PLAN['sessions'] for action in session if 'checkpoint' in action]
 
 
+def screen_text(ui, address):
+    # Card name entry points to the original routine's stack-local text buffer.
+    # Read the string, without comparing target-specific pointer values.
+    pointer = struct.unpack('<I', ui.read(address, 4))[0]
+    return ui.read(pointer, 80).split(b'\0', 1)[0].decode('ascii') if pointer else ''
+
+
+def file_ui(ui):
+    return dict(caption=screen_text(ui, 0x46725c), detail=screen_text(ui, 0x4672c0),
+                selection=screen_text(ui, 0x467284),
+                name_cursor=list(struct.unpack('<hh', ui.read(0x4673dc, 4))),
+                ring=list(struct.unpack('<hh', ui.read(0x467198, 4))))
+
+
 def rendered_cycle(ui, action, original):
     name = action['checkpoint']
     directory = ui.output/name
@@ -58,6 +72,9 @@ def snapshot(ui, action, report, original):
                master=ui.integer(0x462d84), menu=ui.integer(0x940010),
                file_mode=ui.integer(0x93a318), file_slot=ui.integer(0x774680),
                prompt=ui.text(0x4672ac), card=observe_card(ui, name))
+    if action.get('file_ui'):
+        row['prompt'] = screen_text(ui, 0x4672ac)
+        row['file_ui'] = file_ui(ui)
     raw = Path(row['card']['file']).read_bytes()
     for slot in row['card']['slots']:
         slot['sound'] = struct.unpack_from('<h', raw, 0x2000+slot['index']*0x2000+16)[0]
@@ -81,15 +98,21 @@ def check_point(row, action):
             'complete disk/engine card required')
     if action.get('prompt'):
         require(action['prompt'] in row['prompt'], 'actual confirmation prompt differs')
+    if 'text' in action:
+        require(row['prompt'] == action['text'], 'displayed name differs at '+row['name'])
+    for field, wanted in action.get('expected_ui', {}).items():
+        require(row['file_ui'][field] == wanted, 'file UI '+field+' differs at '+row['name'])
+    if 'file_slot' in action:
+        require(row['file_slot'] == action['file_slot'], 'logical/physical slot differs at '+row['name'])
 
 
 def drive(ui, actions, report, original):
-    def select(slot):
+    def select(slot, confirm=True):
         ui.key('Return')
         ui.wait(lambda: 'Select' in ui.text(0x46725c) and ui.integer(0x774680) >= 0)
         for code in ['Down']*(slot//3)+['Right']*(slot%3): ui.key(code)
         require(ui.integer(0x774680) == slot, 'logical card selection differs')
-        ui.key('Return')
+        if confirm: ui.key('Return')
 
     for action in actions:
         for code in action.get('keys', []):
@@ -111,6 +134,8 @@ def drive(ui, actions, report, original):
             ui.wait(lambda: ui.controls() == 0)
         if 'select' in action:
             select(action['select'])
+        if 'choose' in action:
+            select(action['choose'], False)
         if 'save' in action:
             slot, letter = action['save']
             select(slot); ui.enter_name(letter)
@@ -146,7 +171,8 @@ def capture(args):
                             drive(ui, actions, report, True)
                             shutil.copyfile(rundir/'SaveGames', game/'SaveGames')
                         finally: ui.stop()
-                    run_original(game, startup, original_args(), on_menu=driver)
+                    options = original_args(); options.timeout = PLAN.get('session_timeout', options.timeout)
+                    run_original(game, startup, options, on_menu=driver)
         else:
             with (out/'xvfb.log').open('wb') as log:
                 display = subprocess.Popen(['Xvfb','-displayfd','1','-screen','0','1280x1024x24'],
@@ -175,7 +201,8 @@ def validate(data):
     require(data['pass_'] and data['engine_state_writes'] is False and
             data['plan_sha256'] == digest(PLAN_FILE.read_bytes()), 'completed capture of the current scenario required')
     require(len(data['checkpoints']) == len(POINTS), 'incomplete configuration scenario')
-    for row, expected in zip(data['checkpoints'], POINTS): check_point(row, expected)
+    for row, expected in zip(data['checkpoints'], POINTS):
+        check_point(row, expected)
     if data['target'] == 'browser':
         events = data.get('trusted_keyboard_events', [])
         require(events and all(event['trusted'] for event in events), 'real browser keyboard events required')
@@ -260,13 +287,27 @@ def compare(args):
                     try: match_frame(state, pair, changed, observed_pair, True)
                     except RuntimeError: negatives.append(dict(target=target, case=row['name']+'-card-phase', rejected=True))
                     else: raise RuntimeError('Verifier accepted changed card phase')
-        results[target] = dict(capture=actual, frames=frames, pass_=True)
-        for label, index, field in [('cancelled-volume',2,'settings'), ('master-volume',1,'master'),
-                                    ('loaded-first',13,'settings'), ('directory',8,'card'),
-                                    ('menu',0,'menu')]:
+        transitions = []
+        for index in range(1, len(original['checkpoints'])):
+            before, after = original['checkpoints'][index-1:index+1]
+            previous, current = actual['checkpoints'][index-1:index+1]
+            changed = before['card']['sha256'] != after['card']['sha256']
+            require(changed == (previous['card']['sha256'] != current['card']['sha256']), 'card write/refusal transition differs')
+            transitions.append(dict(before=before['name'], after=after['name'], changed=changed,
+                                    original_sha256=after['card']['sha256'], pass_=True))
+        results[target] = dict(capture=actual, frames=frames, card_transitions=transitions, pass_=True)
+        cases = PLAN.get('negative_states')
+        if cases is None: cases = [dict(case=label, checkpoint=POINTS[index]['checkpoint'], field=field)
+                    for label, index, field in [('cancelled-volume',2,'settings'), ('master-volume',1,'master'),
+                                    ('loaded-first',13,'settings'), ('directory',8,'card'), ('menu',0,'menu')]]
+        for case in cases:
+            label, field = case['case'], case['field']
+            index = next(i for i, row in enumerate(actual['checkpoints']) if row['name'] == case['checkpoint'])
             damaged = copy.deepcopy(actual['checkpoints'][index])
             if field == 'settings': damaged['settings']['sound'] ^= 1
             elif field == 'card': damaged['card']['sha256'] = '0'*64
+            elif field == 'prompt': damaged[field] += 'X'
+            elif field == 'file_ui': damaged[field]['name_cursor'][0] ^= 1
             else: damaged[field] ^= 1
             try: match_state(original['checkpoints'][index], damaged)
             except RuntimeError: negatives.append(dict(target=target, case=label, rejected=True))
@@ -290,6 +331,7 @@ def compare(args):
 
 
 def main():
+    global PLAN_FILE, PLAN, POINTS
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='operation', required=True)
     cap = sub.add_parser('capture')
@@ -297,11 +339,17 @@ def main():
     cap.add_argument('--binary', type=Path, default=Path('/tmp/dd2_native'))
     cap.add_argument('--output', type=Path, required=True)
     cap.add_argument('--reference', type=Path, help='completed original capture; selects observed card/highlight phase pairs only')
+    cap.add_argument('--scenario', type=Path, default=PLAN_FILE)
     cmp = sub.add_parser('compare')
     for arg in ['original','native','browser','report']: cmp.add_argument('--'+arg, type=Path, required=True)
     cmp.add_argument('--asan', type=Path, help='optional actual native AddressSanitizer capture')
     cmp.add_argument('--clean', action='store_true')
-    args = parser.parse_args(); capture(args) if args.operation == 'capture' else compare(args)
+    cmp.add_argument('--scenario', type=Path, default=PLAN_FILE)
+    args = parser.parse_args()
+    PLAN_FILE = args.scenario.resolve(); PLAN = json.loads(PLAN_FILE.read_text())
+    POINTS = [action for session in PLAN['sessions'] for action in session if 'checkpoint' in action]
+    require(len({row['checkpoint'] for row in POINTS}) == len(POINTS), 'distinct checkpoints required')
+    capture(args) if args.operation == 'capture' else compare(args)
 
 
 if __name__ == '__main__': main()

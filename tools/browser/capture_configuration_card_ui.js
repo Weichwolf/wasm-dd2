@@ -9,7 +9,7 @@ assert(output.startsWith('/tmp/wasm-dd2/'), 'verification outputs belong in /tmp
 const parent = fs.realpathSync(path.dirname(output));
 assert(parent === '/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'), 'output parent escapes work area');
 fs.mkdirSync(output);
-const planBytes = fs.readFileSync(path.join(__dirname,'../configuration_card_ui.json'));
+const planBytes = fs.readFileSync(process.argv[5] || path.join(__dirname,'../configuration_card_ui.json'));
 const plan = JSON.parse(planBytes), sha = data => createHash('sha256').update(data).digest('hex');
 const reference = process.argv[4] ? JSON.parse(fs.readFileSync(path.join(process.argv[4],'report.json'))) : null;
 if (reference) assert(reference.pass_ && reference.plan_sha256 === sha(planBytes), 'completed original scenario required');
@@ -45,12 +45,12 @@ async function key(page, key) {
   await page.waitForTimeout(300);
   console.log('Browser key',key);
 }
-async function select(page, slot) {
+async function select(page, slot, confirm=true) {
   await key(page,'Return');
   await page.waitForFunction(() => UTF8ToString(HEAPU32[0x46725c>>2]).includes('Select') && HEAP32[0x774680>>2] >= 0);
   for (const code of [...Array(Math.floor(slot/3)).fill('Down'),...Array(slot%3).fill('Right')]) await key(page,code);
   assert(await page.evaluate(() => HEAP32[0x774680>>2]) === slot, 'wrong selected memory-card block');
-  await key(page,'Return');
+  if (confirm) await key(page,'Return');
 }
 async function enterName(page, letter, replace=false) {
   if (replace) for (const code of ['Down','Down','Return','Up','Up']) await key(page,code);
@@ -115,10 +115,18 @@ async function snapshot(page,action) {
       file_mode:HEAP32[0x93a318>>2],file_slot:HEAP32[0x774680>>2],prompt:text(0x4672ac)};
   },action.checkpoint);
   row.card = await card(page,action.checkpoint);
+  if (action.file_ui) row.file_ui = await page.evaluate(() => ({
+    caption:UTF8ToString(HEAPU32[0x46725c>>2]),detail:UTF8ToString(HEAPU32[0x4672c0>>2]),
+    selection:UTF8ToString(HEAPU32[0x467284>>2]),
+    name_cursor:[HEAP16[0x4673dc>>1],HEAP16[0x4673de>>1]],
+    ring:[HEAP16[0x467198>>1],HEAP16[0x46719a>>1]]}));
   assert(row.settings.sound === action.sound, 'stored volume differs at '+row.name);
   for (const field of ['working','master']) if (field in action) assert(row[field] === action[field], field+' volume differs at '+row.name);
   assert.deepEqual(row.card.slots.map(s => [s.index,s.name,s.sound]), action.cards, 'card directory differs at '+row.name);
   if (action.prompt) assert(row.prompt.includes(action.prompt));
+  if ('text' in action) assert.strictEqual(row.prompt,action.text,'displayed name differs at '+row.name);
+  for (const [field,wanted] of Object.entries(action.expected_ui || {})) assert.deepEqual(row.file_ui[field],wanted,'file UI '+field+' differs at '+row.name);
+  if ('file_slot' in action) assert.strictEqual(row.file_slot,action.file_slot,'logical/physical slot differs at '+row.name);
   if (action.cycle) row.cycle = await captureCycle(page,action);
   report.checkpoints.push(row);
   console.log('Configuration checkpoint',row.name,'sound',row.settings.sound,'working',row.working,'master',row.master);
@@ -138,6 +146,7 @@ async function drive(page,actions) {
       await page.waitForFunction(() => (HEAPU16[0x754448>>1] | HEAPU16[0x75444a>>1]) === 0);
     }
     if ('select' in action) await select(page,action.select);
+    if ('choose' in action) await select(page,action.choose,false);
     if (action.save) {
       await select(page,action.save[0]); await enterName(page,action.save[1]);
       await page.waitForFunction(slot => FS.readFile('/SaveGames')[slot*0x200] === 1, action.save[0]);

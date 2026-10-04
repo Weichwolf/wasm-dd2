@@ -892,6 +892,43 @@ make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='compare --original
 make clean-logs
 ```
 
+Patch 867 fixes the filename alphabet's colours. The original clears three
+individual RGB bytes at `0x93a3c8..0x93a3ca`; DWORD aliases also erased the
+primitive opcode and coordinates. The resulting alphabet displayed coloured
+texture pixels instead of the original black letters, differing at 2,409 pixels
+in the empty filename dialog. The patch restores the original BYTE stores.
+
+The additional card-edge scenario uses the same live observers and real keys.
+It checks each of the 26 alphabet entries, cursor and backspace limits, the
+eight-character cap, empty and long filenames, duplicate refusal/cancellation
+and the same-name overwrite exemption. It fills all fifteen slots through the
+normal Save Configuration UI, checks full-card selection/overwrite/rename,
+deletes and reuses the final slot, restarts with the full card and loads its
+last configuration. The original accepts an empty filename and allows
+overwriting any occupied slot on a full card; these are observed behaviors.
+After duplicate refusal, a new entry retains the attempted name while an
+occupied entry resets to the previously saved name. The scenario records the
+actual displayed text, cursor, error detail, settings and complete card bytes.
+Four process startups check normal persistence, including full Chromium
+restarts. Selected rendered cycles use the independent-counter alignment above;
+chronological video/PCM, other save types, corrupted cards and disconnected
+storage remain separate requirements.
+
+The verified native, native ASan and browser runs each match all 67 states and
+complete 128 KiB cards, plus 1,024 framebuffer/palette pairs against the original.
+All four ASan sessions finish without a diagnostic. The report records actual
+card write/refusal transitions and rejects 129 changed-text, cursor, card,
+settings, pixel, palette and independent-card-phase cases.
+
+```sh
+make clean-logs
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='capture --target original --scenario tools/configuration_card_edges.json --output /tmp/wasm-dd2/edges-original'
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='capture --target native --scenario tools/configuration_card_edges.json --binary /tmp/dd2_native --reference /tmp/wasm-dd2/edges-original --output /tmp/wasm-dd2/edges-native'
+make capture-browser-configuration-card-ui BROWSER_CONFIGURATION_CARD_UI_ARGS='web/dd2 /tmp/wasm-dd2/edges-browser /tmp/wasm-dd2/edges-original tools/configuration_card_edges.json'
+make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='compare --scenario tools/configuration_card_edges.json --original /tmp/wasm-dd2/edges-original --native /tmp/wasm-dd2/edges-native --browser /tmp/wasm-dd2/edges-browser --report /tmp/wasm-dd2/edges-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie

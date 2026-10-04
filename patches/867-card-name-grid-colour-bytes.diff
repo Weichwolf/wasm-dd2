@@ -1,0 +1,22 @@
+Restore the original BYTE stores for the card filename grid's primitive RGB.
+FUN_0044a654 clears only 0x93a3c8/0x93a3c9/0x93a3ca (MOV BYTE
+at 0x44a72a/0x44a730/0x44a736). The decompiled DWORD aliases also
+cleared the adjacent primitive opcode and coordinates. The original grid
+letters are black; the corrupted primitive displayed coloured texture pixels
+instead, differing at 2,409 pixels in the empty filename dialog.
+
+--- a/dd2_symbols.h
++++ b/dd2_symbols.h
+@@ -1867,9 +1867,9 @@
+ #define DAT_004673ac (*(int*)GIMG(0x004673ac))
+ #define DAT_004673c4 (*(int*)GIMG(0x004673c4))
+ #define DAT_004673dc (*(int*)GIMG(0x004673dc))
+-#define DAT_0093a3c8 (*(int*)GIMG(0x0093a3c8))
+-#define DAT_0093a3c9 (*(int*)GIMG(0x0093a3c9))
+-#define DAT_0093a3ca (*(int*)GIMG(0x0093a3ca))
++#define DAT_0093a3c8 (*(unsigned char*)GIMG(0x0093a3c8))
++#define DAT_0093a3c9 (*(unsigned char*)GIMG(0x0093a3c9))
++#define DAT_0093a3ca (*(unsigned char*)GIMG(0x0093a3ca))
+ #define DAT_0093a39c (*(int*)GIMG(0x0093a39c))
+ #define DAT_0093a43c (*(int*)GIMG(0x0093a43c))
+ #define DAT_0093a464 (*(int*)GIMG(0x0093a464))
