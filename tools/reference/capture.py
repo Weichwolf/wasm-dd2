@@ -273,7 +273,12 @@ def main():
                   'with',len(callbacks['counter_checks']),'read-only counter checks',flush=True)
 
 
-def run(game, output, args):
+def run(game, output, args, on_menu=None):
+    """Run a reference capture; optional UI driver receives the live, unchanged game.
+
+    The driver owns its observations and real input. Startup, isolated save
+    copying, CD provisioning and scoped process cleanup remain identical.
+    """
     with (game / "dd2h.exe").open("rb") as executable:
         if hashlib.file_digest(executable, "sha256").hexdigest() != EXE_SHA256:
             raise ValueError("Reference EXE differs from the supported unmodified dd2h.exe")
@@ -415,6 +420,11 @@ def run(game, output, args):
                         last_escape = now
                     ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
+                        if on_menu is not None:
+                            if args.mode != 'menu':
+                                raise ValueError('A frontend driver requires menu mode')
+                            on_menu(pid, output, env, deadline, rundir)
+                            return
                         if args.champ_history:
                             capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256,args.champ_history_frame_delay_ms,args.normal_arena_history,args.normal_arena_full_video,args.natural_champ_history,args.steady_driver,args.natural_season_history)
                             return

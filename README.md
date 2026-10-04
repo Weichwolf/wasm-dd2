@@ -818,6 +818,36 @@ make verify-keyboard-binding-menu KEYBOARD_BINDING_MENU_ARGS='compare --original
 make clean-logs
 ```
 
+Configuration persistence and subsequent racing controls have a separate live
+original/native/browser check. It binds Left, Right, Fast Steer, Accelerate and
+Brake to B, C, D, E and F, saves configuration A through the normal memory-card
+menus, and restarts each process. The browser closes Chromium entirely and
+reopens its isolated persistent profile; its production IndexedDB loading and
+save hooks handle persistence. Every original/native input is an actual X11
+key; browser events are trusted Playwright keyboard events. Observers read
+state and files without writing engine state or invoking save/load functions.
+
+The initial, saved and reloaded complete 128 KiB cards match the unmodified
+original byte for byte on both ports. The packed 6,526-byte configuration,
+restored settings and all eighteen saved map bytes also match. A normal player
+race activates the saved map: throttle/brake reach +/-32768, normal steering
+reaches +/-256 and keyboard Fast Steer reaches the original +/-511 limit.
+Both steering directions, released controls, actual acceleration movement and
+the removed A/Z/Space bindings are checked. Fourteen corrupted restored-map,
+card-map, active-map, throttle, fast-steer, release and old-key cases are
+rejected. This checks the exercised configuration/card/input functionality;
+race trajectories, video/audio streams and physical scheduling are separate
+requirements. It does not accept all settings, card edge cases or controllers.
+
+```sh
+make clean-logs
+make verify-configuration-persistence CONFIGURATION_PERSISTENCE_ARGS='capture --target original --output /tmp/wasm-dd2/config-original'
+make verify-configuration-persistence CONFIGURATION_PERSISTENCE_ARGS='capture --target native --binary /tmp/dd2_native --output /tmp/wasm-dd2/config-native'
+make capture-browser-configuration-persistence BROWSER_CONFIGURATION_ARGS='web/dd2 /tmp/wasm-dd2/config-browser'
+make verify-configuration-persistence CONFIGURATION_PERSISTENCE_ARGS='compare --original /tmp/wasm-dd2/config-original --native /tmp/wasm-dd2/config-native --browser /tmp/wasm-dd2/config-browser --report /tmp/wasm-dd2/config-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie

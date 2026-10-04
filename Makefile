@@ -99,6 +99,13 @@ verify-engine-audio: ## compare actual native/browser engine PCM with observed o
 verify-keyboard-binding-menu: ## capture/compare actual original/native/browser key bindings and exact menu cycles; KEYBOARD_BINDING_MENU_ARGS required
 	python3 $(ROOT)/tools/verify_keyboard_binding_menu.py $(KEYBOARD_BINDING_MENU_ARGS)
 
+.PHONY: verify-configuration-persistence capture-browser-configuration-persistence
+verify-configuration-persistence: ## capture/compare actual saved configuration, process restart and remapped racing input; CONFIGURATION_PERSISTENCE_ARGS required
+	python3 $(ROOT)/tools/verify_configuration_persistence.py $(CONFIGURATION_PERSISTENCE_ARGS)
+
+capture-browser-configuration-persistence: ## capture actual browser configuration save, Chromium restart and remapped racing input; BROWSER_CONFIGURATION_ARGS required
+	node $(ROOT)/tools/browser/capture_configuration_persistence.js $(BROWSER_CONFIGURATION_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 
