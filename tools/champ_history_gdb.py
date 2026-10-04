@@ -25,9 +25,11 @@ from verify_champ_season import (ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS,
     NATURAL_SEASON_KEYS, NATURAL_SEASON_STARTS, CHAMP_LEVELS, validate_end)
 from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
 import race_results_protocol
+import multiplayer_results_protocol
 
 
 def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False):
+    protocol = multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
     if result_tables and (normal_arena or full_video or natural_champ or natural_season):
         raise ValueError('Result-table API history requires its own route')
     if natural_champ and (normal_arena or full_video):
@@ -54,7 +56,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     held_polls = 0
     held_counts = []
     start_time = time.monotonic()
-    keys = race_results_protocol.KEYS if result_tables else NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
+    keys = protocol.KEYS if result_tables else NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
     actions = NATURAL_SEASON_ACTIONS if natural_season else NATURAL_CHAMP_ACTIONS if natural_champ else keys
     driving_inputs = []
     driving_cursor = 0
@@ -136,7 +138,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     def snapshot():
         name = f'step{key_index:02d}-'+('natural-finish' if normal_arena and key_index > len(keys) else actions[key_index - 1] if key_index else 'boot')
         directory = root / name
-        directory.mkdir(exist_ok=result_tables and key_index in race_results_protocol.TABLES)
+        directory.mkdir(exist_ok=result_tables and key_index in protocol.TABLES)
         value = {key: integer(address) for key, address in ADDRESSES.items()}
         text = lambda address, size: read(address, size).split(b'\0')[0].decode('ascii')
         value.update(stage=target+(' PutDispEnv entry' if full_video else ' Draw_All entry'), exe_modified=False if original else None, exe_sha256=EXE if original else None,
@@ -185,21 +187,25 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             value['saved_state'] = {**{key:integer(address) for key,address,_ in LAYOUT['fields']},
                 **{key:read(address,size).hex() for key,address,size,_ in LAYOUT['regions']},
                 'joy_present':read(0x754451,1)[0]}
-            if key_index in race_results_protocol.STARTS:
-                race = race_results_protocol.STARTS.index(key_index)
-                if (value['level'],value['race'],value['race_mode'],value['race_type']) != ((2,5,7)[race],race+1,1,4):
-                    raise RuntimeError('Wrong actual loaded Stock Car race start')
-            if key_index in race_results_protocol.OVERS:
-                race = race_results_protocol.OVERS.index(key_index)
-                if (value['level'],value['race'],value['poly_list']) != (15,race+2,0x46ae44 if race==2 else 0x46bf38):
-                    raise RuntimeError('Wrong actual race/season result screen')
-            if key_index in race_results_protocol.TABLES:
-                if value['level'] != 15 or value['poly_list'] != 0x46b890:
+            for steps, expected in [(protocol.STARTS,protocol.PLAN['start_states']),
+                                    (protocol.OVERS,protocol.PLAN['over_states'])]:
+                if key_index in steps:
+                    wanted = expected[steps.index(key_index)]
+                    actual = {**value,**value['saved_state']}
+                    if any(actual[key] != val for key,val in wanted.items()):
+                        raise RuntimeError('Wrong actual result route state: '+str((key_index,wanted,{k:actual[k] for k in wanted})))
+            if result_tables == 'multiplayer' and key_index >= len(protocol.PLAN['load_keys']):
+                if value['saved_state']['multi_count'] != 2:
+                    raise RuntimeError('Two actual multiplayer names required')
+            if key_index in protocol.TABLES:
+                plan = protocol.PLAN
+                if value['level'] != 15 or value['poly_list'] != plan['menu']:
                     raise RuntimeError('Actual result viewer required')
-                value['result_rows'] = [dict(name=text(0x940760+i*26,26),points=text(0x940670+i*12,12)) for i in range(20)]
-                value['rectangle'] = list(struct.unpack('<hhhh',read(0x46be0c,8)))
+                value['result_rows'] = [dict(name=text(plan['name_address']+i*26,26),
+                    points=text(plan['point_address']+i*plan['point_stride'],plan['point_stride'])) for i in range(20)]
+                value['rectangle'] = list(struct.unpack('<hhhh',read(plan['rectangle_address'],8)))
                 value['cycle'] = str(directory/'cycle')
-            if key_index == len(keys) and (value['level'],value['poly_list'],value['race'],value['stats']) != (0,0x4696b0,4,1):
+            if key_index == len(keys) and [value[k] for k in ['level','poly_list','race','stats']] != protocol.PLAN['end']:
                 raise RuntimeError('Actual completed season title return required')
         for filename, address, size in [('framebuf.bin', 0x700450, 307200), ('palette.bin', 0x700050, 1024)]:
             (directory / filename).write_bytes(read(address, size))
@@ -373,7 +379,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     stage = 'release'
                 if stage != 'settle':
                     continue
-                race_start = key_index in race_results_protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
+                race_start = key_index in protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
                 if race_start:
                     ready = game_caller and integer(0x7746ac) == 0 and (not result_tables or integer(0x7746c0)>=8)
                 else:
@@ -383,7 +389,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 steady = steady + 1 if ready else 0
                 if steady < (2 if race_start else 16):
                     continue
-                if result_tables and key_index in race_results_protocol.TABLES:
+                if result_tables and key_index in protocol.TABLES:
                     name = f'step{key_index:02d}-'+actions[key_index-1]
                     directory = root/name/'cycle'; directory.mkdir(parents=True,exist_ok=True)
                     cycle = result_cycles.setdefault(key_index,[])

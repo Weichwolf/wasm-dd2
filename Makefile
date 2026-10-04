@@ -144,10 +144,10 @@ capture-browser-statistics-ui: ## run genuine browser statistics navigation; BRO
 	node $(ROOT)/tools/browser/capture_statistics_ui.js $(BROWSER_STATISTICS_UI_ARGS)
 
 .PHONY: capture-race-results-history verify-race-results-ui capture-browser-race-results-ui
-capture-race-results-history: ## observe original/native result-table clock/RNG histories; RACE_RESULTS_HISTORY_ARGS required
+capture-race-results-history: ## observe original/native single or multiplayer result-table clock/RNG histories; RACE_RESULTS_HISTORY_ARGS required
 	python3 $(ROOT)/tools/capture_race_results_history.py $(RACE_RESULTS_HISTORY_ARGS)
 
-verify-race-results-ui: ## compare aligned actual race and season result tables; RACE_RESULTS_UI_ARGS required
+verify-race-results-ui: ## compare aligned actual single or multiplayer result tables; RACE_RESULTS_UI_ARGS required
 	python3 $(ROOT)/tools/verify_race_results_ui.py $(RACE_RESULTS_UI_ARGS)
 
 capture-browser-race-results-ui: ## observe browser result tables with recorded original API inputs; BROWSER_RACE_RESULTS_UI_ARGS required

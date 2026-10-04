@@ -1084,6 +1084,46 @@ make verify-race-results-ui RACE_RESULTS_UI_ARGS='--fixture /tmp/wasm-dd2/champi
 make clean-logs
 ```
 
+Patch 873 restores the multiplayer league background's signed Y and width
+WORDs at `0x46b61a` and `0x46b61c`. BYTE aliases read -42 as 214 and 282 as
+26. The genuine two-player frontend route is defined in
+`tools/multiplayer_results_ui.json`; it names players A and B through the name
+grid and runs all five Wrecking rounds, retiring both human turns in each round.
+It opens and reopens each cumulative league table and returns to the title after
+the final round. No engine state is injected.
+
+The same original clock/RNG observer and result-table verifier support this
+route with `--multiplayer`, and the browser recorder uses
+`--multiplayer-results`. They check 143 actual states, ten player starts and ten
+retirement transitions, all 20 league ranks and cumulative point totals, and ten
+64-phase table cycles (640 complete indexed frame/palette pairs per target).
+The old executable must fail every table frame while its states, points,
+palettes, clock inputs and computed RNG remain identical. Native uses its actual
+keyboard bridge; browser inputs are synthetic DOM events through the production
+backend. This scenario covers retired human turns (zero human points) and
+nonzero computer scores; natural finishes, positive human scoring, other player
+counts, Stock Car multiplayer, multiplayer save/load and chronological racing
+A/V remain separate requirements.
+The verified run is `/tmp/wasm-dd2/multiplayer-879-final-verified.json`: all
+three targets pass 143 states and 640 complete frame/palette pairs each, with
+776 original clock returns and 5,220 computed RNG calls. All 91 negative checks
+reject altered output, points, player/round progression, API counts or the real
+old background. The patched binaries and shared recorders also pass the previous
+single-player route again: 52 states and 384 original-exact frame/palette hashes
+per target (`/tmp/wasm-dd2/results-879-single-regression-verified.json`).
+
+```sh
+make clean-logs
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target original --multiplayer --output /tmp/wasm-dd2/multiplayer-original'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --multiplayer --binary /tmp/dd2_native --reference /tmp/wasm-dd2/multiplayer-original/history --output /tmp/wasm-dd2/multiplayer-native'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --multiplayer --binary /tmp/dd2_asan --reference /tmp/wasm-dd2/multiplayer-original/history --output /tmp/wasm-dd2/multiplayer-asan'
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/multiplayer-rng-layout
+make capture-browser-race-results-ui BROWSER_RACE_RESULTS_UI_ARGS='web/dd2 /tmp/wasm-dd2/multiplayer-browser --api-reference=/tmp/wasm-dd2/multiplayer-original/history --rng-layout=/tmp/wasm-dd2/multiplayer-rng-layout/layout.json --multiplayer-results'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --multiplayer --binary /tmp/dd2_native_before_873 --reference /tmp/wasm-dd2/multiplayer-original/history --output /tmp/wasm-dd2/multiplayer-before'
+make verify-race-results-ui RACE_RESULTS_UI_ARGS='--multiplayer --original /tmp/wasm-dd2/multiplayer-original --native /tmp/wasm-dd2/multiplayer-native --asan /tmp/wasm-dd2/multiplayer-asan --browser /tmp/wasm-dd2/multiplayer-browser --before /tmp/wasm-dd2/multiplayer-before --report /tmp/wasm-dd2/multiplayer-verified.json --clean'
+make clean-logs
+```
+
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,
 then uses Retire / Yes and Save Replay to create a real `0x2020` card. All

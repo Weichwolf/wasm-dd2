@@ -1,0 +1,262 @@
+{
+  "scope": "Actual fresh two-player Wrecking multiplayer championship, all five rounds and ten turns retired through acknowledged keyboard inputs; player exchange, cumulative league tables with all 20 ranked names/points, reopening and final title return. Original hardware observations supply game-clock returns; ports independently compute the RNG sequence. All 143 checkpoints and ten settled 64-phase indexed/palette cycles are checked, including actual browser canvas. Native uses its keyboard bridge; browser uses synthetic DOM events through its actual keyboard backend. No chronological racing A/V, natural finishes, other player counts/modes, multiplayer save/load, physical keyboard delivery or output/timing parity claim.",
+  "load_keys": [
+    "Return",
+    "Return",
+    "Right",
+    "Right",
+    "Right",
+    "Return",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Right",
+    "Return",
+    "Up",
+    "Left",
+    "Left",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Down",
+    "Down",
+    "Return"
+  ],
+  "retire_keys": [
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return"
+  ],
+  "round_keys": [
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return",
+    "Down",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return",
+    "Right",
+    "Return",
+    "Escape",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Return"
+  ],
+  "races": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "rectangle": [
+    -142,
+    -42,
+    282,
+    120
+  ],
+  "cycles": 10,
+  "frames_per_cycle": 64,
+  "starts": [
+    22,
+    31,
+    46,
+    55,
+    70,
+    79,
+    94,
+    103,
+    118,
+    127
+  ],
+  "overs": [
+    29,
+    38,
+    53,
+    62,
+    77,
+    86,
+    101,
+    110,
+    125,
+    134
+  ],
+  "tables": [
+    40,
+    42,
+    64,
+    66,
+    88,
+    90,
+    112,
+    114,
+    136,
+    138
+  ],
+  "menu": 4632732,
+  "name_address": 9700448,
+  "point_address": 9700128,
+  "point_stride": 16,
+  "rectangle_address": 4634136,
+  "rank_offset": 20,
+  "point_offset": 16,
+  "rank_base": 0,
+  "end": [
+    0,
+    4626096,
+    5,
+    0
+  ],
+  "result_mode": "multiplayer",
+  "start_states": [
+    {
+      "level": 1,
+      "race": 0,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 1,
+      "race": 0,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 2,
+      "race": 1,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 2,
+      "race": 1,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 5,
+      "race": 2,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 5,
+      "race": 2,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 7,
+      "race": 3,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 7,
+      "race": 3,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 10,
+      "race": 4,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 10,
+      "race": 4,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    }
+  ],
+  "over_states": [
+    {
+      "level": 15,
+      "race": 0,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 1,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 1,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 2,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 2,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 3,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 3,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 4,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 4,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 5,
+      "poly_list": 4632132,
+      "player": 2
+    }
+  ]
+}

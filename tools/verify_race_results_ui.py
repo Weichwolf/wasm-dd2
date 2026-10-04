@@ -7,7 +7,9 @@ from pathlib import Path
 import struct
 
 from artifacts import WORK, open_files, prepare_output
-from race_results_protocol import KEYS, STARTS, TABLES, OVERS, PLAN
+import race_results_protocol
+import multiplayer_results_protocol
+KEYS,STARTS,TABLES,OVERS,PLAN = (getattr(race_results_protocol,k) for k in ['KEYS','STARTS','TABLES','OVERS','PLAN'])
 from verify_championship_save import fixture
 from verify_champ_history import recorded_apis
 from verify_configuration_card_ui import match_frame
@@ -23,9 +25,10 @@ def names_and_points(state):
     result = [None]*20
     for index in range(20):
         row = league[index*54:(index+1)*54]
-        rank, points = struct.unpack_from('<hh', row, 26)
-        require(1 <= rank <= 20 and result[rank-1] is None, 'unique actual race ranks required')
-        result[rank-1] = dict(name='%R%JL%T/'+row[:16].split(b'\0')[0].decode('ascii'),
+        rank = struct.unpack_from('<h',row,PLAN['rank_offset'])[0] - PLAN['rank_base']
+        points = struct.unpack_from('<h',row,PLAN['point_offset'])[0]
+        require(0 <= rank < 20 and result[rank] is None, 'unique actual ranks required')
+        result[rank] = dict(name='%R%JL%T/'+row[:16].split(b'\0')[0].decode('ascii'),
                               points='%R%JL%T/'+str(points))
     return result
 
@@ -38,7 +41,7 @@ def frames(directory, browser):
             'wrong presentation observation boundary')
     rows = meta['frames']
     require(len(rows) == 64 and {r['phase'] for r in rows} == set(range(64)) and
-            {r['level'] for r in rows} == {15} and {r['poly_list'] for r in rows} == {0x46b890} and
+            {r['level'] for r in rows} == {15} and {r['poly_list'] for r in rows} == {PLAN['menu']} and
             len({r['cf'] for r in rows}) == 1, 'complete settled actual result cycle required')
     result = {}
     for row in rows:
@@ -54,7 +57,7 @@ def load_history(root, target, initial):
     require(wrapper['pass_'] and not wrapper['engine_state_writes'] and wrapper['target']==target and
             wrapper['initial_card_sha256']==digest(initial), 'completed actual history required')
     directory = root/'history'; meta = json.loads((directory/'history.json').read_text())
-    require(meta['result_tables'] and meta['keys']==KEYS and meta['checkpoints']==NAMES and
+    require(meta['result_tables']==PLAN['result_mode'] and meta['keys']==KEYS and meta['checkpoints']==NAMES and
             meta['initial_save_sha256']==digest(initial) and meta['acknowledged_keys'] and
             len(meta['held_pad_polls'])==len(KEYS) and min(meta['held_pad_polls'])>=1 and
             meta['binary_sha256']==wrapper['binary_sha256'], 'complete current result route required')
@@ -74,7 +77,7 @@ def load_history(root, target, initial):
 
 
 def match_points(source, actual, browser=False):
-    require(len(actual)==52, 'all 52 actual checkpoints required')
+    require(len(actual)==len(NAMES), 'all actual checkpoints required')
     for index,(left,right) in enumerate(zip(source,actual)):
         require(all(left[key]==right[key] for key in FIELDS), 'actual result history state differs at '+str(index))
         expected = dict(clock=left['observed']['clock_calls'],random=left['observed']['rng_calls'])
@@ -85,15 +88,39 @@ def match_points(source, actual, browser=False):
             require(all(right['observed'][key]==left['observed'][key] for key in ['clock_calls','rng_calls']),
                     'actual native API extent differs')
         if index in TABLES:
-            require(right['level']==15 and right['poly_list']==0x46b890 and right['rectangle']==PLAN['rectangle'] and
+            require(right['level']==15 and right['poly_list']==PLAN['menu'] and right['rectangle']==PLAN['rectangle'] and
                     right['result_rows']==names_and_points(right['saved_state'])==left['result_rows'],
                     'displayed result ranks/points or rectangle differ')
-    require((actual[-1]['level'],actual[-1]['poly_list'],actual[-1]['race'],actual[-1]['stats'])==(0,0x4696b0,4,1),
+    for steps,expected in [(STARTS,PLAN['start_states']),(OVERS,PLAN['over_states'])]:
+        for step,wanted in zip(steps,expected):
+            observed={**actual[step],**actual[step]['saved_state']}
+            require(all(observed[k]==v for k,v in wanted.items()),'actual player/race exchange differs')
+    if PLAN['result_mode']=='multiplayer':
+        require(all(p['saved_state']['multi_count']==2 for p in actual[len(PLAN['load_keys']):]),'two actual players required')
+        previous=[0]*20
+        for step in TABLES[::2]:
+            league=bytes.fromhex(actual[step]['saved_state']['league'])
+            cumulative=[struct.unpack_from('<h',league,i*54+16)[0] for i in range(20)]
+            points=[struct.unpack_from('<h',league,i*54+28)[0] for i in range(20)]
+            require(all(cumulative[i]==previous[i]+points[i] for i in range(20)),
+                    'actual multiplayer cumulative points differ')
+            require(all(v>0 for v in cumulative[2:]),'nonempty computer league required')
+            require([league[i*54:i*54+16].split(b'\0')[0] for i in range(2)]==[b'A',b'B'],
+                    'actual human name order differs')
+            previous=cumulative
+    require([actual[-1][k] for k in ['level','poly_list','race','stats']]==PLAN['end'],
             'actual season elimination/title return required')
 
 
 def compare(args):
-    initial,_ = fixture(args.fixture)
+    if args.multiplayer:
+        require(args.fixture is None,'fresh multiplayer card required')
+        from verify_configuration_persistence import ROOT
+        initial=(ROOT/'DestructionDerby2/SaveGames').read_bytes()
+        require(len(initial)==0x20000 and all(struct.unpack_from('<I',initial,i*0x200)[0]==0 for i in range(15)),'actual empty provisioned card required')
+    else:
+        require(args.fixture is not None,'actual championship fixture required')
+        initial,_ = fixture(args.fixture)
     original,random,ticks = load_history(args.original,'original',initial)
     targets,negative,paths = {},[],set()
     for target,directory in [('native',args.native),('native-asan',args.asan),('browser',args.browser),('native-before',args.before)]:
@@ -101,7 +128,7 @@ def compare(args):
         if browser:
             nav = json.loads((directory/'navigation.json').read_text())
             observer = json.loads((directory/'rng-observations.json').read_text())
-            require(nav['keys']==KEYS and nav['checkpoints']==NAMES and nav['result_tables'] and nav['input_synthetic'] and
+            require(nav['keys']==KEYS and nav['checkpoints']==NAMES and nav['result_tables']==PLAN['result_mode'] and nav['input_synthetic'] and
                     nav['input']=='browser keyboard events' and nav['initial_save_sha256']==digest(initial) and
                     nav['wasm_sha256']==observer['layout']['wasm_sha256'], 'actual browser route/file/binary differs')
             require(nav['api_reference']==dict(clock_calls=original['meta']['clock_calls'],computed_rng_calls=original['meta']['rng_calls'],
@@ -147,9 +174,13 @@ def compare(args):
                 except RuntimeError: negative.append(dict(target=target,case=name+'-'+str(region)))
                 else: raise RuntimeError('altered result output accepted')
         if target!='native-before':
-            for field in ['name','points','clock','random']:
+            for field in ['name','points','clock','random']+(['player','race','league'] if args.multiplayer else []):
                 changed=copy.deepcopy(points)
                 if field in ['name','points']:changed[TABLES[0]]['result_rows'][0][field]+='X'
+                elif field in ['player','race']:changed[STARTS[1]]['saved_state'][field]+=1
+                elif field=='league':
+                    raw=bytearray.fromhex(changed[TABLES[0]]['saved_state']['league']);raw[2*54+16]^=1
+                    changed[TABLES[0]]['saved_state']['league']=raw.hex()
                 elif browser:changed[TABLES[0]]['api_calls'][field]+=1
                 else:changed[TABLES[0]]['observed']['clock_calls' if field=='clock' else 'rng_calls']+=1
                 try:match_points(original['points'],changed,browser)
@@ -158,7 +189,7 @@ def compare(args):
         targets[target]=dict(pass_=True,binary_sha256=binary,capture=data,frames=hashes,
                             method='actual old regression rejected' if target=='native-before' else 'literal complete indexed/palette comparison')
     report=dict(scope=PLAN['scope'],pass_=True,original=original,targets=targets,negative_cases=negative,
-                checked_states=52,frames_per_target=384,clock_calls=original['meta']['clock_calls'],rng_calls=original['meta']['rng_calls'])
+                checked_states=len(NAMES),frames_per_target=64*len(TABLES),clock_calls=original['meta']['clock_calls'],rng_calls=original['meta']['rng_calls'])
     destination=prepare_output(args.report);require(WORK in destination.parents,'report belongs in /tmp/wasm-dd2')
     destination.write_text(json.dumps(report,indent=2)+'\n')
     if args.clean:
@@ -171,13 +202,19 @@ def compare(args):
             for raw in directory.glob('step*/*.bin'):
                 require(not raw.is_symlink(),'unexpected raw image symlink');st=raw.stat()
                 require((st.st_dev,st.st_ino) not in opened,'image is still open');raw.unlink()
-    print('Actual aligned result menus: 52 states, 384 exact frames per target;',len(negative),'negative checks rejected',flush=True)
+    print('Actual aligned result menus:',len(NAMES),'states,',64*len(TABLES),'exact frames per target;',len(negative),'negative checks rejected',flush=True)
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    for name in ['fixture','original','native','asan','browser','before','report']:parser.add_argument('--'+name,type=Path,required=True)
+    global KEYS,STARTS,TABLES,OVERS,PLAN,NAMES
+    parser.add_argument('--fixture',type=Path)
+    parser.add_argument('--multiplayer',action='store_true')
+    for name in ['original','native','asan','browser','before','report']:parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--clean',action='store_true');args=parser.parse_args()
+    protocol=multiplayer_results_protocol if args.multiplayer else race_results_protocol
+    KEYS,STARTS,TABLES,OVERS,PLAN=(getattr(protocol,k) for k in ['KEYS','STARTS','TABLES','OVERS','PLAN'])
+    NAMES=[f'step{i:02d}-{key}' for i,key in enumerate(['boot',*KEYS])]
     for name in ['original','native','asan','browser','before','report']:
         require(WORK in getattr(args,name).resolve().parents,'all captures/reports belong in /tmp/wasm-dd2')
     compare(args)

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Record loaded result menus with observed clock/RNG inputs and acknowledged keys.
+"""Record championship result menus with observed clock/RNG inputs and acknowledged keys.
 
 Original uses real X11 input and read-only hardware breakpoints. Native uses
 its keyboard bridge and the recorded original clock stream; every computed RNG
-triple is independently checked. Six full result-menu cycles are retained.
+triple is independently checked. Full result-menu cycles are retained for the loaded single-player route or
+fresh two-player multiplayer season.
 This recorder alone does not accept original video/audio parity.
 """
 import argparse
@@ -13,7 +14,8 @@ from pathlib import Path
 import subprocess
 
 from artifacts import check_space, run_bounded
-from race_results_protocol import KEYS, TABLES
+import race_results_protocol
+import multiplayer_results_protocol
 from verify_championship_save import fixture, setup, execute
 from verify_configuration_persistence import ROOT, digest, EXE_SHA256, require
 
@@ -21,18 +23,30 @@ from verify_configuration_persistence import ROOT, digest, EXE_SHA256, require
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target',choices=['original','native'],required=True)
-    parser.add_argument('--fixture',type=Path,required=True)
+    parser.add_argument('--fixture',type=Path)
+    parser.add_argument('--multiplayer',action='store_true')
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--reference',type=Path)
     parser.add_argument('--binary',type=Path,default=Path('/tmp/dd2_native'))
     args = parser.parse_args()
-    initial, _ = fixture(args.fixture)
+    protocol = multiplayer_results_protocol if args.multiplayer else race_results_protocol
+    KEYS,TABLES = protocol.KEYS,protocol.TABLES
+    mode = protocol.PLAN['result_mode']
+    if args.multiplayer:
+        require(args.fixture is None,'fresh multiplayer uses the provisioned empty card')
+        initial = (ROOT/'DestructionDerby2/SaveGames').read_bytes()
+        import struct
+        require(len(initial)==0x20000 and all(struct.unpack_from('<I',initial,i*0x200)[0]==0 for i in range(15)),
+                'actual fresh provisioned card required')
+    else:
+        require(args.fixture is not None,'original-produced championship fixture required')
+        initial, _ = fixture(args.fixture)
     out, game = setup(args,initial)
-    report = dict(scope=__doc__,pass_=False,engine_state_writes=False,target=args.target,
-                  initial_card_sha256=digest(initial),fixture=str(args.fixture.resolve()))
+    report = dict(scope=protocol.PLAN['scope'],pass_=False,engine_state_writes=False,target=args.target,
+                  initial_card_sha256=digest(initial),fixture=str(args.fixture.resolve()) if args.fixture else None)
     common = ['python','import sys',f'sys.path.insert(0,{str(ROOT/"tools")!r})',
               'from champ_history_gdb import record_champ_history',
-              f'record_champ_history({str(out)!r},target={args.target!r},result_tables=True)','end']
+              f'record_champ_history({str(out)!r},target={args.target!r},result_tables={mode!r})','end']
     script = out/'history.gdb'
     try:
         if args.target == 'original':
@@ -48,7 +62,7 @@ def main():
         else:
             require(args.reference is not None,'actual original history reference required')
             source = json.loads((args.reference/'history.json').read_text())
-            require(source['result_tables'] and source['exe_modified'] is False and
+            require(source['result_tables'] == mode and source['exe_modified'] is False and
                     source['exe_sha256'] == EXE_SHA256 and source['keys'] == KEYS and
                     source['initial_save_sha256'] == digest(initial),'supported actual source required')
             for name,size in [('ticks.bin',source['clock_calls']*4),('random.bin',source['rng_calls']*12)]:
@@ -73,7 +87,7 @@ def main():
             require((game/'SaveGames').read_bytes()==initial,'native history changed card')
             report['binary_sha256'] = digest(args.binary.read_bytes())
         path = out/'history/history.json'; history = json.loads(path.read_text())
-        require(history['result_tables'] and history['keys']==KEYS and len(history['checkpoints'])==len(KEYS)+1,
+        require(history['result_tables'] == mode and history['keys']==KEYS and len(history['checkpoints'])==len(KEYS)+1,
                 'complete result history required')
         history.update(initial_save_sha256=digest(initial),binary_sha256=report['binary_sha256'])
         for step in TABLES:

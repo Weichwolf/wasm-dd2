@@ -35,5 +35,78 @@
     120
   ],
   "cycles": 6,
-  "frames_per_cycle": 64
+  "frames_per_cycle": 64,
+  "starts": [
+    6,
+    21,
+    36
+  ],
+  "tables": [
+    14,
+    16,
+    29,
+    31,
+    44,
+    46
+  ],
+  "overs": [
+    13,
+    28,
+    43
+  ],
+  "menu": 4634768,
+  "name_address": 9701216,
+  "point_address": 9700976,
+  "point_stride": 12,
+  "rectangle_address": 4636172,
+  "rank_offset": 26,
+  "point_offset": 28,
+  "rank_base": 1,
+  "end": [
+    0,
+    4626096,
+    4,
+    1
+  ],
+  "result_mode": true,
+  "start_states": [
+    {
+      "level": 2,
+      "race": 1,
+      "race_mode": 1,
+      "race_type": 4,
+      "player": 0
+    },
+    {
+      "level": 5,
+      "race": 2,
+      "race_mode": 1,
+      "race_type": 4,
+      "player": 0
+    },
+    {
+      "level": 7,
+      "race": 3,
+      "race_mode": 1,
+      "race_type": 4,
+      "player": 0
+    }
+  ],
+  "over_states": [
+    {
+      "level": 15,
+      "race": 2,
+      "poly_list": 4636472
+    },
+    {
+      "level": 15,
+      "race": 3,
+      "poly_list": 4636472
+    },
+    {
+      "level": 15,
+      "race": 4,
+      "poly_list": 4632132
+    }
+  ]
 }
