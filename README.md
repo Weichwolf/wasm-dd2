@@ -1006,6 +1006,45 @@ make verify-original-replay ORIGINAL_REPLAY_ARGS='compare --fixture /tmp/wasm-dd
 make clean-logs
 ```
 
+The replay-history check extends that same original-produced card to the entire
+natural racing playback. Four read-only hardware breakpoint slots observe all
+engine `GetTickCount` returns, all Watcom random triples, real X11 input and each
+`Play_Game` / `Draw_All` pending presentation. Native uses the recorded clock
+file and checks every independently calculated random triple from seed 1.
+Browser uses the same explicit API files, production RNG assertions, read-only
+API counters/seed observations and trusted keyboard input. Its copied input
+files are labelled `input-*`; they are not presented as observed API outputs.
+
+Every racing indexed framebuffer and palette is compared literally, along
+with physics counters, tape position, recorded controls and hashes of all 20
+vehicle positions/matrices/angles, state blocks, render FD and wheel FD. Browser
+captures additionally check every canvas RGBA pixel. Physical primitive-buffer
+storage is retained as a diagnostic: prior loading flips can exchange its two
+packet slots without changing any physics or output pixel. It is not a pose
+comparison. Captures use compressed indexed pictures and optional selected
+vehicle checkpoints, never full memory images per frame.
+
+The verified car-1 Stock Car practice replay has 109 racing presentations,
+550 actual clock returns and 484 computed random triples in one recorded
+original timing history. Native, AddressSanitizer and browser match all 109
+images/palettes and vehicle-state hashes; 57 changed-state, pixel and palette
+cases are rejected. An earlier original timing history produced 273 images,
+also literally matched in the completed video/buffer-storage diagnosis.
+Debugger stops affect elapsed time, so image counts can differ between original
+runs. The ports must match the exact recorded history used for their comparison.
+Chronological audio, loading/menu video, undebugged physical timing and other
+replays remain open; this is not whole-game A/V acceptance.
+
+```sh
+make clean-logs
+make verify-replay-history REPLAY_HISTORY_ARGS='capture --target original --fixture /tmp/wasm-dd2/replay-fixture --output /tmp/wasm-dd2/replay-history-original'
+make verify-replay-history REPLAY_HISTORY_ARGS='capture --target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/replay-fixture --reference /tmp/wasm-dd2/replay-history-original/history --output /tmp/wasm-dd2/replay-history-native'
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/replay-history-layout
+make capture-browser-replay-history BROWSER_REPLAY_HISTORY_ARGS='web/dd2 /tmp/wasm-dd2/replay-history-browser /tmp/wasm-dd2/replay-fixture /tmp/wasm-dd2/replay-history-original /tmp/wasm-dd2/replay-history-layout/layout.json'
+make verify-replay-history REPLAY_HISTORY_ARGS='compare --original /tmp/wasm-dd2/replay-history-original --native /tmp/wasm-dd2/replay-history-native --browser /tmp/wasm-dd2/replay-history-browser --report /tmp/wasm-dd2/replay-history-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie

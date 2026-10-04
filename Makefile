@@ -127,6 +127,13 @@ verify-original-replay: ## generate/compare real original replay cards and natur
 capture-browser-original-replay: ## load a real original replay through IDBFS and trusted keys; BROWSER_ORIGINAL_REPLAY_ARGS required
 	node $(ROOT)/tools/browser/capture_original_replay.js $(BROWSER_ORIGINAL_REPLAY_ARGS)
 
+.PHONY: verify-replay-history capture-browser-replay-history
+verify-replay-history: ## compare actual original replay racing video with recorded clocks and computed RNG; REPLAY_HISTORY_ARGS required
+	python3 $(ROOT)/tools/verify_replay_history.py $(REPLAY_HISTORY_ARGS)
+
+capture-browser-replay-history: ## capture actual browser replay racing canvas/physics with explicit API inputs; BROWSER_REPLAY_HISTORY_ARGS required
+	node $(ROOT)/tools/browser/capture_replay_history.js $(BROWSER_REPLAY_HISTORY_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 

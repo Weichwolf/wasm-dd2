@@ -33,12 +33,18 @@ def digest(data):
 
 
 class NativeUI:
-    def __init__(self, binary, game, output, display, number, limit=240):
+    def __init__(self, binary, game, output, display, number, limit=240, env_override=None):
         self.binary, self.game, self.output = binary, game, output
         self.table = symbols(binary)
         self.env = {k: v for k, v in os.environ.items() if not k.startswith('DD2_')}
         self.env.update(DISPLAY=display, DD2_WINDOW='1', DD2_FE='1', DD2_SOUND='1',
                         DD2_REALTIME='1', SDL_AUDIODRIVER='dummy')
+        if env_override:
+            for key, value in env_override.items():
+                if value is None:
+                    self.env.pop(key, None)
+                else:
+                    self.env[key] = value
         self.log = (output / f'game-{number}.log').open('wb')
         self.process = subprocess.Popen([str(binary)], cwd=game, env=self.env,
                                         stdout=self.log, stderr=self.log)
