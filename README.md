@@ -1045,6 +1045,45 @@ make verify-statistics-ui STATISTICS_UI_ARGS='compare --scenario tools/lap_recor
 make clean-logs
 ```
 
+Patch 872 restores the race-result table's height from the original signed WORD
+at `0x46be12`. The original viewer reads DWORD/SAR-16, giving the rectangle
+(-142,-42,282,120); its host-only height global instead stayed zero after entry
+rotation. The actual pre-fix viewer loses 109,840 indexed pixels per observed
+frame while names, points and palette match the original.
+
+`tools/capture_race_results_history.py` loads an original-produced championship
+card, retires its three remaining Stock Car races and opens and reopens each
+result table. Read-only original hardware observations record the game-clock
+returns and each RNG triple. Native and WASM consume those clock inputs and
+independently calculate the same RNG sequence. Native uses its actual keyboard
+bridge; the browser uses synthetic DOM events through the production keyboard
+backend. Physical keyboard delivery is outside this comparison.
+
+`tools/verify_race_results_ui.py` checks all 52 checkpoint states, all 20 ranked
+names and race points against the classified league data, the complete resulting
+saved state, next-race and season-elimination navigation. Six settled 64-phase
+cycles require 384 literal frame/palette pairs per target, including actual
+browser canvas conversion. A separate real pre-872 executable must fail all six
+table cycles with identical game-clock, RNG and result data. This remains a
+result-menu comparison; chronological racing audio/video, natural finishes,
+other modes and physical output/timing remain open requirements.
+The verified run is `/tmp/wasm-dd2/results-878-final-verified.json`: all three
+targets pass 52 states and 384 frame/palette pairs each, using 74 observed
+clock returns and 1,509 calculated RNG calls. All 54 negative checks reject
+altered results/API counts or the actual old background.
+
+```sh
+make clean-logs
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target original --fixture /tmp/wasm-dd2/championship-save-868-fixture --output /tmp/wasm-dd2/results-original'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/championship-save-868-fixture --reference /tmp/wasm-dd2/results-original/history --output /tmp/wasm-dd2/results-native'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --binary /tmp/dd2_asan --fixture /tmp/wasm-dd2/championship-save-868-fixture --reference /tmp/wasm-dd2/results-original/history --output /tmp/wasm-dd2/results-asan'
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/results-rng-layout
+make capture-browser-race-results-ui BROWSER_RACE_RESULTS_UI_ARGS='web/dd2 /tmp/wasm-dd2/results-browser --api-reference=/tmp/wasm-dd2/results-original/history --rng-layout=/tmp/wasm-dd2/results-rng-layout/layout.json --results-fixture=/tmp/wasm-dd2/championship-save-868-fixture'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --binary /tmp/dd2_native_before_872 --fixture /tmp/wasm-dd2/championship-save-868-fixture --reference /tmp/wasm-dd2/results-original/history --output /tmp/wasm-dd2/results-before'
+make verify-race-results-ui RACE_RESULTS_UI_ARGS='--fixture /tmp/wasm-dd2/championship-save-868-fixture --original /tmp/wasm-dd2/results-original --native /tmp/wasm-dd2/results-native --asan /tmp/wasm-dd2/results-asan --browser /tmp/wasm-dd2/results-browser --before /tmp/wasm-dd2/results-before --report /tmp/wasm-dd2/results-verified.json --clean'
+make clean-logs
+```
+
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,
 then uses Retire / Yes and Save Replay to create a real `0x2020` card. All

@@ -143,6 +143,16 @@ verify-statistics-ui: ## generate/capture/compare actual persisted statistics me
 capture-browser-statistics-ui: ## run genuine browser statistics navigation; BROWSER_STATISTICS_UI_ARGS required
 	node $(ROOT)/tools/browser/capture_statistics_ui.js $(BROWSER_STATISTICS_UI_ARGS)
 
+.PHONY: capture-race-results-history verify-race-results-ui capture-browser-race-results-ui
+capture-race-results-history: ## observe original/native result-table clock/RNG histories; RACE_RESULTS_HISTORY_ARGS required
+	python3 $(ROOT)/tools/capture_race_results_history.py $(RACE_RESULTS_HISTORY_ARGS)
+
+verify-race-results-ui: ## compare aligned actual race and season result tables; RACE_RESULTS_UI_ARGS required
+	python3 $(ROOT)/tools/verify_race_results_ui.py $(RACE_RESULTS_UI_ARGS)
+
+capture-browser-race-results-ui: ## observe browser result tables with recorded original API inputs; BROWSER_RACE_RESULTS_UI_ARGS required
+	node $(ROOT)/tools/browser/capture_champ_season.js $(BROWSER_RACE_RESULTS_UI_ARGS)
+
 .PHONY: verify-original-replay capture-browser-original-replay
 verify-original-replay: ## generate/compare real original replay cards and natural playback; ORIGINAL_REPLAY_ARGS required
 	python3 $(ROOT)/tools/verify_original_replay.py $(ORIGINAL_REPLAY_ARGS)

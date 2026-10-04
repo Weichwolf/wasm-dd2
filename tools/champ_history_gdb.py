@@ -24,9 +24,12 @@ from verify_champ_season import (ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS,
     NATURAL_CHAMP_ACTIONS, NATURAL_CHAMP_KEYS, NATURAL_SEASON_ACTIONS,
     NATURAL_SEASON_KEYS, NATURAL_SEASON_STARTS, CHAMP_LEVELS, validate_end)
 from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
+import race_results_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False):
+    if result_tables and (normal_arena or full_video or natural_champ or natural_season):
+        raise ValueError('Result-table API history requires its own route')
     if natural_champ and (normal_arena or full_video):
         raise ValueError('Natural championship uses its own bounded racing capture')
     if steady_driver and (not natural_champ or target != 'original'):
@@ -51,7 +54,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     held_polls = 0
     held_counts = []
     start_time = time.monotonic()
-    keys = NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
+    keys = race_results_protocol.KEYS if result_tables else NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
     actions = NATURAL_SEASON_ACTIONS if natural_season else NATURAL_CHAMP_ACTIONS if natural_champ else keys
     driving_inputs = []
     driving_cursor = 0
@@ -61,6 +64,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     finish_controls_released = False
     race_frames = []
     presentations = []
+    result_cycles = {}
     final_race = None
     final_races = []
     command = ['xdotool', 'search', '--name', 'PC-DD2', 'windowfocus']
@@ -132,7 +136,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     def snapshot():
         name = f'step{key_index:02d}-'+('natural-finish' if normal_arena and key_index > len(keys) else actions[key_index - 1] if key_index else 'boot')
         directory = root / name
-        directory.mkdir()
+        directory.mkdir(exist_ok=result_tables and key_index in race_results_protocol.TABLES)
         value = {key: integer(address) for key, address in ADDRESSES.items()}
         text = lambda address, size: read(address, size).split(b'\0')[0].decode('ascii')
         value.update(stage=target+(' PutDispEnv entry' if full_video else ' Draw_All entry'), exe_modified=False if original else None, exe_sha256=EXE if original else None,
@@ -141,15 +145,15 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             rows=[dict(name=text(0x940290 + i * 26, 26), points=text(0x940240 + i * 16, 16)) for i in range(5)])
         # Check the actual path rather than publishing a complete-looking trace
         # after a key was consumed on the wrong screen.
-        if not normal_arena and not natural_champ and key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78:
+        if not result_tables and not normal_arena and not natural_champ and key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78:
             race = (key_index - 10) // 17
             if (value['level'], value['race']) != ((1, 2, 5, 7, 10)[race], race):
                 raise RuntimeError('Wrong actual championship race start')
-        if not normal_arena and not natural_champ and key_index >= 17 and (key_index - 17) % 17 == 0:
+        if not result_tables and not normal_arena and not natural_champ and key_index >= 17 and (key_index - 17) % 17 == 0:
             race = (key_index - 17) // 17
             if (value['level'], value['race'], value['poly_list']) != (15, race + 1, 0x46bf38 if race < 4 else 0x46ae44):
                 raise RuntimeError('Wrong actual championship result screen')
-        if not normal_arena and not natural_champ and key_index == 95:
+        if not result_tables and not normal_arena and not natural_champ and key_index == 95:
             validate_end(value)
         if normal_arena and key_index > len(keys) and (value['poly_list'] != 0x46a468 or integer(0x795df4) <= 14 or integer(0x9376a8)):
             raise RuntimeError('Normal arena did not naturally reach Practice_Over')
@@ -176,6 +180,27 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 raise RuntimeError('Natural championship input did not reach the requested league page')
         if natural_champ and integer(0x9376a8):
             raise RuntimeError('Natural championship trace must never Retire')
+        if result_tables:
+            from verify_championship_save import LAYOUT
+            value['saved_state'] = {**{key:integer(address) for key,address,_ in LAYOUT['fields']},
+                **{key:read(address,size).hex() for key,address,size,_ in LAYOUT['regions']},
+                'joy_present':read(0x754451,1)[0]}
+            if key_index in race_results_protocol.STARTS:
+                race = race_results_protocol.STARTS.index(key_index)
+                if (value['level'],value['race'],value['race_mode'],value['race_type']) != ((2,5,7)[race],race+1,1,4):
+                    raise RuntimeError('Wrong actual loaded Stock Car race start')
+            if key_index in race_results_protocol.OVERS:
+                race = race_results_protocol.OVERS.index(key_index)
+                if (value['level'],value['race'],value['poly_list']) != (15,race+2,0x46ae44 if race==2 else 0x46bf38):
+                    raise RuntimeError('Wrong actual race/season result screen')
+            if key_index in race_results_protocol.TABLES:
+                if value['level'] != 15 or value['poly_list'] != 0x46b890:
+                    raise RuntimeError('Actual result viewer required')
+                value['result_rows'] = [dict(name=text(0x940760+i*26,26),points=text(0x940670+i*12,12)) for i in range(20)]
+                value['rectangle'] = list(struct.unpack('<hhhh',read(0x46be0c,8)))
+                value['cycle'] = str(directory/'cycle')
+            if key_index == len(keys) and (value['level'],value['poly_list'],value['race'],value['stats']) != (0,0x4696b0,4,1):
+                raise RuntimeError('Actual completed season title return required')
         for filename, address, size in [('framebuf.bin', 0x700450, 307200), ('palette.bin', 0x700050, 1024)]:
             (directory / filename).write_bytes(read(address, size))
         (directory / 'checkpoint.json').write_text(json.dumps(value, indent=2) + '\n')
@@ -348,9 +373,9 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     stage = 'release'
                 if stage != 'settle':
                     continue
-                race_start = ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
+                race_start = key_index in race_results_protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
                 if race_start:
-                    ready = game_caller and integer(0x7746ac) == 0
+                    ready = game_caller and integer(0x7746ac) == 0 and (not result_tables or integer(0x7746c0)>=8)
                 else:
                     result_action=natural_champ and key_index>0 and actions[key_index-1]=='natural-finish'
                     result_screen=0x46ae44 if natural_season and key_index==55 else 0x46bf38
@@ -358,6 +383,18 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 steady = steady + 1 if ready else 0
                 if steady < (2 if race_start else 16):
                     continue
+                if result_tables and key_index in race_results_protocol.TABLES:
+                    name = f'step{key_index:02d}-'+actions[key_index-1]
+                    directory = root/name/'cycle'; directory.mkdir(parents=True,exist_ok=True)
+                    cycle = result_cycles.setdefault(key_index,[])
+                    value = state(); prefix=f'frame{len(cycle):03d}'
+                    for region,address,size in [('framebuf',0x700450,307200),('palette',0x700050,1024)]:
+                        (directory/(prefix+'-'+region+'.bin')).write_bytes(read(address,size))
+                    value.update(index=len(cycle),prefix=prefix,
+                        sound_volume=integer(0x467410),working_sound_volume=integer(0x93fd20),master_sfx_volume=integer(0x462d84))
+                    cycle.append(value)
+                    if len(cycle)<64: continue
+                    (directory/'cycle.json').write_text(json.dumps(dict(stage='Draw_All entry / pending presentation',frames=cycle),indent=2)+'\n')
                 snapshot()
                 if natural_champ and key_index<len(actions) and actions[key_index]=='natural-finish':
                     key_index+=1;stage='drive'
@@ -392,7 +429,8 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             target=target,input='real X11 keys' if original else 'dd2_key_event', acknowledged_keys=True, held_pad_polls=held_counts,
             clock_calls=len(clocks), rng_calls=len(rng), pad_polls=len(pads), draws=draws,
             observed_play_draw_delay_ms=game_frame_delay_ms,
-            complete_retirement_season=not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
+            complete_retirement_season=not result_tables and not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
+            result_tables=result_tables,
             natural_championship=natural_champ, natural_season=natural_season,
             actions=actions, driving_inputs=driving_inputs,
             driving_policy=('steady' if steady_driver else 'default') if original and natural_champ else None,

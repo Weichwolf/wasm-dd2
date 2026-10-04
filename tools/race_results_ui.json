@@ -1,0 +1,39 @@
+{
+  "scope": "Actual Stock Car championship loaded from an original-produced card, remaining three races retired through acknowledged keyboard inputs; race/season result tables, all 20 ranked names/points, reopening and title return. Original hardware observations supply game-clock returns; ports independently compute the same RNG sequence. All 52 checkpoints and six settled 64-phase indexed/palette cycles are checked, including actual browser canvas. Native uses its keyboard bridge; browser uses synthetic DOM events through its actual keyboard backend. No chronological racing A/V, natural finishes, other modes, physical keyboard delivery or output/timing parity claim.",
+  "load_keys": [
+    "Right",
+    "Right",
+    "Right",
+    "Return",
+    "Return",
+    "Return"
+  ],
+  "retire_keys": [
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return"
+  ],
+  "continuation_keys": [
+    "Escape",
+    "Right",
+    "Down",
+    "Down"
+  ],
+  "races": [
+    2,
+    3,
+    4
+  ],
+  "rectangle": [
+    -142,
+    -42,
+    282,
+    120
+  ],
+  "cycles": 6,
+  "frames_per_cycle": 64
+}

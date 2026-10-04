@@ -9,13 +9,18 @@ assert(output.startsWith('/tmp/wasm-dd2/'),'captures must be under /tmp/wasm-dd2
 assert(!fs.existsSync(output)||!fs.readdirSync(output).length,'use a fresh output directory');
 fs.mkdirSync(output,{recursive:true});
 const build=path.resolve(process.argv[2]||'web/dd2');
-const save=fs.readFileSync(path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
+const resultsOption=process.argv.slice(4).find(value=>value.startsWith('--results-fixture='));
+const resultTables=!!resultsOption;
+const save=fs.readFileSync(resultTables?path.join(path.resolve(resultsOption.slice('--results-fixture='.length)),'original.card'):path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
+const resultPlan=resultTables?JSON.parse(fs.readFileSync(path.join(__dirname,'../race_results_ui.json'))):null;
+const resultLayout=resultTables?JSON.parse(fs.readFileSync(path.join(__dirname,'../championship_save_layout.json'))):null;
 const timingOption=process.argv.slice(4).find(value=>value.startsWith('--reference='));
 const rngOption=process.argv.slice(4).find(value=>value.startsWith('--rng-layout='));
 const rngLayout=rngOption?JSON.parse(fs.readFileSync(path.resolve(rngOption.slice('--rng-layout='.length)))):null;
 const traceRng=process.argv.includes('--rng-call-trace');
 assert(!traceRng||rngLayout,'--rng-call-trace requires --rng-layout');
 const apiOption=process.argv.slice(4).find(value=>value.startsWith('--api-reference='));
+assert(!resultTables||apiOption,'Result-table history requires recorded original API inputs');
 let apiReference=null;
 if(apiOption){
  const root=path.resolve(apiOption.slice('--api-reference='.length));assert(root.startsWith('/tmp/wasm-dd2/'));
@@ -25,10 +30,11 @@ if(apiOption){
  const naturalChamp=meta.natural_championship===true;
  const naturalSeason=meta.natural_season===true;
  assert(!naturalSeason||naturalChamp&&meta.final_races.length===5,'Complete natural season required');
- assert(meta.acknowledged_keys&&(normalArena||naturalChamp?meta.natural_finish:meta.complete_retirement_season));
+ assert(meta.acknowledged_keys&&(resultTables?meta.result_tables:normalArena||naturalChamp?meta.natural_finish:meta.complete_retirement_season));
  const expectedKeys=normalArena?['Return','Right','Right','Return','Right','Return','Down','Down','Return']:['Return','Return','Return','Return','Up','Left','Return','Down','Down','Return'];
  if(naturalChamp)for(let race=0;race<(naturalSeason?5:1);race++)expectedKeys.push('Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
  else if(!normalArena)for(let race=0;race<5;race++)expectedKeys.push('Escape','Down','Down','Down','Return','Up','Return','Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
+ if(resultTables){expectedKeys.splice(0,expectedKeys.length,...resultPlan.load_keys);for(let race=0;race<3;race++)expectedKeys.push(...resultPlan.retire_keys,'Return','Escape','Return',...resultPlan.continuation_keys,'Return');}
  assert.deepEqual(meta.keys,expectedKeys,'Actual complete championship input sequence required');
  if(naturalChamp){
   const actions=expectedKeys.slice(0,10);
@@ -126,7 +132,7 @@ async function tap(page,key,timing=null,raceStart=null){
     'ENV.DD2_TICK_REPLAY="/original-ticks.bin";ENV.DD2_RANDOM_REFERENCE="/original-random.bin";ENV.DD2_RANDOM_LEVEL="all";ENV.DD2_RANDOM_REQUIRE_INITIAL="1";});</script>':'';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+apiHook+marker)});
   });
-  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,seasonEnd,drivingInputs,fullVideo,firstPhase})=>{
+  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,seasonEnd,drivingInputs,fullVideo,firstPhase,resultTables,resultLayout})=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
    window.__rngObservations=[];window.__rngError=null;
@@ -134,7 +140,7 @@ async function tap(page,key,timing=null,raceStart=null){
    const seeds=[1];let previousRng=null;
    window.__apiHistory=apiKeys?{active:false,done:false,stage:fullVideo?'align':'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[],presentations:[],drivingCursor:0,finalDrivers:[]}:null;
    window.__naturalPending=[];window.__captureYield=null;
-   if(naturalChamp){
+   if(naturalChamp||resultTables){
     const schedule=window.setTimeout;
     window.setTimeout=function(callback,delay,...args){
      const h=window.__apiHistory;
@@ -200,13 +206,18 @@ async function tap(page,key,timing=null,raceStart=null){
       history.stage='release';
      }else if(history.stage==='release'&&(masks&history.mask)===0){history.stage='settle';history.steady=0;}
      if(history.stage==='settle'){
-      const go=naturalSeason?apiKeys[history.index]==='natural-finish'||history.index===apiKeys.length&&seasonEnd.level>0:naturalChamp?[10,21].includes(history.index):normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
-      const expectedLevel=naturalSeason?(history.index===apiKeys.length?seasonEnd.level:[1,2,5,7,10][(history.index-10)/11]):history.index===10?1:2;
+      const go=resultTables?[6,21,36].includes(history.index):naturalSeason?apiKeys[history.index]==='natural-finish'||history.index===apiKeys.length&&seasonEnd.level>0:naturalChamp?[10,21].includes(history.index):normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
+      const expectedLevel=resultTables?[2,5,7][[6,21,36].indexOf(history.index)]:naturalSeason?(history.index===apiKeys.length?seasonEnd.level:[1,2,5,7,10][(history.index-10)/11]):history.index===10?1:2;
       const resultAction=naturalChamp&&apiKeys[history.index-1]==='natural-finish';
       const resultScreen=naturalSeason&&history.index===55?0x46ae44:0x46bf38;
-      const ready=go?(naturalChamp?physical.level===expectedLevel:normalArena?physical.level>=8&&physical.level<=12:physical.level===[1,2,5,7,10][(history.index-10)/17])&&physical.quit===0&&physical.ticks>0:HEAP16[0x46996c>>1]===0&&(!normalArena||history.index<=apiKeys.length||HEAPU32[0x940010>>2]===0x46a468)&&(!resultAction||HEAPU32[0x940010>>2]===resultScreen);
+      const ready=go?(resultTables?physical.level===expectedLevel&&physical.ticks>=8:naturalChamp?physical.level===expectedLevel:normalArena?physical.level>=8&&physical.level<=12:physical.level===[1,2,5,7,10][(history.index-10)/17])&&physical.quit===0&&physical.ticks>0:HEAP16[0x46996c>>1]===0&&(!normalArena||history.index<=apiKeys.length||HEAPU32[0x940010>>2]===0x46a468)&&(!resultAction||HEAPU32[0x940010>>2]===resultScreen);
       history.steady=ready?history.steady+1:0;
-      if(history.steady>=(go?2:16)){recordHistory=true;window.__captureNext=true;}
+      if(history.steady>=(go?2:16)){
+       window.__captureNext=true;recordHistory=true;
+       if(resultTables&&[14,16,29,31,44,46].includes(history.index)){
+        history.resultCycles ||= {};const cycle=history.resultCycles[history.index] ||= [];recordHistory=cycle.length===63;
+       }
+      }
      }
     }
     if(window.__scheduledInput){
@@ -244,6 +255,17 @@ async function tap(page,key,timing=null,raceStart=null){
       api_calls:apiKeys?{clock:HEAPU32[rngLayout.clock_counter_address>>2],random:HEAPU32[rngLayout.random_replay_counter_address>>2]}:null};
      window.__captureNext=false;
     }
+    if(resultTables&&history&&history.active&&(recordHistory||[14,16,29,31,44,46].includes(history.index)&&history.stage==='settle'&&history.steady>=16)){
+     const shot=window.__snapshot,data=new DataView(HEAPU8.buffer);
+     const hex=(a,n)=>Array.from(HEAPU8.subarray(a,a+n),b=>b.toString(16).padStart(2,'0')).join('');
+     shot.saved_state={joy_present:HEAPU8[0x754451]};
+     for(const [name,a]of resultLayout.fields)shot.saved_state[name]=data.getInt32(a,true);
+     for(const [name,a,n]of resultLayout.regions)shot.saved_state[name]=hex(a,n);
+     shot.result_rows=Array.from({length:20},(_,i)=>({name:readText(0x940760+i*26,26),points:readText(0x940670+i*12,12)}));
+     shot.rectangle=Array.from(HEAP16.subarray(0x46be0c>>1,(0x46be0c>>1)+4));
+     Object.assign(shot,{sound_volume:HEAP32[0x467410>>2],working_sound_volume:HEAP32[0x93fd20>>2],master_sfx_volume:HEAP32[0x462d84>>2]});
+     if([14,16,29,31,44,46].includes(history.index))history.resultCycles[history.index].push(shot);
+    }
     if(recordRace){
      if(naturalChamp){
       const frame=history.raceFrames.length,{framebuf,palette,...metadata}=window.__snapshot;
@@ -280,6 +302,11 @@ async function tap(page,key,timing=null,raceStart=null){
       history.code={Return:'Enter',Escape:'Escape',Up:'ArrowUp',Down:'ArrowDown',Left:'ArrowLeft',Right:'ArrowRight'}[key];
       history.keyLevel=physical.level;
       history.mask={Return:physical.level>=1&&physical.level<=12?1:0x4000,Escape:0x1008,Up:0x10,Down:0x40,Left:0x80,Right:0x20}[key];
+      if(resultTables){
+       const vk={Return:13,Escape:27,Up:38,Down:40,Left:37,Right:39}[key],bits=[1,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768];
+       const i=[0,1,2,3,4,5,8,6,9,7,10,11,12,13].find(i=>HEAPU8[0x46302c+i]===vk);
+       if(i===undefined)history.error='Actual result key is unmapped';else history.mask=bits[i];
+      }
       if(!history.code)history.error='Unknown reference key';
       else{
        history.stage='down';history.steady=0;
@@ -295,7 +322,7 @@ async function tap(page,key,timing=null,raceStart=null){
      naturalChamp:apiReference&&apiReference.meta.natural_championship,drivingInputs:apiReference&&apiReference.meta.driving_inputs,
      naturalSeason:apiReference&&apiReference.meta.natural_season,seasonEnd:apiReference&&apiReference.seasonEnd,
      fullVideo:apiReference&&apiReference.meta.full_video,
-     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null});
+     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null,resultTables,resultLayout});
   await boot(page,server);
   if(rngLayout){
    const first=await page.evaluate(()=>window.__rngObservations[0]);
@@ -371,6 +398,18 @@ async function tap(page,key,timing=null,raceStart=null){
      if(streaming)assert.equal(n,streamed);
     }
    }
+   if(resultTables){
+    for(const step of [14,16,29,31,44,46]){
+     const directory=path.join(output,apiReference.meta.checkpoints[step],'cycle');fs.mkdirSync(directory);const metadata=[];
+     for(let i=0;i<64;i++){
+      const shot=await page.evaluate(({step,i})=>window.__apiHistory.resultCycles[step][i],{step,i}),prefix='frame'+String(i).padStart(3,'0');
+      assert.equal(shot.canvas_mismatches,0);
+      for(const [region,size]of [['framebuf',307200],['palette',1024]]){const raw=Buffer.from(shot[region],'base64');assert.equal(raw.length,size);fs.writeFileSync(path.join(directory,prefix+'-'+region+'.bin'),raw);delete shot[region];}
+      metadata.push({...shot,index:i,prefix});
+     }
+     fs.writeFileSync(path.join(directory,'cycle.json'),JSON.stringify({stage:'browser platform present',frames:metadata},null,2)+'\n');
+    }
+   }
    const ended=JSON.parse(fs.readFileSync(path.join(output,apiReference.meta.checkpoints.at(-1),'checkpoint.json')));
    assert.equal(ended.api_calls.clock,apiReference.meta.clock_calls,'Actual clock-input extent differs');
    assert.equal(ended.api_calls.random,apiReference.meta.rng_calls,'Actual computed RNG-input extent differs');
@@ -386,13 +425,15 @@ async function tap(page,key,timing=null,raceStart=null){
     assert.equal(ended.level,2);assert.equal(ended.race,1);assert.equal(ended.retired,0);
     assert.equal(await page.evaluate(()=>window.__apiHistory.drivingCursor),apiReference.meta.driving_inputs.length);
    }
+   else if(resultTables){assert.equal(ended.level,0);assert.equal(ended.race,4);assert.equal(ended.poly_list,0x4696b0);}
    else{
     assert.equal(ended.level,0);assert.equal(ended.race,5);assert.equal(ended.season,0);
     assert.equal(ended.cars[0].values[1],3);assert.equal(ended.cars[0].values[2],4);
    }
    assert.deepEqual(errors,[]);
    fs.writeFileSync(path.join(output,'navigation.json'),JSON.stringify({keys:apiReference.meta.keys,checkpoints:apiReference.meta.checkpoints,
-    input:'browser keyboard events',initial_save_sha256:apiReference.meta.initial_save_sha256,wasm_sha256:rngLayout.wasm_sha256,
+    input:'browser keyboard events',result_tables:resultTables,input_synthetic:resultTables?true:undefined,
+    initial_save_sha256:apiReference.meta.initial_save_sha256,wasm_sha256:rngLayout.wasm_sha256,
     normal_arena:apiReference.meta.normal_arena===true,
     natural_championship:apiReference.meta.natural_championship===true,
     natural_season:apiReference.meta.natural_season===true,
