@@ -300,6 +300,18 @@ delimiters and the original ten-character bound are covered. Values, cursors and
 source/destination guards match; the old table stride fails 234 cases on each
 port. This component proof does not establish full text-rendering or menu parity.
 
+Patch 857 restores Print's contiguous three-byte RGB stack block. Both the `%C`
+parser and glyph initializer consume that block; the separate scalar locals
+previously corrupted neighboring stack bytes and supplied incorrect green/blue
+channels. Native ASan exposed the read overflow during actual frontend startup.
+`make verify-print-rgb PRINT_RGB_ARGS='--output /tmp/wasm-dd2/fresh-print-rgb'`
+compares 1,152 complete text-record/glyph-packet cases with unchanged original
+x86, native, native ASan and WASM, covering font/shader modes, colors, mid-string
+color changes, byte overflow and alignment. All outputs match; the old scalar
+layout fails all 1,152 cases on both ports and is rejected by native ASan.
+The corrected native ASan application also initializes and renders 64 main-menu
+draws successfully. These checks do not establish full frontend-frame or audio parity.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,

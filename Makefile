@@ -133,6 +133,10 @@ verify-pit-camera: patch ## compare live/replay pit-camera wrap, signed offsets 
 verify-print-number: patch ## compare numeric text commands and cursor/guard bytes with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_print_number.py" $(PRINT_NUMBER_ARGS)'
 
+.PHONY: verify-print-rgb
+verify-print-rgb: patch ## compare complete Print records and both glyph-packet buffers with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_print_rgb.py" $(PRINT_RGB_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

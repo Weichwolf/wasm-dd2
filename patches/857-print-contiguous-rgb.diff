@@ -1,0 +1,37 @@
+Print's RGB is one contiguous three-byte stack block. Original loads the
+record's colors into [ebp-0x6c], [ebp-0x6b], [ebp-0x6a] at
+0x421cce/0x421cd4/0x421ce0, passes its base to FUN_00420e20 at
+0x422030/0x42204b, and passes the same block to the %C parser at
+0x4215f5/0x4215f9. The reconstructed scalar locals broke both calls:
+glyph green/blue came from neighboring stack data, while color parsing
+wrote outside local_70 and failed to update the other two scalars.
+Native ASan reports the actual frontend startup overflow. Preserve all
+three bytes as one block without changing parser or rendering behavior.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -12869,9 +12869,11 @@
+ #define local_80 (_prxyz[2])
+ #define stack0xffffff78 (_prxyz[0])
+   char local_7c [12];
+-  undefined1 local_70;
+-  undefined1 local_6f;
+-  undefined1 local_6e;
++  undefined1 _print_rgb[3];
++#define local_70 (_print_rgb[0])
++#define local_6f (_print_rgb[1])
++#define local_6e (_print_rgb[2])
++  /* Original address-taken RGB block at ebp-0x6c..-0x6a. */
+   int local_6c;
+   int local_68;
+   int local_64;
+@@ -13233,6 +13235,9 @@
+ #undef in_stack_ffffff7c
+ #undef local_80
+ #undef stack0xffffff78
++#undef local_70
++#undef local_6f
++#undef local_6e
+ 
+ 
+ /* ===== Print_Draw @ 004220e0 ===== */
