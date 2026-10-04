@@ -1328,6 +1328,32 @@ make verify-original-race-audio ORIGINAL_RACE_AUDIO_ARGS='--capture /tmp/wasm-dd
 make clean-logs
 ```
 
+The same component checker accepts a complete, naturally terminated original
+replay with `--replay-fixture`. `capture_original_replay_audio.py` loads an
+original-produced replay card through six genuine X11 keys, without debugger
+stops or engine writes. It checks the loaded tape/order, recorded acceleration,
+natural tape completion, restored frontend settings and unchanged card. The
+capture includes DirectSound, DirectDraw, clock relay and inline timer markers;
+missing presentations or callback markers still reject. The component checker
+also validates the producer, replay metadata and completion before mixing.
+
+The checked practice replay compared all 3,206,768 accepted PCM bytes and the
+independently consumed prefix in native, ASan and WASM, including 93 sources,
+the naturally played duplicate and menu/track 2 CD sectors. Zero duplicate
+phase and damaged/truncated PCM reject. The comparison report is
+`/tmp/wasm-dd2/replay-audio-871-components/report.json`. Original sound controls
+are supplied to this isolated mixer test; complete replay audio from the live
+port engines, browser delivery and physical timing remain unproved.
+
+```sh
+make clean-logs
+python3 tools/capture_original_replay_audio.py \
+  --fixture /tmp/wasm-dd2/replay-fixture \
+  --output /tmp/wasm-dd2/original-replay-audio
+make verify-original-race-audio ORIGINAL_RACE_AUDIO_ARGS='--capture /tmp/wasm-dd2/original-replay-audio --replay-fixture /tmp/wasm-dd2/replay-fixture --output /tmp/wasm-dd2/replay-mixer'
+make clean-logs
+```
+
 For racing-engine timing inputs without debugger stops, `--trace-game-clock`
 enables filtered Wine relay in the private reference prefix. It exports only
 completed GetTickCount calls whose return addresses match the five import-call

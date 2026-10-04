@@ -106,18 +106,49 @@ def compare_pcm(original,actual):
         raise ValueError(f'Chronological racing PCM differs at byte {first}, frame {first//8}')
 
 
+def validate_capture(cap, replay_fixture=None):
+    checkpoint=json.loads((cap/'checkpoint.json').read_text())
+    if checkpoint.get('exe_modified') is not False or checkpoint.get('exe_sha256')!=EXE_SHA256 or checkpoint.get('mode')!='audio':
+        raise ValueError('Actual unmodified original non-debugger audio capture required')
+    if replay_fixture is None:
+        if checkpoint.get('scenario')=='original-replay':
+            raise ValueError('Original replay audio requires its original-produced fixture')
+        if checkpoint['end_state']['level']!=9 or checkpoint['end_state']['cf']<60:
+            raise ValueError('Actual attract race with changing engine controls required')
+        return checkpoint
+    from verify_original_replay import fixture
+    initial,payload,producer=fixture(replay_fixture)
+    proof=json.loads((cap/'report.json').read_text())
+    keys=['Right','Right','Right','Return','Return','Return']
+    if (checkpoint.get('scenario')!='original-replay' or not checkpoint.get('complete_original_replay') or
+        checkpoint.get('engine_state_writes') is not False or checkpoint.get('debugger') is not False or
+        checkpoint.get('initial_save_sha256')!=digest(initial) or checkpoint.get('input_keys')!=keys or
+        not proof.get('pass_') or proof.get('engine_state_writes') is not False or proof.get('debugger') is not False or
+        proof.get('original_exe_sha256')!=EXE_SHA256 or proof.get('initial_save_sha256')!=digest(initial) or
+        proof.get('input_keys')!=keys or proof.get('completion')!=dict(script_cursor=producer['recorded']['end'],first_time=1) or
+        proof.get('restored')!=proof.get('start_state') or checkpoint['end_state']['level']!=0 or checkpoint['end_state']['movie']):
+        raise ValueError('Complete actual original replay and frontend restoration required')
+    rows=[json.loads(line) for line in (cap/'replay.jsonl').read_text().splitlines()]
+    if (len(rows)!=proof.get('observed_replay_samples') or len({r['tick'] for r in rows})<10 or
+        not any(r['pedal']>0 for r in rows)):
+        raise ValueError('Actual recorded replay acceleration/physics required')
+    for row in rows:
+        if (any(row[k]!=v for k,v in producer['recorded'].items()) or
+            row['actual_level']!=producer['recorded']['level'] or row['replay']!=1 or row['quit']!=0 or
+            row['countdown']>=1 or not 0x9376ae<=row['script_cursor']<=producer['recorded']['end'] or row['script_cursor']%2):
+            raise ValueError('Original replay metadata/tape decoding differs')
+    return checkpoint
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--capture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--replay-fixture',type=Path,help='validate a complete real replay instead of the default attract scenario')
     args=parser.parse_args();cap=args.capture.resolve();out=prepare_output(args.output)
     if WORK not in cap.parents or WORK not in out.parents or out.exists():parser.error('Fresh output and original capture must be under /tmp/wasm-dd2/')
     out.mkdir(parents=True);check_space(out);game=ROOT/'DestructionDerby2'
-    checkpoint=json.loads((cap/'checkpoint.json').read_text())
-    if checkpoint.get('exe_modified') is not False or checkpoint.get('exe_sha256')!=EXE_SHA256 or checkpoint.get('mode')!='audio':
-        raise ValueError('Actual unmodified original non-debugger audio capture required')
-    if checkpoint['end_state']['level']!=9 or checkpoint['end_state']['cf']<60:
-        raise ValueError('Actual attract race with changing engine controls required')
+    checkpoint=validate_capture(cap,args.replay_fixture)
     timeline=original_timeline(cap/'wine.log')
     duplicated={source['id'] for source in timeline['sources'] if 'duplicate_of' in source}
     if not duplicated or not any(op['operation']=='mix' and op['source'] in duplicated and op['cursor']>0 for op in timeline['operations']):

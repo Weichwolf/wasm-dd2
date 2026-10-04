@@ -421,9 +421,14 @@ def run(game, output, args, on_menu=None):
                     ready = menu_ready(current) if args.mode in ("menu","audio") or args.race_stream else current["level"] == 9 and current["cf"] > 0
                     if ready:
                         if on_menu is not None:
-                            if args.mode != 'menu':
-                                raise ValueError('A frontend driver requires menu mode')
+                            if args.mode not in ('menu','audio'):
+                                raise ValueError('A frontend driver requires menu/audio mode')
                             on_menu(pid, output, env, deadline, rundir)
+                            # Audio drivers own their real inputs and detailed
+                            # observations. Retain a final common engine/timer
+                            # counter observation before scoped termination.
+                            if args.audio:
+                                observe_state(pid)
                             return
                         if args.champ_history:
                             capture_champ_history(pid,output,env,max(1,deadline-time.monotonic()),args.champ_history_steps,initial_save_sha256,args.champ_history_frame_delay_ms,args.normal_arena_history,args.normal_arena_full_video,args.natural_champ_history,args.steady_driver,args.natural_season_history)
