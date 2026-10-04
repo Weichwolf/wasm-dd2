@@ -137,6 +137,10 @@ verify-print-number: patch ## compare numeric text commands and cursor/guard byt
 verify-print-rgb: patch ## compare complete Print records and both glyph-packet buffers with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_print_rgb.py" $(PRINT_RGB_ARGS)'
 
+.PHONY: verify-position-pointers
+verify-position-pointers: patch ## compare top-three position packets, ordering tables and GTE with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_position_pointers.py" $(POSITION_POINTERS_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

@@ -312,6 +312,19 @@ layout fails all 1,152 cases on both ports and is rejected by native ASan.
 The corrected native ASan application also initializes and renders 64 main-menu
 draws successfully. These checks do not establish full frontend-frame or audio parity.
 
+Patch 858 restores the top-three position pointer's contiguous rank/vector
+stack block, including their original overlap. Separate scalar locals caused
+an actual ASan write overflow when starting the championship's first race.
+`make verify-position-pointers POSITION_POINTERS_ARGS='--output /tmp/wasm-dd2/fresh-position-pointers'`
+compares 2,800 cases against unchanged x86 on native, native ASan and WASM:
+every car, both buffers, ranks zero through four, projection depth boundaries,
+visibility gates, signed vector subtraction, rotation and concurrent cars.
+Complete packets, ordering tables, GTE state and input guards match; ASan
+rejects the old scalar write. The corrected ASan application also reaches
+the first 64 racing pictures through normal menus and acknowledged input;
+their indexed pixels and palettes match the original. These checks establish
+the component and bounded race startup, not complete-season or audio parity.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,
