@@ -364,6 +364,49 @@ both `--require-completed-laps` and `--require-player-points` were enforced.
 Successful raw pictures were removed after writing the report. Complete seasons,
 wins, other menu/loading/fade video, racing PCM and physical timing remain open.
 
+The natural-season recorder extends the acknowledged input sequence to all five
+Wrecking championship races on levels 1, 2, 5, 7 and 10. It resets the road
+follower at each actual road-race start and uses held acceleration/steering in
+the final arena. Both ports replay the original's actual recorded key transitions
+and clock returns; the final arena also contributes every racing picture.
+`verify-natural-season-history` requires five natural completions, all twenty
+drivers' cumulative scores, all twenty league pages and the actual final
+elimination or next-season gameplay transition. Natural destruction remains
+explicit and does not prove five surviving regular finishes or wins. This check
+excludes other menu/loading/fade video, racing PCM and physical timing.
+
+The complete recorded season passed on Native with AddressSanitizer and the
+browser build through patch 860 (`f09136c`): all 19,474 racing indexed pictures
+and palettes, all 66 checkpoint states and 31 selected checkpoint images were
+exact against the unmodified original. Both ports consumed 110,227 original
+clock returns and checked 154,548 calculated RNG records. Every driver's points
+and all twenty league pages matched, followed by the original's actual
+elimination to the frontend. Three road races completed laps; the remaining
+road race and final arena ended with a destroyed player. This is evidence for
+that input trace and those captured builds; the later audio patch 861 is covered
+separately by its mixer comparison.
+
+```sh
+make clean-logs
+mkdir -p /tmp/wasm-dd2
+make native NATIVE=/tmp/wasm-dd2/natural-season-dd2-native
+make web
+python3 tools/reference/capture.py --mode menu --champ-history \
+  --natural-champ-history --natural-season-history --steady-driver \
+  --timeout 7200 --output /tmp/wasm-dd2/natural-season-original
+python3 tools/capture_native_champ_history.py \
+  --binary /tmp/wasm-dd2/natural-season-dd2-native \
+  --reference /tmp/wasm-dd2/natural-season-original/history \
+  --output /tmp/wasm-dd2/natural-season-native
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm \
+  --output /tmp/wasm-dd2/natural-season-layout
+node tools/browser/capture_champ_season.js web/dd2 /tmp/wasm-dd2/natural-season-browser \
+  --api-reference=/tmp/wasm-dd2/natural-season-original/history \
+  --rng-layout=/tmp/wasm-dd2/natural-season-layout/layout.json
+make verify-natural-season-history NATURAL_SEASON_HISTORY_ARGS='--original /tmp/wasm-dd2/natural-season-original/history --native /tmp/wasm-dd2/natural-season-native/history --browser /tmp/wasm-dd2/natural-season-browser --report /tmp/wasm-dd2/natural-season-verified.json --clean'
+make clean-logs
+```
+
 ```sh
 make clean-logs
 python3 tools/reference/capture.py --mode menu --champ-history \

@@ -261,6 +261,10 @@ verify-champ-rest-loop: ## actual original/browser post-Retire Steam caller diag
 verify-normal-arena-history: ## exact natural arena pictures/API states against original; NORMAL_ARENA_HISTORY_ARGS required
 	python3 $(ROOT)/tools/verify_normal_arena_history.py $(NORMAL_ARENA_HISTORY_ARGS)
 
+.PHONY: verify-natural-season-history
+verify-natural-season-history: ## compare five natural championship races, all standings and season ending; NATURAL_SEASON_HISTORY_ARGS required
+	python3 $(ROOT)/tools/verify_natural_season_history.py $(NATURAL_SEASON_HISTORY_ARGS)
+
 verify-cdrom: ## validate virtual CD TOC, raw audio, track boundaries and descriptor isolation
 	python3 $(ROOT)/tools/reference/test_cdrom.py
 

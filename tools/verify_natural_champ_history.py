@@ -33,22 +33,28 @@ def load(path):
 
 def navigation_inputs(meta):
     result=[]
-    for index,key in enumerate(NATURAL_CHAMP_ACTIONS,1):
+    for index,key in enumerate(meta.get('actions',NATURAL_CHAMP_ACTIONS),1):
         if key=='natural-finish':
-            result.extend((row['key'],row['down'],index) for row in meta['driving_inputs'])
+            driving=meta['driving_inputs']
+            if meta.get('natural_season'):
+                race=(index-11)//11
+                driving=[row for row in driving if meta['race_frames'][row['frame']]['race']==race]
+            result.extend((row['key'],row['down'],index) for row in driving)
         else:
             result.extend((key,down,index) for down in (True,False))
     return result
 
 
 def validate_driving_inputs(meta, events):
-    observed=[row for row in events if row['kind']=='key' and row['action']==11]
+    drive_actions={i for i,key in enumerate(meta.get('actions',NATURAL_CHAMP_ACTIONS),1) if key=='natural-finish'}
+    observed=[row for row in events if row['kind']=='key' and row['action'] in drive_actions]
     if len(observed)!=len(meta['driving_inputs']):
         raise ValueError('Driving metadata does not cover every observed real-key transition')
     for transition,event in zip(meta['driving_inputs'],observed):
         frame=transition['frame']
         if not 0<=frame<len(meta['race_frames']):raise ValueError('Invalid driving frame')
-        boundary=meta['final_race'] if transition.get('finish') else meta['race_frames'][frame]
+        finish=meta['final_races'][(event['action']-11)//11] if meta.get('natural_season') else meta['final_race']
+        boundary=finish if transition.get('finish') else meta['race_frames'][frame]
         if (transition['key'],transition['down'])!=(event['key'],event['down']):
             raise ValueError('Driving metadata differs from actual observed key')
         if any(event[key]!=boundary[key] for key in (*STATE,'clock_calls','rng_calls','draws','pad_polls')):
