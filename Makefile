@@ -95,6 +95,10 @@ verify-original-timer-callbacks: ## verify forwarding observer and original call
 verify-engine-audio: ## compare actual native/browser engine PCM with observed original services; ENGINE_AUDIO_ARGS required
 	python3 $(ROOT)/tools/verify_engine_audio.py $(ENGINE_AUDIO_ARGS)
 
+.PHONY: verify-replay-engine-audio
+verify-replay-engine-audio: ## compare actual replay PCM with explicit diagnostic keys; REPLAY_ENGINE_AUDIO_ARGS required
+	python3 $(ROOT)/tools/verify_replay_engine_audio.py $(REPLAY_ENGINE_AUDIO_ARGS)
+
 .PHONY: verify-audio-callback-interleave
 verify-audio-callback-interleave: patch ## check real suspended callback/main stacks and own status assertions; AUDIO_CALLBACK_INTERLEAVE_ARGS required
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_audio_callback_interleave.py" $(AUDIO_CALLBACK_INTERLEAVE_ARGS)'

@@ -2,14 +2,38 @@
 // Recorded control values are assertions in C; no engine state is supplied.
 const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const {serve,chromium}=require('./felib');
-const [buildArg,outputArg,servicesArg,clockArg]=process.argv.slice(2);
-assert(process.argv.length===6,'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK');
+const [buildArg,outputArg,servicesArg,clockArg,fixtureArg,scheduleArg]=process.argv.slice(2);
+assert([6,8].includes(process.argv.length),'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK [REPLAY_FIXTURE NATIVE_REPLAY_CHECKPOINT]');
 const build=path.resolve(buildArg),output=path.resolve(outputArg);
 const services=fs.readFileSync(path.resolve(servicesArg)),clock=fs.readFileSync(path.resolve(clockArg));
-const save=fs.readFileSync(path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const save=fs.readFileSync(fixtureArg?path.join(path.resolve(fixtureArg),'original.card'):
+ path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
+let replay=null;
+if(fixtureArg){
+ const producer=JSON.parse(fs.readFileSync(path.join(path.resolve(fixtureArg),'report.json')));
+ const reference=JSON.parse(fs.readFileSync(path.resolve(scheduleArg)));
+ assert(producer.pass_ && producer.operation==='generate' && producer.card_sha256===hash(save));
+ assert(reference.pass_ && reference.scenario==='original-replay' && reference.engine_state_writes===false);
+ assert(reference.initial_save_sha256===hash(save) && reference.audio_services_sha256===hash(services) && reference.game_clock_sha256===hash(clock));
+ assert.deepStrictEqual(reference.schedule.map(p=>p.key),['Right','Right','Right','Return','Return','Return']);
+ replay={schedule:reference.schedule,end:producer.recorded.end,actions:reference.schedule.flatMap((p,i)=>[
+  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:true,pending_flip:p.flip-1},
+  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:false,pending_flip:(p.release_flip??p.flip+1)-1}])};
+ assert(replay.actions.every((p,i)=>!i || p.pending_flip>replay.actions[i-1].pending_flip));
+}
 assert(output.startsWith('/tmp/wasm-dd2/'),'diagnostics must be under /tmp/wasm-dd2/');
+const parent=fs.realpathSync(path.dirname(output));
+assert(parent==='/tmp/wasm-dd2' || parent.startsWith('/tmp/wasm-dd2/'),'output parent escapes temporary workspace');
 fs.mkdirSync(output,{recursive:false});
+function budget(){
+ const size=dir=>fs.readdirSync(dir,{withFileTypes:true}).reduce((n,e)=>{
+  const p=path.join(dir,e.name);return n+(e.isDirectory()?size(p):e.isFile()?fs.statSync(p).size:0);
+ },0);
+ const disk=fs.statfsSync(output);
+ assert(size(output)<2*1024**3 && disk.bavail*disk.bsize>=1024**3,'verification space budget exceeded');
+}
+budget();
 (async()=>{
  const server=serve(build);await new Promise(resolve=>server.listen(0,resolve));let browser;
  try{
@@ -22,8 +46,22 @@ fs.mkdirSync(output,{recursive:false});
     errors.push(text);page.evaluate(text=>{window.__engineAudioError=text;},text).catch(()=>{});
    }
   });
-  await page.addInitScript(()=>{
+  await page.addInitScript(replay=>{
    window.__engineAudio={paused:false,parts:[],frames:0,buffers:0,mismatches:0,missing:0,dropped:0};
+   if(replay){
+    window.__replayInput={flips:0,pending_flip:-1,index:0,paused:false,resume:null,events:[],observations:[]};
+    for(const type of ['keydown','keyup'])window.addEventListener(type,e=>{
+     if(['ArrowRight','Enter'].includes(e.code))__replayInput.events.push({type,code:e.code,trusted:e.isTrusted,
+      pending_flip:__replayInput.pending_flip,held:HEAPU16[0x754448>>1],pressed:HEAPU16[0x75444a>>1]});
+    });
+    const present=CanvasRenderingContext2D.prototype.putImageData;
+    CanvasRenderingContext2D.prototype.putImageData=function(...args){
+     const result=present.apply(this,args);
+     if(this.canvas.id==='canvas' && typeof Module!=='undefined' && args[0]===Module._dd2img)
+      __replayInput.pending_flip=__replayInput.flips++;
+     return result;
+    };
+   }
    let expected;
    const observe=imports=>{
     if(!imports?.env?.dd2_audio_push || imports.env.dd2_audio_push.__engineObserved)return;
@@ -65,13 +103,26 @@ fs.mkdirSync(output,{recursive:false});
    // input completes, before the application can request further services.
    const schedule=window.setTimeout;
    window.setTimeout=function(callback,delay,...args){
-    if(typeof Module!=='undefined' && Module.FS?.analyzePath('/tmp/wasm-dd2/clock-complete.json').exists &&
-       new Error().stack.includes('_emscripten_sleep')){
-     __engineAudio.paused=true;return -1;
+    if(typeof Module!=='undefined' && new Error().stack.includes('_emscripten_sleep')){
+     if(Module.FS?.analyzePath('/tmp/wasm-dd2/clock-complete.json').exists){
+      __engineAudio.paused=true;return -1;
+     }
+     if(replay && __replayInput.index<replay.actions.length){
+      const action=replay.actions[__replayInput.index];
+      if(__replayInput.pending_flip>action.pending_flip)throw Error('Missed real keyboard presentation');
+      if(__replayInput.pending_flip===action.pending_flip){
+       __replayInput.paused=true;
+       __replayInput.resume=()=>{
+        __replayInput.resume=null;__replayInput.paused=false;__replayInput.index++;
+        schedule(callback,delay,...args);
+       };
+       return -1;
+      }
+     }
     }
     return schedule(callback,delay,...args);
    };
-  });
+  },replay);
   await page.route('**/verification-services.bin',route=>route.fulfill({status:200,body:services}));
   await page.route('**/verification-clock.bin',route=>route.fulfill({status:200,body:clock}));
   await page.route('**/index.html',route=>{
@@ -102,9 +153,47 @@ fs.mkdirSync(output,{recursive:false});
    HEAP32[0x940010>>2]===0x4696b0 && HEAP32[0x467420>>2]===0 && HEAP32[0x462d70>>2]===1),null,{timeout:30000});
   assert.deepStrictEqual(errors,[],'browser engine errors');
   const start=await state();
+  let startSettings;
+  const settings=()=>page.evaluate(()=>({mode:HEAP32[0x4673f8>>2],type:HEAP32[0x4673f4>>2],car:HEAP32[0x467400>>2],
+   track:HEAP32[0x4673fc>>2],sound:HEAP32[0x467410>>2],pad_option:HEAP32[0x467414>>2],
+   saved:Array.from(HEAPU8.subarray(0x46757a,0x46758c)),active:Array.from(HEAPU8.subarray(0x46302c,0x46303a))}));
+  if(replay){
+   startSettings=await settings();
+   for(const [i,action] of replay.actions.entries()){
+    budget();
+    await page.waitForFunction(()=>__replayInput.paused || window.__engineAudioError,null,{timeout:30000});
+    assert.deepStrictEqual(errors,[],'browser engine errors');
+    const observed=await page.evaluate(()=>({index:__replayInput.index,pending_flip:__replayInput.pending_flip,
+     held:HEAPU16[0x754448>>1],pressed:HEAPU16[0x75444a>>1]}));
+    assert(observed.index===i && observed.pending_flip===action.pending_flip,'real keyboard position differs');
+    if(!action.down)assert(observed.held&(action.key==='ArrowRight'?32:16384),'engine did not consume genuine keyboard input');
+    if(action.down)await page.keyboard.down(action.key);else await page.keyboard.up(action.key);
+    await page.evaluate(observed=>{__replayInput.observations.push(observed);__replayInput.resume();},observed);
+   }
+  }
   await page.waitForFunction(()=>__engineAudio.paused || window.__engineAudioError,null,{timeout:180000});
   assert.deepStrictEqual(errors,[],'browser engine errors');
-  const end=await state();assert(end.level===9 && end.cf>=60,'actual attract race not reached');
+  const end=await state();
+  if(replay)assert(end.level===0 && end.cf>0,'actual replay did not return to frontend');
+  else assert(end.level===9 && end.cf>=60,'actual attract race not reached');
+  let replayCheckpoint;
+  if(replay){
+   const restored=await settings();assert.deepStrictEqual(restored,startSettings,'replay settings not restored');
+   replayCheckpoint=await page.evaluate(()=>({completion:{script_cursor:HEAPU32[0x9392b4>>2],first_time:HEAP32[0x9392b0>>2]},
+    replay:HEAP32[0x467074>>2],quit:HEAP32[0x7746ac>>2],
+    script:Array.from(HEAPU8.subarray(0x9376b0,0x9392b0)),order:Array.from(HEAPU8.subarray(0x795c28,0x795c3c)),
+    card:Array.from(HEAPU8.subarray(0x754460,0x774460)),file:Array.from(Module.FS.readFile('/SaveGames')),
+    inputs:{flips:__replayInput.flips,index:__replayInput.index,events:__replayInput.events,observations:__replayInput.observations}}));
+   assert.deepStrictEqual(replayCheckpoint.completion,{script_cursor:replay.end,first_time:1});
+   assert(replayCheckpoint.replay===0 && replayCheckpoint.quit===1);
+   assert(Buffer.from(replayCheckpoint.script).equals(save.subarray(0x2012,0x3c12)) &&
+    Buffer.from(replayCheckpoint.order).equals(save.subarray(0x3c12,0x3c26)),'loaded replay script/order differs');
+   assert(Buffer.from(replayCheckpoint.card).equals(save) && Buffer.from(replayCheckpoint.file).equals(save),'card changed');
+   assert(replayCheckpoint.inputs.index===replay.actions.length && replayCheckpoint.inputs.events.length===replay.actions.length &&
+    replayCheckpoint.inputs.events.every(e=>e.trusted),'genuine trusted input history missing');
+   delete replayCheckpoint.card;delete replayCheckpoint.file;delete replayCheckpoint.script;delete replayCheckpoint.order;
+   replayCheckpoint.restored=restored;
+  }
   const captured=await page.evaluate(()=>{
    const encode=bytes=>{let text='';for(let i=0;i<bytes.length;i+=16384)text+=String.fromCharCode(...bytes.subarray(i,i+16384));return btoa(text);};
    const all=new Uint8Array(__engineAudio.frames*8);let off=0;
@@ -125,7 +214,12 @@ fs.mkdirSync(output,{recursive:false});
    intro,start_state:start,end_state:end,engine_state_writes:false,errors,initial_save_sha256:hash(save),
    wasm_sha256:hash(fs.readFileSync(path.join(build,'index.wasm'))),game_clock_sha256:hash(clock),audio_services_sha256:hash(services),
    audio_services:captured.complete,sink:captured.sink,accepted_sha256:hash(pcm)};
-  fs.writeFileSync(path.join(output,'checkpoint.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
+  if(replay){
+   report.scope='Actual replay engine with trusted Playwright keys and observed clock/audio services; key positions and first Enter release are diagnostic scheduling, original OS event identity/video/physical timing remain open';
+   Object.assign(report,{pass_:true,scenario:'original-replay',schedule:replay.schedule,start_settings:startSettings,...replayCheckpoint});
+   assert(captured.complete.completed_flips===replayCheckpoint.inputs.flips,'presentation observer count differs from actual C endpoint');
+  }
+  fs.writeFileSync(path.join(output,'checkpoint.json'),JSON.stringify(report,null,2)+'\n');budget();console.log(JSON.stringify(report,null,2));
  }catch(error){
   if(browser){
    const page=browser.contexts()[0]?.pages()[0];

@@ -1503,8 +1503,8 @@ playback statuses must follow the port's own stop/play operations. Fifteen
 damaged API/status/context cases reject; the prior inline scheduler also fails
 on native and WASM. These are scheduling tests, not a complete replay-engine
 PCM comparison. The actual startup/attract PCM regression remains a separate
-check; complete replay keyboard scheduling and chronological engine PCM are
-still required.
+check. The bounded replay-engine comparison below exercises these continuations
+with the real application and explicitly scheduled keyboard input.
 
 ```sh
 make clean-logs
@@ -1521,6 +1521,64 @@ are rejected, including cursor/gain changes, moved API calls and missing/wrong
 callbacks; gain and callback mutations also run in the actual browser. This
 proves that bounded trace with observed service timing. Other audio scenarios,
 interactive scheduling and video remain separate requirements.
+
+The complete captured replay audio window also passes on native, native ASan
+and the browser: all 3,206,768 accepted PCM bytes and the independently played
+prefix match the running original. The real engines load an original-produced
+card, process six genuine keys, execute all 4,961 observed services and 45 timer
+callbacks, decode the tape terminal naturally, and restore frontend settings.
+All 902 WebAudio buffers match the C output without missing or dropped buffers.
+The comparator independently exports the original service trace again and
+checks its provenance, the whole output, card/tape identity and frontend/CD
+endpoint. Thirteen negative cases reject, including two actual engine runs with the
+first Enter release shifted by one presentation in either direction.
+
+This uses diagnostic keyboard scheduling: key-down positions come from the
+original's frontend sound triggers, rather than recorded OS input timestamps.
+In this recording, the first confirmation at presentation 1740 reaches the next
+slab sound at 1770. The code's two button stages and two eight-frame rotations
+suggest twelve first-stage frames instead of its seven-frame minimum. Releasing
+Enter for the pad poll at 1752 reproduces that sequence; immediate release starts
+the sound five frames early. This is an explicit input-duration hypothesis, not
+a verified original key-release event or an engine correction. Full original
+OS input identity, chronological video and physical timing remain open.
+
+Native observers use hardware execution breakpoints and one hardware write
+watchpoint on the port's actual audio-completion flag. They capture the selected
+card/tape/settings observations while stopped at that endpoint, before detach
+allows further frontend activity. The browser pauses ordinary Asyncify yield
+callbacks for trusted Playwright keys and ends at the audio completion yield;
+no observer writes engine state. Successful raw port PCM is removed after the
+comparison report is written.
+
+For a completed original replay capture and its independently verified mixer
+and service exports, run these captures. `RELEASE_FLIP` must be diagnosed for
+that original recording; 1752 belongs to the recording described above.
+
+```sh
+make clean-logs
+python3 tools/capture_native_replay_audio.py --binary /tmp/wasm-dd2/audio-native \
+  --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio \
+  --services /tmp/wasm-dd2/replay-services --output /tmp/wasm-dd2/native-replay-audio \
+  --first-return-release-flip "$RELEASE_FLIP"
+python3 tools/capture_native_replay_audio.py --binary /tmp/wasm-dd2/audio-asan \
+  --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio \
+  --services /tmp/wasm-dd2/replay-services --output /tmp/wasm-dd2/asan-replay-audio \
+  --first-return-release-flip "$RELEASE_FLIP"
+node tools/browser/capture_engine_audio.js /tmp/wasm-dd2/audio-browser \
+  /tmp/wasm-dd2/browser-replay-audio /tmp/wasm-dd2/replay-services/services.bin \
+  /tmp/wasm-dd2/original-replay-audio/game-clock/ticks.bin \
+  /tmp/wasm-dd2/replay-fixture /tmp/wasm-dd2/native-replay-audio/checkpoint.json
+# Both of these native captures must fail with the real API-position assertion:
+for offset in -1 1; do
+  python3 tools/capture_native_replay_audio.py --binary /tmp/wasm-dd2/audio-native \
+    --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio \
+    --services /tmp/wasm-dd2/replay-services --output "/tmp/wasm-dd2/replay-release-$offset" \
+    --first-return-release-flip "$((RELEASE_FLIP + offset))"
+done
+make verify-replay-engine-audio REPLAY_ENGINE_AUDIO_ARGS='--fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio --services /tmp/wasm-dd2/replay-services --mixer /tmp/wasm-dd2/replay-mixer --native /tmp/wasm-dd2/native-replay-audio --native-asan /tmp/wasm-dd2/asan-replay-audio --browser /tmp/wasm-dd2/browser-replay-audio --negative-early /tmp/wasm-dd2/replay-release--1 --negative-late /tmp/wasm-dd2/replay-release-1 --output /tmp/wasm-dd2/replay-engine-comparison'
+make clean-logs
+```
 
 Export inputs from one original capture that has passed the clock, callback
 observer and chronological mixer checks, then run both actual applications:
