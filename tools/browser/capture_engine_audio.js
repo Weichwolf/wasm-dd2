@@ -2,8 +2,8 @@
 // Recorded control values are assertions in C; no engine state is supplied.
 const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const {serve,chromium}=require('./felib');
-const [buildArg,outputArg,servicesArg,clockArg,fixtureArg,scheduleArg,layoutArg]=process.argv.slice(2);
-assert([6,8,9].includes(process.argv.length),'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK [REPLAY_FIXTURE NATIVE_REPLAY_CHECKPOINT [WASM_LAYOUT]]');
+const [buildArg,outputArg,servicesArg,clockArg,fixtureArg,scheduleArg,layoutArg,videoArg]=process.argv.slice(2);
+assert([6,8,9,10].includes(process.argv.length),'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK [REPLAY_FIXTURE NATIVE_REPLAY_CHECKPOINT [WASM_LAYOUT [ORIGINAL_VIDEO_REPORT]]]');
 const build=path.resolve(buildArg),output=path.resolve(outputArg);
 const services=fs.readFileSync(path.resolve(servicesArg)),clock=fs.readFileSync(path.resolve(clockArg));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -14,6 +14,10 @@ if(fixtureArg){
  const producer=JSON.parse(fs.readFileSync(path.join(path.resolve(fixtureArg),'report.json')));
  const reference=JSON.parse(fs.readFileSync(path.resolve(scheduleArg)));
  const layout=layoutArg?JSON.parse(fs.readFileSync(path.resolve(layoutArg))):null;
+ const video=videoArg?JSON.parse(fs.readFileSync(path.resolve(videoArg))):null;
+ if(video)assert(video.pass_ && video.debugger===false && video.engine_state_writes===false &&
+  video.game_clock_sha256===hash(clock) && video.frame_count===video.frames.length && video.frame_count<=4096 && layout,
+  'actual original video/clock observation required');
  if(layout)assert(layout.wasm_sha256===hash(fs.readFileSync(path.join(build,'index.wasm'))) &&
   Number.isInteger(layout.clock_counter_address) && layout.clock_counter_address>=10485760,'actual WASM clock layout differs');
  if(reference.keyboard_input_sha256)assert(layout,'observed source keyboard comparison requires actual WASM clock layout');
@@ -22,7 +26,7 @@ if(fixtureArg){
  assert(reference.initial_save_sha256===hash(save) && reference.audio_services_sha256===hash(services) && reference.game_clock_sha256===hash(clock));
  assert.deepStrictEqual(reference.schedule.map(p=>p.key),['Right','Right','Right','Return','Return','Return']);
  replay={schedule:reference.schedule,keyboard_input_sha256:reference.keyboard_input_sha256,
-  clock_counter_address:layout?.clock_counter_address,
+  clock_counter_address:layout?.clock_counter_address,video,
   end:producer.recorded.end,actions:reference.schedule.flatMap((p,i)=>[
   {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:true,pending_flip:p.flip-1,clock_calls:p.clock_calls},
   {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:false,pending_flip:(p.release_flip??p.flip+1)-1,
@@ -42,10 +46,23 @@ function budget(){
 }
 budget();
 (async()=>{
- const server=serve(build);await new Promise(resolve=>server.listen(0,resolve));let browser;
+ const server=serve(build);await new Promise(resolve=>server.listen(0,resolve));let browser,videoFile;
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
   const page=await browser.newPage(),errors=[];
+  if(replay?.video){
+   const filename=path.join(path.resolve(replay.video.capture_directory),'video.bin');
+   assert(filename.startsWith('/tmp/wasm-dd2/'),'original video escapes temporary workspace');
+   videoFile=fs.openSync(filename,'r');
+   assert(replay.video.record_bytes===128+307200+2048,'actual original video record format differs');
+   await page.exposeFunction('__compareEngineVideo',(index,pixels,palette)=>{
+    assert(Number.isInteger(index) && index>=0 && index<replay.video.frame_count,'invalid browser video index');
+    const expected=Buffer.alloc(307200+1024);
+    assert(fs.readSync(videoFile,expected,0,expected.length,index*replay.video.record_bytes+128)===expected.length,'incomplete original video');
+    assert(Buffer.concat([Buffer.from(pixels,'base64'),Buffer.from(palette,'base64')]).equals(expected),`actual browser video bytes differ at frame ${index}`);
+    return true;
+   });
+  }
   page.on('pageerror',error=>errors.push(error.message));page.on('crash',()=>errors.push('renderer crash'));
   page.on('console',message=>{
    const text=message.text();fs.appendFileSync(path.join(output,'browser.log'),message.type()+': '+text+'\n');
@@ -64,15 +81,47 @@ budget();
       __replayInput.events[__replayInput.events.length-1].clock_calls=HEAPU32[replay.clock_counter_address>>2];
     });
     const present=CanvasRenderingContext2D.prototype.putImageData;
+    if(replay.video)window.__engineVideo={frames:[],pending:[],source:null};
     CanvasRenderingContext2D.prototype.putImageData=function(...args){
      const result=present.apply(this,args);
-     if(this.canvas.id==='canvas' && typeof Module!=='undefined' && args[0]===Module._dd2img)
+     if(this.canvas.id==='canvas' && typeof Module!=='undefined' && args[0]===Module._dd2img){
+      if(replay.video){
+       const source=__engineVideo.source;assertVideo(!!source,'Actual presentation import missing');
+       const pixels=HEAPU8.slice(source.fb,source.fb+307200),palette=HEAPU8.slice(source.pal,source.pal+1024);
+       const rgba=this.getImageData(0,0,640,480).data;
+       for(let i=0;i<307200;i++){
+        const p=i*4,c=pixels[i]*4;
+        if(rgba[p]!==palette[c] || rgba[p+1]!==palette[c+1] || rgba[p+2]!==palette[c+2] || rgba[p+3]!==255)
+         throw Error('Actual canvas pixel differs at '+i);
+       }
+       const row={index:__replayInput.flips,flip:__replayInput.flips+1,level:HEAP32[0x936ff4>>2],cf:HEAP32[0x462ff0>>2],
+        movie:HEAP32[0x462cd4>>2],poly_list:HEAPU32[0x940010>>2],restart_cd_audio:HEAP32[0x467420>>2],
+        ticks:HEAP32[0x7746c0>>2],replay:HEAP32[0x467074>>2],quit:HEAP32[0x7746ac>>2],script_cursor:HEAPU32[0x9392b4>>2],
+        clock_calls:HEAPU32[replay.clock_counter_address>>2]};
+       __engineVideo.frames.push(row);
+       const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+       const encode=bytes=>{let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(text);};
+       __engineVideo.pending.push(Promise.all([digest(pixels),digest(palette),digest(rgba),
+        __compareEngineVideo(row.index,encode(pixels),encode(palette))]).then(hashes=>{
+        [row.framebuffer_sha256,row.palette_sha256,row.canvas_rgba_sha256]=hashes;
+        row.original_bytes_compared=hashes[3]===true;
+       }));
+      }
       __replayInput.pending_flip=__replayInput.flips++;
+     }
      return result;
     };
    }
+   function assertVideo(condition,message){if(!condition)throw Error(message);}
    let expected;
    const observe=imports=>{
+    if(replay?.video && imports?.env?.dd2_present && !imports.env.dd2_present.__videoObserved){
+     const present=imports.env.dd2_present;
+     const wrapped=function(fb,pal){
+      __engineVideo.source={fb,pal};try{return present.call(this,fb,pal);}finally{__engineVideo.source=null;}
+     };
+     wrapped.__videoObserved=true;imports.env.dd2_present=wrapped;
+    }
     if(!imports?.env?.dd2_audio_push || imports.env.dd2_audio_push.__engineObserved)return;
     const push=imports.env.dd2_audio_push;
     const wrapped=function(pointer,effects,music,frames,rate,musicFrames){
@@ -232,6 +281,17 @@ budget();
     report.keyboard_input_sha256=replay.keyboard_input_sha256;
     report.scope='Actual replay engine with trusted Playwright keys at original-observed window-procedure message positions; own engine controls and observed clock/audio services. Physical OS timing, chronological video and full-game parity remain open';
    }
+   if(replay.video){
+    const frames=await page.evaluate(async()=>{await Promise.all(__engineVideo.pending);return __engineVideo.frames;});
+    assert(frames.length===captured.complete.completed_flips,'complete bounded browser video required');
+    for(const row of frames){
+     const expected=replay.video.frames[row.index];assert(expected,'extra browser video');
+     for(const key of ['flip','level','cf','movie','poly_list','restart_cd_audio','ticks','replay','quit','script_cursor','clock_calls',
+      'framebuffer_sha256','palette_sha256'])assert(row[key]===expected[key],`original browser video ${row.index} differs: ${key}`);
+    }
+    report.video={pass_:true,scope:'Every bounded indexed frame/palette and actual canvas pixels in the same audio/key run; intro and physical display timing excluded',
+     original_video_sha256:replay.video.video_sha256,original_trace_sha256:replay.video.trace_sha256,frames};
+   }
    assert(captured.complete.completed_flips===replayCheckpoint.inputs.flips,'presentation observer count differs from actual C endpoint');
   }
   fs.writeFileSync(path.join(output,'checkpoint.json'),JSON.stringify(report,null,2)+'\n');budget();console.log(JSON.stringify(report,null,2));
@@ -253,5 +313,5 @@ budget();
    }catch(captureError){console.error('failure observation:',captureError.message);}
   }
   throw error;
- }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+ }finally{if(browser)await browser.close();if(videoFile!==undefined)fs.closeSync(videoFile);await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

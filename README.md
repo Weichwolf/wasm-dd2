@@ -1634,6 +1634,59 @@ make verify-replay-engine-audio REPLAY_ENGINE_AUDIO_ARGS='--fixture /tmp/wasm-dd
 make clean-logs
 ```
 
+The same-run video/audio route now passes a new original replay recording:
+native, native ASan and WASM match every indexed/palette byte in all 2,340
+presentations through the audio endpoint, including menu/loading, 287 racing
+presentations and return to File Manager. All 3,217,320 accepted PCM bytes and
+the independently played 3,203,216-byte prefix match from these same runs, with
+5,654 observed services and 387 callbacks. Four main sound APIs actually
+interleave with timer callbacks in this source recording. The browser directly
+compares each full indexed image/palette against the original binary record,
+checks actual `getImageData` canvas pixels, and observes the real clock counter
+at every presentation. The joint verifier independently re-exports original
+video and audio inputs and rejects 25 damaged input/output cases in total.
+
+The reference-only DirectDraw1 observer forwards the game's calls to the
+installed Wine backend, preserving all 28 exports and all 17 backend PE
+sections. Its private backend alias changes only the non-executable DOS-stub
+builtin marker, as with the timer observer. Each successful Flip records the
+actual uploaded indexed pixels, confirms equality with the engine buffer, and
+independently reads any attached device palette. The executed observer rebuilds
+byte for byte from its sources. There are no debugger stops or writes to game
+memory. Observer I/O changes measured timing; recorded clocks/services are
+explicit comparison inputs.
+
+This proof covers one bounded menu/replay sequence. Original intro output and
+physical display/OS timing remain open. The first six successful original
+uploads have no attached palette; their indexed data and engine palette are
+compared, while original device RGB output remains unproved. All 2,334 attached
+device palettes within the window match the engine palette exactly. Two original
+presentations after the final audio service are outside the joint window.
+Capture raw video is bounded to 4,096 frames (under 1.2 GiB); successful raw port
+images and PCM are deleted after writing the joint report.
+
+To capture this evidence, add `--trace-video` to the original command together
+with `--trace-keyboard --keep-movie`, then export its video after the original
+capture completes. Use a fresh directory for each run:
+
+```sh
+make clean-logs
+python3 tools/capture_original_replay_audio.py --fixture /tmp/wasm-dd2/replay-fixture \
+  --output /tmp/wasm-dd2/original-replay-av --trace-keyboard --keep-movie --trace-video
+make export-original-video ORIGINAL_VIDEO_ARGS='--capture /tmp/wasm-dd2/original-replay-av --output /tmp/wasm-dd2/original-replay-video.json'
+# Verify this recording's chronological mixer and export its audio services,
+# as above. Use --trace-video for both native and ASan replay audio captures.
+node tools/browser/capture_engine_audio.js /tmp/wasm-dd2/audio-browser \
+  /tmp/wasm-dd2/browser-replay-av /tmp/wasm-dd2/replay-av-services/services.bin \
+  /tmp/wasm-dd2/original-replay-av/game-clock/ticks.bin /tmp/wasm-dd2/replay-fixture \
+  /tmp/wasm-dd2/native-replay-av/checkpoint.json /tmp/wasm-dd2/replay-browser-layout/layout.json \
+  /tmp/wasm-dd2/original-replay-video.json
+# Add --video-reference /tmp/wasm-dd2/original-replay-video.json to the full
+# verify-replay-engine-audio command, using the same three video/audio captures
+# and actual early/late input rejection runs from this new original recording.
+make clean-logs
+```
+
 Export inputs from one original capture that has passed the clock, callback
 observer and chronological mixer checks, then run both actual applications:
 

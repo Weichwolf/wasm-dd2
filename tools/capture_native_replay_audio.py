@@ -61,6 +61,7 @@ def main():
     parser.add_argument('--keyboard-input',type=Path,help='verified actual original window-procedure key-down/up observations')
     parser.add_argument('--diagnostic-release-offset',type=int,choices=(-1,1),
         help='deliberately perturb the first observed Enter release for an actual engine rejection test')
+    parser.add_argument('--trace-video',action='store_true',help='also capture each indexed presentation and device palette')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
     original=args.original.resolve();services=args.services.resolve()
     planned=input_schedule(original,services,args.fixture,args.keyboard_input)
@@ -92,6 +93,12 @@ def main():
                 DD2_AUDIO_SERVICES=str(services/'services.bin'),DD2_MIXPCM=str(out/'mixed.pcm'),
                 DD2_AUDIO_SERVICE_REPORT=str(out/'clock-complete.json'),DD2_SNDLOG=str(out/'sound.log'),
                 DD2_RACE_STREAM=str(out/'race-stream.jsonl'),ASAN_OPTIONS='detect_leaks=0:abort_on_error=1')
+            if args.trace_video:
+                limit=json.loads((services/'report.json').read_text())['completion_position']['flip']
+                require(0<limit<=4096,'bounded video capture requires at most 4096 original presentations')
+                (out/'video').mkdir()
+                overrides.update(DD2_FRAMEDIR=str(out/'video'),DD2_PALDUMP='1',
+                    DD2_PRESENT_LOG=str(out/'video/presentations.jsonl'),DD2_VIDEO_CAPTURE_LIMIT=str(limit))
             ui=ConfigUI(binary,game,out,':'+number,1,180,env_override=overrides)
             ui.wait(lambda:ui.integer(0x462cd4)==1)
             report['intro']=dict(movie=1)

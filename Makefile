@@ -103,6 +103,10 @@ verify-replay-engine-audio: ## compare actual replay PCM with observed or diagno
 export-original-keyboard: ## export verified original window-procedure key edges; ORIGINAL_KEYBOARD_ARGS required
 	python3 $(ROOT)/tools/reference/keyboard_messages.py $(ORIGINAL_KEYBOARD_ARGS)
 
+.PHONY: export-original-video
+export-original-video: ## export original successful DirectDraw uploads/palettes; ORIGINAL_VIDEO_ARGS required
+	python3 $(ROOT)/tools/reference/video_frames.py $(ORIGINAL_VIDEO_ARGS)
+
 .PHONY: verify-audio-callback-interleave
 verify-audio-callback-interleave: patch ## check real suspended callback/main stacks and own status assertions; AUDIO_CALLBACK_INTERLEAVE_ARGS required
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_audio_callback_interleave.py" $(AUDIO_CALLBACK_INTERLEAVE_ARGS)'

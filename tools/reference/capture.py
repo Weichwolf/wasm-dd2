@@ -288,7 +288,7 @@ def run(game, output, args, on_menu=None):
         raise RuntimeError("A reference is already running in this private Wine prefix")
     rundir = WORK / "game"
     rundir.mkdir(exist_ok=True)
-    for name in ('winmm.dll','winmm_real.dll','_winmm_real.dll'):
+    for name in ('winmm.dll','winmm_real.dll','_winmm_real.dll','ddraw.dll','_ddraw_real.dll'):
         previous=rundir/name
         if previous.is_symlink():previous.unlink()
         elif previous.exists():raise RuntimeError('Unexpected previous timer observer file: '+str(previous))
@@ -334,6 +334,16 @@ def run(game, output, args, on_menu=None):
             (rundir/name).symlink_to(observer/name)
         env['WINEDLLOVERRIDES']='winmm=n;_winmm_real=n'
         env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
+    if getattr(args,'trace_video',False):
+        from ddraw_video_observer import build
+        observer=WORK/'video-observer'
+        metadata=build(observer)
+        (output/'video-observer-build.json').write_text(json.dumps(metadata,indent=2)+'\n')
+        shutil.copyfile(observer/'ddraw.dll',output/'video-observer.dll')
+        for name in ('ddraw.dll','_ddraw_real.dll'):
+            (rundir/name).symlink_to(observer/name)
+        env['WINEDLLOVERRIDES']=env.get('WINEDLLOVERRIDES','')+';ddraw=n;_ddraw_real=n'
+        env['DD2_VIDEO_CAPTURE']='Z:'+str(output/'video.bin').replace('/','\\')
     wine = None
     xserver = None
     engine_log = (output / "audio/engine.jsonl").open("x") if args.audio else None

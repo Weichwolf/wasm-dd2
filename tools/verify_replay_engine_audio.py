@@ -203,11 +203,22 @@ def verify(args):
     if args.keyboard_input:
         report['keyboard_input_sha256']=source['keyboard_input_sha256']
         report['scope']='Actual menu/replay shared-device PCM with all twelve original-observed window-procedure keyboard edges, original-produced card and observed clock/audio services. Own engine controls and callbacks execute. Intro equivalence, physical OS timing, chronological video and other scenarios remain unproved.'
+    if args.video_reference:
+        from verify_replay_engine_video import verify as verify_video
+        directories={'native':args.native,'native-asan':args.native_asan,'browser':args.browser}
+        report['video']=verify_video(args.original,args.video_reference,
+                                    {name:(directories[name],target) for name,target in inputs.items()},services)
+        print(f"PASS joint original video/audio: {report['video']['bounded_frames']} presentations per target",flush=True)
+        report['scope']='Actual bounded menu/loading/replay/return video and shared-device PCM from the same original and port runs, with all twelve observed key edges and observed clock/audio services. Every indexed/palette byte is compared. Browser canvas pixels and per-frame clocks are checked. Intro, original unattached device palettes, physical OS/display timing and other scenarios remain unproved.'
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened = open_files()
     for directory in (args.native,args.native_asan,args.browser):
         file = directory/'mixed.pcm'; st = file.stat()
         require((st.st_dev,st.st_ino) not in opened, 'successful PCM still in use'); file.unlink()
+        if args.video_reference:
+            for file in (directory/'video').glob('f*.*'):
+                if file.suffix not in ('.bin','.pal'):continue
+                st=file.stat();require((st.st_dev,st.st_ino) not in opened,'successful video still in use');file.unlink()
     for file in (out/'independent-input').glob('*.bin'): file.unlink()
     check_space(out)
     return report
@@ -216,6 +227,7 @@ def verify(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--keyboard-input',type=Path,help='compare against all actual original window-procedure key edges')
+    parser.add_argument('--video-reference',type=Path,help='also compare every video frame from the same original/audio/port runs')
     for name in ('fixture','original','services','mixer','native','native-asan','browser',
                  'negative-early','negative-late','output'):
         parser.add_argument('--'+name,type=Path,required=True)

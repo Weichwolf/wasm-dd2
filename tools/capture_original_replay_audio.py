@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--trace-keyboard',action='store_true',help='record original window-procedure keyboard messages with Wine +msg')
     parser.add_argument('--keep-movie',action='store_true',help='let the original intro finish naturally before menu input')
+    parser.add_argument('--trace-video',action='store_true',help='record every successful original DirectDraw presentation without debugger stops')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
     out,game=setup(args,initial)
     report=dict(scope=__doc__,pass_=False,scenario='original-replay',engine_state_writes=False,
@@ -48,8 +49,9 @@ def main():
     options.wine_debug='-all,+timestamp,+dsound,+ddraw,+relay,+debugstr';options.timeout=150
     if args.trace_keyboard:options.wine_debug+=',+msg'
     options.keep_movie=args.keep_movie
+    options.trace_video=args.trace_video
     report['capture_options']=dict(wine_debug=options.wine_debug,keep_movie=options.keep_movie,
-                                  startup_escape=not options.keep_movie)
+                                  startup_escape=not options.keep_movie,trace_video=options.trace_video)
     def driver(pid,output,env,deadline,rundir):
         ui=RealtimeUI(pid,rundir,output,env,deadline)
         try:
