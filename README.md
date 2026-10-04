@@ -1080,6 +1080,23 @@ reordered calls and unknown engine callers reject and remove partial exports.
 The audio checkpoint also records the initial save hash. Exporting these inputs
 does not yet compare the ports' complete racing-engine audio scheduling.
 
+Patch 862 lets a real native SDL application use `DD2_TICK_REPLAY` without
+overriding it with the default live clock. Ordinary interactive startup retains
+its live clock; explicitly requesting both clock modes still rejects. The
+`verify-native-sdl-clock` fixture creates an actual SDL window and checks literal
+wrapped/repeated clock returns, exhausted/partial/leftover inputs, the explicit
+mode conflict and the old initializer's failure. A native application diagnosis
+also reaches level 9/cf404 with identical original clock-call positions at all
+906 racing presentations. Its full PCM still differs beginning at sample
+89,161; per-presentation device input and multimedia timer scheduling need
+further comparison. This is not racing audio/video acceptance.
+
+```sh
+make clean-logs
+make verify-native-sdl-clock NATIVE_SDL_CLOCK_ARGS='--output /tmp/wasm-dd2/native-sdl-clock'
+make clean-logs
+```
+
 ```sh
 make clean-logs
 python3 tools/reference/capture.py --mode audio --audio --trace-cd \

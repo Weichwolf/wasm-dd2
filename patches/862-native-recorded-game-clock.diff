@@ -1,0 +1,21 @@
+The SDL application entry always enabled DD2_REALTIME, so a real native
+window/intro/frontend run with recorded original GetTickCount inputs exited
+at its first engine clock call. Select the normal live clock only when no
+recorded game clock was supplied. Keep explicit incompatible DD2_REALTIME
+settings visible to the strict clock reader. Device timing remains a separate
+input; this does not supply sound controls or game state.
+
+--- a/dd2_native.c
++++ b/dd2_native.c
+@@ -113,7 +113,10 @@
+ void dd2_native_init(void){
+     int index;
+     if(!getenv("DD2_WINDOW"))return;
+-    setenv("DD2_SOUND","1",1);setenv("DD2_REALTIME","1",1);
++    setenv("DD2_SOUND","1",1);
++    /* Recorded engine clock inputs also work with real SDL output. Keep
++       the live clock as the default for ordinary interactive startup. */
++    if(!getenv("DD2_TICK_REPLAY"))setenv("DD2_REALTIME","1",1);
+     if(!getenv("DD2_LEVEL") && !getenv("DD2_PLAY") && !getenv("DD2_CHAMP"))setenv("DD2_FE","1",1);
+     /* Preserve Unix termination signals. SDL otherwise turns SIGTERM/SIGINT
+      * into the WM_CLOSE request that the original window procedure ignores. */

@@ -54,8 +54,11 @@ patch: ## apply patches/NNN-*.diff onto re_out/ -> build/ (exact match; drift fa
 	bash $(ROOT)/tools/patch.sh
 
 check: ## dry-run the patch series against the pristine decompile (anchor check)
-	@rm -rf /tmp/dd2_patchcheck && mkdir -p /tmp/dd2_patchcheck && cp $(ROOT)/re_out/*.c $(ROOT)/re_out/*.h /tmp/dd2_patchcheck/ && \
-	for p in $(ROOT)/patches/*.diff; do patch -p1 -s -F0 --fuzz=0 -d /tmp/dd2_patchcheck < $$p || { echo "CHECK FAILED: $$p"; exit 1; }; done && \
+	@mkdir -p /tmp/wasm-dd2
+	@set -eu; check_dir=$$(mktemp -d /tmp/wasm-dd2/patchcheck.XXXXXX); \
+	trap 'rm -rf "$$check_dir"' EXIT; \
+	cp $(ROOT)/re_out/*.c $(ROOT)/re_out/*.h "$$check_dir/"; \
+	for p in $(ROOT)/patches/*.diff; do patch -p1 -s -F0 --fuzz=0 -d "$$check_dir" < $$p || { echo "CHECK FAILED: $$p"; exit 1; }; done; \
 	echo "check: all patches apply cleanly"
 
 native: patch ## native 32-bit build (no ASan by default = real crash semantics) -> $(NATIVE)
@@ -75,6 +78,10 @@ verify: native ## crash-free check: run the demo on all 10 levels (native), prin
 
 verify-native-sdl: ## verify actual renderer/X11 pixels, accepted audio and SDL keyboard/virtual-controller input
 	python3 $(ROOT)/tools/verify_native_sdl.py $(NATIVE_SDL_ARGS)
+
+.PHONY: verify-native-sdl-clock
+verify-native-sdl-clock: patch ## verify recorded/live clocks through actual SDL initialization; NATIVE_SDL_CLOCK_ARGS required
+	python3 $(ROOT)/tools/verify_native_sdl_clock.py $(NATIVE_SDL_CLOCK_ARGS)
 
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
