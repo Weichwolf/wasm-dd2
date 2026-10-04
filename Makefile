@@ -141,6 +141,10 @@ verify-print-rgb: patch ## compare complete Print records and both glyph-packet 
 verify-position-pointers: patch ## compare top-three position packets, ordering tables and GTE with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_position_pointers.py" $(POSITION_POINTERS_ARGS)'
 
+.PHONY: verify-champ-menu-fields
+verify-champ-menu-fields: patch ## compare championship menu packed WORD fields and their neighbors with original x86
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_champ_menu_fields.py" $(CHAMP_MENU_FIELDS_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

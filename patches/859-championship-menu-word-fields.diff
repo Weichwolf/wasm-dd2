@@ -1,0 +1,34 @@
+The frontend's locked-track cross has WORD x/y at 0x46968c/0x46968e.
+Original Front_End stores y then x with MOV WORD at 0x45060d/0x450614
+(and hidden coordinates at 0x450622/0x450629). DWORD x erased y,
+placing the visible cross at the top of the screen after a championship.
+The season-result underline lengths at 0x46ae26/0x46ae32 are also
+WORDs: FUN_004549c4 uses MOV WORD in every outcome, including
+0x454abe/0x454ac5 for Relegated Out. DWORD lengths overwrote the next
+two packed RGB bytes, changing the underline's color. Restore these
+four field widths without altering the menu decisions or rendering.
+
+--- a/dd2_symbols.h
++++ b/dd2_symbols.h
+@@ -2314,8 +2314,8 @@
+ #define _DAT_0046965e (*(short*)GIMG(0x0046965e))
+ #define _DAT_00469674 (*(short*)GIMG(0x00469674))
+ #define _DAT_00469676 (*(short*)GIMG(0x00469676))
+-#define _DAT_0046968c (*(int*)GIMG(0x0046968c))
+-#define _DAT_0046968e (*(int*)GIMG(0x0046968e))
++#define _DAT_0046968c (*(unsigned short*)GIMG(0x0046968c))
++#define _DAT_0046968e (*(unsigned short*)GIMG(0x0046968e))
+ #define _DAT_0046996e (*(int*)GIMG(0x0046996e))
+ #define _DAT_00469970 (*(int*)GIMG(0x00469970))
+ #define _DAT_00469f34 (*(int*)GIMG(0x00469f34))
+@@ -2344,8 +2344,8 @@
+ #define _DAT_0046adf2 (*(int*)GIMG(0x0046adf2))
+ #define _DAT_0046ae08 (*(int*)GIMG(0x0046ae08))
+ #define _DAT_0046ae0a (*(int*)GIMG(0x0046ae0a))
+-#define _DAT_0046ae26 (*(int*)GIMG(0x0046ae26))
+-#define _DAT_0046ae32 (*(int*)GIMG(0x0046ae32))
++#define _DAT_0046ae26 (*(unsigned short*)GIMG(0x0046ae26))
++#define _DAT_0046ae32 (*(unsigned short*)GIMG(0x0046ae32))
+ #define _DAT_0046b660 (*(short*)GIMG(0x0046b660))
+ #define _DAT_0046b662 (*(short*)GIMG(0x0046b662))
+ #define _DAT_0046b678 (*(short*)GIMG(0x0046b678))

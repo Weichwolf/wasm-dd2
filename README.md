@@ -325,6 +325,19 @@ the first 64 racing pictures through normal menus and acknowledged input;
 their indexed pixels and palettes match the original. These checks establish
 the component and bounded race startup, not complete-season or audio parity.
 
+Patch 859 restores four packed WORD fields in the championship menus. The
+main-menu cross's DWORD x store erased its adjacent y coordinate; the season
+result's DWORD underline lengths erased neighboring RGB bytes. The unchanged
+x86 uses WORD stores for all four fields. The existing five-race comparison
+identified precisely these two image failures after matching all 19,474 racing
+pictures on both ports. `make verify-champ-menu-fields CHAMP_MENU_FIELDS_ARGS='--output /tmp/wasm-dd2/fresh-champ-menu-fields'`
+checks 504 cases against unchanged x86 on native, native ASan and WASM: six race
+types, every human league/rank position and four neighboring-byte patterns.
+The original result helper and bounded frontend instruction branch match all
+packed fields and guards; the old DWORD stores are rejected separately. This
+component proof does not establish corrected live menu images or full-season
+acceptance; the complete latest-engine comparison must still pass.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,
