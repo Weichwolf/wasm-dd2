@@ -11,6 +11,7 @@
 static unsigned now;
 unsigned dd2_platform_ms(void) { return now; }
 void FUN_0041345c(void) { abort(); }
+int DirectSoundCreate(int,void**,int);
 static void require(int ok, const char *reason) {
     if (!ok) { fprintf(stderr,"Redbook test failed: %s\n",reason); exit(1); }
 }
@@ -21,6 +22,7 @@ static unsigned status(unsigned item) {
 }
 int main(int argc, char **argv) {
     uint32_t open[5] = {0}, set[3] = {0,10,0}, play[3] = {0};
+    void *device=NULL;
     int track;
 #ifndef __EMSCRIPTEN__
     require(mmap((void*)0x400000,0x580400,PROT_READ|PROT_WRITE,
@@ -28,6 +30,12 @@ int main(int argc, char **argv) {
 #endif
     *(int*)0x462ff0=0;
     setenv("DD2_REALTIME","1",1);
+    setenv("DD2_SOUND","1",1);
+    /* The game keeps its effects device alive during CD Stop/Play. Retain a
+     * real backend device so each transport shares the same fractional clock,
+     * instead of starting a fresh output epoch after every CD-only Stop. */
+    require(DirectSoundCreate(0,&device,0)==0 && device,"shared audio device");
+    dd2_cd_pump();
     require(argc==2,"PCM output path required");
     setenv("DD2_CDPCM",argv[1],1);
     open[2] = (uint32_t)(uintptr_t)"cdaudio";
@@ -62,11 +70,16 @@ int main(int argc, char **argv) {
         require(status(2)==((unsigned)track | (played/588u)<<24),"resume follows the shared fractional device clock");
         require(dd2_mci_send(1,0x808,0,NULL)==0,"stop before next track");
     }
-    /* A complete track, including its exact end and no data from the next. */
-    play[1]=2; play[2]=3;
-    require(dd2_mci_send(1,0x806,12,play)==0,"full track play");
-    now += 500000; dd2_cd_pump();
-    require(status(4)==525 && status(2)==3,"stopped at next track boundary");
+    /* Every complete track, including the final physical disc boundary. */
+    for (track=2;track<=19;track++) {
+        unsigned sectors=dd2_cd_sectors[track]-dd2_cd_sectors[track-1];
+        unsigned end=track<19 ? (unsigned)track+1u :
+            19u | sectors/4500u<<8 | (sectors/75u%60u)<<16 | (sectors%75u)<<24;
+        play[1]=track; play[2]=track+1;
+        require(dd2_mci_send(1,0x806,track<19 ? 12 : 4,play)==0,"full track play");
+        now += 500000; dd2_cd_pump();
+        require(status(4)==525 && status(2)==end,"stopped at exact physical track boundary");
+    }
     /* Pause retains the same buffer, unlike the engine's Stop/TO-only resume.
      * The source does not advance during the pause; the device clock does. */
     play[1]=3;play[2]=4;
@@ -105,6 +118,7 @@ int main(int argc, char **argv) {
     require(dd2_mci_send(1,0x814,0x100,set)==257,"closed device status");
     setenv("DD2_CD_ROOT","/dd2-missing-test-disc",1);
     require(dd2_mci_send(0,0x803,0x2000,open)==276,"missing disc rejected");
-    puts("Redbook: all 18 tracks, exact positions, stop/resume, full-track end, replay and errors passed");
+    require(((unsigned(*)(void*))(*(void***)device)[2])(device)==0,"release shared audio device");
+    puts("Redbook: all 18 complete tracks, exact positions, stop/resume, disc end, replay and errors passed");
     return 0;
 }

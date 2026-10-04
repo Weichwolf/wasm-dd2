@@ -552,9 +552,26 @@ to retain the report and remove successful raw comparisons. These checks cover
 the exercised arithmetic and transport routes; full interactive scheduling and
 every race's chronological video/PCM remain separate requirements.
 
-`make verify-redbook` compares native/WASM playback directly with all 18 track
-prefixes and one complete track: 29848052 exact PCM bytes, including stop/resume,
-pause, cross-track boundaries, end-of-track, replay and error checks.
+`make verify-redbook` compiles the patched CD/mixer backend from `build/` at
+`-O2` and compares native, native ASan and Node/WASM playback directly with
+all 18 complete CDDA tracks and their transport intervals: 577760564 exact
+PCM bytes per target. The fixture retains the effects device throughout
+CD Stop/Play, as the game does, so its fractional device clock remains shared.
+Checks include stop/resume, pause, cross-track boundaries, every track end,
+the final disc boundary, replay and errors. Full-track hashes also match the
+provisioned disc manifest. This is a backend/source playback comparison;
+browser fetching, physical output and complete game racing mixes remain
+separate requirements. The report records source, fixture, executable and
+disc-manifest hashes. Run `make patch` first if the patched sources are absent:
+
+```sh
+make clean-logs
+make verify-redbook REDBOOK_ARGS='--output /tmp/wasm-dd2/redbook-full-disc --clean'
+make clean-logs
+```
+
+The verified report is `/tmp/wasm-dd2/redbook-full-disc-880-shared/report.json`;
+successful raw PCM was removed after writing it.
 `make verify-redbook-controls` checks drained/live Pause/Resume and repeated
 controls against 11 transport-state records and 50568 exact source PCM bytes.
 Both complete mixed/music streams also match 515088 exact Float32 bytes,

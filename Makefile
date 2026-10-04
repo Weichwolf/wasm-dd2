@@ -262,8 +262,8 @@ REFCAP ?= /tmp/dd2-reference
 verify-reference-video: native wasm ## compare existing original L9 Draw_All checkpoints (REFCAP) with both ports
 	python3 $(ROOT)/tools/reference/compare_video.py --capture $(REFCAP) --native $(NATIVE) --node $(NODE) --wasm $(OUTJS)
 
-verify-redbook: ## compare MCI playback, stop/resume and complete CD PCM on native/WASM against provisioned CDDA
-	python3 $(ROOT)/tools/verify_redbook.py --node $(NODE)
+verify-redbook: ## compare all 18 complete CD tracks on patched native/ASan/WASM; REDBOOK_ARGS supplies output/cleanup
+	python3 $(ROOT)/tools/verify_redbook.py --node $(NODE) $(REDBOOK_ARGS)
 
 verify-redbook-controls: ## check drained/live Pause/Resume states and exact PCM; REDBOOK_CONTROLS_ARGS can enable Wine
 	python3 $(ROOT)/tools/verify_redbook_controls.py --node $(NODE) $(REDBOOK_CONTROLS_ARGS)
