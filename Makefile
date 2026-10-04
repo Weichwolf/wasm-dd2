@@ -115,6 +115,10 @@ verify-browser-keyboard-negative: web ## reject the genuine old shell key filter
 verify-sound-device: ## compare actual Wine device lifetimes and exact native/WASM PCM across closed movie epochs
 	python3 $(ROOT)/tools/verify_sound_device.py $(SOUND_DEVICE_ARGS)
 
+.PHONY: verify-sound-hardware
+verify-sound-hardware: patch ## compare Wine hardware rejection/software retry with native/ASan/WASM; SOUND_HARDWARE_ARGS required
+	python3 $(ROOT)/tools/verify_sound_hardware.py $(SOUND_HARDWARE_ARGS)
+
 verify-native-window: native ## use real X11 keys to test native menus/CD/race/pause and exact rendered/accepted output
 	python3 $(ROOT)/tools/verify_native_window.py --binary $(NATIVE) --original-startup $(NATIVE_WINDOW_ARGS)
 

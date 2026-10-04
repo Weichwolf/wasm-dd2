@@ -519,6 +519,17 @@ Float32 little-endian stereo at the device rate with `.json` format sidecars.
 Deterministic runs share a 25Hz audio clock. Interactive
 CD playback and the 400ms multimedia timer use elapsed real time, including menus.
 
+The software DirectSound backend rejects secondary `DSBCAPS_LOCHARDWARE`
+requests with `DSERR_UNSUPPORTED` and clears the output pointer. This preserves
+the original engine's retry from flags `0xe6` to `0xe2`, observed in the original
+sound-bank loading trace. Primary buffers remain exempt, matching
+[Wine 10's buffer creation implementation](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/dsound/dsound.c).
+`make verify-sound-hardware SOUND_HARDWARE_ARGS='--output /tmp/wasm-dd2/sound-hardware'`
+checks the actual COM results against Wine, native, native ASan and WASM,
+including the software retry and primary exemption. A mutation restoring the
+old hardware acceptance must fail. The check covers this API branch; full
+engine audio timing remains a separate comparison.
+
 `make verify-redbook` compares native/WASM playback directly with all 18 track
 prefixes and one complete track: 29848052 exact PCM bytes, including stop/resume,
 pause, cross-track boundaries, end-of-track, replay and error checks.
