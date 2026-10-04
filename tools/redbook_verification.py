@@ -28,7 +28,9 @@ def compile_backends(args, temporary, fixture, game):
     source_root = args.source_root.resolve()
     required = ['dd2_cd.c', 'dd2h_stubs.c', 'dd2_cd.h', 'dd2_sound.h',
                 'dd2_disc.h', 'dd2_sound_fir.h', 'dd2_sound_wide.h',
-                'dd2_audio_service.h', 'ghidra_compat.h']
+                'dd2_sound_mixwide.h', 'dd2_sound_gain.h', 'dd2_native.h',
+                'dd2_movie.h', 'dd2_symbols.h', 'dd2_audio_service.h',
+                'ghidra_compat.h']
     if not all((source_root / name).is_file() for name in required):
         raise RuntimeError('Missing patched backend; run make patch first')
     subprocess.run(['python3', str(ROOT / 'tools/generate_cd_toc.py'),

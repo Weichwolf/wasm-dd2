@@ -16,8 +16,10 @@ import struct
 import subprocess
 import sys
 import tempfile
-from generate_sound_gain import gains, render, OUTPUT
+from generate_sound_gain import gains, render
 from verify_sound_cursor import wine_probe
+from artifacts import WORK
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools/reference"))
@@ -107,12 +109,16 @@ def validate_negative_captures(output, table):
     # Mutate copies of real captures: prove the PCM gates reject an ULP error,
     # a lost audible tone and integer saturation of the mixed waveform.
     expected=frame(table,-600,0)
-    with tempfile.TemporaryDirectory(prefix="dd2-gain-negative-") as temporary:
+    rejected=[]
+    with tempfile.TemporaryDirectory(prefix="gain-negative-",dir=WORK) as temporary:
         root=Path(temporary)
         for defect in ("one-bit","all-silent","clipped-mix"):
             source=output/("three-source-mix" if defect=="clipped-mix" else "volume-600-pan0")/"audio"
             broken=root/defect;shutil.copytree(source,broken)
-            files=sorted(broken.glob("*.pcm"))
+            # This comparator checks accepted writes. Device-played PCM is a
+            # separate stream and sorts first; changing it alone leaves the
+            # accepted waveform untouched and cannot test this comparison.
+            files=[broken/stream['file'] for stream in summarize_audio(broken)['streams']]
             mutated=False
             for pcm in files:
                 raw=bytearray(pcm.read_bytes())
@@ -135,10 +141,11 @@ def validate_negative_captures(output, table):
                 if defect=="clipped-mix":validate_mix(broken,table)
                 else:validate_reference(broken,expected)
             except RuntimeError:
-                pass
+                rejected.append(defect)
             else:
                 raise RuntimeError(f"Accepted damaged gain capture: {defect}")
     print("PASS one-bit corruption, lost tone and clipped reference mix rejected",flush=True)
+    return rejected
 
 
 def main():
@@ -148,24 +155,22 @@ def main():
     parser.add_argument("--wine",action="store_true")
     parser.add_argument("--mingw",default="i686-w64-mingw32-gcc")
     parser.add_argument("--output",type=Path)
+    add_backend_arguments(parser)
     args=parser.parse_args()
-    if OUTPUT.read_text()!=render():raise RuntimeError("Gain table is not reproducible")
+    if (args.source_root/'dd2_sound_gain.h').read_text()!=render():
+        raise RuntimeError("Production gain table is not reproducible")
     table=gains()
-    with tempfile.TemporaryDirectory(prefix="dd2-gain-build-") as temporary:
+    WORK.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="gain-build-",dir=WORK) as temporary:
         directory=Path(temporary)
-        output=args.output.resolve() if args.output else directory/"captures"
-        output.mkdir(parents=True,exist_ok=False)
+        output=output_directory(args,directory)
         env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
         env["DD2_SND_RATE"]="22050" # Gain calibration deliberately avoids a resampler.
         source=ROOT/"tools/sound_gain_test.c"
-        common=["-std=gnu89","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
-                f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2h_stubs.c"),str(source),"-Wl,--gc-sections"]
-        native,wasm=directory/"native",directory/"wasm.js"
-        subprocess.run(["gcc","-m32","-no-pie",*common,"-o",str(native)],check=True)
-        subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
-                        "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
+        targets,backend=compile_backends(args,directory,source,ROOT/'DestructionDerby2')
         report={"scope":"gain/control calibration at matching source/device rate; full stream timing and original game parity pending",
-                "cases":[],"volume_sweep":10001,"three_buffer_sum_above_one":True,"wine":args.wine}
+                "cases":[],"volume_sweep":10001,"three_buffer_sum_above_one":True,"wine":args.wine,
+                "pass_":False,"backend":backend,"fixture_source_sha256":hashlib.sha256(source.read_bytes()).hexdigest()}
         if args.wine:
             executable=directory/"gain.exe"
             subprocess.run([args.mingw,"-Wall","-Wextra","-Werror",str(source),"-ldsound","-o",str(executable)],check=True)
@@ -186,7 +191,7 @@ def main():
                 if actual!={"volume":volume,"pan":pan,"source_rate":22050,"source_sample":16384}:
                     raise RuntimeError("Wine fixture source/settings differ")
                 record["wine"]=validate_reference(case/"audio",frame(table,volume,pan))
-            for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
+            for target,command in targets:
                 pcm=case/f"{target}.pcm"
                 subprocess.run([*command,str(pcm),str(volume),str(pan)],env=env,check=True,capture_output=True,timeout=30)
                 expected=sweep_pcm(table) if (volume,pan)==(0,0) else frame(table,volume,pan)*220
@@ -196,7 +201,7 @@ def main():
                 record["targets"].append({"target":target,"pcm_bytes":len(expected)})
             report["cases"].append(record)
             (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
-            print(f"PASS gain {volume}/pan {pan}: {'Wine reference and ' if args.wine else ''}native/WASM exact samples",flush=True)
+            print(f"PASS gain {volume}/pan {pan}: {'Wine reference and ' if args.wine else ''}native/ASan/WASM exact samples",flush=True)
         if args.wine:
             case=output/"mono8-source";case.mkdir();(case/"audio").mkdir()
             capture_env={**env,"DD2_AUDIO_CAPTURE":str(case/"audio"),"DD2_AUDIO_RATE":"22050",
@@ -207,12 +212,12 @@ def main():
             if actual!={"volume":-600,"pan":0,"source_rate":22050,"source_sample":192,"mode":"mono8"}:
                 raise RuntimeError("Wine mono8 fixture settings differ")
             report["wine_mono8"]=validate_reference(case/"audio",frame(table,-600,0))
-            for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
+            for target,command in targets:
                 pcm=case/f"{target}.pcm"
                 subprocess.run([*command,str(pcm),"-600","0","mono8"],env=env,check=True,capture_output=True,timeout=30)
                 if pcm.read_bytes()!=frame(table,-600,0)*220:
                     raise RuntimeError(f"{target} mono8 gain samples differ")
-            print("PASS real Wine/native/WASM mono8 normalization and gain",flush=True)
+            print("PASS real Wine/native/ASan/WASM mono8 normalization and gain",flush=True)
             case=output/"three-source-mix";case.mkdir();(case/"audio").mkdir()
             capture_env={**env,"DD2_AUDIO_CAPTURE":str(case/"audio"),"DD2_AUDIO_RATE":"22050",
                          "DD2_AUDIO_PROCESS":"gain.exe","LD_PRELOAD":"dd2_audio.so",
@@ -222,10 +227,10 @@ def main():
             if actual!={"volume":0,"pan":0,"source_rate":22050,"source_sample":16384,"mode":"mix"}:
                 raise RuntimeError("Wine three-source fixture settings differ")
             report["wine_three_source_mix"]=validate_mix(case/"audio",table)
-            validate_negative_captures(output,table)
-            report["negative_capture_checks"]=["one-bit","all-silent","clipped-mix"]
+            report["negative_capture_checks"]=validate_negative_captures(output,table)
             (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
             print("PASS real Wine three-source mix: exact Float32 sums above 1.0",flush=True)
+        finish_report(output,report,args.clean)
         print("PASS all 10001 volume values, control/error probes, six pan steps and unclipped Float32 mix",flush=True)
 
 

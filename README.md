@@ -746,8 +746,20 @@ also exercised against real DirectSound.
 ```sh
 make verify-sound-gain
 # Actual Wine PCM calibration, captured under a clocked virtual device:
-make verify-sound-gain SOUND_GAIN_ARGS='--wine --mingw i686-w64-mingw32-gcc --output /tmp/fresh-gain-calibration'
+make verify-sound-gain SOUND_GAIN_ARGS='--wine --mingw i686-w64-mingw32-gcc --output /tmp/wasm-dd2/gain-calibration --clean'
 ```
+
+The gain verifier compiles the patched `build/` backend at `-O2` for native,
+native ASan and Node/WASM. It validates the compiled production gain table,
+records all local backend headers (including gain and native mixer arithmetic),
+and supports `--source-root`, fresh `--output` directories and raw cleanup via
+`--clean`. Builds, Wine prefixes and mutation copies stay under `/tmp/wasm-dd2/`.
+The production/Wine run passed in
+`/tmp/wasm-dd2/sound-gain-886-final-production-wine/report.json`: all 13 gain/pan
+cases, the 10001-value volume sweep, mono8 normalization and the mixed plateau
+above 1.0. All three negative captures are rejected. Mutations explicitly alter
+the accepted stream read by this comparator; changing only device-played PCM
+does not test the accepted-waveform comparison.
 
 The port test checks all 10001 volume values, six pan steps and a three-source
 mix above 1.0 against exact Float32 bytes. The Wine calibration checks 13 gain/pan
