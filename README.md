@@ -338,6 +338,23 @@ packed fields and guards; the old DWORD stores are rejected separately. This
 component proof does not establish corrected live menu images or full-season
 acceptance; the complete latest-engine comparison must still pass.
 
+Patch 860 reconstructs Duplicate_Font's original zero blend byte. Both original
+font setup call chains leave Setup_Font's literal zero argument in the stack
+byte later read as Duplicate_Font's descriptor byte 9. Host stack layouts,
+including ASan, otherwise change the copied font's transparency mode and the
+result heading. `make verify-duplicate-font DUPLICATE_FONT_ARGS='--output /tmp/wasm-dd2/fresh-duplicate-font'`
+executes both call orders against unchanged x86, native, native ASan and WASM
+in 256 cases covering all 32 page numbers and varied coordinates, CLUTs and glyph
+patterns. Duplicate metadata, all 96 glyphs per bank, source fields and guards
+match; forced blend bytes 1, 2 and 3 are rejected on both ports. Opaque source
+font page stack residue is explicitly excluded. This component comparison does
+not establish complete menu rendering, championships or A/V parity.
+The actual native ASan first natural result checkpoint also matches the original
+framebuffer, palette and state at 33,632 clock/41,616 independently verified RNG
+calls; all 2,502 previously different pixels are fixed. Its bounded report is
+`/tmp/wasm-dd2/font-blend-860-native-result-verified.json`. This checkpoint does
+not accept every racing picture, complete seasons, PCM or physical timing.
+
 Both corrected native and browser engines complete the new regular ten-lap
 first-race reference with a surviving player and 75 points. All 4,314 racing pictures and
 palettes, 24,632 actual original clock returns, 35,999 calculated RNG calls,

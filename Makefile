@@ -145,6 +145,10 @@ verify-position-pointers: patch ## compare top-three position packets, ordering 
 verify-champ-menu-fields: patch ## compare championship menu packed WORD fields and their neighbors with original x86
 	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_champ_menu_fields.py" $(CHAMP_MENU_FIELDS_ARGS)'
 
+.PHONY: verify-duplicate-font
+verify-duplicate-font: patch ## compare copied font metadata and all glyphs with original x86 call chains
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_duplicate_font.py" $(DUPLICATE_FONT_ARGS)'
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

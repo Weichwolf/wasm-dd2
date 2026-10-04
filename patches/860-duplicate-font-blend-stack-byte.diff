@@ -1,0 +1,23 @@
+Duplicate_Font reads descriptor byte 9 before Setup_Sprite overwrites its
+output fields. Original descriptor starts at ebp-0x2c, hence byte 9 is
+ebp-0x23. Both original call chains precede each group of Duplicate_Font
+calls with Setup_Font at the same caller stack position. Setup_Font pushes
+literal zero at ebp-0x24 (0x4211b6), leaving that byte zero. Subsequent
+Duplicate_Font calls preserve it. Reconstruct this original stack residue
+explicitly; host/ASan stack layouts otherwise change the copied font blend
+mode and the Race Over heading. Other Setup_Font descriptor bytes are not
+initialized by this patch.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -12736,6 +12736,10 @@
+   int iVar2;
+   undefined1 _fd [0x18];
+   
++  /* Original preceding Setup_Font leaves its literal zero argument at
++     [ebp-0x24]; Duplicate_Font reuses byte [ebp-0x23] as descriptor+9.
++     Preserve that blend-mode byte independently of the host stack layout. */
++  _fd[9] = 0;
+   Setup_Sprite(0,param_3,(short *)_fd);
+   iVar1 = _DAT_0075440c;
+   *(undefined2 *)(_DAT_0075440c + 2 + param_2 * 8) = *(undefined2 *)(_fd + 0xc);
