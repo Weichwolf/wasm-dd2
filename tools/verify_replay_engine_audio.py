@@ -147,19 +147,45 @@ def verify(args):
         print(f'PASS {name}: {len(pcm)} actual engine PCM bytes', flush=True)
     negative = {}
     for name, directory, offset in (('release-early', args.negative_early, -1), ('release-late', args.negative_late, 1)):
-        failed = read(directory/'checkpoint.json'); history = read(directory/'input-failure.json')
-        require(failed['pass_'] is False and history['pass_'] is False and history['action'] == 4 and
-                failed['binary_sha256'] == inputs['native']['binary_sha256'] and
+        failed = read(directory/'checkpoint.json')
+        require(failed['binary_sha256'] == inputs['native']['binary_sha256'] and
                 failed['schedule'][3]['release_flip'] == inputs['native']['schedule'][3]['release_flip']+offset and
                 failed['audio_services_sha256'] == services['input_sha256'] and
-                failed['game_clock_sha256'] == clock['ticks_sha256'] and
-                'engine API clock/presentation position differs' in (directory/'game-1.log').read_text(),
-                'wrong input duration did not fail the actual engine timing assertion')
+                failed['game_clock_sha256'] == clock['ticks_sha256'],
+                'actual perturbed keyboard input provenance differs')
         if args.keyboard_input:
             require(failed.get('diagnostic_release_offset') == offset and
                     failed.get('keyboard_input_sha256') == source['keyboard_input_sha256'],
                     'negative keyboard perturbation provenance differs')
-        negative[name] = dict(rejected=True, endpoint=history['last'], error=history['error'])
+        if failed['pass_'] is False:
+            history = read(directory/'input-failure.json')
+            require(history['pass_'] is False and history['action'] == 4 and
+                    'engine API clock/presentation position differs' in (directory/'game-1.log').read_text(),
+                    'failed perturbation did not reach the actual engine timing assertion')
+            negative[name] = dict(rejected=True, basis='engine-timing-assertion',endpoint=history['last'],error=history['error'])
+        else:
+            require(args.keyboard_input is not None,'successful perturbation requires independently observed source keys')
+            history=failed['input_history']
+            require(history['pass_'] and history['hardware_only'] and not history['engine_state_writes'] and
+                    history['schedule']==failed['schedule'],'actual perturbed native input history required')
+            edges=[e for e in history['inputs'] if 'down' in e]
+            require(len(edges)==12,'complete actual perturbed key edges required')
+            for i,p in enumerate(failed['schedule']):
+                for j,down,flip in ((0,True,p['flip']-1),(1,False,p['release_flip']-1)):
+                    e=edges[i*2+j]
+                    require(e['action']==i and e['key']==p['key'] and e['down'] is down and
+                            e['observation']['completed_flips']==flip and
+                            e['observation']['clock_calls']==(p['clock_calls'] if down else p['release_clock_calls']),
+                            'perturbed input was not delivered at its declared original clock/presentation')
+            try:validate(failed,original,source,clock,services,initial,planned,accepted,played)
+            except RuntimeError as error:
+                require(str(error) in ('original sound trigger schedule differs','actual original key-down/up input differs'),
+                        'completed perturbation failed something other than original input identity')
+            else:raise RuntimeError('changed actual original input accepted')
+            pcm=(directory/'mixed.pcm').read_bytes()
+            negative[name]=dict(rejected=True,basis='original-input-identity',engine_completed=True,
+                output_identical=pcm==accepted,actual_release_flip=failed['schedule'][3]['release_flip'],
+                original_release_flip=planned[3]['release_flip'],observed_edge=edges[7])
     # Exercise the comparator at interior stereo samples, endpoints and extent.
     for name, offset in (('first',0),('left',len(accepted)//16*8),
                          ('right',len(accepted)//16*8+4),('last',len(accepted)-1)):

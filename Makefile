@@ -409,6 +409,10 @@ verify-startup-video: ## compare first actual frontend frames/palettes with orig
 verify-video-archive: ## verify lossless closed-block video storage through actual Wine DirectDraw; VIDEO_ARCHIVE_ARGS required
 	python3 $(ROOT)/tools/verify_video_archive.py $(VIDEO_ARCHIVE_ARGS)
 
+.PHONY: verify-replay-video-stream
+verify-replay-video-stream: ## check incremental literal comparison and safe cleanup with copied source records; REPLAY_VIDEO_STREAM_ARGS required
+	python3 $(ROOT)/tools/verify_replay_video_stream.py $(REPLAY_VIDEO_STREAM_ARGS)
+
 .PHONY: verify-car-preview
 verify-car-preview: ## compare whole car preview rotations by observed model pose; CAR_PREVIEW_ARGS supplies captures/report
 	python3 $(ROOT)/tools/verify_car_preview.py $(CAR_PREVIEW_ARGS)

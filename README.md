@@ -1959,8 +1959,28 @@ checked in Python and read identically in Node. Eight damaged-storage or
 unsafe-cleanup cases were rejected; six were also rejected by Node. The synthetic
 patterns compressed to 11,590,254 bytes, which does not predict game compression.
 Report: `/tmp/wasm-dd2/video-archive-892-wine/report.json`. This is storage evidence,
-not original game parity. Native replay capture still has its 4,096-frame limit;
-long-running port output needs incremental comparison before a full-race proof.
+not original game parity.
+
+Native replay captures can now add `--video-reference ORIGINAL_VIDEO_REPORT`
+to `--trace-video`. A worker compares each completed indexed image and palette
+literally with the original, checks presentation order/state, records each matched
+block, and removes its closed raw files. It stops this test's writer on a mismatch.
+This allows the bounded 60,000-frame archive route without accumulating raw native
+video. Raw capture without incremental comparison retains its 4,096-frame limit.
+`make verify-replay-video-stream REPLAY_VIDEO_STREAM_ARGS='--original ORIGINAL_CAPTURE --reference ORIGINAL_VIDEO_REPORT --output /tmp/wasm-dd2/fresh-stream-check'`
+checks transport using copied source records, including six corrupt/open-file
+rejections; it does not claim native engine parity.
+
+A fresh original archive passed the joint actual-engine comparison on native,
+native ASan and the browser: all 985 indexed frames/palettes (287 racing frames),
+4,289,752 accepted PCM bytes and the 4,275,656-byte played prefix match. This uses
+all twelve observed source key edges, 6,556 services and 403 callbacks. The browser
+also checks every actual canvas image. The joint verifier rejects 33 altered
+input/output/evidence cases. In this recording, the actual Enter-release shifts
+of one frame in either direction complete with identical PCM; they are rejected
+for differing original inputs, not reported as engine timing failures.
+Report: `/tmp/wasm-dd2/replay-av-897-final-verified/report.json`. This remains a
+bounded replay/menu proof; full races, intro output and physical timing are open.
 
 To capture this evidence, add `--trace-video` to the original command together
 with `--trace-keyboard --keep-movie`, then export its video after the original

@@ -62,7 +62,9 @@ def main():
     parser.add_argument('--diagnostic-release-offset',type=int,choices=(-1,1),
         help='deliberately perturb the first observed Enter release for an actual engine rejection test')
     parser.add_argument('--trace-video',action='store_true',help='also capture each indexed presentation and device palette')
+    parser.add_argument('--video-reference',type=Path,help='compare original bytes incrementally and discard only matched, closed frames; requires --trace-video')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
+    require(args.video_reference is None or args.trace_video,'incremental video comparison requires --trace-video')
     original=args.original.resolve();services=args.services.resolve()
     planned=input_schedule(original,services,args.fixture,args.keyboard_input)
     if args.first_return_release_flip is not None:
@@ -83,7 +85,15 @@ def main():
         game_clock_sha256=digest(clock.read_bytes()),audio_services_sha256=digest((services/'services.bin').read_bytes()))
     if args.keyboard_input:report['keyboard_input_sha256']=digest(args.keyboard_input.read_bytes())
     if args.diagnostic_release_offset is not None:report['diagnostic_release_offset']=args.diagnostic_release_offset
-    display=ui=None
+    stream_source=None
+    if args.video_reference:
+        from reference.video_frames import observe
+        stream_source=observe(original)
+        require(stream_source==json.loads(args.video_reference.read_text()),'original streaming video reference differs')
+        require(stream_source['trace_sha256']==json.loads((services/'report.json').read_text())['trace_sha256'] and
+                stream_source['game_clock_sha256']==report['game_clock_sha256'],
+                'streaming video and audio must use the same original run')
+    display=ui=video_compare=None
     try:
         with (out/'xvfb.log').open('wb') as log:
             display=subprocess.Popen(['Xvfb','-displayfd','1','-screen','0','1280x1024x24'],
@@ -95,11 +105,15 @@ def main():
                 DD2_RACE_STREAM=str(out/'race-stream.jsonl'),ASAN_OPTIONS='detect_leaks=0:abort_on_error=1')
             if args.trace_video:
                 limit=json.loads((services/'report.json').read_text())['completion_position']['flip']
-                require(0<limit<=4096,'bounded video capture requires at most 4096 original presentations')
+                require(0<limit<=(60000 if args.video_reference else 4096),'bounded video capture requires incremental comparison beyond 4096 presentations')
                 (out/'video').mkdir()
                 overrides.update(DD2_FRAMEDIR=str(out/'video'),DD2_PALDUMP='1',
-                    DD2_PRESENT_LOG=str(out/'video/presentations.jsonl'),DD2_VIDEO_CAPTURE_LIMIT=str(limit))
+                    DD2_PRESENT_LOG=str(out/'video/presentations.jsonl'),
+                    DD2_VIDEO_CAPTURE_LIMIT=None if args.video_reference else str(limit))
             ui=ConfigUI(binary,game,out,':'+number,1,180,env_override=overrides)
+            if args.video_reference:
+                from replay_video_stream import Comparison
+                video_compare=Comparison(out/'video',original,stream_source,limit,ui.process.terminate).start()
             ui.wait(lambda:ui.integer(0x462cd4)==1)
             report['intro']=dict(movie=1)
             subprocess.run(['xdotool','search','--name','^Destruction Derby 2$','windowfocus','keydown','Escape'],
@@ -133,7 +147,13 @@ def main():
     finally:
         if ui:ui.stop()
         if display and display.poll() is None:display.terminate();display.wait(timeout=5)
+        video_error=None
+        if video_compare:
+            try:report['video_stream']=video_compare.finish()
+            except Exception as error:
+                report.update(pass_=False,video_error=str(error));video_error=error
         (out/'checkpoint.json').write_text(json.dumps(report,indent=2)+'\n');check_space(out)
+        if video_error:raise video_error
     print('Actual native replay engine captured; literal PCM comparison pending',flush=True)
 
 

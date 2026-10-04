@@ -30,20 +30,40 @@ def match_browser(original,actual,rgba_sha256):
     require(actual['canvas_rgba_sha256']==rgba_sha256,'actual browser canvas pixels differ')
 
 
+def match_stream(original,actual):
+    require(actual['original_bytes_compared'] is True and actual['index']==original['index'] and
+            all(actual[k]==original[k] for k in ('level','cf','poly_list','restart_cd_audio')) and
+            actual['framebuffer_sha256']==original['framebuffer_sha256'] and
+            actual['palette_sha256']==original['palette_sha256'],
+            'native literal streaming comparison differs')
+
+
 def verify(original,reference,targets,services):
     source=observe(original)
     require(json.loads(reference.read_text())==source,'original video differs from independent trace observation')
     require(source['trace_sha256']==services['trace_sha256'] and source['game_clock_sha256']==services['clock_sha256'],
             'video and audio must come from the same original trace')
     end=services['completion_position']['flip'];require(0<end<=source['frame_count'],'complete bounded original video required')
-    video={};results={};negative={}
+    video={};streams={};results={};negative={}
     for name,(directory,checkpoint) in targets.items():
         if name=='browser':
             proof=checkpoint['video']
             require(proof['pass_'] and proof['original_video_sha256']==source['video_sha256'] and
                     proof['original_trace_sha256']==source['trace_sha256'],'browser video provenance differs')
             frames=proof['frames']
-        else:frames=[json.loads(line) for line in (directory/'video/presentations.jsonl').read_text().splitlines()]
+        else:
+            frames=[json.loads(line) for line in (directory/'video/presentations.jsonl').read_text().splitlines()]
+            path=directory/'video/comparison.json'
+            if path.exists():
+                proof=json.loads(path.read_text())
+                require(proof['pass_'] and proof==checkpoint['video_stream'] and
+                        proof['original_video_sha256']==source['video_sha256'] and
+                        proof['original_trace_sha256']==source['trace_sha256'] and
+                        proof['expected_frames']==end and len(proof['frames'])==end,
+                        'native incremental video provenance/extent differs')
+                require(all(all(p[k]==f[k] for k in f) for p,f in zip(proof['frames'],frames)),
+                        'native incremental video journal differs')
+                streams[name]=proof['frames']
         require(len(frames)>=end and all(row['index']==i for i,row in enumerate(frames)),
                 'missing, duplicated or reordered port presentation')
         if name=='browser':require(len(frames)==end,'browser bounded video extent differs')
@@ -65,11 +85,23 @@ def verify(original,reference,targets,services):
                 else:
                     require(all(row[k]==expected[k] for k in ('level','cf','poly_list','restart_cd_audio')),
                             name+' presentation state differs')
-                    equal_bytes(pixels,(directory/f'video/f{index:05d}.bin').read_bytes(),name+' indexed frame '+str(index))
-                    equal_bytes(palette,(directory/f'video/f{index:05d}.pal').read_bytes(),name+' palette '+str(index))
+                    if name in streams:
+                        compared=streams[name][index]
+                        match_stream(expected,compared)
+                    else:
+                        equal_bytes(pixels,(directory/f'video/f{index:05d}.bin').read_bytes(),name+' indexed frame '+str(index))
+                        equal_bytes(palette,(directory/f'video/f{index:05d}.pal').read_bytes(),name+' palette '+str(index))
                 results[name]['frame_hashes'].append(dict(index=index,framebuffer_sha256=expected['framebuffer_sha256'],
                                                         palette_sha256=expected['palette_sha256']))
             if index==0:
+                for target,frames in streams.items():
+                    for case,field in [('byte-comparison','original_bytes_compared'),('pixel','framebuffer_sha256'),
+                                       ('palette','palette_sha256'),('index','index')]:
+                        bad=copy.deepcopy(frames[0])
+                        bad[field]=False if field=='original_bytes_compared' else 1 if field=='index' else '0'*64
+                        try:match_stream(expected,bad)
+                        except RuntimeError:negative[target+'-stream-'+case]=dict(rejected=True)
+                        else:raise AssertionError('damaged native streaming evidence accepted')
                 for case,data in (('indexed-pixel',pixels),('palette-color',palette)):
                     bad=bytearray(data);bad[len(data)//2]^=1
                     try:equal_bytes(data,bad,case)
