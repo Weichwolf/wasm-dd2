@@ -22,7 +22,7 @@ from audio import build_audio, summarize_audio
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
-from artifacts import WORK as ARTIFACTS, prepare_output, run_bounded
+from artifacts import WORK as ARTIFACTS, check_space, prepare_output, run_bounded
 WORK = ARTIFACTS / 'wine-reference'
 EXE_SHA256 = "0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2"
 
@@ -144,6 +144,8 @@ def main():
     parser.add_argument('--race-step-levels',type=int,nargs='+',choices=range(1,11),default=[],
                         help='also observe the step window in preceding demos of these levels; requires --race-step-window')
     parser.add_argument("--trace-cd", action="store_true")
+    parser.add_argument('--trace-game-clock', action='store_true',
+                        help='export actual engine GetTickCount returns through filtered Wine relay; audio mode only, no debugger')
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
     parser.add_argument("--keep-movie", action="store_true",
@@ -216,6 +218,10 @@ def main():
         parser.error("--audio-tail must be in [0,30] and requires --audio")
     if args.mode=="audio" and (not args.audio or args.audio_tail<=0):
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
+    if args.trace_game_clock:
+        if args.mode != 'audio':
+            parser.error('--trace-game-clock requires audio mode without debugger stops')
+        args.wine_debug += ',+timestamp,+relay'
     game, output = args.game_dir.resolve(), prepare_output(args.output)
     output.mkdir(parents=True, exist_ok=True)
     if (any((output / name).exists() for name in ("image.bin", "checkpoint.json", "navigation.json", "audio", "video-checkpoints.json", "race", "startup", "history"))
@@ -234,6 +240,14 @@ def main():
                           virtual_device=args.audio_device,wine_debug=args.wine_debug,
                           movie_autoskip=not args.keep_movie)
             (output/"audio/summary.json").write_text(json.dumps(report,indent=2)+"\n")
+        if args.trace_game_clock:
+            from game_clock import export_clock
+            if original_pid(WORK/'prefix') is not None:
+                raise RuntimeError('Original still running after scoped capture cleanup')
+            clock = export_clock(output/'wine.log', game/'dd2h.exe', output/'game-clock', allow_terminal_entry=True)
+            check_space(output)
+            print('Original engine clock captured without debugger:', clock['calls'],
+                  'returns,', clock['completed_flips'], 'presentations', flush=True)
 
 
 def run(game, output, args):
@@ -285,6 +299,7 @@ def run(game, output, args):
     def observe_state(pid):
         # These are bounded, read-only observations of a running process, not
         # atomic snapshots or a claim to have sampled every engine frame.
+        check_space(output)
         before = time.monotonic_ns()
         current = state(pid)
         after = time.monotonic_ns()
@@ -314,8 +329,13 @@ def run(game, output, args):
                 if link.exists():
                     raise RuntimeError(f"Unexpected directory at {link}")
                 link.symlink_to(target)
-            for key, value, data in [(r"HKLM\Software\Wine\Drives", "d:", "cdrom"),
-                                     (r"HKCU\Software\Wine\Drivers", "Audio", "alsa")]:
+            settings = [(r"HKLM\Software\Wine\Drives", "d:", "cdrom"),
+                        (r"HKCU\Software\Wine\Drivers", "Audio", "alsa")]
+            if args.trace_game_clock:
+                settings.extend([(r'HKCU\Software\Wine\Debug', 'RelayInclude',
+                                  'kernel32.GetTickCount;kernelbase.GetTickCount'),
+                                 (r'HKCU\Software\Wine\Debug', 'RelayFromInclude', 'dd2h.exe')])
+            for key, value, data in settings:
                 subprocess.run(["wine", "reg", "add", key, "/v", value, "/t", "REG_SZ", "/d", data, "/f"],
                                env=env, stdout=wine_log, stderr=wine_log, check=True, timeout=30)
             # Drive types are read at Wine startup; registry writes need a restart.
@@ -362,6 +382,7 @@ def run(game, output, args):
                             result={"mode":"audio","phase":"live engine; no debugger", "start_state":current,
                                     "readiness":"Main Menu polygon list with frontend startup/CD restart completed; bounded non-atomic observations",
                                     "end_state":observe_state(pid),"exe_modified":False,"exe_sha256":EXE_SHA256,
+                                    "initial_save_sha256":initial_save_sha256,
                                     "state_observations":"audio/engine.jsonl; bounded non-atomic reads, may include attract",
                                     "audio_comparison":"pending"}
                             (output/"checkpoint.json").write_text(json.dumps(result,indent=2)+"\n")

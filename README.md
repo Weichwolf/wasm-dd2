@@ -1065,6 +1065,30 @@ make verify-original-race-audio ORIGINAL_RACE_AUDIO_ARGS='--capture /tmp/wasm-dd
 make clean-logs
 ```
 
+For racing-engine timing inputs without debugger stops, `--trace-game-clock`
+enables filtered Wine relay in the private reference prefix. It exports only
+completed GetTickCount calls whose return addresses match the five import-call
+sites verified in the unmodified executable. `game-clock/ticks.bin` contains
+their literal DWORD returns; `observations.bin` records entry/return trace
+timestamps, trace line numbers, original Flip counts and caller addresses.
+Wine trace timestamps have limited precision and tracing affects the observed
+timing. These are explicit replay inputs, not physical-clock acceptance.
+DLL-internal calls are excluded by their callers. After the original process
+has terminated, a single unreturned entry on the final trace line may be
+reported as an incomplete tail; its return is never invented. Interior gaps,
+reordered calls and unknown engine callers reject and remove partial exports.
+The audio checkpoint also records the initial save hash. Exporting these inputs
+does not yet compare the ports' complete racing-engine audio scheduling.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode audio --audio --trace-cd \
+  --trace-game-clock --audio-tail 20 --timeout 120 \
+  --wine-debug=-all,+dsound,+ddraw --output /tmp/wasm-dd2/racing-clock-original
+make verify-original-game-clock ORIGINAL_GAME_CLOCK_ARGS='--capture /tmp/wasm-dd2/racing-clock-original --executable DestructionDerby2/dd2h.exe --output /tmp/wasm-dd2/racing-clock-negative-tests'
+make clean-logs
+```
+
 The full application startup can also be observed without writing engine state:
 
 ```sh
