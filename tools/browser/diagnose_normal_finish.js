@@ -4,6 +4,7 @@ const assert=require('assert'),fs=require('fs'),path=require('path'),crypto=requ
 const {serve,boot,key,waitRace,chromium}=require('./felib');
 const {createApiRecorder}=require('./wasm_api_record');
 const build=path.resolve(process.argv[2]||'web/dd2'),out=path.resolve(process.argv[3]||'');
+const driverSourceSha256=crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex');
 assert(out.startsWith('/tmp/wasm-dd2/'));
 assert(!fs.existsSync(out)||fs.readdirSync(out).length===0,'Fresh diagnostic directory required');
 fs.mkdirSync(out,{recursive:true});
@@ -27,6 +28,17 @@ assert(!championship||!total,'Use championship or Total Destruction');
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
   page=await browser.newPage({viewport:{width:700,height:560}});
+  await page.addInitScript(()=>{
+   window.__diagnosticMenuReady=0;
+   const present=CanvasRenderingContext2D.prototype.putImageData;
+   CanvasRenderingContext2D.prototype.putImageData=function(...args){
+    const result=present.apply(this,args);
+    if(this.canvas.id==='canvas'&&typeof HEAP16!=='undefined'){
+     window.__diagnosticMenuReady=HEAP32[0x936ff4>>2]===0&&HEAP16[0x46996c>>1]===0?window.__diagnosticMenuReady+1:0;
+    }
+    return result;
+   };
+  });
   if(apiLayout)apiRecorder=await createApiRecorder(page,apiLayout,build,out);
   page.on('pageerror',e=>{errors.push(e.message);errorDetails.push({message:e.message,stack:e.stack});});
   page.on('console',m=>{if(m.type()==='error'&&consoleErrors.length<50)consoleErrors.push(m.text());});
@@ -82,10 +94,14 @@ assert(!championship||!total,'Use championship or Total Destruction');
    front_damage:new DataView(HEAPU8.buffer).getInt32(0x792aee,true),rear_damage:new DataView(HEAPU8.buffer).getInt32(0x792af6,true),
    finished_laps:HEAPU16[0x795c52>>1],
    required_laps:HEAPU16[(0x466df4+HEAP32[0x936ff4>>2]*6)>>1],
+   track_strips:HEAPU16[(0x466df2+HEAP32[0x936ff4>>2]*6)>>1],
    race_position:HEAPU16[0x795c42>>1],race_points:HEAPU16[0x795c46>>1],
    lap:HEAP16[0x795c48>>1],lap_progress:HEAP16[0x795c4a>>1],strip:HEAP32[0x7926ac>>2],
    keymap:Array.from(HEAPU8.subarray(0x46302c,0x46302c+14))};},steadyTrack);
-  const tap=async code=>{inputs.push({code,down:true,before:await state()});await key(page,code,900);inputs.push({code,down:false,after:await state()});};
+  const tap=async code=>{
+   await page.waitForFunction(()=>window.__diagnosticMenuReady>=16,null,{timeout:30000});
+   inputs.push({code,down:true,before:await state()});await key(page,code,900);inputs.push({code,down:false,after:await state()});
+  };
   await boot(page,server);
   if(championship){
    for(const code of ['Enter','Enter','Enter','Enter','ArrowUp','ArrowLeft','Enter'])await tap(code);
@@ -124,7 +140,7 @@ assert(!championship||!total,'Use championship or Total Destruction');
    if(apiRecorder)await apiRecorder.flush();
    fs.writeFileSync(path.join(out,'controls.json'),JSON.stringify({scope:'Actual live trusted browser keyboard accelerator/reverse observation after green; no original parity claim',
     wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),
-    initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex'),pass_:true,controls,errors},null,2));
+    initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex'),driver_source_sha256:driverSourceSha256,pass_:true,controls,errors},null,2));
    console.log(JSON.stringify({pass_:true,held:controls.map(row=>({code:row.code,pad:row.held.pad_copy,throttle:row.held.throttle,speed:row.held.speed})),errors}));return;
   }
   await page.screenshot({path:path.join(out,'race-start.png')});
@@ -133,7 +149,7 @@ assert(!championship||!total,'Use championship or Total Destruction');
   for(const code of driveCodes)await page.keyboard.down(code);
   inputs.push({code:driveCodes.join('+'),down:true,after:await state()});
   const deadline=Date.now()+durationSeconds*1000;
-  let lastPosition=null,lastMovementTick=0,reverseUntil=0;
+  let lastPosition=null,lastMovementTick=0,reverseUntil=0,lastProgress=null,lastProgressTick=0;
   while(Date.now()<deadline){
    const current=await state();observations.push(current);
    if(current.quit||current.level===15||current.level===0){
@@ -161,12 +177,28 @@ assert(!championship||!total,'Use championship or Total Destruction');
      if(!lastPosition||current.position.reduce((n,value,i)=>n+Math.abs(value-lastPosition[i]),0)>500){
       lastPosition=current.position;lastMovementTick=current.ticks;
      }
-     if(current.ticks>=reverseUntil&&current.ticks-lastMovementTick>=75){
-      reverseUntil=current.ticks+100;lastMovementTick=reverseUntil;
+     const progress=current.strip;
+     const advance=lastProgress===null?0:(progress-lastProgress+current.track_strips)%current.track_strips;
+     if(lastProgress===null||advance>0&&advance<current.track_strips/2){
+      lastProgressTick=current.ticks;
+     }
+     lastProgress=progress;
+     if(current.ticks>=reverseUntil&&(current.ticks-lastMovementTick>=75||current.ticks-lastProgressTick>=200)){
+      reverseUntil=current.ticks+100;lastMovementTick=reverseUntil;lastProgressTick=reverseUntil;
      }
      if(current.ticks<reverseUntil){
       want.clear();want.add('KeyZ');want.add(difference>0?'ArrowRight':'ArrowLeft');current.manoeuvre='reverse';
      }else current.manoeuvre='forward';
+     const backwards=current.speed< -5||Math.abs(current.speed)<=5&&current.ticks<reverseUntil;
+     const limit=backwards?96:192;
+     let steering=-difference*0.6+current.yaw_rate*6;
+     if(backwards)steering=-steering;
+     current.target_steering=Math.max(-limit,Math.min(limit,steering));
+     current.steering_direction=backwards?'backwards':'forwards';
+     want.delete('ArrowLeft');want.delete('ArrowRight');
+     const tolerance=backwards||current.speed<40?24:40;
+     if(current.steering>current.target_steering+tolerance)want.add('ArrowLeft');
+     else if(current.steering<current.target_steering-tolerance)want.add('ArrowRight');
     }
     for(const code of held)if(!want.has(code)){await page.keyboard.up(code);inputs.push({code,down:false,after:current});held.delete(code);}
    for(const code of want)if(!held.has(code)){await page.keyboard.down(code);inputs.push({code,down:true,before:current});held.add(code);}
@@ -182,14 +214,14 @@ assert(!championship||!total,'Use championship or Total Destruction');
   if(apiRecorder)await apiRecorder.flush();
   fs.writeFileSync(path.join(out,'diagnosis.json'),JSON.stringify({scope:'Actual live production browser player inputs and natural finish diagnosis; no original A/V parity claim',
    wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex'),
-   natural_finish:natural,started,ended,inputs,observations,errors,errorDetails,traps},null,2));
+   driver_source_sha256:driverSourceSha256,natural_finish:natural,started,ended,inputs,observations,errors,errorDetails,traps},null,2));
   console.log(JSON.stringify({natural_finish:natural,ended,errors}));
  }catch(error){
   if(apiRecorder)await apiRecorder.flush().catch(e=>consoleErrors.push('API recording: '+e.message));
   fs.writeFileSync(path.join(out,'failure.json'),JSON.stringify({scope:'Failed live browser driving diagnosis; no original parity or completed race acceptance',
    error:{message:error.message,stack:error.stack},errors,errorDetails,consoleErrors,traps,inputs,observations,
    wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),
-   initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex')},null,2));
+   initial_save_sha256:crypto.createHash('sha256').update(save).digest('hex'),driver_source_sha256:driverSourceSha256},null,2));
   if(page)await page.screenshot({path:path.join(out,'failure.png'),timeout:5000}).catch(()=>{});
   throw error;
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

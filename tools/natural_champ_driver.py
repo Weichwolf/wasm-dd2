@@ -20,7 +20,7 @@ def metrics(read):
                 planar_speed=i32(0x792a76),finished_laps=int.from_bytes(read(0x795c52,2),'little'))
 
 
-def observe(read):
+def observe(read, steady=False):
     def i32(address):
         return int.from_bytes(read(address, 4), 'little', signed=True)
     row=metrics(read)
@@ -28,23 +28,41 @@ def observe(read):
     offset = i32(0x7926a4)
     speed = row['speed']
     ahead = min(6, max(2, math.floor(speed / 100)))
-    for _ in range(ahead):
-        offset = i32(strip_base + 4 + offset + 20)
-    strip = strip_base + 4 + offset
-    kind, lanes = read(strip, 2)
-    first = int.from_bytes(read(strip + 16, 2), 'little')
-    a = first + i32(0x463dcc + kind * 8)
-    b = first + i32(0x463dd0 + kind * 8) + lanes + 1
-    points = [(i32(vertices + i * 12), i32(vertices + i * 12 + 8))
-              for i in (a, a + lanes, b, b + lanes)]
-    center = [sum(point[j] for point in points) / 4 for j in (0, 1)]
+    centers = []
+    first_ahead = min(6, max(2, math.floor(max(speed, 0) / 40)))
+    selected = range(first_ahead, first_ahead + 5) if steady else (ahead,)
+    for index in range(max(selected) + 1):
+        if index in selected:
+            strip = strip_base + 4 + offset
+            kind, lanes = read(strip, 2)
+            first = int.from_bytes(read(strip + 16, 2), 'little')
+            a = first + i32(0x463dcc + kind * 8)
+            b = first + i32(0x463dd0 + kind * 8) + lanes + 1
+            points = [(i32(vertices + i * 12), i32(vertices + i * 12 + 8))
+                      for i in (a, a + lanes, b, b + lanes)]
+            centers.append([sum(point[j] for point in points) / 4 for j in (0, 1)])
+        if index < max(selected):
+            offset = i32(strip_base + 4 + offset + 20)
+    center = [sum(point[j] for point in centers) / len(centers) for j in (0, 1)]
     position,heading = row['position'],row['heading']
     desired = math.atan2(center[0] - position[0], center[1] - position[1]) * 4096 / (2 * math.pi)
     difference = (desired - heading + 6144) % 4096 - 2048
     wanted = []
-    if speed < 400:
+    if speed < (250 if steady else 400):
         wanted.append('a')
-    if difference > 70:
+    if steady:
+        row.update(steering=i32(0x792a82),yaw_rate=i32(0x792a04)/8192,
+                   front_damage=i32(0x792aee),rear_damage=i32(0x792af6),
+                   strip=i32(0x7926ac),
+                   track_strips=int.from_bytes(read(0x466df2+i32(0x936ff4)*6,2),'little'),
+                   target_strips=[first_ahead, first_ahead + 4])
+        steering = max(-192, min(192, -difference * 0.6 + row['yaw_rate'] * 6))
+        row['target_steering'] = steering
+        if row['steering'] > steering + 40:
+            wanted.append('Left')
+        elif row['steering'] < steering - 40:
+            wanted.append('Right')
+    elif difference > 70:
         wanted.append('Left')
     elif difference < -70:
         wanted.append('Right')
@@ -52,25 +70,53 @@ def observe(read):
 
 
 class KeyboardDriver:
-    def __init__(self):
+    def __init__(self, steady=False):
+        self.steady = steady
         self.position = None
         self.last_movement = 0
         self.reverse_until = 0
+        self.progress = None
+        self.last_progress = 0
 
     def controls(self, read, tick):
-        row = observe(read)
+        row = observe(read, self.steady)
         position = row['position']
         if self.position is None or sum(abs(a-b) for a,b in zip(position,self.position)) > 500:
             self.position = position
             self.last_movement = tick
-        if tick < self.reverse_until:
-            row['wanted'] = ['z', 'Right' if row['heading_error'] > 0 else 'Left']
-            row['manoeuvre'] = 'reverse'
-        elif tick - self.last_movement >= 75:
+        if self.steady:
+            # Lap progress is a confirmed checkpoint sequence, not current
+            # travel: it stays at its previous maximum after reversing. Watch
+            # the physical FD strip, including its normal end-to-start wrap.
+            progress = row['strip']
+            if self.progress is None or 0 < (progress-self.progress) % row['track_strips'] < row['track_strips']/2:
+                self.last_progress = tick
+            self.progress = progress
+        if tick >= self.reverse_until and (tick - self.last_movement >= 75 or
+                self.steady and tick - self.last_progress >= 200):
             self.reverse_until = tick + 100
             self.last_movement = self.reverse_until
+            self.last_progress = self.reverse_until
+        if tick < self.reverse_until:
             row['wanted'] = ['z', 'Right' if row['heading_error'] > 0 else 'Left']
             row['manoeuvre'] = 'reverse'
         else:
             row['manoeuvre'] = 'forward'
+        if self.steady:
+            # A reversing car rotates in the opposite direction for the same
+            # wheel angle. Brake with forward steering until it backs up, and
+            # keep reverse steering while the accelerator stops that motion.
+            backwards = row['speed'] < -5 or (abs(row['speed']) <= 5 and tick < self.reverse_until)
+            limit = 96 if backwards else 192
+            steering = -row['heading_error'] * 0.6 + row['yaw_rate'] * 6
+            if backwards:
+                steering = -steering
+            row['target_steering'] = max(-limit, min(limit, steering))
+            row['steering_direction'] = 'backwards' if backwards else 'forwards'
+            row['wanted'] = [key for key in row['wanted'] if key not in ('Left', 'Right')]
+            tolerance = 24 if backwards or row['speed'] < 40 else 40
+            if row['steering'] > row['target_steering'] + tolerance:
+                row['wanted'].append('Left')
+            elif row['steering'] < row['target_steering'] - tolerance:
+                row['wanted'].append('Right')
         return row

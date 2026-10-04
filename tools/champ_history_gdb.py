@@ -17,14 +17,17 @@ import time
 import zlib
 
 import gdb
+import natural_champ_driver
 
 from verify_champ_season import ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS, NATURAL_CHAMP_ACTIONS, NATURAL_CHAMP_KEYS, validate_end
 from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False):
     if natural_champ and (normal_arena or full_video):
         raise ValueError('Natural championship uses its own bounded racing capture')
+    if steady_driver and (not natural_champ or target != 'original'):
+        raise ValueError('Steady driver is only used for the original natural championship; ports replay its recorded inputs')
     root = Path(output) / 'history'
     root.mkdir()
     inferior = gdb.selected_inferior()
@@ -49,13 +52,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     driving_cursor = 0
     driving_held = []
     last_control_tick = None
-    keyboard_driver = KeyboardDriver()
+    keyboard_driver = KeyboardDriver(steady=steady_driver)
     finish_controls_released = False
     race_frames = []
     presentations = []
     final_race = None
     command = ['xdotool', 'search', '--name', 'PC-DD2', 'windowfocus']
     original = target == 'original'
+    driver_source_sha256 = hashlib.sha256(Path(natural_champ_driver.__file__).read_bytes()).hexdigest() if original and natural_champ else None
     draw_pc = (0x412ca0 if full_video else 0x420c9c) if original else int(gdb.parse_and_eval('&PutDispEnv' if full_video else '&Draw_All'))
     pad_pc = 0x422da4 if original else int(gdb.parse_and_eval('&FUN_00422da4'))
     rng_entry = 0x456cc6 if original else int(gdb.parse_and_eval('&rand'))
@@ -360,6 +364,8 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             observed_play_draw_delay_ms=game_frame_delay_ms,
             complete_retirement_season=not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
             natural_championship=natural_champ, actions=actions, driving_inputs=driving_inputs,
+            driving_policy=('steady' if steady_driver else 'default') if original and natural_champ else None,
+            driving_source_sha256=driver_source_sha256,
             racing_image_format='indexed-zlib' if natural_champ else 'indexed-raw',
             natural_finish=bool(final_race), final_race=final_race, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,

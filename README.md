@@ -301,6 +301,18 @@ match the retained original evidence. Its report is
 Regular ten-lap finishes and positive player result/continuation parity remain
 unaccepted until a complete original/native/browser capture passes those gates.
 
+For a completed-lap attempt, add `--steady-driver` to the original command.
+This external keyboard driver uses averaged road centers, a lower target speed
+and yaw feedback. It reverses its steering feedback when the car actually backs
+up, including while the accelerator stops that backwards motion. Stall detection
+uses the physical FD strip at `0x7926ac` and handles the track's normal strip wrap.
+The confirmed lap checkpoint at `0x795c4a` is unsuitable: the original only advances
+it in sequence, so it stays unchanged while a car returns after rolling backwards.
+Treating that value as current travel caused unnecessary repeated reversals in
+the incomplete lap-eight recording. The source report includes the driver hash;
+the ports replay its actual keys rather than running that driver again. This
+option is a capture aid and does not establish a completed race.
+
 For a browser crash that depends on ordinary timing, `diagnose_normal_finish.js`
 can record actual `GetTickCount` import returns and DOM key delivery boundaries
 with `--api-layout=<matching-layout.json>`. It retains the original clock return
@@ -311,6 +323,9 @@ position, speed, heading, damage, lap and race points. This is a diagnostic
 comparison between the ports; it does not accept original video or PCM parity.
 The recorder bounds its metadata and saves input/state/error details on failure;
 `--trap-trace` adds a read-only uncaught-exception debugger trace after green.
+Menu taps wait for 16 actual presentations with a completed menu transition,
+so slow rendering does not silently lose the next Enter. Diagnostic reports
+retain the controller source hash used at launch.
 
 ```sh
 make clean-logs
