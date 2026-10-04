@@ -40,14 +40,14 @@ def file_ui(ui):
                 ring=list(struct.unpack('<hh', ui.read(0x467198, 4))))
 
 
-def rendered_cycle(ui, action, original):
+def rendered_cycle(ui, action, original, wanted_pairs=None):
     name = action['checkpoint']
     directory = ui.output/name
     directory.mkdir()
     entry = 0x420c9c if original else ui.table['Draw_All']
     pid = ui.pid if original else ui.process.pid
-    wanted = None
-    if action.get('card_highlight') and getattr(ui, 'reference', None):
+    wanted = wanted_pairs
+    if wanted is None and action.get('card_highlight') and getattr(ui, 'reference', None):
         source = json.loads((ui.reference/'report.json').read_text())
         validate(source)
         row = next(row for row in source['checkpoints'] if row['name'] == name)

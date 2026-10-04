@@ -113,6 +113,13 @@ verify-configuration-card-ui: ## capture/compare live volume/card UI and exact s
 capture-browser-configuration-card-ui: ## capture live browser volume/card UI across Chromium restarts; BROWSER_CONFIGURATION_CARD_UI_ARGS required
 	node $(ROOT)/tools/browser/capture_configuration_card_ui.js $(BROWSER_CONFIGURATION_CARD_UI_ARGS)
 
+.PHONY: verify-championship-save capture-browser-championship-save
+verify-championship-save: ## generate/compare actual original championship cards and live loading; CHAMPIONSHIP_SAVE_ARGS required
+	python3 $(ROOT)/tools/verify_championship_save.py $(CHAMPIONSHIP_SAVE_ARGS)
+
+capture-browser-championship-save: ## load an original championship card through production IDBFS and real keys; BROWSER_CHAMPIONSHIP_SAVE_ARGS required
+	node $(ROOT)/tools/browser/capture_championship_save.js $(BROWSER_CHAMPIONSHIP_SAVE_ARGS)
+
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 

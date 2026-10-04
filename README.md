@@ -929,6 +929,33 @@ make verify-configuration-card-ui CONFIGURATION_CARD_UI_ARGS='compare --scenario
 make clean-logs
 ```
 
+The championship-save check generates a real `0x3030` card with the running
+original: select Stock Car and car 1, name the player, race, Retire/Yes, then
+File Options / Save Game. All 6,526 payload bytes must match the original's
+actual saved fields, statistics, standings, names, fastest laps and bindings.
+Each application starts with that same complete card as a file input. The
+browser seeds IndexedDB before engine startup, then uses normal IDBFS loading.
+The game must remain at the default frontend until File Manager loads the save;
+the next race must restore every field and region, the car order and actual
+racing bindings, and permit pause. Loading must preserve all 128 KiB of the card.
+
+The verified Stock Car case resumes race index 1 on track 2. Native and browser
+each match the original's complete loaded state and 128 card-menu framebuffers
+and palettes; actual browser canvas pixels are checked too. The comparator
+rejects 76 changed-field, region, pixel and palette cases. This covers the
+exercised save/load route and selected menu cycles. Chronological race video/PCM,
+subsequent finishes, every season, multiplayer and replay saves remain separate.
+
+```sh
+make clean-logs
+make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='generate --mode 1 --output /tmp/wasm-dd2/champ-save-fixture'
+make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='capture --target original --fixture /tmp/wasm-dd2/champ-save-fixture --output /tmp/wasm-dd2/champ-save-original'
+make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='capture --target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/champ-save-fixture --reference /tmp/wasm-dd2/champ-save-original --output /tmp/wasm-dd2/champ-save-native'
+make capture-browser-championship-save BROWSER_CHAMPIONSHIP_SAVE_ARGS='web/dd2 /tmp/wasm-dd2/champ-save-browser /tmp/wasm-dd2/champ-save-fixture /tmp/wasm-dd2/champ-save-original'
+make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='compare --fixture /tmp/wasm-dd2/champ-save-fixture --original /tmp/wasm-dd2/champ-save-original --native /tmp/wasm-dd2/champ-save-native --browser /tmp/wasm-dd2/champ-save-browser --report /tmp/wasm-dd2/champ-save-verified.json --clean'
+make clean-logs
+```
+
 Patch 850 fixes missing body panels and wheels in Car Select. Added address
 filters in old face handlers rejected order-table buckets above `0x900000`,
 while the actual frontend table begins at `0x935ff0`. At one measured Rookie
