@@ -1580,6 +1580,60 @@ make verify-replay-engine-audio REPLAY_ENGINE_AUDIO_ARGS='--fixture /tmp/wasm-dd
 make clean-logs
 ```
 
+An additional replay recording verifies all twelve key-down/up edges directly
+from Wine `+msg` entry/return pairs in the unchanged original window procedure.
+Each edge retains its VK, message, lParam, thread, window, trace timestamp and
+presentation/game-clock position. The exporter independently rereads and hashes
+the original trace; it rejects edited input JSON. Native and browser captures
+cross-check these positions against the original sound triggers and observe the
+actual clock counter at each edge. This recording passes all 3,164,408 accepted
+PCM bytes and the 3,150,304-byte independently played prefix on native, native
+ASan and WASM, with 5,608 services, 386 callbacks and 891 WebAudio buffers.
+Seventeen negative cases reject, including actual one-presentation early/late
+Enter releases and damaged keyboard provenance, release and browser clock
+observations.
+
+This covers the shared menu/replay sound device. The original intro completes
+naturally to avoid its Wine startup Escape race; ports skip their intro with a
+real Escape key. Intro audio equivalence, physical OS timing, chronological video
+and other scenarios remain open. Full source lParams are retained as evidence;
+the port input bridge consumes their key-up bit rather than reproducing every
+OS message field. The bounded audio endpoint is the last observed service's
+presentation/clock position, which can precede the trace's final presentation.
+
+Prefer observed edges for a new capture. After independently checking its mixer
+and exporting audio services, use the following route; the legacy diagnostic
+release route above remains available for recordings without `+msg` evidence.
+
+```sh
+make clean-logs
+python3 tools/capture_original_replay_audio.py --fixture /tmp/wasm-dd2/replay-fixture \
+  --output /tmp/wasm-dd2/original-replay-audio --trace-keyboard --keep-movie
+# The capture writes keyboard-input.json. For an existing +msg capture:
+make export-original-keyboard ORIGINAL_KEYBOARD_ARGS='--capture /tmp/wasm-dd2/original-replay-audio --fixture /tmp/wasm-dd2/replay-fixture --output /tmp/wasm-dd2/replay-keyboard.json'
+for target in native asan; do
+  python3 tools/capture_native_replay_audio.py --binary "/tmp/wasm-dd2/audio-$target" \
+    --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio \
+    --services /tmp/wasm-dd2/replay-services --keyboard-input /tmp/wasm-dd2/replay-keyboard.json \
+    --output "/tmp/wasm-dd2/$target-replay-audio"
+done
+python3 tools/wasm_rng_layout.py --wasm /tmp/wasm-dd2/audio-browser/index.wasm \
+  --output /tmp/wasm-dd2/replay-browser-layout
+node tools/browser/capture_engine_audio.js /tmp/wasm-dd2/audio-browser \
+  /tmp/wasm-dd2/browser-replay-audio /tmp/wasm-dd2/replay-services/services.bin \
+  /tmp/wasm-dd2/original-replay-audio/game-clock/ticks.bin /tmp/wasm-dd2/replay-fixture \
+  /tmp/wasm-dd2/native-replay-audio/checkpoint.json /tmp/wasm-dd2/replay-browser-layout/layout.json
+# Both deliberately perturbed captures must fail the real API-position assertion:
+for offset in -1 1; do
+  python3 tools/capture_native_replay_audio.py --binary /tmp/wasm-dd2/audio-native \
+    --fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio \
+    --services /tmp/wasm-dd2/replay-services --keyboard-input /tmp/wasm-dd2/replay-keyboard.json \
+    --diagnostic-release-offset "$offset" --output "/tmp/wasm-dd2/replay-release-$offset"
+done
+make verify-replay-engine-audio REPLAY_ENGINE_AUDIO_ARGS='--fixture /tmp/wasm-dd2/replay-fixture --original /tmp/wasm-dd2/original-replay-audio --services /tmp/wasm-dd2/replay-services --mixer /tmp/wasm-dd2/replay-mixer --keyboard-input /tmp/wasm-dd2/replay-keyboard.json --native /tmp/wasm-dd2/native-replay-audio --native-asan /tmp/wasm-dd2/asan-replay-audio --browser /tmp/wasm-dd2/browser-replay-audio --negative-early /tmp/wasm-dd2/replay-release--1 --negative-late /tmp/wasm-dd2/replay-release-1 --output /tmp/wasm-dd2/replay-engine-comparison'
+make clean-logs
+```
+
 Export inputs from one original capture that has passed the clock, callback
 observer and chronological mixer checks, then run both actual applications:
 

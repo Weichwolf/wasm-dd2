@@ -96,8 +96,12 @@ verify-engine-audio: ## compare actual native/browser engine PCM with observed o
 	python3 $(ROOT)/tools/verify_engine_audio.py $(ENGINE_AUDIO_ARGS)
 
 .PHONY: verify-replay-engine-audio
-verify-replay-engine-audio: ## compare actual replay PCM with explicit diagnostic keys; REPLAY_ENGINE_AUDIO_ARGS required
+verify-replay-engine-audio: ## compare actual replay PCM with observed or diagnostic keys; REPLAY_ENGINE_AUDIO_ARGS required
 	python3 $(ROOT)/tools/verify_replay_engine_audio.py $(REPLAY_ENGINE_AUDIO_ARGS)
+
+.PHONY: export-original-keyboard
+export-original-keyboard: ## export verified original window-procedure key edges; ORIGINAL_KEYBOARD_ARGS required
+	python3 $(ROOT)/tools/reference/keyboard_messages.py $(ORIGINAL_KEYBOARD_ARGS)
 
 .PHONY: verify-audio-callback-interleave
 verify-audio-callback-interleave: patch ## check real suspended callback/main stacks and own status assertions; AUDIO_CALLBACK_INTERLEAVE_ARGS required

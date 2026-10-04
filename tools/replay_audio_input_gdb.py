@@ -1,9 +1,10 @@
-"""Drive genuine native X11 keys at original-observed sound presentation positions.
+"""Drive genuine native X11 keys at supplied original presentation/clock positions.
 
-Hardware breakpoints only; all memory observations are read-only. Positions are
-derived from the original's six frontend sound triggers, not original OS event
-timestamps. This supplies explicit diagnostic scheduling; physical timing and
-complete original/port output acceptance require separate comparisons.
+Hardware breakpoints only; all memory observations are read-only. Verified
+original window-procedure edges can specify every press and release.
+The legacy sound-trigger schedule retains its explicit release hypothesis.
+Physical timing and complete original/port output acceptance require separate
+comparisons.
 """
 import json
 import hashlib
@@ -86,7 +87,8 @@ def drive(output,schedule,error_pc):
                 continue
             if pc==poll_pc:
                 if stage=='holding':
-                    if last['completed_flips']!=schedule[index]['release_flip']-1:
+                    if (last['completed_flips']!=schedule[index]['release_flip']-1 or
+                        last['clock_calls']!=schedule[index].get('release_clock_calls',schedule[index]['clock_calls'])):
                         raise RuntimeError('Diagnostic key release position differs')
                     send(False);stage='release';poll.enabled=False
                     pad.condition=f'*(unsigned char*)0x{flag:x} == 0';pad.enabled=True

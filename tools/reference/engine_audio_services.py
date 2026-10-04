@@ -171,6 +171,7 @@ def export(capture,mixer,output):
                 interleaved_main_apis=interleaved,
                 assertions='API arguments/status/cursors/gains are checked; never applied from the input',
                 port_comparison='pending')
+    report['completion_position']=dict(flip=events[-1]['flip'],clock_calls=events[-1]['clock_calls'])
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     (output/'events.json').write_text(json.dumps(events,indent=2)+'\n');check_space(output)
     return report

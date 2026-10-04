@@ -2,8 +2,8 @@
 // Recorded control values are assertions in C; no engine state is supplied.
 const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const {serve,chromium}=require('./felib');
-const [buildArg,outputArg,servicesArg,clockArg,fixtureArg,scheduleArg]=process.argv.slice(2);
-assert([6,8].includes(process.argv.length),'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK [REPLAY_FIXTURE NATIVE_REPLAY_CHECKPOINT]');
+const [buildArg,outputArg,servicesArg,clockArg,fixtureArg,scheduleArg,layoutArg]=process.argv.slice(2);
+assert([6,8,9].includes(process.argv.length),'usage: capture_engine_audio.js BUILD OUTPUT SERVICES CLOCK [REPLAY_FIXTURE NATIVE_REPLAY_CHECKPOINT [WASM_LAYOUT]]');
 const build=path.resolve(buildArg),output=path.resolve(outputArg);
 const services=fs.readFileSync(path.resolve(servicesArg)),clock=fs.readFileSync(path.resolve(clockArg));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -13,13 +13,20 @@ let replay=null;
 if(fixtureArg){
  const producer=JSON.parse(fs.readFileSync(path.join(path.resolve(fixtureArg),'report.json')));
  const reference=JSON.parse(fs.readFileSync(path.resolve(scheduleArg)));
+ const layout=layoutArg?JSON.parse(fs.readFileSync(path.resolve(layoutArg))):null;
+ if(layout)assert(layout.wasm_sha256===hash(fs.readFileSync(path.join(build,'index.wasm'))) &&
+  Number.isInteger(layout.clock_counter_address) && layout.clock_counter_address>=10485760,'actual WASM clock layout differs');
+ if(reference.keyboard_input_sha256)assert(layout,'observed source keyboard comparison requires actual WASM clock layout');
  assert(producer.pass_ && producer.operation==='generate' && producer.card_sha256===hash(save));
  assert(reference.pass_ && reference.scenario==='original-replay' && reference.engine_state_writes===false);
  assert(reference.initial_save_sha256===hash(save) && reference.audio_services_sha256===hash(services) && reference.game_clock_sha256===hash(clock));
  assert.deepStrictEqual(reference.schedule.map(p=>p.key),['Right','Right','Right','Return','Return','Return']);
- replay={schedule:reference.schedule,end:producer.recorded.end,actions:reference.schedule.flatMap((p,i)=>[
-  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:true,pending_flip:p.flip-1},
-  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:false,pending_flip:(p.release_flip??p.flip+1)-1}])};
+ replay={schedule:reference.schedule,keyboard_input_sha256:reference.keyboard_input_sha256,
+  clock_counter_address:layout?.clock_counter_address,
+  end:producer.recorded.end,actions:reference.schedule.flatMap((p,i)=>[
+  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:true,pending_flip:p.flip-1,clock_calls:p.clock_calls},
+  {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:false,pending_flip:(p.release_flip??p.flip+1)-1,
+   clock_calls:p.release_clock_calls??p.clock_calls}])};
  assert(replay.actions.every((p,i)=>!i || p.pending_flip>replay.actions[i-1].pending_flip));
 }
 assert(output.startsWith('/tmp/wasm-dd2/'),'diagnostics must be under /tmp/wasm-dd2/');
@@ -53,6 +60,8 @@ budget();
     for(const type of ['keydown','keyup'])window.addEventListener(type,e=>{
      if(['ArrowRight','Enter'].includes(e.code))__replayInput.events.push({type,code:e.code,trusted:e.isTrusted,
       pending_flip:__replayInput.pending_flip,held:HEAPU16[0x754448>>1],pressed:HEAPU16[0x75444a>>1]});
+     if(replay.clock_counter_address && ['ArrowRight','Enter'].includes(e.code))
+      __replayInput.events[__replayInput.events.length-1].clock_calls=HEAPU32[replay.clock_counter_address>>2];
     });
     const present=CanvasRenderingContext2D.prototype.putImageData;
     CanvasRenderingContext2D.prototype.putImageData=function(...args){
@@ -163,9 +172,10 @@ budget();
     budget();
     await page.waitForFunction(()=>__replayInput.paused || window.__engineAudioError,null,{timeout:30000});
     assert.deepStrictEqual(errors,[],'browser engine errors');
-    const observed=await page.evaluate(()=>({index:__replayInput.index,pending_flip:__replayInput.pending_flip,
-     held:HEAPU16[0x754448>>1],pressed:HEAPU16[0x75444a>>1]}));
+    const observed=await page.evaluate(address=>({index:__replayInput.index,pending_flip:__replayInput.pending_flip,
+     held:HEAPU16[0x754448>>1],pressed:HEAPU16[0x75444a>>1],clock_calls:address?HEAPU32[address>>2]:null}),replay.clock_counter_address);
     assert(observed.index===i && observed.pending_flip===action.pending_flip,'real keyboard position differs');
+    if(replay.clock_counter_address)assert(observed.clock_calls===action.clock_calls,'real keyboard game-clock position differs');
     if(!action.down)assert(observed.held&(action.key==='ArrowRight'?32:16384),'engine did not consume genuine keyboard input');
     if(action.down)await page.keyboard.down(action.key);else await page.keyboard.up(action.key);
     await page.evaluate(observed=>{__replayInput.observations.push(observed);__replayInput.resume();},observed);
@@ -184,6 +194,7 @@ budget();
     script:Array.from(HEAPU8.subarray(0x9376b0,0x9392b0)),order:Array.from(HEAPU8.subarray(0x795c28,0x795c3c)),
     card:Array.from(HEAPU8.subarray(0x754460,0x774460)),file:Array.from(Module.FS.readFile('/SaveGames')),
     inputs:{flips:__replayInput.flips,index:__replayInput.index,events:__replayInput.events,observations:__replayInput.observations}}));
+   if(replay.clock_counter_address)replayCheckpoint.clock_calls=await page.evaluate(address=>HEAPU32[address>>2],replay.clock_counter_address);
    assert.deepStrictEqual(replayCheckpoint.completion,{script_cursor:replay.end,first_time:1});
    assert(replayCheckpoint.replay===0 && replayCheckpoint.quit===1);
    assert(Buffer.from(replayCheckpoint.script).equals(save.subarray(0x2012,0x3c12)) &&
@@ -217,6 +228,10 @@ budget();
   if(replay){
    report.scope='Actual replay engine with trusted Playwright keys and observed clock/audio services; key positions and first Enter release are diagnostic scheduling, original OS event identity/video/physical timing remain open';
    Object.assign(report,{pass_:true,scenario:'original-replay',schedule:replay.schedule,start_settings:startSettings,...replayCheckpoint});
+   if(replay.keyboard_input_sha256){
+    report.keyboard_input_sha256=replay.keyboard_input_sha256;
+    report.scope='Actual replay engine with trusted Playwright keys at original-observed window-procedure message positions; own engine controls and observed clock/audio services. Physical OS timing, chronological video and full-game parity remain open';
+   }
    assert(captured.complete.completed_flips===replayCheckpoint.inputs.flips,'presentation observer count differs from actual C endpoint');
   }
   fs.writeFileSync(path.join(output,'checkpoint.json'),JSON.stringify(report,null,2)+'\n');budget();console.log(JSON.stringify(report,null,2));

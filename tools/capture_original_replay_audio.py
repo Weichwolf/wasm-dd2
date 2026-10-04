@@ -34,6 +34,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fixture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--trace-keyboard',action='store_true',help='record original window-procedure keyboard messages with Wine +msg')
+    parser.add_argument('--keep-movie',action='store_true',help='let the original intro finish naturally before menu input')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
     out,game=setup(args,initial)
     report=dict(scope=__doc__,pass_=False,scenario='original-replay',engine_state_writes=False,
@@ -44,6 +46,10 @@ def main():
     # Flip records are required to order sound services against completed
     # presentations. Relay and dsound alone record clocks/PCM but omit Flips.
     options.wine_debug='-all,+timestamp,+dsound,+ddraw,+relay,+debugstr';options.timeout=150
+    if args.trace_keyboard:options.wine_debug+=',+msg'
+    options.keep_movie=args.keep_movie
+    report['capture_options']=dict(wine_debug=options.wine_debug,keep_movie=options.keep_movie,
+                                  startup_escape=not options.keep_movie)
     def driver(pid,output,env,deadline,rundir):
         ui=RealtimeUI(pid,rundir,output,env,deadline)
         try:
@@ -90,7 +96,7 @@ def main():
             run_original(game,out,options,on_menu=driver)
         audio=summarize_audio(out/'audio',require_played=True)
         audio.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=44100,
-            virtual_device='clock',wine_debug=options.wine_debug,movie_autoskip=True)
+            virtual_device='clock',wine_debug=options.wine_debug,movie_autoskip=not options.keep_movie)
         (out/'audio/summary.json').write_text(json.dumps(audio,indent=2)+'\n')
         clock=export_clock(out/'wine.log',game/'dd2h.exe',out/'game-clock',allow_terminal_entry=True)
         callbacks=original_report(out,game/'dd2h.exe',allow_terminal=True)
@@ -99,6 +105,9 @@ def main():
     finally:
         (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');check_space(out)
     print('Actual original replay audio inputs captured; port PCM comparison pending',flush=True)
+    if args.trace_keyboard:
+        from reference.keyboard_messages import observe
+        (out/'keyboard-input.json').write_text(json.dumps(observe(out,args.fixture),indent=2)+'\n')
 
 
 if __name__=='__main__':main()

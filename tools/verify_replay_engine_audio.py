@@ -3,10 +3,11 @@
 
 The actual original-produced card is loaded through genuine X11/Playwright
 keys. Ports execute their own controls and timer bodies; observed sound APIs,
-positions, gains and statuses remain assertions. Key-down positions follow
-original sound triggers. The first Enter release is an explicit diagnostic
-hypothesis, not a recorded original OS event. Original OS input identity,
-physical timing, chronological video and other scenarios remain unproved.
+positions, gains and statuses remain assertions. With --keyboard-input, every
+key edge is independently verified against original window-procedure records.
+Without it, sound-trigger scheduling retains an explicit first-Enter release
+hypothesis. Physical timing, chronological video and other scenarios remain
+unproved.
 """
 import argparse
 import copy
@@ -48,14 +49,19 @@ def validate(target, original, source, clock, services, initial, planned, accept
     complete = target['audio_services']
     require(complete['complete'] is True and complete['epoch'] == 2 and
             all(complete[field] == services[field] for field in ('events', 'frames', 'callbacks')) and
-            complete['completed_flips'] == clock['completed_flips'], 'bounded audio service extent differs')
+            complete['completed_flips'] == services['completion_position']['flip'], 'bounded audio service extent differs')
     schedule = target['schedule']
     require(len(schedule) == len(planned), 'six genuine replay inputs required')
     for actual, expected in zip(schedule, planned):
         require({k: actual[k] for k in expected} == expected, 'original sound trigger schedule differs')
-    require(schedule[3].get('release_flip') and schedule[3].get('release_scope') ==
-            'explicit diagnostic hypothesis; not observed original OS release',
-            'diagnostic Enter release must be explicit')
+    observed_keys = all(p.get('release_scope') == 'original window-procedure entry/return' for p in planned)
+    if observed_keys:
+        require(schedule == planned and target.get('keyboard_input_sha256') == source['keyboard_input_sha256'],
+                'actual original key-down/up input differs')
+    else:
+        require(schedule[3].get('release_flip') and schedule[3].get('release_scope') ==
+                'explicit diagnostic hypothesis; not observed original OS release',
+                'diagnostic Enter release must be explicit')
     if browser:
         history = target['inputs']; events = history['events']
         require(not target['errors'] and history['index'] == 12 and len(events) == 12 and
@@ -67,6 +73,12 @@ def validate(target, original, source, clock, services, initial, planned, accept
                 e = events[i*2+j]
                 require(e['trusted'] is True and e['type'] == kind and e['code'] == key and
                         e['pending_flip'] == flip, 'trusted keyboard event position differs')
+                if observed_keys:
+                    require(e['clock_calls'] == (p['clock_calls'] if j == 0 else p['release_clock_calls']),
+                            'trusted keyboard game-clock position differs')
+        if observed_keys:
+            require(target['clock_calls'] == services['completion_position']['clock_calls'],
+                    'browser hardware endpoint clock differs')
         sink = target['sink']
         require(sink['frames'] == services['frames'] and sink['buffers'] > 0 and
                 not any(sink[k] for k in ('mismatches', 'missing', 'dropped')),
@@ -76,7 +88,7 @@ def validate(target, original, source, clock, services, initial, planned, accept
         history = target['input_history']; terminal = history['terminal']
         require(history['pass_'] and history['hardware_only'] and not history['engine_state_writes'] and
                 history['schedule'] == schedule and terminal['completed_flips'] == complete['completed_flips'] and
-                terminal['clock_calls'] == clock['calls'] and terminal['services'] == services['events'],
+                terminal['clock_calls'] == services['completion_position']['clock_calls'] and terminal['services'] == services['events'],
                 'read-only hardware endpoint differs')
         consumed = [e for e in history['inputs'] if e.get('pad_consumed')]
         require(len(consumed) == 6 and all(e['action'] == i and e['key'] == p['key'] and
@@ -92,7 +104,8 @@ def validate(target, original, source, clock, services, initial, planned, accept
                 e = edges[i*2+j]
                 require(e['action'] == i and e['key'] == p['key'] and e['down'] is down and
                         e['observation']['completed_flips'] == flip and
-                        e['observation']['clock_calls'] == p['clock_calls'], 'genuine native keyboard edge differs')
+                        e['observation']['clock_calls'] == (p['clock_calls'] if down else p.get('release_clock_calls',p['clock_calls'])),
+                        'genuine native keyboard edge differs')
         endpoint = history['endpoint']
         require(endpoint['scene'] == target['end_state'] and endpoint['settings'] == target['restored'] and
                 endpoint['card_sha256'] == digest(initial) and
@@ -111,7 +124,8 @@ def verify(args):
     initial, _, _ = fixture(args.fixture)
     original = validate_capture(args.original, args.fixture)
     source = read(args.original/'report.json'); clock = read(args.original/'game-clock/report.json')
-    planned = input_schedule(args.original, args.services, args.fixture)
+    planned = input_schedule(args.original, args.services, args.fixture,args.keyboard_input)
+    if args.keyboard_input:source={**source,'keyboard_input_sha256':digest(args.keyboard_input.read_bytes())}
     services = export(args.original, args.mixer, out/'independent-input')
     require(digest((args.services/'services.bin').read_bytes()) == services['input_sha256'] and
             digest((args.original/'game-clock/ticks.bin').read_bytes()) == clock['ticks_sha256'],
@@ -141,6 +155,10 @@ def verify(args):
                 failed['game_clock_sha256'] == clock['ticks_sha256'] and
                 'engine API clock/presentation position differs' in (directory/'game-1.log').read_text(),
                 'wrong input duration did not fail the actual engine timing assertion')
+        if args.keyboard_input:
+            require(failed.get('diagnostic_release_offset') == offset and
+                    failed.get('keyboard_input_sha256') == source['keyboard_input_sha256'],
+                    'negative keyboard perturbation provenance differs')
         negative[name] = dict(rejected=True, endpoint=history['last'], error=history['error'])
     # Exercise the comparator at interior stereo samples, endpoints and extent.
     for name, offset in (('first',0),('left',len(accepted)//16*8),
@@ -167,10 +185,24 @@ def verify(args):
         try: validate(bad,original,source,clock,services,initial,planned,accepted,played)
         except RuntimeError: negative[name] = dict(rejected=True)
         else: raise AssertionError('damaged '+name+' accepted')
+    if args.keyboard_input:
+        for name, browser in (('keyboard-provenance',False),('observed-release',False),
+                              ('browser-key-clock',True),('browser-end-clock',True)):
+            bad = copy.deepcopy(inputs['browser' if browser else 'native'])
+            if name == 'keyboard-provenance': bad['keyboard_input_sha256'] = '0'*64
+            elif name == 'observed-release': bad['schedule'][3]['release_flip'] += 1
+            elif name == 'browser-key-clock': bad['inputs']['events'][7]['clock_calls'] += 1
+            else: bad['clock_calls'] += 1
+            try: validate(bad,original,source,clock,services,initial,planned,accepted,played,browser)
+            except RuntimeError: negative[name] = dict(rejected=True)
+            else: raise AssertionError('damaged '+name+' accepted')
     report = dict(scope=__doc__, pass_=True, original_exe_sha256=original['exe_sha256'],
                   initial_card_sha256=digest(initial), trace_sha256=services['trace_sha256'],
                   services_sha256=services['input_sha256'], game_clock_sha256=clock['ticks_sha256'],
                   targets=targets, negative_cases=negative)
+    if args.keyboard_input:
+        report['keyboard_input_sha256']=source['keyboard_input_sha256']
+        report['scope']='Actual menu/replay shared-device PCM with all twelve original-observed window-procedure keyboard edges, original-produced card and observed clock/audio services. Own engine controls and callbacks execute. Intro equivalence, physical OS timing, chronological video and other scenarios remain unproved.'
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened = open_files()
     for directory in (args.native,args.native_asan,args.browser):
@@ -183,6 +215,7 @@ def verify(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--keyboard-input',type=Path,help='compare against all actual original window-procedure key edges')
     for name in ('fixture','original','services','mixer','native','native-asan','browser',
                  'negative-early','negative-late','output'):
         parser.add_argument('--'+name,type=Path,required=True)
