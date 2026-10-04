@@ -552,6 +552,31 @@ to retain the report and remove successful raw comparisons. These checks cover
 the exercised arithmetic and transport routes; full interactive scheduling and
 every race's chronological video/PCM remain separate requirements.
 
+`make verify-shared-audio` also compiles the patched `build/` backend at `-O2`
+for native, native ASan and Node/WASM. It checks a controlled source creation
+order with one effect before the CD buffer and another after it: all 338688
+mixed Float32 bytes, 30870 CD source frames and the complete isolated music
+stream must match on each target. `--wine` independently captures the actual
+Wine mixer; control-edge preroll and trailing silence are reported separately.
+The accepted waveform begins at the first nonzero CD source frame, with no
+phase fitting or sample tolerance. Changed-bit, wrong-order and lost-CD
+mutations must all fail. Source, fixture, calibration and executable hashes
+are retained; `--source-root` selects another prepared backend.
+
+The verified production/Wine report is
+`/tmp/wasm-dd2/shared-audio-884-final-production-wine/report.json`: 27744 exact
+consecutive Wine waveform frames, including 2995 that distinguish the order
+of summation. This is a bounded shared-mixer component comparison; complete
+game streams, queued control timing and physical output remain open.
+Builds, private Wine prefixes and captures stay under `/tmp/wasm-dd2/`, and
+`--clean` deletes successful raw PCM after writing the report:
+
+```sh
+make clean-logs
+make verify-shared-audio SHARED_AUDIO_ARGS='--wine --mingw <32-bit compiler> --output /tmp/wasm-dd2/shared-audio --clean'
+make clean-logs
+```
+
 `make verify-redbook` compiles the patched CD/mixer backend from `build/` at
 `-O2` and compares native, native ASan and Node/WASM playback directly with
 all 18 complete CDDA tracks and their transport intervals: 577760564 exact

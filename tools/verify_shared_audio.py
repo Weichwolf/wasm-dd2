@@ -18,6 +18,8 @@ import sys
 import tempfile
 from generate_sound_gain import gains
 from verify_sound_cursor import wine_probe
+from artifacts import WORK
+from redbook_verification import add_backend_arguments, output_directory, compile_backends, finish_report
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/shared_audio_test.c"
@@ -79,7 +81,8 @@ def validate_reference(directory, wave, alternative, baseline, allowed):
 def check_negative_captures(directory, wave, alternative, baseline, allowed):
     first = next(i for i in range(len(wave)//8) if wave[i*8:i*8+8] != baseline)
     marker = wave[first*8:(first+32)*8]
-    with tempfile.TemporaryDirectory(prefix="dd2-shared-negative-") as tmp:
+    rejected = []
+    with tempfile.TemporaryDirectory(prefix="shared-negative-", dir=WORK) as tmp:
         for defect in ("one-bit", "wrong-order", "lost-cd"):
             broken = Path(tmp)/defect
             shutil.copytree(directory, broken)
@@ -102,10 +105,11 @@ def check_negative_captures(directory, wave, alternative, baseline, allowed):
             try:
                 validate_reference(broken, wave, alternative, baseline, allowed)
             except RuntimeError:
-                pass
+                rejected.append(defect)
             else:
                 raise RuntimeError(f"Accepted damaged Wine shared mix: {defect}")
     print("PASS altered bit, wrong summation order and lost CD rejected", flush=True)
+    return rejected
 
 
 def main():
@@ -116,6 +120,7 @@ def main():
     parser.add_argument("--mingw", default="i686-w64-mingw32-gcc")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--record", action="store_true", help="replace calibration metadata after a real Wine capture")
+    add_backend_arguments(parser)
     args = parser.parse_args()
     if args.record and not args.wine:
         parser.error("--record requires --wine")
@@ -125,24 +130,18 @@ def main():
     fixture = {"rate": 44100, "track": 2, "order": ["effect-half", "cd", "effect-gain"]}
     env = {k: v for k, v in os.environ.items() if not k.startswith("DD2_")}
     env.update(DD2_SND_RATE="44100", DD2_CD_ROOT=str(game / "Redbook"))
-    with tempfile.TemporaryDirectory(prefix="dd2-shared-audio-") as tmp:
+    WORK.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="shared-audio-", dir=WORK) as tmp:
         directory = Path(tmp)
-        output = args.output.resolve() if args.output else directory / "captures"
-        output.mkdir(parents=True, exist_ok=False)
-        subprocess.run(["python3", str(ROOT / "tools/generate_cd_toc.py"),
-                        str(game / "Redbook/disc.json"), str(directory / "dd2_disc.h")], check=True)
-        common = ["-std=gnu99", "-w", "-DDD2_NO_FOPEN_WRAP", "-ffunction-sections", "-fdata-sections",
-                  f"-I{directory}", f"-I{ROOT / 're_out'}", str(ROOT / "re_out/dd2h_stubs.c"),
-                  str(ROOT / "re_out/dd2_cd.c"), str(SOURCE), "-Wl,--gc-sections"]
-        native, wasm = directory / "native", directory / "wasm.js"
-        subprocess.run(["gcc", "-m32", "-no-pie", *common, "-o", str(native)], check=True)
-        subprocess.run([args.emcc, *common, "-sNODERAWFS=1", "-sEXIT_RUNTIME=1", "-sGLOBAL_BASE=10485760",
-                        "--pre-js", str(ROOT / "tools/node_env.js"), "-o", str(wasm)], check=True)
-        report = {"scope": __doc__, "fixture": fixture, "source_sha256": hashlib.sha256(raw).hexdigest(), "targets": []}
+        output = output_directory(args, directory)
+        targets, backend = compile_backends(args, directory, SOURCE, game)
+        report = {"scope": __doc__, "fixture": fixture, "source_sha256": hashlib.sha256(raw).hexdigest(), "targets": [],
+                  "fixture_source_sha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(), "backend": backend}
         if args.wine:
             executable = directory / "shared.exe"
             subprocess.run([args.mingw, "-Wall", "-Wextra", "-Werror", str(SOURCE),
                             "-ldsound", "-lwinmm", "-o", str(executable)], check=True)
+            report['wine_executable_sha256'] = hashlib.sha256(executable.read_bytes()).hexdigest()
             libraries = build_audio(directory / "audio-libraries")
             _, cd_libraries = build_cdrom(game, directory / "cd-libraries")
             device = directory / "cd-device"; device.touch()
@@ -157,7 +156,7 @@ def main():
             if actual != fixture:
                 raise RuntimeError("Wine fixture setup differs")
             reference = validate_reference(output / "audio", wave, alternative, baseline, allowed)
-            check_negative_captures(output / "audio", wave, alternative, baseline, allowed)
+            report['negative_checks'] = check_negative_captures(output / "audio", wave, alternative, baseline, allowed)
             report["wine"] = reference
             if args.record:
                 calibration = {"scope": __doc__, "fixture": fixture, "source_sha256": report["source_sha256"],
@@ -177,7 +176,7 @@ def main():
         expected = (struct.pack("<ff", 0.5, 0.5)*3528 + wave[:30870*8] + baseline*4410 + bytes(3528*8))
         music = bytes(3528*8) + b"".join(struct.pack("<ff", l/32768, r/32768)
                     for l, r in struct.iter_unpack("<hh", raw[:30870*4])) + bytes((4410+3528)*8)
-        for target, command in (("native", [str(native)]), ("wasm", [args.node, str(wasm)])):
+        for target, command in targets:
             mixed, cd, part = [output / f"{target}-{kind}.pcm" for kind in ("mixed", "source", "music")]
             run = subprocess.run(command, env={**env, "DD2_MIXPCM": str(mixed), "DD2_CDPCM": str(cd),
                                  "DD2_MUSICPCM": str(part)}, stdout=subprocess.PIPE, text=True, check=True, timeout=30)
@@ -190,7 +189,8 @@ def main():
                     raise RuntimeError("Shared mixer format metadata differs")
             report["targets"].append({"target": target, "full_mixed_pcm_bytes": len(expected), "cd_frames": 30870})
             print(f"PASS {target}: full controlled shared mix, CD source and music part exact", flush=True)
-        (output / "report.json").write_text(json.dumps(report, indent=2)+"\n")
+        report['calibration_manifest_sha256'] = hashlib.sha256(MANIFEST.read_bytes()).hexdigest()
+        finish_report(output, report, args.clean)
         print(f"PASS actual Wine ordered waveform: {reference['exact_wave_frames']} exact frames; "
               f"{reference['order_sensitive_frames']} distinguish summation order", flush=True)
 
