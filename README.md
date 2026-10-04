@@ -530,6 +530,28 @@ including the software retry and primary exemption. A mutation restoring the
 old hardware acceptance must fail. The check covers this API branch; full
 engine audio timing remains a separate comparison.
 
+Patch 868 accelerates the exact native FIR arithmetic with the i386 x87. It
+selects nearest/even and 64-significand-bit precision only while mixing, keeps
+the calibrated Float32 spills, then restores the engine's original control
+word. WASM retains the checked integer implementation. The previous software
+path's extra ASan cost let elapsed audio work grow faster than it was processed,
+preventing a loaded championship from reaching eight physics ticks in 60 seconds.
+The actual ASan load now reaches and pauses the next race, preserving all saved
+fields and matching 128 original card-menu images. The optimization does not
+drop audio blocks, samples, source advancement or control calls.
+
+The production resampler check now compiles the patched `build/` mixer, rather
+than the pristine shim. Native, native ASan and WASM pass 24 complete format/rate
+waveforms and six short-loop cases against calibrated Wine hashes. In addition
+to the existing 1,084,900 CPU-x87 oracle results, 500,012 production arithmetic
+results match the software model. Twelve caller precision/rounding combinations
+check control-word restoration; mutations using 53 bits or failing to restore
+the caller are rejected. Run `make verify-sound-resample
+SOUND_RESAMPLE_ARGS='--wasm-optimization O2 --output /tmp/wasm-dd2/resample --clean'`
+to retain the report and remove successful raw comparisons. These checks cover
+the exercised arithmetic and transport routes; full interactive scheduling and
+every race's chronological video/PCM remain separate requirements.
+
 `make verify-redbook` compares native/WASM playback directly with all 18 track
 prefixes and one complete track: 29848052 exact PCM bytes, including stop/resume,
 pause, cross-track boundaries, end-of-track, replay and error checks.

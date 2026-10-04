@@ -274,7 +274,7 @@ verify-sound-gain: ## check all quantized gains and Float32 mix; SOUND_GAIN_ARGS
 	python3 $(ROOT)/tools/generate_sound_gain.py --check
 	python3 $(ROOT)/tools/verify_sound_gain.py --node $(NODE) $(SOUND_GAIN_ARGS)
 
-verify-sound-resample: ## check complete waveforms against real Wine FIR hashes and CPU x87; SOUND_RESAMPLE_ARGS can recapture Wine
+verify-sound-resample: patch ## check production waveforms against real Wine FIR hashes and CPU x87; SOUND_RESAMPLE_ARGS can recapture Wine
 	python3 $(ROOT)/tools/generate_sound_fir.py --check
 	python3 $(ROOT)/tools/verify_sound_resample.py --node $(NODE) $(SOUND_RESAMPLE_ARGS)
 

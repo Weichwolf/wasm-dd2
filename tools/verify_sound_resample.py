@@ -17,6 +17,7 @@ import sys
 import tempfile
 from verify_sound_cursor import wine_probe
 from generate_sound_fir import OUTPUT, render
+from artifacts import WORK, check_space, open_files, prepare_output
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "tools/reference/sound_resample_wine10.json"
@@ -82,39 +83,66 @@ def main():
     parser.add_argument("--mingw",default="i686-w64-mingw32-gcc")
     parser.add_argument("--output",type=Path)
     parser.add_argument("--device-rates",type=int,nargs="+",choices=(22050,44100,48000),default=[22050,44100,48000])
+    parser.add_argument("--source-root",type=Path,default=ROOT/"build",
+                        help="patched production mixer directory; run make patch first")
+    parser.add_argument("--clean",action="store_true",help="remove successful raw waveforms after saving the report")
     args=parser.parse_args()
     if OUTPUT.read_text()!=render():raise RuntimeError("FIR table is not reproducible")
     expected=json.loads(MANIFEST.read_text())
     source=ROOT/"tools/sound_resample_test.c"
     if hashlib.sha256(source.read_bytes()).hexdigest()!=expected["fixture_source_sha256"]:
         raise RuntimeError("Fixture source changed since real reference calibration")
-    with tempfile.TemporaryDirectory(prefix="dd2-resample-build-") as temporary:
+    source_root=args.source_root.resolve()
+    if not (source_root/"dd2h_stubs.c").is_file():
+        raise RuntimeError("Missing patched mixer; run make patch first")
+    WORK.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="resample-build-",dir=WORK) as temporary:
         directory=Path(temporary)
-        output=args.output.resolve() if args.output else directory/"captures"
+        output=prepare_output(args.output) if args.output else directory/"captures"
+        if WORK not in output.parents:raise RuntimeError("Use /tmp/wasm-dd2/ for verification outputs")
         output.mkdir(parents=True,exist_ok=False)
         env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
         common=["-std=gnu89","-w","-DDD2_NO_FOPEN_WRAP","-ffunction-sections","-fdata-sections",
-                f"-I{ROOT/'re_out'}",str(ROOT/"re_out/dd2h_stubs.c"),str(source),"-Wl,--gc-sections"]
-        native,wasm=directory/"native",directory/"wasm.js"
+                f"-I{source_root}",str(source_root/"dd2h_stubs.c"),str(source),"-Wl,--gc-sections"]
+        native,native_asan,wasm=directory/"native",directory/"native-asan",directory/"wasm.js"
         # Match the production native mixer: exact FIR arithmetic must run
         # faster than its elapsed-time audio clock, without fast-math.
         subprocess.run(["gcc","-m32","-no-pie","-O2","-fno-strict-aliasing",*common,"-o",str(native)],check=True)
+        subprocess.run(["gcc","-m32","-no-pie","-O2","-fno-strict-aliasing","-fsanitize=address",
+                        *common,"-o",str(native_asan)],check=True)
         subprocess.run([args.emcc,"-"+args.wasm_optimization,"-fno-strict-aliasing",*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sGLOBAL_BASE=10485760",
                         "--pre-js",str(ROOT/"tools/node_env.js"),"-o",str(wasm)],check=True)
         # This oracle executes actual CPU x87 arithmetic and compares all four
         # operations before its output is used to verify WASM's software model.
         wide=ROOT/"tools/sound_wide_test.c"
-        subprocess.run(["gcc","-m32","-O2","-Wall","-Wextra","-Werror",f"-I{ROOT/'re_out'}",
+        subprocess.run(["gcc","-m32","-O2","-Wall","-Wextra","-Werror",f"-I{source_root}",
                         str(wide),"-o",str(directory/"wide-native")],check=True)
-        subprocess.run([args.emcc,"-O2","-Wall","-Wextra","-Werror",f"-I{ROOT/'re_out'}",str(wide),
+        subprocess.run([args.emcc,"-O2","-Wall","-Wextra","-Werror",f"-I{source_root}",str(wide),
                         "-sNODERAWFS=1","-sEXIT_RUNTIME=1","-o",str(directory/"wide-wasm.js")],check=True)
         for target,command in (("native",[str(directory/"wide-native")]),("wasm",[args.node,str(directory/"wide-wasm.js")])):
             subprocess.run([*command,str(output/f"wide-{target}.bin")],env=env,check=True,timeout=30)
         if (output/"wide-native.bin").read_bytes()!=(output/"wide-wasm.bin").read_bytes():
             raise RuntimeError("WASM software precision differs from actual x87 oracle")
+        mixwide=ROOT/"tools/sound_mixwide_test.c"
+        for target,compiler,flags in [("native","gcc",["-m32"]),
+                                     ("native-asan","gcc",["-m32","-fsanitize=address"]),
+                                     ("wasm",args.emcc,["-sNODERAWFS=1","-sEXIT_RUNTIME=1"])]:
+            executable=directory/("mixwide-"+target+(".js" if target=="wasm" else ""))
+            subprocess.run([compiler,"-O2","-Wall","-Wextra","-Werror","-fno-strict-aliasing",
+                            *flags,f"-I{source_root}",str(mixwide),"-o",str(executable)],check=True)
+            command=[args.node,str(executable)] if target=="wasm" else [str(executable)]
+            subprocess.run([*command,str(output/f"mixwide-{target}.bin")],env=env,check=True,timeout=30)
+        if not ((output/'mixwide-native.bin').read_bytes()==(output/'mixwide-native-asan.bin').read_bytes()==
+                (output/'mixwide-wasm.bin').read_bytes()):
+            raise RuntimeError("Production FIR arithmetic differs from the software x87 model")
         report={"scope":"complete synthetic one-shot FIR/format waveforms; preroll reported separately; original full-output/timing parity pending",
+                "pass_":False,
                 "wine":args.wine,"wasm_optimization":args.wasm_optimization,
-                "x87_cpu_results":1084900,"cases":[],"loops":[]}
+                "x87_cpu_results":1084900,"source_root":str(source_root),
+                "production_fir_results":500012,"caller_fpu_modes":12,
+                "mixer_sha256":hashlib.sha256((source_root/'dd2h_stubs.c').read_bytes()).hexdigest(),
+                "arithmetic_sha256":hashlib.sha256((source_root/'dd2_sound_mixwide.h').read_bytes()).hexdigest(),
+                "cases":[],"loops":[]}
         if args.wine:
             executable=directory/"resample.exe"
             subprocess.run([args.mingw,"-Wall","-Wextra","-Werror",str(source),"-ldsound","-o",str(executable)],check=True)
@@ -141,7 +169,7 @@ def main():
                 if actual!=settings:raise RuntimeError("Wine source/controls/status differ")
                 wave,record["wine"]=reference_wave(case/"audio",count,rate)
                 check_wave(wave,reference["active_sha256"])
-            for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
+            for target,command in (("native",[str(native)]),("native-asan",[str(native_asan)]),("wasm",[args.node,str(wasm)])):
                 pcm=case/f"{target}.pcm"
                 result=subprocess.run([*command,str(pcm),str(frequency),str(bits),str(channels)],
                                       env=env,text=True,capture_output=True,check=True,timeout=30)
@@ -159,6 +187,7 @@ def main():
                 else:raise RuntimeError("Accepted corrupt/resized waveform")
             report["cases"].append(record)
             (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
+            check_space(output)
             print(f"PASS device {rate}Hz, source {frequency}Hz/{bits}-bit/{channels}ch: {count} complete exact frames",flush=True)
         selected_loops=[c for c in expected["loops"] if c.get("device_rate",22050) in args.device_rates]
         if len(selected_loops)!=2*len(args.device_rates):raise RuntimeError("Missing/duplicate device loop cases")
@@ -182,7 +211,7 @@ def main():
                 if (stream["format"],stream["rate"],stream["channels"],stream["frame_bytes"]) != ("FLOAT_LE",rate,2,8):
                     raise RuntimeError("Unexpected reference loop device format")
                 record["wine"]=check_loop((case/"audio"/stream["file"]).read_bytes(),cycle)
-            for target,command in (("native",[str(native)]),("wasm",[args.node,str(wasm)])):
+            for target,command in (("native",[str(native)]),("native-asan",[str(native_asan)]),("wasm",[args.node,str(wasm)])):
                 pcm=case/f"{target}.pcm"
                 result=subprocess.run([*command,str(pcm),str(frequency),"8","1","loop"],
                                       env=env,text=True,capture_output=True,check=True,timeout=30)
@@ -194,7 +223,16 @@ def main():
             else:raise RuntimeError("Accepted corrupt loop waveform")
             report["loops"].append(record)
             (output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
+            check_space(output)
             print(f"PASS device {rate}Hz, source {frequency}Hz short loop: all active PCM frames match exact Wine cycle",flush=True)
+        report['pass_']=True
+        (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+        if args.clean:
+            opened=open_files()
+            for file in [*output.rglob('*.pcm'),*output.glob('*.bin')]:
+                stat=file.stat()
+                if (stat.st_dev,stat.st_ino) in opened:raise RuntimeError('Raw comparison output still in use')
+                file.unlink()
 
 
 if __name__ == "__main__":
