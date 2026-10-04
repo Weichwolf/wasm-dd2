@@ -96,7 +96,7 @@ def execute(args, out, game, action):
             try:
                 number = display.stdout.readline().decode().strip(); require(number, 'Xvfb did not start')
                 ui = ConfigUI(args.binary.resolve(), game, out, ':'+number, 1, 700)
-                ui.boot(); action(ui)
+                ui.boot(getattr(args, 'boot_label', 'Wrecking')); action(ui)
             finally:
                 if ui: ui.stop()
                 display.terminate(); display.wait(timeout=5)

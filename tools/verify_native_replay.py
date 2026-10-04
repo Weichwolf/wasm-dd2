@@ -101,13 +101,13 @@ class NativeUI:
         subprocess.run(['xdotool', 'keydown' if down else 'keyup', code],
                        env=self.env, check=True, timeout=5)
 
-    def boot(self):
+    def boot(self, menu_label='Wrecking'):
         self.wait(lambda: self.integer(0x462cd4) == 1)
         subprocess.run(['xdotool', 'search', '--name', '^Destruction Derby 2$',
                         'windowfocus', 'keydown', 'Escape'], env=self.env, check=True, timeout=5)
         self.wait(lambda: self.integer(0x462cd4) == 0)
         self.edge('Escape', False)
-        self.wait(lambda: self.integer(0x936ff4) == 0 and 'Wrecking' in self.text(0x46975c))
+        self.wait(lambda: self.integer(0x936ff4) == 0 and menu_label in self.text(0x46975c))
         window = subprocess.check_output(['xdotool', 'search', '--name', '^Destruction Derby 2$'],
                                          env=self.env, text=True, timeout=5).splitlines()[-1]
         subprocess.run(['xdotool', 'windowfocus', '--sync', window], env=self.env, check=True, timeout=5)

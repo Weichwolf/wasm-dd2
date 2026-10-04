@@ -136,6 +136,13 @@ verify-championship-save: ## generate/compare actual original championship cards
 capture-browser-championship-save: ## load an original championship card through production IDBFS and real keys; BROWSER_CHAMPIONSHIP_SAVE_ARGS required
 	node $(ROOT)/tools/browser/capture_championship_save.js $(BROWSER_CHAMPIONSHIP_SAVE_ARGS)
 
+.PHONY: verify-statistics-ui capture-browser-statistics-ui
+verify-statistics-ui: ## generate/capture/compare actual persisted statistics menus; STATISTICS_UI_ARGS required
+	python3 $(ROOT)/tools/verify_statistics_ui.py $(STATISTICS_UI_ARGS)
+
+capture-browser-statistics-ui: ## run genuine browser statistics navigation; BROWSER_STATISTICS_UI_ARGS required
+	node $(ROOT)/tools/browser/capture_statistics_ui.js $(BROWSER_STATISTICS_UI_ARGS)
+
 .PHONY: verify-original-replay capture-browser-original-replay
 verify-original-replay: ## generate/compare real original replay cards and natural playback; ORIGINAL_REPLAY_ARGS required
 	python3 $(ROOT)/tools/verify_original_replay.py $(ORIGINAL_REPLAY_ARGS)

@@ -1,0 +1,503 @@
+{
+  "scope": "Actual original-generated completed-season configuration loaded at normal startup; genuine keys exercise all 20 drivers, all 11 track statistics, championship results, driver/track wraps and category/season clamps and reopening. Selected full 64-phase indexed/palette cycles and actual browser canvas are compared. One eliminated Stock Car season only; no chronological racing A/V, other seasons or physical display/timing claim.",
+  "actions": [
+    {
+      "checkpoint": "information",
+      "keys": [
+        "Down",
+        "Right",
+        "Return"
+      ],
+      "menu": 4627108,
+      "cycle": true,
+      "label": "View Statistics",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "category-driver",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4620172,
+      "cycle": true,
+      "label": "View Driver Stats",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "driver-00",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 0
+    },
+    {
+      "checkpoint": "driver-left-wrap",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4619396,
+      "cycle": false,
+      "driver": 19
+    },
+    {
+      "checkpoint": "driver-right-wrap",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": false,
+      "driver": 0
+    },
+    {
+      "checkpoint": "driver-01",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 1
+    },
+    {
+      "checkpoint": "driver-02",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 2
+    },
+    {
+      "checkpoint": "driver-03",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 3
+    },
+    {
+      "checkpoint": "driver-04",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 4
+    },
+    {
+      "checkpoint": "driver-05",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 5
+    },
+    {
+      "checkpoint": "driver-06",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 6
+    },
+    {
+      "checkpoint": "driver-07",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 7
+    },
+    {
+      "checkpoint": "driver-08",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 8
+    },
+    {
+      "checkpoint": "driver-09",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 9
+    },
+    {
+      "checkpoint": "driver-10",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 10
+    },
+    {
+      "checkpoint": "driver-11",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 11
+    },
+    {
+      "checkpoint": "driver-12",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 12
+    },
+    {
+      "checkpoint": "driver-13",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 13
+    },
+    {
+      "checkpoint": "driver-14",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 14
+    },
+    {
+      "checkpoint": "driver-15",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 15
+    },
+    {
+      "checkpoint": "driver-16",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 16
+    },
+    {
+      "checkpoint": "driver-17",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 17
+    },
+    {
+      "checkpoint": "driver-18",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 18
+    },
+    {
+      "checkpoint": "driver-19",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": true,
+      "driver": 19
+    },
+    {
+      "checkpoint": "driver-right-wrap-again",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4619396,
+      "cycle": false,
+      "driver": 0
+    },
+    {
+      "checkpoint": "driver-reopened",
+      "keys": [
+        "Escape",
+        "Return"
+      ],
+      "menu": 4619396,
+      "cycle": false,
+      "driver": 0
+    },
+    {
+      "checkpoint": "category-track",
+      "keys": [
+        "Escape",
+        "Right"
+      ],
+      "menu": 4620172,
+      "cycle": true,
+      "label": "View Track Stats",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "track-00",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 0
+    },
+    {
+      "checkpoint": "track-left-wrap",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4621208,
+      "cycle": false,
+      "track": 10
+    },
+    {
+      "checkpoint": "track-right-wrap",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": false,
+      "track": 0
+    },
+    {
+      "checkpoint": "track-01",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 1
+    },
+    {
+      "checkpoint": "track-02",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 2
+    },
+    {
+      "checkpoint": "track-03",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 3
+    },
+    {
+      "checkpoint": "track-04",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 4
+    },
+    {
+      "checkpoint": "track-05",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 5
+    },
+    {
+      "checkpoint": "track-06",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 6
+    },
+    {
+      "checkpoint": "track-07",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 7
+    },
+    {
+      "checkpoint": "track-08",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 8
+    },
+    {
+      "checkpoint": "track-09",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 9
+    },
+    {
+      "checkpoint": "track-10",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": true,
+      "track": 10
+    },
+    {
+      "checkpoint": "track-right-wrap-again",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4621208,
+      "cycle": false,
+      "track": 0
+    },
+    {
+      "checkpoint": "track-reopened",
+      "keys": [
+        "Right",
+        "Escape",
+        "Return"
+      ],
+      "menu": 4621208,
+      "cycle": false,
+      "track": 0
+    },
+    {
+      "checkpoint": "category-championship",
+      "keys": [
+        "Escape",
+        "Right"
+      ],
+      "menu": 4620172,
+      "cycle": true,
+      "label": "View Championship",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "championship",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4618268,
+      "cycle": true,
+      "championship": 0
+    },
+    {
+      "checkpoint": "championship-minimum",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4618268,
+      "cycle": false,
+      "championship": 0
+    },
+    {
+      "checkpoint": "championship-maximum",
+      "keys": [
+        "Right"
+      ],
+      "menu": 4618268,
+      "cycle": false,
+      "championship": 0
+    },
+    {
+      "checkpoint": "championship-reopened",
+      "keys": [
+        "Escape",
+        "Return"
+      ],
+      "menu": 4618268,
+      "cycle": false,
+      "championship": 0
+    },
+    {
+      "checkpoint": "category-maximum",
+      "keys": [
+        "Escape",
+        "Right"
+      ],
+      "menu": 4620172,
+      "cycle": false,
+      "label": "View Championship",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "category-driver-return",
+      "keys": [
+        "Left",
+        "Left"
+      ],
+      "menu": 4620172,
+      "cycle": false,
+      "label": "View Driver Stats",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "category-minimum",
+      "keys": [
+        "Left"
+      ],
+      "menu": 4620172,
+      "cycle": false,
+      "label": "View Driver Stats",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "information-return",
+      "keys": [
+        "Escape"
+      ],
+      "menu": 4627108,
+      "cycle": false,
+      "label": "View Statistics",
+      "label_address": 4627268
+    },
+    {
+      "checkpoint": "category-reopened",
+      "keys": [
+        "Return"
+      ],
+      "menu": 4620172,
+      "cycle": false,
+      "label": "View Driver Stats",
+      "label_address": 4620320
+    },
+    {
+      "checkpoint": "frontend-return",
+      "keys": [
+        "Escape",
+        "Escape"
+      ],
+      "menu": 4626096,
+      "cycle": false,
+      "label": "Information",
+      "label_address": 4626268
+    }
+  ]
+}

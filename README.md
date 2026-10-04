@@ -978,6 +978,42 @@ make verify-championship-save CHAMPIONSHIP_SAVE_ARGS='compare --fixture /tmp/was
 make clean-logs
 ```
 
+Patch 870 restores the signed WORD Y/width fields of the Driver, Track and
+Championship statistics table rectangles. The previous BYTE aliases placed
+their dark translucent backgrounds outside the visible slab and truncated the
+Championship width. The corrected types follow the unchanged original callers'
+DWORD/SAR-16 loads and the actual packed rectangle descriptors.
+
+The persisted-statistics check loads the original-generated Stock Car save,
+retires its remaining three races in the original, returns after elimination
+and saves configuration B in slot 1. The complete `0x1010` configuration packs
+the real completed-season statistics; normal startup restores all saved fields
+and regions while leaving the earlier championship slot unchanged. Actual X11
+or trusted Playwright keys exercise all 20 driver pages, all 11 track pages,
+Championship standings, driver/track wrapping, category/season limits and
+reopening. Displayed values are checked against the original saved payload.
+The gate requires 53 checkpoint states and 2,304 complete indexed/palette pairs
+on each of Native, Native ASan and WASM, with actual browser canvas checks.
+It rejects altered pixels, palettes and statistics, plus all three real missing
+backgrounds captured from a pre-870 native executable. This covers one eliminated
+Stock Car season and settled 64-phase menu cycles; chronological racing A/V,
+multiple seasons, victories/promotion and physical output/timing remain open.
+The verified production builds pass this gate on all three targets. The report
+is `/tmp/wasm-dd2/statistics-876-final-verified.json`; all 228 negative cases are
+rejected, and successful raw frame comparisons are removed after the report.
+
+```sh
+make clean-logs
+make verify-statistics-ui STATISTICS_UI_ARGS='generate --championship /tmp/wasm-dd2/champ-save-fixture --output /tmp/wasm-dd2/stats-fixture'
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --target original --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/stats-original'
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/stats-native'
+make verify-statistics-ui STATISTICS_UI_ARGS='capture --target native --binary /tmp/dd2_asan --fixture /tmp/wasm-dd2/stats-fixture --output /tmp/wasm-dd2/stats-asan'
+make capture-browser-statistics-ui BROWSER_STATISTICS_UI_ARGS='web/dd2 /tmp/wasm-dd2/stats-browser /tmp/wasm-dd2/stats-fixture'
+make verify-statistics-ui STATISTICS_UI_ARGS='baseline --fixture /tmp/wasm-dd2/stats-fixture --original /tmp/wasm-dd2/stats-original --binary /tmp/dd2_native_before_870 --output /tmp/wasm-dd2/stats-before'
+make verify-statistics-ui STATISTICS_UI_ARGS='compare --fixture /tmp/wasm-dd2/stats-fixture --original /tmp/wasm-dd2/stats-original --native /tmp/wasm-dd2/stats-native --asan /tmp/wasm-dd2/stats-asan --browser /tmp/wasm-dd2/stats-browser --before /tmp/wasm-dd2/stats-before/report.json --report /tmp/wasm-dd2/stats-verified.json --clean'
+make clean-logs
+```
+
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,
 then uses Retire / Yes and Save Replay to create a real `0x2020` card. All
