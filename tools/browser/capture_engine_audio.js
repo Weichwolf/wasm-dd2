@@ -22,12 +22,14 @@ if(fixtureArg){
  if(layout)assert(layout.wasm_sha256===hash(fs.readFileSync(path.join(build,'index.wasm'))) &&
   Number.isInteger(layout.clock_counter_address) && layout.clock_counter_address>=10485760,'actual WASM clock layout differs');
  if(reference.keyboard_input_sha256)assert(layout,'observed source keyboard comparison requires actual WASM clock layout');
+ if(video?.rng_seed_observed)assert(Number.isInteger(layout.seed_address) && layout.seed_address>=10485760 &&
+  Number.isInteger(layout.counter_address) && layout.counter_address>=10485760,'actual WASM RNG layout required');
  assert(producer.pass_ && producer.operation==='generate' && producer.card_sha256===hash(save));
  assert(reference.pass_ && reference.scenario==='original-replay' && reference.engine_state_writes===false);
  assert(reference.initial_save_sha256===hash(save) && reference.audio_services_sha256===hash(services) && reference.game_clock_sha256===hash(clock));
  assert.deepStrictEqual(reference.schedule.map(p=>p.key),['Right','Right','Right','Return','Return','Return']);
  replay={schedule:reference.schedule,keyboard_input_sha256:reference.keyboard_input_sha256,
-  clock_counter_address:layout?.clock_counter_address,video,
+  clock_counter_address:layout?.clock_counter_address,seed_address:layout?.seed_address,rng_counter_address:layout?.counter_address,video,
   end:producer.recorded.end,actions:reference.schedule.flatMap((p,i)=>[
   {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:true,pending_flip:p.flip-1,clock_calls:p.clock_calls},
   {action:i,key:p.key==='Right'?'ArrowRight':'Enter',down:false,pending_flip:(p.release_flip??p.flip+1)-1,
@@ -97,6 +99,7 @@ budget();
         movie:HEAP32[0x462cd4>>2],poly_list:HEAPU32[0x940010>>2],restart_cd_audio:HEAP32[0x467420>>2],
         ticks:HEAP32[0x7746c0>>2],replay:HEAP32[0x467074>>2],quit:HEAP32[0x7746ac>>2],script_cursor:HEAPU32[0x9392b4>>2],
         clock_calls:HEAPU32[replay.clock_counter_address>>2]};
+       if(replay.video.rng_seed_observed){row.rng_seed=HEAPU32[replay.seed_address>>2];row.rng_calls=HEAPU32[replay.rng_counter_address>>2];}
        __engineVideo.frames.push(row);
        const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
        const encode=bytes=>{let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(text);};
@@ -287,6 +290,7 @@ budget();
      const expected=replay.video.frames[row.index];assert(expected,'extra browser video');
      for(const key of ['flip','level','cf','movie','poly_list','restart_cd_audio','ticks','replay','quit','script_cursor','clock_calls',
       'framebuffer_sha256','palette_sha256'])assert(row[key]===expected[key],`original browser video ${row.index} differs: ${key}`);
+     if(replay.video.rng_seed_observed)assert(row.rng_seed===expected.rng_seed,`original browser RNG seed differs at ${row.index}`);
     }
     report.video={pass_:true,scope:'Every bounded indexed frame/palette and actual canvas pixels in the same audio/key run; intro and physical display timing excluded',
      original_video_sha256:replay.video.video_sha256,original_trace_sha256:replay.video.trace_sha256,frames};

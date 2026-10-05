@@ -37,9 +37,11 @@ def main():
     parser.add_argument('--trace-keyboard',action='store_true',help='record original window-procedure keyboard messages with Wine +msg')
     parser.add_argument('--keep-movie',action='store_true',help='let the original intro finish naturally before menu input')
     parser.add_argument('--trace-video',action='store_true',help='record every successful original DirectDraw presentation without debugger stops')
+    parser.add_argument('--trace-video-rng',action='store_true',help='also read the original RNG seed at each presentation; requires --trace-video')
     parser.add_argument('--video-archive',action='store_true',help='losslessly archive closed presentation blocks; requires --trace-video')
     parser.add_argument('--video-max-frames',type=int,default=4096,help='at most 60000 with --video-archive, otherwise 4096')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
+    if args.trace_video_rng and not args.trace_video:parser.error('--trace-video-rng requires --trace-video')
     if (args.video_archive and not args.trace_video) or not 1<=args.video_max_frames<=(60000 if args.video_archive else 4096):
         parser.error('video archival requires --trace-video and a bounded 1..60000 frame count; raw limit is 4096')
     out,game=setup(args,initial)
@@ -54,9 +56,11 @@ def main():
     if args.trace_keyboard:options.wine_debug+=',+msg'
     options.keep_movie=args.keep_movie
     options.trace_video=args.trace_video
+    options.trace_video_rng=args.trace_video_rng
     options.video_archive=args.video_archive;options.video_max_frames=args.video_max_frames
     report['capture_options']=dict(wine_debug=options.wine_debug,keep_movie=options.keep_movie,
                                   startup_escape=not options.keep_movie,trace_video=options.trace_video,
+                                  trace_video_rng=options.trace_video_rng,
                                   video_archive=options.video_archive,video_max_frames=options.video_max_frames)
     def driver(pid,output,env,deadline,rundir):
         ui=RealtimeUI(pid,rundir,output,env,deadline)

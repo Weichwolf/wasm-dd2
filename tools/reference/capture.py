@@ -155,6 +155,7 @@ def main():
     parser.add_argument('--trace-timer-callbacks',action='store_true',
                         help='observe actual original callbacks through a forwarding Wine API observer; audio mode only, logging changes timing')
     parser.add_argument('--trace-video',action='store_true',help='observe actual successful DirectDraw uploads and palettes')
+    parser.add_argument('--trace-video-rng',action='store_true',help='also read the actual original RNG seed at each observed presentation; requires --trace-video')
     parser.add_argument('--video-archive',action='store_true',help='archive closed video blocks losslessly instead of retaining raw frames')
     parser.add_argument('--video-max-frames',type=int,default=4096,help='bounded presentation count; at most 60000 with --video-archive')
     parser.add_argument("--wine-debug", default="-all",
@@ -179,6 +180,8 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.trace_video_rng and not args.trace_video:
+        parser.error('--trace-video-rng requires --trace-video')
     if args.video_archive and not args.trace_video:
         parser.error('--video-archive requires --trace-video')
     if not 1<=args.video_max_frames<=(60000 if args.video_archive else 4096):
@@ -353,6 +356,7 @@ def run(game, output, args, on_menu=None):
         env['WINEDLLOVERRIDES']=env.get('WINEDLLOVERRIDES','')+';ddraw=n;_ddraw_real=n'
         env['DD2_VIDEO_CAPTURE']='Z:'+str(output/'video.bin').replace('/','\\')
         env['DD2_VIDEO_MAX_FRAMES']=str(getattr(args,'video_max_frames',4096))
+        if getattr(args,'trace_video_rng',False):env['DD2_VIDEO_RNG']='1'
         if getattr(args,'video_archive',False):
             from video_archive import Collector
             env['DD2_VIDEO_CHUNK_FRAMES']='128'

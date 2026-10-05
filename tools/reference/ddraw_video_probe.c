@@ -25,6 +25,16 @@ int main(int argc,char **argv){
     unsigned frame,x,y,frames=argc>1?(unsigned)atoi(argv[1]):65;
     region(0x460000,0x10000);region(0x700000,0x50000);
     region(0x770000,0x10000);region(0x930000,0x20000);
+    if(argc>2){
+        static const unsigned char getter[6]={0xa1,0x7c,0x09,0x94,0x00,0xc3};
+        /* This synthetic probe owns all these bytes; no original is modified. */
+        region(0x4571fb,6);region(0x94097c,4);region(0x941000,16);
+        memcpy((void*)0x4571fb,getter,6);
+        *(unsigned*)0x46c32c=0x4571fb;
+        *(unsigned*)0x94097c=0x941000;
+        *(unsigned*)0x94100c=1;
+        if(!strcmp(argv[2],"bad-getter"))*(unsigned*)0x46c32c=0;
+    }
     klass.lpfnWndProc=DefWindowProcA;klass.hInstance=GetModuleHandleA(0);klass.lpszClassName="DD2VideoStorage";
     if(!RegisterClassA(&klass))return 4;
     window=CreateWindowA(klass.lpszClassName,"Video storage probe",WS_POPUP,0,0,640,480,0,0,klass.hInstance,0);
@@ -50,6 +60,11 @@ int main(int argc,char **argv){
         check(IDirectDrawPalette_SetEntries(pal,0,0,256,entries),"SetEntries");
         for(y=0;y<480;y++)for(x=0;x<640;x++)pixels[y*640+x]=(BYTE)(x/16+y/16+frame);
         *(unsigned*)0x462ff0=frame;*(unsigned*)0x7746c0=frame*2;
+        if(argc>2)*(unsigned*)0x94100c=*(unsigned*)0x94100c*1103515245u+12345u;
+        if(argc>2){
+            *(unsigned*)0x462d74=1;*(unsigned*)0x462d70=0;
+            *(unsigned*)0x74f174=frame%17+2;*(unsigned*)0x74f178=frame%17+3;
+        }
         memset(&desc,0,sizeof(desc));desc.dwSize=sizeof(desc);
         check(IDirectDrawSurface_Lock(back,0,&desc,DDLOCK_WAIT,0),"Lock");
         for(y=0;y<480;y++)memcpy((char*)desc.lpSurface+y*desc.lPitch,pixels+y*640,640);

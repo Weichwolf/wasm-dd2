@@ -135,6 +135,22 @@ def verify(args):
     played = (args.original/'audio'/audio['played_streams'][-1]['file']).read_bytes()
     require(len(accepted) == services['frames']*8 and accepted[:len(played)] == played,
             'original accepted/played extent differs')
+    endpoint_observation=None
+    if args.video_reference:
+        from reference.video_frames import observe
+        video_source=observe(args.original)
+        require(video_source==read(args.video_reference),'independently observed original video differs')
+        if video_source.get('presentation_cd_state_observed'):
+            require(video_source['trace_sha256']==services['trace_sha256'] and
+                    0<services['completion_position']['flip']<=video_source['frame_count'],
+                    'original presentation endpoint provenance/extent differs')
+            frame=video_source['frames'][services['completion_position']['flip']-1]
+            endpoint_observation=dict(basis='actual original successful presentation at the shared audio endpoint',
+                flip=frame['flip'],trace_line=frame['trace_line'],
+                scene=dict(level=frame['level'],cf=frame['cf'],movie=frame['movie'],
+                    menu=dict(poly_list=frame['poly_list'],restart_cd_audio=frame['restart_cd_audio']),cd=frame['cd']),
+                asynchronous_diagnostic=original['end_state'])
+            original={**original,'end_state':endpoint_observation['scene']}
     targets = {}; inputs = {}
     for name, directory in (('native', args.native), ('native-asan', args.native_asan), ('browser', args.browser)):
         target = read(directory/'checkpoint.json'); inputs[name] = target
@@ -236,6 +252,7 @@ def verify(args):
                                     {name:(directories[name],target) for name,target in inputs.items()},services)
         print(f"PASS joint original video/audio: {report['video']['bounded_frames']} presentations per target",flush=True)
         report['scope']='Actual bounded menu/loading/replay/return video and shared-device PCM from the same original and port runs, with all twelve observed key edges and observed clock/audio services. Every indexed/palette byte is compared. Browser canvas pixels and per-frame clocks are checked. Intro, original unattached device palettes, physical OS/display timing and other scenarios remain unproved.'
+    if endpoint_observation:report['original_endpoint_observation']=endpoint_observation
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened = open_files()
     for directory in (args.native,args.native_asan,args.browser):

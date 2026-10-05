@@ -24,13 +24,16 @@ def main():
     out.mkdir();source=json.loads(args.reference.read_text());assert source['pass_'] and source['frame_count']>=2
     with Records(args.original) as records:raw=[records[i] for i in range(2)]
     cases={}
-    for case in ('exact','pixel','palette','truncated','index','state','open-file'):
+    cases_to_check=('exact','pixel','palette','truncated','index','state','open-file')
+    if source.get('rng_seed_observed'):cases_to_check+=('rng-seed','rng-missing')
+    for case in cases_to_check:
         directory=out/case;directory.mkdir();opened=None;stopped=[]
         comparison=Comparison(directory,args.original,source,2,lambda:stopped.append(True)).start()
         try:
             with (directory/'presentations.jsonl').open('w') as journal:
                 for i in range(2):
                     row=dict(index=i,**{k:source['frames'][i][k] for k in FIELDS})
+                    if 'rng_seed' in source['frames'][i]:row['rng_seed']=source['frames'][i]['rng_seed']
                     pixels=bytearray(raw[i][128:128+307200]);palette=bytearray(raw[i][128+307200:128+308224])
                     if i==0:
                         if case=='pixel':pixels[42]^=1
@@ -38,6 +41,8 @@ def main():
                         elif case=='truncated':pixels=pixels[:-1]
                         elif case=='index':row['index']=1
                         elif case=='state':row['cf']+=1
+                        elif case=='rng-seed':row['rng_seed']^=1
+                        elif case=='rng-missing':del row['rng_seed']
                     (directory/f'f{i:05d}.bin').write_bytes(pixels)
                     (directory/f'f{i:05d}.pal').write_bytes(palette)
                     if case=='open-file' and i==0:opened=(directory/f'f{i:05d}.bin').open('rb')
@@ -63,7 +68,7 @@ def main():
             if path.is_file():
                 stat=path.stat();assert (stat.st_dev,stat.st_ino) not in opened
         shutil.rmtree(directory)
-    check_space(out);print('Verified incremental transport and six rejection cases; no port parity claim')
+    check_space(out);print('Verified incremental transport and',len(cases)-1,'rejection cases; no port parity claim')
 
 
 if __name__=='__main__':main()

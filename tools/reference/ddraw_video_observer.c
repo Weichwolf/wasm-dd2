@@ -21,6 +21,7 @@ static HANDLE backend,output;
 static U32 serial,attempts;
 static U8 palette[1024];
 static int initialized;
+static U32 observe_rng;
 static U32 chunk_frames,chunk_number,chunk_count,maximum_frames=4096;
 static char capture_path[1024],part_path[1100],closed_path[1100];
 IMPORT int API CloseHandle(HANDLE);
@@ -43,6 +44,17 @@ static U32 option(const char *name,U32 fallback,U32 limit){
         n=n*10+(U32)(value[i]-'0');if(n>limit)fail(155);
     }
     if(!n)fail(155);return n;
+}
+static U32 random_seed(void){
+    static const U8 getter[6]={0xa1,0x7c,0x09,0x94,0x00,0xc3};
+    U32 i,base;
+    /* Verified original Watcom getter: mov eax,[0x94097c]; ret.
+     * rand adds 12 to this pointer. Never call the getter or advance rand. */
+    if(*(volatile U32*)0x46c32c!=0x4571fb)fail(158);
+    for(i=0;i<6;i++)if(((volatile U8*)0x4571fb)[i]!=getter[i])fail(158);
+    base=*(volatile U32*)0x94097c;
+    if(!base || (base&3) || base>0xfffffff0u)fail(158);
+    return *(volatile U32*)(base+12);
 }
 static void open_chunk(void){
     char *p=part_path,*q=closed_path;const char *s=capture_path;
@@ -139,6 +151,11 @@ static int API flip(Wrapper *w,void *target,void *flags){
     for(i=0;i<307200;i++)if(w->back->pixels[i]!=((volatile U8*)0x700450)[i])fail(150);
     record[21]=307200;record[22]=1024;record[23]=1024;
     record[24]=(U32)palette_hr;record[25]=(U32)entries_hr;
+    if(observe_rng){
+        record[1]=3;record[26]=random_seed();
+        record[27]=*(volatile U32*)0x462d74;record[28]=*(volatile U32*)0x462d70;
+        record[29]=*(volatile U32*)0x74f174;record[30]=*(volatile U32*)0x74f178;
+    }
     if(serial>maximum_frames)fail(154);
     if(chunk_frames && !output)open_chunk();
     write_bytes(record,sizeof(record));write_bytes(w->back->pixels,307200);
@@ -165,6 +182,7 @@ int API DirectDrawCreate(void *guid,Object **result,void *outer){
         {U32 i;for(i=0;i<=length;i++)capture_path[i]=path[i];}
         chunk_frames=option("DD2_VIDEO_CHUNK_FRAMES",0,128);
         maximum_frames=option("DD2_VIDEO_MAX_FRAMES",4096,60000);
+        observe_rng=option("DD2_VIDEO_RNG",0,1);
         if(!chunk_frames && maximum_frames>4096)fail(155);
         if(!chunk_frames){
             output=CreateFileA(path,0x40000000u,3,0,1,0x80,0);if(output==(HANDLE)-1)fail(153);

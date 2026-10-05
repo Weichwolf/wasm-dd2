@@ -24,6 +24,7 @@ def equal_bytes(original,actual,label):
 
 def match_browser(original,actual,rgba_sha256):
     require(all(actual[k]==original[k] for k in FIELDS),'browser presentation state/clock differs')
+    if 'rng_seed' in original:require(actual.get('rng_seed')==original['rng_seed'],'browser computed RNG seed differs')
     require(actual['framebuffer_sha256']==original['framebuffer_sha256'] and
             actual['palette_sha256']==original['palette_sha256'] and actual['original_bytes_compared'] is True,
             'browser original indexed/palette byte comparison differs')
@@ -31,6 +32,7 @@ def match_browser(original,actual,rgba_sha256):
 
 
 def match_stream(original,actual):
+    if 'rng_seed' in original:require(actual.get('rng_seed')==original['rng_seed'],'native computed RNG seed differs')
     require(actual['original_bytes_compared'] is True and actual['index']==original['index'] and
             all(actual[k]==original[k] for k in ('level','cf','poly_list','restart_cd_audio')) and
             actual['framebuffer_sha256']==original['framebuffer_sha256'] and
@@ -83,6 +85,7 @@ def verify(original,reference,targets,services):
                 row=video[name][index]
                 if name=='browser':match_browser(expected,row,rgba_sha)
                 else:
+                    if 'rng_seed' in expected:require(row.get('rng_seed')==expected['rng_seed'],name+' computed RNG seed differs')
                     require(all(row[k]==expected[k] for k in ('level','cf','poly_list','restart_cd_audio')),
                             name+' presentation state differs')
                     if name in streams:
@@ -93,7 +96,20 @@ def verify(original,reference,targets,services):
                         equal_bytes(palette,(directory/f'video/f{index:05d}.pal').read_bytes(),name+' palette '+str(index))
                 results[name]['frame_hashes'].append(dict(index=index,framebuffer_sha256=expected['framebuffer_sha256'],
                                                         palette_sha256=expected['palette_sha256']))
+                if 'rng_seed' in expected:results[name]['frame_hashes'][-1]['rng_seed']=row['rng_seed']
             if index==0:
+                if 'rng_seed' in expected:
+                    for target in video:
+                        actual=streams.get(target,video[target])[0]
+                        for case in ('changed','missing'):
+                            bad=copy.deepcopy(actual)
+                            if case=='changed':bad['rng_seed']^=1
+                            else:del bad['rng_seed']
+                            try:
+                                if target=='browser':match_browser(expected,bad,rgba_sha)
+                                else:match_stream(expected,bad)
+                            except RuntimeError:negative[target+'-rng-'+case]=dict(rejected=True)
+                            else:raise AssertionError('damaged/missing computed RNG seed accepted')
                 for target,frames in streams.items():
                     for case,field in [('byte-comparison','original_bytes_compared'),('pixel','framebuffer_sha256'),
                                        ('palette','palette_sha256'),('index','index')]:
@@ -117,9 +133,10 @@ def verify(original,reference,targets,services):
                     try:match_browser(expected,bad,rgba_sha)
                     except RuntimeError:negative[case]=dict(rejected=True)
                     else:raise AssertionError('damaged browser '+case+' accepted')
-    return dict(scope=__doc__.strip(),pass_=True,original_video_sha256=source['video_sha256'],
+    return dict(scope=__doc__.strip(),pass_=True,rng_seed_observed=source.get('rng_seed_observed',False),original_video_sha256=source['video_sha256'],
         original_trace_sha256=source['trace_sha256'],bounded_frames=end,
         racing_frames=sum(f['level']!=0 for f in source['frames'][:end]),
         attached_device_palettes=sum(f['device_palette_observed'] for f in source['frames'][:end]),
         missing_device_palette_frames=source['missing_device_palette_frames'],
+        terminal_unobserved_flip=source.get('terminal_unobserved_flip'),
         original_frames_after_audio_endpoint=source['frame_count']-end,targets=results,negative_cases=negative)

@@ -85,6 +85,8 @@ class Comparison:
             expected = self.source['frames'][index]
             if row['index'] != index or any(row[k] != expected[k] for k in FIELDS):
                 raise ValueError('Native presentation order/state differs at '+str(index))
+            if 'rng_seed' in expected and row.get('rng_seed')!=expected['rng_seed']:
+                raise ValueError('Native computed RNG seed differs at '+str(index))
             raw = self.records[index]
             values = []
             for suffix, begin, size in [('bin',128,307200),('pal',128+307200,1024)]:

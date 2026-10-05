@@ -17,6 +17,7 @@ import subprocess
 from artifacts import WORK, check_space, open_files, run_bounded
 from reference.ddraw_video_observer import build
 from reference.video_archive import Collector, Records, RECORD_BYTES
+from reference.video_frames import terminal_flip
 
 ROOT = Path(__file__).resolve().parents[1]
 COMPILER = ROOT / 'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'
@@ -39,14 +40,19 @@ try { records=new VideoRecords(process.argv[2]);const sha=crypto.createHash('sha
     return json.loads(result.stdout)
 
 
-def verify(directory, frames):
+def verify(directory, frames, rng=False):
     base = bytes((x//16+y//16)&255 for y in range(480) for x in range(640))
     sha = hashlib.sha256()
+    seed=1
     with Records(directory) as records:
         assert len(records) == frames
         for i, raw in enumerate(records):
             header = struct.unpack_from('<32I', raw)
-            assert header[:4] == (0x32564444,1,i+1,i+1)
+            assert header[:4] == (0x32564444,3 if rng else 1,i+1,i+1)
+            if rng:
+                seed=(seed*1103515245+12345)&0xffffffff
+                assert header[26]==seed and header[27:31]==(1,0,(i%17)+2,(i%17)+3) and header[31]==0
+            else:assert not any(header[26:])
             assert header[9] == i and header[13] == i*2
             assert header[17:24] == (640,480,640,8,307200,1024,1024)
             pixels = base.translate(bytes((p+i)&255 for p in range(256)))
@@ -106,6 +112,20 @@ def negatives(output, directory):
             else:raise AssertionError('Truncated block accepted')
         assert path.exists()
         shutil.rmtree(broken)
+    pending=dict(valid_tail=True,thread=36,entry_line=100,last_line=120)
+    assert terminal_flip(18,17,17,pending,36)['presentation_observed'] is False
+    assert terminal_flip(17,17,17,None,36) is None
+    for name,args in {
+        'two-missing':(19,17,17,pending,36),
+        'interior-marker-gap':(18,17,16,pending,36),
+        'wrong-thread':(18,17,17,pending,37),
+        'non-ddraw-tail':(18,17,17,dict(pending,valid_tail=False),36),
+        'missing-entry':(18,17,17,None,36),
+        'pending-without-extra':(17,17,17,pending,36),
+    }.items():
+        try:terminal_flip(*args)
+        except ValueError:cases['terminal-'+name]=dict(rejected=True)
+        else:raise AssertionError('Unobserved presentation gap accepted: '+name)
     return cases
 
 
@@ -135,19 +155,21 @@ def main():
             env['DISPLAY'] = ':'+number
             subprocess.run(['wineboot','--init'],env=env,stdout=log,stderr=log,check=True,timeout=60)
             results = {}
-            for kind,frames in [('legacy',17),('archive',args.frames)]:
+            for kind,frames in [('legacy',17),('rng',17),('archive',args.frames)]:
                 directory = output/kind;directory.mkdir()
                 for name in ('ddraw.dll','_ddraw_real.dll','probe.exe'):
                     shutil.copyfile(observer/name,directory/name)
                 capture_env = {**env,'WINEDLLOVERRIDES':'ddraw=n;_ddraw_real=n',
                     'DD2_VIDEO_CAPTURE':'Z:'+str(directory/'video.bin').replace('/','\\')}
                 collector = None
+                rng=kind!='legacy'
+                if rng:capture_env['DD2_VIDEO_RNG']='1'
                 if kind == 'archive':
                     capture_env.update(DD2_VIDEO_CHUNK_FRAMES='128',DD2_VIDEO_MAX_FRAMES=str(frames))
                     collector = Collector(directory).start()
                 try:
                     with (directory/'probe.json').open('w') as proof:
-                        run_bounded(['wine',str(directory/'probe.exe'),str(frames)],
+                        run_bounded(['wine',str(directory/'probe.exe'),str(frames)]+(['rng'] if rng else []),
                             directory=output,timeout=300,check=True,env=capture_env,cwd=directory,
                             stdout=proof,stderr=log)
                     assert json.loads((directory/'probe.json').read_text())['frames'] == frames
@@ -155,17 +177,32 @@ def main():
                     subprocess.run(['wineserver','-k'],env=env,stdout=log,stderr=log,timeout=10,check=True)
                     subprocess.run(['wineserver','-w'],env=env,stdout=log,stderr=log,timeout=10,check=True)
                     if collector:report['archive'] = collector.finish()
-                results[kind] = verify(directory,frames)
+                results[kind] = verify(directory,frames,rng)
                 node = node_read(directory)
                 assert node['frames'] == frames and node['sha256'] == results[kind]['sha256']
                 results[kind]['node'] = node
-            report.update(pass_=True,targets=results,negative_cases=negatives(output,output/'archive'))
+            cases=negatives(output,output/'archive')
+            bad=output/'negative-getter';bad.mkdir()
+            for name in ('ddraw.dll','_ddraw_real.dll','probe.exe'):shutil.copyfile(observer/name,bad/name)
+            bad_env={**env,'WINEDLLOVERRIDES':'ddraw=n;_ddraw_real=n','DD2_VIDEO_RNG':'1',
+                     'DD2_VIDEO_CAPTURE':'Z:'+str(bad/'video.bin').replace('/','\\')}
+            try:
+                result=run_bounded(['wine',str(bad/'probe.exe'),'1','bad-getter'],directory=output,
+                    env=bad_env,cwd=bad,stdout=log,stderr=log,timeout=60,check=False)
+                assert result.returncode==158,'Unsupported RNG getter was accepted'
+                assert not (bad/'video.bin').stat().st_size,'Invented seed record was written'
+                cases['unsupported-rng-getter']=dict(rejected=True,exit_code=158)
+            finally:
+                subprocess.run(['wineserver','-k'],env=env,stdout=log,stderr=log,timeout=10,check=True)
+                subprocess.run(['wineserver','-w'],env=env,stdout=log,stderr=log,timeout=10,check=True)
+            shutil.rmtree(bad)
+            report.update(pass_=True,targets=results,negative_cases=cases)
     finally:
         if display:display.terminate();display.wait(timeout=5)
         (output/'report.json').write_text(json.dumps(report,indent=2)+'\n');check_space(output)
     # The durable report precedes raw cleanup; do not delete any live handles.
     opened = open_files()
-    for directory in (output/'legacy',output/'archive',output/'wine-prefix'):
+    for directory in (output/'legacy',output/'rng',output/'archive',output/'wine-prefix'):
         for path in directory.rglob('*'):
             if path.is_file():
                 stat = path.stat()

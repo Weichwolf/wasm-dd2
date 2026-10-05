@@ -72,6 +72,8 @@ def build(output,system=SYSTEM_DDRAW):
                 source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs},
                 observer_sha256=hashlib.sha256((output/'ddraw.dll').read_bytes()).hexdigest(),
                 record_bytes=128+307200+1024+1024,maximum_frames=4096,
+                record_versions=[1,2,3],rng_record_version=3,rng_getter_address=0x4571fb,
+                rng_getter_bytes='a17c099400c3',rng_thread_pointer_address=0x94097c,rng_seed_offset=12,
                 archive_maximum_frames=60000,archive_maximum_chunk_frames=128)
     (output/'build.json').write_text(json.dumps(report,indent=2)+'\n');check_space(output)
     return report

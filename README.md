@@ -1982,6 +1982,28 @@ for differing original inputs, not reported as engine timing failures.
 Report: `/tmp/wasm-dd2/replay-av-897-final-verified/report.json`. This remains a
 bounded replay/menu proof; full races, intro output and physical timing are open.
 
+Add `--trace-video-rng` with `--trace-video` to observe the original Watcom
+RNG seed at each successful presentation. The observer verifies the original
+CRT getter bytes and reads its thread-data seed without calling or advancing
+the generator. Version 3 records also include the CD state at that presentation;
+the joint verifier uses the presentation at the shared audio endpoint instead
+of a freely running, potentially earlier scalar snapshot. Native patch 874
+logs its own computed seed, while the browser reads its actual WASM seed through
+the independently verified layout. Captured seeds are assertions, never inputs
+to either generator; original per-call counts and call sites remain unobserved.
+
+The fresh replay run in `/tmp/wasm-dd2/replay-rng-906-final-verified/report.json`
+passes on native, ASan and browser: all 1,744 indexed frames/palettes, per-frame
+RNG seeds, 3,535,008 accepted PCM bytes and the 3,520,912-byte played prefix match.
+All 39 altered evidence/input cases are rejected, including changed or missing
+seeds in each target. Both actual one-frame Enter-release shifts fail the engine
+timing assertion in this recording. Intro playback was skipped to bound verbose
+Wine logs; full races, intro output and physical timing remain open. The Wine
+storage probe additionally checks version 3 seeds/CD fields over 4,101 synthetic
+presentations and rejects an unsupported getter. An unfinished final Flip is
+reported without inventing an image or seed, and accepted only for a single
+terminal DirectDraw-only trace suffix on the engine thread; interior gaps fail.
+
 To capture this evidence, add `--trace-video` to the original command together
 with `--trace-keyboard --keep-movie`, then export its video after the original
 capture completes. Use a fresh directory for each run:
