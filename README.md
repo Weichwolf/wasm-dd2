@@ -1493,6 +1493,84 @@ references. The full startup check uses the original MCI exclusive endpoint:
 Wine source report and source PCM hashes; complete output-clock/device parity
 remains outside this regression check.
 
+Patch 890 uses source-relative browser output time for movie scheduling and
+drain. `AudioContext.currentTime` observes rendered quanta ahead of consumed
+audio. The related context/performance pair from
+[getOutputTimestamp](https://www.w3.org/TR/webaudio-1.0/#dom-audiocontext-getoutputtimestamp)
+estimates output position at the current performance time. The estimate stays
+monotonic, does not exceed rendered audio, and freezes during suspension.
+It discards observed sub-millisecond startup positions: Chromium clamps
+negative output position to zero and then adds small render-work increments,
+whose extrapolation would advance video through the silent prefill. The
+actual scheduled source start is subtracted, including contexts already
+running before scheduling. Source completion requires both `onended` and
+output reaching the complete source extent. Canonical PCM remains unchanged.
+
+`capture_browser_movie_device.py --clock-profile` independently brackets
+browser performance time with host hrtime before and after playback. Six
+native CLOCK_MONOTONIC probes validate that host clock domain. Sixteen RPC
+brackets intersect without fitting clocks to audio/video. Pinned Chromium
+154.0.8037.92's TimeClamper allows 100-us coarse rounding; actual consumed
+device intervals supply separate source-position bounds. Its context/output
+implementation and precision sources are hash-bound in
+`browser-clock-1160-source/sources.json`. The observer also binds every actual
+clock return before presentation, startup write, complete canonical source,
+converted device interval and event chronology. `--source-delay-ms 80` adds
+declared main-thread work before scheduling, preserving real context clocks,
+graph nodes and source PCM; it is a load regression, not an original-input
+timing comparison.
+
+The final Intro capture has 1711 presentations. Median video lead changes
+from 104.94..105.94 ms in the prior render-clock capture to -4.35..-3.45 ms:
+negative means video follows the independently consumed source position.
+The delayed-source skip schedules at 87.07483 ms of context time, yet its
+median video lead is -4.67..-3.58 ms. Both final captures have no positive-PTS
+frame ahead of its consumed source position. Their initial frame zero is
+still submitted before source output; that startup relation remains open.
+At full-source `onended`, 2406..2426 source frames remain unconsumed; context
+close now occurs 674..694 frames after the source endpoint. Eight captures
+include earlier clock implementations and reject 56 altered clock controls
+(`browser-clock-1193-comparison/report.json`). Valid measurements do not mean
+each implementation satisfies the desired clock behavior.
+
+The separate literal device comparison still fails whole original PCM.
+The final full Intro accepts and consumes 1514069 S16 frames: 1882 startup
+zeros, the complete converted source, and 2283 trailing zeros. Source samples
+from both final AudioBuffers still equal all 6039616 original source bytes;
+Chromium's S16 converter and complete driver lifetime remain different.
+Twenty altered PCM/start-clock controls reject
+(`browser-clock-1194-pcm/report.json`). No byte shifts, gain changes, fitted
+timestamps or cancellation-input equivalence are used for a parity claim.
+
+The actual platform imports also pass declared render/output-clock checks,
+including a forced 1024-sample scheduled start, clamped startup, render-ended
+before consumed, regressing timestamps, suspension, completion, double stop
+and no-device clock wrap. The old production import reproduces its render-clock
+and premature-completion failures (`browser-clock-1190-fixture/report.json`).
+Native SDL preprocessing remains identical; native ASan/UBSan and WASM pass
+all six full/skip/audio-unavailable Intro/Outro transport, source-PCM, literal
+video and deadline checks (`browser-clock-1184-native-wasm/report.json`). These
+component and device observations do not establish whole original timing or
+complete game parity.
+
+The final browser build passes complete Intro/Outro and both skip paths with
+every observed canvas pixel, full Wine ACM source PCM, reset and context-close
+check (`browser-clock-1191-sinks/report.json`). Normal full/skip/activation
+startup also reaches real menus and a live 20-car race with exact source,
+canvas and submitted shared-mixer bytes (`browser-clock-1192-startup/report.json`).
+All six preparation/activation/allocation/open/rate-failure cases remain valid
+(`browser-clock-1195-ready/report.json`). These reports bind the current WASM
+and platform sources; completed raw comparison PCM is removed after reports.
+
+```sh
+python3 tools/capture_browser_movie_device.py --build web/dd2 --clock-profile \
+  --output /tmp/wasm-dd2/browser-movie-clock
+python3 tools/observe_browser_movie_clock.py \
+  --capture /tmp/wasm-dd2/browser-movie-clock \
+  --clock-sources /tmp/wasm-dd2/browser-clock-1160-source \
+  --output /tmp/wasm-dd2/browser-movie-clock-report
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

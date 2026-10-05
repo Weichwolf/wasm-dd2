@@ -4,19 +4,50 @@ const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=requ
 const {serve,chromium}=require('./felib');
 const build=path.resolve(process.argv[2]),output=path.resolve(process.argv[3]);
 const movie=process.argv[4]||'Intro.avi',skip=process.argv.includes('--skip');
+const clockProfile=process.argv.includes('--clock-profile');
+const delayOption=process.argv.find(a=>a.startsWith('--source-delay-ms='));
+const sourceDelayMs=delayOption?Number(delayOption.split('=')[1]):0;
+assert(Number.isFinite(sourceDelayMs)&&sourceDelayMs>=0&&sourceDelayMs<=200,'declared source preparation work must be 0..200 ms');
 const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 (async()=>{
  const server=serve(build);await new Promise(r=>server.listen(0,r));let browser;
  const errors=[];
+ const clockBounds=[],hostClock=[];
+ function checkHostClock(){
+  if(!clockProfile)return;
+  const {execFileSync}=require('child_process');
+  for(let i=0;i<3;i++){
+   const begin=process.hrtime.bigint(),value=BigInt(execFileSync(path.join(output,'clock-probe'),{encoding:'utf8'}).trim()),end=process.hrtime.bigint();
+   assert(begin<=value&&value<=end,'Node hrtime does not bracket native CLOCK_MONOTONIC');
+   hostClock.push({begin_ns:String(begin),native_monotonic_ns:String(value),end_ns:String(end)});
+  }
+ }
+ async function sampleClock(page,phase){
+  if(!clockProfile)return;
+  for(let i=0;i<8;i++){
+   const begin=process.hrtime.bigint();
+   const value=await page.evaluate(()=>({performance_ms:performance.now(),time_origin_ms:performance.timeOrigin}));
+   const end=process.hrtime.bigint();
+   clockBounds.push({phase,begin_ns:String(begin),end_ns:String(end),...value});
+  }
+ }
+ checkHostClock();
  fs.writeFileSync(path.join(output,'observer-source.js'),fs.readFileSync(__filename));
  try{
   browser=await chromium.launch({args:['--no-sandbox','--alsa-output-device=default'],
                                 ignoreDefaultArgs:['--mute-audio']});
   const page=await browser.newPage();
   page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>errors.push('renderer crash'));
-  await page.addInitScript(()=>{
+  await page.addInitScript(({clockProfile,sourceDelayMs})=>{
    window.__deviceMovie={events:[],frames:[],source:null};
+   if(clockProfile)__deviceMovie.clock_calls=0;
    const contexts=new WeakSet(),observed=new WeakSet();let preparing;
+   function snapshot(ac){
+    const begin=performance.now(),context=ac.currentTime,out=ac.getOutputTimestamp(),end=performance.now();
+    return {begin_performance_ms:begin,end_performance_ms:end,context_time:context,
+            output_context_time:out.contextTime,output_performance_ms:out.performanceTime,
+            base_latency:ac.baseLatency,output_latency:ac.outputLatency,state:ac.state};
+   }
    function stamp(event,ac,extra={}){
     const out=ac.getOutputTimestamp();
     __deviceMovie.events.push({event,performance_ms:performance.now(),context_time:ac.currentTime,
@@ -26,6 +57,9 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
    const make=AudioContext.prototype.createBufferSource;
    AudioContext.prototype.createBufferSource=function(...args){
     const ac=this,source=make.apply(this,args),start=source.start;
+    // Optional declared main-thread work exposes a nonzero scheduled start;
+    // preserve actual nodes, context clocks and every source PCM sample.
+    if(preparing&&sourceDelayMs){const began=performance.now();while(performance.now()-began<sourceDelayMs){}}
     source.start=function(...values){
      if(preparing){
       const e=preparing,b=source.buffer;
@@ -54,19 +88,33 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
     };
     imports.env.movie_present=function(...args){
      const ac=Module._dd2movieAc,before=performance.now(),time=ac?.currentTime??null;
+     const beforeClock=clockProfile&&ac?snapshot(ac):null;
      const result=present.apply(this,args);
      __deviceMovie.frames.push({frame:__deviceMovie.frames.length,begin_performance_ms:before,
-                               end_performance_ms:performance.now(),context_time:time});
+                               end_performance_ms:performance.now(),context_time:time,
+                               ...(clockProfile?{movie_clock_ms:__deviceMovie.last_movie_clock_ms,
+                                                before_clock:beforeClock,after_clock:ac?snapshot(ac):null}:{})});
      return result;
     };
+    if(clockProfile){
+     const clock=imports.env.movie_clock;
+     assertClock(clock);
+     imports.env.movie_clock=function(...args){
+      const value=clock.apply(this,args);__deviceMovie.clock_calls++;
+      if(__deviceMovie.clock_calls===1)__deviceMovie.initial_movie_clock_ms=value;
+      __deviceMovie.last_movie_clock_ms=value;return value;
+     };
+    }
    }
+   function assertClock(clock){if(typeof clock!=='function')throw Error('production movie clock import missing');}
    for(const name of ['instantiate','instantiateStreaming']){
     const make=WebAssembly[name];if(make)WebAssembly[name]=function(bytes,imports,...rest){observe(imports);return make.call(this,bytes,imports,...rest);};
    }
-  });
+  },{clockProfile,sourceDelayMs});
   await page.goto(`http://localhost:${server.address().port}/index.html?movie=${encodeURIComponent(movie.toUpperCase())}`);
   await page.waitForFunction(()=>!!Module._dd2movieSource&&HEAP32[0x462cd4>>2]===1,null,{timeout:30000});
   await page.click('#canvas');
+  await sampleClock(page,'playing');
   if(skip){
    await page.waitForFunction(()=>__deviceMovie.frames.length>=26);
    await page.keyboard.up('Escape');await page.waitForTimeout(200);
@@ -75,6 +123,7 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
   }
   await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0&&!Module._dd2movieSource&&
                                __deviceMovie.events.some(e=>e.event==='context-close'),null,{timeout:110000});
+  await sampleClock(page,'finished');checkHostClock();
   // Inspect source PCM after playback. Walking a whole AudioBuffer inside
   // source.start would itself add empty rendered quanta before scheduling.
   const observed=await page.evaluate(()=>{
@@ -110,8 +159,11 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
   const report={scope:'Actual unmuted Chromium ALSA movie device and unchanged source/API observations; no original parity claim',
                 observations_valid:true,original_port_parity:'unproven',movie,skip,
                 key_up_retained:skip,wasm_sha256:hash(path.join(build,'index.wasm')),
+                source_schedule_delay_ms:sourceDelayMs,
                 chromium_version:browser.version(),device_closed_before_browser_shutdown:true,
-                observer_source_sha256:hash(path.join(output,'observer-source.js')),...observed};
+                observer_source_sha256:hash(path.join(output,'observer-source.js')),
+                ...(clockProfile?{clock_profile:true,clock_bounds:clockBounds,host_clock_bounds:hostClock,
+                                  host_clock_probe_sha256:hash(path.join(output,'clock_probe.c'))}:{}),...observed};
   fs.writeFileSync(path.join(output,'browser.json'),JSON.stringify(report,null,2)+'\n');
   console.log(`Observed unmuted browser ${movie} skip=${skip}: ${observed.frames.length} frames, device closed normally`);
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

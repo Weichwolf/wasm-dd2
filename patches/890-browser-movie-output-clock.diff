@@ -1,0 +1,64 @@
+Use the browser's output timestamp for movie presentation and audio drain.
+
+Wine MCIAVI starts its wall-clock loop after queuing source audio; the
+observed original video is near its actual consumed source position.
+Chromium currentTime is the next render quantum, not consumed output: real
+ALSA captures show pictures about 105 ms ahead of their source audio and
+onended about 2400 source frames before the output endpoint. Use the related
+getOutputTimestamp context/performance pair as specified by Web Audio to
+estimate the output position at the current performance time. Before a valid
+positive output millisecond, hold the movie clock at zero. Chromium clamps
+negative startup positions to zero, then adds sub-millisecond render work;
+extrapolating that zero-millisecond position falsely advances the first frames
+through the silent prefill. Subtract the actual scheduled source start:
+under load the context can already have rendered silent quanta before the
+source is scheduled. Keep the valid source-relative output estimate
+monotonic and bounded by already rendered audio, including suspension.
+
+Audio completion requires both the source-ended event and output reaching
+the scheduled source endpoint. Do not alter source samples, add silence,
+fit clocks, or claim whole original PCM/device parity from this correction.
+
+--- a/dd2_movie_platform.c
++++ b/dd2_movie_platform.c
+@@ -27,11 +27,25 @@
+     var source=ac.createBufferSource();source.buffer=buffer;source.connect(ac.destination);
+     Module._dd2movieDone=false;Module._dd2movieClock=ac;
+     Module._dd2movieSource=source;
++    var outputTime=0,startTime=ac.currentTime;
++    Module._dd2movieOutputTime=function(){
++        if(ac.state!=='running')return outputTime;
++        var timestamp=ac.getOutputTimestamp();
++        if(timestamp.performanceTime>0 && Math.floor(timestamp.contextTime*1000)>0) {
++            var elapsed=Math.max(0,(performance.now()-timestamp.performanceTime)/1000);
++            outputTime=Math.max(outputTime,Math.min(ac.currentTime,timestamp.contextTime+elapsed)-startTime);
++        }
++        return outputTime;
++    };
+     source.onended=function(){Module._dd2movieDone=true;};
+-    source.start(ac.currentTime);
++    Module._dd2movieEndTime=frames/rate;
++    source.start(startTime);
+     return 0;
+ });
+-EM_JS(int,movie_audio_done,(),{return Module._dd2movieDone ? 1 : 0;});
++EM_JS(int,movie_audio_done,(),{
++    if(!Module._dd2movieOutputTime)return Module._dd2movieDone ? 1 : 0;
++    return Module._dd2movieDone && Module._dd2movieOutputTime()>=Module._dd2movieEndTime ? 1 : 0;
++});
+ EM_JS(void,movie_audio_stop,(),{
+     if(Module._dd2movieSource) {
+         Module._dd2movieSource.onended=null;
+@@ -39,10 +53,11 @@
+         Module._dd2movieSource.disconnect();Module._dd2movieSource=null;
+     }
+     Module._dd2movieClock=null;Module._dd2movieDone=true;
++    Module._dd2movieOutputTime=null;Module._dd2movieEndTime=0;
+     if(Module._dd2movieAc){Module._dd2movieAc.close().catch(function(){});Module._dd2movieAc=null;}
+ });
+ EM_JS(unsigned,movie_clock,(),{
+-    return Math.floor(Module._dd2movieClock ? Module._dd2movieClock.currentTime*1000 : performance.now())>>>0;
++    return Math.floor(Module._dd2movieOutputTime ? Module._dd2movieOutputTime()*1000 : performance.now())>>>0;
+ });
+ EM_JS(void,movie_present,(const uint32_t* argb),{
+     var canvas=Module.canvas || document.getElementById('canvas');if(!canvas)return;

@@ -28,11 +28,20 @@ def main():
     parser.add_argument('--build',type=Path,required=True)
     parser.add_argument('--movie',choices=('Intro.avi','Outro.avi'),default='Intro.avi')
     parser.add_argument('--skip',action='store_true')
+    parser.add_argument('--clock-profile',action='store_true',help='bracket browser performance time with native monotonic time and observe actual movie clocks')
+    parser.add_argument('--source-delay-ms',type=int,choices=range(201),default=0,metavar='0..200',
+                        help='declared main-thread work before scheduling the unchanged AudioBuffer source')
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args();output=prepare_output(args.output)
     require(WORK in output.parents,'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True,exist_ok=False);(output/'audio').mkdir()
     libraries=build_audio(output/'audio-libraries')
+    if args.clock_profile:
+        probe=output/'clock_probe.c'
+        probe.write_text('#include <time.h>\n#include <stdio.h>\n#include <stdint.h>\n'
+                         'int main(void){struct timespec t;if(clock_gettime(CLOCK_MONOTONIC,&t))return 1;'
+                         'printf("%llu\\n",(unsigned long long)((uint64_t)t.tv_sec*1000000000+t.tv_nsec));return 0;}\n')
+        subprocess.run(['gcc','-O2','-Wall','-Wextra','-Werror',str(probe),'-o',str(output/'clock-probe')],check=True)
     (output/'asound.conf').write_text(f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                                      'pcm.!default { type dd2clock }\n')
     env={k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
@@ -41,6 +50,8 @@ def main():
                LD_PRELOAD=str(libraries[1]/'dd2_audio.so'))
     command=['node',str(ROOT/'tools/browser/capture_movie_device.js'),str(args.build.resolve()),str(output),args.movie]
     if args.skip:command.append('--skip')
+    if args.clock_profile:command.append('--clock-profile')
+    if args.source_delay_ms:command.append('--source-delay-ms='+str(args.source_delay_ms))
     with (output/'run.log').open('w') as log:
         run_bounded(command,directory=output,env=env,timeout=180,check=True,stdout=log,stderr=subprocess.STDOUT)
     observed=json.loads((output/'browser.json').read_text())
