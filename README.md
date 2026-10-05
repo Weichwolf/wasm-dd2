@@ -261,11 +261,35 @@ Fresh original/native/browser process startups then load this actual final card.
 Every saved field and all seven record pages, wraps and reopening agree, with
 576 exact indexed-frame/palette pairs per port and 38 rejected mutations:
 `/tmp/wasm-dd2/lap-record-1238-file-input-verified.json`.
-This is a controlled file-input case; it does not prove a lap beating the
-provisioned default time, the ports' own live record/name/save sequence or
-chronological original racing A/V. Its producer and extra comparison wrappers
-are diagnostic scripts retained under `/tmp/wasm-dd2/`; they are not public
-verification commands yet. Successful comparison rasters were removed.
+That comparison covered loading/viewing the original-produced card. A further
+real-input check now covers each target's own completed lap, Fastest Lap name
+`D`, record-history shift, complete configuration overwrite and fresh process
+or browser-page restart. Each target's newly saved time must equal its own
+observed lap time; all restored configuration fields must equal its saved
+state, and the existing championship slot must stay unchanged. The empty and
+entered-name dialogs also match the original in 128 complete indexed-frame/
+palette pairs per port, including the browser's actual canvas. The post-race
+dialog retains a constant race frame counter; the comparison records it and
+matches highlight phases without changing engine clocks. Public capture and
+comparison commands are:
+
+```sh
+make capture-live-lap-record LIVE_LAP_RECORD_ARGS='--target original --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/statistics-876-fixture-complete --output /tmp/wasm-dd2/lap-original'
+make capture-live-lap-record LIVE_LAP_RECORD_ARGS='--target native --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/statistics-876-fixture-complete --output /tmp/wasm-dd2/lap-native'
+make capture-browser-live-lap-record BROWSER_LIVE_LAP_RECORD_ARGS='web/dd2 /tmp/wasm-dd2/lap-browser /tmp/wasm-dd2/lap-original'
+make verify-live-lap-record LIVE_LAP_RECORD_VERIFY_ARGS='--original /tmp/wasm-dd2/lap-original --native /tmp/wasm-dd2/lap-native --browser /tmp/wasm-dd2/lap-browser --report /tmp/wasm-dd2/lap-verified.json --clean'
+```
+
+The fixture must be a completed original-generated statistics/configuration
+capture accepted by `verify_statistics_ui.fixture`, not an arbitrary card.
+The recording policy reads the first road track and drives one Amateur car
+through actual X11/Playwright keys; it never writes live state, clocks or RNG.
+Each target drives independently from the same declared edited file input.
+Consequently neither different lap times nor matching name-dialog phases prove
+chronological original racing A/V or a lap beating the provisioned default.
+Full race/audio parity and complete Championship progression remain open.
+Verified report: `/tmp/wasm-dd2/lap-record-1250-public-verified.json`, with 14
+rejected mutations. Successful comparison rasters were removed after writing it.
 
 Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
 split the minute digits from a four-element array, while the sprite loop still

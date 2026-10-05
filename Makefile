@@ -479,3 +479,13 @@ clean: ## remove generated build/ and outputs
 .PHONY: clean-logs
 clean-logs: ## remove logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
+
+.PHONY: capture-live-lap-record capture-browser-live-lap-record verify-live-lap-record
+capture-live-lap-record: ## actual original/native lap/name/configuration save and restart; LIVE_LAP_RECORD_ARGS required
+	python3 $(ROOT)/tools/capture_live_lap_record.py $(LIVE_LAP_RECORD_ARGS)
+
+capture-browser-live-lap-record: ## actual browser lap/name/save/reload; BROWSER_LIVE_LAP_RECORD_ARGS required
+	node $(ROOT)/tools/browser/capture_live_lap_record.js $(BROWSER_LIVE_LAP_RECORD_ARGS)
+
+verify-live-lap-record: ## compare actual record persistence and selected original dialog rasters; LIVE_LAP_RECORD_VERIFY_ARGS required
+	python3 $(ROOT)/tools/verify_live_lap_record.py $(LIVE_LAP_RECORD_VERIFY_ARGS)
