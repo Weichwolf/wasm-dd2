@@ -106,17 +106,30 @@ def parse(raw, serial):
     if len(raw) != RECORD_BYTES:
         raise ValueError('Incomplete original movie readback')
     h = struct.unpack_from('<32I', raw)
-    if (h[:3] != (0x4d324444, 1, serial) or not h[3] or not 0 < h[4] <= 32768 or
+    if (h[0] != 0x4d324444 or h[1] not in (1, 2) or h[2] != serial or not h[3] or not 0 < h[4] <= 32768 or
             h[9:14] != (320, 192, 32, 640, 480) or h[14] or h[15] != 192 or
-            not h[16] or not h[18] or any(h[20:])):
+            not h[16] or not h[18] or any(h[20:] if h[1] == 1 else h[30:])):
         raise ValueError('Unsupported original movie record')
+    clock = {}
+    if h[1] == 2:
+        begin, end, readback, frequency = struct.unpack_from('<4Q', raw, 80)
+        if not frequency or not 0 < begin <= end <= readback:
+            raise ValueError('Reversed or missing original movie QPC observations')
+        for ticks, qpc in ((h[28], begin), (h[29], end)):
+            offset = (ticks-qpc*1000//frequency+0x80000000) % 0x100000000-0x80000000
+            if abs(offset) > 2000:
+                raise ValueError('Original movie QPC/tick domains differ')
+        clock = dict(paint_begin_qpc=begin, paint_end_qpc=end,
+                     readback_end_qpc=readback, frequency=frequency,
+                     ticks_before=h[28], ticks_after=h[29])
     if any(raw[128+h[4]:128+32768]):
         raise ValueError('Nonzero compressed-packet padding')
     rect = list(struct.unpack_from('<4i', raw, 20))
     if rect not in ([0, 0, 320, 192], [0, 48, 640, 384]):
         raise ValueError('Unsupported actual movie destination')
     at = 128+32768
-    return dict(serial=serial, decode_serial=h[3], packet=raw[128:128+h[4]],
+    return dict(serial=serial, record_version=h[1], clock=clock,
+                decode_serial=h[3], packet=raw[128:128+h[4]],
                 rectangle=rect, thread=h[16], observed_ms=h[17],
                 private_mci_window_draws=h[19],
                 source_rgb=raw[at:at+320*192*3], window_argb=raw[at+320*192*3:])
@@ -170,6 +183,7 @@ class Collector:
                     private_mci_window_draws=row['private_mci_window_draws'],
                     packet_sha256=digest(row['packet']),source_rgb_sha256=digest(row['source_rgb']),
                     window_argb_sha256=digest(row['window_argb']))
+                entry.update(record_version=row['record_version'], clock=row['clock'])
                 pending.append((path,before,entry))
             check_space(self.directory);opened=open_files()
             for path,before,_ in pending:

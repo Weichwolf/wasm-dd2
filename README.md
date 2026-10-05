@@ -883,11 +883,30 @@ presentation/audio clocks and physical display/DAC timing remain unverified.
 Use a fresh original capture and fresh output directories; successful raw
 reference captures are removed after the final report.
 
+New original movie captures also bracket the actual forwarded `StretchDIBits`
+call with QPC, retain its readback-end timestamp and frequency, and record
+paired Linux `CLOCK_MONOTONIC_RAW`/`CLOCK_MONOTONIC` engine observation ranges.
+`make observe-movie-timing` validates those authenticated version-2 records,
+their ordering and clock domains, then reports their relation to the virtual
+device's actual played sample intervals. The sampled clock-offset envelope is
+a diagnostic, not a guarantee for unsampled instants or original/port timing.
+Version-1 image records remain readable; they lack these clock measurements.
+
+The actual original run in `movie-clock-956-observed/report.json` has 1711
+presentations, the same complete window digest above, and 1057 paired clock
+observations. Its whole accepted PCM is 6042256 bytes; whole played PCM is
+6041088 bytes. Both contain the same 6039616 source bytes already verified,
+followed by 2640/1472 additional zero bytes respectively. These tails remain
+part of the observed streams. The differing extents expose a driver/drain
+timing mismatch that the previously equal single-run PCM does not settle.
+No fixed padding or audio/video offset fitting is used to claim parity.
+
 ```sh
 make verify-movie-end MOVIE_END_ARGS='--mingw i686-w64-mingw32-gcc --output /tmp/wasm-dd2/default-movie-end'
 node tools/browser/qa_movie.js /tmp/wasm-dd2/browser /tmp/wasm-dd2/avi-source /tmp/wasm-dd2/browser-movie --capture-pcm
 make verify-movie-audio-sinks MOVIE_AUDIO_SINK_ARGS='--capture /tmp/wasm-dd2/original-intro-window --native /tmp/wasm-dd2/native-movie/intro-full --browser /tmp/wasm-dd2/browser-movie --output /tmp/wasm-dd2/intro-accepted-audio'
 make verify-movie-video MOVIE_VIDEO_ARGS='--capture /tmp/wasm-dd2/original-intro-window --native /tmp/wasm-dd2/native --browser /tmp/wasm-dd2/browser --output /tmp/wasm-dd2/intro-window-sinks'
+make observe-movie-timing MOVIE_TIMING_ARGS='--capture /tmp/wasm-dd2/original-intro-window --output /tmp/wasm-dd2/intro-clock-observations'
 ```
 
 Patch 838 fixes corrupted championship names: the computer-name table began at

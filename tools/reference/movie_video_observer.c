@@ -76,8 +76,14 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
     typedef int(API *Call)(HANDLE,int,int,int,int,int,int,int,int,const void*,const Bitmap*,U32,U32);
     typedef void(*Copy)(U32*,U32*,U8*);
     int result;U32 header[32]={0},i,j;HANDLE window,file,peer;Rect rect;Bitmap info={0};
+    U64 paint_begin,paint_end,readback_end,frequency;
+    U32 ticks_before,ticks_after;
     initialize();
+    ticks_before=GetTickCount();
+    if(!QueryPerformanceCounter(&paint_begin))fail(245);
     result=((Call)GetProcAddress(backend,"StretchDIBits"))(target,x,y,width,height,sx,sy,sw,sh,bits,format,usage,operation);
+    if(!QueryPerformanceCounter(&paint_end))fail(245);
+    ticks_after=GetTickCount();
     /* Wine setup processes forward unchanged and never read game memory. */
     if(GetModuleHandleA("dd2h.exe")!=(HANDLE)0x400000||result<=0)return result;
     /* DirectDraw setup also uses GDI. Only the supported AVI output format
@@ -105,6 +111,7 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
         if(!dc||!bitmap||!pixels||!SelectObject(dc,bitmap))fail(239);
     }
     if(!BitBlt(dc,0,0,640,480,target,0,0,0x00cc0020u)||!GdiFlush())fail(240);
+    if(!QueryPerformanceCounter(&readback_end)||!QueryPerformanceFrequency(&frequency)||!frequency)fail(245);
     /* BI_RGB's fourth byte is reserved, not alpha. Normalize only that byte
      * to the ports' opaque convention; every displayed RGB byte is retained. */
     for(i=0;i<640*480;i++)pixels[i]|=0xff000000u;
@@ -112,11 +119,16 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
         const U8 *p=(const U8*)bits+((191-i)*320+j)*4;
         U8 *q=source+(i*320+j)*3;q[0]=p[2];q[1]=p[1];q[2]=p[0];
     }
-    header[0]=0x4d324444u;header[1]=1;header[2]=serial;header[3]=decode_serial;
+    header[0]=0x4d324444u;header[1]=2;header[2]=serial;header[3]=decode_serial;
     header[4]=packet_size;header[5]=(U32)x;header[6]=(U32)y;header[7]=(U32)width;header[8]=(U32)height;
     header[9]=320;header[10]=192;header[11]=32;header[12]=640;header[13]=480;
     header[14]=usage;header[15]=(U32)result;header[16]=GetCurrentThreadId();
     header[17]=GetTickCount();header[18]=(U32)window;header[19]=private_draws;
+    header[20]=(U32)paint_begin;header[21]=(U32)(paint_begin>>32);
+    header[22]=(U32)paint_end;header[23]=(U32)(paint_end>>32);
+    header[24]=(U32)readback_end;header[25]=(U32)(readback_end>>32);
+    header[26]=(U32)frequency;header[27]=(U32)(frequency>>32);
+    header[28]=ticks_before;header[29]=ticks_after;
     filename();file=CreateFileA(part,0x40000000u,3,0,1,0x80,0);
     if(file==(HANDLE)-1)fail(241);
     write_bytes(file,header,sizeof(header));write_bytes(file,packet,sizeof(packet));

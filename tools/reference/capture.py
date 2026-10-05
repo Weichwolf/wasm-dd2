@@ -390,15 +390,16 @@ def run(game, output, args, on_menu=None):
         if video_collector:video_collector.check()
         if movie_collector:movie_collector.check()
         before = time.monotonic_ns()
-        raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
+        clock_anchors = args.trace_timer_callbacks or args.trace_movie_video
+        raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None
         current = state(pid,observe_timers=args.trace_timer_callbacks)
-        raw_after = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
+        raw_after = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None
         after = time.monotonic_ns()
         if engine_log:
             engine_log.write(json.dumps({"read_begin_ns": before, "read_end_ns": after,
                                          **({'qpc_clock':'CLOCK_MONOTONIC_RAW',
                                              'read_begin_raw_ns':raw_before,'read_end_raw_ns':raw_after}
-                                            if args.trace_timer_callbacks else {}),
+                                            if clock_anchors else {}),
                                          **current}) + "\n")
             engine_log.flush()
         return current
