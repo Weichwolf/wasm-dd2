@@ -1375,6 +1375,63 @@ fresh Wine ACM output, and source reset/closed-context ordering passes
 WebAudio source boundaries; consumed browser output samples and original
 presentation clocks remain open.
 
+Actual Chromium device movie capture now uses the existing real-time virtual
+ALSA device with Playwright's default `--mute-audio` removed. A private unavailable
+Pulse socket selects Chromium's ordinary ALSA fallback; the negotiated device
+is the same 22050-Hz stereo S16 format as the original movie reference. No graph
+nodes, source samples or engine state are replaced. The recorder waits for
+actual device-close journals before browser shutdown; killing a pooled audio
+service would leave its final queued samples and lifetime unobserved.
+
+```sh
+python3 tools/capture_browser_movie_device.py \
+  --build /tmp/wasm-dd2/movie-filter-1127-browser \
+  --output /tmp/wasm-dd2/browser-movie-device
+python3 tools/capture_browser_movie_device.py \
+  --build /tmp/wasm-dd2/movie-filter-1127-browser --skip \
+  --output /tmp/wasm-dd2/browser-movie-device-skip
+python3 tools/observe_browser_movie_device.py \
+  --capture /tmp/wasm-dd2/browser-movie-device /tmp/wasm-dd2/browser-movie-device-skip \
+  --original-intro /tmp/wasm-dd2/movie-queue-1059-original \
+  --chromium-sources /tmp/wasm-dd2/browser-device-1140-source \
+  --output /tmp/wasm-dd2/browser-movie-device-report
+```
+
+The completed Chromium 154.0.8037.92 full Intro capture observes 1711 movie
+presentations and 1514069 accepted/consumed device frames. Its initial ALSA write
+contains the independently negotiated 1882-frame silent buffer. The observed
+source-start argument is frame 1920 of the context clock, so the independent
+startup/source-clock prediction puts source sample zero at device frame 3802.
+These recorded start times include source construction and observer work; they
+are not a fitted alignment or a stable latency guarantee.
+
+All 1509904 source frames then match Chromium's actual S16 converter prediction:
+canonical `n/32768` Float32 becomes `n-1` for positive S16 values and remains
+`n` otherwise. Chromium's [ALSA output source](https://raw.githubusercontent.com/chromium/chromium/154.0.8037.92/media/audio/alsa/alsa_output.cc)
+selects S16 and explicitly prefills silence; its
+[sample conversion source](https://raw.githubusercontent.com/chromium/chromium/154.0.8037.92/media/base/audio_sample_types.h)
+uses separate 32767/32768 scales and truncation. The full device stream ends
+with 363 silent frames. This prediction diagnoses the transport; the literal
+whole original comparison remains **false** for both accepted and consumed
+streams, and its source-interval PCM differs too. No initial silence or tails
+are trimmed for a whole-output claim.
+
+The real key-up/key-down cancellation capture has 31 presentations and a
+26310-frame converted source prefix after its independently predicted startup
+interval. Its whole-original comparison is explicitly absent because the
+retained full-original capture has different cancellation inputs. Twenty
+altered source-bit, extra-silence, muted-output, missing-source and source-clock
+controls are rejected (`browser-device-1145-comparison/report.json`). Browser
+context/performance clocks and ALSA CLOCK_MONOTONIC remain separate; no common
+original/port A/V clock or physical DAC equality is established. This device
+comparison exposes gaps that the earlier exact AudioBuffer submission checks
+could not cover. An exhaustive arithmetic check against that pinned Chromium
+header covers all 65536 S16 values: canonical `n/32768` round trips change 32767
+positive values, while Chromium's own `ToFloat`/`FromFloat` round trip still
+changes 768 values (`browser-device-1140-source/roundtrip-report.json`). This
+identifies a provider-conversion issue for further work; the production movie
+source conversion has not been changed by this diagnostic.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
