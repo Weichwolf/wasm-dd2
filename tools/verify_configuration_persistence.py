@@ -216,6 +216,7 @@ def after_restart(ui, report):
 def original_args():
     return SimpleNamespace(mode='menu', wine_debug='-all', audio=False, trace_cd=False,
                            trace_timer_callbacks=False, trace_game_clock=False, trace_multimedia_timer=False,
+                           trace_movie_video=False, trace_movie_timing=False,
                            keep_movie=False, timeout=360, startup_frames=128, champ_history=False,
                            race_stream=False, keys=None, frames=None, frame=1, menu_cycle=0, audio_tail=0)
 
