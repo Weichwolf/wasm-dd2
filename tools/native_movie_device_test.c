@@ -84,8 +84,9 @@ static void require(int ok,const char* why){
 int main(int argc,char** argv){
     int16_t source[22050*2];unsigned i,round;Uint32 started;
     const char* mode=argc>1?argv[1]:"full";
+    int schedule=!strcmp(mode,"schedule");
     int reset_error=!strcmp(mode,"reset-error") || !strcmp(mode,"reset-write-error");
-    int complete=!strcmp(mode,"full") || !strcmp(mode,"tail") || reset_error;
+    int complete=!strcmp(mode,"full") || !strcmp(mode,"tail") || reset_error || schedule;
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
     if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
         for(i=0;i<2205*2;i++)source[i]=12345;
@@ -96,7 +97,7 @@ int main(int argc,char** argv){
     }
     require(complete || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
     for(round=0;round<(complete?2u:1u);round++){
-        int done;size_t frames=complete?2205:22050;struct timespec close_time;uint64_t close_ns;
+        int done;size_t frames=schedule?22050:complete?2205:22050;struct timespec close_time;uint64_t close_ns;
         for(i=0;i<frames;i++){
             source[i*2]=(int16_t)(12345+(i%2205)+round*4000);
             source[i*2+1]=(int16_t)(-23456+(i%2205));

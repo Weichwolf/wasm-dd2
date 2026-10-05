@@ -1277,6 +1277,44 @@ strict whole-output comparison remains a failure. No source bytes, timestamps
 or clock gaps are shifted or fitted, and synchronized A/V or full game parity
 is not established by these completion/fault tests.
 
+Patch 887 corrects native movie producer waits against an advancing period
+clock. Wine 10 measures wake error before processing, advances the target
+independently of that processing, and bounds the next relative-wait correction
+to half a period. Native's previous `SDL_Delay(10)` added every fill's cost
+to each period. The producer now applies that bounded correction with a
+monotonic nanosecond clock and retries interrupted waits. The initial source
+fill, constructor readiness, source endpoints and reset order are preserved.
+
+`verify_native_movie_schedule.py` observes actual forwarded waits and ALSA
+calls with a declared 3-ms fill-cost model. Two repeated one-second,
+nonzero-source lifetimes require every accepted and consumed caller sample
+at offset zero. The previous production header accumulates 215/218 ms of
+phase drift; the new header's measured drift is 0.305/0.291 ms. Waits remain
+within 5..15 ms. Both old and new headers preserve complete caller PCM, and
+24 altered PCM controls are rejected (`movie-schedule-1107-cadence/report.json`).
+The separate full device suite still passes ASan/UBSan, all startup/join,
+cancel/reset/error cases and 120 altered PCM controls
+(`movie-schedule-1108-device/report.json`). Reproduce the loaded cadence check:
+
+```sh
+python3 tools/verify_native_movie_schedule.py \
+  --before-header /tmp/wasm-dd2/movie-schedule-1105-before/dd2_native_movie_alsa.h \
+  --output /tmp/wasm-dd2/movie-schedule
+```
+
+Full native Intro/Outro and real key-up/key-down cancellation still match
+fresh Wine ACM source PCM exactly at offset zero
+(`movie-schedule-1116-comparison/report.json`). The strict whole original Intro
+comparison still fails: native accepts 880 and consumes 635 driver-silence
+frames; the current original accepts 660 and consumes 440. The native Outro
+run accepts 660 and consumes 440, with its original whole-lifetime comparison
+still pending. Forwarded SDL presentation and sample-clock brackets remain
+recorded independently (`movie-schedule-1114-intro-timing/report.json`). Native
+uses CLOCK_MONOTONIC; Wine's QPC domain and its separate stopped-client driver
+lifetime still require their own comparisons. This proves the bounded cadence
+correction under the declared load, not synchronized A/V, whole original tails
+or complete game parity.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
