@@ -248,6 +248,25 @@ make capture-browser-driver-name-ui BROWSER_DRIVER_NAME_UI_ARGS='web/dd2 /tmp/wa
 make verify-driver-name-ui DRIVER_NAME_UI_ARGS='compare --original /tmp/wasm-dd2/names-original --native /tmp/wasm-dd2/names-native --browser /tmp/wasm-dd2/names-browser --report /tmp/wasm-dd2/names-verified.json --clean'
 ```
 
+A separate controlled save-file case now exercises the original's real lap
+record/name/save path. Its initial card comes from the original-generated
+completed-season configuration; exactly one declared saved-minute WORD changes
+from zero to two, giving the first record a `2:25:00` threshold. A real single-car
+Time Trials lap produces `1:04:88`, opens the actual Fastest Lap dialog, accepts
+`D`, shifts the four older records and overwrites configuration slot B through
+the original menus. The final complete disk card matches original memory and
+its serialized live configuration; the existing championship slot is preserved.
+Producer: `/tmp/wasm-dd2/lap-record-1234-original-file-save/report.json`.
+Fresh original/native/browser process startups then load this actual final card.
+Every saved field and all seven record pages, wraps and reopening agree, with
+576 exact indexed-frame/palette pairs per port and 38 rejected mutations:
+`/tmp/wasm-dd2/lap-record-1238-file-input-verified.json`.
+This is a controlled file-input case; it does not prove a lap beating the
+provisioned default time, the ports' own live record/name/save sequence or
+chronological original racing A/V. Its producer and extra comparison wrappers
+are diagnostic scripts retained under `/tmp/wasm-dd2/`; they are not public
+verification commands yet. Successful comparison rasters were removed.
+
 Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
 split the minute digits from a four-element array, while the sprite loop still
 read six elements; native and WASM displayed stack garbage in the first pair.
