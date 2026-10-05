@@ -909,6 +909,43 @@ make verify-movie-video MOVIE_VIDEO_ARGS='--capture /tmp/wasm-dd2/original-intro
 make observe-movie-timing MOVIE_TIMING_ARGS='--capture /tmp/wasm-dd2/original-intro-window --output /tmp/wasm-dd2/intro-clock-observations'
 ```
 
+Patch 877 follows the original Wine MCI final-draw/drain sequence. Video ends
+immediately after its last permitted image. Available audio is checked then;
+an incomplete device gets another check after 100 ms, rather than every pump.
+Without audio, completion no longer waits for an extra video deadline.
+
+`make verify-movie-drain` constructs a short AVI from two original Cinepak
+packets and one complete original ADPCM block. Actual Wine MCI presents frame
+0 only and takes about 100 ms with the real-time virtual device; unavailable
+audio completes immediately after that image. Production native ASan/UBSan
+and WASM components check immediate completion, later drains, 100-ms queries,
+32-bit clock wrap and audio failure. The pre-877 native fixture is rejected for
+its 46-ms completion and per-millisecond drain queries. The accepted component
+report is `/tmp/wasm-dd2/movie-drain-968-final/report.json`.
+These controlled clock cases do not establish live audio/video parity,
+device-played PCM extents, driver silence tails or physical DAC timing.
+
+Full Intro/Outro playback, skip and unavailable-audio cases pass on native
+ASan/UBSan and WASM in `movie-drain-965-playback/report.json`. Actual SDL and
+browser full/skip runs pass in `movie-drain-966-native/report.json` and
+`movie-drain-967-browser/report.json`: 1711/1812 full presentations, every
+renderer/canvas pixel equal to its submitted image, and complete accepted
+6039616/6395840 PCM bytes equal to fresh actual Wine ACM output. These sink
+checks retain their declared scope; they are not synchronized original output.
+
+A separate actual native SDL/ALSA run with the real-time virtual device is
+rejected by the complete unshifted original PCM comparator
+(`movie-drain-969-native-alsa/original-comparison.json`). It contains 12288
+startup zero bytes before the exact source PCM and 6080 trailing zero bytes.
+This diagnostic decomposition does not trim or align any accepted comparison.
+The native device startup/output mismatch remains open. An empty SDL queue
+only reports delivery to the backend, not the actual played sample boundary.
+See [SDL_GetQueuedAudioSize](https://wiki.libsdl.org/SDL2/SDL_GetQueuedAudioSize).
+
+```sh
+make verify-movie-drain MOVIE_DRAIN_ARGS='--mingw <32-bit compiler> --output /tmp/wasm-dd2/movie-drain'
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

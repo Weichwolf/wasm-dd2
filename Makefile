@@ -295,9 +295,12 @@ verify-movie-surface: ## compare movie RGB565 scaling/display with real Win32 GD
 verify-movie-window: patch ## compare every actual original intro window byte with production native/WASM components
 	python3 $(ROOT)/tools/verify_movie_window.py $(MOVIE_WINDOW_ARGS)
 
-.PHONY: verify-movie-end verify-movie-video observe-movie-timing verify-movie-audio-sinks
+.PHONY: verify-movie-end verify-movie-drain verify-movie-video observe-movie-timing verify-movie-audio-sinks
 verify-movie-end: ## observe actual Wine default exclusive AVI play endpoints; MOVIE_END_ARGS supplies MinGW/output
 	python3 $(ROOT)/tools/verify_movie_end.py $(MOVIE_END_ARGS)
+
+verify-movie-drain: patch ## compare real-time Wine final draw/drain with native/ASan/WASM components; MOVIE_DRAIN_ARGS required
+	python3 $(ROOT)/tools/verify_movie_drain.py $(MOVIE_DRAIN_ARGS)
 
 verify-movie-video: ## compare actual original intro window bytes with SDL/canvas; MOVIE_VIDEO_ARGS required
 	python3 $(ROOT)/tools/verify_movie_video.py $(MOVIE_VIDEO_ARGS)

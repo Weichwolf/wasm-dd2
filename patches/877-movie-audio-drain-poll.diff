@@ -1,0 +1,63 @@
+Match Wine 10 MCIAVI's final-draw and audio-drain polling behavior.
+
+MCIAVI_player exits the video loop as soon as its last permitted frame is
+painted; it does not wait for the next video deadline. It tests outstanding
+WaveOut headers immediately and sleeps 100 ms before each incomplete retry.
+A real MCI fixture retaining two original Cinepak packets and one complete
+ADPCM block plays only frame 0 and takes about 100 ms with a real-time virtual
+ALSA device. The pre-fix port finishes at 46 ms and polls at every millisecond;
+with no audio it incorrectly waits another 40 ms after the last image.
+
+Preserve video/source PCM bytes and explicit cancellation. This fixes MCI
+transport timing; WaveOut/SDL/WebAudio buffer completion, driver silence tails
+and full original/live-port A/V timing remain separate acceptance requirements.
+
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/mciavi32/mciavi.c
+
+--- a/dd2_movie.c
++++ b/dd2_movie.c
+@@ -16,6 +16,7 @@
+ extern int FUN_004132f0(void*,unsigned,unsigned,unsigned);
+ static DD2AVI* movie;
+ static unsigned playing,start_ms,next_frame,window,callback,notify,audio_available;
++static unsigned draining,drain_poll_ms;
+ static int32_t destination[4];
+ static uint32_t image[640*480];
+ static void finish(unsigned result) {
+@@ -27,6 +28,7 @@
+     dd2_movie_audio_stop();
+     if(playing)finish(4); /* MCI_NOTIFY_ABORTED */
+     dd2_avi_close(movie);movie=NULL;playing=window=callback=notify=next_frame=0;
++    draining=drain_poll_ms=0;
+ }
+ static DD2AVI* load_movie(const char* filename) {
+     uint8_t* bytes=NULL;
+@@ -66,8 +68,17 @@
+         }
+         dd2_movie_present(image);next_frame++;
+     }
+-    if(next_frame==end_frame && (uint64_t)elapsed*info->video_rate>=(uint64_t)end_frame*info->video_scale*1000
+-            && (!audio_available || dd2_movie_audio_done()))finish(1); /* MCI_NOTIFY_SUCCESSFUL */
++    /* MCIAVI_player leaves its video loop immediately after the final draw.
++     * It checks completed wave headers, then sleeps 100 ms before each retry.
++     * A queued/played PCM extent remains the platform's separate contract. */
++    if(next_frame==end_frame) {
++        if(!audio_available)finish(1); /* MCI_NOTIFY_SUCCESSFUL */
++        else if(!draining || dd2_movie_now_ms()-drain_poll_ms>=100u) {
++            draining=1;
++            if(dd2_movie_audio_done())finish(1);
++            else drain_poll_ms=dd2_movie_now_ms();
++        }
++    }
+ }
+ int dd2_movie_mci_send(unsigned device,unsigned command,unsigned flags,uint32_t* params) {
+     const DD2AVIInfo* info;
+@@ -108,7 +119,7 @@
+         /* Wine's real MCIAVI_player continues video when OpenAudio cannot
+          * open WaveOut. Do not discard the entire film on a device failure. */
+         audio_available=dd2_movie_audio_start(dd2_avi_pcm(movie),info->pcm_frames,info->pcm_rate,info->pcm_channels)==0;
+-        next_frame=0;callback=params[0];notify=flags&1;
++        next_frame=draining=drain_poll_ms=0;callback=params[0];notify=flags&1;
+         start_ms=dd2_movie_now_ms();playing=1;
+         if(flags&2)while(playing) { dd2_movie_pump();dd2_movie_wait(); }
+         return 0;
