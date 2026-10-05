@@ -90,6 +90,9 @@ def main():
     require(frames and [r['frame'] for r in frames] == list(range(len(frames))),
             'incomplete native movie frame journal')
     require(all(r['exact_pixels'] == 640*480 for r in frames), 'actual renderer/texture readback differs')
+    require(all(r.get('record_version') == 2 and r.get('clock_domain') == 'CLOCK_MONOTONIC' and
+                r['readback_begin_ns'] <= r['readback_end_ns'] <= r['present_begin_ns'] <=
+                r['present_end_ns'] <= r['time_ns'] for r in frames), 'actual presentation clock brackets missing')
     accepted = [r for r in audio['streams'] if r['format'] == 'S16_LE']
     played = [r for r in audio['played_streams'] if r['format'] == 'S16_LE']
     require(len(accepted) == len(played) == 1 and accepted[0]['closed'] and played[0]['closed'],

@@ -1,6 +1,8 @@
 /* Observe actual SDL movie texture, renderer and accepted device data.
  * Calls and pixels are forwarded unchanged; this does not alter engine state,
- * input, device clocks, PCM or rendering. Captures use an isolated process. */
+ * input, device clocks, PCM or rendering. Readback and capture still affect
+ * scheduling; bracket the forwarded presentation separately from that work.
+ * Captures use an isolated process, not a physical display timing probe. */
 #define _GNU_SOURCE
 #include <SDL2/SDL.h>
 #include <dlfcn.h>
@@ -76,9 +78,11 @@ void SDL_RenderPresent(SDL_Renderer* renderer){
     void (*call)(SDL_Renderer*)=dlsym(RTLD_NEXT,"SDL_RenderPresent");
     if(root()){
         int width,height;
+        uint64_t readback_begin=now(),readback_end,present_begin,present_end;
         if(!texture_ready || SDL_GetRendererOutputSize(renderer,&width,&height) || width!=640 || height!=480
                 || SDL_RenderReadPixels(renderer,NULL,SDL_PIXELFORMAT_ARGB8888,actual,640*4) || memcmp(expected,actual,sizeof(actual)))
             fail("actual SDL renderer pixels differ from movie texture");
+        readback_end=now();
         /* Optional bounded FIFO exports only the actual renderer readback.
          * No reference data enters this process or the engine. */
         if(getenv("DD2_NATIVE_MOVIE_VIDEO_PIPE")){
@@ -89,8 +93,13 @@ void SDL_RenderPresent(SDL_Renderer* renderer){
             }
             if(fwrite(actual,1,sizeof(actual),video_pipe)!=sizeof(actual) || fflush(video_pipe))fail("actual video pipe write");
         }
-        fprintf(events(),"{\"event\":\"present\",\"frame\":%u,\"exact_pixels\":307200,\"time_ns\":%llu}\n",frame++,(unsigned long long)now());
+        present_begin=now();call(renderer);present_end=now();
+        fprintf(events(),"{\"event\":\"present\",\"frame\":%u,\"exact_pixels\":307200,"
+                "\"record_version\":2,\"clock_domain\":\"CLOCK_MONOTONIC\","
+                "\"readback_begin_ns\":%llu,\"readback_end_ns\":%llu,"
+                "\"present_begin_ns\":%llu,\"present_end_ns\":%llu,\"time_ns\":%llu}\n",
+                frame++,(unsigned long long)readback_begin,(unsigned long long)readback_end,
+                (unsigned long long)present_begin,(unsigned long long)present_end,(unsigned long long)now());
         texture_ready=0;fflush(journal);
-    }
-    call(renderer);
+    }else call(renderer);
 }

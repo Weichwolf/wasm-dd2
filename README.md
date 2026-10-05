@@ -988,6 +988,28 @@ make compare-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--source /tmp/wasm-dd
 make clean-logs
 ```
 
+Native movie observer version 2 separately records renderer readback, export
+work and the begin/end of the actual forwarded `SDL_RenderPresent` call. The
+old event was written before forwarding and could not locate presentation
+completion. All intervals explicitly use `CLOCK_MONOTONIC`, matching the
+virtual device sample journal. `make observe-native-movie-timing` validates
+the chronological brackets and derives consumed audio frame intervals without
+offset fitting. It rejects changed clock domains, reversed calls, overlapping
+readback and changed frame ordinals.
+
+The full Intro observation `movie-clock-986-native-observed/report.json`
+covers 1711 actual calls. Its first call spans consumed frames 582..1265;
+the first SDL call itself takes about 31 ms. Readback duration and capture
+export overhead remain separately visible. These are measurements of an
+instrumented run, not stable presentation deadlines or original timing parity.
+The earlier original QPC observations and these SDL brackets refer to their
+respective public APIs; they do not define one physical display boundary.
+
+```sh
+make capture-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--binary /tmp/dd2_native --movie Intro.avi --output /tmp/wasm-dd2/native-intro-clocks'
+make observe-native-movie-timing MOVIE_TIMING_ARGS='--capture /tmp/wasm-dd2/native-intro-clocks --output /tmp/wasm-dd2/native-intro-timing'
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

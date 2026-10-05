@@ -318,6 +318,10 @@ verify-movie-video: ## compare actual original intro window bytes with SDL/canva
 observe-movie-timing: ## validate actual original movie QPC/audio clock observations; MOVIE_TIMING_ARGS required
 	python3 $(ROOT)/tools/observe_movie_timing.py $(MOVIE_TIMING_ARGS)
 
+.PHONY: observe-native-movie-timing
+observe-native-movie-timing: ## validate actual SDL presentation brackets against consumed movie samples; MOVIE_TIMING_ARGS required
+	python3 $(ROOT)/tools/observe_native_movie_timing.py $(MOVIE_TIMING_ARGS)
+
 verify-movie-audio-sinks: ## compare complete original accepted/played intro PCM with native/browser sinks; MOVIE_AUDIO_SINK_ARGS required
 	python3 $(ROOT)/tools/verify_movie_audio_sinks.py $(MOVIE_AUDIO_SINK_ARGS)
 
