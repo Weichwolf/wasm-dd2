@@ -10,11 +10,16 @@ assert(!fs.existsSync(output)||!fs.readdirSync(output).length,'use a fresh outpu
 fs.mkdirSync(output,{recursive:true});
 const build=path.resolve(process.argv[2]||'web/dd2');
 const resultsOption=process.argv.slice(4).find(value=>value.startsWith('--results-fixture='));
-const multiplayerResults=process.argv.includes('--multiplayer-results');
-assert(!multiplayerResults||!resultsOption,'multiplayer starts with the provisioned empty card');
+const loadedOption=process.argv.slice(4).find(value=>value.startsWith('--multiplayer-fixture='));
+const freshMultiplayer=process.argv.includes('--multiplayer-results');
+const multiplayerResults=freshMultiplayer||!!loadedOption;
+assert(Number(!!resultsOption)+Number(!!loadedOption)+Number(freshMultiplayer)<=1,'choose one result-table route');
 const resultTables=multiplayerResults||!!resultsOption;
-const save=fs.readFileSync(resultsOption?path.join(path.resolve(resultsOption.slice('--results-fixture='.length)),'original.card'):path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
-const resultPlan=resultTables?JSON.parse(fs.readFileSync(path.join(__dirname,multiplayerResults?'../multiplayer_results_ui.json':'../race_results_ui.json'))):null;
+const resultFixture=resultsOption||loadedOption;
+const save=fs.readFileSync(resultFixture?path.join(path.resolve(resultFixture.slice(resultFixture.indexOf('=')+1)),'original.card'):path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
+const resultPlan=resultTables?JSON.parse(fs.readFileSync(path.join(__dirname,loadedOption?'../multiplayer_loaded_ui.json':freshMultiplayer?'../multiplayer_results_ui.json':'../race_results_ui.json'))):null;
+const resultCaptures=resultPlan?(resultPlan.captures||resultPlan.tables):[];
+const resultCardPairs={};
 const resultLayout=resultTables?JSON.parse(fs.readFileSync(path.join(__dirname,'../championship_save_layout.json'))):null;
 const timingOption=process.argv.slice(4).find(value=>value.startsWith('--reference='));
 const rngOption=process.argv.slice(4).find(value=>value.startsWith('--rng-layout='));
@@ -36,8 +41,9 @@ if(apiOption){
  const expectedKeys=normalArena?['Return','Right','Right','Return','Right','Return','Down','Down','Return']:['Return','Return','Return','Return','Up','Left','Return','Down','Down','Return'];
  if(naturalChamp)for(let race=0;race<(naturalSeason?5:1);race++)expectedKeys.push('Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
  else if(!normalArena)for(let race=0;race<5;race++)expectedKeys.push('Escape','Down','Down','Down','Return','Up','Return','Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
- if(resultTables){expectedKeys.splice(0,expectedKeys.length,...resultPlan.load_keys);for(let race=0;race<(multiplayerResults?5:3);race++)expectedKeys.push(...(multiplayerResults?resultPlan.round_keys:[...resultPlan.retire_keys,'Return','Escape','Return',...resultPlan.continuation_keys,'Return']));}
+ if(resultTables){expectedKeys.splice(0,expectedKeys.length,...resultPlan.load_keys);for(let race=0;race<resultPlan.races.length;race++)expectedKeys.push(...(multiplayerResults?resultPlan.round_keys:[...resultPlan.retire_keys,'Return','Escape','Return',...resultPlan.continuation_keys,'Return']));}
  assert.deepEqual(meta.keys,expectedKeys,'Actual complete championship input sequence required');
+ for(const step of resultPlan?.card_steps||[]){const cycle=JSON.parse(fs.readFileSync(path.join(root,meta.checkpoints[step],'cycle/cycle.json')));resultCardPairs[step]=cycle.frames.map(f=>[f.phase,f.card_phase]);}
  if(naturalChamp){
   const actions=expectedKeys.slice(0,10);
   for(let race=0;race<(naturalSeason?5:1);race++)actions.push('natural-finish',...expectedKeys.slice(10+race*10,20+race*10));
@@ -134,7 +140,7 @@ async function tap(page,key,timing=null,raceStart=null){
     'ENV.DD2_TICK_REPLAY="/original-ticks.bin";ENV.DD2_RANDOM_REFERENCE="/original-random.bin";ENV.DD2_RANDOM_LEVEL="all";ENV.DD2_RANDOM_REQUIRE_INITIAL="1";});</script>':'';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+apiHook+marker)});
   });
-  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,seasonEnd,drivingInputs,fullVideo,firstPhase,resultTables,resultLayout,resultPlan})=>{
+  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,seasonEnd,drivingInputs,fullVideo,firstPhase,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs})=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
    window.__rngObservations=[];window.__rngError=null;
@@ -177,7 +183,7 @@ async function tap(page,key,timing=null,raceStart=null){
     }
     window.__slabReadyFrames=HEAP16[0x46996c>>1]===0?window.__slabReadyFrames+1:0;
     const history=window.__apiHistory;
-    let recordHistory=false;
+    let recordHistory=false,recordResultCycle=false;
     if(history&&history.active&&history.stage==='align'&&physical.level===0&&HEAPU32[0x940010>>2]===0x4696b0&&HEAP32[0x4699cc>>2]===firstPhase){
      // Wait for the normal 64-frame blink cycle; never set its engine counter.
      history.stage='settle';history.steady=0;
@@ -216,8 +222,12 @@ async function tap(page,key,timing=null,raceStart=null){
       history.steady=ready?history.steady+1:0;
       if(history.steady>=(go?2:16)){
        window.__captureNext=true;recordHistory=true;
-       if(resultTables&&resultPlan.tables.includes(history.index)){
-        history.resultCycles ||= {};const cycle=history.resultCycles[history.index] ||= [];recordHistory=cycle.length===63;
+       if(resultTables&&resultCaptures.includes(history.index)){
+        history.resultCycles ||= {};const cycle=history.resultCycles[history.index] ||= [];
+        const wanted=resultCardPairs[history.index],phase=HEAP32[0x4699cc>>2],card=HEAP32[0x467390>>2]%255;
+        const selected=!wanted||wanted.some(pair=>pair[0]===phase&&pair[1]===card)&&!cycle.some(f=>f.phase===phase);
+        if(wanted&&history.steady>3328){history.error='Actual card animation pairs not reached';}
+        recordResultCycle=selected;recordHistory=selected&&cycle.length===63;window.__captureNext=selected;
        }
       }
      }
@@ -257,7 +267,7 @@ async function tap(page,key,timing=null,raceStart=null){
       api_calls:apiKeys?{clock:HEAPU32[rngLayout.clock_counter_address>>2],random:HEAPU32[rngLayout.random_replay_counter_address>>2]}:null};
      window.__captureNext=false;
     }
-    if(resultTables&&history&&history.active&&(recordHistory||resultPlan.tables.includes(history.index)&&history.stage==='settle'&&history.steady>=16)){
+    if(resultTables&&history&&history.active&&(recordHistory||recordResultCycle)){
      const shot=window.__snapshot,data=new DataView(HEAPU8.buffer);
      const hex=(a,n)=>Array.from(HEAPU8.subarray(a,a+n),b=>b.toString(16).padStart(2,'0')).join('');
      shot.saved_state={joy_present:HEAPU8[0x754451]};
@@ -266,7 +276,11 @@ async function tap(page,key,timing=null,raceStart=null){
      shot.result_rows=Array.from({length:20},(_,i)=>({name:readText(resultPlan.name_address+i*26,26),points:readText(resultPlan.point_address+i*resultPlan.point_stride,resultPlan.point_stride)}));
      shot.rectangle=Array.from(HEAP16.subarray(resultPlan.rectangle_address>>1,(resultPlan.rectangle_address>>1)+4));
      Object.assign(shot,{sound_volume:HEAP32[0x467410>>2],working_sound_volume:HEAP32[0x93fd20>>2],master_sfx_volume:HEAP32[0x462d84>>2]});
-     if(resultPlan.tables.includes(history.index))history.resultCycles[history.index].push(shot);
+     if((resultPlan.card_steps||[]).includes(history.index)){
+      shot.file_mode=HEAP32[0x93a318>>2];shot.file_slot=HEAP32[0x774680>>2];shot.card_phase=HEAP32[0x467390>>2]%255;
+      shot.file_ui={caption:readText(HEAPU32[0x46725c>>2],512),detail:readText(HEAPU32[0x4672c0>>2],512),selection:readText(HEAPU32[0x467284>>2],512),name_cursor:Array.from(HEAP16.subarray(0x4673dc>>1,(0x4673dc>>1)+2)),ring:Array.from(HEAP16.subarray(0x467198>>1,(0x467198>>1)+2))};
+     }
+     if(recordResultCycle)history.resultCycles[history.index].push(shot);
     }
     if(recordRace){
      if(naturalChamp){
@@ -324,7 +338,7 @@ async function tap(page,key,timing=null,raceStart=null){
      naturalChamp:apiReference&&apiReference.meta.natural_championship,drivingInputs:apiReference&&apiReference.meta.driving_inputs,
      naturalSeason:apiReference&&apiReference.meta.natural_season,seasonEnd:apiReference&&apiReference.seasonEnd,
      fullVideo:apiReference&&apiReference.meta.full_video,
-     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null,resultTables,resultLayout,resultPlan});
+     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs});
   await boot(page,server);
   if(rngLayout){
    const first=await page.evaluate(()=>window.__rngObservations[0]);
@@ -401,7 +415,7 @@ async function tap(page,key,timing=null,raceStart=null){
     }
    }
    if(resultTables){
-    for(const step of resultPlan.tables){
+    for(const step of resultCaptures){
      const directory=path.join(output,apiReference.meta.checkpoints[step],'cycle');fs.mkdirSync(directory);const metadata=[];
      for(let i=0;i<64;i++){
       const shot=await page.evaluate(({step,i})=>window.__apiHistory.resultCycles[step][i],{step,i}),prefix='frame'+String(i).padStart(3,'0');

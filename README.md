@@ -2201,8 +2201,51 @@ and scores. The producer/validation reports are
 `/tmp/wasm-dd2/multiplayer-positive-1261-original-persistent/report.json` and
 `/tmp/wasm-dd2/multiplayer-producer-1271-validation/report.json`.
 This verifies original-only generation for two players on the first Wrecking
-round; port generation, loading comparisons and chronological racing/audio
-parity remain separate acceptance work. Stock Car needs its four-round route.
+round; port generation and chronological racing/audio parity remain open.
+Loading is checked below. Stock Car needs its four-round route.
+
+The loaded multiplayer comparison uses the confirmed original-produced card
+above and passes on Native, AddressSanitizer and browser WASM.
+
+The result recorders accept this card with `--loaded-multiplayer --fixture`;
+the browser uses `--multiplayer-fixture`. The route cold-loads the saved game,
+checks names, configuration and cumulative points, and retires both players
+in each of the four remaining rounds. It verifies the original player reset,
+subsequent player exchanges, all 20 cumulative scores, reopening each league,
+and final title return. The comparison requires 103 states, two complete
+file-menu cycles and eight league cycles: 640 indexed frame/palette pairs per
+target. File-menu samples wait for the original's observed blink/card-animation
+pairs without writing either counter. The actual executable before patch 873
+must match the file menus and reject every league background. Successful
+verification removes the raw comparison images after writing its report.
+This route does not establish positive-score generation parity, chronological
+race A/V, every player count/mode or all save/load edge cases.
+The verified run is `/tmp/wasm-dd2/multiplayer-loaded-1260-verified.json`:
+103 actual states, 128 file-menu and 512 league frame/palette pairs per port,
+170 original clock returns and 4,178 independently computed RNG calls.
+Both saved human scores (55 and 95) survive loading and all four retired rounds;
+the complete configuration, player reset/exchanges and all 20 cumulative totals
+match. All 101 negative checks reject altered images, card animation, points,
+player/round progression, API counts or the real old league background. The old
+executable matches all 128 file-menu images and fails all 512 league images.
+Successful raw comparison images have been removed after writing the report.
+
+Use fresh output directories and keep the existing native, ASan and WASM builds
+outside capture directories. The original-only producer must finish successfully
+before starting the loading captures:
+
+```sh
+make clean-logs
+make generate-multiplayer-save MULTIPLAYER_SAVE_ARGS='--output /tmp/wasm-dd2/multiplayer-save-fixture'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target original --loaded-multiplayer --fixture /tmp/wasm-dd2/multiplayer-save-fixture --output /tmp/wasm-dd2/multiplayer-loaded-original'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --loaded-multiplayer --binary /tmp/dd2_native --fixture /tmp/wasm-dd2/multiplayer-save-fixture --reference /tmp/wasm-dd2/multiplayer-loaded-original/history --output /tmp/wasm-dd2/multiplayer-loaded-native'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --loaded-multiplayer --binary /tmp/dd2_asan --fixture /tmp/wasm-dd2/multiplayer-save-fixture --reference /tmp/wasm-dd2/multiplayer-loaded-original/history --output /tmp/wasm-dd2/multiplayer-loaded-asan'
+python3 tools/wasm_rng_layout.py --wasm web/dd2/index.wasm --output /tmp/wasm-dd2/multiplayer-loaded-rng-layout
+make capture-browser-race-results-ui BROWSER_RACE_RESULTS_UI_ARGS='web/dd2 /tmp/wasm-dd2/multiplayer-loaded-browser --api-reference=/tmp/wasm-dd2/multiplayer-loaded-original/history --rng-layout=/tmp/wasm-dd2/multiplayer-loaded-rng-layout/layout.json --multiplayer-fixture=/tmp/wasm-dd2/multiplayer-save-fixture'
+make capture-race-results-history RACE_RESULTS_HISTORY_ARGS='--target native --loaded-multiplayer --binary /tmp/dd2_native_before_873 --fixture /tmp/wasm-dd2/multiplayer-save-fixture --reference /tmp/wasm-dd2/multiplayer-loaded-original/history --output /tmp/wasm-dd2/multiplayer-loaded-before'
+make verify-race-results-ui RACE_RESULTS_UI_ARGS='--loaded-multiplayer --fixture /tmp/wasm-dd2/multiplayer-save-fixture --original /tmp/wasm-dd2/multiplayer-loaded-original --native /tmp/wasm-dd2/multiplayer-loaded-native --asan /tmp/wasm-dd2/multiplayer-loaded-asan --browser /tmp/wasm-dd2/multiplayer-loaded-browser --before /tmp/wasm-dd2/multiplayer-loaded-before --report /tmp/wasm-dd2/multiplayer-loaded-verified.json --clean'
+make clean-logs
+```
 
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,

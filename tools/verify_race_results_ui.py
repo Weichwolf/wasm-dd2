@@ -9,12 +9,16 @@ import struct
 from artifacts import WORK, open_files, prepare_output
 import race_results_protocol
 import multiplayer_results_protocol
+import multiplayer_loaded_protocol
+from multiplayer_save_fixture import fixture as multiplayer_fixture
 KEYS,STARTS,TABLES,OVERS,PLAN = (getattr(race_results_protocol,k) for k in ['KEYS','STARTS','TABLES','OVERS','PLAN'])
 from verify_championship_save import fixture
 from verify_champ_history import recorded_apis
 from verify_configuration_card_ui import match_frame
 from verify_configuration_persistence import EXE_SHA256, digest, require
 
+CAPTURES=TABLES
+INITIAL_MULTI_STATE=None
 NAMES = [f'step{i:02d}-{key}' for i,key in enumerate(['boot',*KEYS])]
 FIELDS = ['level','cf','ticks','quit','poly_list','race_type','race_mode','race','season',
           'num_races','division','stats','actual_season','retire_confirm','cars','saved_state']
@@ -34,14 +38,14 @@ def names_and_points(state):
 
 
 
-def frames(directory, browser):
+def frames(directory, browser, card=False):
     directory = Path(directory)
     meta = json.loads((directory/'cycle.json').read_text())
     require(meta['stage'] == ('browser platform present' if browser else 'Draw_All entry / pending presentation'),
             'wrong presentation observation boundary')
     rows = meta['frames']
     require(len(rows) == 64 and {r['phase'] for r in rows} == set(range(64)) and
-            {r['level'] for r in rows} == {15} and {r['poly_list'] for r in rows} == {PLAN['menu']} and
+            {r['level'] for r in rows} == {0 if card else 15} and {r['poly_list'] for r in rows} == {0x4671ec if card else PLAN['menu']} and
             len({r['cf'] for r in rows}) == 1, 'complete settled actual result cycle required')
     result = {}
     for row in rows:
@@ -87,17 +91,25 @@ def match_points(source, actual, browser=False):
         else:
             require(all(right['observed'][key]==left['observed'][key] for key in ['clock_calls','rng_calls']),
                     'actual native API extent differs')
+        if index in PLAN.get('card_steps',[]):
+            require(all(left[k]==right[k] for k in ['file_mode','file_slot','file_ui']),'actual loaded card menu differs')
+            require(right['file_mode']==0 and right['file_slot']==(-1 if index==4 else 0) and right['poly_list']==0x4671ec,'actual card selection required')
         if index in TABLES:
             require(right['level']==15 and right['poly_list']==PLAN['menu'] and right['rectangle']==PLAN['rectangle'] and
                     right['result_rows']==names_and_points(right['saved_state'])==left['result_rows'],
                     'displayed result ranks/points or rectangle differ')
     for steps,expected in [(STARTS,PLAN['start_states']),(OVERS,PLAN['over_states'])]:
         for step,wanted in zip(steps,expected):
+            if INITIAL_MULTI_STATE and 'race_mode' in wanted:
+                wanted=dict(wanted,race_mode=INITIAL_MULTI_STATE['mode'])
             observed={**actual[step],**actual[step]['saved_state']}
             require(all(observed[k]==v for k,v in wanted.items()),'actual player/race exchange differs')
-    if PLAN['result_mode']=='multiplayer':
+    if str(PLAN['result_mode']).startswith('multiplayer'):
         require(all(p['saved_state']['multi_count']==2 for p in actual[len(PLAN['load_keys']):]),'two actual players required')
-        previous=[0]*20
+        previous=[struct.unpack_from('<h',bytes.fromhex(INITIAL_MULTI_STATE['league']),i*54+16)[0] for i in range(20)] if INITIAL_MULTI_STATE else [0]*20
+        if INITIAL_MULTI_STATE:
+            loaded=actual[STARTS[0]]['saved_state']
+            require(all(loaded[k]==(0 if k=='player' else v) for k,v in INITIAL_MULTI_STATE.items()),'actual loaded multiplayer fields/regions differ')
         for step in TABLES[::2]:
             league=bytes.fromhex(actual[step]['saved_state']['league'])
             cumulative=[struct.unpack_from('<h',league,i*54+16)[0] for i in range(20)]
@@ -113,7 +125,12 @@ def match_points(source, actual, browser=False):
 
 
 def compare(args):
-    if args.multiplayer:
+    global INITIAL_MULTI_STATE
+    if args.loaded_multiplayer:
+        require(args.fixture is not None,'original-produced positive multiplayer fixture required')
+        initial,_=multiplayer_fixture(args.fixture)
+        INITIAL_MULTI_STATE=json.loads((args.fixture/'report.json').read_text())['saved_state']
+    elif args.multiplayer:
         require(args.fixture is None,'fresh multiplayer card required')
         from verify_configuration_persistence import ROOT
         initial=(ROOT/'DestructionDerby2/SaveGames').read_bytes()
@@ -154,27 +171,33 @@ def compare(args):
         if target=='native-before':
             require(binary!=targets['native']['binary_sha256'], 'distinct actual old executable required')
         hashes=[]
-        for step in TABLES:
-            name=NAMES[step];a=frames(args.original/'history'/name/'cycle',False);b=frames(root/name/'cycle',browser)
+        for step in CAPTURES:
+            card=step in PLAN.get('card_steps',[])
+            name=NAMES[step];a=frames(args.original/'history'/name/'cycle',False,card);b=frames(root/name/'cycle',browser,card)
             paths.update([args.original/'history'/name/'cycle',root/name/'cycle'])
             for phase in range(64):
                 require(all(a[phase][0][key]==b[phase][0][key] for key in ['cf','ticks','level','race','season']),
                         'aligned result cycle state differs')
-                if target=='native-before':
+                if target=='native-before' and not card:
                     require(a[phase][1][1]==b[phase][1][1], 'old palette differs')
                     try: match_frame(*a[phase],*b[phase],False)
                     except RuntimeError: pass
                     else: raise RuntimeError('actual old background accepted')
-                else: match_frame(*a[phase],*b[phase],False)
+                else: match_frame(*a[phase],*b[phase],card)
                 hashes.append(dict(checkpoint=name,phase=phase,framebuffer_sha256=digest(b[phase][1][0]),palette_sha256=digest(b[phase][1][1])))
-            if target=='native-before':negative.append(dict(target=target,case=name+'-actual-old-background-64-frames'));continue
+            if target=='native-before' and not card:negative.append(dict(target=target,case=name+'-actual-old-background-64-frames'));continue
+            if card:
+                changed=dict(b[0][0],card_phase=(b[0][0]['card_phase']+20)%255)
+                try:match_frame(*a[0],changed,b[0][1],True)
+                except RuntimeError:negative.append(dict(target=target,case=name+'-card-animation'))
+                else:raise RuntimeError('altered card animation accepted')
             for region in range(2):
                 bad=[bytearray(p) for p in b[0][1]];bad[region][0]^=1
-                try: match_frame(*a[0],b[0][0],bad,False)
+                try: match_frame(*a[0],b[0][0],bad,card)
                 except RuntimeError: negative.append(dict(target=target,case=name+'-'+str(region)))
                 else: raise RuntimeError('altered result output accepted')
         if target!='native-before':
-            for field in ['name','points','clock','random']+(['player','race','league'] if args.multiplayer else []):
+            for field in ['name','points','clock','random']+(['player','race','league'] if args.multiplayer or args.loaded_multiplayer else []):
                 changed=copy.deepcopy(points)
                 if field in ['name','points']:changed[TABLES[0]]['result_rows'][0][field]+='X'
                 elif field in ['player','race']:changed[STARTS[1]]['saved_state'][field]+=1
@@ -189,7 +212,7 @@ def compare(args):
         targets[target]=dict(pass_=True,binary_sha256=binary,capture=data,frames=hashes,
                             method='actual old regression rejected' if target=='native-before' else 'literal complete indexed/palette comparison')
     report=dict(scope=PLAN['scope'],pass_=True,original=original,targets=targets,negative_cases=negative,
-                checked_states=len(NAMES),frames_per_target=64*len(TABLES),clock_calls=original['meta']['clock_calls'],rng_calls=original['meta']['rng_calls'])
+                checked_states=len(NAMES),frames_per_target=64*len(CAPTURES),result_frames_per_target=64*len(TABLES),card_frames_per_target=64*len(PLAN.get('card_steps',[])),clock_calls=original['meta']['clock_calls'],rng_calls=original['meta']['rng_calls'])
     destination=prepare_output(args.report);require(WORK in destination.parents,'report belongs in /tmp/wasm-dd2')
     destination.write_text(json.dumps(report,indent=2)+'\n')
     if args.clean:
@@ -202,18 +225,21 @@ def compare(args):
             for raw in directory.glob('step*/*.bin'):
                 require(not raw.is_symlink(),'unexpected raw image symlink');st=raw.stat()
                 require((st.st_dev,st.st_ino) not in opened,'image is still open');raw.unlink()
-    print('Actual aligned result menus:',len(NAMES),'states,',64*len(TABLES),'exact frames per target;',len(negative),'negative checks rejected',flush=True)
+    print('Actual aligned result menus:',len(NAMES),'states,',64*len(CAPTURES),'exact frames per target;',len(negative),'negative checks rejected',flush=True)
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    global KEYS,STARTS,TABLES,OVERS,PLAN,NAMES
+    global KEYS,STARTS,TABLES,OVERS,PLAN,NAMES,CAPTURES
     parser.add_argument('--fixture',type=Path)
     parser.add_argument('--multiplayer',action='store_true')
+    parser.add_argument('--loaded-multiplayer',action='store_true')
     for name in ['original','native','asan','browser','before','report']:parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--clean',action='store_true');args=parser.parse_args()
-    protocol=multiplayer_results_protocol if args.multiplayer else race_results_protocol
+    require(not(args.multiplayer and args.loaded_multiplayer),'choose fresh or loaded multiplayer')
+    protocol=multiplayer_loaded_protocol if args.loaded_multiplayer else multiplayer_results_protocol if args.multiplayer else race_results_protocol
     KEYS,STARTS,TABLES,OVERS,PLAN=(getattr(protocol,k) for k in ['KEYS','STARTS','TABLES','OVERS','PLAN'])
+    CAPTURES=getattr(protocol,'CAPTURES',protocol.TABLES)
     NAMES=[f'step{i:02d}-{key}' for i,key in enumerate(['boot',*KEYS])]
     for name in ['original','native','asan','browser','before','report']:
         require(WORK in getattr(args,name).resolve().parents,'all captures/reports belong in /tmp/wasm-dd2')

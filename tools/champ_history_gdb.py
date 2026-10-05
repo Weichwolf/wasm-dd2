@@ -26,10 +26,21 @@ from verify_champ_season import (ADDRESSES, EXE, KEYS, NORMAL_ARENA_KEYS,
 from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
 import race_results_protocol
 import multiplayer_results_protocol
+import multiplayer_loaded_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False):
-    protocol = multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None):
+    protocol = multiplayer_loaded_protocol if result_tables == 'multiplayer-loaded' else multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
+    if result_tables == 'multiplayer-loaded' and result_race_mode not in (0,1):
+        raise ValueError('Actual saved Wrecking or Stock Car mode required')
+    captures = getattr(protocol,'CAPTURES',protocol.TABLES)
+    card_steps = protocol.PLAN.get('card_steps',[])
+    card_wanted = {}
+    if result_reference:
+        for step in card_steps:
+            name = f'step{step:02d}-'+protocol.KEYS[step-1]
+            meta = json.loads((Path(result_reference)/name/'cycle/cycle.json').read_text())
+            card_wanted[step] = {(f['phase'],f['card_phase']) for f in meta['frames']}
     if result_tables and (normal_arena or full_video or natural_champ or natural_season):
         raise ValueError('Result-table API history requires its own route')
     if natural_champ and (normal_arena or full_video):
@@ -138,7 +149,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     def snapshot():
         name = f'step{key_index:02d}-'+('natural-finish' if normal_arena and key_index > len(keys) else actions[key_index - 1] if key_index else 'boot')
         directory = root / name
-        directory.mkdir(exist_ok=result_tables and key_index in protocol.TABLES)
+        directory.mkdir(exist_ok=result_tables and key_index in captures)
         value = {key: integer(address) for key, address in ADDRESSES.items()}
         text = lambda address, size: read(address, size).split(b'\0')[0].decode('ascii')
         value.update(stage=target+(' PutDispEnv entry' if full_video else ' Draw_All entry'), exe_modified=False if original else None, exe_sha256=EXE if original else None,
@@ -191,10 +202,12 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                                     (protocol.OVERS,protocol.PLAN['over_states'])]:
                 if key_index in steps:
                     wanted = expected[steps.index(key_index)]
+                    if result_tables == 'multiplayer-loaded' and 'race_mode' in wanted:
+                        wanted = dict(wanted,race_mode=result_race_mode)
                     actual = {**value,**value['saved_state']}
                     if any(actual[key] != val for key,val in wanted.items()):
                         raise RuntimeError('Wrong actual result route state: '+str((key_index,wanted,{k:actual[k] for k in wanted})))
-            if result_tables == 'multiplayer' and key_index >= len(protocol.PLAN['load_keys']):
+            if str(result_tables).startswith('multiplayer') and key_index >= len(protocol.PLAN['load_keys']):
                 if value['saved_state']['multi_count'] != 2:
                     raise RuntimeError('Two actual multiplayer names required')
             if key_index in protocol.TABLES:
@@ -204,7 +217,12 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 value['result_rows'] = [dict(name=text(plan['name_address']+i*26,26),
                     points=text(plan['point_address']+i*plan['point_stride'],plan['point_stride'])) for i in range(20)]
                 value['rectangle'] = list(struct.unpack('<hhhh',read(plan['rectangle_address'],8)))
-                value['cycle'] = str(directory/'cycle')
+            if key_index in card_steps:
+                card_text = lambda pointer: text(word(pointer),80) if 0x400000 < word(pointer) < 0x980400 else ''
+                value.update(file_mode=integer(0x93a318),file_slot=integer(0x774680),file_ui=dict(
+                    caption=card_text(0x46725c),detail=card_text(0x4672c0),selection=card_text(0x467284),
+                    name_cursor=list(struct.unpack('<hh',read(0x4673dc,4))),ring=list(struct.unpack('<hh',read(0x467198,4)))))
+            if key_index in captures: value['cycle'] = str(directory/'cycle')
             if key_index == len(keys) and [value[k] for k in ['level','poly_list','race','stats']] != protocol.PLAN['end']:
                 raise RuntimeError('Actual completed season title return required')
         for filename, address, size in [('framebuf.bin', 0x700450, 307200), ('palette.bin', 0x700050, 1024)]:
@@ -389,11 +407,20 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 steady = steady + 1 if ready else 0
                 if steady < (2 if race_start else 16):
                     continue
-                if result_tables and key_index in protocol.TABLES:
+                if result_tables and key_index in captures:
                     name = f'step{key_index:02d}-'+actions[key_index-1]
                     directory = root/name/'cycle'; directory.mkdir(parents=True,exist_ok=True)
                     cycle = result_cycles.setdefault(key_index,[])
-                    value = state(); prefix=f'frame{len(cycle):03d}'
+                    value = state()
+                    if key_index in card_steps:
+                        value['card_phase'] = integer(0x467390)%255
+                        pair = (value['phase'],value['card_phase'])
+                        if key_index in card_wanted:
+                            if steady>3328: raise RuntimeError('Actual card animation pairs not reached')
+                            if pair not in card_wanted[key_index]: continue
+                            card_wanted[key_index].remove(pair)
+                        elif value['phase'] in {f['phase'] for f in cycle}: continue
+                    prefix=f'frame{len(cycle):03d}'
                     for region,address,size in [('framebuf',0x700450,307200),('palette',0x700050,1024)]:
                         (directory/(prefix+'-'+region+'.bin')).write_bytes(read(address,size))
                     value.update(index=len(cycle),prefix=prefix,

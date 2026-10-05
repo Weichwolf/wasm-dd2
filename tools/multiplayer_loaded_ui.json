@@ -1,0 +1,229 @@
+{
+  "scope": "Actual multiplayer championship card produced by the unmodified original after both players complete the first round by laps with positive scores; cold frontend load, saved names/points/configuration, player reset and exchange, remaining four rounds in the saved race mode retired, cumulative league reopening and final title return. Original hardware observations supply game-clock returns; ports independently compute the RNG sequence. All 103 checkpoint states, two complete file-menu cycles and eight complete league cycles are checked, including actual browser canvas. Native uses its keyboard bridge; browser uses synthetic DOM events through its actual keyboard backend. Natural producer driving is original-only and does not accept racing A/V parity. No chronological racing A/V, positive-score generation parity, physical keyboard delivery/output timing, other modes/player counts or all save edge cases claim.",
+  "load_keys": [
+    "Right",
+    "Right",
+    "Right",
+    "Return",
+    "Return",
+    "Return"
+  ],
+  "retire_keys": [
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return"
+  ],
+  "round_keys": [
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return",
+    "Down",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Down",
+    "Return",
+    "Up",
+    "Return",
+    "Right",
+    "Return",
+    "Escape",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Return"
+  ],
+  "races": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "rectangle": [
+    -142,
+    -42,
+    282,
+    120
+  ],
+  "cycles": 10,
+  "frames_per_cycle": 64,
+  "starts": [
+    6,
+    15,
+    30,
+    39,
+    54,
+    63,
+    78,
+    87
+  ],
+  "overs": [
+    13,
+    22,
+    37,
+    46,
+    61,
+    70,
+    85,
+    94
+  ],
+  "tables": [
+    24,
+    26,
+    48,
+    50,
+    72,
+    74,
+    96,
+    98
+  ],
+  "menu": 4632732,
+  "name_address": 9700448,
+  "point_address": 9700128,
+  "point_stride": 16,
+  "rectangle_address": 4634136,
+  "rank_offset": 20,
+  "point_offset": 16,
+  "rank_base": 0,
+  "end": [
+    0,
+    4626096,
+    5,
+    0
+  ],
+  "result_mode": "multiplayer-loaded",
+  "start_states": [
+    {
+      "level": 2,
+      "race": 1,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 2,
+      "race": 1,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 5,
+      "race": 2,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 5,
+      "race": 2,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 7,
+      "race": 3,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 7,
+      "race": 3,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    },
+    {
+      "level": 10,
+      "race": 4,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 0
+    },
+    {
+      "level": 10,
+      "race": 4,
+      "race_mode": 0,
+      "race_type": 3,
+      "player": 1
+    }
+  ],
+  "over_states": [
+    {
+      "level": 15,
+      "race": 1,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 2,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 2,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 3,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 3,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 4,
+      "poly_list": 4636472,
+      "player": 2
+    },
+    {
+      "level": 15,
+      "race": 4,
+      "poly_list": 4634340,
+      "player": 0
+    },
+    {
+      "level": 15,
+      "race": 5,
+      "poly_list": 4632132,
+      "player": 2
+    }
+  ],
+  "card_steps": [
+    4,
+    5
+  ],
+  "captures": [
+    4,
+    5,
+    24,
+    26,
+    48,
+    50,
+    72,
+    74,
+    96,
+    98
+  ]
+}

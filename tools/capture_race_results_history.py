@@ -3,8 +3,8 @@
 
 Original uses real X11 input and read-only hardware breakpoints. Native uses
 its keyboard bridge and the recorded original clock stream; every computed RNG
-triple is independently checked. Full result-menu cycles are retained for the loaded single-player route or
-fresh two-player multiplayer season.
+triple is independently checked. Full menu cycles are retained for loaded
+single-player or multiplayer cards and a fresh two-player multiplayer season.
 This recorder alone does not accept original video/audio parity.
 """
 import argparse
@@ -16,6 +16,8 @@ import subprocess
 from artifacts import check_space, run_bounded
 import race_results_protocol
 import multiplayer_results_protocol
+import multiplayer_loaded_protocol
+from multiplayer_save_fixture import fixture as multiplayer_fixture
 from verify_championship_save import fixture, setup, execute
 from verify_configuration_persistence import ROOT, digest, EXE_SHA256, require
 
@@ -25,13 +27,16 @@ def main():
     parser.add_argument('--target',choices=['original','native'],required=True)
     parser.add_argument('--fixture',type=Path)
     parser.add_argument('--multiplayer',action='store_true')
+    parser.add_argument('--loaded-multiplayer',action='store_true')
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--reference',type=Path)
     parser.add_argument('--binary',type=Path,default=Path('/tmp/dd2_native'))
     args = parser.parse_args()
-    protocol = multiplayer_results_protocol if args.multiplayer else race_results_protocol
-    KEYS,TABLES = protocol.KEYS,protocol.TABLES
+    require(not(args.multiplayer and args.loaded_multiplayer),'choose fresh or loaded multiplayer')
+    protocol = multiplayer_loaded_protocol if args.loaded_multiplayer else multiplayer_results_protocol if args.multiplayer else race_results_protocol
+    KEYS,TABLES = protocol.KEYS,getattr(protocol,'CAPTURES',protocol.TABLES)
     mode = protocol.PLAN['result_mode']
+    result_race_mode=None
     if args.multiplayer:
         require(args.fixture is None,'fresh multiplayer uses the provisioned empty card')
         initial = (ROOT/'DestructionDerby2/SaveGames').read_bytes()
@@ -40,13 +45,15 @@ def main():
                 'actual fresh provisioned card required')
     else:
         require(args.fixture is not None,'original-produced championship fixture required')
-        initial, _ = fixture(args.fixture)
+        initial, _ = (multiplayer_fixture if args.loaded_multiplayer else fixture)(args.fixture)
+        if args.loaded_multiplayer:
+            result_race_mode=json.loads((args.fixture/'report.json').read_text())['saved_state']['mode']
     out, game = setup(args,initial)
     report = dict(scope=protocol.PLAN['scope'],pass_=False,engine_state_writes=False,target=args.target,
                   initial_card_sha256=digest(initial),fixture=str(args.fixture.resolve()) if args.fixture else None)
     common = ['python','import sys',f'sys.path.insert(0,{str(ROOT/"tools")!r})',
               'from champ_history_gdb import record_champ_history',
-              f'record_champ_history({str(out)!r},target={args.target!r},result_tables={mode!r})','end']
+              f'record_champ_history({str(out)!r},target={args.target!r},result_tables={mode!r},result_reference={str(args.reference.resolve()) if args.reference else None!r},result_race_mode={result_race_mode!r})','end']
     script = out/'history.gdb'
     try:
         if args.target == 'original':
