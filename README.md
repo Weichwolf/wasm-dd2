@@ -2229,6 +2229,12 @@ match. All 101 negative checks reject altered images, card animation, points,
 player/round progression, API counts or the real old league background. The old
 executable matches all 128 file-menu images and fails all 512 league images.
 Successful raw comparison images have been removed after writing the report.
+The shared recorders also pass a fresh two-player retirement regression:
+143 states and 640 original-exact indexed frame/palette pairs per port, with
+191 original clock returns, 5,220 computed RNG calls and 91 rejected negative
+cases (`/tmp/wasm-dd2/multiplayer-fresh-1277-verified.json`). This regression
+covers zero human scores and positive computer totals; it does not extend the
+natural positive-score generation or chronological A/V scope.
 
 Use fresh output directories and keep the existing native, ASan and WASM builds
 outside capture directories. The original-only producer must finish successfully
