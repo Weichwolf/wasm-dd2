@@ -9,10 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 static uint32_t expected[640*480],actual[640*480];
 static int texture_ready;
 static unsigned frame,streams;
 static FILE* journal;
+static FILE* video_pipe;
 static struct {SDL_AudioDeviceID id;FILE* pcm;uint64_t bytes;unsigned serial;int open;} devices[16];
 static const char* root(void){return getenv("DD2_NATIVE_MOVIE_OBSERVE");}
 static void fail(const char* why){fprintf(stderr,"Native movie observer: %s\n",why);exit(1);}
@@ -77,6 +79,16 @@ void SDL_RenderPresent(SDL_Renderer* renderer){
         if(!texture_ready || SDL_GetRendererOutputSize(renderer,&width,&height) || width!=640 || height!=480
                 || SDL_RenderReadPixels(renderer,NULL,SDL_PIXELFORMAT_ARGB8888,actual,640*4) || memcmp(expected,actual,sizeof(actual)))
             fail("actual SDL renderer pixels differ from movie texture");
+        /* Optional bounded FIFO exports only the actual renderer readback.
+         * No reference data enters this process or the engine. */
+        if(getenv("DD2_NATIVE_MOVIE_VIDEO_PIPE")){
+            if(!video_pipe){char path[4096];struct stat status;
+                snprintf(path,sizeof(path),"%s/video.pipe",root());
+                if(stat(path,&status) || !S_ISFIFO(status.st_mode))fail("actual video FIFO required");
+                video_pipe=fopen(path,"wb");if(!video_pipe)fail("video pipe open");
+            }
+            if(fwrite(actual,1,sizeof(actual),video_pipe)!=sizeof(actual) || fflush(video_pipe))fail("actual video pipe write");
+        }
         fprintf(events(),"{\"event\":\"present\",\"frame\":%u,\"exact_pixels\":307200,\"time_ns\":%llu}\n",frame++,(unsigned long long)now());
         texture_ready=0;fflush(journal);
     }

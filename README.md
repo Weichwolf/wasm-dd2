@@ -858,13 +858,36 @@ For this fresh original run, all 6039616 accepted and virtual-device-played
 intro PCM bytes equal actual native SDL and browser WebAudio submissions,
 without trimming or padding (`movie-audio-946-actual-sinks/report.json`). The
 earlier 3520-byte zero tail is absent in this run: driver completion timing
-must be observed, not replaced with fixed padding. Direct original/canvas
-window comparison and synchronized movie audio/video clocks remain open.
+must be observed, not replaced with fixed padding. Synchronized movie
+audio/video clocks remain open.
+
+`make verify-movie-video` compares the complete actual original intro window
+with actual SDL renderer and browser canvas readbacks, in chronological order.
+All 1711 presentations and 2102476800 opaque ARGB bytes per target match the
+original, without alignment, omitted frames or reference pixels entering a
+port. The original BI_RGB reserved byte becomes opaque alpha; canvas RGBA is
+converted only to the original window's byte order. A pre-876 native executable
+must match every original frame and then fail for its extra final presentation.
+The canvas comparator also rejects a changed bit and a truncated frame.
+The combined accepted report is
+`/tmp/wasm-dd2/movie-video-952-final-sinks/report.json`; each target's window
+stream SHA256 is
+`aa1caa5a561cf5860e8568a88f34b222e9837dd462841b35784a328a665f0f52`.
+
+Native readbacks stream through a FIFO. Browser readbacks are compressed in a
+private worker with a 1280 MiB queued/completed memory budget and a 512 MiB
+compressed-data limit, then exported for literal comparison after the movie.
+No raw full-video file is written. The observer can affect elapsed time; this
+comparison proves the complete image sequence and endpoint, while common
+presentation/audio clocks and physical display/DAC timing remain unverified.
+Use a fresh original capture and fresh output directories; successful raw
+reference captures are removed after the final report.
 
 ```sh
 make verify-movie-end MOVIE_END_ARGS='--mingw i686-w64-mingw32-gcc --output /tmp/wasm-dd2/default-movie-end'
 node tools/browser/qa_movie.js /tmp/wasm-dd2/browser /tmp/wasm-dd2/avi-source /tmp/wasm-dd2/browser-movie --capture-pcm
 make verify-movie-audio-sinks MOVIE_AUDIO_SINK_ARGS='--capture /tmp/wasm-dd2/original-intro-window --native /tmp/wasm-dd2/native-movie/intro-full --browser /tmp/wasm-dd2/browser-movie --output /tmp/wasm-dd2/intro-accepted-audio'
+make verify-movie-video MOVIE_VIDEO_ARGS='--capture /tmp/wasm-dd2/original-intro-window --native /tmp/wasm-dd2/native --browser /tmp/wasm-dd2/browser --output /tmp/wasm-dd2/intro-window-sinks'
 ```
 
 Patch 838 fixes corrupted championship names: the computer-name table began at
