@@ -58,7 +58,10 @@ if(apiOption){
  assert.equal(ticks.length,meta.clock_calls*4);assert.equal(random.length,meta.rng_calls*12);
  assert(rngLayout&&rngLayout.clock_counter_address&&rngLayout.random_replay_counter_address,'API counter layout required');
  assert(!traceRng&&!timingOption,'Use API-input comparison separately from realtime debugger/timing diagnosis');
- apiReference={meta,ticks:ticks.toString('base64'),random:random.toString('base64'),
+ const initialCheckpoint=JSON.parse(fs.readFileSync(path.join(root,meta.checkpoints[0],'checkpoint.json')));
+ const initialMenuPhase=initialCheckpoint.phase??null;
+ assert(initialMenuPhase===null||Number.isInteger(initialMenuPhase)&&initialMenuPhase>=0&&initialMenuPhase<64,'Observed initial menu blink phase required');
+ apiReference={meta,ticks:ticks.toString('base64'),random:random.toString('base64'),initialMenuPhase,
   seasonEnd:naturalSeason?JSON.parse(fs.readFileSync(path.join(root,meta.checkpoints.at(-1),'checkpoint.json'))):null,
   api_sha256:{clock:crypto.createHash('sha256').update(ticks).digest('hex'),random:crypto.createHash('sha256').update(random).digest('hex')}};
 }
@@ -150,7 +153,7 @@ async function tap(page,key,timing=null,raceStart=null){
    window.__rngObservations=[];window.__rngError=null;
    window.__stablePhysicsFrames=0;let previousPhysics=null;
    const seeds=[1];let previousRng=null;
-   window.__apiHistory=apiKeys?{active:false,done:false,stage:fullVideo?'align':'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[],presentations:[],drivingCursor:0,finalDrivers:[]}:null;
+   window.__apiHistory=apiKeys?{active:false,done:false,stage:firstPhase!==null?'align':'settle',steady:0,index:0,shots:[],inputs:[],keys:apiKeys,error:null,raceFrames:[],presentations:[],drivingCursor:0,finalDrivers:[]}:null;
    window.__naturalPending=[];window.__captureYield=null;
    if(naturalChamp||resultTables){
     const schedule=window.setTimeout;
@@ -344,7 +347,7 @@ async function tap(page,key,timing=null,raceStart=null){
      naturalMultiplayer:apiReference&&apiReference.meta.natural_multiplayer,naturalMultiplayerPlan,
      naturalSeason:apiReference&&apiReference.meta.natural_season,seasonEnd:apiReference&&apiReference.seasonEnd,
      fullVideo:apiReference&&apiReference.meta.full_video,
-     firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs});
+     firstPhase:apiReference?(apiReference.meta.full_video?apiReference.meta.presentations[0].phase:apiReference.initialMenuPhase===null?null:(apiReference.initialMenuPhase-15+64)%64):null,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs});
   await boot(page,server);
   if(rngLayout){
    const first=await page.evaluate(()=>window.__rngObservations[0]);

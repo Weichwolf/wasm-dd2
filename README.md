@@ -2797,29 +2797,32 @@ driver state at human A's final quit boundary.
 
 An explicitly partial replay uses the first human's actual recorded keys,
 96,097 clock returns and 208,969 RNG triples. All 15,762 native ASan and WASM
-racing indexed/palette pairs now match the original literally, with their
-observed gameplay state, player, blink phase and API counts. Native also
-matches the complete mixed clock/RNG return order and driving-key boundaries
-(`multiplayer-prefix-1543-native-comparison/report.json`); the browser comparison
-is `multiplayer-prefix-1541-browser-comparison/report.json`. All 24 checkpoint
-states/results match. The initial complete image comparisons fail: native has two differing
-menu rasters and WASM has three, captured at different observed blink phases.
-A later native capture matches all 24 rasters after natural phase alignment
-(`multiplayer-prefix-1550-native-aligned-comparison/report.json`). Menu key-release observations also occur
-one draw later on native for some menu actions; this is recorded separately
-from the matching driving-key boundaries.
+racing indexed/palette pairs match the original literally, with their observed
+gameplay state, player, blink phase and API counts. Native also matches the
+complete mixed clock/RNG return order and driving-key boundaries. All 24
+checkpoint states/results, indexed images and palettes match on both ports
+with the initial menu blink phase aligned to its actual original observation
+(`multiplayer-prefix-1550-native-aligned-comparison/report.json` and
+`multiplayer-prefix-1552-browser-aligned-comparison/report.json`). Actual browser
+canvas conversion is checked on every captured racing image. This covers one
+human's ten-lap finish and selected menu/start/result checkpoints, not every
+loading/fade presentation or complete game acceptance. Menu key-release
+observations occur one draw later on native for some menu actions; these
+observation positions are recorded separately from the matching driving-key
+boundaries.
 
 The public comparison rejects seven altered pixel, palette, physics, API-count
 and extent cases using independently observed racing frame 11,000
 (`multiplayer-prefix-1536-comparison-controls/report.json`). The unchanged full
-multiplayer gate rejects the first-human prefix. The second regular finish,
-chronological PCM and physical timing remain unproven. Successful closed port
-racing images are removed after the reports. WASM checkpoint images remain
-for the ongoing menu-phase diagnosis; diagnosed native raw checkpoints and
-return/event logs are removed after the aligned comparison, with SHA ledgers
-and processed states retained (`multiplayer-prefix-1551-native-cleanup/report.json`). Failed second-human raw archive chunks are removed;
-every first-human original picture and three selected failed-tail diagnostic
-chunks remain until their comparisons are finished.
+multiplayer gate rejects the first-human prefix. The exact original terminal
+car metrics, second regular finish, chronological PCM and physical timing
+remain unproven. After the successful reports, closed port racing/checkpoint
+raw files and diagnosed native return/event logs are removed, retaining SHA
+ledgers and processed states (`multiplayer-prefix-1551-native-cleanup/report.json`
+and `multiplayer-prefix-1555-browser-cleanup/report.json`). Successfully compared
+first-human original archive packs are also removed. The shared turn-boundary
+chunk and selected failed second-human diagnostic chunks remain for that open
+diagnosis; the recorded original API/key streams remain available.
 
 Patch 903 adds an optional native provider return observer. Native captures
 can use `--api-return-log` to retain each actual clock return, independently
@@ -2845,17 +2848,16 @@ before/after patch 903 against the original
 identical racing and checkpoint raster hashes, including the same two
 unaligned-menu failures; this does not establish full-game parity.
 
-Native non-full-video capture also waits for the observed original initial
-menu blink phase before its sixteen settling draws, without writing the blink
-counter. The completed native comparison matches all 15,762 racing
-indexed/palette pairs and all 24 menu/start/result rasters, checkpoint states
-and blink phases (`multiplayer-prefix-1550-native-aligned-comparison/report.json`).
-Actual mixed API returns, gameplay counters and driving-key boundaries also
-match; both partial histories are rejected by the unchanged full multiplayer
-gate. This covers the first human's actual ten-lap finish only. A corresponding
-phase-aligned WASM capture is still running; exact original terminal car
-metrics, the second regular finish, chronological PCM, physical timing and
-complete game parity remain unproven.
+Native and browser non-full-video capture wait for the observed original
+initial menu blink phase before their sixteen settling draws, without writing
+the blink counter. The original native capture had two differing menu rasters
+and WASM had three; all of those rasters now match when observed at the same
+normal animation phase. Both completed comparisons retain all 15,762 matching
+racing indexed/palette pairs and match all 24 menu/start/result rasters,
+checkpoint states and blink phases. Both partial histories remain rejected by
+the unchanged full multiplayer gate. This establishes the phase-aligned
+first-human trace; complete two-human, chronological PCM, physical timing and
+whole-game parity remain unproven.
 
 ```sh
 make verify-native-api-returns API_RETURN_LOG_ARGS='--reference /tmp/wasm-dd2/original-history --before-source /tmp/wasm-dd2/before/dd2_stubs.c --output /tmp/wasm-dd2/api-return-check --wasm'
