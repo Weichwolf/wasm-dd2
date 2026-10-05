@@ -288,6 +288,14 @@ Each target drives independently from the same declared edited file input.
 Consequently neither different lap times nor matching name-dialog phases prove
 chronological original racing A/V or a lap beating the provisioned default.
 Full race/audio parity and complete Championship progression remain open.
+
+The host road follower accepts `movement_distance`, `stall_ticks` and
+`progress_ticks` tuning without changing its established default policy.
+`python3 tools/verify_road_driver_defaults.py --reference /tmp/wasm-dd2/multiplayer-positive-1251-original-steady --report /tmp/wasm-dd2/road-defaults-verified.json`
+replays recorded observations through the captured and current default host
+policies. All 29,676 keyboard intentions matched in the verified diagnosis.
+This is a host-policy regression from an incomplete original race; it proves
+neither a tuned driver's finish nor engine, score or A/V parity.
 Verified report: `/tmp/wasm-dd2/lap-record-1250-public-verified.json`, with 14
 rejected mutations. Successful comparison rasters were removed after writing it.
 

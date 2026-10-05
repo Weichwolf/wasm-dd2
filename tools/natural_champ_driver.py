@@ -70,8 +70,11 @@ def observe(read, steady=False):
 
 
 class KeyboardDriver:
-    def __init__(self, steady=False):
+    def __init__(self, steady=False, movement_distance=500, stall_ticks=75, progress_ticks=200):
         self.steady = steady
+        self.movement_distance = movement_distance
+        self.stall_ticks = stall_ticks
+        self.progress_ticks = progress_ticks
         self.position = None
         self.last_movement = 0
         self.reverse_until = 0
@@ -81,7 +84,7 @@ class KeyboardDriver:
     def controls(self, read, tick):
         row = observe(read, self.steady)
         position = row['position']
-        if self.position is None or sum(abs(a-b) for a,b in zip(position,self.position)) > 500:
+        if self.position is None or sum(abs(a-b) for a,b in zip(position,self.position)) > self.movement_distance:
             self.position = position
             self.last_movement = tick
         if self.steady:
@@ -92,8 +95,8 @@ class KeyboardDriver:
             if self.progress is None or 0 < (progress-self.progress) % row['track_strips'] < row['track_strips']/2:
                 self.last_progress = tick
             self.progress = progress
-        if tick >= self.reverse_until and (tick - self.last_movement >= 75 or
-                self.steady and tick - self.last_progress >= 200):
+        if tick >= self.reverse_until and (tick - self.last_movement >= self.stall_ticks or
+                self.steady and tick - self.last_progress >= self.progress_ticks):
             self.reverse_until = tick + 100
             self.last_movement = self.reverse_until
             self.last_progress = self.reverse_until
