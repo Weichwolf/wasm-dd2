@@ -207,8 +207,10 @@ advanced only twenty bytes per track, damaging other entries on confirmation.
 compares 3,528 cases with actual unmodified original x86 record comparison,
 history shifts, time/name stores and configuration-payload serialization.
 All seven saved/runtime index pairs, equal/better/worse times, confirmation and
-cancellation, and 1/2/8/9-character names cover complete target regions and
-their guards. Native, AddressSanitizer and WASM agree; the old code fails 1,904
+cancellation, and 1/2/8/9-character name buffers cover complete target regions
+and their guards. Nine-character buffers are a copy-boundary probe; the original
+name dialog accepts at most eight characters. Native, AddressSanitizer and WASM
+agree; the old code fails 1,904
 cases, including 1,232 wrong prompt decisions. A single hardware breakpoint
 supplies only the name-entry callback's declared 0/1 return; the same name
 buffer is already provided on every target. Original record/packer instructions
