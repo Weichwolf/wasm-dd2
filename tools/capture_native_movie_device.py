@@ -8,6 +8,7 @@ its report carries no pixel-equality evidence.
 No full video or engine memory images are captured.
 """
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -17,7 +18,7 @@ import struct
 import time
 
 from artifacts import WORK, check_space, prepare_output
-from reference.audio import build_audio, build_reset_fault, summarize_audio
+from reference.audio import build_audio, build_reset_fault, build_write_fault, summarize_audio
 from verify_configuration_persistence import ROOT, require
 from verify_native_sdl import config
 
@@ -33,6 +34,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--skip', action='store_true', help='test real X11 key-up followed by cancellation key-down')
     parser.add_argument('--reset-errors', action='store_true', help='inject scoped ALSA reset errors after source playback')
+    parser.add_argument('--write-error', choices=('EPIPE','EINTR','EAGAIN'),
+                        help='inject one declared ALSA result on the first movie PCM write and observe its unchanged retry')
     parser.add_argument('--clock-profile', action='store_true', help='observe movie-clock call sites in a frame-pointer native binary')
     parser.add_argument('--timing-only', action='store_true', help='observe forwarded rendering timestamps without pixel readback/export')
     parser.add_argument('--video-digest', action='store_true', help='hash every actual renderer frame through a bounded FIFO without retaining raw video')
@@ -48,6 +51,11 @@ def main():
                     *config('cflags'), str(ROOT/'tools/native_movie_observer.c'), *config('libs'),
                     '-ldl', '-o', str(observer)], check=True)
     libraries = build_audio(output/'audio-libraries')
+    fault_source = None
+    if args.write_error:
+        fault_source = output/'movie_write_fault.c'
+        fault_source.write_bytes((ROOT/'tools/reference/movie_write_fault.c').read_bytes())
+        build_write_fault(libraries, fault_source)
     worker_observer = None
     if args.producer_clock:
         worker_observer = output/'worker-clock-observer.so'
@@ -117,6 +125,10 @@ def main():
             if args.reset_errors:
                 env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
                 env['DD2_RESET_FAULT_LOG']=str(output/'reset-fault.jsonl')
+            if args.write_error:
+                env['LD_PRELOAD']='dd2_write_fault.so '+env['LD_PRELOAD']
+                env.update(DD2_RECOVERY_ERRNO=str(getattr(errno,args.write_error)),
+                           DD2_RECOVERY_ANY_SOURCE='1', DD2_RECOVERY_LOG=str(output/'write-fault.jsonl'))
             if clock_metadata:
                 env['LD_PRELOAD']=str(clock_observer)+' '+env['LD_PRELOAD']
                 env.update(DD2_MOVIE_CLOCK_LOG=str(output/'movie-clock.jsonl'),
@@ -211,6 +223,15 @@ def main():
                 'scoped movie reset faults not observed')
         report.update(reset_errors=True,reset_faults=faults,
                       reset_fault_source_sha256=sha(ROOT/'tools/reference/alsa_reset_fault.c'))
+    if args.write_error:
+        from verify_movie_write_recovery import verify_fault
+        faults = [json.loads(s) for s in (output/'write-fault.jsonl').read_text().splitlines()]
+        verify_fault(faults,getattr(errno,args.write_error))
+        require(all(e['pid'] == accepted[0]['pid'] for e in faults), 'Wrong process received movie write fault')
+        report['write_recovery'] = dict(errno=getattr(errno,args.write_error),
+                                       first_movie_write=True, unchanged_retry_verified=True,
+                                       source_sha256=sha(fault_source),
+                                       journal_sha256=sha(output/'write-fault.jsonl'), events=faults)
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n');check_space(output)
     print('Actual native ALSA movie device recorded:', args.movie, len(frames),
           'frames,', accepted[0]['accepted_frames'], 'accepted and', played[0]['played_frames'],

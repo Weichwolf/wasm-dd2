@@ -347,6 +347,10 @@ capture-native-movie-device: ## record actual native ALSA movie frames and accep
 compare-native-movie-device: ## compare unshifted native movie device PCM with Wine ACM and optional whole original intro
 	python3 $(ROOT)/tools/compare_native_movie_device.py $(NATIVE_MOVIE_DEVICE_ARGS)
 
+.PHONY: verify-movie-write-recovery
+verify-movie-write-recovery: patch ## compare recoverable ALSA source writes with real Wine and sanitized native; MOVIE_WRITE_RECOVERY_ARGS required
+	python3 $(ROOT)/tools/verify_movie_write_recovery.py $(MOVIE_WRITE_RECOVERY_ARGS)
+
 .PHONY: capture-original-outro
 capture-original-outro: ## capture complete actual original Outro through real CREDITZ! menu inputs; ORIGINAL_OUTRO_ARGS required
 	python3 $(ROOT)/tools/capture_original_outro.py $(ORIGINAL_OUTRO_ARGS)

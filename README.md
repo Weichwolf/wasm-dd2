@@ -1774,6 +1774,41 @@ differs from the original at its silent endpoint
 (`movie-worker-1402-outro-whole-played.json`); browser device PCM and matched
 original/port A/V clocks remain open.
 
+Patch 899 restores Wine's recovery of a failed movie ALSA write. Previously,
+a single recoverable `EPIPE` or `EINTR` made native audio startup fail. Wine's
+`alsa_write_best_effort` calls `snd_pcm_recover(error, 0)` and retries the same
+buffer and frame count once. Native now does the same, preserving the source
+cursor until frames are actually accepted. `EAGAIN` still defers a full-buffer
+write; failed recovery and a second failed write still report an error.
+
+The real Wine WaveOut and native ASan/UBSan fixtures check one injected `EPIPE`,
+`EINTR` or `EAGAIN`, unchanged accepted source bytes and actual recovery/retry
+arguments. Native also consumes the complete nonzero caller source. Wine's
+short single-header fixture can truncate its final playback samples, so its
+consumed stream is checked as the independently recorded source prefix; this
+does not prove whole-lifetime equality. Reversing patch 899 in a private header
+snapshot reproduces both old startup failures. The default Make target passes
+with 56 changed PCM/recovery controls (`movie-recovery-1449-make/report.json`).
+The existing repeat, delayed startup/join, cancel, permanent error, reset warning
+and unavailable-device suite still passes with 60 changed PCM controls
+(`movie-recovery-1441-device-regression/report.json`).
+
+Full production native Intro with a first-write `EPIPE` and Outro with a
+first-write `EINTR` both retain every source byte at offset zero in accepted
+and consumed device output: 6039616 and 6395840 bytes respectively, checked
+against fresh Wine ACM and both decoders (`movie-recovery-1447-source-comparison/report.json`).
+All 1711/1812 renderer pictures retain the original-reference movie digests
+(`movie-recovery-1448-video-regression.json`). Whole played silence tails still
+differ, and browser transport and synchronized original/port A/V remain open.
+Successful raw PCM is removed after writing its comparison reports.
+
+```sh
+make clean-logs
+make verify-movie-write-recovery MOVIE_WRITE_RECOVERY_ARGS='--mingw /path/to/i686-w64-mingw32-gcc --output /tmp/wasm-dd2/movie-write-recovery'
+python3 tools/capture_native_movie_device.py --binary /path/to/dd2-native --movie Intro.avi --video-digest --write-error EPIPE --output /tmp/wasm-dd2/native-recovered-intro
+make clean-logs
+```
+
 ```sh
 make verify-movie-worker-clock MOVIE_WORKER_CLOCK_ARGS='--mingw /path/to/i686-w64-mingw32-gcc --before-header /tmp/wasm-dd2/before/dd2_native_movie_alsa.h --output /tmp/wasm-dd2/movie-worker-clock'
 python3 tools/capture_native_movie_device.py --binary /path/to/dd2-native --movie Intro.avi --video-digest --clock-profile --producer-clock --output /tmp/wasm-dd2/native-producer-clock
