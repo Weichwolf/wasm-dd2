@@ -225,6 +225,29 @@ reports are `/tmp/wasm-dd2/lap-record-update-1217-{native,browser}-verified.json
 they cover viewing/wrapping/reopening records and unchanged card data, excluding
 new record-name entry and persistence writes.
 
+The actual driver-name dialog has a 14-column, five-row character grid;
+File Manager name-entry keys belong to a different grid. In the driver dialog,
+the old file-name helper types `Dg` instead of confirming `D`.
+`tools/driver_name_input.py` navigates the driver/fastest-lap grid with real keys
+and checks its observed cursor and visible input after every action. The real
+championship dialog is tested for mixed-case input, its eight-character limit
+(a ninth input is ignored), punctuation/deletion, cancellation, the empty-name
+default and the original `MACSrPOO` unlock behavior. Native and browser compare
+three complete 64-phase dialog cycles plus all seven observed menu/name states
+with the unmodified original; the browser also checks actual canvas pixels and
+trusted keyboard events. This covers championship name entry, excluding the
+fastest-lap title/update path, persistence writes, racing and whole original A/V.
+The verified report is `/tmp/wasm-dd2/driver-name-1231-verified.json`: 192 exact
+framebuffer/palette pairs per port, 125 real navigation keys and 16 rejected
+pixel/palette/name mutations. Successful raw captures were removed after the report.
+
+```sh
+make verify-driver-name-ui DRIVER_NAME_UI_ARGS='capture --target original --output /tmp/wasm-dd2/names-original'
+make verify-driver-name-ui DRIVER_NAME_UI_ARGS='capture --target native --binary /tmp/dd2_native --output /tmp/wasm-dd2/names-native'
+make capture-browser-driver-name-ui BROWSER_DRIVER_NAME_UI_ARGS='web/dd2 /tmp/wasm-dd2/names-browser'
+make verify-driver-name-ui DRIVER_NAME_UI_ARGS='compare --original /tmp/wasm-dd2/names-original --native /tmp/wasm-dd2/names-native --browser /tmp/wasm-dd2/names-browser --report /tmp/wasm-dd2/names-verified.json --clean'
+```
+
 Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
 split the minute digits from a four-element array, while the sprite loop still
 read six elements; native and WASM displayed stack garbage in the first pair.

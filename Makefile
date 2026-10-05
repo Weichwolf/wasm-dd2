@@ -389,6 +389,13 @@ verify-race-positions: patch ## original-x86 lap/finish/record-loading component
 verify-lap-record-update: patch ## original-x86 record updates/serialization with controlled name callback; LAP_RECORD_UPDATE_ARGS required
 	python3 $(ROOT)/tools/verify_lap_record_update.py $(LAP_RECORD_UPDATE_ARGS)
 
+.PHONY: verify-driver-name-ui capture-browser-driver-name-ui
+verify-driver-name-ui: ## actual original/native driver-name input and menu comparisons; DRIVER_NAME_UI_ARGS required
+	python3 $(ROOT)/tools/verify_driver_name_ui.py $(DRIVER_NAME_UI_ARGS)
+
+capture-browser-driver-name-ui: ## trusted browser driver-name input; BROWSER_DRIVER_NAME_UI_ARGS required
+	node $(ROOT)/tools/browser/capture_driver_name_ui.js $(BROWSER_DRIVER_NAME_UI_ARGS)
+
 verify-champ-season: ## actual full Retire/Yes season capture/compare; CHAMP_SEASON_ARGS required
 	python3 $(ROOT)/tools/verify_champ_season.py $(CHAMP_SEASON_ARGS)
 
