@@ -824,6 +824,19 @@ component comparison streams its output without retaining raw video. Build
 products, Wine prefixes, diagnostics and comparison output stay under
 `/tmp/wasm-dd2/`; successful raw captures are removed after writing reports.
 
+`make verify-movie-playback` also compiles the patched `build/` production
+backend. Each presented ARGB frame streams through a bounded pipe. Native's
+first stream is compressed losslessly; WASM's complete stream is compared
+literally with the decompressed frames, without retaining two raw movies.
+Archives are deleted after successful comparison and capture-space guards
+enforce the 2 GiB limit. The original `Play_Movie` fixture in
+`/tmp/wasm-dd2/movie-playback-926-production/report.json` passed Intro and Outro
+in full, skipped and audio-unavailable modes on native ASan/UBSan and WASM.
+It checks every pixel, complete available source PCM, deadlines, clock wrap,
+drain-before-notify and early close; a changed display bit is rejected in
+each of the six cases. Its controlled clock/device remains a transport
+component test, with the original chronological mismatches above still open.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

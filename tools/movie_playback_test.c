@@ -52,11 +52,11 @@ static void FUN_00413054(void){
 #include "movie-function.c"
 int main(int argc,char** argv){
     require(argc==6,"movie/video/audio/timeline/skip arguments");
-    video=fopen(argv[2],"wb");audio=fopen(argv[3],"wb");timeline=fopen(argv[4],"w");
+    video=!strcmp(argv[2],"-")?stdout:fopen(argv[2],"wb");audio=fopen(argv[3],"wb");timeline=fopen(argv[4],"w");
     require(video && audio && timeline,"capture files");skipping=atoi(argv[5])==1;audio_failure=atoi(argv[5])==2;
     Play_Movie((uint)(uintptr_t)argv[1]);
     require(!dd2_movie_active() && !Movie_Playing && notifications==1 && closed==1,"finished/closed state");
-    require(!fclose(video) && !fclose(audio) && !fclose(timeline),"close full capture streams");
+    require(!fflush(video) && (video==stdout || !fclose(video)) && !fclose(audio) && !fclose(timeline),"close full capture streams");
     printf("{\"frames\":%u,\"pcm_frames\":%lu,\"rate\":%u,\"channels\":%u,\"pumps\":%u,\"notifications\":%u,\"closed\":%u,\"skip\":%u,\"audio_failure\":%u}\n",
            frames,(unsigned long)pcm_frames,rate,channels,pumps,notifications,closed,skipping,audio_failure);
     return 0;
