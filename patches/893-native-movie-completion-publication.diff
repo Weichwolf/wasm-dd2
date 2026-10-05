@@ -1,0 +1,37 @@
+Wait for producer-published movie audio completion.
+
+Wine 10 publishes WHDR_DONE/WOM_DONE from its WaveOut device worker; MCI
+waits for those notifications rather than polling the ALSA sample position.
+A real Wine two-header fixture blocks the first callback while all samples
+play: the second header stays pending until the worker is released. The
+same gated native producer previously reported done directly from hardware
+consumption before it published completion.
+
+Read the producer's existing completion/error latch under its mutex. Keep
+source playback, queue reset, final cleanup and device clocks unchanged.
+The scoped publication test does not establish whole original A/V parity.
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -185,17 +185,11 @@
+     movie_alsa_stop();return -1;
+ }
+ static int movie_alsa_done(void){
+-    snd_pcm_sframes_t pending=0;int result=0;
++    int result;
+     SDL_LockMutex(movie_alsa.mutex);
+-    if(movie_alsa.error)result=-1;
+-    else if(movie_alsa.source_done)result=1;
+-    else if(movie_alsa.index==movie_alsa.frames){
+-        int status=movie_snd_pcm_delay(movie_alsa.device,&pending);
+-        if(status==-EPIPE)pending=0;
+-        else if(status<0)result=-1;
+-        if(!result && pending>=0 && (uint64_t)pending<=movie_alsa.written &&
+-                movie_alsa.written-(uint64_t)pending>=movie_alsa.frames)result=1;
+-    }
++    /* MCI waits for the WaveOut worker's completed-header publication.
++     * Hardware consumption alone does not deliver that notification. */
++    result=movie_alsa.error?-1:movie_alsa.source_done?1:0;
+     SDL_UnlockMutex(movie_alsa.mutex);return result;
+ }
+ #undef MOVIE_ALSA_SYMBOLS

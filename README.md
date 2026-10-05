@@ -1082,8 +1082,8 @@ make verify-movie-drain MOVIE_DRAIN_ARGS='--mingw <32-bit compiler> --output /tm
 Patch 878 removes the extra startup silence when the native SDL driver is
 ALSA. SDL writes silence while a newly opened audio device is paused. The
 movie output now opens ALSA with Wine 10's 10-ms/four-period WaveOut profile,
-fills the first buffer with source PCM, and checks device-pending frames for
-completion. Other SDL audio drivers retain their existing route. An
+fills the first buffer with source PCM, and tracks device-pending frames in
+the producer. Patch 893 makes MCI wait for producer-published completion. Other SDL audio drivers retain their existing route. An
 unrecoverable output error closes the movie audio and reports MCI failure.
 The shared MCI component's native ASan/UBSan and WASM regression covers nine
 cases each, including immediate and later output errors
@@ -1433,6 +1433,44 @@ cancel/reset/error cases and 120 altered PCM controls
 python3 tools/verify_native_movie_schedule.py \
   --before-header /tmp/wasm-dd2/movie-schedule-1105-before/dd2_native_movie_alsa.h \
   --output /tmp/wasm-dd2/movie-schedule
+```
+
+Patch 893 removes an early-completion path in the native movie device.
+Wine's WaveOut worker publishes completed headers and `WOM_DONE`; MCI waits
+for those notifications. Native previously also reported completion directly
+from ALSA consumption before its producer published the result. The production
+query now reads the producer's completion/error latch under the same mutex.
+
+`make verify-movie-completion` gates Wine's first completion callback while
+its device consumes two headers, and separately gates the native producer
+before its first period. Both use the same 882 nonzero stereo frames. Complete
+accepted and device-consumed caller PCM must match at offset zero. Wine's
+second header remains pending until its worker resumes; native must likewise
+remain pending until its producer resumes. The old header reports completion
+early and fails the same invariant. The actual Wine and native ASan/UBSan
+comparison passes 18 changed-state/PCM controls
+(`movie-completion-1296-public/report.json`). The full native device suite
+passes 60 changed PCM controls (`movie-completion-1283-device/report.json`),
+and native/ASan/UBSan and WASM MCI drain/reset/error regressions also pass
+(`movie-completion-1286-drain/report.json`). These are completion-boundary
+checks, not chronological original game A/V acceptance.
+
+The rebuilt full native port consumes both complete Intro/Outro source streams
+at offset zero and preserves actual key-up/key-down cancellation
+(`movie-completion-1291-comparison/report.json` and
+`movie-completion-1294-skip-comparison/report.json`). The digest of all 1711
+actual native Intro renderer frames matches a fresh unchanged-original window
+capture, independently checked against each original packet/readback
+(`movie-completion-1290-video.json`). That fresh original accepts 220 and
+consumes one post-source silence frame, while this native run accepts 660 and
+consumes 440. Both retain every source sample; the complete streams differ
+(`movie-completion-1297-fresh-comparison/report.json`). Native's same complete
+Intro streams match the older 1059 original capture, which establishes only
+that particular pair. Movie observer workload and independently scheduled
+completion polls still require chronological A/V diagnosis.
+
+```sh
+make verify-movie-completion MOVIE_COMPLETION_ARGS='--output /tmp/wasm-dd2/movie-completion --mingw /path/to/i686-w64-mingw32-gcc --before-header /tmp/wasm-dd2/before/dd2_native_movie_alsa.h'
 ```
 
 Full native Intro/Outro and real key-up/key-down cancellation still match

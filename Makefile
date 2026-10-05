@@ -310,6 +310,10 @@ verify-movie-end: ## observe actual Wine default exclusive AVI play endpoints; M
 verify-movie-drain: patch ## compare real-time Wine final draw/drain with native/ASan/WASM components; MOVIE_DRAIN_ARGS required
 	python3 $(ROOT)/tools/verify_movie_drain.py $(MOVIE_DRAIN_ARGS)
 
+.PHONY: verify-movie-completion
+verify-movie-completion: patch ## compare actual Wine/native worker-published audio completion; MOVIE_COMPLETION_ARGS required
+	python3 $(ROOT)/tools/verify_movie_completion.py $(MOVIE_COMPLETION_ARGS)
+
 .PHONY: verify-native-movie-device capture-native-movie-device compare-native-movie-device
 verify-native-movie-device: patch ## verify actual ALSA movie start, repeat, cancel and errors under ASan/UBSan; NATIVE_MOVIE_DEVICE_ARGS required
 	python3 $(ROOT)/tools/verify_native_movie_device.py $(NATIVE_MOVIE_DEVICE_ARGS)
