@@ -1315,6 +1315,66 @@ lifetime still require their own comparisons. This proves the bounded cadence
 correction under the declared load, not synchronized A/V, whole original tails
 or complete game parity.
 
+Patch 888 reuses full integer horizontal movie-filter sums across output
+rows. The bilinear expression is separable; retaining its unrounded horizontal
+sums preserves all 7-bit coefficients, RepeatNone borders and RGB565 output
+while avoiding repeated source-row work. The clocks, source frames, PCM and
+completion rules are unchanged.
+
+The complete old/current comparison covers all 1712 Intro and 1813 Outro
+source frames plus 74 clipped/extreme/small-source transforms per movie on
+native ASan/UBSan and WASM. Every ARGB byte matches, with changed-bit and
+invalid-rectangle controls rejected
+(`movie-filter-1123-exact/report.json`). The verifier accepts an immutable
+`--before-source`; its default pre-879 reconstruction reverses 888 and 879.
+
+```sh
+python3 tools/verify_movie_window_axes.py \
+  --before-source /tmp/wasm-dd2/movie-filter-1121-before/dd2_movie_surface.c \
+  --output /tmp/wasm-dd2/movie-filter-exact
+python3 tools/capture_native_movie_device.py \
+  --binary /tmp/wasm-dd2/movie-filter-1124-native --clock-profile --video-digest \
+  --output /tmp/wasm-dd2/movie-filter-intro
+python3 tools/observe_native_movie_work.py \
+  --capture /tmp/wasm-dd2/movie-filter-intro \
+  --binary /tmp/wasm-dd2/movie-filter-1124-native \
+  --output /tmp/wasm-dd2/movie-filter-work
+```
+
+The optional read-only clock observer forwards CLOCK_MONOTONIC unchanged in
+an unchanged non-PIE native binary. Its frame-pointer caller is checked in
+disassembly, with bounds from that binary's symbol table. The work report
+binds every observed clock call to actual MCI/pump call sites and uses the
+observed MCI epoch, without fitting. Clock-domain, unknown-site, reversed-clock
+and texture-before-clock controls are rejected. Elapsed-to-texture time drops
+from a 10.823-ms median before 888 to 2.416 ms afterwards
+(`movie-clock-1125-work/report.json`, `movie-filter-1131-work/report.json`).
+These are wall-clock intervals including decoder/filter work, journaling and
+OS scheduling. The new run includes a 59.806-ms work maximum and a 68.970-ms
+pump lateness maximum, so faster typical work is not stable deadline evidence.
+
+The new native Intro's actual SDL readbacks contain 1711 frames and
+2102476800 opaque ARGB bytes. Its streaming SHA256 equals the original-window
+SHA256 recorded in `movie-scale-1000-live-sinks/report.json`; the bounded FIFO
+retains no raw video. In this run the complete accepted and device-consumed
+PCM streams, including their respective 660/440-frame silent tails, also match
+the retained unmodified original Intro capture literally at offset zero
+(`movie-filter-1136-comparison/report.json`). Full native Outro and real
+key-up/key-down cancellation still preserve exact source PCM. The original
+whole Outro comparison remains open. Actual SDL/sample-clock brackets are
+reported separately in `movie-filter-1133-timing/report.json`; the FIFO and
+observer costs remain visible. Matching these byte streams in one run does
+not establish repeated tail equality, synchronized original/port A/V clocks,
+physical output or complete game parity.
+
+The fresh browser build also completes full Intro/Outro and both real
+key-up/key-down cancellation cases. All 1711/1812 complete canvas frames match
+the production image bytes, all 6039616/6395840 submitted movie PCM bytes match
+fresh Wine ACM output, and source reset/closed-context ordering passes
+(`movie-filter-1129-browser-sinks/report.json`). This checks actual canvas and
+WebAudio source boundaries; consumed browser output samples and original
+presentation clocks remain open.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

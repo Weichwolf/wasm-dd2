@@ -1,0 +1,85 @@
+Reuse exact horizontal movie filter sums across adjacent output rows.
+
+Distribute the existing integer bilinear expression into two separable stages,
+without rounding horizontal sums. RepeatNone black borders, 7-bit weights,
+RGB565 quantization and channel expansion remain unchanged.
+This reduces per-frame work without altering source or presentation clocks.
+
+--- a/dd2_movie_surface.c
++++ b/dd2_movie_surface.c
+@@ -36,31 +36,58 @@
+         }
+     }
+ }
++/* Retain full integer horizontal sums until the vertical stage. Reuse
++ * source rows; no intermediate rounding or coefficient changes are allowed. */
++static void movie_filter_row(const uint8_t* rgb,unsigned width,unsigned height,
++                             int64_t y,const MovieAxis* horizontal,unsigned* row) {
++    unsigned x;
++    for(x=0;x<640;x++) {
++        unsigned k,wx=horizontal[x].active?horizontal[x].fraction:0;
++        int64_t sx=horizontal[x].active?horizontal[x].index:0;
++        for(k=0;k<3;k++) {
++            unsigned sum=0;
++            if(horizontal[x].active && y>=0 && y<height) {
++                if(sx>=0 && sx<width)sum=rgb[((size_t)y*width+(size_t)sx)*3+k]*(128-wx);
++                if(sx+1>=0 && sx+1<width)sum+=rgb[((size_t)y*width+(size_t)(sx+1))*3+k]*wx;
++            }
++            row[x*3+k]=sum;
++        }
++    }
++}
+ int dd2_movie_render_window(const uint8_t* rgb,unsigned width,unsigned height,const int32_t* rect,uint32_t* argb) {
+     int x,y;MovieAxis horizontal[640],vertical[480];
++    unsigned rows[2][640*3];int64_t cached[2]={INT64_MIN,INT64_MIN};
+     if(!rgb || !width || !height || !rect || !argb || rect[2]<=0 || rect[3]<=0)return -1;
+     movie_axis(horizontal,640,rect[0],rect[2],width);
+     movie_axis(vertical,480,rect[1],rect[3],height);
+-    for(y=0;y<480;y++)for(x=0;x<640;x++) {
+-        uint32_t color=0xff000000u;
+-        if(horizontal[x].active && vertical[y].active) {
+-            int64_t sx=horizontal[x].index,sy=vertical[y].index;
+-            unsigned wx=horizontal[x].fraction,wy=vertical[y].fraction;
+-            unsigned sums[3]={0,0,0},ix,iy,k,r,g,b;
+-            for(iy=0;iy<2;iy++)for(ix=0;ix<2;ix++) {
+-                int64_t px=sx+ix,py=sy+iy;
+-                unsigned weight=(ix?wx:128-wx)*(iy?wy:128-wy);
+-                if(px>=0 && py>=0 && px<width && py<height) {
+-                    const uint8_t* p=rgb+((size_t)py*width+(size_t)px)*3;
+-                    for(k=0;k<3;k++)sums[k]+=p[k]*weight;
++    for(y=0;y<480;y++) {
++        unsigned slot=0,wy=vertical[y].active?vertical[y].fraction:0;
++        if(vertical[y].active) {
++            unsigned iy;
++            int64_t sy=vertical[y].index;
++            slot=(unsigned)sy&1u;
++            for(iy=0;iy<2;iy++) {
++                unsigned target=(slot+iy)&1u;
++                if(cached[target]!=sy+iy) {
++                    movie_filter_row(rgb,width,height,sy+iy,horizontal,rows[target]);
++                    cached[target]=sy+iy;
+                 }
+             }
+-            r=sums[0]>>17;g=sums[1]>>16;b=sums[2]>>17;
+-            color|=((r<<3)|(r>>2))<<16;
+-            color|=((g<<2)|(g>>4))<<8;
+-            color|=(b<<3)|(b>>2);
+         }
+-        argb[y*640+x]=color;
++        for(x=0;x<640;x++) {
++            uint32_t color=0xff000000u;
++            if(horizontal[x].active && vertical[y].active) {
++                const unsigned* a=rows[slot]+x*3;
++                const unsigned* b=rows[slot^1u]+x*3;
++                unsigned r=(a[0]*(128-wy)+b[0]*wy)>>17;
++                unsigned g=(a[1]*(128-wy)+b[1]*wy)>>16;
++                unsigned blue=(a[2]*(128-wy)+b[2]*wy)>>17;
++                color|=((r<<3)|(r>>2))<<16;
++                color|=((g<<2)|(g>>4))<<8;
++                color|=(blue<<3)|(blue>>2);
++            }
++            argb[y*640+x]=color;
++        }
+     }
+     return 0;
+ }

@@ -31,6 +31,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--skip', action='store_true', help='test real X11 key-up followed by cancellation key-down')
     parser.add_argument('--reset-errors', action='store_true', help='inject scoped ALSA reset errors after source playback')
+    parser.add_argument('--clock-profile', action='store_true', help='observe movie-clock call sites in a frame-pointer native binary')
+    parser.add_argument('--video-digest', action='store_true', help='hash every actual renderer frame through a bounded FIFO without retaining raw video')
     args = parser.parse_args()
     output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
@@ -41,12 +43,40 @@ def main():
                     '-ldl', '-o', str(observer)], check=True)
     libraries = build_audio(output/'audio-libraries')
     if args.reset_errors: build_reset_fault(libraries)
+    clock_metadata = None
+    if args.clock_profile:
+        symbols = subprocess.check_output(['nm', '-S', str(binary)], text=True)
+        matches = [s.split() for s in symbols.splitlines() if s.endswith(' dd2_movie_now_ms')]
+        require(len(matches) == 1 and len(matches[0]) == 4, 'unique movie-clock symbol required')
+        lower, size = (int(s, 16) for s in matches[0][:2])
+        disassembly = subprocess.check_output(['objdump', '-d', '--disassemble=dd2_movie_now_ms', str(binary)], text=True)
+        require('elf32-i386' in disassembly and 'push   %ebp' in disassembly and 'mov    %esp,%ebp' in disassembly,
+                '32-bit frame-pointer movie-clock function required')
+        (output/'movie-clock-disassembly.txt').write_text(disassembly)
+        clock_observer = output/'clock-observer.so'
+        subprocess.run(['gcc', '-m32', '-shared', '-fPIC', '-O2', '-fno-omit-frame-pointer',
+                        '-Wall', '-Wextra', '-Werror', '-Wno-frame-address',
+                        str(ROOT/'tools/native_movie_clock_observer.c'), '-ldl', '-o', str(clock_observer)], check=True)
+        clock_metadata = dict(lower=lower, upper=lower+size,
+                              source_sha256=sha(ROOT/'tools/native_movie_clock_observer.c'),
+                              observer_sha256=sha(clock_observer), clock_domain='CLOCK_MONOTONIC')
     asound = output/'asound.conf'
     asound.write_text(f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                       'pcm.!default { type dd2clock }\n')
-    process = display = None
+    process = display = video_reader = None
+    video_digest = None
     with (output/'run.log').open('wb') as log:
         try:
+            if args.video_digest:
+                os.mkfifo(output/'video.pipe')
+                reader = ('import hashlib,json,sys\n'
+                          'h=hashlib.sha256();size=0\n'
+                          'with open(sys.argv[1],"rb") as f:\n'
+                          ' while block:=f.read(1048576):\n'
+                          '  h.update(block);size+=len(block)\n'
+                          'print(json.dumps(dict(bytes=size,sha256=h.hexdigest())))\n')
+                video_reader = subprocess.Popen(['python3', '-c', reader, str(output/'video.pipe')],
+                                                stdout=subprocess.PIPE, stderr=log)
             display = subprocess.Popen(['Xvfb', '-displayfd', '1', '-screen', '0', '640x480x24'],
                                        stdout=subprocess.PIPE, stderr=log)
             number = display.stdout.readline().decode().strip()
@@ -60,6 +90,12 @@ def main():
             if args.reset_errors:
                 env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
                 env['DD2_RESET_FAULT_LOG']=str(output/'reset-fault.jsonl')
+            if clock_metadata:
+                env['LD_PRELOAD']=str(clock_observer)+' '+env['LD_PRELOAD']
+                env.update(DD2_MOVIE_CLOCK_LOG=str(output/'movie-clock.jsonl'),
+                           DD2_MOVIE_CLOCK_LOWER=format(lower,'x'), DD2_MOVIE_CLOCK_UPPER=format(lower+size,'x'))
+            if args.video_digest:
+                env['DD2_NATIVE_MOVIE_VIDEO_PIPE']='1'
             process = subprocess.Popen([str(binary)], cwd=ROOT/'DestructionDerby2',
                                        env=env, stdout=log, stderr=log)
             deadline = time.monotonic()+110
@@ -84,11 +120,19 @@ def main():
                 check_space(output);time.sleep(.1)
             require(process.returncode == 0, 'native ALSA movie failed')
             require(not args.skip or control_done, 'movie exited before real skip keys')
+            if video_reader:
+                digest_output, _ = video_reader.communicate(timeout=10)
+                require(video_reader.returncode == 0, 'actual video digest reader failed')
+                video_digest = json.loads(digest_output)
         finally:
             if process and process.poll() is None:
                 process.terminate();process.wait(timeout=5)
             if display:
                 display.terminate();display.wait(timeout=5)
+            if video_reader and video_reader.poll() is None:
+                video_reader.terminate();video_reader.wait(timeout=5)
+            if args.video_digest:
+                (output/'video.pipe').unlink(missing_ok=True)
     audio = summarize_audio(output/'audio', require_played=True)
     events = [json.loads(s) for s in (output/'events.jsonl').read_text().splitlines()]
     frames = [r for r in events if r['event'] == 'present']
@@ -107,6 +151,15 @@ def main():
                   movie=args.movie, frames=len(frames), exact_rendered_pixels=len(frames)*640*480,
                   skip=args.skip, key_up_retained=args.skip and control_done,
                   observer_source_sha256=sha(ROOT/'tools/native_movie_observer.c'), audio=audio)
+    if clock_metadata:
+        clocks = [json.loads(s) for s in (output/'movie-clock.jsonl').read_text().splitlines()]
+        require(len(clocks) >= len(frames) and all(e['clock_domain'] == 'CLOCK_MONOTONIC' for e in clocks),
+                'movie-clock observations incomplete')
+        report['clock_profile'] = dict(**clock_metadata, calls=len(clocks),
+                                      journal_sha256=sha(output/'movie-clock.jsonl'))
+    if video_digest:
+        require(video_digest['bytes'] == len(frames)*640*480*4, 'actual video stream length differs')
+        report['actual_video_digest'] = dict(**video_digest, frames=len(frames), format='opaque ARGB8888 little endian')
     if args.reset_errors:
         faults=[json.loads(s) for s in (output/'reset-fault.jsonl').read_text().splitlines()]
         require(faults and all(e['result']==-5 and e['pid']==accepted[0]['pid'] for e in faults),

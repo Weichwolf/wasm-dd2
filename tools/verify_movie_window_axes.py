@@ -2,8 +2,9 @@
 """Compare every old/current window byte for complete original movies and transforms.
 
 Native ASan/UBSan and WASM use the production AVI decoder and window renderer.
-The pre-axis implementation is reconstructed from the current production
-source and the reverse patch, not a reference image injected into an engine.
+The earlier implementation is an immutable source snapshot or reconstructed
+from the current production source and reverse patches. No reference image
+is injected into an engine.
 Recorded elapsed rendering times are diagnostics, not timing acceptance.
 Unchanged pixels do not establish common live original/port audio clocks.
 """
@@ -27,6 +28,7 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--before-source', type=Path, help='immutable earlier movie_surface source instead of pre-axis reconstruction')
     args = parser.parse_args();output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False)
@@ -37,8 +39,16 @@ def main():
         shutil.copy2(path,production/path.name)
     surface = production/'dd2_movie_surface.c';before = output/'dd2_movie_surface.c'
     patch = ROOT/'patches/879-movie-window-axis-transform.diff'
-    before.write_bytes(surface.read_bytes())
-    subprocess.run(['patch', '--batch', '--fuzz=0', '-R', '-p1', '-i', str(patch)], cwd=output, check=True)
+    reversed_patches = []
+    if args.before_source:
+        before.write_bytes(args.before_source.read_bytes())
+    else:
+        before.write_bytes(surface.read_bytes())
+        if 'movie_filter_row' in before.read_text():
+            reversed_patches.append(ROOT/'patches/888-movie-window-filter-rows.diff')
+        reversed_patches.append(patch)
+        for reverse in reversed_patches:
+            subprocess.run(['patch', '--batch', '--fuzz=0', '-R', '-p1', '-i', str(reverse)], cwd=output, check=True)
     fixture = ROOT/'tools/movie_window_axes_test.c'
     codecs = [production/f'dd2_{name}.c' for name in ('avi','cinepak','msadpcm')]
     common = ['-std=gnu99','-O2','-Wall','-Wextra','-Werror','-I'+str(production)]
@@ -57,6 +67,8 @@ def main():
     report = dict(scope=__doc__, original_port_live_parity='unproven', before_source_sha256=sha(before),
                   sources={str(p.relative_to(ROOT)):sha(production/p.name) for p in originals},
                   fixture_source_sha256=sha(fixture),patch_sha256=sha(patch),cases=[])
+    report['before_source_input'] = str(args.before_source.resolve()) if args.before_source else None
+    report['reversed_patches'] = {p.name:sha(p) for p in reversed_patches}
     env = {k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     for filename in ('Intro.avi','Outro.avi'):
         movie=ROOT/'DestructionDerby2'/filename;metadata,_,_,_=original_metadata(movie)
