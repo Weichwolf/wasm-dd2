@@ -2649,6 +2649,36 @@ make verify-road-recovery ROAD_RECOVERY_ARGS='--reference /tmp/wasm-dd2/multipla
 make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-wall-recovery --speed-limit 160 --slow-recovery --wall-recovery'
 ```
 
+Long racing captures can retain every literal image within the 2 GiB limit
+using `tools/racing_archive.py` and Debian's `libzstd1`. It packs at most 64
+closed indexed images and palettes together, verifies the decoded bytes and
+the production comparison reader before removing their old storage, and
+commits each manifest atomically. Open/recent files remain untouched. The
+recorder keeps its original write-once image format, metadata, inputs and API
+streams; the archive is a separate storage operation. A live follower waits
+for complete packs and flushes its last partial pack when that specific
+recorder exits. Interrupted cleanup resumes only for identical closed inputs.
+
+The existing literal racing comparison reads either original files or these
+archives and still checks the recorder's own per-frame hashes and every pixel
+and palette byte. Successful multiplayer comparisons also remove closed raw
+archive packs, retaining their manifest as diagnostic provenance.
+`multiplayer-natural-1473-archive-make/report.json` verifies 256 actual original
+image pairs, open-file protection, restart cleanup and 13 controls, including
+internally consistent changed image/palette bytes, truncation, trailing bytes,
+oversized decoding and changed/repeated prefixes. Its source files occupy
+20,412,545 bytes; the identical archived pictures occupy 15,188,942 bytes.
+Successful test fixtures are removed after the report. These results prove
+lossless storage, not a regular finish or original/port game parity.
+
+```sh
+make clean-logs
+make verify-racing-archive RACING_ARCHIVE_VERIFY_ARGS='--reference /tmp/wasm-dd2/natural-wall-recovery/history --first 10048 --output /tmp/wasm-dd2/racing-archive-check'
+make pack-racing-archive RACING_ARCHIVE_ARGS='--capture /tmp/wasm-dd2/natural-wall-recovery/history'
+# While a known recorder is running, add --follow-pid with its actual PID.
+make clean-logs
+```
+
 The comparison covers both turns, real player exchange, positive result totals,
 reopening the cumulative league and actually starting the next round. It checks
 all chronological racing pixels/palettes and 35 checkpoints, with selected

@@ -120,6 +120,9 @@ def exact_bytes(a, b, size):
 def picture(root, prefix, suffix, size):
     raw = root / (prefix + suffix)
     compressed = root / (prefix + suffix + '.z')
+    if not raw.exists() and not compressed.exists() and (root/'racing-archive.json').exists():
+        from racing_archive import archived_picture
+        return archived_picture(root, prefix, suffix, size)
     if raw.exists() == compressed.exists():
         raise ValueError('Exactly one raw or losslessly compressed picture is required')
     if raw.exists():

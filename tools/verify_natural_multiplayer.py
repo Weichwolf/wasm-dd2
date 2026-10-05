@@ -297,11 +297,14 @@ def main():
     if args.clean:
         opened = open_files()
         for root in [args.original, args.native, args.browser, *([args.asan] if args.asan else [])]:
-            for path in [*root.glob('race*.bin.z'), *root.glob('race*.pal'), *root.glob('step*/framebuf.bin'), *root.glob('step*/palette.bin')]:
+            storage = root/'racing-archive'
+            archived = [*storage.glob('pack*.zst'), *storage.glob('lock')] if storage.exists() else []
+            for path in [*root.glob('race*.bin.z'), *root.glob('race*.pal'), *root.glob('step*/framebuf.bin'), *root.glob('step*/palette.bin'), *archived]:
                 st = path.stat()
                 if (st.st_dev, st.st_ino) in opened:
                     raise RuntimeError('Comparison capture is still open: '+str(path))
                 path.unlink()
+            if storage.exists(): storage.rmdir()
     print('Natural multiplayer original/native/browser comparison PASS:', scores)
 
 

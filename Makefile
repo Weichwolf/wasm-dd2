@@ -157,6 +157,13 @@ verify-natural-multiplayer: ## compare positive-score original/native/browser ho
 verify-road-recovery: ## regress host keyboard intentions against retained original observations; ROAD_RECOVERY_ARGS required
 	python3 $(ROOT)/tools/verify_road_recovery.py $(ROAD_RECOVERY_ARGS)
 
+.PHONY: pack-racing-archive verify-racing-archive
+pack-racing-archive: ## losslessly archive closed racing images, optionally following a live recorder; RACING_ARCHIVE_ARGS required
+	python3 $(ROOT)/tools/racing_archive.py $(RACING_ARCHIVE_ARGS)
+
+verify-racing-archive: ## compare archive decoding literally with actual original images and reject damaged/open inputs; RACING_ARCHIVE_VERIFY_ARGS required
+	python3 $(ROOT)/tools/verify_racing_archive.py $(RACING_ARCHIVE_VERIFY_ARGS)
+
 .PHONY: capture-race-results-history verify-race-results-ui capture-browser-race-results-ui
 capture-race-results-history: ## observe original/native single or multiplayer result-table clock/RNG histories; RACE_RESULTS_HISTORY_ARGS required
 	python3 $(ROOT)/tools/capture_race_results_history.py $(RACE_RESULTS_HISTORY_ARGS)
