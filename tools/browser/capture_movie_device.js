@@ -8,6 +8,7 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
 (async()=>{
  const server=serve(build);await new Promise(r=>server.listen(0,r));let browser;
  const errors=[];
+ fs.writeFileSync(path.join(output,'observer-source.js'),fs.readFileSync(__filename));
  try{
   browser=await chromium.launch({args:['--no-sandbox','--alsa-output-device=default'],
                                 ignoreDefaultArgs:['--mute-audio']});
@@ -28,13 +29,9 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
     source.start=function(...values){
      if(preparing){
       const e=preparing,b=source.buffer;
-      let mismatches=0;
-      for(let ch=0;ch<e.channels;ch++){
-       const samples=b.getChannelData(ch);
-       for(let i=0;i<e.frames;i++)if(samples[i]!==HEAP16[(e.pointer>>1)+i*e.channels+ch]/32768)mismatches++;
-      }
       __deviceMovie.source={frames:e.frames,rate:e.rate,channels:e.channels,
-                            context_rate:ac.sampleRate,mismatches};
+                            context_rate:ac.sampleRate};
+      window.__deviceMovieBuffer=b;
       contexts.add(ac);stamp('source-start',ac,{scheduled_time:values[0]??null});
       source.addEventListener('ended',()=>stamp('source-ended',ac));
      }
@@ -78,8 +75,28 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
   }
   await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0&&!Module._dd2movieSource&&
                                __deviceMovie.events.some(e=>e.event==='context-close'),null,{timeout:110000});
-  const observed=await page.evaluate(()=>__deviceMovie);
-  assert(!errors.length,JSON.stringify(errors));assert(observed.source?.mismatches===0,'movie source Float32 conversion changed');
+  // Inspect source PCM after playback. Walking a whole AudioBuffer inside
+  // source.start would itself add empty rendered quanta before scheduling.
+  const observed=await page.evaluate(()=>{
+   const state=__deviceMovie,b=__deviceMovieBuffer,e=state.source;
+   const pcm=new Int16Array(e.frames*e.channels);let errors=0;
+   for(let ch=0;ch<e.channels;ch++){
+    const samples=b.getChannelData(ch);
+    for(let i=0;i<e.frames;i++){
+     const n=samples[i]*32768;
+     if(!Number.isInteger(n)||n<-32768||n>32767)errors++;
+     pcm[i*e.channels+ch]=n;
+    }
+   }
+   state.source.canonical_encoding_errors=errors;
+   const bytes=new Uint8Array(pcm.buffer);let text='';
+   for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));
+   return {...state,source_pcm:btoa(text)};
+  });
+  assert(!errors.length,JSON.stringify(errors));assert(observed.source?.canonical_encoding_errors===0,'movie source is not canonical S16 Float32');
+  fs.writeFileSync(path.join(output,'movie-source.pcm'),Buffer.from(observed.source_pcm,'base64'));
+  delete observed.source_pcm;
+  observed.source.pcm_file='movie-source.pcm';observed.source.pcm_sha256=hash(path.join(output,'movie-source.pcm'));
   // Chromium pools output streams after closing an AudioContext. Wait for
   // actual device close journals; browser termination must not forge EOF.
   const deadline=performance.now()+20000;
@@ -94,7 +111,7 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
                 observations_valid:true,original_port_parity:'unproven',movie,skip,
                 key_up_retained:skip,wasm_sha256:hash(path.join(build,'index.wasm')),
                 chromium_version:browser.version(),device_closed_before_browser_shutdown:true,
-                observer_source_sha256:hash(__filename),...observed};
+                observer_source_sha256:hash(path.join(output,'observer-source.js')),...observed};
   fs.writeFileSync(path.join(output,'browser.json'),JSON.stringify(report,null,2)+'\n');
   console.log(`Observed unmuted browser ${movie} skip=${skip}: ${observed.frames.length} frames, device closed normally`);
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

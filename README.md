@@ -1432,6 +1432,67 @@ changes 768 values (`browser-device-1140-source/roundtrip-report.json`). This
 identifies a provider-conversion issue for further work; the production movie
 source conversion has not been changed by this diagnostic.
 
+Patch 889 prepares the complete browser movie AudioBuffer before opening
+its real-time AudioContext. Previously a running context could render empty
+quanta during the whole-source PCM copy. The standalone
+[AudioBuffer constructor](https://www.w3.org/TR/webaudio-1.0/#dom-audiobuffer-audiobuffer)
+allows source preparation without starting a device. Canonical Float32 values,
+requested rate, start/stop, gesture handling and completion rules are preserved.
+Buffer allocation errors now return unavailable audio before creating a context.
+Wine MCIAVI's source queue is filled before its video-clock loop; this removes
+browser-side preparation work from an already running source clock.
+
+`verify_browser_movie_ready.py` compiles immutable old/current production
+platform imports and executes them in real Chromium. Caller channels cover
+all 65536 S16 values in both directions. The current buffer is complete when
+its context is constructed; the old order fails that invariant while preserving
+caller PCM. Six cases cover normal startup, old order, required real activation,
+buffer allocation failure, context open failure and a declared wrong negotiated
+rate. All failed contexts close, and stop remains idempotent
+(`browser-ready-1155-fixture/report.json`). Fixture startup runs in the runtime
+callback, so Playwright evaluation cannot accidentally provide the gesture
+whose absence the activation case checks.
+
+```sh
+python3 tools/verify_browser_movie_ready.py \
+  --before-platform /tmp/wasm-dd2/browser-ready-1147-before/dd2_movie_platform.c \
+  --output /tmp/wasm-dd2/browser-ready-fixture
+```
+
+Device observation now saves its own immutable observer source and reads the
+complete AudioBuffer after the player stops. Whole-buffer inspection inside
+`source.start` would itself postpone scheduling on an active context. The
+canonical S16 restored from each actual AudioBuffer is compared separately
+with every original source byte; no reference data enters an engine.
+
+Fresh captures with this same reduced-cost observer show the previous source
+scheduled at context frame 1920 and the new full/skip sources at frame zero.
+The independent source/device prediction therefore falls from device frame
+3802 to 1882. Chromium's mandatory 1882-frame ALSA prefill still remains. The
+full new Intro has 1711 presentations, 1512187 accepted and consumed S16 frames,
+a complete converted source extent and 401 trailing silent frames. Both literal
+whole-original comparisons still fail, including the positive-sample converter
+difference. All three actual AudioBuffers preserve the complete 6039616-byte
+original source, and thirty altered device-data/clock controls are rejected
+(`browser-ready-1156-comparison/report.json`). The previous and current skip
+runs use real key-up/key-down input; their different wall-clock presentation
+counts are not paired to claim original cancellation timing equality.
+
+Full Intro/Outro and both skip paths also pass every actual canvas-pixel,
+complete Wine ACM source-PCM and reset/context-close check on the fresh browser
+build (`browser-ready-1153-sinks/report.json`). These checks establish the source
+preparation order and preserved source/image bytes; they do not establish
+whole original PCM, matched A/V clocks, physical output or complete game parity.
+
+Normal game startup also passes the full, skip and required-activation paths,
+then reaches actual menus and a live 20-car race in every case
+(`browser-ready-1158-startup/report.json`). All complete 6039616-byte Intro
+sources, observed canvas pixels and submitted shared-mixer buffers match their
+references. The full startup check uses the original MCI exclusive endpoint:
+1711 presentations from 1712 decoded source frames. Its report binds the WASM,
+Wine source report and source PCM hashes; complete output-clock/device parity
+remains outside this regression check.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

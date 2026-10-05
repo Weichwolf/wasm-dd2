@@ -9,7 +9,11 @@ const reference=fs.readFileSync(path.join(source,'intro/wine.pcm'));
 assert(crypto.createHash('sha256').update(reference).digest('hex')===film.pcm_sha256,'changed actual Wine reference');
 (async()=>{
  const server=serve(build);await new Promise(r=>server.listen(0,r));
- const report={scope:'Normal original startup, complete/skip/gesture intro, exact submitted source PCM/canvas/shared-mix bytes and real menu/race input; original complete output clocks and physical sinks remain open',cases:[]};
+ const report={scope:'Normal original startup, complete/skip/gesture intro, exact submitted source PCM/canvas/shared-mix bytes and real menu/race input; original complete output clocks and physical sinks remain open',
+               wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),
+               source_report_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(source,'report.json'))).digest('hex'),
+               source_pcm_sha256:film.pcm_sha256,source_frames:film.metadata.frames,
+               expected_full_presentations:film.metadata.frames-1,cases:[]};
  try{
   for(const mode of ['gesture','full','skip']){
    const browser=await chromium.launch({args:['--no-sandbox',...(mode==='gesture'?[
@@ -120,8 +124,11 @@ assert(crypto.createHash('sha256').update(reference).digest('hex')===film.pcm_sh
      return {...__startup,pcm:btoa(text),moviePlaying:HEAP32[0x462cd4>>2],drawMode:HEAP32[0x463010>>2],soundReady:HEAP32[0x462d68>>2],mixedRate:Module._dd2ac.sampleRate};
     });
     const pcm=Buffer.from(result.pcm,'base64');assert(pcm.equals(reference),'normal intro WebAudio source differs from complete actual Wine PCM');delete result.pcm;
+    fs.writeFileSync(path.join(output,`${mode}-diagnosis.json`),JSON.stringify(result,null,2)+'\n');
     assert(result.movieAudio===1 && result.audioErrors===0 && result.pixelErrors===0 && result.mixedDuringMovie===0,'normal startup sink bytes or device epochs differ');
-    assert(mode==='full'?result.movieFrames===film.metadata.frames:result.movieFrames>=26 && result.movieFrames<film.metadata.frames,'incorrect normal intro extent');
+    // Wine MCI's default final video frame is exclusive in the normal
+    // Play_Movie path too; retain the decoder's separate source-frame count.
+    assert(mode==='full'?result.movieFrames===film.metadata.frames-1:result.movieFrames>=26 && result.movieFrames<film.metadata.frames-1,'incorrect normal intro extent');
     assert(result.drawMode===0 && result.soundReady===1 && result.mixedRate===44100 && result.moviePlaying===0,'normal movie-to-game device transition failed');
     const movies=result.contexts.filter(c=>c.rate===22050);assert(movies.length===1 && movies[0].closed,'normal movie context was not closed');
     assert.deepEqual(errors,[],'normal browser startup runtime errors');

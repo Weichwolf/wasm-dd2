@@ -35,7 +35,7 @@ def predict(source):
 
 def validate(actual, converted, browser, device, first_write):
     source=browser['source'];start=browser['events'][0]
-    require(start['event']=='source-start' and source['mismatches']==0 and
+    require(start['event']=='source-start' and source.get('canonical_encoding_errors',source.get('mismatches'))==0 and
             source['rate']==source['context_rate']==device['rate']==22050 and
             source['channels']==device['channels']==2, 'canonical source/device metadata differs')
     scheduled=start['scheduled_time'];position=round(scheduled*22050)
@@ -87,10 +87,15 @@ def main():
         require(observed['observations_valid'] and observed['movie']=='Intro.avi' and
                 observed['browser_report_sha256']==sha(capture/'browser.json') and
                 observed['original_movie_sha256']==sha(ROOT/'DestructionDerby2/Intro.avi') and
-                browser['observer_source_sha256']==sha(ROOT/'tools/browser/capture_movie_device.js') and
+                browser['observer_source_sha256']==sha(capture/'observer-source.js' if (capture/'observer-source.js').exists()
+                                                        else ROOT/'tools/browser/capture_movie_device.js') and
                 browser['chromium_version']==provenance['chromium_version'] and
                 browser['device_closed_before_browser_shutdown'] and
                 browser['source']['frames']==metadata['pcm_frames'],'actual supported complete browser observation required')
+        if 'pcm_file' in browser['source']:
+            captured_source=capture/browser['source']['pcm_file']
+            require(sha(captured_source)==browser['source']['pcm_sha256'] and captured_source.read_bytes()==source,
+                    'actual complete AudioBuffer PCM differs from original source')
         frames=browser['frames']
         require([r['frame'] for r in frames]==list(range(len(frames))) and
                 (26<=len(frames)<metadata['frames']-1 if browser['skip'] else len(frames)==metadata['frames']-1),
