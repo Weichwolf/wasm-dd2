@@ -2802,9 +2802,10 @@ observed gameplay state, player, blink phase and API counts. Native also
 matches the complete mixed clock/RNG return order and driving-key boundaries
 (`multiplayer-prefix-1543-native-comparison/report.json`); the browser comparison
 is `multiplayer-prefix-1541-browser-comparison/report.json`. All 24 checkpoint
-states/results match. The complete image comparisons still fail: the initial
-native recording has two differing menu rasters and WASM has three, captured
-at different observed blink phases. Menu key-release observations also occur
+states/results match. The initial complete image comparisons fail: native has two differing
+menu rasters and WASM has three, captured at different observed blink phases.
+A later native capture matches all 24 rasters after natural phase alignment
+(`multiplayer-prefix-1550-native-aligned-comparison/report.json`). Menu key-release observations also occur
 one draw later on native for some menu actions; this is recorded separately
 from the matching driving-key boundaries.
 
@@ -2813,8 +2814,10 @@ and extent cases using independently observed racing frame 11,000
 (`multiplayer-prefix-1536-comparison-controls/report.json`). The unchanged full
 multiplayer gate rejects the first-human prefix. The second regular finish,
 chronological PCM and physical timing remain unproven. Successful closed port
-racing images are removed after the reports, retaining checkpoint images for
-the menu-phase diagnosis. Failed second-human raw archive chunks are removed;
+racing images are removed after the reports. WASM checkpoint images remain
+for the ongoing menu-phase diagnosis; diagnosed native raw checkpoints and
+return/event logs are removed after the aligned comparison, with SHA ledgers
+and processed states retained (`multiplayer-prefix-1551-native-cleanup/report.json`). Failed second-human raw archive chunks are removed;
 every first-human original picture and three selected failed-tail diagnostic
 chunks remain until their comparisons are finished.
 
@@ -2844,10 +2847,15 @@ unaligned-menu failures; this does not establish full-game parity.
 
 Native non-full-video capture also waits for the observed original initial
 menu blink phase before its sixteen settling draws, without writing the blink
-counter. All 23 available pre-finish checkpoint rasters, palettes, phases and
-states match the original in the new live capture
-(`menu-phase-1544-diagnosis/native-aligned-prefix.json`). Its complete racing
-and final checkpoint comparison remain pending.
+counter. The completed native comparison matches all 15,762 racing
+indexed/palette pairs and all 24 menu/start/result rasters, checkpoint states
+and blink phases (`multiplayer-prefix-1550-native-aligned-comparison/report.json`).
+Actual mixed API returns, gameplay counters and driving-key boundaries also
+match; both partial histories are rejected by the unchanged full multiplayer
+gate. This covers the first human's actual ten-lap finish only. A corresponding
+phase-aligned WASM capture is still running; exact original terminal car
+metrics, the second regular finish, chronological PCM, physical timing and
+complete game parity remain unproven.
 
 ```sh
 make verify-native-api-returns API_RETURN_LOG_ARGS='--reference /tmp/wasm-dd2/original-history --before-source /tmp/wasm-dd2/before/dd2_stubs.c --output /tmp/wasm-dd2/api-return-check --wasm'
