@@ -1010,6 +1010,46 @@ make capture-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--binary /tmp/dd2_nat
 make observe-native-movie-timing MOVIE_TIMING_ARGS='--capture /tmp/wasm-dd2/native-intro-clocks --output /tmp/wasm-dd2/native-intro-timing'
 ```
 
+Patch 879 computes the movie window's fixed-point source index and seven-bit
+filter fraction once per destination column/row. Previously the same signed
+64-bit divisions ran for every pixel. Clipping, RepeatNone, bilinear weights,
+truncation and RGB565 display expansion remain byte-identical. No rendering
+deadline, audio data or presentation count is fitted to a reference.
+
+`make verify-movie-window-axes` compiles an immutable production source snapshot
+and the exact pre-patch renderer. All 1712/1813 Intro/Outro source frames,
+including the decoder's separately retained final frame, and 74 synthetic
+transform cases per movie match literally on native ASan/UBSan and WASM.
+The transforms cover offsets, clipping, one-pixel images, downscaling and
+extreme signed rectangle coordinates. Changed pixels and invalid dimensions
+are rejected. All 4513382400 ARGB bytes per target are checked in memory,
+without storing multi-gigabyte raw streams
+(`movie-scale-999-components/report.json`). Rendering time is diagnostic;
+WASM's measured filter time falls from about 46 to 10 seconds for both movies.
+
+Fresh unmodified original capture `movie-scale-995-original` and production
+native/browser builds also pass the complete actual intro sink comparison:
+1711 frames and 2102476800 opaque ARGB bytes each, with identical original
+window hashes (`movie-scale-1000-live-sinks/report.json`). Native ALSA output
+still begins with all 6039616 exact original source PCM bytes at offset zero;
+its strict whole stream remains unequal because its silence tail differs.
+The first native texture upload occurs sooner, but a complete native timing
+observation still reports scheduling and initial presentation delay. Original
+audio/video clocks and full lifetime PCM parity remain open.
+
+Native API observations additionally bracket movie thread creation, initial
+event polls, texture uploads and render copies. Each forwarded call uses the
+same arguments/results; the verifier checks texture/copy/readback ordering.
+These measurements locate startup work without adding engine breakpoints or
+full memory dumps. They are instrumented API observations, not a physical
+display clock guarantee.
+
+```sh
+make clean-logs
+make verify-movie-window-axes MOVIE_WINDOW_AXES_ARGS='--output /tmp/wasm-dd2/window-axes'
+make clean-logs
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

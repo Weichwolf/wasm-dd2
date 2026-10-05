@@ -54,6 +54,19 @@ def main():
     events = [json.loads(s) for s in (capture/'events.jsonl').read_text().splitlines()]
     frames = [r for r in events if r['event'] == 'present'];validate_frames(frames)
     require(len(frames) == observation['frames'] == metadata['frames']-1, 'incomplete presentation sequence')
+    updates = [r for r in events if r['event'] == 'texture_update']
+    copies = [r for r in events if r['event'] == 'render_copy']
+    threads = [r for r in events if r['event'] == 'movie_thread']
+    require(len(updates) == len(copies) == len(frames) and len(threads) == 1 and threads[0]['success'],
+            'complete movie start/render API observations required')
+    for index, (update, copied, presented) in enumerate(zip(updates, copies, frames)):
+        require(update['frame'] == copied['frame'] == index and
+                update['call_begin_ns'] <= update['call_end_ns'] <= update['time_ns'] <=
+                copied['call_begin_ns'] <= copied['call_end_ns'] <= copied['time_ns'] <=
+                presented['readback_begin_ns'], 'reordered texture/copy/readback API intervals')
+    thread = threads[0]
+    require(thread['call_begin_ns'] <= thread['call_end_ns'] <= thread['time_ns'] <= updates[0]['call_begin_ns'],
+            'thread startup does not precede movie rendering')
     audio = summarize_audio(capture/'audio', require_played=True)
     devices = [r for r in audio['played_streams'] if r['format'] == 'S16_LE']
     require(len(devices) == 1, 'unique movie playback device required')
@@ -107,6 +120,10 @@ def main():
                   observed_present_begin_span_ms=(last['present_begin_ns']-first['present_begin_ns'])/1e6,
                   max_readback_duration_ms=max(r['readback_duration_ns'] for r in frames)/1e6,
                   max_export_before_present_ms=max(r['export_before_present_ns'] for r in frames)/1e6,
+                  movie_thread_creation_ms=(thread['call_end_ns']-thread['call_begin_ns'])/1e6,
+                  first_texture_after_first_played_sample_ms=(updates[0]['call_begin_ns']-segments[0]['begin_ns'])/1e6,
+                  max_texture_update_ms=max((r['call_end_ns']-r['call_begin_ns'])/1e6 for r in updates),
+                  max_render_copy_ms=max((r['call_end_ns']-r['call_begin_ns'])/1e6 for r in copies),
                   negative_controls_rejected=negative)
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n');check_space(output)
     print(json.dumps(report, indent=2), flush=True)

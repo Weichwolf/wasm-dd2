@@ -28,6 +28,25 @@ static FILE* create(const char* suffix){
 }
 static uint64_t now(void){struct timespec ts;clock_gettime(CLOCK_MONOTONIC,&ts);return (uint64_t)ts.tv_sec*1000000000+ts.tv_nsec;}
 static FILE* events(void){if(!journal)journal=create("events.jsonl");return journal;}
+int SDL_PollEvent(SDL_Event* event){
+    int (*call)(SDL_Event*)=dlsym(RTLD_NEXT,"SDL_PollEvent");
+    uint64_t begin=now(),end;int result=call(event);end=now();
+    if(root() && !frame){
+        fprintf(events(),"{\"event\":\"initial_poll\",\"result\":%d,\"call_begin_ns\":%llu,\"call_end_ns\":%llu,\"time_ns\":%llu}\n",
+                result,(unsigned long long)begin,(unsigned long long)end,(unsigned long long)now());fflush(journal);
+    }
+    return result;
+}
+SDL_Thread* SDL_CreateThread(SDL_ThreadFunction fn,const char* name,void* data){
+    SDL_Thread* (*call)(SDL_ThreadFunction,const char*,void*)=dlsym(RTLD_NEXT,"SDL_CreateThread");
+    uint64_t begin=now(),end;SDL_Thread* thread=call(fn,name,data);end=now();
+    if(root() && name && !strcmp(name,"dd2-movie-alsa")){
+        fprintf(events(),"{\"event\":\"movie_thread\",\"call_begin_ns\":%llu,\"call_end_ns\":%llu,\"success\":%s,\"time_ns\":%llu}\n",
+                (unsigned long long)begin,(unsigned long long)end,thread?"true":"false",(unsigned long long)now());
+        fflush(journal);
+    }
+    return thread;
+}
 SDL_AudioDeviceID SDL_OpenAudioDevice(const char* name,int capture,const SDL_AudioSpec* requested,SDL_AudioSpec* obtained,int flags){
     SDL_AudioDeviceID (*call)(const char*,int,const SDL_AudioSpec*,SDL_AudioSpec*,int)=dlsym(RTLD_NEXT,"SDL_OpenAudioDevice");
     SDL_AudioDeviceID id=call(name,capture,requested,obtained,flags);
@@ -65,12 +84,23 @@ void SDL_CloseAudioDevice(SDL_AudioDeviceID id){
 }
 int SDL_UpdateTexture(SDL_Texture* texture,const SDL_Rect* rect,const void* pixels,int pitch){
     int (*call)(SDL_Texture*,const SDL_Rect*,const void*,int)=dlsym(RTLD_NEXT,"SDL_UpdateTexture");
-    int result=call(texture,rect,pixels,pitch);
+    uint64_t begin=now(),end;int result=call(texture,rect,pixels,pitch);end=now();
     if(root() && !result){Uint32 format;int width,height,y;
         if(rect || SDL_QueryTexture(texture,&format,NULL,&width,&height) || format!=SDL_PIXELFORMAT_ARGB8888 || width!=640 || height!=480 || pitch!=640*4)
             fail("actual movie texture format");
         for(y=0;y<480;y++)memcpy(expected+y*640,(const uint8_t*)pixels+y*pitch,640*4);
         texture_ready=1;
+        fprintf(events(),"{\"event\":\"texture_update\",\"frame\":%u,\"call_begin_ns\":%llu,\"call_end_ns\":%llu,\"time_ns\":%llu}\n",
+                frame,(unsigned long long)begin,(unsigned long long)end,(unsigned long long)now());fflush(journal);
+    }
+    return result;
+}
+int SDL_RenderCopy(SDL_Renderer* renderer,SDL_Texture* texture,const SDL_Rect* source,const SDL_Rect* target){
+    int (*call)(SDL_Renderer*,SDL_Texture*,const SDL_Rect*,const SDL_Rect*)=dlsym(RTLD_NEXT,"SDL_RenderCopy");
+    uint64_t begin=now(),end;int result=call(renderer,texture,source,target);end=now();
+    if(root() && !result){
+        fprintf(events(),"{\"event\":\"render_copy\",\"frame\":%u,\"call_begin_ns\":%llu,\"call_end_ns\":%llu,\"time_ns\":%llu}\n",
+                frame,(unsigned long long)begin,(unsigned long long)end,(unsigned long long)now());fflush(journal);
     }
     return result;
 }
