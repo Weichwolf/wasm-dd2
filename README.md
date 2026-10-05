@@ -177,6 +177,17 @@ are `/tmp/wasm-dd2/season-transition-fixed-852-final/report.json`,
 `/tmp/wasm-dd2/parity-season-transition-852.json` and
 `/tmp/wasm-dd2/champ-season-standing-fixed-852.json` (last report remains failed).
 
+`make verify-multiplayer-points MULTIPLAYER_POINTS_ARGS='--output /tmp/wasm-dd2/fresh-multiplayer-points'`
+compares 4,736 explicit post-result component cases with unchanged original x86:
+human/computer score transfer, accumulation, averaging, race positions and league
+sorting. Native, AddressSanitizer and WASM must match complete targeted regions
+and guards. Transfer arithmetic includes WORD boundaries; sorting uses valid
+nonnegative keys because negative keys also overrun the original's signed `-1`
+sentinel. Twenty negative controls reject changed guards, inputs and truncation.
+This does not establish naturally earned multiplayer points, result calculation,
+save/load, menu images or chronological racing/audio parity.
+The verified report is `/tmp/wasm-dd2/multiplayer-points-1269-public/report.json`.
+
 Patch 891 restores the original lap-completion WORD and lap-record DWORDs.
 The overlapping finish DWORD also read the next car's speed, preventing a
 normal finish whenever that neighboring WORD was nonzero. Byte-typed record

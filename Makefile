@@ -381,6 +381,10 @@ verify-league-standing: patch ## compare all outcome classifications with origin
 verify-season-transition: patch ## original-x86 transfers/reset/statistics/unlocks; SEASON_TRANSITION_ARGS required
 	python3 $(ROOT)/tools/verify_season_transition.py $(SEASON_TRANSITION_ARGS)
 
+.PHONY: verify-multiplayer-points
+verify-multiplayer-points: patch ## original-x86 post-result score components; MULTIPLAYER_POINTS_ARGS required
+	python3 $(ROOT)/tools/verify_multiplayer_points.py $(MULTIPLAYER_POINTS_ARGS)
+
 .PHONY: verify-race-positions
 verify-race-positions: patch ## original-x86 lap/finish/record-loading components; RACE_POSITIONS_ARGS required
 	python3 $(ROOT)/tools/verify_race_positions.py $(RACE_POSITIONS_ARGS)
