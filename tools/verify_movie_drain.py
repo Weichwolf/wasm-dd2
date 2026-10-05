@@ -113,19 +113,20 @@ def main():
     subprocess.run(['gcc', '-m32', '-no-pie', '-fsanitize=address,undefined',
                     '-fno-sanitize-recover=all', *common, '-o', str(native)], check=True)
     subprocess.run(['emcc', *common, '-sNODERAWFS=1', '-sEXIT_RUNTIME=1', '-o', str(wasm)], check=True)
-    cases = [(0, 0), (1, 0), (46, 0), (100, 0), (101, 0), (250, 0), (0, 1)]
+    cases = [(0, 0), (1, 0), (46, 0), (100, 0), (101, 0), (250, 0), (0, 1), (0, 2), (101, 2)]
     for name, command in [('native-asan-ubsan', [str(native)]), ('wasm', ['node', str(wasm)])]:
         rows = []
         for done, failed in cases:
             run = subprocess.run([*command, str(movie), str(done), str(failed)],
                                  capture_output=True, text=True, check=True, timeout=15)
             observed = json.loads(run.stdout)
-            elapsed = 0 if failed else (done+99)//100*100
+            elapsed = 0 if failed == 1 else (done+99)//100*100
             expected = dict(frames=1, elapsed_ms=elapsed,
-                            audio_queries=[] if failed else list(range(0, elapsed+1, 100)),
-                            notifications=1, closed=1)
+                            audio_queries=[] if failed == 1 else list(range(0, elapsed+1, 100)),
+                            notifications=1, closed=2 if failed == 2 else 1)
             require(observed == expected, f'{name} actual drain queries/completion differ: {observed}')
-            rows.append(dict(done_ms=done, audio_unavailable=bool(failed), actual=observed))
+            rows.append(dict(done_ms=done, audio_unavailable=failed == 1,
+                             output_error=failed == 2, actual=observed))
         report['targets'].append(dict(target=name, cases=rows))
     if args.before_native:
         before = subprocess.run([str(args.before_native.resolve()), str(movie), '46', '0'],

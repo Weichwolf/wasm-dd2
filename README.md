@@ -938,12 +938,54 @@ rejected by the complete unshifted original PCM comparator
 (`movie-drain-969-native-alsa/original-comparison.json`). It contains 12288
 startup zero bytes before the exact source PCM and 6080 trailing zero bytes.
 This diagnostic decomposition does not trim or align any accepted comparison.
-The native device startup/output mismatch remains open. An empty SDL queue
+An empty SDL queue
 only reports delivery to the backend, not the actual played sample boundary.
 See [SDL_GetQueuedAudioSize](https://wiki.libsdl.org/SDL2/SDL_GetQueuedAudioSize).
 
 ```sh
 make verify-movie-drain MOVIE_DRAIN_ARGS='--mingw <32-bit compiler> --output /tmp/wasm-dd2/movie-drain'
+```
+
+Patch 878 removes the extra startup silence when the native SDL driver is
+ALSA. SDL writes silence while a newly opened audio device is paused. The
+movie output now opens ALSA with Wine 10's 10-ms/four-period WaveOut profile,
+fills the first buffer with source PCM, and checks device-pending frames for
+completion. Other SDL audio drivers retain their existing route. An
+unrecoverable output error closes the movie audio and reports MCI failure.
+The shared MCI component's native ASan/UBSan and WASM regression covers nine
+cases each, including immediate and later output errors
+(`/tmp/wasm-dd2/movie-start-974-drain/report.json`).
+
+The production native build presents 1711/1812 Intro/Outro frames, with every
+renderer pixel matching its submitted texture. Both complete source streams
+(6039616/6395840 bytes) occur at offset zero in actual accepted and virtual-device
+played PCM, compared literally with fresh actual Wine ACM conversion. Changed
+first samples, prepended silence and truncated source intervals are rejected.
+Actual X11 key-up retains playback; key-down closes Intro and Outro, with both
+device outputs matching literal source prefixes. The pre-fix actual device
+capture fails the same unshifted comparison at byte 29184 on both outputs.
+The production comparison is `movie-start-984-final-comparison/report.json`.
+The strict whole original intro comparison still rejects the differing zero
+tails; this does not establish original A/V timing, other native audio drivers,
+physical DAC output or complete movie parity. No fixed padding, reference PCM
+injection or fitted offset is used.
+
+`make verify-native-movie-device` compiles the actual production ALSA header
+under ASan/UBSan. Nonzero caller PCM starts at sample zero in two consecutive
+device lifetimes; the full source is consumed before completion. Early close,
+a real submitted-device write returning EIO, and an unavailable device check
+joined producers, closed journals and literal consumed prefixes. Twelve altered
+PCM cases are rejected (`movie-start-978-device/report.json`). Successful raw
+boundary captures are deleted after the report; whole-movie tail diagnostics
+remain available while that diagnosis is open.
+
+```sh
+make clean-logs
+make verify-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--output /tmp/wasm-dd2/movie-device'
+make capture-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--binary /tmp/dd2_native --movie Intro.avi --output /tmp/wasm-dd2/movie-device-intro'
+make capture-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--binary /tmp/dd2_native --movie Outro.avi --output /tmp/wasm-dd2/movie-device-outro'
+make compare-native-movie-device NATIVE_MOVIE_DEVICE_ARGS='--source /tmp/wasm-dd2/avi-source --capture /tmp/wasm-dd2/movie-device-intro /tmp/wasm-dd2/movie-device-outro --original-intro /tmp/wasm-dd2/original-intro-window --output /tmp/wasm-dd2/movie-device-comparison'
+make clean-logs
 ```
 
 Patch 838 fixes corrupted championship names: the computer-name table began at

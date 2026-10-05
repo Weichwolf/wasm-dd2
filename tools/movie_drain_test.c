@@ -43,15 +43,16 @@ void dd2_movie_wait(void){now_ms++;}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
 int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){
     require(pcm && count==1012 && rate==22050 && channels==2,"original short audio format");
-    epoch=now_ms;return failed?-1:0;
+    epoch=now_ms;return failed==1?-1:0;
 }
 int dd2_movie_audio_done(void){
     require(query_count<4096,"bounded audio queries");queries[query_count++]=now_ms-epoch;
+    if(failed==2 && now_ms-epoch>=done_ms)return -1;
     return now_ms-epoch>=done_ms;
 }
 void dd2_movie_audio_stop(void){closed++;}
 int FUN_004132f0(void* hwnd,unsigned message,unsigned result,unsigned device){
-    require(hwnd==(void*)1 && message==0x3b9 && result==1 && device==2,"successful notify");
+    require(hwnd==(void*)1 && message==0x3b9 && result==(failed==2?8u:1u) && device==2,"completion/failure notify");
     notifications++;return 0;
 }
 int main(int argc,char** argv){
@@ -69,7 +70,7 @@ int main(int argc,char** argv){
         if(dd2_movie_active())now_ms++;
     }
     require(!dd2_movie_mci_send(open[1],0x804,2,close),"close");
-    require(frames==1 && notifications==1 && closed==1,"complete actual MCI state");
+    require(frames==1 && notifications==1 && closed==(failed==2?2u:1u),"complete actual MCI state");
     printf("{\"frames\":%u,\"elapsed_ms\":%u,\"audio_queries\":[",frames,now_ms-epoch);
     for(i=0;i<query_count;i++)printf("%s%u",i?",":"",queries[i]);
     printf("],\"notifications\":%u,\"closed\":%u}\n",notifications,closed);return 0;
