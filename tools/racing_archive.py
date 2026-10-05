@@ -13,6 +13,7 @@ import fcntl
 from functools import lru_cache
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import time
@@ -246,7 +247,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--capture', type=Path, required=True, help='history directory containing race*.bin.z and race*.pal')
     parser.add_argument('--follow-pid', type=int, help='keep packing until this specific recorder process exits')
+    parser.add_argument('--follow-timeout-seconds', type=float, default=7200,
+                        help='positive finite follower lifetime; default 7200 seconds')
     args = parser.parse_args()
+    if not math.isfinite(args.follow_timeout_seconds) or args.follow_timeout_seconds <= 0:
+        parser.error('--follow-timeout-seconds must be positive and finite')
     token = identity(args.follow_pid) if args.follow_pid else None
     if args.follow_pid: require(token is not None, 'Recorder is not live')
     start = time.monotonic()
@@ -256,7 +261,8 @@ def main():
         if not token or identity(args.follow_pid) != token:
             compact(args.capture, minimum_age=0)
             break
-        require(time.monotonic()-start < 7200, 'Archive follower exceeded its declared two-hour lifetime')
+        require(time.monotonic()-start < args.follow_timeout_seconds,
+                'Archive follower exceeded its declared lifetime of '+str(args.follow_timeout_seconds)+' seconds')
         time.sleep(2)
 
 

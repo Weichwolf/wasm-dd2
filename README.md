@@ -2764,6 +2764,15 @@ recorder keeps its original write-once image format, metadata, inputs and API
 streams; the archive is a separate storage operation. A live follower waits
 for complete packs and flushes its last partial pack when that specific
 recorder exits. Interrupted cleanup resumes only for identical closed inputs.
+The follower's default lifetime is two hours. For longer running recorders,
+`--follow-timeout-seconds 14400` declares a four-hour limit without changing
+the capture's 2 GiB guard, recorder identity check or archive bytes. The value
+must be positive and finite. Expiry stops the follower and leaves the followed
+recorder running. CLI checks retain all eight original image/palette pairs
+through a final partial pack after the observed process exits, reject four
+invalid limits, and verify that a short expiry preserves the live process and
+unpacked tail (`racing-archive-1528-lifetime/report.json`). This extends the
+storage workflow; complete race and A/V acceptance remain separate.
 
 The existing literal racing comparison reads either original files or these
 archives and still checks the recorder's own per-frame hashes and every pixel
@@ -2782,6 +2791,7 @@ make clean-logs
 make verify-racing-archive RACING_ARCHIVE_VERIFY_ARGS='--reference /tmp/wasm-dd2/natural-wall-recovery/history --first 10048 --output /tmp/wasm-dd2/racing-archive-check'
 make pack-racing-archive RACING_ARCHIVE_ARGS='--capture /tmp/wasm-dd2/natural-wall-recovery/history'
 # While a known recorder is running, add --follow-pid with its actual PID.
+# For a longer capture, also add --follow-timeout-seconds 14400.
 make clean-logs
 ```
 
