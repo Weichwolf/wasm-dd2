@@ -1,0 +1,64 @@
+Match Wine ALSA producer fill/wait order without changing source PCM or clocks.
+
+Wine 10 alsa_timer_loop locks its stream, initializes the QPC deadline,
+queries/fills the device, unlocks, and only then performs its first relative
+wait. Native slept before its first worker availability query, discarding
+that first producer opportunity. Actual forwarded Wine WaveOut evidence has
+one RAW clock read before the timer thread's first availability query; the
+retained native production Intro has two. Preserve the main-thread initial
+fill from Wine alsa_start, move only the worker fill before its wait, and
+initialize its QPC deadline under the same stream mutex. Keep clock units,
+signed narrowing, correction limits, PCM and source completion unchanged.
+Publish failed main startup under the mutex so the newly immediate worker
+cannot retry an initial failure before the caller begins cleanup.
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -114,15 +114,22 @@
+ }
+ static int movie_alsa_worker(void* ignored){
+     const int64_t period=100000;
+-    int64_t delay=period,next=movie_alsa_clock_ticks()+period,adjust;
++    int64_t delay=period,next,adjust;
+     uint32_t low;
+     (void)ignored;
+-    while(!SDL_AtomicGet(&movie_alsa.stop)){
++    /* Wine alsa_timer_loop holds the stream lock while initializing QPC,
++     * then fills before its first relative wait. The main start path still
++     * supplies the initial client buffer, like Wine alsa_start. */
++    SDL_LockMutex(movie_alsa.mutex);
++    next=movie_alsa_clock_ticks()+period;
++    while(!SDL_AtomicGet(&movie_alsa.stop) && !movie_alsa.error){
+         struct timespec wait={0,(long)(delay*100)},remaining;
++        if(movie_alsa_fill() && !movie_alsa.source_done)movie_alsa.error=1;
++        SDL_UnlockMutex(movie_alsa.mutex);
++        if(movie_alsa.error)return 0;
+         while(nanosleep(&wait,&remaining)<0 && errno==EINTR)wait=remaining;
+-        if(SDL_AtomicGet(&movie_alsa.stop))break;
++        if(SDL_AtomicGet(&movie_alsa.stop))return 0;
+         SDL_LockMutex(movie_alsa.mutex);
+-        if(SDL_AtomicGet(&movie_alsa.stop)){SDL_UnlockMutex(movie_alsa.mutex);break;}
+         /* Wine measures wake error before processing this period, advances
+          * the target independently, and bounds each correction to half P. */
+         /* Wine stores the QPC difference in a signed 32-bit int before
+@@ -132,10 +139,8 @@
+         if(adjust>period/2)adjust=period/2;
+         else if(adjust<-period/2)adjust=-period/2;
+         delay=period+adjust;next+=period;
+-        if(movie_alsa_fill() && !movie_alsa.source_done)movie_alsa.error=1;
+-        SDL_UnlockMutex(movie_alsa.mutex);
+-        if(movie_alsa.error)break;
+-    }
++    }
++    SDL_UnlockMutex(movie_alsa.mutex);
+     return 0;
+ }
+ static void movie_alsa_stop(void){
+@@ -195,6 +200,7 @@
+     movie_alsa.thread=SDL_CreateThread(movie_alsa_worker,"dd2-movie-alsa",NULL);
+     if(!movie_alsa.thread){SDL_UnlockMutex(movie_alsa.mutex);goto failed;}
+     period_result=movie_alsa_fill();
++    if(period_result)movie_alsa.error=1; /* do not retry a failed startup in the worker */
+     SDL_UnlockMutex(movie_alsa.mutex);
+     if(period_result)goto failed;
+     return 0;

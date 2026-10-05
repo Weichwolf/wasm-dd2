@@ -1835,6 +1835,39 @@ streams and retains exact indexed-to-renderer pixels
 (`math-1467-native-quit/report.json`). Complete audio endpoints, shared A/V
 timing and the remaining game coverage are still open.
 
+Patch 901 matches Wine's producer fill/wait order: initialize QPC under the
+stream mutex, check/fill ALSA immediately, then perform the first relative
+wait. The main-thread initial fill remains separate, as in Wine `alsa_start`.
+Actual forwarded Wine calls have one RAW clock read before the producer's
+first availability query; the previous native worker had two. Both complete
+native films now have one (`movie-worker-1488-intro/report.json` and
+`movie-worker-1489-outro/report.json`). Clock precision, correction arithmetic,
+source samples and completion publication remain unchanged.
+
+The Wine/ASan/UBSan clock fixture passes all 24 declared schedules, rejects
+the previous production header's first-fill order and eight altered records
+(`movie-worker-1484-first-fill/report.json`). A separate failed Wine observation
+retains its diagnosis: its single-header consumed output lost the final 126
+source frames despite complete accepted PCM (`movie-worker-1482-first-fill/diagnosis.json`).
+That run is not counted as passing or whole-output parity. The native device
+suite also forces the worker to acquire/release the actual stream mutex before
+cleanup following a one-shot startup error. Publishing that error prevents a
+retry; removing the publication in a private header produces caller PCM and
+fails the invariant. All lifecycle cases and 61 negative controls pass
+(`movie-worker-1491-startup-once/report.json`), as do the 14 completion and 56
+write-recovery controls (`movie-worker-1486-completion/report.json` and
+`movie-worker-1487-write-recovery/report.json`).
+
+The complete native films retain all 1711/1812 renderer frame digests against
+the previously recorded literal original window comparisons
+(`movie-worker-1493-video-regression.json`). Fresh Wine ACM and both decoders
+match the complete source audio; both actual native accepted and consumed
+streams begin with all 6039616/6395840 source bytes at offset zero
+(`movie-worker-1494-source-comparison/report.json`). Remaining silence tails
+are reported without padding, trimming or alignment. Whole original audio,
+browser device conversion and synchronized A/V remain unproven. Successful
+raw comparison data is deleted after reports are written.
+
 Use retained complete object directories from builds before/after patch 900;
 the verifier preserves their objects and creates private links in its fresh
 output directory. Source game data stays in the ignored provisioned directory:

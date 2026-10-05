@@ -18,6 +18,9 @@ Injected reset errors must preserve successful completed-source playback,
 including later driver-silence write failures, and still close and join safely.
 Final MCI cleanup must independently drop/reset/prepare before joining, including
 on cancellation. An old final-reset header must fail that same cleanup sequence.
+A one-shot startup availability failure must remain failed even when the real
+worker acquires and releases the mutex before caller cleanup; removing the
+startup error publication must produce samples and fail that same invariant.
 """
 import argparse
 import hashlib
@@ -118,6 +121,13 @@ def main():
                     '-o', str(delay)], check=True)
     subprocess.run([*common, '-shared', '-fPIC', '-DDD2_MOVIE_DEVICE_JOIN', *config('libs'), '-ldl',
                     '-o', str(join)], check=True)
+    unpublished=output/'unpublished-source';unpublished.mkdir()
+    startup_publication='    if(period_result)movie_alsa.error=1; /* do not retry a failed startup in the worker */\n'
+    require(header.read_text().count(startup_publication)==1,'unique startup error publication required')
+    (unpublished/header.name).write_text(header.read_text().replace(startup_publication,''))
+    unpublished_binary=output/'unpublished-device'
+    subprocess.run([*common,'-no-pie','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+                    '-I'+str(unpublished),*config('libs'),'-ldl','-o',str(unpublished_binary)],check=True)
     old_binary = None
     if args.before_header:
         old_source = output/'before-source';old_source.mkdir()
@@ -166,7 +176,8 @@ def main():
     base.update(ASAN_OPTIONS='detect_leaks=1:halt_on_error=1', UBSAN_OPTIONS='halt_on_error=1',
                 LD_LIBRARY_PATH=':'.join(map(str, libraries)))
     cases = [];negative = []
-    for mode in ('full', 'delay', 'tail', 'reset-error', 'reset-write-error', 'cancel', 'join', 'error', 'initial-error', 'thread-error', 'unavailable',
+    for mode in ('full', 'delay', 'tail', 'reset-error', 'reset-write-error', 'cancel', 'join', 'error', 'initial-error',
+                 'initial-once-error','unpublished-initial-error','thread-error', 'unavailable',
                  *(['before-delay'] if old_binary else []), *(['before-join'] if before_stop else []),
                  *(['before-tail'] if before_tail else []), *(['before-queue'] if before_queue else []),
                  *(['before-reset'] if before_reset else []), *(['before-reset-error'] if before_reset_error else [])):
@@ -176,17 +187,21 @@ def main():
                           f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                           'pcm.!default { type dd2clock }\n')
         selected = old_binary if mode == 'before-delay' else before_stop if mode == 'before-join' else before_tail if mode == 'before-tail' else before_queue if mode == 'before-queue' else before_reset if mode == 'before-reset' else before_reset_error if mode == 'before-reset-error' else binary
-        preloader = str(fault)+' ' if mode in ('error','initial-error','reset-error','reset-write-error','before-reset-error') else str(delay)+' ' if mode in ('delay','before-delay','thread-error') else str(join)+' ' if mode in ('join','before-join') else ''
+        if mode=='unpublished-initial-error':selected=unpublished_binary
+        preloader = str(fault)+' ' if mode in ('error','initial-error','initial-once-error','unpublished-initial-error','reset-error','reset-write-error','before-reset-error') else str(delay)+' ' if mode in ('delay','before-delay','thread-error') else str(join)+' ' if mode in ('join','before-join') else ''
         env = {**base, 'ALSA_CONFIG_PATH':str(asound), 'DD2_AUDIO_CAPTURE':str(case/'audio'),
                'DD2_AUDIO_PROCESS':selected.name[:15], 'DD2_AUDIO_RATE':'22050',
                'DD2_MOVIE_DEVICE_DELAY_LOG':str(case/'thread-ready.jsonl'),
                'DD2_MOVIE_DEVICE_JOIN_LOG':str(case/'join.jsonl'),
                'LD_PRELOAD':asan+' '+preloader+'dd2_audio.so'}
         if mode == 'initial-error': env['DD2_MOVIE_DEVICE_FAIL_START'] = '1'
+        if mode in ('initial-once-error','unpublished-initial-error'):
+            env['DD2_MOVIE_DEVICE_FAIL_START_ONCE']=str(case/'startup-once.jsonl')
         if mode == 'thread-error': env['DD2_MOVIE_DEVICE_FAIL_THREAD'] = '1'
         if mode in ('reset-error','reset-write-error','before-reset-error'): env['DD2_MOVIE_DEVICE_FAIL_RESET_LOG'] = str(case/'reset-fault.jsonl')
         if mode == 'reset-write-error': env['DD2_MOVIE_DEVICE_FAIL_POST_RESET_WRITE'] = str(case/'write-fault.jsonl')
         fixture_mode = 'full' if mode in ('delay','before-delay') else 'cancel' if mode in ('join','before-join') else 'tail' if mode in ('before-tail','before-queue','before-reset') else 'reset-error' if mode=='before-reset-error' else mode
+        if mode=='unpublished-initial-error':fixture_mode='initial-once-error'
         run = subprocess.run([str(selected), fixture_mode, *(['-1'] if mode=='before-reset-error' else [])], env=env, capture_output=True, text=True, timeout=10)
         (case/'run.log').write_text(run.stdout+run.stderr)
         require(run.returncode == 0 and 'runtime error:' not in run.stderr,
@@ -196,15 +211,27 @@ def main():
             require(rows == [dict(unavailable_rejected=True)] and not list((case/'audio').glob('*.pcm')),
                     'unavailable device produced PCM')
             cases.append(dict(mode=mode, results=rows));continue
-        if mode in ('initial-error','thread-error'):
-            require(rows == [{mode.replace('-','_')+'_rejected':True}], 'initial fill/thread failure not rejected')
+        if mode in ('initial-error','initial-once-error','unpublished-initial-error','thread-error'):
+            require(rows == [{fixture_mode.replace('-','_')+'_rejected':True}], 'initial fill/thread failure not rejected')
+            startup_once=None
+            if mode in ('initial-once-error','unpublished-initial-error'):
+                startup_once=[json.loads(s) for s in (case/'startup-once.jsonl').read_text().splitlines()]
+                require(startup_once[0]==dict(event='avail',call=1,result=-5) and
+                        startup_once[-1]==dict(event='worker_passed_before_cleanup'),
+                        'one-shot startup failure/worker opportunity missing')
+                require(len(startup_once)==2 if mode=='initial-once-error' else len(startup_once)>2,
+                        'startup worker retried failed initialization')
             for prefix in ('stream','played'):
                 journals=list((case/'audio').glob(prefix+'-*.jsonl'))
                 require(len(journals)==1, 'unique failed-start device journal required')
                 events=[json.loads(s) for s in journals[0].read_text().splitlines()]
-                require(events[-1]['event']=='close' and journals[0].with_suffix('.pcm').stat().st_size==0,
-                        'failed startup did not close without samples')
-            cases.append(dict(mode=mode, results=rows));continue
+                size=journals[0].with_suffix('.pcm').stat().st_size
+                require(events[-1]['event']=='close','failed startup did not close')
+                if mode=='unpublished-initial-error':
+                    if prefix=='stream':require(size>0,'unpublished startup error unexpectedly prevented source retry')
+                else:require(size==0,'failed startup produced samples')
+            if mode=='unpublished-initial-error':negative.append(dict(mode=mode,mutation='unpublished-startup-error',rejected=True))
+            cases.append(dict(mode=mode, results=rows,startup_once=startup_once));continue
         audio = summarize_audio(case/'audio', require_played=True)
         full = fixture_mode in ('full','tail','reset-error','reset-write-error');expected_runs = 2 if full else 1
         require(len(rows) == len(audio['streams']) == len(audio['played_streams']) == expected_runs,

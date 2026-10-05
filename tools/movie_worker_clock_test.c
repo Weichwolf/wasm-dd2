@@ -28,7 +28,7 @@ int main(void){
 #include <time.h>
 #include <errno.h>
 static uint64_t raw[4],mono[4],sleep_ns[4];
-static unsigned sample,sleeps,clock_calls;
+static unsigned sample,sleeps,clock_calls,fills,first_fill_samples,first_fill_sleeps;
 static int fallback,clocks[8];
 static void fixture_stop(void);
 static int fixture_clock(clockid_t clock,struct timespec* ts){
@@ -53,15 +53,22 @@ static int fixture_sleep(const struct timespec* ts,struct timespec* remaining){
 #undef nanosleep
 #undef clock_gettime
 static void fixture_stop(void){SDL_AtomicSet(&movie_alsa.stop,1);}
-static snd_pcm_sframes_t no_data(snd_pcm_t* device){(void)device;return 0;}
+static snd_pcm_sframes_t no_data(snd_pcm_t* device){
+    (void)device;
+    if(!fills){first_fill_samples=sample;first_fill_sleeps=sleeps;}
+    fills++;return 0;
+}
 static void emit(unsigned id){
     unsigned i;
-    sample=sleeps=clock_calls=0;memset(&movie_alsa,0,sizeof(movie_alsa));
+    sample=sleeps=clock_calls=fills=first_fill_samples=first_fill_sleeps=0;
+    memset(&movie_alsa,0,sizeof(movie_alsa));
     movie_alsa.mutex=SDL_CreateMutex();if(!movie_alsa.mutex)exit(5);
     movie_snd_pcm_avail_update=no_data;
     if(movie_alsa_worker(NULL))exit(6);
     SDL_DestroyMutex(movie_alsa.mutex);
-    printf("{\"case\":%u,\"fallback\":%d,\"raw_ns\":[",id,fallback);
+    printf("{\"case\":%u,\"fallback\":%d,\"first_fill_samples\":%u,"
+           "\"first_fill_sleeps\":%u,\"fills\":%u,\"raw_ns\":[",
+           id,fallback,first_fill_samples,first_fill_sleeps,fills);
     for(i=0;i<4;i++)printf("%s%llu",i?",":"",(unsigned long long)raw[i]);
     printf("],\"mono_ns\":[");
     for(i=0;i<4;i++)printf("%s%llu",i?",":"",(unsigned long long)mono[i]);

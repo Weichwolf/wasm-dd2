@@ -12,6 +12,50 @@
 #include <errno.h>
 #ifdef DD2_MOVIE_DEVICE_FAULT
 static unsigned reset_calls;
+static unsigned initial_avail_calls;
+static SDL_threadID initial_caller;
+static SDL_mutex* initial_mutex;
+static SDL_atomic_t initial_unlocked,initial_worker_passed;
+/* Give the real worker a confirmed opportunity after a one-shot main startup
+ * failure. A later retry would now succeed and incorrectly emit caller PCM. */
+snd_pcm_sframes_t snd_pcm_avail_update(snd_pcm_t* device){
+    static __typeof__(snd_pcm_avail_update)* next;
+    const char* path=getenv("DD2_MOVIE_DEVICE_FAIL_START_ONCE");
+    snd_pcm_sframes_t result;
+    if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_avail_update");
+    if(!next)return -EIO;
+    if(!path)return next(device);
+    if(!initial_avail_calls){initial_caller=SDL_ThreadID();result=-EIO;}
+    else result=next(device);
+    initial_avail_calls++;
+    {FILE* log=fopen(path,"a");if(!log)exit(1);
+     fprintf(log,"{\"event\":\"avail\",\"call\":%u,\"result\":%ld}\n",
+             initial_avail_calls,(long)result);fclose(log);}
+    return result;
+}
+int SDL_UnlockMutex(SDL_mutex* mutex){
+    static __typeof__(SDL_UnlockMutex)* next;
+    int wait=0,result;Uint32 started;
+    const char* path=getenv("DD2_MOVIE_DEVICE_FAIL_START_ONCE");
+    if(!next)next=dlsym(RTLD_NEXT,"SDL_UnlockMutex");
+    if(!next)exit(1);
+    if(path && initial_avail_calls && SDL_ThreadID()==initial_caller)
+        wait=SDL_AtomicCAS(&initial_unlocked,0,1);
+    if(wait)initial_mutex=mutex;
+    result=next(mutex);
+    if(path && SDL_AtomicGet(&initial_unlocked) && mutex==initial_mutex && SDL_ThreadID()!=initial_caller)
+        SDL_AtomicSet(&initial_worker_passed,1);
+    if(wait){
+        started=SDL_GetTicks();
+        while(!SDL_AtomicGet(&initial_worker_passed)){
+            if(SDL_GetTicks()-started>1000)exit(2);
+            SDL_Delay(1);
+        }
+        {FILE* log=fopen(path,"a");if(!log)exit(1);
+         fputs("{\"event\":\"worker_passed_before_cleanup\"}\n",log);fclose(log);}
+    }
+    return result;
+}
 static int record_fault(const char* path){
     struct timespec now;FILE* log=fopen(path,"a");if(!log)exit(1);
     clock_gettime(CLOCK_MONOTONIC,&now);
@@ -88,12 +132,14 @@ int main(int argc,char** argv){
     int reset_error=!strcmp(mode,"reset-error") || !strcmp(mode,"reset-write-error");
     int complete=!strcmp(mode,"full") || !strcmp(mode,"tail") || reset_error || schedule;
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
-    if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
+    if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") ||
+       !strcmp(mode,"initial-once-error") || !strcmp(mode,"thread-error")){
         for(i=0;i<2205*2;i++)source[i]=12345;
         require(movie_alsa_start(source,2205,22050)==-1,"reject unavailable audio device");
         require(!movie_alsa.device && !movie_alsa.thread,"failed start cleans up");
         printf("{\"%s_rejected\":true}\n",!strcmp(mode,"unavailable")?"unavailable":
-               !strcmp(mode,"initial-error")?"initial_error":"thread_error");SDL_Quit();return 0;
+               !strcmp(mode,"initial-error")?"initial_error":
+               !strcmp(mode,"initial-once-error")?"initial_once_error":"thread_error");SDL_Quit();return 0;
     }
     require(complete || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
     for(round=0;round<(complete?2u:1u);round++){

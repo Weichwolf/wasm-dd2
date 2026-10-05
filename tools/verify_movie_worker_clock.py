@@ -34,6 +34,8 @@ def validate(rows):
         fallback=index//12
         require(row['case']==index%12 and row['fallback']==fallback,'worker input identity differs')
         require(row['clock_calls']==([4,1]*4 if fallback else [4]*4),'worker QPC clock selection differs')
+        require(row['first_fill_samples']==1 and row['first_fill_sleeps']==0 and row['fills']==4,
+                'worker initial fill order differs')
         clock=row['mono_ns'] if fallback else row['raw_ns']
         require(len(clock)==4,'complete declared worker clocks required')
         ticks=[ns//100 for ns in clock]
@@ -69,8 +71,11 @@ def identify_producer(journal):
             if previous!=4:recovered_queries+=1
             preceding.append(previous);retry=False
     require(preceding.count(4)>=3,'producer QPC correction cycles missing')
+    first_avail=next(i for i,row in enumerate(rows) if row['event']=='avail')
+    initial_raw=sum(row['event']=='clock' and row['clock']==4 for row in rows[:first_avail])
     return dict(producer_tid=producer,producer_queries=counts[producer],
                 raw_clock_reads=len(raw),preceding_query_clocks=preceding,
+                raw_reads_before_first_query=initial_raw,
                 recovered_queries_without_new_correction=recovered_queries)
 
 
@@ -102,6 +107,7 @@ def main():
     require(actual==dict(source_frames=2205,frequency=10000000,header_done=True),'actual Wine caller completion differs')
     journal=[json.loads(s) for s in (wine/'worker-clock.jsonl').read_text().splitlines()]
     producer=identify_producer(journal)
+    require(producer['raw_reads_before_first_query']==1,'actual Wine initial fill order differs')
     audio=summarize_audio(wine/'audio',require_played=True)
     expected=b''.join(struct.pack('<hh',12345+i,-23456+i) for i in range(2205))
     for kind in ('streams','played_streams'):
@@ -124,19 +130,26 @@ def main():
         if label=='before':
             try:validate(result)
             except RuntimeError as error:
-                require(str(error)=='worker QPC clock selection differs','old worker failed for another reason')
-            else:raise RuntimeError('accepted old MONOTONIC worker')
+                require(str(error) in ('worker QPC clock selection differs','worker initial fill order differs'),
+                        'old worker failed for another reason')
+                rejection=str(error)
+            else:raise RuntimeError('accepted old worker')
         else:validate(result)
         native.append(dict(source=label,header_sha256=sha(saved),binary_sha256=sha(binary),rows=result,
-                           old_source_rejected=label=='before'))
+                           old_source_rejected=label=='before',
+                           rejection=rejection if label=='before' else None))
     negative=[]
-    for label in ('wrong-clock','missing-fallback','unquantized-wait','missing-case','wrong-wrap'):
+    for label in ('wrong-clock','missing-fallback','unquantized-wait','missing-case','wrong-wrap',
+                  'late-first-clock','sleep-before-fill','missing-first-fill'):
         result=copy.deepcopy(native[0]['rows'])
         if label=='wrong-clock':result[0]['clock_calls']=[1]*4
         elif label=='missing-fallback':result[12]['clock_calls']=[1]*4
         elif label=='unquantized-wait':result[1]['sleep_ns'][1]+=30
         elif label=='missing-case':result.pop()
-        else:result[11]['sleep_ns'][1]=5000000
+        elif label=='wrong-wrap':result[11]['sleep_ns'][1]=5000000
+        elif label=='late-first-clock':result[0]['first_fill_samples']=2
+        elif label=='sleep-before-fill':result[0]['first_fill_sleeps']=1
+        else:result[0]['fills']=3
         try:validate(result)
         except RuntimeError:negative.append(dict(mutation=label,rejected=True))
         else:raise RuntimeError('accepted changed worker evidence: '+label)
@@ -149,7 +162,7 @@ def main():
     (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     for pcm in (wine/'audio').glob('*.pcm'):pcm.unlink()
     check_space(out)
-    print('PASS actual Wine producer RAW clock, 24 sanitized worker schedules, old worker and five controls rejected')
+    print('PASS actual Wine producer first fill and RAW clock, 24 sanitized worker schedules, old worker and eight controls rejected')
 
 
 if __name__=='__main__':main()
