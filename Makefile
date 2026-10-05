@@ -351,6 +351,13 @@ compare-native-movie-device: ## compare unshifted native movie device PCM with W
 capture-original-outro: ## capture complete actual original Outro through real CREDITZ! menu inputs; ORIGINAL_OUTRO_ARGS required
 	python3 $(ROOT)/tools/capture_original_outro.py $(ORIGINAL_OUTRO_ARGS)
 
+.PHONY: verify-native-credits capture-browser-credits
+verify-native-credits: ## check real native CREDITZ! name-grid, complete Outro and exit(0); NATIVE_CREDITS_ARGS required
+	python3 $(ROOT)/tools/verify_credits_frontend.py $(NATIVE_CREDITS_ARGS)
+
+capture-browser-credits: ## check real browser CREDITZ! inputs, original frame hashes and exit(0); BROWSER_CREDITS_ARGS required
+	node $(ROOT)/tools/browser/capture_credits_frontend.js $(BROWSER_CREDITS_ARGS)
+
 verify-movie-video: ## compare actual original Intro/Outro window bytes with SDL/canvas; MOVIE_VIDEO_ARGS required
 	python3 $(ROOT)/tools/verify_movie_video.py $(MOVIE_VIDEO_ARGS)
 

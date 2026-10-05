@@ -1,0 +1,21 @@
+Match the USER32 PostQuitMessage void(int) signature at the engine caller.
+
+The original WM_DESTROY branch in FUN_004132f0 calls PostQuitMessage(0)
+and returns zero. The port shim already returns void, but the decompiled
+caller had no declaration and GNU89 implicitly gave it an int return.
+Emscripten therefore linked a signature_mismatch:PostQuitMessage trap.
+DestroyWindow delivers WM_DESTROY, so the actual CREDITZ! -> Play_Xtro ->
+Close_Application path trapped after all 1812 Outro pictures, before the
+original exit(0). Declare the existing shim without changing the original
+window-procedure logic or suppressing a runtime error.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -3,6 +3,7 @@
+ #include <stdio.h>
+ int _g_esi=0x74c500,_g_edi=0x4604b6,_g_ebx=0x74c500,_g_ebp=0x74c540,_g_eax=0;
+ int DirectDrawCreate(int,void**,int); int DirectSoundCreate(int,void**,int);
++void PostQuitMessage(int);
+ /* forward declarations (decomp markers, excl. compat/libc) */
+ void draw_text_half(void);
+ void FUN_0041033a(void);

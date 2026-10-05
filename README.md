@@ -1711,6 +1711,36 @@ fail. These are separately observed device lifetimes; no trimming, padding or
 clock alignment turns the different consumed endpoints into a parity claim.
 Browser device PCM and synchronized original/port Outro A/V remain open.
 
+Patch 898 fixes a browser crash after the full Outro reached through the actual
+`CREDITZ!` name-grid route. `DestroyWindow` delivers `WM_DESTROY` to the original
+window procedure, which calls `PostQuitMessage(0)` before `Play_Xtro` exits with
+status zero. The shim returned void, but its undeclared GNU89 caller expected
+an int. Emscripten linked a signature-mismatch trap; the browser completed all
+1812 pictures and then raised `unreachable`, before calling `exit`. The patch
+declares the existing void-returning function at the engine caller.
+
+Both ports now pass all 48 real keyboard inputs, observed name/cursor states,
+full Outro completion and the original zero-status exit. The browser additionally
+checks each chronological actual canvas frame's SHA256 against the retained
+original window manifest, forwards the real imported exit unchanged, requires
+exactly one `exit(0)` and rejects page errors. All 1812 frame hashes match
+(`credits-1432-browser/report.json`); native process exit passes
+(`credits-1433-native/report.json`). Normal native Quit still supports cancel,
+returns its distinct original WinMain status of one when confirmed and closes
+both opened SDL streams (`credits-1434-native-quit/report.json`). These checks
+prove this frontend route and its movie-image regression, not full PCM,
+synchronized A/V, other menus or physical display timing.
+
+Reproduce against a completed original credits capture and fresh output paths:
+
+```sh
+make clean-logs
+make capture-original-outro ORIGINAL_OUTRO_ARGS='--output /tmp/wasm-dd2/credits-original'
+make verify-native-credits NATIVE_CREDITS_ARGS='--original /tmp/wasm-dd2/credits-original --binary /tmp/wasm-dd2/dd2-native --output /tmp/wasm-dd2/credits-native'
+make capture-browser-credits BROWSER_CREDITS_ARGS='web/dd2 /tmp/wasm-dd2/credits-browser /tmp/wasm-dd2/credits-original'
+make clean-logs
+```
+
 Patch 897 corrects the native ALSA producer's wake-up clock independently of
 movie presentation and the device sample clock. Wine's `alsa_timer_loop` uses
 QPC in 100-ns ticks, narrows the correction to signed 32 bits, then clamps it
