@@ -5,17 +5,33 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef DD2_MOVIE_DEVICE_FAULT
+#if defined(DD2_MOVIE_DEVICE_FAULT) || defined(DD2_MOVIE_DEVICE_DELAY)
 #include <alsa/asoundlib.h>
 #include <dlfcn.h>
 #include <errno.h>
+#ifdef DD2_MOVIE_DEVICE_FAULT
 snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* device,const void* buffer,snd_pcm_uframes_t frames){
     static __typeof__(snd_pcm_writei)* next;
     static unsigned calls;
     if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_writei");
-    if(!next || ++calls>1)return -EIO;
+    if(!next || getenv("DD2_MOVIE_DEVICE_FAIL_START") || ++calls>1)return -EIO;
     return next(device,buffer,frames);
 }
+#else
+#include <time.h>
+SDL_Thread* SDL_CreateThread(SDL_ThreadFunction fn,const char* name,void* data){
+    static __typeof__(SDL_CreateThread)* next;
+    SDL_Thread* thread;struct timespec now;FILE* log;
+    if(!next)next=dlsym(RTLD_NEXT,"SDL_CreateThread");
+    if(!next || getenv("DD2_MOVIE_DEVICE_FAIL_THREAD"))return NULL;
+    thread=next(fn,name,data);
+    SDL_Delay(80); /* explicit busy-start model; no sample data/time fitting */
+    clock_gettime(CLOCK_MONOTONIC,&now);
+    log=fopen(getenv("DD2_MOVIE_DEVICE_DELAY_LOG"),"a");if(!log)exit(1);
+    fprintf(log,"{\"ready_ns\":%llu}\n",(unsigned long long)((uint64_t)now.tv_sec*1000000000+now.tv_nsec));
+    fclose(log);return thread;
+}
+#endif
 #else
 #include "dd2_native_movie_alsa.h"
 static void require(int ok,const char* why){
@@ -25,10 +41,12 @@ int main(int argc,char** argv){
     int16_t source[22050*2];unsigned i,round;Uint32 started;
     const char* mode=argc>1?argv[1]:"full";
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
-    if(!strcmp(mode,"unavailable")){
+    if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
+        for(i=0;i<2205*2;i++)source[i]=12345;
         require(movie_alsa_start(source,2205,22050)==-1,"reject unavailable audio device");
         require(!movie_alsa.device && !movie_alsa.thread,"failed start cleans up");
-        puts("{\"unavailable_rejected\":true}");SDL_Quit();return 0;
+        printf("{\"%s_rejected\":true}\n",!strcmp(mode,"unavailable")?"unavailable":
+               !strcmp(mode,"initial-error")?"initial_error":"thread_error");SDL_Quit();return 0;
     }
     require(!strcmp(mode,"full") || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
     for(round=0;round<(!strcmp(mode,"full")?2u:1u);round++){

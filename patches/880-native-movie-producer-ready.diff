@@ -1,0 +1,33 @@
+Prepare the native movie producer before starting the ALSA sample clock.
+
+Wine WINMM prepares its device thread during open, before waveOutWrite starts
+playback. The native path filled and started ALSA before waiting for SDL thread
+creation. Under measured scheduling load, those ready waits took several ms
+while source audio was already playing, ahead of the video epoch.
+
+Create the producer while holding its mutex, then fill source sample zero.
+The producer cannot submit prematurely. Unlock before handling a failed fill
+so teardown can join a waiting worker. No sample offsets or padding are fitted.
+
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/winmm/waveform.c
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -115,9 +115,15 @@
+     movie_alsa.source=source;movie_alsa.frames=frames;
+     movie_alsa.silence=calloc(movie_alsa.buffer*2,sizeof(int16_t));
+     movie_alsa.mutex=SDL_CreateMutex();
+-    if(!movie_alsa.silence || !movie_alsa.mutex || movie_alsa_fill())goto failed;
++    if(!movie_alsa.silence || !movie_alsa.mutex)goto failed;
++    /* Finish producer startup before starting the device's sample clock.
++     * The mutex keeps the producer from writing before the initial fill. */
++    SDL_LockMutex(movie_alsa.mutex);
+     movie_alsa.thread=SDL_CreateThread(movie_alsa_worker,"dd2-movie-alsa",NULL);
+-    if(!movie_alsa.thread)goto failed;
++    if(!movie_alsa.thread){SDL_UnlockMutex(movie_alsa.mutex);goto failed;}
++    period_result=movie_alsa_fill();
++    SDL_UnlockMutex(movie_alsa.mutex);
++    if(period_result)goto failed;
+     return 0;
+ failed:
+     if(hardware)movie_snd_pcm_hw_params_free(hardware);

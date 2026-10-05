@@ -1050,6 +1050,31 @@ make verify-movie-window-axes MOVIE_WINDOW_AXES_ARGS='--output /tmp/wasm-dd2/win
 make clean-logs
 ```
 
+Patch 880 prepares the native ALSA producer before starting its device sample
+clock, following Wine WINMM's open-before-write order. The previous path
+started source PCM before waiting for SDL thread creation; a measured busy
+constructor consumed several milliseconds of audio before the video epoch.
+The constructor now holds the producer mutex until thread readiness and the
+first source fill. Failure paths unlock before joining and closing resources.
+
+The device regression explicitly delays constructor return by 80 ms. Two
+consecutive new lifetimes start their actual sample clock after readiness;
+the old production header fails that same invariant in both lifetimes. No
+sample padding, shifted PCM or fitted timestamps are used. ASan/UBSan also
+checks repeat, cancellation, runtime write errors, failed initial writes,
+failed thread creation and unavailable devices; 36 altered PCM cases are
+rejected (`movie-start-1009-ready-final/report.json`). Compiles use an immutable
+header snapshot to keep another build from changing the tested input.
+
+Production Intro/Outro runs retain 1711/1812 renderer presentations and exact
+6039616/6395840 source bytes from sample zero in accepted and consumed PCM.
+The intro reference is the fresh unmodified original; Outro is compared
+literally with the previously verified actual Wine-ACM source interval.
+Thread readiness precedes actual playback in both full runs
+(`movie-start-1012-ready-comparison/report.json`). The strict whole original
+intro comparison still rejects the differing silence tail. Full original
+movie timing and all audio driver output remain separate requirements.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
