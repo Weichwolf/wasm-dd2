@@ -28,6 +28,7 @@ const traceRng=process.argv.includes('--rng-call-trace');
 assert(!traceRng||rngLayout,'--rng-call-trace requires --rng-layout');
 const apiOption=process.argv.slice(4).find(value=>value.startsWith('--api-reference='));
 assert(!resultTables||apiOption,'Result-table history requires recorded original API inputs');
+const naturalMultiplayerPlan=JSON.parse(fs.readFileSync(path.join(__dirname,'../natural_multiplayer_ui.json')));
 let apiReference=null;
 if(apiOption){
  const root=path.resolve(apiOption.slice('--api-reference='.length));assert(root.startsWith('/tmp/wasm-dd2/'));
@@ -36,18 +37,21 @@ if(apiOption){
  const normalArena=meta.normal_arena===true;
  const naturalChamp=meta.natural_championship===true;
  const naturalSeason=meta.natural_season===true;
+ const naturalMultiplayer=meta.natural_multiplayer===true;
+ assert(!naturalMultiplayer||naturalChamp&&!naturalSeason&&meta.final_races.length===2,'Two complete natural multiplayer turns required');
  assert(!naturalSeason||naturalChamp&&meta.final_races.length===5,'Complete natural season required');
  assert(meta.acknowledged_keys&&(resultTables?meta.result_tables===resultPlan.result_mode:normalArena||naturalChamp?meta.natural_finish:meta.complete_retirement_season));
  const expectedKeys=normalArena?['Return','Right','Right','Return','Right','Return','Down','Down','Return']:['Return','Return','Return','Return','Up','Left','Return','Down','Down','Return'];
  if(naturalChamp)for(let race=0;race<(naturalSeason?5:1);race++)expectedKeys.push('Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
  else if(!normalArena)for(let race=0;race<5;race++)expectedKeys.push('Escape','Down','Down','Down','Return','Up','Return','Right','Return','Right','Right','Right','Right','Escape','Down','Down','Return');
  if(resultTables){expectedKeys.splice(0,expectedKeys.length,...resultPlan.load_keys);for(let race=0;race<resultPlan.races.length;race++)expectedKeys.push(...(multiplayerResults?resultPlan.round_keys:[...resultPlan.retire_keys,'Return','Escape','Return',...resultPlan.continuation_keys,'Return']));}
+ if(naturalMultiplayer)expectedKeys.splice(0,expectedKeys.length,...naturalMultiplayerPlan.keys);
  assert.deepEqual(meta.keys,expectedKeys,'Actual complete championship input sequence required');
  for(const step of resultPlan?.card_steps||[]){const cycle=JSON.parse(fs.readFileSync(path.join(root,meta.checkpoints[step],'cycle/cycle.json')));resultCardPairs[step]=cycle.frames.map(f=>[f.phase,f.card_phase]);}
  if(naturalChamp){
   const actions=expectedKeys.slice(0,10);
   for(let race=0;race<(naturalSeason?5:1);race++)actions.push('natural-finish',...expectedKeys.slice(10+race*10,20+race*10));
-  assert.deepEqual(meta.actions,actions);
+  assert.deepEqual(meta.actions,naturalMultiplayer?naturalMultiplayerPlan.actions:actions);
  }
  assert.equal(meta.initial_save_sha256,crypto.createHash('sha256').update(save).digest('hex'));
  const ticks=fs.readFileSync(path.join(root,'ticks.bin')),random=fs.readFileSync(path.join(root,'random.bin'));
@@ -140,7 +144,7 @@ async function tap(page,key,timing=null,raceStart=null){
     'ENV.DD2_TICK_REPLAY="/original-ticks.bin";ENV.DD2_RANDOM_REFERENCE="/original-random.bin";ENV.DD2_RANDOM_LEVEL="all";ENV.DD2_RANDOM_REQUIRE_INITIAL="1";});</script>':'';
    return route.fulfill({status:200,contentType:'text/html',body:html.replace(marker,hook+apiHook+marker)});
   });
-  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,seasonEnd,drivingInputs,fullVideo,firstPhase,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs})=>{
+  await page.addInitScript(({rngLayout,rngLimit,apiKeys,normalArena,naturalChamp,naturalSeason,naturalMultiplayer,naturalMultiplayerPlan,seasonEnd,drivingInputs,fullVideo,firstPhase,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs})=>{
    window.__slabReadyFrames=0;window.__releaseKey=null;window.__captureNext=false;
    window.__scheduledInput=null;window.__scheduleError=null;window.__inputObservations=[];window.__scheduledFrames=[];
    window.__rngObservations=[];window.__rngError=null;
@@ -214,10 +218,10 @@ async function tap(page,key,timing=null,raceStart=null){
       history.stage='release';
      }else if(history.stage==='release'&&(masks&history.mask)===0){history.stage='settle';history.steady=0;}
      if(history.stage==='settle'){
-      const go=resultTables?resultPlan.starts.includes(history.index):naturalSeason?apiKeys[history.index]==='natural-finish'||history.index===apiKeys.length&&seasonEnd.level>0:naturalChamp?[10,21].includes(history.index):normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
-      const expectedLevel=resultTables?resultPlan.start_states[resultPlan.starts.indexOf(history.index)]?.level:naturalSeason?(history.index===apiKeys.length?seasonEnd.level:[1,2,5,7,10][(history.index-10)/11]):history.index===10?1:2;
+      const go=naturalMultiplayer?naturalMultiplayerPlan.starts.includes(history.index):resultTables?resultPlan.starts.includes(history.index):naturalSeason?apiKeys[history.index]==='natural-finish'||history.index===apiKeys.length&&seasonEnd.level>0:naturalChamp?[10,21].includes(history.index):normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
+      const expectedLevel=naturalMultiplayer?naturalMultiplayerPlan.start_states[naturalMultiplayerPlan.starts.indexOf(history.index)]?.level:resultTables?resultPlan.start_states[resultPlan.starts.indexOf(history.index)]?.level:naturalSeason?(history.index===apiKeys.length?seasonEnd.level:[1,2,5,7,10][(history.index-10)/11]):history.index===10?1:2;
       const resultAction=naturalChamp&&apiKeys[history.index-1]==='natural-finish';
-      const resultScreen=naturalSeason&&history.index===55?0x46ae44:0x46bf38;
+      const resultScreen=naturalMultiplayer&&resultAction?naturalMultiplayerPlan.over_states[naturalMultiplayerPlan.overs.indexOf(history.index)].poly_list:naturalSeason&&history.index===55?0x46ae44:0x46bf38;
       const ready=go?(resultTables?physical.level===expectedLevel&&physical.ticks>=8:naturalChamp?physical.level===expectedLevel:normalArena?physical.level>=8&&physical.level<=12:physical.level===[1,2,5,7,10][(history.index-10)/17])&&physical.quit===0&&physical.ticks>0:HEAP16[0x46996c>>1]===0&&(!normalArena||history.index<=apiKeys.length||HEAPU32[0x940010>>2]===0x46a468)&&(!resultAction||HEAPU32[0x940010>>2]===resultScreen);
       history.steady=ready?history.steady+1:0;
       if(history.steady>=(go?2:16)){
@@ -265,6 +269,7 @@ async function tap(page,key,timing=null,raceStart=null){
       rows:Array.from({length:5},(_,i)=>({name:readText(0x940290+i*26,26),points:readText(0x940240+i*16,16)})),
       framebuf:encode(0x700450,307200),palette:encode(0x700050,1024),rng:rngState,
       api_calls:apiKeys?{clock:HEAPU32[rngLayout.clock_counter_address>>2],random:HEAPU32[rngLayout.random_replay_counter_address>>2]}:null};
+     if(naturalMultiplayer){window.__snapshot.player=HEAP32[0x93decc>>2];window.__snapshot.multi_count=HEAP32[0x467658>>2];}
      window.__captureNext=false;
     }
     if(resultTables&&history&&history.active&&(recordHistory||recordResultCycle)){
@@ -336,6 +341,7 @@ async function tap(page,key,timing=null,raceStart=null){
   },{rngLayout,rngLimit:apiReference?apiReference.meta.rng_calls:100000,
      apiKeys:apiReference&&(apiReference.meta.natural_championship?apiReference.meta.actions:apiReference.meta.keys),normalArena:apiReference&&apiReference.meta.normal_arena,
      naturalChamp:apiReference&&apiReference.meta.natural_championship,drivingInputs:apiReference&&apiReference.meta.driving_inputs,
+     naturalMultiplayer:apiReference&&apiReference.meta.natural_multiplayer,naturalMultiplayerPlan,
      naturalSeason:apiReference&&apiReference.meta.natural_season,seasonEnd:apiReference&&apiReference.seasonEnd,
      fullVideo:apiReference&&apiReference.meta.full_video,
      firstPhase:apiReference&&apiReference.meta.full_video?apiReference.meta.presentations[0].phase:null,resultTables,resultLayout,resultPlan,resultCaptures,resultCardPairs});
@@ -370,7 +376,7 @@ async function tap(page,key,timing=null,raceStart=null){
     });
     return batch.length;
    };
-   const deadline=Date.now()+(apiReference.meta.natural_season?7200000:streaming?900000:240000);let lastIndex=-1,lastChange=Date.now();
+   const deadline=Date.now()+((apiReference.meta.natural_season||apiReference.meta.natural_multiplayer)?7200000:streaming?900000:240000);let lastIndex=-1,lastChange=Date.now();
    while(true){
     if(streaming)await drain();
     const progress=await page.evaluate(layout=>{const h=window.__apiHistory;return {done:h.done,error:h.error||window.__rngError,index:h.index,stage:h.stage,steady:h.steady,checkpoints:h.shots.length,level:HEAP32[0x936ff4>>2],ticks:HEAP32[0x7746c0>>2],clock_calls:HEAPU32[layout.clock_counter_address>>2],random_calls:HEAPU32[layout.counter_address>>2],quit:HEAP32[0x7746ac>>2],pad:HEAPU32[0x754448>>2],last_stack:h.lastStack};},rngLayout);
@@ -431,6 +437,11 @@ async function tap(page,key,timing=null,raceStart=null){
    assert.equal(ended.api_calls.random,apiReference.meta.rng_calls,'Actual computed RNG-input extent differs');
    assert.equal(ended.rng.count,apiReference.meta.rng_calls);
    if(apiReference.meta.normal_arena){assert.equal(ended.poly_list,0x46a468);assert(ended.finished>14);assert.equal(ended.retired,0);}
+   else if(apiReference.meta.natural_multiplayer){
+    assert.equal(ended.level,2);assert.equal(ended.race,1);assert.equal(ended.player,0);assert.equal(ended.multi_count,2);assert.equal(ended.retired,0);
+    assert.equal(await page.evaluate(()=>window.__apiHistory.drivingCursor),apiReference.meta.driving_inputs.length);
+    assert.deepEqual(await page.evaluate(()=>window.__apiHistory.finalDrivers),apiReference.meta.final_races.map(row=>row.driver));
+   }
    else if(apiReference.meta.natural_season){
     for(const key of ['level','race','season','poly_list'])assert.equal(ended[key],apiReference.seasonEnd[key],'Actual natural season ending differs: '+key);
     assert.equal(ended.retired,0);
@@ -453,6 +464,7 @@ async function tap(page,key,timing=null,raceStart=null){
     normal_arena:apiReference.meta.normal_arena===true,
     natural_championship:apiReference.meta.natural_championship===true,
     natural_season:apiReference.meta.natural_season===true,
+    natural_multiplayer:apiReference.meta.natural_multiplayer===true,
     final_driver:await page.evaluate(()=>window.__apiHistory.finalDriver||null),
     final_drivers:await page.evaluate(()=>window.__apiHistory.finalDrivers),
     actions:apiReference.meta.actions,

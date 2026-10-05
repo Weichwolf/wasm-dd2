@@ -27,9 +27,10 @@ from natural_champ_driver import metrics as driver_metrics, KeyboardDriver
 import race_results_protocol
 import multiplayer_results_protocol
 import multiplayer_loaded_protocol
+import natural_multiplayer_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250):
     protocol = multiplayer_loaded_protocol if result_tables == 'multiplayer-loaded' else multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
     if result_tables == 'multiplayer-loaded' and result_race_mode not in (0,1):
         raise ValueError('Actual saved Wrecking or Stock Car mode required')
@@ -41,6 +42,10 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             name = f'step{step:02d}-'+protocol.KEYS[step-1]
             meta = json.loads((Path(result_reference)/name/'cycle/cycle.json').read_text())
             card_wanted[step] = {(f['phase'],f['card_phase']) for f in meta['frames']}
+    if not 60 <= natural_multiplayer_speed <= 250:
+        raise ValueError('Natural multiplayer throttle limit must be 60..250')
+    if natural_multiplayer and (not natural_champ or natural_season or result_tables):
+        raise ValueError('Natural multiplayer requires its dedicated natural championship route')
     if result_tables and (normal_arena or full_video or natural_champ or natural_season):
         raise ValueError('Result-table API history requires its own route')
     if natural_champ and (normal_arena or full_video):
@@ -67,13 +72,16 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     held_polls = 0
     held_counts = []
     start_time = time.monotonic()
-    keys = protocol.KEYS if result_tables else NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
-    actions = NATURAL_SEASON_ACTIONS if natural_season else NATURAL_CHAMP_ACTIONS if natural_champ else keys
+    keys = natural_multiplayer_protocol.KEYS if natural_multiplayer else protocol.KEYS if result_tables else NATURAL_SEASON_KEYS if natural_season else NATURAL_CHAMP_KEYS if natural_champ else NORMAL_ARENA_KEYS if normal_arena else KEYS[:steps]
+    actions = natural_multiplayer_protocol.ACTIONS if natural_multiplayer else NATURAL_SEASON_ACTIONS if natural_season else NATURAL_CHAMP_ACTIONS if natural_champ else keys
     driving_inputs = []
     driving_cursor = 0
     driving_held = []
     last_control_tick = None
-    keyboard_driver = KeyboardDriver(steady=steady_driver)
+    def new_driver():
+        return KeyboardDriver(steady=True, movement_distance=100, progress_ticks=1200) if natural_multiplayer else KeyboardDriver(steady=steady_driver)
+
+    keyboard_driver = new_driver()
     finish_controls_released = False
     race_frames = []
     presentations = []
@@ -97,7 +105,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         return int.from_bytes(read(address, 4), 'little', signed=True)
 
     def state():
-        return dict(level=integer(0x936ff4), cf=integer(0x462ff0),
+        value = dict(level=integer(0x936ff4), cf=integer(0x462ff0),
                     ticks=integer(0x7746c0), countdown=integer(0x784298),
                     frame_skip=integer(0x7746b8), quit=integer(0x7746ac),
                     race=integer(0x93dec8), season=integer(0x93dec0),
@@ -105,13 +113,15 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     phase=integer(0x4699cc),
                     poly_list=word(0x940010), clock_calls=len(clocks),
                     rng_calls=len(rng), pad_polls=len(pads), draws=draws)
+        if natural_multiplayer: value['player'] = integer(0x93decc)
+        return value
 
     timeline = (root / 'events.jsonl').open('x')
 
     def event(kind, **extra):
         nonlocal event_index
         event_index += 1
-        if event_index > (1500000 if natural_season else 300000 if natural_champ else 100000):
+        if event_index > (1500000 if natural_season or natural_multiplayer else 300000 if natural_champ else 100000):
             raise RuntimeError('Championship history exceeded its bounded observation limit')
         row = dict(index=event_index, kind=kind, **state(), **extra)
         timeline.write(json.dumps(row) + '\n')
@@ -184,7 +194,11 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     raise RuntimeError('Natural season input did not reach the requested league page')
             if key_index==len(actions) and len(final_races)!=5:
                 raise RuntimeError('Natural season must contain five actual natural race completions')
-        if natural_champ and not natural_season:
+        if natural_multiplayer:
+            value['player'] = integer(0x93decc)
+            value['multi_count'] = integer(0x467658)
+            natural_multiplayer_protocol.validate_checkpoint(key_index, value)
+        if natural_champ and not natural_season and not natural_multiplayer:
             if key_index in (10, 21) and (value['level'],value['race'],value['quit']) != ((1,0,0) if key_index==10 else (2,1,0)):
                 raise RuntimeError('Wrong naturally continued championship race start')
             if key_index == 11 and (value['level'],value['race'],value['poly_list'],value['stats']) != (15,1,0x46bf38,1):
@@ -376,12 +390,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                         driving_held.clear();finish_controls_released=True
                     elif stage == 'drive' and game_caller and not finish_controls_released and integer(0x784298)<0:
                         tick=integer(0x7746c0)
-                        if last_control_tick is None or tick-last_control_tick>=6:
+                        if last_control_tick is None or tick-last_control_tick>=(1 if natural_multiplayer else 6):
                             if natural_season and integer(0x936ff4)>=8:
                                 observed=dict(driver_metrics(read),wanted=['a','Right'],manoeuvre='arena')
                             else:
                                 observed=keyboard_driver.controls(read,tick)
                             wanted=observed['wanted']
+                            if natural_multiplayer and observed['speed'] >= natural_multiplayer_speed and 'a' in wanted:
+                                wanted.remove('a')
                             for key in list(driving_held):
                                 if key not in wanted:
                                     send(key,False);driving_inputs.append(dict(frame=frame,key=key,down=False))
@@ -397,12 +413,12 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     stage = 'release'
                 if stage != 'settle':
                     continue
-                race_start = key_index in protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
+                race_start = key_index in natural_multiplayer_protocol.STARTS if natural_multiplayer else key_index in protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
                 if race_start:
                     ready = game_caller and integer(0x7746ac) == 0 and (not result_tables or integer(0x7746c0)>=8)
                 else:
                     result_action=natural_champ and key_index>0 and actions[key_index-1]=='natural-finish'
-                    result_screen=0x46ae44 if natural_season and key_index==55 else 0x46bf38
+                    result_screen=natural_multiplayer_protocol.OVER_STATES[natural_multiplayer_protocol.OVERS.index(key_index)]['poly_list'] if natural_multiplayer and result_action else 0x46ae44 if natural_season and key_index==55 else 0x46bf38
                     ready = read(0x46996c, 2) == b'\0\0' and (not normal_arena or key_index <= len(keys) or word(0x940010) == 0x46a468) and (not result_action or word(0x940010)==result_screen)
                 steady = steady + 1 if ready else 0
                 if steady < (2 if race_start else 16):
@@ -431,7 +447,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 snapshot()
                 if natural_champ and key_index<len(actions) and actions[key_index]=='natural-finish':
                     key_index+=1;stage='drive'
-                    keyboard_driver=KeyboardDriver(steady=steady_driver)
+                    keyboard_driver=new_driver()
                     last_control_tick=None;finish_controls_released=False
                     continue
                 if normal_arena and key_index == len(keys):
@@ -457,17 +473,18 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             raise RuntimeError('Recorded original driving input extent differs')
         (root / 'ticks.bin').write_bytes(b''.join(struct.pack('<I', value) for value in clocks))
         (root / 'random.bin').write_bytes(b''.join(struct.pack('<III', *row) for row in rng))
-        (root / 'history.json').write_text(json.dumps(dict(scope=__doc__.strip() if original else 'Actual native keyboard-bridge championship trace; calculated RNG and recorded clock inputs; no physical sink/whole-game parity claim',
+        (root / 'history.json').write_text(json.dumps(dict(scope=(natural_multiplayer_protocol.SCOPE if natural_multiplayer else __doc__.strip()) if original else 'Actual native keyboard-bridge championship trace; calculated RNG and recorded clock inputs; no physical sink/whole-game parity claim',
             exe_modified=False if original else None, exe_sha256=EXE if original else None, keys=keys, checkpoints=checkpoints,
             target=target,input='real X11 keys' if original else 'dd2_key_event', acknowledged_keys=True, held_pad_polls=held_counts,
             clock_calls=len(clocks), rng_calls=len(rng), pad_polls=len(pads), draws=draws,
             observed_play_draw_delay_ms=game_frame_delay_ms,
             complete_retirement_season=not result_tables and not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
             result_tables=result_tables,
-            natural_championship=natural_champ, natural_season=natural_season,
+            natural_championship=natural_champ, natural_season=natural_season, natural_multiplayer=natural_multiplayer,
             actions=actions, driving_inputs=driving_inputs,
-            driving_policy=('steady' if steady_driver else 'default') if original and natural_champ else None,
+            driving_policy=('steady-persistent' if natural_multiplayer else 'steady' if steady_driver else 'default') if original and natural_champ else None,
             driving_source_sha256=driver_source_sha256,
+            driving_speed_limit=natural_multiplayer_speed if natural_multiplayer and original else None,
             racing_image_format='indexed-zlib' if natural_champ else 'indexed-raw',
             natural_finish=bool(final_race), final_race=final_race, final_races=final_races, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,

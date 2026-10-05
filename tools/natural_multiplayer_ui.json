@@ -1,0 +1,120 @@
+{
+  "scope": "Two naturally completed first-round Wrecking hotseat turns, positive human points, player exchange, cumulative league reopening and next-round start. Recorded original clock returns and calculated RNG, chronological indexed racing pixels/palettes and checkpoints. No chronological PCM, physical timing, full season or other modes.",
+  "actions": [
+    "Return",
+    "Return",
+    "Right",
+    "Right",
+    "Right",
+    "Return",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Right",
+    "Return",
+    "Up",
+    "Left",
+    "Left",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Down",
+    "Down",
+    "Return",
+    "natural-finish",
+    "Down",
+    "Return",
+    "natural-finish",
+    "Right",
+    "Return",
+    "Escape",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Return"
+  ],
+  "keys": [
+    "Return",
+    "Return",
+    "Right",
+    "Right",
+    "Right",
+    "Return",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Right",
+    "Return",
+    "Up",
+    "Left",
+    "Left",
+    "Return",
+    "Up",
+    "Left",
+    "Return",
+    "Down",
+    "Down",
+    "Return",
+    "Down",
+    "Return",
+    "Right",
+    "Return",
+    "Escape",
+    "Return",
+    "Escape",
+    "Down",
+    "Down",
+    "Return"
+  ],
+  "starts": [
+    22,
+    25,
+    34
+  ],
+  "overs": [
+    23,
+    26
+  ],
+  "tables": [
+    28,
+    30
+  ],
+  "start_states": [
+    {
+      "level": 1,
+      "race": 0,
+      "player": 0,
+      "quit": 0
+    },
+    {
+      "level": 1,
+      "race": 0,
+      "player": 1,
+      "quit": 0
+    },
+    {
+      "level": 2,
+      "race": 1,
+      "player": 0,
+      "quit": 0
+    }
+  ],
+  "over_states": [
+    {
+      "level": 15,
+      "race": 0,
+      "player": 0,
+      "poly_list": 4634340
+    },
+    {
+      "level": 15,
+      "race": 1,
+      "player": 2,
+      "poly_list": 4636472
+    }
+  ]
+}

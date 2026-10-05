@@ -2480,6 +2480,54 @@ This verifies original-only generation for two players on the first Wrecking
 round; port generation and chronological racing/audio parity remain open.
 Loading is checked below. Stock Car needs its four-round route.
 
+Natural fresh multiplayer can now record both first-round hotseat turns with
+real original X11 input, four read-only hardware breakpoint slots, every observed
+engine clock/RNG return and compressed indexed racing pictures. Ports replay the
+recorded driving transitions and calculate their own RNG; they do not run a
+second road follower or receive scores/state from the reference.
+
+```
+make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-multi-original'
+python3 tools/capture_native_champ_history.py --reference /tmp/wasm-dd2/natural-multi-original/history --output /tmp/wasm-dd2/natural-multi-native --binary /tmp/wasm-dd2/current-native/dd2-native
+python3 tools/wasm_rng_layout.py --wasm /tmp/wasm-dd2/current-web/index.wasm --output /tmp/wasm-dd2/natural-multi-layout
+node tools/browser/capture_champ_season.js /tmp/wasm-dd2/current-web /tmp/wasm-dd2/natural-multi-browser --api-reference=/tmp/wasm-dd2/natural-multi-original/history --rng-layout=/tmp/wasm-dd2/natural-multi-layout/layout.json
+make verify-natural-multiplayer NATURAL_MULTIPLAYER_VERIFY_ARGS='--original /tmp/wasm-dd2/natural-multi-original/history --native /tmp/wasm-dd2/natural-multi-native/history --browser /tmp/wasm-dd2/natural-multi-browser --report /tmp/wasm-dd2/natural-multi-report.json --negative-controls --clean'
+```
+
+Use actual current native/web build paths in these commands. A sanitizer capture
+can be included with `--asan /tmp/wasm-dd2/natural-multi-asan/history`.
+The regular-finish gate is `--require-completed-laps`: it requires both humans to
+survive and complete their laps, in addition to positive earned/cumulative points.
+A destroyed car can naturally end a race and earn points; that does not pass this
+gate. An original attempt can use `--speed-limit 120` to reduce normal accelerator
+input. This only changes the external keyboard policy, never game state or clocks,
+and does not guarantee lap completion. Recorder sources are frozen in the
+capture directory before the original attempt starts.
+
+The comparison covers both turns, real player exchange, positive result totals,
+reopening the cumulative league and actually starting the next round. It checks
+all chronological racing pixels/palettes and 35 checkpoints, with selected
+complete league/start rasters. Chronological PCM, physical timing, a full natural
+multiplayer season and other player counts/modes remain outside this acceptance.
+
+The completed original/native/browser/AddressSanitizer comparison is
+`/tmp/wasm-dd2/multiplayer-natural-1417-verified.json`: 6,121 literal racing
+pixel/palette pairs per target, 35 states, three race-start and two reopened
+league rasters, 42,458 original clock calls and 23,497 calculated RNG calls.
+Both humans naturally finish through destroyed cars and earn 45/175 points;
+these totals survive the actual next-round start. Thirteen controls reject
+changed keys/timing/RNG/pixels/palettes, incorrect human points/player exchange,
+and destroyed cars presented as regular lap finishes. The regular-finish gate
+therefore deliberately rejects this trace. A lower-throttle original lap-finish
+attempt is separate, not accepted by this report. Successful raw comparison
+pictures were deleted after writing the report.
+
+The current shared browser recorder also regressed the prior five-round retired
+multiplayer route: 143 states and 640 complete indexed/palette pairs agree with
+the retained original states and previously literal-verified image hashes
+(`multiplayer-natural-1410-browser-regression.json`). This retained-hash check
+is not a fresh original raster or chronological A/V comparison.
+
 The loaded multiplayer comparison uses the confirmed original-produced card
 above and passes on Native, AddressSanitizer and browser WASM.
 
