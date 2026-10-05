@@ -16,11 +16,12 @@ import shutil
 import struct
 import subprocess
 import tempfile
+from artifacts import WORK, check_space, prepare_output
 from verify_movie_codec import packets,riff_chunks,compare
 from verify_sound_cursor import wine_probe
 
 ROOT=Path(__file__).resolve().parent.parent
-SOURCES=[ROOT/"re_out"/f"dd2_{name}.c" for name in ("avi","cinepak","msadpcm")]
+SOURCES=[ROOT/"build"/f"dd2_{name}.c" for name in ("avi","cinepak","msadpcm")]
 FIXTURE=ROOT/"tools/movie_avi_test.c"
 
 
@@ -82,12 +83,14 @@ def main():
     parser.add_argument("--output",type=Path,required=True)
     args=parser.parse_args()
     env={k:v for k,v in os.environ.items() if not k.startswith("DD2_")}
-    output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
+    output=prepare_output(args.output)
+    if WORK not in output.parents:raise ValueError("Use /tmp/wasm-dd2/")
+    output.mkdir(parents=True,exist_ok=False);check_space(output)
     report={"scope":__doc__,"sources":{str(p.relative_to(ROOT)):sha(p) for p in [*SOURCES,FIXTURE,Path(__file__).resolve()]},"films":[],
             "wine_version":subprocess.check_output(["wine","--version"],text=True).strip()}
-    with tempfile.TemporaryDirectory(prefix="dd2-movie-avi-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="movie-avi-",dir=WORK) as tmp:
         directory=Path(tmp);native=directory/"native";wasm=directory/"wasm.js"
-        common=["-std=gnu99","-O2","-Wall","-Wextra","-Werror",f"-I{ROOT/'re_out'}",*map(str,SOURCES),str(FIXTURE)]
+        common=["-std=gnu99","-O2","-Wall","-Wextra","-Werror",f"-I{ROOT/'build'}",*map(str,SOURCES),str(FIXTURE)]
         subprocess.run(["gcc","-m32","-no-pie","-fsanitize=address,undefined","-fno-sanitize-recover=all",*common,"-o",str(native)],check=True)
         subprocess.run([args.emcc,*common,"-sNODERAWFS=1","-sEXIT_RUNTIME=1","-sINITIAL_MEMORY=67108864",
                         "-sALLOW_MEMORY_GROWTH=1","-sMAXIMUM_MEMORY=268435456","-o",str(wasm)],check=True)
@@ -112,6 +115,7 @@ def main():
                 records=wine_probe(exe,film,env,arguments=tuple("Z:"+str(p).replace("/","\\") for p in (input_path,target)))
                 shutil.move(film/"wine.log",film/f"{exe.stem}-wine.log")
                 shutil.rmtree(film/"wine-prefix");input_path.unlink()
+                check_space(output)
                 if exe==codecs[0]:
                     if records!=dict(width=expected["width"],height=expected["height"],frames=expected["frames"],empty_packets=expected["empty_frames"]):
                         raise RuntimeError("Actual Win32 video fixture extent differs")
@@ -128,6 +132,7 @@ def main():
                 rgb=film/f"{target}.rgb";decoded=film/f"{target}.pcm";seeks=film/f"{target}-seeks.rgb"
                 run=subprocess.run([*command,str(path),str(rgb),str(decoded),str(seeks)],env=env,capture_output=True,text=True,timeout=60)
                 (film/f"{target}.log").write_text(run.stdout+run.stderr)
+                check_space(output)
                 if run.returncode or json.loads(run.stdout)!=expected:raise RuntimeError(f"{target}: AVI interface failed: {run.stderr}")
                 if compare(reference,rgb)!=pixel_bytes*expected["frames"] or compare(pcm,decoded)!=expected["pcm_frames"]*expected["pcm_channels"]*2:
                     raise RuntimeError("Wrong full AVI decoded extent")
@@ -153,6 +158,7 @@ def main():
                 print(f"PASS {filename} {target}: all {expected['frames']} RGB frames and {expected['pcm_frames']} PCM frames exact, seeks and {len(rejected)} malformed files checked",flush=True)
             reference.unlink();selected.unlink()
             report["films"].append(result);(output/"report.json").write_text(json.dumps(report,indent=2)+"\n")
+            check_space(output)
 
 
 if __name__=="__main__":main()

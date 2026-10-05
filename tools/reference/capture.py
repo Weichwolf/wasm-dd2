@@ -156,6 +156,7 @@ def main():
                         help='observe actual original callbacks through a forwarding Wine API observer; audio mode only, logging changes timing')
     parser.add_argument('--trace-video',action='store_true',help='observe actual successful DirectDraw uploads and palettes')
     parser.add_argument('--trace-video-rng',action='store_true',help='also read the actual original RNG seed at each observed presentation; requires --trace-video')
+    parser.add_argument('--trace-movie-video',action='store_true',help='archive actual MCIAVI source and window RGB; requires audio mode and --keep-movie')
     parser.add_argument('--video-archive',action='store_true',help='archive closed video blocks losslessly instead of retaining raw frames')
     parser.add_argument('--video-max-frames',type=int,default=4096,help='bounded presentation count; at most 60000 with --video-archive')
     parser.add_argument("--wine-debug", default="-all",
@@ -180,6 +181,8 @@ def main():
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     args = parser.parse_args()
+    if args.trace_movie_video and (args.mode!='audio' or not args.keep_movie):
+        parser.error('--trace-movie-video requires --mode audio --keep-movie')
     if args.trace_video_rng and not args.trace_video:
         parser.error('--trace-video-rng requires --trace-video')
     if args.video_archive and not args.trace_video:
@@ -298,7 +301,8 @@ def run(game, output, args, on_menu=None):
         raise RuntimeError("A reference is already running in this private Wine prefix")
     rundir = WORK / "game"
     rundir.mkdir(exist_ok=True)
-    for name in ('winmm.dll','winmm_real.dll','_winmm_real.dll','ddraw.dll','_ddraw_real.dll'):
+    for name in ('winmm.dll','winmm_real.dll','_winmm_real.dll','ddraw.dll','_ddraw_real.dll',
+                 'msvfw32.dll','_msvfw32_real.dll','gdi32.dll','_gdi32_real.dll'):
         previous=rundir/name
         if previous.is_symlink():previous.unlink()
         elif previous.exists():raise RuntimeError('Unexpected previous timer observer file: '+str(previous))
@@ -345,6 +349,20 @@ def run(game, output, args, on_menu=None):
         env['WINEDLLOVERRIDES']='winmm=n;_winmm_real=n'
         env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
     video_collector=None
+    movie_collector=None
+    if getattr(args,'trace_movie_video',False):
+        from reference.movie_video_observer import build,Collector
+        observer=WORK/'movie-video-observer'
+        metadata=build(observer)
+        (output/'movie-video-observer-build.json').write_text(json.dumps(metadata,indent=2)+'\n')
+        shutil.copyfile(observer/'msvfw32.dll',output/'movie-video-observer.dll')
+        shutil.copyfile(observer/'gdi32.dll',output/'movie-gdi-observer.dll')
+        for name in ('msvfw32.dll','_msvfw32_real.dll','gdi32.dll','_gdi32_real.dll'):
+            (rundir/name).symlink_to(observer/name)
+        env['WINEDLLOVERRIDES']=env.get('WINEDLLOVERRIDES','')+';msvfw32=n;_msvfw32_real=n;gdi32=n,b;_gdi32_real=n'
+        env['DD2_MOVIE_VIDEO_CAPTURE']='Z:'+str(output/'movie-video.bin').replace('/','\\')
+        env['DD2_MOVIE_VIDEO_MAX_FRAMES']='60000'
+        movie_collector=Collector(output).start()
     if getattr(args,'trace_video',False):
         from ddraw_video_observer import build
         observer=WORK/'video-observer'
@@ -370,6 +388,7 @@ def run(game, output, args, on_menu=None):
         # atomic snapshots or a claim to have sampled every engine frame.
         check_space(output)
         if video_collector:video_collector.check()
+        if movie_collector:movie_collector.check()
         before = time.monotonic_ns()
         raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if args.trace_timer_callbacks else None
         current = state(pid,observe_timers=args.trace_timer_callbacks)
@@ -530,6 +549,7 @@ def run(game, output, args, on_menu=None):
                 xserver.terminate()
                 xserver.wait(timeout=5)
             if video_collector:video_collector.finish()
+            if movie_collector:movie_collector.finish()
 
 
 def capture_startup_video(pid,output,env,frames,skip_movie,timeout,initial_save_sha256):

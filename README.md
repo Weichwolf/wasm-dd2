@@ -774,6 +774,56 @@ full original stream timing, combined CD/effects output and Windows hardware
 equivalence remain open. The observer uses `DD2_AUDIO_PROCESS=gain.exe` for the
 fixture; original game captures still default to `dd2h.exe`.
 
+Patch 875 corrects the actual Wine 10/X11 movie window filter. The original
+MCIAVI `StretchDIBits` window route uses bilinear pixel-center sampling before
+RGB565 conversion; the earlier direct-DIB fixture exercises a different,
+nearest-neighbor route. Production native and WASM movie playback now use the
+window conversion. A forwarding observer records the unmodified original's
+compressed AVI packet, source RGB and actual window RGB after each successful
+draw. It preserves Wine's executable backend sections and public exports.
+Only the reserved BI_RGB fourth byte is normalized to opaque alpha.
+
+The complete intro observation in
+`/tmp/wasm-dd2/movie-window-921-final-verified/report.json` passed all 1711
+actual original window draws: 315371520 source RGB bytes and 2102476800
+opaque window ARGB bytes per native ASan/UBSan and WASM component. Components
+decode the original AVI themselves; captured pixels or engine state never
+feed the port. Eight changed/truncated pixel comparisons are rejected. The
+pre-875 production renderer is also rejected, with 25797 differing window
+bytes in frame zero and identical decoded source RGB.
+
+The AVI declares 1712 frames, but this original run presented only frames
+0 through 1710. This window-component proof does not establish port frame
+counts, presentation schedules, physical display timing or combined movie
+audio/video parity. Complete codec and actual SDL/browser sink checks remain
+distinct from comparing the original's chronological movie output.
+
+The patched AVI parser/decoders passed complete Intro/Outro RGB and PCM,
+forward/backward/repeated seeks and ten malformed-container cases per target
+in `/tmp/wasm-dd2/movie-avi-923-production/report.json`. Full native SDL and
+browser runs also passed both movies and real key-up/key-down cancellation
+checks (`movie-native-924-sinks/report.json`, `movie-browser-925-sinks/report.json`).
+These compare rendered pixels with submitted textures/canvas buffers and
+6039616/6395840 accepted source PCM bytes with Wine ACM. They still show
+1712/1813 presentations; the intro's extra final presentation is an open
+original mismatch. The original also accepts 3520 extra zero bytes after the
+otherwise identical complete intro PCM in the observed run. The strict
+diagnostic is `/tmp/wasm-dd2/movie-av-927-diagnosis/report.json`.
+
+```sh
+make clean-logs
+python3 tools/reference/capture.py --mode audio --audio --audio-rate 22050 \
+  --keep-movie --trace-movie-video --wine-debug=-all,+iccvid,+mciavi \
+  --audio-tail 3 --timeout 140 --output /tmp/wasm-dd2/original-intro-window
+make verify-movie-window MOVIE_WINDOW_ARGS='--capture /tmp/wasm-dd2/original-intro-window --output /tmp/wasm-dd2/intro-window-comparison --negative-controls'
+make clean-logs
+```
+
+Closed original readbacks are archived losslessly in bounded batches. The
+component comparison streams its output without retaining raw video. Build
+products, Wine prefixes, diagnostics and comparison output stay under
+`/tmp/wasm-dd2/`; successful raw captures are removed after writing reports.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

@@ -17,6 +17,7 @@ import struct
 import subprocess
 import tempfile
 import time
+from artifacts import WORK, check_space, prepare_output
 from verify_native_sdl import config
 from verify_movie_codec import compare
 ROOT=Path(__file__).resolve().parent.parent
@@ -30,10 +31,12 @@ def main():
     parser.add_argument("--skip-only",action="store_true")
     parser.add_argument("--skip-key",default="d",help="real X11 key used for movie cancellation")
     parser.add_argument("--release-key",default="Escape",help="real X11 release which must retain playback")
-    args=parser.parse_args();output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
+    args=parser.parse_args();output=prepare_output(args.output)
+    if WORK not in output.parents:raise ValueError("Use /tmp/wasm-dd2/")
+    output.mkdir(parents=True,exist_ok=False);check_space(output)
     source=json.loads((args.source/"report.json").read_text());binary=args.binary.resolve()
     report={"scope":__doc__,"binary_sha256":hashlib.sha256(binary.read_bytes()).hexdigest(),"cases":[]}
-    with tempfile.TemporaryDirectory(prefix="dd2-native-movie-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="native-movie-",dir=WORK) as tmp:
         directory=Path(tmp);observer=directory/"observer.so"
         subprocess.run(["gcc","-m32","-shared","-fPIC","-O2","-Wall","-Wextra","-Werror",*config("cflags"),str(ROOT/"tools/native_movie_observer.c"),*config("libs"),"-ldl","-o",str(observer)],check=True)
         for film in source["films"]:
@@ -72,6 +75,7 @@ def main():
                         if process and process.poll() is None:process.terminate();process.wait(timeout=5)
                         if display:display.terminate();display.wait(timeout=5)
                 events=[json.loads(s) for s in (case/"events.jsonl").read_text().splitlines()]
+                check_space(output)
                 opens=[e for e in events if e["event"]=="open"]
                 movie_devices=[e for e in opens if e["device"] and e["rate"]==22050 and e["format"]==0x8010 and e["channels"]==2]
                 if len(movie_devices)!=1:raise RuntimeError("No unique actual PCM16 stereo movie device")
