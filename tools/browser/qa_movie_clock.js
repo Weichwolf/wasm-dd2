@@ -12,7 +12,7 @@ const root=path.resolve(process.argv[2]);
    const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(`http://localhost:${server.address().port}/${program}.html`);
    await page.waitForFunction(()=>window.fixtureReady);await page.click('button');
-   const result=await page.evaluate(()=>{
+   const result=await page.evaluate(async()=>{
     const p=Module._malloc(22050*4);for(let i=0;i<44100;i++)HEAP16[(p>>1)+i]=(i%65536)-32768;
     let scheduled,exact=false;
     const NativeContext=AudioContext;
@@ -52,13 +52,34 @@ const root=path.resolve(process.argv[2]);
     const wrappedFallback=Module._dd2_movie_now_ms();
     const preciseFallback=Module._dd2_movie_now_us?Module._dd2_movie_now_us():null;
     performance.now=()=>123456.789;
-    const fractionalFallback=Module._dd2_movie_now_us?Module._dd2_movie_now_us():null;performance.now=now;
-    return {opened,sourceExact:exact,scheduled,rows,stopCleared,wrappedFallback,preciseFallback,fractionalFallback};
+    const fractionalFallback=Module._dd2_movie_now_us?Module._dd2_movie_now_us():null;
+    let drainTimer=null;
+    if(Module._dd2_movie_drain_start){
+     const begin=now.call(performance),fixed=Module._dd2_movie_now_us();
+     Module._dd2_movie_drain_start();const immediate=Module._dd2_movie_drain_ready();
+     await new Promise(resolve=>setTimeout(resolve,120));
+     const ready=Module._dd2_movie_drain_ready(),elapsed=now.call(performance)-begin;
+     const frozenClock=Module._dd2_movie_now_us()===fixed;
+     Module._dd2_movie_drain_start();Module._dd2_movie_drain_cancel();
+     await new Promise(resolve=>setTimeout(resolve,110));const cancelled=Module._dd2_movie_drain_ready();
+     Module._dd2_movie_drain_start();await new Promise(resolve=>setTimeout(resolve,60));
+     Module._dd2_movie_drain_start();const rearmBegin=now.call(performance);
+     await new Promise(resolve=>setTimeout(resolve,60));
+     const beforeRearmDeadline=Module._dd2_movie_drain_ready(),rearmElapsed=now.call(performance)-rearmBegin;
+     await new Promise(resolve=>setTimeout(resolve,50));const afterRearmDeadline=Module._dd2_movie_drain_ready();
+     Module._dd2_movie_drain_cancel();Module._dd2_movie_drain_cancel();
+     drainTimer={immediate,ready,elapsed,frozenClock,cancelled,beforeRearmDeadline,rearmElapsed,afterRearmDeadline};
+    }
+    performance.now=now;
+    return {opened,sourceExact:exact,scheduled,rows,stopCleared,wrappedFallback,preciseFallback,fractionalFallback,drainTimer};
    });
    assert(!errors.length,JSON.stringify(errors));assert(result.opened===0&&result.sourceExact&&result.stopCleared,'caller PCM or cleanup differs');
    assert(result.wrappedFallback===123,'unavailable-device performance clock did not wrap');
    const rows=Object.fromEntries(result.rows.map(r=>[r.phase,r]));
    if(program==='production'){
+    const timer=result.drainTimer;
+    assert(timer&&timer.immediate===0&&timer.ready===1&&timer.elapsed>=100&&timer.frozenClock,'real relative timer followed frozen movie clock');
+    assert(timer.cancelled===0&&timer.beforeRearmDeadline===0&&timer.rearmElapsed<99.8&&timer.afterRearmDeadline===1,'cancelled/replaced wait leaked into a later drain');
     assert(result.preciseFallback===(2**32+123.75)*1000&&result.fractionalFallback===123456789,'microsecond clock lost fractional milliseconds or wrapped as a DWORD');
     assert(rows['no-output'].microseconds===0&&rows['zero-output-position'].microseconds===0,'missing output advanced microsecond clock');
     assert(rows['no-output'].clock===0&&rows['zero-output-position'].clock===0,'unavailable output advanced movie');

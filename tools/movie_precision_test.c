@@ -43,6 +43,9 @@ static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie precis
 FILE* dd2_fopen_ci(const char* name,const char* mode){return fopen(name,mode);}
 unsigned dd2_movie_now_ms(void){return (unsigned)(now_ns/1000000);}
 double dd2_movie_now_us(void){return (double)(now_ns/1000);}
+void dd2_movie_drain_start(void){}
+int dd2_movie_drain_ready(void){return 0;}
+void dd2_movie_drain_cancel(void){}
 void dd2_movie_wait(void){now_ns+=1000;}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"frame image");frames++;}
 int dd2_movie_render_window(const uint8_t* rgb,unsigned width,unsigned height,const int32_t* rect,uint32_t* pixels){

@@ -1650,6 +1650,44 @@ and timing regressions, not full original game parity.
 make verify-movie-precision MOVIE_PRECISION_ARGS='--output /tmp/wasm-dd2/movie-precision --before-movie /tmp/wasm-dd2/before/dd2_movie.c'
 ```
 
+Patch 896 separates the 100-ms MCI drain wait from the movie clock. Wine
+MCIAVI uses Sleep(100) between completed-header checks; NtDelayExecution
+establishes an OS timeout independently of QPC. The former port measured
+retries with the movie clock, so a frozen clock stalled completion, a fast
+clock caused early checks, and separately rounded milliseconds shortened
+the wait. Native now uses an independent CLOCK_MONOTONIC timespec deadline;
+browser uses a real setTimeout callback. Finish, close and a new play cancel
+outstanding waits. The immediate first check and reset-before-notify ordering
+are preserved. No source PCM or silence tail is fitted.
+
+`make verify-movie-wait` plays the short original-packet AVI through actual
+Wine MCI both normally and with a declared frozen RAW/QPC clock. The frozen
+case has zero QPC elapsed time while a forwarded main-thread OS wait exceeds
+100 ms, all 1012 source PCM frames play unchanged, and MCI closes the device
+before returning. Native ASan/UBSan checks 15 production timer boundaries,
+including nanosecond and seconds rollover, cancellation and replacement.
+Native/WASM MCI completes after the same independent 100-ms wait with frozen,
+normal, fast and slow declared movie clocks. The old source instead stalls,
+or completes at 99.3, 49.7 and 198.5 ms; both targets reject it on the same
+wait contract. Five changed-evidence controls also fail
+(`movie-wait-1369-public-metadata/report.json`). This is an actual Wine timer
+and controlled port API comparison, not full original dd2h.exe playback parity.
+
+Real browser timer tests hold the movie clock fixed, then check timeout,
+cancellation and replacement without stale callbacks
+(`movie-wait-1357-browser-timer/report.json`). Complete native and browser
+Intro captures retain 1711 presentations and valid independent timing
+observations. The native source PCM matches fresh Wine ACM at offset zero;
+whole native tails and browser device PCM still differ from the original.
+Complete Intro/Outro, early close and unavailable-audio transport checks pass
+on native ASan/UBSan and WASM, as do the microsecond-boundary and nine drain
+cases per port (`movie-wait-1365-playback/report.json`,
+`movie-wait-1367-precision/report.json`, `movie-wait-1366-drain/report.json`).
+
+```sh
+make verify-movie-wait MOVIE_WAIT_ARGS='--output /tmp/wasm-dd2/movie-wait --before-movie /tmp/wasm-dd2/before/dd2_movie.c --mingw /path/to/i686-w64-mingw32-gcc'
+```
+
 The new native Intro's actual SDL readbacks contain 1711 frames and
 2102476800 opaque ARGB bytes. Its streaming SHA256 equals the original-window
 SHA256 recorded in `movie-scale-1000-live-sinks/report.json`; the bounded FIFO

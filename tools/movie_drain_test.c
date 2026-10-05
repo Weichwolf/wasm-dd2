@@ -65,6 +65,10 @@ static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie drain 
 FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
 unsigned dd2_movie_now_ms(void){return SDL_GetTicks();}
 double dd2_movie_now_us(void){return (double)SDL_GetPerformanceCounter()*1000000/SDL_GetPerformanceFrequency();}
+static Uint64 drain_deadline;
+void dd2_movie_drain_start(void){drain_deadline=SDL_GetPerformanceCounter()+SDL_GetPerformanceFrequency()/10;}
+int dd2_movie_drain_ready(void){return drain_deadline && SDL_GetPerformanceCounter()>=drain_deadline;}
+void dd2_movie_drain_cancel(void){drain_deadline=0;}
 void dd2_movie_wait(void){SDL_Delay(1);}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
 int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){
@@ -105,6 +109,10 @@ static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie drain:
 FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
 unsigned dd2_movie_now_ms(void){return now_ms;}
 double dd2_movie_now_us(void){return (double)(unsigned)(now_ms-0xfffffff0u)*1000;}
+static unsigned drain_deadline,drain_armed;
+void dd2_movie_drain_start(void){drain_deadline=now_ms+100;drain_armed=1;}
+int dd2_movie_drain_ready(void){return drain_armed && (int32_t)(now_ms-drain_deadline)>=0;}
+void dd2_movie_drain_cancel(void){drain_armed=0;}
 void dd2_movie_wait(void){now_ms++;}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
 int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){

@@ -318,6 +318,10 @@ verify-movie-qpc: patch ## verify actual Wine QPC and native RAW/fallback/wrap p
 verify-movie-precision: patch ## check microsecond frame boundaries on native/ASan/WASM; MOVIE_PRECISION_ARGS required
 	python3 $(ROOT)/tools/verify_movie_precision.py $(MOVIE_PRECISION_ARGS)
 
+.PHONY: verify-movie-wait
+verify-movie-wait: patch ## compare Wine relative drain with independent native/WASM timers; MOVIE_WAIT_ARGS required
+	python3 $(ROOT)/tools/verify_movie_wait.py $(MOVIE_WAIT_ARGS)
+
 .PHONY: verify-movie-completion
 verify-movie-completion: patch ## compare actual Wine/native worker-published audio completion; MOVIE_COMPLETION_ARGS required
 	python3 $(ROOT)/tools/verify_movie_completion.py $(MOVIE_COMPLETION_ARGS)

@@ -106,7 +106,7 @@ def main():
     metadata, _, _, _ = original_metadata(movie)
     sites, pump_disassembly = call_sites(args.binary, 'dd2_movie_pump')
     epochs, start_disassembly = call_sites(args.binary, 'dd2_movie_mci_send')
-    require(len(sites) == 3 and len(epochs) == 1, 'unsupported movie clock call graph')
+    require(len(sites) in (1,3) and len(epochs) == 1, 'unsupported movie clock call graph')
     precise = binding.get('microsecond_clock', False)
     require(precise == bool(re.search(r'call[^\n]*<dd2_movie_now_us>', start_disassembly)) and
             precise == bool(re.search(r'call[^\n]*<dd2_movie_now_us>', pump_disassembly)),

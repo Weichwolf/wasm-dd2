@@ -32,7 +32,7 @@ def main():
     before=output/'before.c';before.write_bytes(args.before_platform.read_bytes());units=[]
     for label,source in [('production',current),('before',before)]:
         exports=['_malloc','_free','_dd2_movie_now_ms','_dd2_movie_audio_start','_dd2_movie_audio_done','_dd2_movie_audio_stop']
-        if label=='production':exports.append('_dd2_movie_now_us')
+        if label=='production':exports+=['_dd2_movie_now_us','_dd2_movie_drain_start','_dd2_movie_drain_ready','_dd2_movie_drain_cancel']
         subprocess.run(['emcc','-DDD2_BROWSER','-I'+str(snapshot),str(source),'--no-entry','-sASYNCIFY',
                         '-sEXPORTED_FUNCTIONS='+json.dumps(exports),
                         '-sEXIT_RUNTIME=0','-o',str(output/(label+'.js'))],check=True)
