@@ -1199,6 +1199,43 @@ consumes 440 driver-silence frames; native accepts 880 and consumes 456
 fails. These are device-boundary and literal source comparisons, not full
 original audio tails, shared clocks, physical output or complete game parity.
 
+Patch 885 restores the final native movie client reset. MCIAVI calls
+WaveOutReset again before unpreparing and closing, even when completion has
+already reset the empty queue. Native cleanup now drops, resets and prepares
+the configured client under its producer mutex before joining. The stop flag
+still prevents caller samples from being resubmitted during cancellation;
+failed hardware configuration is not treated as a configured client. Final
+reset/prepare errors do not prevent cleanup, matching MCI's ignored final
+WaveOutReset result.
+
+The actual device verifier requires this distinct final reset on full,
+delayed-start, tail, cancel, delayed-join and runtime-error lifetimes, with no
+subsequent producer writes. Delayed joins must begin after prepare and
+consume no caller PCM during their wait. The previous header fails the same
+final-reset check in both repeated lifetimes. Reset faults exercise both the
+producer and final cleanup. ASan/UBSan and 96 altered PCM controls pass
+(`movie-close-1070-device/report.json`). An immutable pre-fix header can be
+checked with:
+
+```sh
+python3 tools/verify_native_movie_device.py \
+  --before-reset-header /tmp/wasm-dd2/movie-close-1069-before/dd2_native_movie_alsa.h \
+  --output /tmp/wasm-dd2/movie-close-device
+```
+
+Full native Intro/Outro and real cancellation retain exact, unshifted Wine
+ACM source samples (`movie-close-1078-comparison/report.json`). Both complete
+movies now record the independent completed-queue reset and final client
+reset. Whole-output timing remains different: an isolated Intro accepts the
+same complete PCM bytes as the current original, including 660 silence
+frames, but consumes 343 silence frames versus the original's 440
+(`movie-close-1083-isolated-comparison/report.json`). Concurrent Intro/Outro
+captures consume 850/849; those numbers are not tuned or selected for a parity
+claim. The corresponding presentation/sample-clock reports retain every
+actual bracket and gap. Native's producer still uses relative 10-ms waits;
+Wine adjusts those waits against an advancing period clock. That scheduling,
+the separate driver lifetime and original/port video timing remain open.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
