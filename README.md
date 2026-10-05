@@ -2582,6 +2582,30 @@ observations, the opt-in policy supplies additional reverse intentions while
 legacy decisions remain identical (`multiplayer-natural-1423-recovery-intentions.json`).
 These host-policy regressions do not prove a physical finish or game A/V parity.
 
+The slow-recovery attempt also exposed a host-controller dead zone. At lap 9/10,
+the actual car remained near a wall; 9849 of 9961 lap-nine observations had zero
+steering. A small heading error cancelled the turn while reversing, sending the
+car back along the same obstruction. The run stopped before 2 GiB, with three
+diagnostic pictures retained and approximately 1.9 GB of closed raw images
+removed (`multiplayer-natural-1451-recovery-diagnosis/report.json`). It did not
+produce a regular finish or an original/port comparison.
+
+`--wall-recovery` retains a minimum steering target during backward recovery
+when ordinary alignment feedback would cancel that turn. The direction comes
+from the heading error at the start of the manoeuvre. This option supplies real
+Left/Right key intentions only; existing controls and the default policy remain
+unchanged. The regression checks all 25826 retained original observations against
+the frozen original driver and current default keys. The opt-in policy changes
+6656 recovery intentions and rejects both the old cancelled-turn case and a
+changed default key (`multiplayer-natural-1454-wall-policy.json`). This is a
+host-policy counterfactual, not proof of an actual escape, lap finish or game
+parity. Recorder metadata and frozen sources include the selected option.
+
+```sh
+make verify-road-recovery ROAD_RECOVERY_ARGS='--reference /tmp/wasm-dd2/multiplayer-natural-1421-original-recovery --output /tmp/wasm-dd2/road-recovery-report.json'
+make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-wall-recovery --speed-limit 160 --slow-recovery --wall-recovery'
+```
+
 The comparison covers both turns, real player exchange, positive result totals,
 reopening the cumulative league and actually starting the next round. It checks
 all chronological racing pixels/palettes and 35 checkpoints, with selected

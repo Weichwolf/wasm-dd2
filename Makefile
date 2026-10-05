@@ -147,12 +147,15 @@ capture-browser-statistics-ui: ## run genuine browser statistics navigation; BRO
 generate-multiplayer-save: ## produce a positive-score original multiplayer card using real road-driving keys; MULTIPLAYER_SAVE_ARGS required
 	python3 $(ROOT)/tools/multiplayer_save_fixture.py $(MULTIPLAYER_SAVE_ARGS)
 
-.PHONY: capture-natural-multiplayer verify-natural-multiplayer
+.PHONY: capture-natural-multiplayer verify-natural-multiplayer verify-road-recovery
 capture-natural-multiplayer: ## record natural original hotseat turns with clock/RNG and racing pictures; NATURAL_MULTIPLAYER_CAPTURE_ARGS required
 	python3 $(ROOT)/tools/capture_natural_multiplayer.py $(NATURAL_MULTIPLAYER_CAPTURE_ARGS)
 
 verify-natural-multiplayer: ## compare positive-score original/native/browser hotseat racing histories; NATURAL_MULTIPLAYER_VERIFY_ARGS required
 	python3 $(ROOT)/tools/verify_natural_multiplayer.py $(NATURAL_MULTIPLAYER_VERIFY_ARGS)
+
+verify-road-recovery: ## regress host keyboard intentions against retained original observations; ROAD_RECOVERY_ARGS required
+	python3 $(ROOT)/tools/verify_road_recovery.py $(ROAD_RECOVERY_ARGS)
 
 .PHONY: capture-race-results-history verify-race-results-ui capture-browser-race-results-ui
 capture-race-results-history: ## observe original/native single or multiplayer result-table clock/RNG histories; RACE_RESULTS_HISTORY_ARGS required

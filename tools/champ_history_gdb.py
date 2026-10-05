@@ -30,7 +30,7 @@ import multiplayer_loaded_protocol
 import natural_multiplayer_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False, wall_recovery=False):
     protocol = multiplayer_loaded_protocol if result_tables == 'multiplayer-loaded' else multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
     if result_tables == 'multiplayer-loaded' and result_race_mode not in (0,1):
         raise ValueError('Actual saved Wrecking or Stock Car mode required')
@@ -80,7 +80,8 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     last_control_tick = None
     def new_driver():
         return KeyboardDriver(steady=True, movement_distance=100, progress_ticks=1200,
-                              slow_ticks=75 if slow_recovery else 0) if natural_multiplayer else KeyboardDriver(steady=steady_driver)
+                              slow_ticks=75 if slow_recovery else 0,
+                              escape_steering=96 if wall_recovery else 0) if natural_multiplayer else KeyboardDriver(steady=steady_driver)
 
     keyboard_driver = new_driver()
     finish_controls_released = False
@@ -487,6 +488,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             driving_source_sha256=driver_source_sha256,
             driving_speed_limit=natural_multiplayer_speed if natural_multiplayer and original else None,
             driving_slow_recovery=slow_recovery if natural_multiplayer and original else None,
+            driving_wall_recovery=wall_recovery if natural_multiplayer and original else None,
             racing_image_format='indexed-zlib' if natural_champ else 'indexed-raw',
             natural_finish=bool(final_race), final_race=final_race, final_races=final_races, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,

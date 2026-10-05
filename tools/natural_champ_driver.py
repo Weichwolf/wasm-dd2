@@ -71,7 +71,7 @@ def observe(read, steady=False):
 
 class KeyboardDriver:
     def __init__(self, steady=False, movement_distance=500, stall_ticks=75, progress_ticks=200,
-                 slow_ticks=0, minimum_speed=40):
+                 slow_ticks=0, minimum_speed=40, escape_steering=0):
         self.steady = steady
         self.movement_distance = movement_distance
         self.stall_ticks = stall_ticks
@@ -84,6 +84,8 @@ class KeyboardDriver:
         self.slow_ticks = slow_ticks
         self.minimum_speed = minimum_speed
         self.slow_since = None
+        self.escape_steering = escape_steering
+        self.reverse_turn = 0
 
     def controls(self, read, tick):
         row = observe(read, self.steady)
@@ -116,6 +118,8 @@ class KeyboardDriver:
             self.last_movement = self.reverse_until
             self.last_progress = self.reverse_until
             self.slow_since = None
+            if self.escape_steering:
+                self.reverse_turn = self.escape_steering if row['heading_error'] >= 0 else -self.escape_steering
         if tick < self.reverse_until:
             row['wanted'] = ['z', 'Right' if row['heading_error'] > 0 else 'Left']
             row['manoeuvre'] = 'reverse'
@@ -130,6 +134,15 @@ class KeyboardDriver:
             steering = -row['heading_error'] * 0.6 + row['yaw_rate'] * 6
             if backwards:
                 steering = -steering
+            if self.escape_steering and backwards and tick < self.reverse_until:
+                # The road can lie almost parallel to an obstructing wall.
+                # A small alignment error otherwise cancels every turn during
+                # reversal, so the car travels back along the same wall.
+                # Keep the turn chosen at the start of this manoeuvre when
+                # ordinary feedback falls inside the recovery dead zone.
+                if abs(steering) < self.escape_steering:
+                    steering = self.reverse_turn
+                row['recovery_turn'] = self.reverse_turn
             row['target_steering'] = max(-limit, min(limit, steering))
             row['steering_direction'] = 'backwards' if backwards else 'forwards'
             row['wanted'] = [key for key in row['wanted'] if key not in ('Left', 'Right')]
