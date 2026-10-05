@@ -2786,6 +2786,29 @@ oversized decoding and changed/repeated prefixes. Its source files occupy
 Successful test fixtures are removed after the report. These results prove
 lossless storage, not a regular finish or original/port game parity.
 
+The slower unchanged-original capture with speed limit 120 and both recovery
+options records human A finishing ten laps alive and earning 120 points. Human
+B remains alive and unfinished on lap six when the 30,000-racing-image guard
+ends the recording. All 146,327 clock returns and 309,633 calculated RNG triples
+are checked and exported from its complete bounded event stream
+(`multiplayer-natural-1534-cap-diagnosis/report.json`). This is a failed complete
+two-player reference; its periodic driver samples do not preserve the exact
+driver state at human A's final quit boundary.
+
+An explicitly partial replay uses the first human's actual recorded keys,
+96,097 clock returns and 208,969 RNG triples. While both port captures are still
+running, 12,000 native ASan indexed/palette pairs and their recorded gameplay
+state/API counts match the original literally. The first 10,000 WASM
+indexed/palette pairs also match (`multiplayer-prefix-1532-expanded-live-check/report.json`).
+The public comparison rejects seven altered pixel, palette, physics, API-count
+and extent cases using independently observed racing frame 11,000
+(`multiplayer-prefix-1536-comparison-controls/report.json`). The unchanged full
+multiplayer gate rejects this prefix. Complete comparison of all 15,762
+first-human racing pictures, the second regular finish, chronological PCM and
+physical timing remain unproven. After diagnosis, failed second-human raw
+archive chunks are removed; every first-human picture and three selected
+failed-tail diagnostic chunks remain until their comparisons are finished.
+
 ```sh
 make clean-logs
 make verify-racing-archive RACING_ARCHIVE_VERIFY_ARGS='--reference /tmp/wasm-dd2/natural-wall-recovery/history --first 10048 --output /tmp/wasm-dd2/racing-archive-check'
