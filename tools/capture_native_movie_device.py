@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--clock-profile', action='store_true', help='observe movie-clock call sites in a frame-pointer native binary')
     parser.add_argument('--timing-only', action='store_true', help='observe forwarded rendering timestamps without pixel readback/export')
     parser.add_argument('--video-digest', action='store_true', help='hash every actual renderer frame through a bounded FIFO without retaining raw video')
+    parser.add_argument('--producer-clock', action='store_true', help='observe forwarded producer clock/ALSA calls separately from movie clocks')
     args = parser.parse_args()
     if args.timing_only and args.video_digest:
         parser.error('timing-only cannot export a video digest')
@@ -47,6 +48,12 @@ def main():
                     *config('cflags'), str(ROOT/'tools/native_movie_observer.c'), *config('libs'),
                     '-ldl', '-o', str(observer)], check=True)
     libraries = build_audio(output/'audio-libraries')
+    worker_observer = None
+    if args.producer_clock:
+        worker_observer = output/'worker-clock-observer.so'
+        subprocess.run(['gcc', '-m32', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+                        str(ROOT/'tools/reference/movie_worker_clock_observer.c'), '-ldl', '-o',
+                        str(worker_observer)], check=True)
     if args.reset_errors: build_reset_fault(libraries)
     clock_metadata = None
     if args.clock_profile:
@@ -103,6 +110,10 @@ def main():
                        DD2_AUDIO_RATE='22050', DD2_NATIVE_MOVIE_OBSERVE=str(output),
                        LD_PRELOAD=str(observer)+' dd2_audio.so', LD_LIBRARY_PATH=':'.join(map(str, libraries)))
             if args.timing_only: env['DD2_NATIVE_MOVIE_TIMING_ONLY']='1'
+            if worker_observer:
+                env['LD_PRELOAD']=str(worker_observer)+' '+env['LD_PRELOAD']
+                env.update(DD2_WORKER_PROCESS=binary.name[:15],
+                           DD2_WORKER_CAPTURE=str(output/'worker-clock.jsonl'))
             if args.reset_errors:
                 env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
                 env['DD2_RESET_FAULT_LOG']=str(output/'reset-fault.jsonl')
@@ -184,6 +195,13 @@ def main():
                 'movie-clock observations incomplete')
         report['clock_profile'] = dict(**clock_metadata, clock_domain=next(iter(domains)), calls=len(clocks),
                                       journal_sha256=sha(output/'movie-clock.jsonl'))
+    if worker_observer:
+        from verify_movie_worker_clock import identify_producer
+        journal=[json.loads(s) for s in (output/'worker-clock.jsonl').read_text().splitlines()]
+        report['producer_clock']=dict(**identify_producer(journal),
+            clock_domain='CLOCK_MONOTONIC_RAW',
+            observer_source_sha256=sha(ROOT/'tools/reference/movie_worker_clock_observer.c'),
+            observer_sha256=sha(worker_observer),journal_sha256=sha(output/'worker-clock.jsonl'))
     if video_digest:
         require(video_digest['bytes'] == len(frames)*640*480*4, 'actual video stream length differs')
         report['actual_video_digest'] = dict(**video_digest, frames=len(frames), format='opaque ARGB8888 little endian')

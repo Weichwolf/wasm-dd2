@@ -1711,6 +1711,44 @@ fail. These are separately observed device lifetimes; no trimming, padding or
 clock alignment turns the different consumed endpoints into a parity claim.
 Browser device PCM and synchronized original/port Outro A/V remain open.
 
+Patch 897 corrects the native ALSA producer's wake-up clock independently of
+movie presentation and the device sample clock. Wine's `alsa_timer_loop` uses
+QPC in 100-ns ticks, narrows the correction to signed 32 bits, then clamps it
+to half a period. Native previously used adjusted MONOTONIC nanoseconds. It
+now prefers RAW, falls back to MONOTONIC on failure, and applies the same tick
+precision and narrowing without signed overflow. Relative OS sleeps and MCI's
+independent drain timer are preserved; no audio extent or offset is fitted.
+
+`make verify-movie-worker-clock` observes the actual Wine WaveOut producer's
+forwarded RAW clock calls and unchanged caller PCM. Native ASan/UBSan checks
+24 declared schedules: different clock rates, RAW failure, sub-tick/seconds
+boundaries, frozen clocks, half-period limits and signed correction wrap.
+The old header fails the same clock contract and five changed-evidence controls
+are rejected (`movie-worker-1398-make/report.json`). Actual sanitized device
+start/repeat/cancel/reset/error tests still pass with 60 changed PCM controls
+(`movie-worker-1389-device/report.json`); real Wine and sanitized native
+completion-publication checks pass with 14 controls
+(`movie-worker-1392-completion/report.json`). These are worker/device checks,
+not complete original movie timing or output acceptance.
+
+Fresh production native Intro/Outro captures retain all 1711/1812 pictures and
+the previously verified original window digests. Accepted and consumed source
+PCM matches fresh Wine ACM at offset zero, with 12 changed-source controls
+(`movie-worker-1400-source-comparison/report.json`). The live Intro observer
+also authenticates 6853 producer RAW reads and two extra availability queries
+after successful underrun recovery, within their existing producer ticks
+(`movie-worker-1397-intro/report.json`). Forwarded SDL/sample-clock observations
+remain valid (`movie-worker-1401-intro-timing/report.json`,
+`movie-worker-1396-outro-timing/report.json`). The complete consumed Outro still
+differs from the original at its silent endpoint
+(`movie-worker-1402-outro-whole-played.json`); browser device PCM and matched
+original/port A/V clocks remain open.
+
+```sh
+make verify-movie-worker-clock MOVIE_WORKER_CLOCK_ARGS='--mingw /path/to/i686-w64-mingw32-gcc --before-header /tmp/wasm-dd2/before/dd2_native_movie_alsa.h --output /tmp/wasm-dd2/movie-worker-clock'
+python3 tools/capture_native_movie_device.py --binary /path/to/dd2-native --movie Intro.avi --video-digest --clock-profile --producer-clock --output /tmp/wasm-dd2/native-producer-clock
+```
+
 ```sh
 make clean-logs
 make capture-original-outro ORIGINAL_OUTRO_ARGS='--output /tmp/wasm-dd2/outro-original'

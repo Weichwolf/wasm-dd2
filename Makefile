@@ -322,6 +322,10 @@ verify-movie-precision: patch ## check microsecond frame boundaries on native/AS
 verify-movie-wait: patch ## compare Wine relative drain with independent native/WASM timers; MOVIE_WAIT_ARGS required
 	python3 $(ROOT)/tools/verify_movie_wait.py $(MOVIE_WAIT_ARGS)
 
+.PHONY: verify-movie-worker-clock
+verify-movie-worker-clock: patch ## compare actual Wine producer QPC and sanitized native wake correction; MOVIE_WORKER_CLOCK_ARGS required
+	python3 $(ROOT)/tools/verify_movie_worker_clock.py $(MOVIE_WORKER_CLOCK_ARGS)
+
 .PHONY: verify-movie-completion
 verify-movie-completion: patch ## compare actual Wine/native worker-published audio completion; MOVIE_COMPLETION_ARGS required
 	python3 $(ROOT)/tools/verify_movie_completion.py $(MOVIE_COMPLETION_ARGS)

@@ -1,0 +1,57 @@
+Match Wine ALSA producer wake correction to its actual QPC clock.
+
+Wine 10 alsa_timer_loop reads NtQueryPerformanceCounter for next/last period
+correction. Unix QPC prefers CLOCK_MONOTONIC_RAW, otherwise CLOCK_MONOTONIC,
+and truncates to 100-ns ticks. The old native producer used adjusted MONOTONIC
+nanoseconds. Use the same clock selection and tick precision, including Wine's
+signed 32-bit difference before its half-period clamp. OS nanosleep and the
+virtual/hardware sample clock remain independent. No output, silence or
+presentation offset is fitted; complete movie A/V parity remains unproven.
+
+Primary sources:
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/winealsa.drv/alsa.c
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/ntdll/unix/sync.c
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -93,23 +93,33 @@
+     }
+     return 0;
+ }
+-static int64_t movie_alsa_clock_ns(void){
+-    struct timespec now;clock_gettime(CLOCK_MONOTONIC,&now);
+-    return (int64_t)now.tv_sec*1000000000+now.tv_nsec;
++static int64_t movie_alsa_clock_ticks(void){
++    struct timespec now;
++    /* Wine's ALSA timer correction uses NtQueryPerformanceCounter, separately
++     * from the OS relative sleep and the device's playback sample clock. */
++#ifdef CLOCK_MONOTONIC_RAW
++    if(clock_gettime(CLOCK_MONOTONIC_RAW,&now))
++#endif
++        clock_gettime(CLOCK_MONOTONIC,&now);
++    return (int64_t)now.tv_sec*10000000+now.tv_nsec/100;
+ }
+ static int movie_alsa_worker(void* ignored){
+-    const int64_t period=10000000;
+-    int64_t delay=period,next=movie_alsa_clock_ns()+period,adjust;
++    const int64_t period=100000;
++    int64_t delay=period,next=movie_alsa_clock_ticks()+period,adjust;
++    uint32_t low;
+     (void)ignored;
+     while(!SDL_AtomicGet(&movie_alsa.stop)){
+-        struct timespec wait={0,(long)delay},remaining;
++        struct timespec wait={0,(long)(delay*100)},remaining;
+         while(nanosleep(&wait,&remaining)<0 && errno==EINTR)wait=remaining;
+         if(SDL_AtomicGet(&movie_alsa.stop))break;
+         SDL_LockMutex(movie_alsa.mutex);
+         if(SDL_AtomicGet(&movie_alsa.stop)){SDL_UnlockMutex(movie_alsa.mutex);break;}
+         /* Wine measures wake error before processing this period, advances
+          * the target independently, and bounds each correction to half P. */
+-        adjust=next-movie_alsa_clock_ns();
++        /* Wine stores the QPC difference in a signed 32-bit int before
++         * clamping it. Express the two's-complement narrowing without UB. */
++        low=(uint32_t)((uint64_t)next-(uint64_t)movie_alsa_clock_ticks());
++        adjust=low<=0x7fffffffu?(int64_t)low:(int64_t)low-4294967296LL;
+         if(adjust>period/2)adjust=period/2;
+         else if(adjust<-period/2)adjust=-period/2;
+         delay=period+adjust;next+=period;
