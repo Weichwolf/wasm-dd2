@@ -86,7 +86,7 @@ def execute(args, out, game, action):
                 ui = OriginalUI(pid, rundir, output, env, deadline)
                 try: action(ui)
                 finally: ui.stop()
-            options = original_args(); options.timeout = 700
+            options = original_args(); options.timeout = getattr(args, 'timeout', 700)
             run_original(game, out, options, on_menu=driver)
     else:
         with (out/'xvfb.log').open('wb') as log:

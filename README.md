@@ -2186,6 +2186,24 @@ make verify-race-results-ui RACE_RESULTS_UI_ARGS='--multiplayer --original /tmp/
 make clean-logs
 ```
 
+`make generate-multiplayer-save MULTIPLAYER_SAVE_ARGS='--output /tmp/wasm-dd2/fresh-positive-multiplayer'`
+produces a real Wrecking Racing save after two named players finish ten laps
+without retirement or destruction. The default uses the Pro (`--car 0`) and
+real X11 keys with a read-only hardware observer. Its road follower allows slow
+movement and delayed progress before reversing; it does not write engine state,
+clocks, RNG or points. Completed turns, actual key transitions, frozen observer
+sources and the original card payload are required by the fixture validator.
+
+The unmodified original completed both turns with 55 and 95 points and saved
+its actual 128 KiB card, including the 6,526-byte game payload. Seven negative
+controls reject altered observer sources, histories, inputs, finishes, card bytes
+and scores. The producer/validation reports are
+`/tmp/wasm-dd2/multiplayer-positive-1261-original-persistent/report.json` and
+`/tmp/wasm-dd2/multiplayer-producer-1271-validation/report.json`.
+This verifies original-only generation for two players on the first Wrecking
+round; port generation, loading comparisons and chronological racing/audio
+parity remain separate acceptance work. Stock Car needs its four-round route.
+
 The original-replay check records an actual Stock Car practice run with car 1
 on track 1 in the unmodified original, holds acceleration after the countdown,
 then uses Retire / Yes and Save Replay to create a real `0x2020` card. All
