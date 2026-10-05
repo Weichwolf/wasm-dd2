@@ -1,0 +1,52 @@
+Restore the original race finish WORD and lap-record DWORD layout.
+
+Get_Race_Positions @443eb5 compares WORD [795c52] with 1. The overlapping
+DWORD alias also reads car 1's WORD speed @795c54; a nonzero speed masks
+car 0's completed laps and stops the normal finish counter from advancing.
+Use only the original WORD. Preserve practice's separate finish policy,
+refresh delays, destroyed-car checks and the existing rank sorting.
+
+Calc_Track_Positions @443b3d multiplies level-1 by 12 and compares/stores
+three DWORDs at 466e3c/40/44. The BYTE macros truncated fractional time and
+made the C array's level stride 3 bytes instead of 12, corrupting neighboring
+records. Restore all three signed DWORD aliases. This also restores the
+original HUD and saved-record loading strides: FUN_0044d810 @44d81c uses
+12-byte records and DWORD stores after loading unsigned saved WORDs.
+Update_Jimmy_Spunk_Times @44d8ae..44d8c5 reads the same DWORD table, and its
+later original WORD reads @44d96b/44d97c/44d992 retain their explicit casts.
+The separate saved-record aliases and ordinary record-name UI still need
+verification; this patch does not claim whole races, UI, or original A/V parity.
+
+--- a/dd2.c
++++ b/dd2.c
+@@ -32363,7 +32363,7 @@
+     if ((_DAT_00792ac6 == 1) || ((7 < _current_level && ((int)DAT_00466e38 < 2)))) {
+       _race_finished = _race_finished + 1;
+     }
+-    if ((race_type != 1) && (_DAT_00795c52 == 1)) {
++    if ((race_type != 1) && (*(ushort *)&DAT_00795c52 == 1)) {
+       _race_finished = _race_finished + 1;
+     }
+   }
+--- a/dd2_symbols.h
++++ b/dd2_symbols.h
+@@ -995,7 +995,7 @@
+ #define sd_sfx_vol (*(int*)GIMG(0x00466f2c))
+ #define NamePolys (*(undefined1*)GIMG(0x0093fcd0))
+ #define depth_cue_near (*(int*)GIMG(0x00462fd8))
+-#define Track_Records (*(undefined1*)GIMG(0x00466e3c))
++#define Track_Records (*(int*)GIMG(0x00466e3c))
+ #define Replay_Invalid (*(int*)GIMG(0x009392c0))
+ #define mem_size (*(int*)GIMG(0x00774694))
+ #define num_spies (*(int*)GIMG(0x0074f1a4))
+@@ -1598,8 +1598,8 @@
+ #define DAT_00467060 (*(int*)GIMG(0x00467060))
+ #define DAT_00466e38 (*(int*)GIMG(0x00466e38))
+ #define DAT_00795dd8 (*(int*)GIMG(0x00795dd8))
+-#define DAT_00466e44 (*(undefined1*)GIMG(0x00466e44))
+-#define DAT_00466e40 (*(undefined1*)GIMG(0x00466e40))
++#define DAT_00466e44 (*(int*)GIMG(0x00466e44))
++#define DAT_00466e40 (*(int*)GIMG(0x00466e40))
+ #define DAT_0042e134 (*(undefined1*)GIMG(0x0042e134))
+ #define DAT_0042e13c (*(undefined1*)GIMG(0x0042e13c))
+ #define DAT_0042e140 (*(undefined1*)GIMG(0x0042e140))

@@ -177,6 +177,26 @@ are `/tmp/wasm-dd2/season-transition-fixed-852-final/report.json`,
 `/tmp/wasm-dd2/parity-season-transition-852.json` and
 `/tmp/wasm-dd2/champ-season-standing-fixed-852.json` (last report remains failed).
 
+Patch 891 restores the original lap-completion WORD and lap-record DWORDs.
+The overlapping finish DWORD also read the next car's speed, preventing a
+normal finish whenever that neighboring WORD was nonzero. Byte-typed record
+aliases truncated fractional lap times and used a three-byte track stride
+instead of twelve; they also corrupted loading from saved track records.
+
+`make verify-race-positions RACE_POSITIONS_ARGS='--output /tmp/wasm-dd2/fresh-race-positions'`
+compares 6,262 explicit cases against unmodified mapped original x86 on native,
+native with AddressSanitizer and WASM. Complete targeted regions and their
+guards agree for race initialization, lap/checkpoint progression, timer/record
+limits, standings and finish policies, and seven permutations of record loading.
+The old code fails 440 lap-record cases, 416 finish cases and all 56 loading
+cases. Nonzero neighboring-speed inputs explicitly probe the finish-field alias;
+they do not demonstrate that it caused the live race obstruction. The fixture
+uses the original static track table, including the 999
+strip-count placeholders for slots 6/7; it does not validate loaded road data.
+Ordinary races, record-name entry, saved-record updates, Championship Scores UI
+and chronological A/V remain separate acceptance work. Component report:
+`/tmp/wasm-dd2/race-positions-1203-fixed/report.json`.
+
 Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
 split the minute digits from a four-element array, while the sprite loop still
 read six elements; native and WASM displayed stack garbage in the first pair.
