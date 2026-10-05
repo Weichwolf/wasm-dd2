@@ -1,0 +1,36 @@
+Reset the native movie device before waiting for producer cleanup.
+
+Wine MCIAVI resets WaveOut when playback/cancellation finishes. The native
+stop path set a flag and joined a sleeping producer before dropping ALSA;
+queued samples continued to play during that join. Stop under the producer
+mutex first, then join and close. Recheck the stop flag after acquiring the
+mutex so a waiting producer cannot refill/restart a dropped device.
+
+This corrects shutdown ordering, not whole original PCM tails or A/V clocks.
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -73,6 +73,7 @@
+         SDL_Delay(10);
+         if(SDL_AtomicGet(&movie_alsa.stop))break;
+         SDL_LockMutex(movie_alsa.mutex);
++        if(SDL_AtomicGet(&movie_alsa.stop)){SDL_UnlockMutex(movie_alsa.mutex);break;}
+         if(movie_alsa_fill())movie_alsa.error=1;
+         SDL_UnlockMutex(movie_alsa.mutex);
+         if(movie_alsa.error)break;
+@@ -81,8 +82,14 @@
+ }
+ static void movie_alsa_stop(void){
+     SDL_AtomicSet(&movie_alsa.stop,1);
++    /* Reset playback now; a producer join must not extend audible output. */
++    if(movie_alsa.device){
++        if(movie_alsa.mutex)SDL_LockMutex(movie_alsa.mutex);
++        movie_snd_pcm_drop(movie_alsa.device);
++        if(movie_alsa.mutex)SDL_UnlockMutex(movie_alsa.mutex);
++    }
+     if(movie_alsa.thread)SDL_WaitThread(movie_alsa.thread,NULL);
+-    if(movie_alsa.device){movie_snd_pcm_drop(movie_alsa.device);movie_snd_pcm_close(movie_alsa.device);}
++    if(movie_alsa.device)movie_snd_pcm_close(movie_alsa.device);
+     if(movie_alsa.mutex)SDL_DestroyMutex(movie_alsa.mutex);
+     free(movie_alsa.silence);memset(&movie_alsa,0,sizeof(movie_alsa));
+ }

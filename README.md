@@ -1075,6 +1075,30 @@ Thread readiness precedes actual playback in both full runs
 intro comparison still rejects the differing silence tail. Full original
 movie timing and all audio driver output remain separate requirements.
 
+Patch 881 resets the native movie device before joining its producer, following
+Wine MCIAVI's reset-before-cleanup order. Previously queued samples could keep
+playing while `SDL_WaitThread` waited for the sleeping producer. Stop now drops
+ALSA under the producer mutex first; the producer rechecks cancellation after
+acquiring that mutex so it cannot refill a device that has been reset.
+
+The device regression delays the join by 80 ms and checks actual consumed
+samples and reset timestamps. The old production header keeps playing during
+that wait; the new header resets before the join and consumes no samples during
+it. Repeated close, delayed startup, cancellation, initial/runtime write errors,
+thread creation failure and unavailable-device checks pass under ASan/UBSan;
+36 altered PCM controls are rejected
+(`movie-stop-1021-device-final/report.json`). To include the old-stop control,
+pass `--before-stop-header /tmp/wasm-dd2/before/dd2_native_movie_alsa.h` through
+`NATIVE_MOVIE_DEVICE_ARGS`, using a saved production header from before patch 881.
+
+Full native Intro/Outro runs retain 1711/1812 presentations. All source PCM
+bytes at offset zero match newly measured Wine ACM output in accepted and
+consumed streams. Real key-up/key-down cancellation retains a literal source
+prefix and closes the device; 12 altered PCM controls are rejected
+(`movie-stop-1022-comparison/report.json`). The strict whole original Intro
+comparison still rejects its different silence tail. This shutdown correction
+does not establish whole original audio or synchronized A/V timing parity.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

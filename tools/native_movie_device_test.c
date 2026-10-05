@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#if defined(DD2_MOVIE_DEVICE_FAULT) || defined(DD2_MOVIE_DEVICE_DELAY)
+#if defined(DD2_MOVIE_DEVICE_FAULT) || defined(DD2_MOVIE_DEVICE_DELAY) || defined(DD2_MOVIE_DEVICE_JOIN)
 #include <alsa/asoundlib.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -16,6 +16,21 @@ snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* device,const void* buffer,snd_pcm_uf
     if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_writei");
     if(!next || getenv("DD2_MOVIE_DEVICE_FAIL_START") || ++calls>1)return -EIO;
     return next(device,buffer,frames);
+}
+#elif defined(DD2_MOVIE_DEVICE_JOIN)
+#include <time.h>
+void SDL_WaitThread(SDL_Thread* thread,int* status){
+    static __typeof__(SDL_WaitThread)* next;
+    uint64_t begin,end;struct timespec now;FILE* log;
+    if(!next)next=dlsym(RTLD_NEXT,"SDL_WaitThread");
+    if(!next)exit(1);
+    clock_gettime(CLOCK_MONOTONIC,&now);begin=(uint64_t)now.tv_sec*1000000000+now.tv_nsec;
+    SDL_Delay(80); /* explicit cleanup delay; source data is unchanged */
+    next(thread,status);
+    clock_gettime(CLOCK_MONOTONIC,&now);end=(uint64_t)now.tv_sec*1000000000+now.tv_nsec;
+    log=fopen(getenv("DD2_MOVIE_DEVICE_JOIN_LOG"),"a");if(!log)exit(1);
+    fprintf(log,"{\"join_begin_ns\":%llu,\"join_end_ns\":%llu}\n",(unsigned long long)begin,(unsigned long long)end);
+    fclose(log);
 }
 #else
 #include <time.h>
