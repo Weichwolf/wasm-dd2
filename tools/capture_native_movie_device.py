@@ -64,7 +64,7 @@ def main():
                         str(ROOT/'tools/native_movie_clock_observer.c'), '-ldl', '-o', str(clock_observer)], check=True)
         clock_metadata = dict(lower=lower, upper=lower+size,
                               source_sha256=sha(ROOT/'tools/native_movie_clock_observer.c'),
-                              observer_sha256=sha(clock_observer), clock_domain='CLOCK_MONOTONIC')
+                              observer_sha256=sha(clock_observer))
     asound = output/'asound.conf'
     asound.write_text(f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                       'pcm.!default { type dd2clock }\n')
@@ -166,9 +166,10 @@ def main():
                   observer_source_sha256=sha(ROOT/'tools/native_movie_observer.c'), audio=audio)
     if clock_metadata:
         clocks = [json.loads(s) for s in (output/'movie-clock.jsonl').read_text().splitlines()]
-        require(len(clocks) >= len(frames) and all(e['clock_domain'] == 'CLOCK_MONOTONIC' for e in clocks),
+        domains={e['clock_domain'] for e in clocks}
+        require(len(clocks) >= len(frames) and len(domains)==1 and domains.issubset({'CLOCK_MONOTONIC','CLOCK_MONOTONIC_RAW'}),
                 'movie-clock observations incomplete')
-        report['clock_profile'] = dict(**clock_metadata, calls=len(clocks),
+        report['clock_profile'] = dict(**clock_metadata, clock_domain=next(iter(domains)), calls=len(clocks),
                                       journal_sha256=sha(output/'movie-clock.jsonl'))
     if video_digest:
         require(video_digest['bytes'] == len(frames)*640*480*4, 'actual video stream length differs')

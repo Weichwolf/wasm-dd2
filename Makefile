@@ -310,6 +310,10 @@ verify-movie-end: ## observe actual Wine default exclusive AVI play endpoints; M
 verify-movie-drain: patch ## compare real-time Wine final draw/drain with native/ASan/WASM components; MOVIE_DRAIN_ARGS required
 	python3 $(ROOT)/tools/verify_movie_drain.py $(MOVIE_DRAIN_ARGS)
 
+.PHONY: verify-movie-qpc
+verify-movie-qpc: patch ## verify actual Wine QPC and native RAW/fallback/wrap provider; MOVIE_QPC_ARGS required
+	python3 $(ROOT)/tools/verify_movie_qpc.py $(MOVIE_QPC_ARGS)
+
 .PHONY: verify-movie-completion
 verify-movie-completion: patch ## compare actual Wine/native worker-published audio completion; MOVIE_COMPLETION_ARGS required
 	python3 $(ROOT)/tools/verify_movie_completion.py $(MOVIE_COMPLETION_ARGS)

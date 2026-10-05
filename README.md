@@ -1556,8 +1556,11 @@ python3 tools/observe_native_movie_work.py \
   --output /tmp/wasm-dd2/movie-filter-work
 ```
 
-The optional read-only clock observer forwards CLOCK_MONOTONIC unchanged in
-an unchanged non-PIE native binary. Its frame-pointer caller is checked in
+The optional read-only clock observer forwards the native movie clock unchanged
+in an unchanged non-PIE native binary. For CLOCK_MONOTONIC_RAW it records
+independent CLOCK_MONOTONIC brackets around each reading, so texture work is
+bounded in the texture clock domain without fitting an offset or rate.
+Its frame-pointer caller is checked in
 disassembly, with bounds from that binary's symbol table. The work report
 binds every observed clock call to actual MCI/pump call sites and uses the
 observed MCI epoch, without fitting. Clock-domain, unknown-site, reversed-clock
@@ -1567,6 +1570,47 @@ from a 10.823-ms median before 888 to 2.416 ms afterwards
 These are wall-clock intervals including decoder/filter work, journaling and
 OS scheduling. The new run includes a 59.806-ms work maximum and a 68.970-ms
 pump lateness maximum, so faster typical work is not stable deadline evidence.
+
+Patch 894 changes the native movie clock to prefer CLOCK_MONOTONIC_RAW and
+fall back to CLOCK_MONOTONIC when RAW is unavailable, matching Wine 10's
+Unix QueryPerformanceCounter provider. Wine MCIAVI schedules video with QPC
+independently of the audio device. The earlier native provider always used
+the adjusted CLOCK_MONOTONIC clock, whose rate can differ from QPC.
+The source is Wine's [`monotonic_counter`](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/ntdll/unix/sync.c).
+Audio-device and producer scheduling keep their existing clocks.
+
+`make verify-movie-qpc` compares sixteen actual Wine QPC readings with
+independently forwarded Linux RAW readings at 100-ns resolution. It checks
+the production native provider under ASan/UBSan with 22 declared RAW,
+fallback, millisecond-boundary and DWORD-wrap inputs, plus a live reading.
+An optional `--before-source` must fail the same provider-selection check;
+four changed-evidence controls must also fail. This proves the clock-domain
+correction; millisecond precision, browser clock behavior and full original
+A/V timing remain open.
+
+The full native Intro regression observes 1711 presentations and 56,712
+actual RAW movie-clock calls. Independent MONOTONIC brackets validate the
+texture intervals, with five changed-history controls rejected
+(`movie-qpc-1327-work/report.json`). Both the timing-only and renderer-readback
+runs preserve all 6,039,616 source PCM bytes at offset zero, with no gap in
+that source interval. The readback run's 1711-frame digest matches the
+previously authenticated original window digest. Accepted/device-consumed
+silent tails are 440/194 frames in the timing-only run and 440/220 in the
+readback run; whole original PCM remains unequal
+(`movie-qpc-1331-comparison.json`). The real-time Wine short-AVI comparison
+and all nine controlled drain cases on native ASan/UBSan and WASM also pass
+(`movie-qpc-1329-drain/report.json`). These checks do not prove synchronized
+original/port playback or browser parity.
+
+```sh
+make verify-movie-qpc MOVIE_QPC_ARGS='--output /tmp/wasm-dd2/movie-qpc --mingw /path/to/i686-w64-mingw32-gcc --before-source /tmp/wasm-dd2/before/dd2_movie_platform.c'
+python3 tools/capture_native_movie_device.py \
+  --binary /tmp/wasm-dd2/dd2-native --clock-profile --timing-only \
+  --output /tmp/wasm-dd2/movie-qpc-intro
+python3 tools/observe_native_movie_work.py \
+  --capture /tmp/wasm-dd2/movie-qpc-intro --binary /tmp/wasm-dd2/dd2-native \
+  --output /tmp/wasm-dd2/movie-qpc-work
+```
 
 The new native Intro's actual SDL readbacks contain 1711 frames and
 2102476800 opaque ARGB bytes. Its streaming SHA256 equals the original-window

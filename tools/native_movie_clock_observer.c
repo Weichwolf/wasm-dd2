@@ -21,18 +21,25 @@ __attribute__((constructor)) static void initialize(void){
 int clock_gettime(clockid_t clock,struct timespec* stamp){
     static __typeof__(clock_gettime)* next;
     uintptr_t caller=(uintptr_t)__builtin_return_address(0);
-    int result,saved;
+    int result,saved,selected;struct timespec before,after;
     if(!next)next=dlsym(RTLD_NEXT,"clock_gettime");
     if(!next)abort();
+    selected=journal && (clock==CLOCK_MONOTONIC || clock==CLOCK_MONOTONIC_RAW) && caller>=lower && caller<upper;
+    if(selected && clock==CLOCK_MONOTONIC_RAW && next(CLOCK_MONOTONIC,&before))abort();
     result=next(clock,stamp);saved=errno;
-    if(journal && clock==CLOCK_MONOTONIC && !result && caller>=lower && caller<upper){
+    if(selected && !result){
+        if(clock==CLOCK_MONOTONIC_RAW){if(next(CLOCK_MONOTONIC,&after))abort();}
+        else before=after=*stamp;
         /* The verified caller is dd2_movie_now_ms, compiled with an EBP
          * frame. No other caller's stack is followed. */
         uintptr_t site=((uintptr_t*)__builtin_frame_address(1))[1];
-        fprintf(journal,"{\"event\":\"movie_clock\",\"clock_domain\":\"CLOCK_MONOTONIC\","
-                "\"time_ns\":%llu,\"site\":%lu}\n",
+        fprintf(journal,"{\"event\":\"movie_clock\",\"clock_domain\":\"%s\","
+                "\"time_ns\":%llu,\"site\":%lu,\"monotonic_begin_ns\":%llu,\"monotonic_end_ns\":%llu}\n",
+                clock==CLOCK_MONOTONIC_RAW?"CLOCK_MONOTONIC_RAW":"CLOCK_MONOTONIC",
                 (unsigned long long)((uint64_t)stamp->tv_sec*1000000000+stamp->tv_nsec),
-                (unsigned long)site);
+                (unsigned long)site,
+                (unsigned long long)((uint64_t)before.tv_sec*1000000000+before.tv_nsec),
+                (unsigned long long)((uint64_t)after.tv_sec*1000000000+after.tv_nsec));
     }
     errno=saved;return result;
 }
