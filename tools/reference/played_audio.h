@@ -71,9 +71,9 @@ static void played_open(PlayedAudio *capture,uint64_t time,snd_pcm_ioplug_t *io)
     snprintf(path,sizeof(path),"%s/played-%d-%u.jsonl",capture->root,(int)getpid(),id);
     capture->events=fopen(path,"wx");
     if(!capture->pcm || !capture->events){played_error(capture,"Cannot create fresh played files");return;}
-    fprintf(capture->events,"{\"event\":\"format\",\"kind\":\"virtual-device-played\",\"time_ns\":%"PRIu64",\"pid\":%d,\"rate\":%u,\"channels\":%u,\"frame_bytes\":%u,\"format\":\"%s\",\"buffer_frames\":%"PRIu64"}\n",
+    fprintf(capture->events,"{\"event\":\"format\",\"kind\":\"virtual-device-played\",\"time_ns\":%"PRIu64",\"pid\":%d,\"rate\":%u,\"channels\":%u,\"frame_bytes\":%u,\"format\":\"%s\",\"buffer_frames\":%"PRIu64",\"period_frames\":%"PRIu64"}\n",
             time,(int)getpid(),io->rate,io->channels,capture->frame_bytes,
-            snd_pcm_format_name(io->format),(uint64_t)io->buffer_size);
+            snd_pcm_format_name(io->format),(uint64_t)io->buffer_size,(uint64_t)io->period_size);
     played_flush(capture);
 }
 static void played_write(PlayedAudio *capture,snd_pcm_ioplug_t *io,

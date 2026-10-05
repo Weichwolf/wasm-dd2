@@ -47,6 +47,9 @@ def summarize_played_audio(directory, *, required=False):
         for key in ("time_ns", "rate", "channels", "frame_bytes", "buffer_frames"):
             if type(info[key]) is not int or info[key] <= 0:
                 raise ValueError("Invalid played format")
+        if "period_frames" in info and (type(info["period_frames"]) is not int or
+                                       not 0 < info["period_frames"] <= info["buffer_frames"]):
+            raise ValueError("Invalid negotiated played period")
         widths = {"FLOAT_LE": 4, "S16_LE": 2}
         if info["format"] not in widths or info["frame_bytes"] != widths[info["format"]]*info["channels"]:
             raise ValueError("Invalid played frame size")

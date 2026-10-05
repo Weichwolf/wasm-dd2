@@ -55,6 +55,7 @@ static void require(int ok,const char* why){
 int main(int argc,char** argv){
     int16_t source[22050*2];unsigned i,round;Uint32 started;
     const char* mode=argc>1?argv[1]:"full";
+    int complete=!strcmp(mode,"full") || !strcmp(mode,"tail");
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
     if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
         for(i=0;i<2205*2;i++)source[i]=12345;
@@ -63,9 +64,9 @@ int main(int argc,char** argv){
         printf("{\"%s_rejected\":true}\n",!strcmp(mode,"unavailable")?"unavailable":
                !strcmp(mode,"initial-error")?"initial_error":"thread_error");SDL_Quit();return 0;
     }
-    require(!strcmp(mode,"full") || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
-    for(round=0;round<(!strcmp(mode,"full")?2u:1u);round++){
-        int done;size_t frames=!strcmp(mode,"full")?2205:22050;
+    require(complete || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
+    for(round=0;round<(complete?2u:1u);round++){
+        int done;size_t frames=complete?2205:22050;
         for(i=0;i<frames;i++){
             source[i*2]=(int16_t)(12345+(i%2205)+round*4000);
             source[i*2+1]=(int16_t)(-23456+(i%2205));
@@ -79,9 +80,10 @@ int main(int argc,char** argv){
             require(SDL_GetTicks()-started<2000,"device completion timeout");
             SDL_Delay(1);
         }while(1);
-        if(!strcmp(mode,"full"))require(done==1,"complete source playback");
+        if(complete)require(done==1,"complete source playback");
         else if(!strcmp(mode,"error"))require(done==-1,"report actual device error");
         else require(done==0,"cancel while playing");
+        if(!strcmp(mode,"tail"))SDL_Delay(45); /* observe driver output after the source drains */
         printf("{\"round\":%u,\"mode\":\"%s\",\"elapsed_ms\":%u,\"done\":%d}\n",
                round,mode,SDL_GetTicks()-started,done);
         started=SDL_GetTicks();movie_alsa_stop();

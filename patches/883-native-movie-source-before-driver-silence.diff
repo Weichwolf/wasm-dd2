@@ -1,0 +1,73 @@
+Keep movie source PCM separate from ALSA driver silence at end of stream.
+
+Wine 10 WOD_PushData limits client writes to queued wave-header frames.
+Its ALSA transport adds a single period-sized lead-in only without pending
+client data. The native path instead filled every remaining hardware slot
+with zeros as soon as source submission ended, while source samples were
+still queued. Wait for consumed source completion before driver silence,
+and bound each silence submission by the actual negotiated ALSA period.
+
+This corrects the source/driver boundary; whole original tails and clocks
+still require their own comparison. No source samples or times are fitted.
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -12,6 +12,7 @@
+     X(snd_pcm_hw_params_set_rate_near) X(snd_pcm_hw_params_set_channels) \
+     X(snd_pcm_hw_params_set_period_time_near) X(snd_pcm_hw_params_set_periods_near) \
+     X(snd_pcm_hw_params_set_buffer_size_near) X(snd_pcm_hw_params_get_buffer_size) \
++    X(snd_pcm_hw_params_get_period_size) \
+     X(snd_pcm_hw_params) X(snd_pcm_sw_params_malloc) X(snd_pcm_sw_params_free) \
+     X(snd_pcm_sw_params_current) X(snd_pcm_sw_params_set_start_threshold) \
+     X(snd_pcm_sw_params_set_stop_threshold) X(snd_pcm_sw_params) \
+@@ -29,7 +30,7 @@
+     int16_t* silence;
+     size_t frames,index;
+     uint64_t written;
+-    snd_pcm_uframes_t buffer;
++    snd_pcm_uframes_t buffer,period;
+     int error;
+ } movie_alsa;
+ static int movie_alsa_symbols(void){
+@@ -59,11 +60,23 @@
+         snd_pcm_uframes_t count=available;
+         const int16_t* data=left?movie_alsa.source+movie_alsa.index*2:movie_alsa.silence;
+         if(left && count>left)count=left;
++        if(!left){
++            snd_pcm_sframes_t pending=0;
++            int status=movie_snd_pcm_delay(movie_alsa.device,&pending);
++            if(status==-EPIPE)pending=0;
++            else if(status<0)return -1;
++            /* Wine keeps client data separate from its period-sized lead-in.
++             * Do not append silence while source frames are still pending. */
++            if(pending<0 || (uint64_t)pending>movie_alsa.written ||
++               movie_alsa.written-(uint64_t)pending<movie_alsa.frames)return 0;
++            if(count>movie_alsa.period)count=movie_alsa.period;
++        }
+         n=movie_snd_pcm_writei(movie_alsa.device,data,count);
+         if(n==-EAGAIN || n==0)return 0;
+         if(n<0)return -1;
+         if(left)movie_alsa.index+=n;
+         movie_alsa.written+=n;available-=n;
++        if(!left)return 0; /* one driver silence period per producer tick */
+     }
+     return 0;
+ }
+@@ -112,6 +125,8 @@
+     if(movie_snd_pcm_hw_params(movie_alsa.device,hardware)<0 ||
+        movie_snd_pcm_hw_params_get_buffer_size(hardware,&movie_alsa.buffer)<0 ||
+        !movie_alsa.buffer || movie_alsa.buffer>1048576 ||
++       movie_snd_pcm_hw_params_get_period_size(hardware,&movie_alsa.period,NULL)<0 ||
++       !movie_alsa.period || movie_alsa.period>movie_alsa.buffer ||
+        movie_snd_pcm_sw_params_malloc(&software)<0 ||
+        movie_snd_pcm_sw_params_current(movie_alsa.device,software)<0 ||
+        movie_snd_pcm_sw_params_set_start_threshold(movie_alsa.device,software,1)<0 ||
+@@ -120,7 +135,7 @@
+     movie_snd_pcm_hw_params_free(hardware);hardware=NULL;
+     movie_snd_pcm_sw_params_free(software);software=NULL;
+     movie_alsa.source=source;movie_alsa.frames=frames;
+-    movie_alsa.silence=calloc(movie_alsa.buffer*2,sizeof(int16_t));
++    movie_alsa.silence=calloc(movie_alsa.period*2,sizeof(int16_t));
+     movie_alsa.mutex=SDL_CreateMutex();
+     if(!movie_alsa.silence || !movie_alsa.mutex)goto failed;
+     /* Finish producer startup before starting the device's sample clock.

@@ -9,6 +9,8 @@ prefixes and closed journals. This is a device boundary test, not original
 game output, whole movie tails, physical DAC or A/V timing parity.
 Delayed joins must reset the device before cleanup and consume no samples
 during that wait; the old stop header must fail those same invariants.
+Source samples must drain before driver silence is submitted; each subsequent
+silence write is limited by the independently observed negotiated period.
 """
 import argparse
 import hashlib
@@ -35,11 +37,27 @@ def verify_pcm(actual, source, full):
                 'cancel/error output differs from caller prefix')
 
 
+def verify_driver_tail(directory, accepted, played, source_frames, *, require_tail=False):
+    period=played['period_frames']
+    end=next(s['begin_ns']+((source_frames-s['offset_frames'])*1_000_000_000+played['rate']-1)//played['rate']
+             for s in played['segments'] if s['offset_frames'] < source_frames <= s['offset_frames']+s['frames'])
+    events=[json.loads(s) for s in (directory/accepted['events']).read_text().splitlines()]
+    zeros=[e for e in events if e['event']=='write' and e['accepted']>0 and
+           e['offset_frames']+e['accepted']>source_frames]
+    require(not require_tail or zeros, 'missing observed post-drain driver silence')
+    require(all(e['offset_frames']>=source_frames and e['call_begin_ns']>=end for e in zeros),
+            'driver silence submitted before source playback completed')
+    require(all(e['requested']<=period for e in zeros), 'driver silence write exceeds negotiated period')
+    return dict(source_played_end_ns=end,negotiated_period_frames=period,
+                driver_silence_writes=len(zeros),first_silence_write_ns=zeros[0]['call_begin_ns'] if zeros else None)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--before-header', type=Path, help='require delayed startup using an old production header to start audio too early')
     parser.add_argument('--before-stop-header', type=Path, help='require an old production header to keep playback running during a delayed join')
+    parser.add_argument('--before-tail-header', type=Path, help='require an old production header to submit silence while source samples remain pending')
     args = parser.parse_args();output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False)
@@ -71,29 +89,37 @@ def main():
         before_stop = output/'before-stop'
         subprocess.run([*common, '-no-pie', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                         '-I'+str(old_source), *config('libs'), '-ldl', '-o', str(before_stop)], check=True)
+    before_tail = None
+    if args.before_tail_header:
+        old_source = output/'before-tail-source';old_source.mkdir()
+        (old_source/'dd2_native_movie_alsa.h').write_bytes(args.before_tail_header.read_bytes())
+        before_tail = output/'before-tail-device'
+        subprocess.run([*common, '-no-pie', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                        '-I'+str(old_source), *config('libs'), '-ldl', '-o', str(before_tail)], check=True)
     asan = subprocess.check_output(['gcc', '-m32', '-print-file-name=libasan.so'], text=True).strip()
     libraries = build_audio(output/'audio-libraries')
     base = {k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     base.update(ASAN_OPTIONS='detect_leaks=1:halt_on_error=1', UBSAN_OPTIONS='halt_on_error=1',
                 LD_LIBRARY_PATH=':'.join(map(str, libraries)))
     cases = [];negative = []
-    for mode in ('full', 'delay', 'cancel', 'join', 'error', 'initial-error', 'thread-error', 'unavailable',
-                 *(['before-delay'] if old_binary else []), *(['before-join'] if before_stop else [])):
+    for mode in ('full', 'delay', 'tail', 'cancel', 'join', 'error', 'initial-error', 'thread-error', 'unavailable',
+                 *(['before-delay'] if old_binary else []), *(['before-join'] if before_stop else []),
+                 *(['before-tail'] if before_tail else [])):
         case = output/mode;case.mkdir();(case/'audio').mkdir()
         asound = case/'asound.conf'
         asound.write_text('pcm.!default { type hw card "DD2_NONEXISTENT" }\n' if mode == 'unavailable' else
                           f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                           'pcm.!default { type dd2clock }\n')
-        selected = old_binary if mode == 'before-delay' else before_stop if mode == 'before-join' else binary
+        selected = old_binary if mode == 'before-delay' else before_stop if mode == 'before-join' else before_tail if mode == 'before-tail' else binary
         preloader = str(fault)+' ' if mode in ('error','initial-error') else str(delay)+' ' if mode in ('delay','before-delay','thread-error') else str(join)+' ' if mode in ('join','before-join') else ''
         env = {**base, 'ALSA_CONFIG_PATH':str(asound), 'DD2_AUDIO_CAPTURE':str(case/'audio'),
-               'DD2_AUDIO_PROCESS':selected.name, 'DD2_AUDIO_RATE':'22050',
+               'DD2_AUDIO_PROCESS':selected.name[:15], 'DD2_AUDIO_RATE':'22050',
                'DD2_MOVIE_DEVICE_DELAY_LOG':str(case/'thread-ready.jsonl'),
                'DD2_MOVIE_DEVICE_JOIN_LOG':str(case/'join.jsonl'),
                'LD_PRELOAD':asan+' '+preloader+'dd2_audio.so'}
         if mode == 'initial-error': env['DD2_MOVIE_DEVICE_FAIL_START'] = '1'
         if mode == 'thread-error': env['DD2_MOVIE_DEVICE_FAIL_THREAD'] = '1'
-        fixture_mode = 'full' if mode in ('delay','before-delay') else 'cancel' if mode in ('join','before-join') else mode
+        fixture_mode = 'full' if mode in ('delay','before-delay') else 'cancel' if mode in ('join','before-join') else 'tail' if mode=='before-tail' else mode
         run = subprocess.run([str(selected), fixture_mode], env=env, capture_output=True, text=True, timeout=10)
         (case/'run.log').write_text(run.stdout+run.stderr)
         require(run.returncode == 0 and 'runtime error:' not in run.stderr,
@@ -113,9 +139,10 @@ def main():
                         'failed startup did not close without samples')
             cases.append(dict(mode=mode, results=rows));continue
         audio = summarize_audio(case/'audio', require_played=True)
-        full = fixture_mode == 'full';expected_runs = 2 if full else 1
+        full = fixture_mode in ('full','tail');expected_runs = 2 if full else 1
         require(len(rows) == len(audio['streams']) == len(audio['played_streams']) == expected_runs,
                 'incorrect repeated device lifetimes')
+        tails=[]
         for round_, row in enumerate(rows):
             require(row['round'] == round_ and row['mode'] == fixture_mode, 'unexpected test lifetime')
             count = 2205 if full else 22050
@@ -134,6 +161,16 @@ def main():
                         try: verify_pcm(altered, expected, True)
                         except (RuntimeError, AssertionError): negative.append(dict(round=round_, kind=kind, mutation=label))
                         else: raise RuntimeError('accepted altered device output: '+label)
+            if mode in ('full','delay','tail','before-tail'):
+                try:
+                    tail=verify_driver_tail(case/'audio',audio['streams'][round_],audio['played_streams'][round_],count,
+                                            require_tail=fixture_mode=='tail')
+                except RuntimeError as error:
+                    require(mode=='before-tail' and 'before source playback completed' in str(error),
+                            'unexpected driver silence boundary failure: '+str(error))
+                    tail=dict(premature_driver_silence_rejected=True)
+                else: require(mode!='before-tail', 'old tail header unexpectedly passes source drain boundary')
+                tails.append(tail)
         startup = None
         if mode in ('delay','before-delay'):
             ready = [json.loads(s)['ready_ns'] for s in (case/'thread-ready.jsonl').read_text().splitlines()]
@@ -164,18 +201,19 @@ def main():
                         'old stop did not fail reset-before-join invariant')
             shutdown=dict(device_stop_ns=stopped,**joins[0],reset_before_join=stopped<=boundary,
                           played_during_join=played_during_join)
-        cases.append(dict(mode=mode, results=rows, startup=startup, shutdown=shutdown, audio=audio));check_space(output)
+        cases.append(dict(mode=mode, results=rows, startup=startup, shutdown=shutdown, tails=tails, audio=audio));check_space(output)
     report = dict(scope=__doc__, pass_=True, original_port_parity='unproven',
                   source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
                   production_header_sha256=hashlib.sha256(header.read_bytes()).hexdigest(),
                   before_header_sha256=hashlib.sha256(args.before_header.read_bytes()).hexdigest() if args.before_header else None,
                   before_stop_header_sha256=hashlib.sha256(args.before_stop_header.read_bytes()).hexdigest() if args.before_stop_header else None,
+                  before_tail_header_sha256=hashlib.sha256(args.before_tail_header.read_bytes()).hexdigest() if args.before_tail_header else None,
                   cases=cases, negative_controls=negative)
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
     # These successful boundary diagnoses retain reports and journals only.
     for pcm in output.glob('*/audio/*.pcm'): pcm.unlink()
     check_space(output)
-    print('PASS sanitized actual ALSA device: repeat, delayed readiness/join, cancel, initial/live errors, unavailable;',
+    print('PASS sanitized actual ALSA device: repeat, delayed readiness/join, source/driver silence, cancel, errors, unavailable;',
           len(negative), 'changed PCM controls rejected', flush=True)
 
 

@@ -1128,6 +1128,44 @@ the strict whole original Intro comparison still rejects the silence tail
 movies and real key-up/key-down cancellation with exactly one film-source
 stop and a closed context (`movie-stop-1034-browser-proof/report.json`).
 
+Patch 883 separates native movie source submission from driver silence.
+Previously the producer filled all free hardware slots with zeros as soon
+as it had submitted the last source sample, while source frames were still
+queued. It now waits for the source to drain and limits each subsequent
+silence write to the actual negotiated ALSA period. Wine's client source
+queue and period-sized ALSA lead-in are separate layers; full original
+completion/reset timing remains open.
+
+The virtual-device journal now records its negotiated period independently
+of the production header. Two repeated post-drain lifetimes require silence
+only after source completion and within that period; the previous production
+header fails the same boundary in both lifetimes. All startup, join, cancel,
+initial/runtime error and unavailable-device cases still pass ASan/UBSan;
+60 altered PCM controls are rejected (`movie-tail-1040-device/report.json`).
+
+Fresh complete original Intro and native Intro/Outro runs use the same
+220-frame period. Native source intervals at offset zero match newly measured
+Wine ACM, including actual key-up/key-down cancellation
+(`movie-tail-1047-comparison/report.json`). Native accepts 880 driver-silence
+frames after each full film; the fresh original Intro accepts 660 and consumes
+439. The strict whole original comparison still fails. The original's first
+silence call finishes about 13 microseconds before the observed source sample
+endpoint, showing that its client bookkeeping and device clock require their
+own timing comparison (`movie-tail-1048-original-boundary/report.json`).
+`observe_movie_driver_tail.py` records these call brackets, sample intervals
+and byte extents without shifting output or filling clock gaps.
+
+To regenerate actual source PCM for the current live comparison:
+
+```sh
+python3 tools/capture_movie_audio_source.py --output /tmp/wasm-dd2/movie-source \
+  --mingw third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32
+```
+
+The source capture uses unchanged original AVI packets, actual Wine ACM and
+freshly parsed metadata. Its PCM is a source reference; remove it after the
+current comparison report, and retain no whole-original-output claim from it.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
