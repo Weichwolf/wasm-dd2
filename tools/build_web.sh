@@ -29,8 +29,10 @@ for u in $UNITS; do
   # As in the native build, the exact integer x87 FIR mixer must process
   # samples faster than its real-time clock. Otherwise its own processing
   # time grows the next elapsed-time block and starves live race updates.
-  # Keep the reconstructed engine at -O0 and preserve exact arithmetic.
-  case "$u" in dd2h_stubs) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
+  # Movie decode/filter units also match the native build's optimization:
+  # their processing time feeds the real presentation clock. Keep the
+  # reconstructed engine at -O0 and preserve exact arithmetic.
+  case "$u" in dd2h_stubs|dd2_avi|dd2_cinepak|dd2_msadpcm|dd2_movie_surface) UNIT_FLAGS=(-O2 -fno-strict-aliasing);; esac
   if ! emcc -c $F "${UNIT_FLAGS[@]}" "$c" -o "$o" 2>"$BUILD_TMP/$u.log"; then
     echo "ERROR compiling $u.c:"; cat "$BUILD_TMP/$u.log"; err=1
   fi

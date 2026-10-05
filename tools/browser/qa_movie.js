@@ -3,6 +3,7 @@
 const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=require('crypto');
 const {serve,chromium}=require('./felib');
 const build=path.resolve(process.argv[2]||'web/dd2'),source=path.resolve(process.argv[3]),output=path.resolve(process.argv[4]);
+const capturePCM=process.argv.includes('--capture-pcm');
 fs.mkdirSync(output,{recursive:false});
 const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
 (async()=>{
@@ -80,11 +81,16 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
    const result=await page.evaluate(()=>__movie);
    assert(!errors.length,JSON.stringify(errors));assert(result.audioBuffers===1 && result.audioErrors===0 && result.pixelErrors===0,'actual movie sink bytes differ');
    assert(result.rates.length===1 && result.rates[0]===22050,'movie introduced output resampling');
-   assert(skip ? result.frames>=26 && result.frames<film.metadata.frames : result.frames===film.metadata.frames,'wrong actual movie frame extent');
+   assert(skip ? result.frames>=26 && result.frames<film.metadata.frames-1 : result.frames===film.metadata.frames-1,'wrong actual default MCI movie frame extent');
    const pcm=Buffer.from(result.pcm),reference=fs.readFileSync(path.join(source,path.parse(film.file).name.toLowerCase(),'wine.pcm'));
    assert(crypto.createHash('sha256').update(reference).digest('hex')===film.pcm_sha256,'changed actual source PCM');
    assert(pcm.equals(reference),'actual WebAudio movie source differs from whole Wine ACM PCM');
    delete result.pcm;result.file=film.file;result.skip=skip;result.pcmBytes=pcm.length;
+   result.acceptedPcmSha256=crypto.createHash('sha256').update(pcm).digest('hex');
+   if(capturePCM){
+    result.pcmFile=`${path.parse(film.file).name.toLowerCase()}-${skip?'skip':'full'}.pcm`;
+    fs.writeFileSync(path.join(output,result.pcmFile),pcm);
+   }
    result.keyUpRetained=skip;result.keyDownClosed=skip;
    report.cases.push(result);fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
    await page.screenshot({path:path.join(output,`${path.parse(film.file).name.toLowerCase()}-${skip?'skip':'full'}.png`)});

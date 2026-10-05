@@ -118,7 +118,9 @@ def main():
             for mode in (0,1,2):
                 skip=mode==1;audio_failure=mode==2
                 case=output/f"{name}-{('full','skip','audio-unavailable')[mode]}";case.mkdir();previous=None;result={"file":film["file"],"skip":skip,"audio_unavailable":audio_failure,"targets":[]}
-                expected_frames=26 if skip else film["metadata"]["frames"]
+                # Observed Wine 10 default MCI end excludes the final source
+                # frame; the AVI codec metadata still includes it.
+                expected_frames=26 if skip else film["metadata"]["frames"]-1
                 for target,command in (("native-asan-ubsan",[str(native)]),("wasm",[args.node,str(wasm)])):
                     video=case/"native-video.zlib";audio=case/f"{target}.pcm";timing=case/f"{target}.timeline"
                     actual,video_sha,changed=capture_component(command,path,audio,timing,mode,

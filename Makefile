@@ -295,6 +295,13 @@ verify-movie-surface: ## compare movie RGB565 scaling/display with real Win32 GD
 verify-movie-window: patch ## compare every actual original intro window byte with production native/WASM components
 	python3 $(ROOT)/tools/verify_movie_window.py $(MOVIE_WINDOW_ARGS)
 
+.PHONY: verify-movie-end verify-movie-audio-sinks
+verify-movie-end: ## observe actual Wine default exclusive AVI play endpoints; MOVIE_END_ARGS supplies MinGW/output
+	python3 $(ROOT)/tools/verify_movie_end.py $(MOVIE_END_ARGS)
+
+verify-movie-audio-sinks: ## compare complete original accepted/played intro PCM with native/browser sinks; MOVIE_AUDIO_SINK_ARGS required
+	python3 $(ROOT)/tools/verify_movie_audio_sinks.py $(MOVIE_AUDIO_SINK_ARGS)
+
 .PHONY: verify-movie-playback
 verify-movie-playback: patch ## run original Play_Movie through the production MCI device; MOVIE_PLAYBACK_ARGS supplies source/output
 	python3 $(ROOT)/tools/verify_movie_playback.py --node $(NODE) $(MOVIE_PLAYBACK_ARGS)

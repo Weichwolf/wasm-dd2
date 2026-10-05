@@ -20,11 +20,11 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "tools/sound_cursor_test.c"
 
 
-def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type null }\n", arguments=(), cd_device=None):
+def wine_probe(executable, directory, env, *, alsa_config="pcm.!default { type null }\n", arguments=(), cd_device=None, wine_debug="-all"):
     prefix = directory / "wine-prefix"
     config = directory / "asound.conf"
     config.write_text(alsa_config)
-    env = {**env, "WINEPREFIX": str(prefix), "WINEARCH": "win32", "WINEDEBUG": "-all",
+    env = {**env, "WINEPREFIX": str(prefix), "WINEARCH": "win32", "WINEDEBUG": wine_debug,
            "ALSA_CONFIG_PATH": str(config)}
     with (directory / "wine.log").open("wb") as log:
         display = subprocess.Popen(["Xvfb", "-displayfd", "1", "-screen", "0", "640x480x16"],

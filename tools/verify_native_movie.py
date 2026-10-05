@@ -97,7 +97,7 @@ def main():
                 if not any(e["event"]=="close" and e["stream"]==stream and e["bytes"]==offset for e in events):raise RuntimeError("Movie device did not close")
                 presents=[e for e in events if e["event"]=="present"]
                 if [e["frame"] for e in presents]!=list(range(len(presents))):raise RuntimeError("Movie present journal inconsistent")
-                if not skip and len(presents)!=film["metadata"]["frames"]:raise RuntimeError("Incomplete actual movie presentation")
+                if not skip and len(presents)!=film["metadata"]["frames"]-1:raise RuntimeError("Wrong actual default MCI movie presentation extent")
                 if skip and not 26<=len(presents)<film["metadata"]["frames"]:raise RuntimeError("Key-down did not exit active movie")
                 result={"file":film["file"],"skip":skip,"presented_frames":len(presents),"exact_rendered_pixels":len(presents)*307200,"pcm_bytes":offset,"key_up_retained":skip,"key_down_closed":skip,"release_key":args.release_key if skip else None,"skip_key":args.skip_key if skip else None}
                 report["cases"].append(result);(output/"report.json").write_text(json.dumps(report,indent=2)+"\n")

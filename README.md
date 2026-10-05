@@ -837,6 +837,36 @@ drain-before-notify and early close; a changed display bit is rejected in
 each of the six cases. Its controlled clock/device remains a transport
 component test, with the original chronological mismatches above still open.
 
+Patch 876 fixes the extra final MCI movie presentation. Actual Wine 10
+default playback uses `source_frames - 1` as an exclusive end; the AVI decoder
+still retains every source frame for decoding and seeking. The independent
+real-MCI near-end probe (`movie-end-930-wine/report.json`) confirms this for
+both Intro and Outro. Native ASan/UBSan transport, actual SDL and actual browser
+checks now show 1711/1812 full movie presentations, with the original key-up,
+key-down, unavailable-audio, clock-wrap and drain/notify tests still passing.
+Movie decode/filter units in the browser use the same `-O2` flags as native.
+
+The fresh unmodified original intro capture `movie-video-931-original` has
+1711 window draws. Actual SDL renderer readbacks match all 2102476800 opaque
+window ARGB bytes in order (`movie-video-937-actual-sinks/native/report.json`).
+The pre-876 executable matches all 1711 frames and is then rejected for its
+extra presentation. Native full/skip Intro/Outro sinks passed in
+`movie-native-935-end-sinks/report.json`; browser sinks and captured accepted
+WebAudio PCM passed in `movie-browser-942-accepted/report.json`.
+
+For this fresh original run, all 6039616 accepted and virtual-device-played
+intro PCM bytes equal actual native SDL and browser WebAudio submissions,
+without trimming or padding (`movie-audio-946-actual-sinks/report.json`). The
+earlier 3520-byte zero tail is absent in this run: driver completion timing
+must be observed, not replaced with fixed padding. Direct original/canvas
+window comparison and synchronized movie audio/video clocks remain open.
+
+```sh
+make verify-movie-end MOVIE_END_ARGS='--mingw i686-w64-mingw32-gcc --output /tmp/wasm-dd2/default-movie-end'
+node tools/browser/qa_movie.js /tmp/wasm-dd2/browser /tmp/wasm-dd2/avi-source /tmp/wasm-dd2/browser-movie --capture-pcm
+make verify-movie-audio-sinks MOVIE_AUDIO_SINK_ARGS='--capture /tmp/wasm-dd2/original-intro-window --native /tmp/wasm-dd2/native-movie/intro-full --browser /tmp/wasm-dd2/browser-movie --output /tmp/wasm-dd2/intro-accepted-audio'
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now
