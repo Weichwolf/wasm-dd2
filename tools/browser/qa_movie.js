@@ -4,6 +4,11 @@ const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=requ
 const {serve,chromium}=require('./felib');
 const build=path.resolve(process.argv[2]||'web/dd2'),source=path.resolve(process.argv[3]),output=path.resolve(process.argv[4]);
 const capturePCM=process.argv.includes('--capture-pcm');
+const originalPaths={};
+for(const [file,name] of [['Intro.avi','original-intro'],['Outro.avi','original-outro']]){
+ const option=process.argv.find(s=>s.startsWith('--'+name+'='));
+ if(option)originalPaths[file]=path.resolve(option.slice(name.length+3));
+}
 fs.mkdirSync(output,{recursive:false});
 const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
 (async()=>{
@@ -12,10 +17,23 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
   for(const film of originals.films)for(const skip of [false,true]){
+   let referenceFrames=null,originalManifestSha256=null;
+   if(originalPaths[film.file]){
+    const directory=originalPaths[film.file],outro=film.file==='Outro.avi';
+    const provenance=JSON.parse(fs.readFileSync(path.join(directory,outro?'report.json':'checkpoint.json')));
+    const bytes=fs.readFileSync(path.join(directory,'movie-video-archive/manifest.json'));
+    const manifest=JSON.parse(bytes),begin=outro?provenance.outro_archive_begin:0;
+    assert(provenance.exe_modified===false&&provenance.exe_sha256==='0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2', 'original executable provenance differs');
+    assert(outro?provenance.pass_&&provenance.original_process_exited:provenance.end_state.movie===0,'original movie incomplete');
+    assert(manifest.pass_&&Number.isInteger(begin)&&begin>=0,'original window manifest incomplete');
+    referenceFrames=manifest.records.slice(begin).map(r=>r.window_argb_sha256);
+    assert(referenceFrames.length===film.metadata.frames-1&&referenceFrames.every(h=>/^[0-9a-f]{64}$/.test(h)), 'original chronological frame extent differs');
+    originalManifestSha256=crypto.createHash('sha256').update(bytes).digest('hex');
+   }
    const page=await browser.newPage(),errors=[];
    page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>errors.push('renderer crash'));
    await page.addInitScript(()=>{
-    window.__movie={frames:0,pixels:0,pixelErrors:0,audioBuffers:0,audioErrors:0,pcm:[],rates:[],stops:0,resets:[]};
+    window.__movie={frames:0,pixels:0,pixelErrors:0,audioBuffers:0,audioErrors:0,pcm:[],rates:[],stops:0,resets:[],canvasHashes:[]};
     window.__movieContexts=[];
     const observed=new WeakSet();
     let audio,frame;
@@ -70,11 +88,16 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
     CanvasRenderingContext2D.prototype.putImageData=function(...args){
      const result=put.apply(this,args);
      if(frame && this.canvas.id==='canvas'){
-      const state=__movie,actual=this.getImageData(0,0,640,480).data;state.frames++;
+      const state=__movie,actual=this.getImageData(0,0,640,480).data,index=state.frames++;state.canvasHashes.push(null);
+      const argb=new Uint8Array(actual.length);
       for(let i=0;i<640*480;i++){
        const value=HEAPU32[(frame.pointer>>2)+i],p=i*4;
        if(actual[p]!==((value>>>16)&255) || actual[p+1]!==((value>>>8)&255) || actual[p+2]!== (value&255) || actual[p+3]!==255)state.pixelErrors++;
+       argb[p]=actual[p+2];argb[p+1]=actual[p+1];argb[p+2]=actual[p];argb[p+3]=actual[p+3];
       }
+      crypto.subtle.digest('SHA-256',argb).then(hash=>{
+       state.canvasHashes[index]=Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('');
+      });
       state.pixels+=640*480;
      }
      return result;
@@ -91,6 +114,7 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
    }
    await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0 && !Module._dd2movieSource &&
                               __movieContexts.length===1 && __movieContexts[0].state==='closed',null,{timeout:100000});
+   await page.waitForFunction(()=>__movie.canvasHashes.every(h=>h!==null));
    const result=await page.evaluate(()=>__movie);
    const diagnosis={...result};delete diagnosis.pcm;
    fs.writeFileSync(path.join(output,`${path.parse(film.file).name.toLowerCase()}-${skip?'skip':'full'}.json`),JSON.stringify(diagnosis,null,2)+'\n');
@@ -101,6 +125,12 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
           'movie audio not reset before completion notification');
    assert(result.stops===1 && result.resets.every(r=>r.sourceCleared), 'idempotent device reset failed');
    assert(skip ? result.frames>=26 && result.frames<film.metadata.frames-1 : result.frames===film.metadata.frames-1,'wrong actual default MCI movie frame extent');
+   if(referenceFrames){
+    assert.deepStrictEqual(result.canvasHashes,referenceFrames.slice(0,result.frames),'actual canvas differs from retained original chronological hashes');
+    result.originalManifestSha256=originalManifestSha256;result.matchedOriginalFrames=result.frames;
+    const changed=[...result.canvasHashes];changed[0]='0'.repeat(64);
+    assert.notDeepStrictEqual(changed,referenceFrames.slice(0,result.frames),'changed frame digest accepted');
+   }
    const pcm=Buffer.from(result.pcm),reference=fs.readFileSync(path.join(source,path.parse(film.file).name.toLowerCase(),'wine.pcm'));
    assert(crypto.createHash('sha256').update(reference).digest('hex')===film.pcm_sha256,'changed actual source PCM');
    assert(pcm.equals(reference),'actual WebAudio movie source differs from whole Wine ACM PCM');

@@ -2121,6 +2121,58 @@ python3 tools/observe_browser_movie_clock.py \
   --output /tmp/wasm-dd2/browser-movie-clock-report
 ```
 
+Patch 902 separates browser movie video deadlines from audio source completion.
+Wine's `MCIAVI_player` schedules frames with `currenttime_us`/QPC independently
+of WaveOut progress. The browser now uses `performance.now` for video after
+initial activation; `getOutputTimestamp` remains responsible for consumed-source
+completion. Initial autoplay suspension holds the video epoch until activation,
+while a later audio suspension leaves the video clock advancing. The independent
+100-ms drain timer, source samples and reset-before-notification order remain.
+The native platform branch is unchanged.
+
+The production-import fixture checks independent video time, initial activation,
+fractional milliseconds, DWORD wrap, consumed-source completion and drain
+cancel/rearm. The previous audio-dependent import and four changed observations
+are rejected (`movie-clock-1499-component/report.json`). All 65536 caller S16
+values and preparation/activation/allocation/context/rate-failure checks still
+pass (`movie-clock-1504-ready/report.json`). Actual full browser builds reproduce
+the old freeze: zero pictures across 752 ms of audio suspension, versus 18 with
+the correction. A separate required-gesture case holds picture one until a
+real canvas click, then advances 19 pictures during a later 752-ms suspension
+(`movie-clock-1507-actual-pause/report.json`). This muted test observes actual
+engine imports and real AudioContext suspension; it does not prove device PCM.
+
+All 1711 Intro and 1812 Outro canvas-frame hashes match the retained original
+window manifests. Full and real-key skip cases preserve all 6039616/6395840
+source PCM bytes against fresh Wine ACM output and pass cleanup checks
+(`movie-clock-1503-acm/report.json`, `movie-clock-1508-full-movies/report.json`).
+The actual 48-key `CREDITZ!` name-entry route also matches all 1812 original
+Outro hashes, preserves the card and exits normally with code zero
+(`movie-clock-1511-credits/report.json`). These are image/source regressions,
+not complete original output or physical timing acceptance.
+
+The unmuted Intro device capture independently brackets performance time against
+actual consumed samples. With the independent video epoch, video leads source
+consumption by 71..84 ms (median bounds 80.05..81.13 ms), rather than the previous
+output-clock implementation's few milliseconds of lag. Chromium's mandatory
+1882-frame silent prefill and positive-S16 conversion difference remain. All
+1711 pictures and the complete converted source are observed; seven damaged
+clock controls reject (`movie-clock-1509-unmuted-intro/report.json`,
+`movie-clock-1510-device-timing/report.json`). Startup buffering, whole original
+PCM, final output timing and synchronized A/V parity are still unresolved; no
+fitted offsets, sample padding or trimmed comparisons establish acceptance.
+
+```sh
+make verify-browser-movie-pause BROWSER_MOVIE_PAUSE_ARGS='/tmp/wasm-dd2/current-web /tmp/wasm-dd2/previous-web /tmp/wasm-dd2/fresh-movie-pause'
+python3 tools/verify_browser_movie_clock.py \
+  --before-platform /tmp/wasm-dd2/previous-platform/dd2_movie_platform.c \
+  --output /tmp/wasm-dd2/fresh-independent-movie-clock
+node tools/browser/qa_movie.js /tmp/wasm-dd2/current-web \
+  /tmp/wasm-dd2/fresh-wine-movie-source /tmp/wasm-dd2/fresh-browser-movies \
+  --original-intro=/tmp/wasm-dd2/original-intro-window \
+  --original-outro=/tmp/wasm-dd2/original-outro-window
+```
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

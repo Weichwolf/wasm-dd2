@@ -4,8 +4,9 @@
 Real browser graph nodes preserve every caller sample. Declared render/output
 positions exercise missing output, render-ahead, source-ended-before-consumed,
 timestamp regression, suspension, source completion, idempotent cleanup and
-the no-device 32-bit clock wrap. An old production import must reproduce its
-render-clock and premature completion failures. This is a component check;
+the no-device 32-bit clock wrap. Video follows independent performance time;
+only initial autoplay activation defers its epoch. An old production import
+must fail that same independence contract. This is a component check;
 it does not establish original device PCM or matched A/V timing.
 """
 import argparse
@@ -32,7 +33,8 @@ def main():
     before=output/'before.c';before.write_bytes(args.before_platform.read_bytes());units=[]
     for label,source in [('production',current),('before',before)]:
         exports=['_malloc','_free','_dd2_movie_now_ms','_dd2_movie_audio_start','_dd2_movie_audio_done','_dd2_movie_audio_stop']
-        if label=='production':exports+=['_dd2_movie_now_us','_dd2_movie_drain_start','_dd2_movie_drain_ready','_dd2_movie_drain_cancel']
+        if 'double dd2_movie_now_us' in source.read_text():exports+=['_dd2_movie_now_us']
+        if label=='production':exports+=['_dd2_movie_drain_start','_dd2_movie_drain_ready','_dd2_movie_drain_cancel']
         subprocess.run(['emcc','-DDD2_BROWSER','-I'+str(snapshot),str(source),'--no-entry','-sASYNCIFY',
                         '-sEXPORTED_FUNCTIONS='+json.dumps(exports),
                         '-sEXIT_RUNTIME=0','-o',str(output/(label+'.js'))],check=True)
@@ -48,7 +50,7 @@ def main():
     report=dict(scope=__doc__,component_checks_passed=True,original_port_parity='unproven',units=units,
                 browser_observer_source_sha256=sha(ROOT/'tools/browser/qa_movie_clock.js'),cases=observed['cases'])
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n');check_space(output)
-    print('PASS actual production output-clock/drain/cleanup checks; old render-clock and early completion rejected',flush=True)
+    print('PASS independent video clock, source-consumption/drain/activation/cleanup checks; old audio-dependent clock rejected',flush=True)
 
 
 if __name__=='__main__':main()

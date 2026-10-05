@@ -97,6 +97,7 @@ def validate(browser,device,metadata):
                 'output timestamp is outside rendered/time bounds')
         bounds=times(point['begin_performance_ms'],point['end_performance_ms']);source_ms=source_times(bounds)
         row=dict(frame=i,pts_ms=pts,movie_clock_ms=clock,monotonic_begin_bounds_ns=bounds,
+                 elapsed_video_clock_ms=clock-browser['initial_movie_clock_ms'],
                  consumed_source_time_bounds_ms=source_ms,
                  video_ahead_source_bounds_ms=[pts-source_ms[1],pts-source_ms[0]],
                  render_context_time_ms=point['context_time']*1000)
