@@ -354,6 +354,10 @@ compare-native-movie-device: ## compare unshifted native movie device PCM with W
 verify-movie-write-recovery: patch ## compare recoverable ALSA source writes with real Wine and sanitized native; MOVIE_WRITE_RECOVERY_ARGS required
 	python3 $(ROOT)/tools/verify_movie_write_recovery.py $(MOVIE_WRITE_RECOVERY_ARGS)
 
+.PHONY: verify-frexp-abi
+verify-frexp-abi: ## compare production Native/WASM libc ABI and original Watcom instructions; FREXP_ABI_ARGS required
+	python3 $(ROOT)/tools/verify_frexp_abi.py $(FREXP_ABI_ARGS)
+
 .PHONY: capture-original-outro
 capture-original-outro: ## capture complete actual original Outro through real CREDITZ! menu inputs; ORIGINAL_OUTRO_ARGS required
 	python3 $(ROOT)/tools/capture_original_outro.py $(ORIGINAL_OUTRO_ARGS)

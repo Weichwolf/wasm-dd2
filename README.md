@@ -1802,6 +1802,49 @@ All 1711/1812 renderer pictures retain the original-reference movie digests
 differ, and browser transport and synchronized original/port A/V remain open.
 Successful raw PCM is removed after writing its comparison reports.
 
+Patch 900 restores the Watcom `frexp` routine at `0x45c0f0` under a private
+symbol and releases the standard `frexp` symbol to libc. The generated
+`int frexp(void)` stub had overridden Emscripten's `double frexp(double,int*)`:
+actual libc `snprintf` with floating-point values trapped in
+`signature_mismatch:frexp`, and native C calls returned incorrect results.
+The original routine takes double bits on the stack and returns bits in
+`EDX:EAX`. Its reconstructed `uint64_t` interface preserves that i386 ABI,
+the original VA dispatch entry and all original bit operations. Its signed
+zeros, subnormals, infinities and NaNs retain the original behavior rather
+than being replaced with the different host math semantics.
+
+`make verify-frexp-abi` links its private probe alongside every production
+object, retaining the game entry point but calling only the component probe.
+Both native ASan and WASM dispatch match the unmodified, position-independent
+original i386 instructions for 21,504 inputs: every encoded exponent, both
+signs, fraction boundaries and fixed-seed random values. Results include
+every returned bit, stored exponent and adjacent write guards. Separately,
+libc formatting and finite `frexp` results now pass. libc NaN payload/quiet
+bits and nonfinite stored exponents are not asserted; the original Watcom
+comparison does assert those bits. The old native call and both old WASM
+routes fail; five changed-result controls also fail
+(`math-1466-abi/report.json`). These are CRT component results, not full game
+formatting or original/port A/V parity.
+
+The production browser still passes the actual 48-key `CREDITZ!` route,
+all 1,812 chronological canvas frame hashes against the retained original
+window manifest, and the original `exit(0)`
+(`math-1464-browser-credits/report.json`). Native normal Quit still supports
+cancel/confirm, returns the original status one, closes all opened SDL
+streams and retains exact indexed-to-renderer pixels
+(`math-1467-native-quit/report.json`). Complete audio endpoints, shared A/V
+timing and the remaining game coverage are still open.
+
+Use retained complete object directories from builds before/after patch 900;
+the verifier preserves their objects and creates private links in its fresh
+output directory. Source game data stays in the ignored provisioned directory:
+
+```sh
+make clean-logs
+make verify-frexp-abi FREXP_ABI_ARGS='--native-before /tmp/wasm-dd2/movie-recovery-1443-build/objects --wasm-before /tmp/wasm-dd2/credits-1431-build/objects --native-after /tmp/wasm-dd2/math-1457-build/native-objects --wasm-after /tmp/wasm-dd2/math-1457-build/wasm-objects --output /tmp/wasm-dd2/frexp-abi-repeat --clean'
+make clean-logs
+```
+
 ```sh
 make clean-logs
 make verify-movie-write-recovery MOVIE_WRITE_RECOVERY_ARGS='--mingw /path/to/i686-w64-mingw32-gcc --output /tmp/wasm-dd2/movie-write-recovery'
