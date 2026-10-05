@@ -197,6 +197,32 @@ Ordinary races, record-name entry, saved-record updates, Championship Scores UI
 and chronological A/V remain separate acceptance work. Component report:
 `/tmp/wasm-dd2/race-positions-1203-fixed/report.json`.
 
+Patch 892 restores unsigned WORDs for saved lap times and the 80-byte track
+stride for the first record's name. Byte aliases previously read another
+track/name byte when comparing times, missed improved records, requested names
+for equal/slower laps and truncated accepted times. The name destination also
+advanced only twenty bytes per track, damaging other entries on confirmation.
+
+`make verify-lap-record-update LAP_RECORD_UPDATE_ARGS='--output /tmp/wasm-dd2/fresh-lap-record-update'`
+compares 3,528 cases with actual unmodified original x86 record comparison,
+history shifts, time/name stores and configuration-payload serialization.
+All seven saved/runtime index pairs, equal/better/worse times, confirmation and
+cancellation, and 1/2/8/9-character names cover complete target regions and
+their guards. Native, AddressSanitizer and WASM agree; the old code fails 1,904
+cases, including 1,232 wrong prompt decisions. A single hardware breakpoint
+supplies only the name-entry callback's declared 0/1 return; the same name
+buffer is already provided on every target. Original record/packer instructions
+are checked unchanged. This verifies record logic under that UI contract,
+not the real name-entry dialog, reading/writing a persisted card, ordinary
+races or original A/V. Those still require actual frontend input and full
+comparison. Report: `/tmp/wasm-dd2/lap-record-update-1210-pack/report.json`.
+Fresh native and browser navigation also matches all 576 frame/palette pairs
+against retained fingerprints from the earlier literal original comparison,
+using the same original-produced card and actual keys. Cached-reference menu
+reports are `/tmp/wasm-dd2/lap-record-update-1217-{native,browser}-verified.json`;
+they cover viewing/wrapping/reopening records and unchanged card data, excluding
+new record-name entry and persistence writes.
+
 Patch 853 restores the six contiguous Total Destruction timer digits. Ghidra
 split the minute digits from a four-element array, while the sprite loop still
 read six elements; native and WASM displayed stack garbage in the first pair.

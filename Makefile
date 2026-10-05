@@ -385,6 +385,10 @@ verify-season-transition: patch ## original-x86 transfers/reset/statistics/unloc
 verify-race-positions: patch ## original-x86 lap/finish/record-loading components; RACE_POSITIONS_ARGS required
 	python3 $(ROOT)/tools/verify_race_positions.py $(RACE_POSITIONS_ARGS)
 
+.PHONY: verify-lap-record-update
+verify-lap-record-update: patch ## original-x86 record updates/serialization with controlled name callback; LAP_RECORD_UPDATE_ARGS required
+	python3 $(ROOT)/tools/verify_lap_record_update.py $(LAP_RECORD_UPDATE_ARGS)
+
 verify-champ-season: ## actual full Retire/Yes season capture/compare; CHAMP_SEASON_ARGS required
 	python3 $(ROOT)/tools/verify_champ_season.py $(CHAMP_SEASON_ARGS)
 
