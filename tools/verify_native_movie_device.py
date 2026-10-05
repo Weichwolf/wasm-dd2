@@ -14,8 +14,8 @@ silence write is limited by the independently observed negotiated period.
 The completed source queue must drop/reset/prepare independently of later
 movie close; the initial driver lead-in is discarded while caller PCM remains
 complete. A previous queue-reset header must fail that same transition.
-Injected reset errors must surface as failures after complete source playback
-and still close and join safely in both repeated device lifetimes.
+Injected reset errors must preserve successful completed-source playback,
+including later driver-silence write failures, and still close and join safely.
 Final MCI cleanup must independently drop/reset/prepare before joining, including
 on cancellation. An old final-reset header must fail that same cleanup sequence.
 """
@@ -77,16 +77,19 @@ def verify_queue_reset(directory, accepted, played, source_frames, before_close_
 def verify_stop_reset(directory, accepted, before_close_ns, join_begin_ns=None):
     events=[json.loads(s) for s in (directory/accepted['events']).read_text().splitlines()]
     resets=[e for e in events if e['event']=='snd_pcm_reset' and e['time_ns']>=before_close_ns]
-    require(len(resets)==1 and resets[0]['result']==0, 'missing final MCI client reset')
-    index=events.index(resets[0]);adjacent=events[index-1:index+2]
+    # A producer already holding the mutex can finish its empty-queue reset
+    # after the caller's close bracket, before the final reset acquires it.
+    require(1<=len(resets)<=2 and resets[-1]['result']==0, 'missing final MCI client reset')
+    final=resets[-1];index=events.index(final);adjacent=events[index-1:index+2]
     require([e['event'] for e in adjacent]==['snd_pcm_drop','snd_pcm_reset','snd_pcm_prepare'] and
             all(e['result']==0 for e in adjacent), 'final MCI reset sequence differs')
     end=adjacent[-1]['time_ns']
     require(events[-1]['event']=='close' and before_close_ns<=adjacent[0]['time_ns']<=end<=events[-1]['time_ns'] and
             not any(e['event']=='write' for e in events[index+2:]), 'producer wrote after final client reset')
     if join_begin_ns is not None:require(end<=join_begin_ns, 'final client reset occurred after join began')
-    return dict(drop_ns=adjacent[0]['time_ns'],reset_ns=resets[0]['time_ns'],prepare_ns=end,
-                close_ns=events[-1]['time_ns'],no_writes_after_reset=True)
+    return dict(drop_ns=adjacent[0]['time_ns'],reset_ns=final['time_ns'],prepare_ns=end,
+                close_ns=events[-1]['time_ns'],no_writes_after_reset=True,
+                overlapping_completed_queue_resets=len(resets)-1)
 
 
 def main():
@@ -97,6 +100,7 @@ def main():
     parser.add_argument('--before-tail-header', type=Path, help='require an old production header to submit silence while source samples remain pending')
     parser.add_argument('--before-queue-header', type=Path, help='require an old production header to omit the independent completed-queue reset')
     parser.add_argument('--before-reset-header', type=Path, help='require an old production header to omit the final MCI client reset')
+    parser.add_argument('--before-reset-error-header', type=Path, help='require an old production header to turn a completed-queue reset warning into failed source playback')
     args = parser.parse_args();output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False)
@@ -149,23 +153,30 @@ def main():
         before_reset = output/'before-reset-device'
         subprocess.run([*common, '-no-pie', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                         '-I'+str(old_source), *config('libs'), '-ldl', '-o', str(before_reset)], check=True)
+    before_reset_error = None
+    if args.before_reset_error_header:
+        old_source = output/'before-warning-source';old_source.mkdir()
+        (old_source/'dd2_native_movie_alsa.h').write_bytes(args.before_reset_error_header.read_bytes())
+        before_reset_error = output/'before-warning'
+        subprocess.run([*common, '-no-pie', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                        '-I'+str(old_source), *config('libs'), '-ldl', '-o', str(before_reset_error)], check=True)
     asan = subprocess.check_output(['gcc', '-m32', '-print-file-name=libasan.so'], text=True).strip()
     libraries = build_audio(output/'audio-libraries')
     base = {k:v for k,v in os.environ.items() if not k.startswith('DD2_')}
     base.update(ASAN_OPTIONS='detect_leaks=1:halt_on_error=1', UBSAN_OPTIONS='halt_on_error=1',
                 LD_LIBRARY_PATH=':'.join(map(str, libraries)))
     cases = [];negative = []
-    for mode in ('full', 'delay', 'tail', 'reset-error', 'cancel', 'join', 'error', 'initial-error', 'thread-error', 'unavailable',
+    for mode in ('full', 'delay', 'tail', 'reset-error', 'reset-write-error', 'cancel', 'join', 'error', 'initial-error', 'thread-error', 'unavailable',
                  *(['before-delay'] if old_binary else []), *(['before-join'] if before_stop else []),
                  *(['before-tail'] if before_tail else []), *(['before-queue'] if before_queue else []),
-                 *(['before-reset'] if before_reset else [])):
+                 *(['before-reset'] if before_reset else []), *(['before-reset-error'] if before_reset_error else [])):
         case = output/mode;case.mkdir();(case/'audio').mkdir()
         asound = case/'asound.conf'
         asound.write_text('pcm.!default { type hw card "DD2_NONEXISTENT" }\n' if mode == 'unavailable' else
                           f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                           'pcm.!default { type dd2clock }\n')
-        selected = old_binary if mode == 'before-delay' else before_stop if mode == 'before-join' else before_tail if mode == 'before-tail' else before_queue if mode == 'before-queue' else before_reset if mode == 'before-reset' else binary
-        preloader = str(fault)+' ' if mode in ('error','initial-error','reset-error') else str(delay)+' ' if mode in ('delay','before-delay','thread-error') else str(join)+' ' if mode in ('join','before-join') else ''
+        selected = old_binary if mode == 'before-delay' else before_stop if mode == 'before-join' else before_tail if mode == 'before-tail' else before_queue if mode == 'before-queue' else before_reset if mode == 'before-reset' else before_reset_error if mode == 'before-reset-error' else binary
+        preloader = str(fault)+' ' if mode in ('error','initial-error','reset-error','reset-write-error','before-reset-error') else str(delay)+' ' if mode in ('delay','before-delay','thread-error') else str(join)+' ' if mode in ('join','before-join') else ''
         env = {**base, 'ALSA_CONFIG_PATH':str(asound), 'DD2_AUDIO_CAPTURE':str(case/'audio'),
                'DD2_AUDIO_PROCESS':selected.name[:15], 'DD2_AUDIO_RATE':'22050',
                'DD2_MOVIE_DEVICE_DELAY_LOG':str(case/'thread-ready.jsonl'),
@@ -173,9 +184,10 @@ def main():
                'LD_PRELOAD':asan+' '+preloader+'dd2_audio.so'}
         if mode == 'initial-error': env['DD2_MOVIE_DEVICE_FAIL_START'] = '1'
         if mode == 'thread-error': env['DD2_MOVIE_DEVICE_FAIL_THREAD'] = '1'
-        if mode == 'reset-error': env['DD2_MOVIE_DEVICE_FAIL_RESET_LOG'] = str(case/'reset-fault.jsonl')
-        fixture_mode = 'full' if mode in ('delay','before-delay') else 'cancel' if mode in ('join','before-join') else 'tail' if mode in ('before-tail','before-queue','before-reset') else mode
-        run = subprocess.run([str(selected), fixture_mode], env=env, capture_output=True, text=True, timeout=10)
+        if mode in ('reset-error','reset-write-error','before-reset-error'): env['DD2_MOVIE_DEVICE_FAIL_RESET_LOG'] = str(case/'reset-fault.jsonl')
+        if mode == 'reset-write-error': env['DD2_MOVIE_DEVICE_FAIL_POST_RESET_WRITE'] = str(case/'write-fault.jsonl')
+        fixture_mode = 'full' if mode in ('delay','before-delay') else 'cancel' if mode in ('join','before-join') else 'tail' if mode in ('before-tail','before-queue','before-reset') else 'reset-error' if mode=='before-reset-error' else mode
+        run = subprocess.run([str(selected), fixture_mode, *(['-1'] if mode=='before-reset-error' else [])], env=env, capture_output=True, text=True, timeout=10)
         (case/'run.log').write_text(run.stdout+run.stderr)
         require(run.returncode == 0 and 'runtime error:' not in run.stderr,
                 'sanitized device test failed: '+run.stderr)
@@ -194,7 +206,7 @@ def main():
                         'failed startup did not close without samples')
             cases.append(dict(mode=mode, results=rows));continue
         audio = summarize_audio(case/'audio', require_played=True)
-        full = fixture_mode in ('full','tail','reset-error');expected_runs = 2 if full else 1
+        full = fixture_mode in ('full','tail','reset-error','reset-write-error');expected_runs = 2 if full else 1
         require(len(rows) == len(audio['streams']) == len(audio['played_streams']) == expected_runs,
                 'incorrect repeated device lifetimes')
         tails=[];queue_resets=[]
@@ -237,14 +249,31 @@ def main():
                 else: require(mode!='before-queue', 'old queue header unexpectedly resets before close')
                 queue_resets.append(reset)
         reset_faults = None
-        if mode == 'reset-error':
+        reset_policy = None;write_faults = None
+        if mode in ('reset-error','reset-write-error','before-reset-error'):
             reset_faults = [json.loads(s) for s in (case/'reset-fault.jsonl').read_text().splitlines()]
-            require(len(reset_faults) == 2*len(rows) and all(r['done'] == -1 for r in rows) and
+            require(len(reset_faults) == 2*len(rows) and
                     all(e['result'] == -5 for e in reset_faults), 'reset failure was not reported')
-            for index, (row, stream) in enumerate(zip(rows, audio['played_streams'])):
+            for index, (row, accepted, stream) in enumerate(zip(rows, audio['streams'], audio['played_streams'])):
                 fault_, cleanup=reset_faults[index*2:index*2+2]
-                require(stream['segments'][-1]['end_ns'] <= fault_['time_ns'] < row['before_close_ns'] <= cleanup['time_ns'],
+                end=verify_driver_tail(case/'audio',accepted,stream,2205)['source_played_end_ns']
+                require(end <= fault_['time_ns'] < row['before_close_ns'] <= cleanup['time_ns'],
                         'reset fault must follow complete source playback and precede close')
+            try:
+                require(all(r['done']==1 for r in rows), 'reset warning changed successful completion')
+            except RuntimeError as error:
+                require(mode=='before-reset-error' and 'reset warning changed successful completion' in str(error),
+                        'unexpected reset warning outcome: '+str(error))
+                reset_policy=dict(failed_completion_rejected=True)
+            else:
+                require(mode!='before-reset-error', 'old header unexpectedly preserves reset-warning success')
+                reset_policy=dict(completed_source_success_preserved=True)
+        if mode=='reset-write-error':
+            write_faults=[json.loads(s) for s in (case/'write-fault.jsonl').read_text().splitlines()]
+            require(write_faults and all(e['result']==-5 for e in write_faults), 'post-source write failures not observed')
+            for index, row in enumerate(rows):
+                require(any(reset_faults[index*2]['time_ns']<e['time_ns']<row['before_close_ns'] for e in write_faults),
+                        'missing driver-silence write fault in a completed lifetime')
         startup = None
         if mode in ('delay','before-delay'):
             ready = [json.loads(s)['ready_ns'] for s in (case/'thread-ready.jsonl').read_text().splitlines()]
@@ -288,7 +317,8 @@ def main():
                 else:require(mode!='before-reset', 'old header unexpectedly resets during final cleanup')
                 stop_resets.append(reset)
         cases.append(dict(mode=mode, results=rows, startup=startup, shutdown=shutdown, tails=tails,
-                          queue_resets=queue_resets,stop_resets=stop_resets,reset_faults=reset_faults,audio=audio));check_space(output)
+                          queue_resets=queue_resets,stop_resets=stop_resets,reset_faults=reset_faults,
+                          reset_policy=reset_policy,write_faults=write_faults,audio=audio));check_space(output)
     report = dict(scope=__doc__, pass_=True, original_port_parity='unproven',
                   source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
                   production_header_sha256=hashlib.sha256(header.read_bytes()).hexdigest(),
@@ -297,6 +327,7 @@ def main():
                   before_tail_header_sha256=hashlib.sha256(args.before_tail_header.read_bytes()).hexdigest() if args.before_tail_header else None,
                   before_queue_header_sha256=hashlib.sha256(args.before_queue_header.read_bytes()).hexdigest() if args.before_queue_header else None,
                   before_reset_header_sha256=hashlib.sha256(args.before_reset_header.read_bytes()).hexdigest() if args.before_reset_header else None,
+                  before_reset_error_header_sha256=hashlib.sha256(args.before_reset_error_header.read_bytes()).hexdigest() if args.before_reset_error_header else None,
                   cases=cases, negative_controls=negative)
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
     # These successful boundary diagnoses retain reports and journals only.

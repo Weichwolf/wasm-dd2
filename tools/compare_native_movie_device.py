@@ -37,6 +37,10 @@ def original_streams(directory):
         streams = [r for r in summary[kind] if r['format'] == 'S16_LE']
         require(len(streams) == 1, 'unique original movie device required')
         row = streams[0];path = directory/'audio'/row['file']
+        if summary.get('reset_errors',False):
+            faults=[json.loads(s) for s in (directory/'reset-fault.jsonl').read_text().splitlines()]
+            require(summary['reset_faults']==faults and all(e['result']==-5 and e['pid']==row['pid'] for e in faults),
+                    'changed original reset-fault observation')
         count = row['accepted_frames'] if kind == 'streams' else row['played_frames']
         require(row['closed'] and row['rate'] == 22050 and row['channels'] == 2 and
                 path.stat().st_size == count*4 and sha(path) == row['sha256'], 'changed original PCM')
@@ -56,6 +60,17 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     reference = json.loads((args.source/'report.json').read_text())
     originals = original_streams(args.original_intro) if args.original_intro else {}
+    original_reset_errors = (json.loads((args.original_intro/'audio/summary.json').read_text()).get('reset_errors',False)
+                             if args.original_intro else None)
+    original_source_checks = []
+    if originals:
+        pcm=args.source/'intro/wine.pcm';expected=pcm.read_bytes()
+        film=next(r for r in reference['films'] if r['file']=='Intro.avi')
+        require(sha(pcm)==film['pcm_sha256'], 'changed original source reference')
+        for kind,path in originals.items():
+            source_equal(expected,path.read_bytes())
+            original_source_checks.append(dict(kind=kind,source_pcm_bytes=len(expected),
+                                               source_interval_exact_at_offset_zero=True))
     cases = [];negative = []
     before = None
     if args.before_intro:
@@ -87,6 +102,10 @@ def main():
         pcm = args.source/Path(name).stem.lower()/'wine.pcm'
         expected = pcm.read_bytes();metadata = film['metadata']
         skip = observation.get('skip', False)
+        reset_errors = observation.get('reset_errors', False)
+        if reset_errors:
+            require(observation['reset_faults']==[json.loads(s) for s in (capture/'reset-fault.jsonl').read_text().splitlines()] and
+                    all(e['result']==-5 for e in observation['reset_faults']), 'changed reset-fault observation')
         require(sha(pcm) == film['pcm_sha256'] and len(expected) == metadata['pcm_frames']*4,
                 'changed source PCM')
         require((26 <= observation['frames'] < metadata['frames']-1 and observation['key_up_retained'])
@@ -116,7 +135,8 @@ def main():
                     row.update(whole_original_equal=False, whole_original_difference=str(error))
                 else: row['whole_original_equal'] = True
                 row.update(original_complete_bytes=originals[kind].stat().st_size,
-                           original_complete_sha256=sha(originals[kind]))
+                           original_complete_sha256=sha(originals[kind]),original_reset_errors=original_reset_errors,
+                           same_reset_error_profile=reset_errors==original_reset_errors)
             for label, altered in ([] if skip else [('changed-first-byte', bytes([actual[0]^1])+actual[1:]),
                                    ('prepended-silence', b'\0'*4+actual),
                                    ('truncated-source', actual[:len(expected)-4])]):
@@ -126,9 +146,11 @@ def main():
             rows.append(row)
         cases.append(dict(capture=str(capture.resolve()), movie=name, frames=observation['frames'],
                           skip=skip,
+                          reset_errors=reset_errors,
                           binary_sha256=observation['binary_sha256'], device_pcm=rows))
     report = dict(scope=__doc__, source_pcm_checks_passed=True, original_port_parity='unproven',
                   source_report_sha256=sha(args.source/'report.json'), cases=cases,
+                  original_source_checks=original_source_checks,
                   before_intro=before, negative_controls=negative)
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n');check_space(output)
     print('PASS unshifted source PCM:', len(cases), 'movies,', len(negative),

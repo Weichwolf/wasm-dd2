@@ -15,7 +15,7 @@ import struct
 import time
 
 from artifacts import WORK, check_space, prepare_output
-from reference.audio import build_audio, summarize_audio
+from reference.audio import build_audio, build_reset_fault, summarize_audio
 from verify_configuration_persistence import ROOT, require
 from verify_native_sdl import config
 
@@ -30,6 +30,7 @@ def main():
     parser.add_argument('--movie', choices=('Intro.avi', 'Outro.avi'), default='Intro.avi')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--skip', action='store_true', help='test real X11 key-up followed by cancellation key-down')
+    parser.add_argument('--reset-errors', action='store_true', help='inject scoped ALSA reset errors after source playback')
     args = parser.parse_args()
     output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
@@ -39,6 +40,7 @@ def main():
                     *config('cflags'), str(ROOT/'tools/native_movie_observer.c'), *config('libs'),
                     '-ldl', '-o', str(observer)], check=True)
     libraries = build_audio(output/'audio-libraries')
+    if args.reset_errors: build_reset_fault(libraries)
     asound = output/'asound.conf'
     asound.write_text(f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                       'pcm.!default { type dd2clock }\n')
@@ -55,6 +57,9 @@ def main():
                        DD2_AUDIO_CAPTURE=str(output/'audio'), DD2_AUDIO_PROCESS=binary.name[:15],
                        DD2_AUDIO_RATE='22050', DD2_NATIVE_MOVIE_OBSERVE=str(output),
                        LD_PRELOAD=str(observer)+' dd2_audio.so', LD_LIBRARY_PATH=':'.join(map(str, libraries)))
+            if args.reset_errors:
+                env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
+                env['DD2_RESET_FAULT_LOG']=str(output/'reset-fault.jsonl')
             process = subprocess.Popen([str(binary)], cwd=ROOT/'DestructionDerby2',
                                        env=env, stdout=log, stderr=log)
             deadline = time.monotonic()+110
@@ -102,6 +107,12 @@ def main():
                   movie=args.movie, frames=len(frames), exact_rendered_pixels=len(frames)*640*480,
                   skip=args.skip, key_up_retained=args.skip and control_done,
                   observer_source_sha256=sha(ROOT/'tools/native_movie_observer.c'), audio=audio)
+    if args.reset_errors:
+        faults=[json.loads(s) for s in (output/'reset-fault.jsonl').read_text().splitlines()]
+        require(faults and all(e['result']==-5 and e['pid']==accepted[0]['pid'] for e in faults),
+                'scoped movie reset faults not observed')
+        report.update(reset_errors=True,reset_faults=faults,
+                      reset_fault_source_sha256=sha(ROOT/'tools/reference/alsa_reset_fault.c'))
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n');check_space(output)
     print('Actual native ALSA movie device recorded:', args.movie, len(frames),
           'frames,', accepted[0]['accepted_frames'], 'accepted and', played[0]['played_frames'],

@@ -1,0 +1,39 @@
+Keep completed movie source playback successful after reset warnings.
+
+Wine ALSA reset warns on drop/reset/prepare errors, still tries each call,
+clears the client's queue and returns S_OK. Actual Wine MCI with unchanged
+short original AVI packets completes and closes after both ALSA reset calls
+are deliberately failed with EIO. Native's empty-queue reset short-circuited
+on that error and reported a movie failure despite fully consumed source PCM.
+
+Try the entire completed-queue reset and latch source completion regardless
+of its transport warnings. Later driver-silence failures must not change that
+completed-source result. Caller-data write errors remain errors. This fixes
+the observed completion policy, not whole device tails or shared A/V clocks.
+
+--- a/dd2_native_movie_alsa.h
++++ b/dd2_native_movie_alsa.h
+@@ -80,9 +80,11 @@
+             /* WINMM stops/resets an empty completed header queue independently
+              * of MCI's later drain poll/close. Discard its initial lead-in. */
+             if(!movie_alsa.source_done){
+-                if(movie_snd_pcm_drop(movie_alsa.device)<0 ||
+-                   movie_snd_pcm_reset(movie_alsa.device)<0 ||
+-                   movie_snd_pcm_prepare(movie_alsa.device)<0)return -1;
++                /* Wine ALSA logs these errors, tries every step, and returns
++                 * S_OK. The caller source has already completed playback. */
++                movie_snd_pcm_drop(movie_alsa.device);
++                movie_snd_pcm_reset(movie_alsa.device);
++                movie_snd_pcm_prepare(movie_alsa.device);
+                 movie_alsa.source_done=1;
+             }
+             return 0; /* one driver silence period per producer tick */
+@@ -99,7 +101,7 @@
+         if(SDL_AtomicGet(&movie_alsa.stop))break;
+         SDL_LockMutex(movie_alsa.mutex);
+         if(SDL_AtomicGet(&movie_alsa.stop)){SDL_UnlockMutex(movie_alsa.mutex);break;}
+-        if(movie_alsa_fill())movie_alsa.error=1;
++        if(movie_alsa_fill() && !movie_alsa.source_done)movie_alsa.error=1;
+         SDL_UnlockMutex(movie_alsa.mutex);
+         if(movie_alsa.error)break;
+     }

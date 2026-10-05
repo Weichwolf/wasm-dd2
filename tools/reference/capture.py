@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 from cdrom import build_cdrom
-from audio import build_audio, summarize_audio
+from audio import build_audio, build_reset_fault, summarize_audio
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -180,6 +180,7 @@ def main():
                         help="clock uses a real-time sample clock; null is diagnostic and consumes too fast")
     parser.add_argument("--audio-tail", type=float, default=0,
                         help="seconds to keep running after video/navigation capture (requires --audio)")
+    parser.add_argument('--reset-errors',action='store_true',help='inject scoped ALSA reset errors in the unmodified game process')
     args = parser.parse_args()
     if args.trace_movie_video and (args.mode!='audio' or not args.keep_movie):
         parser.error('--trace-movie-video requires --mode audio --keep-movie')
@@ -238,6 +239,8 @@ def main():
         parser.error("--menu-cycle requires --mode menu")
     if args.audio_tail < 0 or args.audio_tail > 30 or (args.audio_tail and not args.audio):
         parser.error("--audio-tail must be in [0,30] and requires --audio")
+    if args.reset_errors and not args.audio:
+        parser.error('--reset-errors requires --audio')
     if args.mode=="audio" and (not args.audio or args.audio_tail<=0):
         parser.error("--mode audio requires --audio and a positive --audio-tail; no debugger is used")
     if args.trace_game_clock or args.trace_multimedia_timer:
@@ -267,6 +270,12 @@ def main():
             report.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=args.audio_rate,
                           virtual_device=args.audio_device,wine_debug=args.wine_debug,
                           movie_autoskip=not args.keep_movie)
+            if args.reset_errors:
+                faults=[json.loads(s) for s in (output/'reset-fault.jsonl').read_text().splitlines()]
+                if not faults or any(e['result']!=-5 for e in faults):
+                    raise RuntimeError('original game reset faults not observed')
+                report.update(reset_errors=True,reset_faults=faults,
+                              reset_fault_source_sha256=hashlib.sha256(Path(__file__).with_name('alsa_reset_fault.c').read_bytes()).hexdigest())
             (output/"audio/summary.json").write_text(json.dumps(report,indent=2)+"\n")
         if args.trace_game_clock:
             from game_clock import export_clock
@@ -333,6 +342,10 @@ def run(game, output, args, on_menu=None):
         env.update(DD2_AUDIO_CAPTURE=str(output/"audio"),DD2_AUDIO_RATE=str(args.audio_rate))
         env["LD_PRELOAD"]+=" dd2_audio.so"
         env["LD_LIBRARY_PATH"]=":".join(map(str,audio_libraries))+":"+env["LD_LIBRARY_PATH"]
+        if args.reset_errors:
+            build_reset_fault(audio_libraries)
+            env.update(DD2_AUDIO_PROCESS='dd2h.exe',DD2_RESET_FAULT_LOG=str(output/'reset-fault.jsonl'))
+            env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
         if args.audio_device=="clock":
             library=json.dumps(str(WORK/"audio"/"$LIB"/"dd2_clock.so"))
             alsa.write_text(f'pcm_type.dd2clock {{ lib {library} }}\npcm.!default {{ type dd2clock }}\n')

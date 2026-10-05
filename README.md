@@ -1236,6 +1236,47 @@ actual bracket and gap. Native's producer still uses relative 10-ms waits;
 Wine adjusts those waits against an advancing period clock. That scheduling,
 the separate driver lifetime and original/port video timing remain open.
 
+Patch 886 corrects the completed-queue reset-error policy introduced in 884.
+Wine ALSA warns when drop/reset/prepare fails, tries every reset step, and
+returns success after clearing the completed client queue. Native previously
+short-circuited on reset EIO and reported a movie error after all source
+samples had already played. It now tries every step and preserves source
+completion. Subsequent driver-silence write errors cannot turn that completed
+source into a failed movie; caller-data write errors still surface separately.
+
+`verify_movie_drain.py --reset-errors` injects EIO into public ALSA reset only
+in the selected process. Actual Wine MCI completes the short original-packet
+AVI and closes its device despite those faults. The production native MCI
+and actual ALSA device now notify success (1); the previous header produces
+failure (8) and is rejected by the same notification check. Both close before
+notification and preserve source PCM. Nine common MCI clock cases still pass
+on native/ASan/UBSan and WASM (`movie-reset-error-1093-mci/report.json`).
+
+```sh
+python3 tools/verify_movie_drain.py --reset-errors \
+  --before-reset-error-header /tmp/wasm-dd2/movie-reset-error-1086-before/dd2_native_movie_alsa.h \
+  --mingw third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32 \
+  --output /tmp/wasm-dd2/movie-reset-errors
+```
+
+Repeated nonzero-source device tests additionally require successful
+completion despite reset errors and later silence-write errors. The previous
+header fails that completion policy; all existing lifetime/error/startup
+checks and 120 altered PCM controls pass ASan/UBSan
+(`movie-reset-error-1091-device/report.json`). A producer already holding the
+mutex may finish its empty-queue reset inside the caller's close bracket;
+the distinct final reset must still precede join and allow no further writes.
+
+The unmodified original also reaches the ready Main Menu after its complete
+Intro with every selected-process ALSA reset returning EIO. Full native
+Intro/Outro and actual key-up/key-down cancellation pass with the same reset
+fault policy (`movie-reset-error-1103-comparison/report.json`). Complete
+original and native Intro source PCM matches fresh Wine ACM at offset zero.
+The consumed zero tails still differ (original 439 frames, native 468), so
+strict whole-output comparison remains a failure. No source bytes, timestamps
+or clock gaps are shifted or fitted, and synchronized A/V or full game parity
+is not established by these completion/fault tests.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

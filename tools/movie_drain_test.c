@@ -54,6 +54,47 @@ int main(int argc,char** argv){
            argc==3?"true":"null");
     return 0;
 }
+#elif defined(DD2_MOVIE_DRAIN_DEVICE)
+#include <SDL2/SDL.h>
+#include "dd2_movie.h"
+#include "dd2_movie_platform.h"
+#include "dd2_native_movie_alsa.h"
+static unsigned frames,notifications,notify_result,closed;
+static int closed_at_notify;
+static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie drain device: %s\n",why);exit(1);}}
+FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
+unsigned dd2_movie_now_ms(void){return SDL_GetTicks();}
+void dd2_movie_wait(void){SDL_Delay(1);}
+void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
+int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){
+    require(pcm && count==1012 && rate==22050 && channels==2,"original short source format");
+    return movie_alsa_start(pcm,count,rate);
+}
+int dd2_movie_audio_done(void){return movie_alsa_done();}
+void dd2_movie_audio_stop(void){if(movie_alsa.device)movie_alsa_stop();closed++;}
+int FUN_004132f0(void* hwnd,unsigned message,unsigned result,unsigned device){
+    require(hwnd==(void*)1 && message==0x3b9 && device==2,"actual MCI notify recipient/device");
+    notify_result=result;notifications++;closed_at_notify=!movie_alsa.device;return 0;
+}
+int main(int argc,char** argv){
+    uint32_t open[4]={0},window[3]={0},put[5]={0},play[3]={1},close[1]={0};unsigned begin;
+    require(argc==2,"short movie required");require(!SDL_Init(SDL_INIT_TIMER),"SDL timer");
+    open[2]=(uint32_t)(uintptr_t)"avivideo";open[3]=(uint32_t)(uintptr_t)argv[1];
+    require(!dd2_movie_mci_send(0,0x803,0x2202,open),"open");
+    window[1]=1;require(!dd2_movie_mci_send(open[1],0x841,0x10002,window),"window");
+    put[2]=48;put[3]=640;put[4]=384;
+    require(!dd2_movie_mci_send(open[1],0x842,0x50002,put),"rectangle");
+    begin=SDL_GetTicks();require(!dd2_movie_mci_send(open[1],0x806,1,play),"play");
+    while(dd2_movie_active()){
+        require(SDL_GetTicks()-begin<1000,"bounded real device completion");
+        dd2_movie_pump();if(dd2_movie_active())SDL_Delay(1);
+    }
+    require(!dd2_movie_mci_send(open[1],0x804,2,close),"close");
+    require(frames==1 && notifications==1 && closed==2 && closed_at_notify,"complete real device MCI lifetime");
+    printf("{\"frames\":%u,\"notifications\":%u,\"notify_result\":%u,\"device_closed_before_notify\":true}\n",
+           frames,notifications,notify_result);
+    SDL_Quit();return 0;
+}
 #else
 #include "dd2_movie.h"
 #include "dd2_movie_platform.h"

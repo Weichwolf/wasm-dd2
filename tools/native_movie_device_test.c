@@ -11,11 +11,27 @@
 #include <dlfcn.h>
 #include <errno.h>
 #ifdef DD2_MOVIE_DEVICE_FAULT
+static unsigned reset_calls;
+static int record_fault(const char* path){
+    struct timespec now;FILE* log=fopen(path,"a");if(!log)exit(1);
+    clock_gettime(CLOCK_MONOTONIC,&now);
+    fprintf(log,"{\"time_ns\":%llu,\"result\":%d}\n",
+            (unsigned long long)((uint64_t)now.tv_sec*1000000000+now.tv_nsec),-EIO);
+    fclose(log);return -EIO;
+}
+int snd_pcm_open(snd_pcm_t** device,const char* name,snd_pcm_stream_t stream,int mode){
+    static __typeof__(snd_pcm_open)* next;int result;
+    if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_open");
+    if(!next)return -EIO;
+    result=next(device,name,stream,mode);if(!result)reset_calls=0;return result;
+}
 snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* device,const void* buffer,snd_pcm_uframes_t frames){
     static __typeof__(snd_pcm_writei)* next;
     static unsigned calls;
     if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_writei");
     if(!next)return -EIO;
+    if(reset_calls && getenv("DD2_MOVIE_DEVICE_FAIL_POST_RESET_WRITE"))
+        return record_fault(getenv("DD2_MOVIE_DEVICE_FAIL_POST_RESET_WRITE"));
     if(!getenv("DD2_MOVIE_DEVICE_FAIL_RESET_LOG") &&
        (getenv("DD2_MOVIE_DEVICE_FAIL_START") || ++calls>1))return -EIO;
     return next(device,buffer,frames);
@@ -24,11 +40,8 @@ int snd_pcm_reset(snd_pcm_t* device){
     static __typeof__(snd_pcm_reset)* next;
     const char* path=getenv("DD2_MOVIE_DEVICE_FAIL_RESET_LOG");
     if(path){
-        struct timespec now;FILE* log=fopen(path,"a");if(!log)exit(1);
-        clock_gettime(CLOCK_MONOTONIC,&now);
-        fprintf(log,"{\"time_ns\":%llu,\"result\":%d}\n",
-                (unsigned long long)((uint64_t)now.tv_sec*1000000000+now.tv_nsec),-EIO);
-        fclose(log);return -EIO;
+        reset_calls++;
+        return record_fault(path);
     }
     if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_reset");
     return next?next(device):-EIO;
@@ -71,7 +84,7 @@ static void require(int ok,const char* why){
 int main(int argc,char** argv){
     int16_t source[22050*2];unsigned i,round;Uint32 started;
     const char* mode=argc>1?argv[1]:"full";
-    int reset_error=!strcmp(mode,"reset-error");
+    int reset_error=!strcmp(mode,"reset-error") || !strcmp(mode,"reset-write-error");
     int complete=!strcmp(mode,"full") || !strcmp(mode,"tail") || reset_error;
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
     if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
@@ -99,7 +112,7 @@ int main(int argc,char** argv){
         }while(1);
         if(reset_error){
             SDL_Delay(45);done=movie_alsa_done();
-            require(done==-1,"report completed queue reset failure");
+            require(done==(argc>2?atoi(argv[2]):1),"keep completed source successful after reset warning");
         }
         else if(complete)require(done==1,"complete source playback");
         else if(!strcmp(mode,"error"))require(done==-1,"report actual device error");

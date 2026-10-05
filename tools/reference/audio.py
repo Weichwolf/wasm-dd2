@@ -29,6 +29,13 @@ def build_audio(output):
     return libraries
 
 
+def build_reset_fault(libraries):
+    source = SOURCE.with_name('alsa_reset_fault.c')
+    for bits, directory in zip((32, 64), libraries):
+        subprocess.run(['gcc', f'-m{bits}', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
+                        str(source), '-ldl', '-o', str(directory/'dd2_reset_fault.so')], check=True)
+
+
 def summarize_played_audio(directory, *, required=False):
     """Validate device-consumed extents; keep every pause/XRUN gap explicit."""
     if (directory/"error.txt").exists():
