@@ -3,18 +3,26 @@ const fs=require('fs'),path=require('path'),assert=require('assert'),crypto=requ
 const {serve,chromium}=require('./felib');
 const build=path.resolve(process.argv[2]),capture=path.resolve(process.argv[3]),output=path.resolve(process.argv[4]);
 assert(output.startsWith('/tmp/wasm-dd2/'),'Use /tmp/wasm-dd2/');fs.mkdirSync(output);
-const manifest=JSON.parse(fs.readFileSync(path.join(capture,'movie-video-archive/manifest.json')));
-const checkpoint=JSON.parse(fs.readFileSync(path.join(capture,'checkpoint.json')));
-assert(manifest.pass_===true && manifest.frames===manifest.records.length && checkpoint.exe_modified===false && checkpoint.end_state.movie===0,'incomplete original');
+let manifest=JSON.parse(fs.readFileSync(path.join(capture,'movie-video-archive/manifest.json')));
+const movie=process.argv.find(s=>s.startsWith('--movie='))?.slice(8)||'Intro.avi';
+assert(['Intro.avi','Outro.avi'].includes(movie),'unsupported movie');
+const outro=movie==='Outro.avi';
+const checkpoint=JSON.parse(fs.readFileSync(path.join(capture,outro?'report.json':'checkpoint.json')));
+assert(manifest.pass_===true && manifest.frames===manifest.records.length && checkpoint.exe_modified===false &&
+ (outro ? checkpoint.pass_===true && checkpoint.original_process_exited===true : checkpoint.end_state.movie===0),'incomplete original');
+const archiveBegin=outro?checkpoint.outro_archive_begin:0;
+assert(Number.isInteger(archiveBegin) && archiveBegin>=0 && archiveBegin<manifest.frames,'invalid movie session');
+if(outro)manifest={...manifest,frames:manifest.frames-archiveBegin,records:manifest.records.slice(archiveBegin)};
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const frameBytes=640*480*4,windowOffset=128+32768+320*192*3;
 const diagnose=process.argv.includes('--diagnose');
 function original(frame){
- const entry=manifest.records[frame];assert(entry && entry.serial===frame && entry.file===String(frame).padStart(6,'0')+'.zlib','extra/reordered canvas frame');
+ const serial=archiveBegin+frame;
+ const entry=manifest.records[frame];assert(entry && entry.serial===serial && entry.file===String(serial).padStart(6,'0')+'.zlib','extra/reordered canvas frame');
  const packed=fs.readFileSync(path.join(capture,'movie-video-archive',entry.file));
  assert(packed.length===entry.compressed_bytes && sha(packed)===entry.compressed_sha256,'changed compressed original');
  const raw=zlib.inflateSync(packed,{maxOutputLength:1446016});
- assert(raw.length===1446016 && sha(raw)===entry.raw_sha256 && raw.readUInt32LE(8)===frame,'changed original movie readback');
+ assert(raw.length===1446016 && sha(raw)===entry.raw_sha256 && raw.readUInt32LE(8)===serial,'changed original movie readback');
  return raw.subarray(windowOffset);
 }
 (async()=>{
@@ -87,7 +95,7 @@ function original(frame){
     return result;
    };
   });
-  await page.goto(`http://localhost:${server.address().port}/index.html?movie=INTRO.AVI`);
+  await page.goto(`http://localhost:${server.address().port}/index.html?movie=${movie.toUpperCase()}`);
   await page.waitForFunction(()=>!!Module._dd2movieSource && HEAP32[0x462cd4>>2]===1,null,{timeout:15000});
   await page.click('#canvas');
   await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0 && !Module._dd2movieSource,null,{timeout:diagnose?15000:100000});
@@ -108,6 +116,7 @@ function original(frame){
   assert(!errors.length && !state.errors.length,JSON.stringify([...errors,...state.errors]));
   assert(state.pending===0 && state.frames===manifest.frames && report.frames===manifest.frames && next===manifest.frames && !pending.size,'actual canvas/original presentation count differs');
   report.window_sha256=digest.digest('hex');report.pass_=true;
+  report.movie=movie;report.original_archive_begin=archiveBegin;
   report.elapsed_seconds=(Date.now()-started)/1000;
   report.wasm_sha256=sha(fs.readFileSync(path.join(build,'index.wasm')));
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');

@@ -1684,6 +1684,42 @@ on native ASan/UBSan and WASM, as do the microsecond-boundary and nine drain
 cases per port (`movie-wait-1365-playback/report.json`,
 `movie-wait-1367-precision/report.json`, `movie-wait-1366-drain/report.json`).
 
+The complete Outro now also has an actual original-window reference. The
+unmodified `dd2h.exe` receives real X11 navigation through the driver-name grid
+and its built-in `CREDITZ!` name, plays `OUTRO.AVI`, and exits. Original assets,
+save data, engine state, clocks and RNG are unchanged. The recorder separates
+the skipped startup Intro from Outro using actual MCI open filenames and paint
+ordinals. Every one of Outro's 1812 presented 640x480 windows matches both the
+actual native SDL readback and browser canvas byte for byte, in order
+(`outro-1379-final-video/report.json`). The 11 presented empty packets at its
+exclusive endpoint retain the last decoded image, packet and decode count;
+four altered-reference controls reject changed retained packets, decode counts,
+source pixels and window pixels (`outro-1382-reference-controls.json`). Browser
+controls also reject a changed canvas bit and truncated canvas. This proves
+the complete observed movie pictures, not equivalent frontend input/exit
+behavior in the ports, synchronized clocks, hardware display or full game A/V.
+
+Fresh Wine ACM source conversion and both decoders match all 6395840 Outro PCM
+bytes. The actual original accepts this entire source at offset zero followed
+by 660 silent frames; changed source and nonzero-tail controls fail
+(`outro-1380-final-accepted-source.json`). A fresh production native device
+capture matches the complete accepted original stream, including that tail,
+and both its accepted and consumed source prefixes are exact. The complete
+consumed streams differ: original has 265 trailing silent frames, native 440
+(`outro-1383-native-comparison/report.json`). Six altered native PCM controls
+fail. These are separately observed device lifetimes; no trimming, padding or
+clock alignment turns the different consumed endpoints into a parity claim.
+Browser device PCM and synchronized original/port Outro A/V remain open.
+
+```sh
+make clean-logs
+make capture-original-outro ORIGINAL_OUTRO_ARGS='--output /tmp/wasm-dd2/outro-original'
+make verify-movie-video MOVIE_VIDEO_ARGS='--movie Outro.avi --capture /tmp/wasm-dd2/outro-original --native /path/to/dd2-native --browser /path/to/web --output /tmp/wasm-dd2/outro-video --negative-controls'
+python3 tools/reference/verify_movie.py --movie Outro.avi --capture /tmp/wasm-dd2/outro-original --source /tmp/wasm-dd2/movie-acm-source --report /tmp/wasm-dd2/outro-accepted-source.json --negative-controls
+python3 tools/compare_native_movie_device.py --source /tmp/wasm-dd2/movie-acm-source --capture /tmp/wasm-dd2/outro-native-device --original-outro /tmp/wasm-dd2/outro-original --output /tmp/wasm-dd2/outro-device-comparison
+make clean-logs
+```
+
 ```sh
 make verify-movie-wait MOVIE_WAIT_ARGS='--output /tmp/wasm-dd2/movie-wait --before-movie /tmp/wasm-dd2/before/dd2_movie.c --mingw /path/to/i686-w64-mingw32-gcc'
 ```

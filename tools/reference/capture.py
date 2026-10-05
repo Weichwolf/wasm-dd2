@@ -492,8 +492,9 @@ def run(game, output, args, on_menu=None):
                             on_menu(pid, output, env, deadline, rundir)
                             # Audio drivers own their real inputs and detailed
                             # observations. Retain a final common engine/timer
-                            # counter observation before scoped termination.
-                            if args.audio:
+                            # counter observation while the process remains
+                            # live. An Outro driver can await its actual exit.
+                            if args.audio and original_pid(prefix) == pid:
                                 observe_state(pid)
                             return
                         if args.champ_history:
