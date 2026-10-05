@@ -28,6 +28,8 @@ def main():
     parser.add_argument('--reference', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--binary', type=Path, default=Path('/tmp/dd2_native'))
+    parser.add_argument('--api-return-log', action='store_true',
+                        help='observe actual provider returns in a compact log; debugger stops only for drawing/input')
     args = parser.parse_args()
     reference = args.reference.resolve()
     meta = json.loads((reference / 'history.json').read_text())
@@ -52,6 +54,9 @@ def main():
     env.update(DD2_FE='1', DD2_SOUND='1', DD2_NOSEGV='1',
         DD2_TICK_REPLAY=str(reference / 'ticks.bin'), DD2_RANDOM_REFERENCE=str(reference / 'random.bin'),
         DD2_RANDOM_LEVEL='all', DD2_RANDOM_REQUIRE_INITIAL='1')
+    api_return_log = output/'native-api-returns.bin' if args.api_return_log else None
+    if api_return_log:
+        env['DD2_API_OBSERVE'] = str(api_return_log)
     script = output / 'history.gdb'
     phase_gate = ''
     if full_video:
@@ -61,9 +66,18 @@ def main():
         # Stop on the previous normal presentation. The recorder resumes through
         # the next real pad poll/draw, matching the original first phase.
         phase_gate = f' && *(int*)0x4699cc == {(first_phase - 1) % 64}'
+    else:
+        # The source snapshot follows sixteen settled Draw_All entries.
+        # Observe the same preceding blink phase before starting, rather than
+        # comparing a newly booted menu with an arbitrary later original one.
+        first = json.loads((reference/meta['checkpoints'][0]/'checkpoint.json').read_text())
+        if 'phase' in first:
+            if not 0 <= first['phase'] < 64:
+                raise ValueError('Original initial menu phase outside its observed cycle')
+            phase_gate = f' && *(int*)0x4699cc == {(first["phase"] - 16) % 64}'
     script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\nset disable-randomization off\nstarti\n'+
         ('hbreak *PutDispEnv\n' if full_video else 'hbreak *Draw_All\n')+'condition 1 *(int*)0x936ff4 == 0 && *(int*)0x940010 == 0x4696b0 && *(int*)0x467420 == 0 && *(short*)0x46996c == 0'+phase_gate+'\ncontinue\ndelete 1\npython\n'+
-        f'import sys, json\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r},full_video={full_video!r},natural_champ={natural_champ!r},natural_season={natural_season!r},natural_multiplayer={natural_multiplayer!r},driving_reference=json.load(open({str(reference / "history.json")!r})).get("driving_inputs"))\nend\n'+
+        f'import sys, json\nsys.path.insert(0,{str(ROOT / "tools")!r})\nfrom champ_history_gdb import record_champ_history\nrecord_champ_history({str(output)!r},{len(meta["keys"])},"native",normal_arena={normal_arena!r},full_video={full_video!r},natural_champ={natural_champ!r},natural_season={natural_season!r},natural_multiplayer={natural_multiplayer!r},driving_reference=json.load(open({str(reference / "history.json")!r})).get("driving_inputs"),native_api_return_log={str(api_return_log) if api_return_log else None!r})\nend\n'+
         'printf "NATIVE_CLOCK_CONSUMED=%u\\n", dd2_tick_replay_calls()\nprintf "NATIVE_RANDOM_CONSUMED=%u\\n", dd2_random_replay_calls()\nkill\nquit\n')
     with tempfile.TemporaryDirectory(prefix='native-champ-history-assets-', dir=WORK) as tmp:
         game = Path(tmp)

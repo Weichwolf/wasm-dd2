@@ -1,0 +1,103 @@
+Record actual native clock and calculated RNG return values in an optional compact
+log. This preserves every return and mixed API order without per-call debugger
+stops. The observer changes no input or engine state, preserves errno and opens
+its file exclusively. WASM retains its existing import observer. Physical timing
+and game parity require separate actual-output comparisons.
+
+--- a/dd2_stubs.c
++++ b/dd2_stubs.c
+@@ -2,6 +2,14 @@
+ #include <time.h>
+ #include "dd2_native.h"
+ #include "ghidra_compat.h"
++#ifndef __EMSCRIPTEN__
++#include <errno.h>
++static void dd2_api_observe(unsigned kind,unsigned before,unsigned after,unsigned value,unsigned caller);
++#define DD2_API_OBSERVE(kind,before,after,value) \
++    dd2_api_observe(kind,before,after,value,(unsigned)(uintptr_t)__builtin_return_address(0))
++#else
++#define DD2_API_OBSERVE(kind,before,after,value) ((void)0)
++#endif
+ unsigned __doclose(void* p,int q){ return 0; }
+ char* __cvt(double v,int n,void* d,void* s){ if(d)*(int*)d=0; if(s)*(int*)s=0; return ""; }
+ void FUN_0042304c(byte* p){ }
+@@ -112,10 +120,15 @@
+         }
+         dd2_tick_calls++;
+         if(dd2_audio_service_pump)dd2_audio_service_pump();
++        DD2_API_OBSERVE(1,0,0,dd2_virtual_ms);
+         return dd2_virtual_ms;
+     }
+     if(!getenv("DD2_REALTIME")) dd2_virtual_ms += 16;
+-    return dd2_platform_ms();
++    {
++        unsigned value=dd2_platform_ms();
++        DD2_API_OBSERVE(1,0,0,value);
++        return value;
++    }
+ }
+ 
+ void* LockResource(void* h){ return h; /* dd2h passes raw in-memory WAV pointers (sound-bank blob
+@@ -193,7 +206,62 @@
+         }
+         dd2_random_calls++;
+     }
++    DD2_API_OBSERVE(2,before,after,value);
+     return (int)value;
+ }
+ void srand(unsigned seed){_dd2_rand_seed=seed;}
+ unsigned dd2_random_current_seed(void){return _dd2_rand_seed;}
++
++/* Optional native return observations. This never supplies clock/RNG values
++ * or engine state. DD2_API_OBSERVE selects a new, exclusive output file.
++ * Format: DD2APIR1, little-endian record size 32, then eight DWORDs:
++ * kind, sequence, clock count, calculated RNG count, before, after, value,
++ * native caller PC. Frame/input observers can order boundaries by their
++ * observed clock+RNG counts, without a debugger stop at each API return. */
++#ifndef __EMSCRIPTEN__
++static FILE* dd2_api_file;
++static unsigned dd2_api_sequence;
++static int dd2_api_init;
++static void dd2_api_fail(const char* message){
++    fprintf(stderr,"[api-observer] %s\n",message);exit(1);
++}
++static void dd2_api_close(void){
++    if(dd2_api_file){
++        FILE* file=dd2_api_file;dd2_api_file=NULL;
++        if(fclose(file)!=0)dd2_api_fail("cannot close return log");
++    }
++}
++unsigned dd2_api_observer_flush(void){
++    int saved_errno=errno;
++    if(dd2_api_file && fflush(dd2_api_file)!=0)dd2_api_fail("cannot flush return log");
++    errno=saved_errno;return dd2_api_sequence;
++}
++static void dd2_api_observe(unsigned kind,unsigned before,unsigned after,unsigned value,unsigned caller){
++    unsigned words[8],i,j;unsigned char bytes[32];int saved_errno=errno;
++    if(!dd2_api_init){
++        const char* path=getenv("DD2_API_OBSERVE");dd2_api_init=1;
++        if(path){
++            static const unsigned char header[12]={'D','D','2','A','P','I','R','1',32,0,0,0};
++            const char* level=getenv("DD2_RANDOM_LEVEL");
++            if(!getenv("DD2_TICK_REPLAY") || !getenv("DD2_RANDOM_REFERENCE") ||
++                    !level || strcmp(level,"all") || getenv("DD2_REALTIME"))
++                dd2_api_fail("requires full clock/RNG reference inputs in headless clock mode");
++            dd2_api_file=fopen(path,"wbx");
++            if(!dd2_api_file)dd2_api_fail("cannot create exclusive return log");
++            if(fwrite(header,1,sizeof(header),dd2_api_file)!=sizeof(header))dd2_api_fail("cannot write return-log header");
++            atexit(dd2_api_close);
++        }
++    }
++    if(dd2_api_file){
++        if(dd2_api_sequence==0xffffffffu)dd2_api_fail("return-log sequence exhausted");
++        words[0]=kind;words[1]=++dd2_api_sequence;
++        words[2]=dd2_tick_calls;words[3]=g_rand_calls;
++        words[4]=before;words[5]=after;words[6]=value;words[7]=caller;
++        for(i=0;i<8;i++)for(j=0;j<4;j++)bytes[i*4+j]=(unsigned char)(words[i]>>(j*8));
++        if(fwrite(bytes,1,sizeof(bytes),dd2_api_file)!=sizeof(bytes))dd2_api_fail("cannot write return log");
++    }
++    errno=saved_errno;
++}
++#else
++unsigned dd2_api_observer_flush(void){return 0;}
++#endif

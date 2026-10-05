@@ -194,6 +194,10 @@ verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing,
 verify-random-reference: ## compute actual original Watcom random records; reject state/result differences and arithmetic mutation
 	python3 $(ROOT)/tools/verify_random_reference.py $(RANDOM_REFERENCE_ARGS)
 
+.PHONY: verify-native-api-returns
+verify-native-api-returns: ## check optional native API return observations against an actual original transcript; API_RETURN_LOG_ARGS required
+	python3 $(ROOT)/tools/verify_api_return_log.py $(API_RETURN_LOG_ARGS)
+
 refcapture-race-stream: ## complete selected original attract loop, clock/random returns and initial blink state; read-only hardware breakpoints
 	python3 $(ROOT)/tools/reference/capture.py --race-stream $(RACE_CAPTURE_ARGS)
 

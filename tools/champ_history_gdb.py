@@ -30,7 +30,9 @@ import multiplayer_loaded_protocol
 import natural_multiplayer_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False, wall_recovery=False):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False, wall_recovery=False, native_api_return_log=None):
+    if native_api_return_log and target != 'native':
+        raise ValueError('Provider return observations are only available for native captures')
     protocol = multiplayer_loaded_protocol if result_tables == 'multiplayer-loaded' else multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
     if result_tables == 'multiplayer-loaded' and result_race_mode not in (0,1):
         raise ValueError('Actual saved Wrecking or Stock Car mode required')
@@ -92,6 +94,12 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     final_races = []
     command = ['xdotool', 'search', '--name', 'PC-DD2', 'windowfocus']
     original = target == 'original'
+    api_return_log = Path(native_api_return_log).resolve() if native_api_return_log else None
+    api_return_observations = None
+    if api_return_log:
+        # These are actual provider counters, not reference-derived lengths.
+        clock_count_address = int(gdb.parse_and_eval('&dd2_tick_calls'))
+        rng_count_address = int(gdb.parse_and_eval('&g_rand_calls'))
     driver_source_sha256 = hashlib.sha256(Path(natural_champ_driver.__file__).read_bytes()).hexdigest() if original and natural_champ else None
     draw_pc = (0x412ca0 if full_video else 0x420c9c) if original else int(gdb.parse_and_eval('&PutDispEnv' if full_video else '&Draw_All'))
     pad_pc = 0x422da4 if original else int(gdb.parse_and_eval('&FUN_00422da4'))
@@ -113,8 +121,10 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     race=integer(0x93dec8), season=integer(0x93dec0),
                     finished=integer(0x795df4), retired=integer(0x9376a8), damage=integer(0x792a76),
                     phase=integer(0x4699cc),
-                    poly_list=word(0x940010), clock_calls=len(clocks),
-                    rng_calls=len(rng), pad_polls=len(pads), draws=draws)
+                    poly_list=word(0x940010),
+                    clock_calls=word(clock_count_address) if api_return_log else len(clocks),
+                    rng_calls=word(rng_count_address) if api_return_log else len(rng),
+                    pad_polls=len(pads), draws=draws)
         if natural_multiplayer: value['player'] = integer(0x93decc)
         return value
 
@@ -246,15 +256,15 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         (directory / 'checkpoint.json').write_text(json.dumps(value, indent=2) + '\n')
         checkpoints.append(name)
         event('checkpoint', checkpoint=name, action=key_index)
-        print(f'{target} history checkpoint {key_index}: level={value["level"]}, clocks={len(clocks)}, rng={len(rng)}', flush=True)
+        print(f'{target} history checkpoint {key_index}: level={value["level"]}, clocks={value["observed"]["clock_calls"]}, rng={value["observed"]["rng_calls"]}', flush=True)
 
     rng_pc = rng_entry
-    rng_point = breakpoint(rng_pc)
+    rng_point = None if api_return_log else breakpoint(rng_pc)
     rng_pointer = rng_before = rng_caller = None
     clock_entry = word(0x9500c0) if original else int(gdb.parse_and_eval('&GetTickCount'))
     clock_pc = clock_entry
     clock_condition = '*(unsigned int*)$esp >= 0x400000 && *(unsigned int*)$esp < 0x470000' if original else None
-    clock_point = breakpoint(clock_pc, clock_condition)
+    clock_point = None if api_return_log else breakpoint(clock_pc, clock_condition)
     clock_caller = None
     breakpoint(draw_pc)
     breakpoint(pad_pc)
@@ -469,6 +479,33 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 send(actions[key_index - 1], True)
             else:
                 raise RuntimeError(f'Unexpected original history stop: {pc:x}')
+        if api_return_log:
+            from native_api_returns import merge, returns
+            observed_count = int(gdb.parse_and_eval('(unsigned)dd2_api_observer_flush()'))
+            observed_data = api_return_log.read_bytes()
+            actual_returns = list(returns(observed_data))
+            if observed_count != len(actual_returns):
+                raise RuntimeError('Incomplete actual native API return observations')
+            actual_clock = [row['value'] for row in actual_returns if row['kind'] == 'GetTickCount']
+            actual_rng = [(row['before'],row['after'],row['result']) for row in actual_returns if row['kind'] == 'rand']
+            if (len(actual_clock),len(actual_rng)) != (word(clock_count_address),word(rng_count_address)):
+                raise RuntimeError('Actual native return log/provider counters differ')
+            timeline.flush()
+            boundaries = [json.loads(line) for line in (root/'events.jsonl').read_text().splitlines()]
+            combined = merge(boundaries,actual_returns)
+            limit = 1500000 if natural_season or natural_multiplayer else 300000 if natural_champ else 100000
+            if len(combined) > limit:
+                raise RuntimeError('Championship history exceeded its bounded observation limit')
+            timeline.close()
+            staged = root/'events.jsonl.tmp'
+            with staged.open('x') as output_stream:
+                for row in combined:
+                    output_stream.write(json.dumps(row)+'\n')
+            staged.replace(root/'events.jsonl')
+            clocks, rng = actual_clock, actual_rng
+            api_return_observations = dict(scope='Actual native provider return values and calculated RNG triples; debugger observes frame/input states only. No game state is attached to unobserved API return points.',
+                file=str(api_return_log),sha256=hashlib.sha256(observed_data).hexdigest(),
+                records=observed_count,format='DD2APIR1')
         if not rng or rng[0][0] != 1 or rng_pc != rng_entry or clock_pc != clock_entry:
             raise RuntimeError('Incomplete original RNG/clock entry-to-return pairs')
         if natural_champ and not original and driving_cursor!=len(driving_reference):
@@ -479,6 +516,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             exe_modified=False if original else None, exe_sha256=EXE if original else None, keys=keys, checkpoints=checkpoints,
             target=target,input='real X11 keys' if original else 'dd2_key_event', acknowledged_keys=True, held_pad_polls=held_counts,
             clock_calls=len(clocks), rng_calls=len(rng), pad_polls=len(pads), draws=draws,
+            api_return_observations=api_return_observations,
             observed_play_draw_delay_ms=game_frame_delay_ms,
             complete_retirement_season=not result_tables and not normal_arena and not natural_champ and steps == 95, normal_arena=normal_arena,
             result_tables=result_tables,

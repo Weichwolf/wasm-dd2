@@ -2796,18 +2796,64 @@ two-player reference; its periodic driver samples do not preserve the exact
 driver state at human A's final quit boundary.
 
 An explicitly partial replay uses the first human's actual recorded keys,
-96,097 clock returns and 208,969 RNG triples. While both port captures are still
-running, 12,000 native ASan indexed/palette pairs and their recorded gameplay
-state/API counts match the original literally. The first 10,000 WASM
-indexed/palette pairs also match (`multiplayer-prefix-1532-expanded-live-check/report.json`).
+96,097 clock returns and 208,969 RNG triples. All 15,762 native ASan and WASM
+racing indexed/palette pairs now match the original literally, with their
+observed gameplay state, player, blink phase and API counts. Native also
+matches the complete mixed clock/RNG return order and driving-key boundaries
+(`multiplayer-prefix-1543-native-comparison/report.json`); the browser comparison
+is `multiplayer-prefix-1541-browser-comparison/report.json`. All 24 checkpoint
+states/results match. The complete image comparisons still fail: the initial
+native recording has two differing menu rasters and WASM has three, captured
+at different observed blink phases. Menu key-release observations also occur
+one draw later on native for some menu actions; this is recorded separately
+from the matching driving-key boundaries.
+
 The public comparison rejects seven altered pixel, palette, physics, API-count
 and extent cases using independently observed racing frame 11,000
 (`multiplayer-prefix-1536-comparison-controls/report.json`). The unchanged full
-multiplayer gate rejects this prefix. Complete comparison of all 15,762
-first-human racing pictures, the second regular finish, chronological PCM and
-physical timing remain unproven. After diagnosis, failed second-human raw
-archive chunks are removed; every first-human picture and three selected
-failed-tail diagnostic chunks remain until their comparisons are finished.
+multiplayer gate rejects the first-human prefix. The second regular finish,
+chronological PCM and physical timing remain unproven. Successful closed port
+racing images are removed after the reports, retaining checkpoint images for
+the menu-phase diagnosis. Failed second-human raw archive chunks are removed;
+every first-human original picture and three selected failed-tail diagnostic
+chunks remain until their comparisons are finished.
+
+Patch 903 adds an optional native provider return observer. Native captures
+can use `--api-return-log` to retain each actual clock return, independently
+calculated RNG triple, mixed API order and native caller PC while the debugger
+stops only for drawing and input. The observer opens its output exclusively,
+preserves errno and does not supply engine state or return values. Its decoder
+checks the actual counters and LCG; debugger boundary states are merged at their
+observed completed API counts. No engine state is invented at API return points.
+The live event file contains only drawing/input observations until the final
+merge, so full-history comparison requires capture completion.
+
+`api-return-1546-component-wasm/report.json` checks all 305,066 actual original
+mixed API returns against caller-visible values before the patch, with native
+observation disabled/enabled, and on WASM before/after. Native uses ASan/UBSan;
+all five cases retain identical values and errno. WASM creates no native log,
+even when its environment requests one. Twelve altered observation/order and
+exclusive-output controls are rejected. This is provider/observer evidence;
+chronological PCM and physical timing require their own checks. The actual
+native engine comparison also verifies all 15,762 first-human racing
+image/palette pairs, observed state/API counts and mixed API return order
+before/after patch 903 against the original
+(`multiplayer-prefix-1543-native-comparison/report.json`). Both runs have
+identical racing and checkpoint raster hashes, including the same two
+unaligned-menu failures; this does not establish full-game parity.
+
+Native non-full-video capture also waits for the observed original initial
+menu blink phase before its sixteen settling draws, without writing the blink
+counter. All 23 available pre-finish checkpoint rasters, palettes, phases and
+states match the original in the new live capture
+(`menu-phase-1544-diagnosis/native-aligned-prefix.json`). Its complete racing
+and final checkpoint comparison remain pending.
+
+```sh
+make verify-native-api-returns API_RETURN_LOG_ARGS='--reference /tmp/wasm-dd2/original-history --before-source /tmp/wasm-dd2/before/dd2_stubs.c --output /tmp/wasm-dd2/api-return-check --wasm'
+# Retain the pre-patch provider in /tmp before regenerating build/.
+# Native engine capture accepts --api-return-log alongside --binary/--reference/--output.
+```
 
 ```sh
 make clean-logs
