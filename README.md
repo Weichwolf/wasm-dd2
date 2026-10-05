@@ -1166,6 +1166,39 @@ The source capture uses unchanged original AVI packets, actual Wine ACM and
 freshly parsed metadata. Its PCM is a source reference; remove it after the
 current comparison report, and retain no whole-original-output claim from it.
 
+Patch 884 restores the native movie device's independent completed-queue
+reset. Wine 10's `WOD_PushData` stops and resets a client whose completed
+WaveOut header queue is empty; its ALSA reset drops, resets and prepares the
+PCM before the later MCI reset/close. The native producer now performs that
+transition once, after the source has actually drained and its initial driver
+lead-in has been submitted. Completion remains latched after that reset.
+
+Two repeated nonzero-source device lifetimes preserve every accepted and
+consumed source sample while requiring drop/reset/prepare before close. The
+previous header fails that independent transition. Injected reset failures
+are reported after complete source playback and still close safely. All
+startup, delayed join, cancellation, initial/runtime failure and unavailable
+cases pass ASan/UBSan; 84 altered PCM controls are rejected
+(`movie-queue-1065-device/report.json`). Reproduce with an immutable old header:
+
+```sh
+python3 tools/verify_native_movie_device.py \
+  --before-queue-header /tmp/wasm-dd2/movie-queue-1052-before/dd2_native_movie_alsa.h \
+  --output /tmp/wasm-dd2/movie-queue-device
+```
+
+Full native Intro/Outro and real key-up/key-down cancellation retain exact
+Wine ACM source PCM at offset zero (`movie-queue-1067-comparison/report.json`).
+`observe_movie_driver_tail.py` now records post-source transport calls and
+each complete drop/reset/prepare sequence. A fresh unmodified original Intro
+records two such resets; the new native Intro/Outro record the independent
+producer reset, while the previous native Intro records none. Source-relative
+reset times remain different. The fresh original Intro accepts 660 and
+consumes 440 driver-silence frames; native accepts 880 and consumes 456
+(Intro) or 458 (Outro). The strict whole original Intro comparison still
+fails. These are device-boundary and literal source comparisons, not full
+original audio tails, shared clocks, physical output or complete game parity.
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

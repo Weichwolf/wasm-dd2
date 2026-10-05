@@ -1,10 +1,11 @@
 /* Exercise the production ALSA movie device with caller PCM from sample zero.
- * The fault build only injects EIO after a successful device submission. */
+ * The fault build injects EIO on write or completed-queue reset. */
 #include <SDL2/SDL.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #if defined(DD2_MOVIE_DEVICE_FAULT) || defined(DD2_MOVIE_DEVICE_DELAY) || defined(DD2_MOVIE_DEVICE_JOIN)
 #include <alsa/asoundlib.h>
 #include <dlfcn.h>
@@ -14,8 +15,23 @@ snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t* device,const void* buffer,snd_pcm_uf
     static __typeof__(snd_pcm_writei)* next;
     static unsigned calls;
     if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_writei");
-    if(!next || getenv("DD2_MOVIE_DEVICE_FAIL_START") || ++calls>1)return -EIO;
+    if(!next)return -EIO;
+    if(!getenv("DD2_MOVIE_DEVICE_FAIL_RESET_LOG") &&
+       (getenv("DD2_MOVIE_DEVICE_FAIL_START") || ++calls>1))return -EIO;
     return next(device,buffer,frames);
+}
+int snd_pcm_reset(snd_pcm_t* device){
+    static __typeof__(snd_pcm_reset)* next;
+    const char* path=getenv("DD2_MOVIE_DEVICE_FAIL_RESET_LOG");
+    if(path){
+        struct timespec now;FILE* log=fopen(path,"a");if(!log)exit(1);
+        clock_gettime(CLOCK_MONOTONIC,&now);
+        fprintf(log,"{\"time_ns\":%llu,\"result\":%d}\n",
+                (unsigned long long)((uint64_t)now.tv_sec*1000000000+now.tv_nsec),-EIO);
+        fclose(log);return -EIO;
+    }
+    if(!next)next=dlsym(RTLD_NEXT,"snd_pcm_reset");
+    return next?next(device):-EIO;
 }
 #elif defined(DD2_MOVIE_DEVICE_JOIN)
 #include <time.h>
@@ -55,7 +71,8 @@ static void require(int ok,const char* why){
 int main(int argc,char** argv){
     int16_t source[22050*2];unsigned i,round;Uint32 started;
     const char* mode=argc>1?argv[1]:"full";
-    int complete=!strcmp(mode,"full") || !strcmp(mode,"tail");
+    int reset_error=!strcmp(mode,"reset-error");
+    int complete=!strcmp(mode,"full") || !strcmp(mode,"tail") || reset_error;
     require(!SDL_Init(SDL_INIT_TIMER),"SDL timer initialization");
     if(!strcmp(mode,"unavailable") || !strcmp(mode,"initial-error") || !strcmp(mode,"thread-error")){
         for(i=0;i<2205*2;i++)source[i]=12345;
@@ -66,7 +83,7 @@ int main(int argc,char** argv){
     }
     require(complete || !strcmp(mode,"cancel") || !strcmp(mode,"error"),"known mode");
     for(round=0;round<(complete?2u:1u);round++){
-        int done;size_t frames=complete?2205:22050;
+        int done;size_t frames=complete?2205:22050;struct timespec close_time;uint64_t close_ns;
         for(i=0;i<frames;i++){
             source[i*2]=(int16_t)(12345+(i%2205)+round*4000);
             source[i*2+1]=(int16_t)(-23456+(i%2205));
@@ -80,12 +97,17 @@ int main(int argc,char** argv){
             require(SDL_GetTicks()-started<2000,"device completion timeout");
             SDL_Delay(1);
         }while(1);
-        if(complete)require(done==1,"complete source playback");
+        if(reset_error){
+            SDL_Delay(45);done=movie_alsa_done();
+            require(done==-1,"report completed queue reset failure");
+        }
+        else if(complete)require(done==1,"complete source playback");
         else if(!strcmp(mode,"error"))require(done==-1,"report actual device error");
         else require(done==0,"cancel while playing");
         if(!strcmp(mode,"tail"))SDL_Delay(45); /* observe driver output after the source drains */
-        printf("{\"round\":%u,\"mode\":\"%s\",\"elapsed_ms\":%u,\"done\":%d}\n",
-               round,mode,SDL_GetTicks()-started,done);
+        clock_gettime(CLOCK_MONOTONIC,&close_time);close_ns=(uint64_t)close_time.tv_sec*1000000000+close_time.tv_nsec;
+        printf("{\"round\":%u,\"mode\":\"%s\",\"elapsed_ms\":%u,\"done\":%d,\"before_close_ns\":%llu}\n",
+               round,mode,SDL_GetTicks()-started,done,(unsigned long long)close_ns);
         started=SDL_GetTicks();movie_alsa_stop();
         require(!movie_alsa.device && !movie_alsa.thread,"closed device and joined producer");
         require(SDL_GetTicks()-started<1000,"bounded close");

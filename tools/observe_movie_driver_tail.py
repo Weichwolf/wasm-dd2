@@ -52,6 +52,19 @@ def main():
             file.seek(count*4);require(not any(file.read()), 'nonzero output after declared source')
     first = zeros[0] if zeros else None
     period = played['period_frames']
+    transport = [dict(e, after_source_end_ms=(e['time_ns']-end)/1e6)
+                 for e in events if e['event'] in ('snd_pcm_drop', 'snd_pcm_reset', 'snd_pcm_prepare', 'close')
+                 and e.get('offset_frames', e.get('frames', 0)) >= count]
+    resets = []
+    for index, event in enumerate(events):
+        if event['event'] != 'snd_pcm_reset' or event['offset_frames'] < count:
+            continue
+        adjacent = events[max(0, index-1):index+2]
+        resets.append(dict(time_ns=event['time_ns'], after_source_end_ms=(event['time_ns']-end)/1e6,
+                           accepted_offset_frames=event['offset_frames'],
+                           drop_reset_prepare=[e['event'] for e in adjacent] ==
+                                              ['snd_pcm_drop', 'snd_pcm_reset', 'snd_pcm_prepare'] and
+                                              all(e['result'] == 0 for e in adjacent)))
     report = dict(scope=__doc__, observations_valid=True, original_port_parity='unproven',
                   movie=args.movie, original_movie_sha256=sha(ROOT/'DestructionDerby2'/args.movie),
                   accepted_journal_sha256=sha(capture/'audio'/accepted['events']),
@@ -66,6 +79,7 @@ def main():
                   silence_calls_end_after_source=all(e['call_end_ns']>=end for e in zeros),
                   first_silence_call_after_source_end_ms=[(first[k]-end)/1e6 for k in
                                                         ('call_begin_ns','call_end_ns')] if first else None,
+                  post_source_submission_transport=transport, completed_queue_resets=resets,
                   played_segments=played['segments'])
     if (capture/'report.json').exists():
         observed=json.loads((capture/'report.json').read_text())
