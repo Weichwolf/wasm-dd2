@@ -403,7 +403,7 @@ def run(game, output, args, on_menu=None):
         if video_collector:video_collector.check()
         if movie_collector:movie_collector.check()
         before = time.monotonic_ns()
-        clock_anchors = args.trace_timer_callbacks or args.trace_movie_video
+        clock_anchors = args.trace_timer_callbacks or getattr(args,'trace_movie_video',False)
         raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None
         current = state(pid,observe_timers=args.trace_timer_callbacks)
         raw_after = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None
