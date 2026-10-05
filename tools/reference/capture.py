@@ -156,6 +156,7 @@ def main():
                         help='observe actual original callbacks through a forwarding Wine API observer; audio mode only, logging changes timing')
     parser.add_argument('--trace-video',action='store_true',help='observe actual successful DirectDraw uploads and palettes')
     parser.add_argument('--trace-video-rng',action='store_true',help='also read the actual original RNG seed at each observed presentation; requires --trace-video')
+    parser.add_argument('--trace-movie-timing',action='store_true',help='record forwarded movie paint clocks and actual packets without pixel readback; requires audio mode, --audio and --keep-movie')
     parser.add_argument('--trace-movie-video',action='store_true',help='archive actual MCIAVI source and window RGB; requires audio mode and --keep-movie')
     parser.add_argument('--video-archive',action='store_true',help='archive closed video blocks losslessly instead of retaining raw frames')
     parser.add_argument('--video-max-frames',type=int,default=4096,help='bounded presentation count; at most 60000 with --video-archive')
@@ -182,8 +183,12 @@ def main():
                         help="seconds to keep running after video/navigation capture (requires --audio)")
     parser.add_argument('--reset-errors',action='store_true',help='inject scoped ALSA reset errors in the unmodified game process')
     args = parser.parse_args()
-    if args.trace_movie_video and (args.mode!='audio' or not args.keep_movie):
-        parser.error('--trace-movie-video requires --mode audio --keep-movie')
+    if args.trace_movie_timing and not args.audio:
+        parser.error('--trace-movie-timing requires --audio for independent clock anchors')
+    if args.trace_movie_timing and args.trace_movie_video:
+        parser.error('choose either movie timing or full movie video capture')
+    if (args.trace_movie_video or args.trace_movie_timing) and (args.mode!='audio' or not args.keep_movie):
+        parser.error('movie observation requires --mode audio --keep-movie')
     if args.trace_video_rng and not args.trace_video:
         parser.error('--trace-video-rng requires --trace-video')
     if args.video_archive and not args.trace_video:
@@ -363,10 +368,10 @@ def run(game, output, args, on_menu=None):
         env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
     video_collector=None
     movie_collector=None
-    if getattr(args,'trace_movie_video',False):
+    if args.trace_movie_video or args.trace_movie_timing:
         from reference.movie_video_observer import build,Collector
-        observer=WORK/'movie-video-observer'
-        metadata=build(observer)
+        observer=WORK/('movie-timing-observer' if args.trace_movie_timing else 'movie-video-observer')
+        metadata=build(observer,timing_only=args.trace_movie_timing)
         (output/'movie-video-observer-build.json').write_text(json.dumps(metadata,indent=2)+'\n')
         shutil.copyfile(observer/'msvfw32.dll',output/'movie-video-observer.dll')
         shutil.copyfile(observer/'gdi32.dll',output/'movie-gdi-observer.dll')
@@ -375,7 +380,7 @@ def run(game, output, args, on_menu=None):
         env['WINEDLLOVERRIDES']=env.get('WINEDLLOVERRIDES','')+';msvfw32=n;_msvfw32_real=n;gdi32=n,b;_gdi32_real=n'
         env['DD2_MOVIE_VIDEO_CAPTURE']='Z:'+str(output/'movie-video.bin').replace('/','\\')
         env['DD2_MOVIE_VIDEO_MAX_FRAMES']='60000'
-        movie_collector=Collector(output).start()
+        movie_collector=Collector(output,timing_only=args.trace_movie_timing).start()
     if getattr(args,'trace_video',False):
         from ddraw_video_observer import build
         observer=WORK/'video-observer'
@@ -403,7 +408,7 @@ def run(game, output, args, on_menu=None):
         if video_collector:video_collector.check()
         if movie_collector:movie_collector.check()
         before = time.monotonic_ns()
-        clock_anchors = args.trace_timer_callbacks or getattr(args,'trace_movie_video',False)
+        clock_anchors = args.trace_timer_callbacks or args.trace_movie_video or args.trace_movie_timing
         raw_before = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None
         current = state(pid,observe_timers=args.trace_timer_callbacks)
         raw_after = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) if clock_anchors else None

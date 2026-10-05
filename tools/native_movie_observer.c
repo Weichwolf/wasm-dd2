@@ -19,6 +19,7 @@ static FILE* journal;
 static FILE* video_pipe;
 static struct {SDL_AudioDeviceID id;FILE* pcm;uint64_t bytes;unsigned serial;int open;} devices[16];
 static const char* root(void){return getenv("DD2_NATIVE_MOVIE_OBSERVE");}
+static int timing_only(void){return getenv("DD2_NATIVE_MOVIE_TIMING_ONLY")!=NULL;}
 static void fail(const char* why){fprintf(stderr,"Native movie observer: %s\n",why);exit(1);}
 static FILE* create(const char* suffix){
     char path[4096];FILE* file;
@@ -88,7 +89,7 @@ int SDL_UpdateTexture(SDL_Texture* texture,const SDL_Rect* rect,const void* pixe
     if(root() && !result){Uint32 format;int width,height,y;
         if(rect || SDL_QueryTexture(texture,&format,NULL,&width,&height) || format!=SDL_PIXELFORMAT_ARGB8888 || width!=640 || height!=480 || pitch!=640*4)
             fail("actual movie texture format");
-        for(y=0;y<480;y++)memcpy(expected+y*640,(const uint8_t*)pixels+y*pitch,640*4);
+        if(!timing_only())for(y=0;y<480;y++)memcpy(expected+y*640,(const uint8_t*)pixels+y*pitch,640*4);
         texture_ready=1;
         fprintf(events(),"{\"event\":\"texture_update\",\"frame\":%u,\"call_begin_ns\":%llu,\"call_end_ns\":%llu,\"time_ns\":%llu}\n",
                 frame,(unsigned long long)begin,(unsigned long long)end,(unsigned long long)now());fflush(journal);
@@ -108,6 +109,16 @@ void SDL_RenderPresent(SDL_Renderer* renderer){
     void (*call)(SDL_Renderer*)=dlsym(RTLD_NEXT,"SDL_RenderPresent");
     if(root()){
         int width,height;
+        if(timing_only()){
+            uint64_t begin,end;
+            if(!texture_ready || getenv("DD2_NATIVE_MOVIE_VIDEO_PIPE"))fail("timing-only texture or conflicting pixel capture");
+            begin=now();call(renderer);end=now();
+            fprintf(events(),"{\"event\":\"present\",\"frame\":%u,\"exact_pixels\":0,"
+                    "\"record_version\":3,\"clock_domain\":\"CLOCK_MONOTONIC\","
+                    "\"present_begin_ns\":%llu,\"present_end_ns\":%llu,\"time_ns\":%llu}\n",
+                    frame++,(unsigned long long)begin,(unsigned long long)end,(unsigned long long)now());
+            texture_ready=0;fflush(journal);return;
+        }
         uint64_t readback_begin=now(),readback_end,present_begin,present_end;
         if(!texture_ready || SDL_GetRendererOutputSize(renderer,&width,&height) || width!=640 || height!=480
                 || SDL_RenderReadPixels(renderer,NULL,SDL_PIXELFORMAT_ARGB8888,actual,640*4) || memcmp(expected,actual,sizeof(actual)))

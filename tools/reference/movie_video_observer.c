@@ -51,9 +51,12 @@ int ICDecompress(HANDLE codec,U32 flags,Bitmap *input,const void *compressed,
     leave();return result;
 }
 #else
+static U32 serial,maximum=60000,private_draws;
+#ifndef DD2_MOVIE_TIMING_OBSERVER
 static HANDLE dc,bitmap;
-static U32 *pixels,serial,maximum=60000,private_draws;
+static U32 *pixels;
 static U8 source[320*192*3];
+#endif
 static char root[1024],part[1100],closed[1100];
 static void initialize(void){
     if(backend)return;
@@ -75,7 +78,10 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
                      U32 usage,U32 operation){
     typedef int(API *Call)(HANDLE,int,int,int,int,int,int,int,int,const void*,const Bitmap*,U32,U32);
     typedef void(*Copy)(U32*,U32*,U8*);
-    int result;U32 header[32]={0},i,j;HANDLE window,file,peer;Rect rect;Bitmap info={0};
+    int result;U32 header[32]={0};HANDLE window,file,peer;Rect rect;
+#ifndef DD2_MOVIE_TIMING_OBSERVER
+    U32 i,j;Bitmap info={0};
+#endif
     U64 paint_begin,paint_end,readback_end,frequency;
     U32 ticks_before,ticks_after;
     initialize();
@@ -104,6 +110,11 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
         if(!copy)fail(243);copy(&decode_serial,&packet_size,packet);
     }
     if(!decode_serial||!packet_size)fail(244);
+#ifdef DD2_MOVIE_TIMING_OBSERVER
+    /* Timing-only records never allocate a readback DC or touch pixels. */
+    readback_end=0;
+    if(!QueryPerformanceFrequency(&frequency)||!frequency)fail(245);
+#else
     if(!dc){
         dc=CreateCompatibleDC(target);info.size=40;info.width=640;info.height=-480;
         info.planes=1;info.bits=32;
@@ -119,7 +130,14 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
         const U8 *p=(const U8*)bits+((191-i)*320+j)*4;
         U8 *q=source+(i*320+j)*3;q[0]=p[2];q[1]=p[1];q[2]=p[0];
     }
-    header[0]=0x4d324444u;header[1]=2;header[2]=serial;header[3]=decode_serial;
+#endif
+    header[0]=0x4d324444u;
+#ifdef DD2_MOVIE_TIMING_OBSERVER
+    header[1]=3;
+#else
+    header[1]=2;
+#endif
+    header[2]=serial;header[3]=decode_serial;
     header[4]=packet_size;header[5]=(U32)x;header[6]=(U32)y;header[7]=(U32)width;header[8]=(U32)height;
     header[9]=320;header[10]=192;header[11]=32;header[12]=640;header[13]=480;
     header[14]=usage;header[15]=(U32)result;header[16]=GetCurrentThreadId();
@@ -132,7 +150,9 @@ int API StretchDIBits(HANDLE target,int x,int y,int width,int height,
     filename();file=CreateFileA(part,0x40000000u,3,0,1,0x80,0);
     if(file==(HANDLE)-1)fail(241);
     write_bytes(file,header,sizeof(header));write_bytes(file,packet,sizeof(packet));
+#ifndef DD2_MOVIE_TIMING_OBSERVER
     write_bytes(file,source,sizeof(source));write_bytes(file,pixels,640*480*4);
+#endif
     if(!CloseHandle(file)||!MoveFileA(part,closed))fail(242);
     serial++;leave();return result;
 }

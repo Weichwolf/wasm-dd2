@@ -3,6 +3,8 @@
 
 The real-time virtual ALSA device exposes literal sample extents and gaps.
 This recorder does not align output, fit state or prove original/port parity.
+Timing-only mode skips texture copies, renderer readback and video export;
+its report carries no pixel-equality evidence.
 No full video or engine memory images are captured.
 """
 import argparse
@@ -32,8 +34,11 @@ def main():
     parser.add_argument('--skip', action='store_true', help='test real X11 key-up followed by cancellation key-down')
     parser.add_argument('--reset-errors', action='store_true', help='inject scoped ALSA reset errors after source playback')
     parser.add_argument('--clock-profile', action='store_true', help='observe movie-clock call sites in a frame-pointer native binary')
+    parser.add_argument('--timing-only', action='store_true', help='observe forwarded rendering timestamps without pixel readback/export')
     parser.add_argument('--video-digest', action='store_true', help='hash every actual renderer frame through a bounded FIFO without retaining raw video')
     args = parser.parse_args()
+    if args.timing_only and args.video_digest:
+        parser.error('timing-only cannot export a video digest')
     output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False);(output/'audio').mkdir()
@@ -87,6 +92,7 @@ def main():
                        DD2_AUDIO_CAPTURE=str(output/'audio'), DD2_AUDIO_PROCESS=binary.name[:15],
                        DD2_AUDIO_RATE='22050', DD2_NATIVE_MOVIE_OBSERVE=str(output),
                        LD_PRELOAD=str(observer)+' dd2_audio.so', LD_LIBRARY_PATH=':'.join(map(str, libraries)))
+            if args.timing_only: env['DD2_NATIVE_MOVIE_TIMING_ONLY']='1'
             if args.reset_errors:
                 env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
                 env['DD2_RESET_FAULT_LOG']=str(output/'reset-fault.jsonl')
@@ -138,17 +144,24 @@ def main():
     frames = [r for r in events if r['event'] == 'present']
     require(frames and [r['frame'] for r in frames] == list(range(len(frames))),
             'incomplete native movie frame journal')
-    require(all(r['exact_pixels'] == 640*480 for r in frames), 'actual renderer/texture readback differs')
-    require(all(r.get('record_version') == 2 and r.get('clock_domain') == 'CLOCK_MONOTONIC' and
-                r['readback_begin_ns'] <= r['readback_end_ns'] <= r['present_begin_ns'] <=
-                r['present_end_ns'] <= r['time_ns'] for r in frames), 'actual presentation clock brackets missing')
+    require(all(r['exact_pixels'] == (0 if args.timing_only else 640*480) for r in frames), 'actual renderer/texture readback differs')
+    if args.timing_only:
+        require(all(r.get('record_version') == 3 and r.get('clock_domain') == 'CLOCK_MONOTONIC' and
+                    'readback_begin_ns' not in r and 'readback_end_ns' not in r and
+                    r['present_begin_ns'] <= r['present_end_ns'] <= r['time_ns'] for r in frames),
+                'actual timing-only presentation brackets missing')
+    else:
+        require(all(r.get('record_version') == 2 and r.get('clock_domain') == 'CLOCK_MONOTONIC' and
+                    r['readback_begin_ns'] <= r['readback_end_ns'] <= r['present_begin_ns'] <=
+                    r['present_end_ns'] <= r['time_ns'] for r in frames), 'actual presentation clock brackets missing')
     accepted = [r for r in audio['streams'] if r['format'] == 'S16_LE']
     played = [r for r in audio['played_streams'] if r['format'] == 'S16_LE']
     require(len(accepted) == len(played) == 1 and accepted[0]['closed'] and played[0]['closed'],
             'unique complete S16 movie device lifetime required')
     report = dict(scope=__doc__, observations_valid=True, original_port_parity='unproven',
                   binary_sha256=sha(binary), original_movie_sha256=sha(ROOT/'DestructionDerby2'/args.movie),
-                  movie=args.movie, frames=len(frames), exact_rendered_pixels=len(frames)*640*480,
+                  movie=args.movie, frames=len(frames), pixel_readback=not args.timing_only,
+                  exact_rendered_pixels=0 if args.timing_only else len(frames)*640*480,
                   skip=args.skip, key_up_retained=args.skip and control_done,
                   observer_source_sha256=sha(ROOT/'tools/native_movie_observer.c'), audio=audio)
     if clock_metadata:

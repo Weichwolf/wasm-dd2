@@ -1,6 +1,8 @@
 """Forward Wine's movie APIs and archive actual closed MCI window readbacks.
 
 This observes dd2h.exe's StretchDIBits source and resulting 640x480 window RGB.
+The optional timing-only mode records source packets and forwarded paint clocks
+without allocating a readback DC or capturing pixels.
 All backend sections and public exports are preserved. It does not establish
 movie clocks, physical display output or chronological original/port parity.
 """
@@ -16,14 +18,15 @@ from artifacts import WORK, check_space, open_files
 from reference.timer_observer import KERNEL, pe_exports
 
 SYSTEM = Path('/usr/lib/i386-linux-gnu/wine/i386-windows/msvfw32.dll')
-RECORD_BYTES = 128 + 32768 + 320*192*3 + 640*480*4
+TIMING_RECORD_BYTES = 128 + 32768
+RECORD_BYTES = TIMING_RECORD_BYTES + 320*192*3 + 640*480*4
 
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def build_backend(output, system, library, gdi=False):
+def build_backend(output, system, library, gdi=False, timing_only=False):
     output = Path(output).resolve()
     if WORK not in output.parents:
         raise ValueError('Use /tmp/wasm-dd2/')
@@ -69,6 +72,7 @@ def build_backend(output, system, library, gdi=False):
         libraries.append(str(lib))
     source = Path(__file__).with_suffix('.c')
     defines=['-DDD2_MOVIE_GDI_OBSERVER'] if gdi else []
+    if gdi and timing_only: defines.append('-DDD2_MOVIE_TIMING_OBSERVER')
     subprocess.run(['clang', '--target=i686-windows-gnu', '-ffreestanding', '-fno-builtin',
                     '-fno-stack-protector', '-O2', '-Wall', '-Wextra', '-Werror',
                     *defines,
@@ -83,45 +87,47 @@ def build_backend(output, system, library, gdi=False):
         expected = None if e['name'] in observed or e['name']=='DD2MoviePacketCopy' else f'_{library}_real.'+(e['name'] or '#'+str(e['ordinal']))
         if e['forwarder'] != expected:
             raise ValueError('Movie observer forwards to the wrong backend')
-    report = dict(scope=__doc__.strip(), backend_path=str(system), backend_sha256=digest(original),
+    report = dict(scope='Forwarded movie APIs, source packets and paint clocks; no pixel readback or A/V parity claim.' if timing_only else __doc__.strip(), backend_path=str(system), backend_sha256=digest(original),
                   private_backend_sha256=digest(backend), unchanged_sections=sections,
                   modified_header_bytes=list(range(at, at+len(marker))), exports=exports,
                   observer_exports=actual, additional_observer_exports=additional,
                   observer_sha256=digest((output/f'{library}.dll').read_bytes()),
                   source_sha256={p.name: digest(p.read_bytes()) for p in
                                  (source, source.with_name('winmm_timer_observer.h'))},
-                  record_bytes=RECORD_BYTES, maximum_frames=60000, original_window_address=0x46047c)
+                  record_bytes=TIMING_RECORD_BYTES if timing_only else RECORD_BYTES,
+                  timing_only=timing_only, maximum_frames=60000, original_window_address=0x46047c)
     (output/f'{library}-build.json').write_text(json.dumps(report, indent=2)+'\n')
     return report
 
 
-def build(output, system=SYSTEM):
-    report=build_backend(output,system,'msvfw32')
-    report['gdi']=build_backend(output,SYSTEM.with_name('gdi32.dll'),'gdi32',gdi=True)
+def build(output, system=SYSTEM, timing_only=False):
+    report=build_backend(output,system,'msvfw32',timing_only=timing_only)
+    report['gdi']=build_backend(output,SYSTEM.with_name('gdi32.dll'),'gdi32',gdi=True,timing_only=timing_only)
     (Path(output)/'build.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
 
 
-def parse(raw, serial):
-    if len(raw) != RECORD_BYTES:
+def parse(raw, serial, timing_only=False):
+    if len(raw) != (TIMING_RECORD_BYTES if timing_only else RECORD_BYTES):
         raise ValueError('Incomplete original movie readback')
     h = struct.unpack_from('<32I', raw)
-    if (h[0] != 0x4d324444 or h[1] not in (1, 2) or h[2] != serial or not h[3] or not 0 < h[4] <= 32768 or
+    if (h[0] != 0x4d324444 or h[1] not in ((3,) if timing_only else (1, 2)) or h[2] != serial or not h[3] or not 0 < h[4] <= 32768 or
             h[9:14] != (320, 192, 32, 640, 480) or h[14] or h[15] != 192 or
             not h[16] or not h[18] or any(h[20:] if h[1] == 1 else h[30:])):
         raise ValueError('Unsupported original movie record')
     clock = {}
-    if h[1] == 2:
+    if h[1] in (2, 3):
         begin, end, readback, frequency = struct.unpack_from('<4Q', raw, 80)
-        if not frequency or not 0 < begin <= end <= readback:
+        if not frequency or not 0 < begin <= end or (readback != 0 if timing_only else end > readback):
             raise ValueError('Reversed or missing original movie QPC observations')
         for ticks, qpc in ((h[28], begin), (h[29], end)):
             offset = (ticks-qpc*1000//frequency+0x80000000) % 0x100000000-0x80000000
             if abs(offset) > 2000:
                 raise ValueError('Original movie QPC/tick domains differ')
         clock = dict(paint_begin_qpc=begin, paint_end_qpc=end,
-                     readback_end_qpc=readback, frequency=frequency,
+                     frequency=frequency,
                      ticks_before=h[28], ticks_after=h[29])
+        if not timing_only: clock["readback_end_qpc"] = readback
     if any(raw[128+h[4]:128+32768]):
         raise ValueError('Nonzero compressed-packet padding')
     rect = list(struct.unpack_from('<4i', raw, 20))
@@ -132,12 +138,14 @@ def parse(raw, serial):
                 decode_serial=h[3], packet=raw[128:128+h[4]],
                 rectangle=rect, thread=h[16], observed_ms=h[17],
                 private_mci_window_draws=h[19],
-                source_rgb=raw[at:at+320*192*3], window_argb=raw[at+320*192*3:])
+                source_rgb=raw[at:at+320*192*3] if not timing_only else None,
+                window_argb=raw[at+320*192*3:] if not timing_only else None)
 
 
 class Collector:
     """Archive only atomically renamed, closed, literal movie observations."""
-    def __init__(self, directory):
+    def __init__(self, directory, timing_only=False):
+        self.timing_only=timing_only
         self.directory = Path(directory).resolve()
         if WORK not in self.directory.parents:
             raise ValueError('Use /tmp/wasm-dd2/')
@@ -172,7 +180,7 @@ class Collector:
                 before=path.stat()
                 if (before.st_dev,before.st_ino) in opened:
                     raise ValueError('Movie readback is still open')
-                raw=path.read_bytes();row=parse(raw,index)
+                raw=path.read_bytes();row=parse(raw,index,self.timing_only)
                 if identity(path.stat())!=identity(before):raise ValueError('Movie readback changed')
                 packed=zlib.compress(raw,1);target=self.archive/f'{index:06d}.zlib'
                 with target.open('xb') as file:file.write(packed)
@@ -181,8 +189,10 @@ class Collector:
                     compressed_sha256=digest(packed),compressed_bytes=len(packed),
                     decode_serial=row['decode_serial'],rectangle=row['rectangle'],
                     private_mci_window_draws=row['private_mci_window_draws'],
-                    packet_sha256=digest(row['packet']),source_rgb_sha256=digest(row['source_rgb']),
-                    window_argb_sha256=digest(row['window_argb']))
+                    packet_sha256=digest(row['packet']),pixels_captured=not self.timing_only)
+                if not self.timing_only:
+                    entry.update(source_rgb_sha256=digest(row['source_rgb']),
+                                 window_argb_sha256=digest(row['window_argb']))
                 entry.update(record_version=row['record_version'], clock=row['clock'])
                 pending.append((path,before,entry))
             check_space(self.directory);opened=open_files()
@@ -208,7 +218,9 @@ class Collector:
         self.drain(final=True)
         if list(self.directory.glob('movie-video.bin.*')) or not self.records:
             raise ValueError('Unclosed or missing movie readbacks')
-        report = dict(scope=__doc__.strip(), pass_=True, record_bytes=RECORD_BYTES,
+        report = dict(scope='Actual forwarded movie paint clocks and source packets; no pixel readback or output/timing parity claim.' if self.timing_only else __doc__.strip(),
+                      pass_=True, timing_only=self.timing_only,
+                      record_bytes=TIMING_RECORD_BYTES if self.timing_only else RECORD_BYTES,
                       frames=len(self.records), records=self.records)
         (self.archive/'manifest.json').write_text(json.dumps(report, indent=2)+'\n')
         return report

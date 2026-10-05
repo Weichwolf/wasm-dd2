@@ -1025,6 +1025,50 @@ device's actual played sample intervals. The sampled clock-offset envelope is
 a diagnostic, not a guarantee for unsampled instants or original/port timing.
 Version-1 image records remain readable; they lack these clock measurements.
 
+For clock diagnosis, `--trace-movie-timing` records version-3 source packets
+and forwarded paint timestamps without allocating a readback DC, reading
+window pixels or exporting RGB/ARGB. Each raw record is 32,896 bytes rather
+than 1,446,016. The original executable and forwarded API arguments remain
+unchanged. `observe_movie_timing.py` authenticates every actual compressed
+packet against the original AVI, requires the complete 1711-frame Intro
+endpoint, and reports `pixel_readback: false` with no window digest. Version-3
+records cannot be accepted by a full image comparison.
+
+The native recorder's `--timing-only` similarly skips texture copies, renderer
+readback and video export while retaining the forwarded SDL call brackets.
+It reports zero verified pixels and a distinct version-3 presentation schema.
+The native timing verifier rejects pixel claims or readback timestamps in that
+mode. Full version-2 recording remains the default on both routes.
+
+Two unchanged-original timing-only runs preserve all 6,039,616 source PCM bytes
+at offset zero with no source-clock gaps. They accept/consume 440/207 and
+660/275 additional silent frames. The native timing-only run likewise has no
+source gap and accepts/consumes 440/220 silent frames. These extents are retained,
+not fitted to one another (`movie-timing-1313-source-continuity.json`). The earlier
+full-readback run's 17.999-ms source gap is absent in these two runs; this does
+not prove readback was its sole cause or establish whole original A/V parity.
+
+Both native modes validate all 1711 actual presentations, and the new default
+full original/native routes retain the complete verified window-stream digest
+(`movie-timing-1319-full-video-regression.json`). Twelve actual original record
+mutations, strict original/native mode separation, four invalid option sets,
+and four changed-clock/frame controls per native mode are rejected. Timing
+reports are `movie-timing-1305-report/report.json`,
+`movie-timing-1310-repeat-report/report.json`, and
+`movie-timing-1311-native-report/report.json`. Successful raw observations are
+removed after the report; packet/clock manifests remain for diagnosis.
+
+```sh
+python3 tools/reference/capture.py --mode audio --audio --audio-rate 22050 \
+  --keep-movie --trace-movie-timing --wine-debug=-all,+mciavi \
+  --audio-tail 1 --timeout 140 --output /tmp/wasm-dd2/original-movie-timing
+make observe-movie-timing MOVIE_TIMING_ARGS='--capture /tmp/wasm-dd2/original-movie-timing --output /tmp/wasm-dd2/original-movie-clock-report'
+python3 tools/capture_native_movie_device.py --binary /tmp/dd2_native \
+  --timing-only --output /tmp/wasm-dd2/native-movie-timing
+python3 tools/observe_native_movie_timing.py \
+  --capture /tmp/wasm-dd2/native-movie-timing --output /tmp/wasm-dd2/native-movie-clock-report
+```
+
 The actual original run in `movie-clock-956-observed/report.json` has 1711
 presentations, the same complete window digest above, and 1057 paired clock
 observations. Its whole accepted PCM is 6042256 bytes; whole played PCM is

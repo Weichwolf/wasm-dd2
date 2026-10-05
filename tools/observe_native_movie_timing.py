@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Validate forwarded SDL presentation brackets against consumed audio samples.
 
-Both journals use CLOCK_MONOTONIC. Readback and export work precede the
+Both journals use CLOCK_MONOTONIC. Timing-only captures skip pixel readback
+and export and cannot serve as pixel-equality evidence. Readback and export work precede the
 forwarded SDL_RenderPresent call and are reported separately. Observations
 include their scheduling cost; these are API/device measurements, not
 physical display/DAC timestamps or synchronized original/port parity.
@@ -23,15 +24,17 @@ def sha(path):
         return hashlib.file_digest(file, 'sha256').hexdigest()
 
 
-def validate_frames(frames):
+def validate_frames(frames, timing_only=False):
     require(frames, 'presentation records missing')
     previous = 0
     for index, row in enumerate(frames):
-        require(row['frame'] == index and row['exact_pixels'] == 640*480 and
-                row.get('record_version') == 2 and row.get('clock_domain') == 'CLOCK_MONOTONIC',
+        require(row['frame'] == index and row['exact_pixels'] == (0 if timing_only else 640*480) and
+                row.get('record_version') == (3 if timing_only else 2) and row.get('clock_domain') == 'CLOCK_MONOTONIC',
                 'actual presentation sequence or clock domain differs')
-        times = [row[key] for key in ('readback_begin_ns', 'readback_end_ns', 'present_begin_ns',
-                                      'present_end_ns', 'time_ns')]
+        if timing_only:
+            require('readback_begin_ns' not in row and 'readback_end_ns' not in row, 'timing-only observation claims pixel readback')
+        keys = ('present_begin_ns','present_end_ns','time_ns') if timing_only else ('readback_begin_ns','readback_end_ns','present_begin_ns','present_end_ns','time_ns')
+        times = [row[key] for key in keys]
         require(all(type(t) is int and t > 0 for t in times) and previous <= times[0] and
                 times == sorted(times), 'reversed or overlapping forwarded presentation brackets')
         previous = times[-1]
@@ -52,7 +55,8 @@ def main():
     require(sha(movie) == observation['original_movie_sha256'], 'changed original movie')
     metadata, _, _, _ = original_metadata(movie)
     events = [json.loads(s) for s in (capture/'events.jsonl').read_text().splitlines()]
-    frames = [r for r in events if r['event'] == 'present'];validate_frames(frames)
+    mode = observation.get('pixel_readback') is False
+    frames = [r for r in events if r['event'] == 'present'];validate_frames(frames,mode)
     require(len(frames) == observation['frames'] == metadata['frames']-1, 'incomplete presentation sequence')
     updates = [r for r in events if r['event'] == 'texture_update']
     copies = [r for r in events if r['event'] == 'render_copy']
@@ -63,7 +67,7 @@ def main():
         require(update['frame'] == copied['frame'] == index and
                 update['call_begin_ns'] <= update['call_end_ns'] <= update['time_ns'] <=
                 copied['call_begin_ns'] <= copied['call_end_ns'] <= copied['time_ns'] <=
-                presented['readback_begin_ns'], 'reordered texture/copy/readback API intervals')
+                presented['present_begin_ns' if mode else 'readback_begin_ns'], 'reordered texture/copy/readback API intervals')
     thread = threads[0]
     require(thread['call_begin_ns'] <= thread['call_end_ns'] <= thread['time_ns'] <= updates[0]['call_begin_ns'],
             'thread startup does not precede movie rendering')
@@ -79,8 +83,8 @@ def main():
     for row in frames:
         row['played_audio_frames_during_present'] = [consumed(row['present_begin_ns']),
                                                      consumed(row['present_end_ns'])]
-        row['readback_duration_ns'] = row['readback_end_ns']-row['readback_begin_ns']
-        row['export_before_present_ns'] = row['present_begin_ns']-row['readback_end_ns']
+        row['readback_duration_ns'] = None if mode else row['readback_end_ns']-row['readback_begin_ns']
+        row['export_before_present_ns'] = None if mode else row['present_begin_ns']-row['readback_end_ns']
     source_end_ns = None
     for segment in segments:
         if segment['offset_frames'] < metadata['pcm_frames'] <= segment['offset_frames']+segment['frames']:
@@ -88,14 +92,15 @@ def main():
             break
     require(source_end_ns is not None, 'played source endpoint missing')
     negative = []
-    for label in ('clock-domain', 'reversed-present', 'readback-after-present', 'frame-order'):
+    for label in ('clock-domain', 'reversed-present', 'unexpected-readback' if mode else 'readback-after-present', 'frame-order'):
         altered = copy.deepcopy(frames)
         row = altered[0]
         if label == 'clock-domain': row['clock_domain'] = 'CLOCK_MONOTONIC_RAW'
         elif label == 'reversed-present': row['present_begin_ns'] = row['present_end_ns']+1
+        elif label == 'unexpected-readback': row['readback_begin_ns'] = row['present_begin_ns']
         elif label == 'readback-after-present': row['readback_end_ns'] = row['present_end_ns']+1
         else: row['frame'] = 1
-        try: validate_frames(altered)
+        try: validate_frames(altered,mode)
         except RuntimeError: negative.append(label)
         else: raise RuntimeError('accepted altered actual presentation clocks: '+label)
     frame_file = output/'frames.json';frame_file.write_text(json.dumps(frames)+'\n')
@@ -104,7 +109,7 @@ def main():
                   movie=observation['movie'], binary_sha256=observation['binary_sha256'],
                   native_observer_source_sha256=observation['observer_source_sha256'],
                   capture_report_sha256=sha(capture/'report.json'), events_sha256=sha(capture/'events.jsonl'),
-                  frames_sha256=sha(frame_file), frames=len(frames), clock_domain='CLOCK_MONOTONIC',
+                  frames_sha256=sha(frame_file), frames=len(frames), pixel_readback=not mode, clock_domain='CLOCK_MONOTONIC',
                   sample_clock_source_sha256=sha(ROOT/'tools/reference/alsa_clock.c'),
                   played_journal_sha256=sha(capture/'audio'/device['events']),
                   played_pcm_sha256=device['sha256'], played_segments=len(segments),
@@ -118,8 +123,8 @@ def main():
                   first_present_played_audio_frames=first['played_audio_frames_during_present'],
                   last_present_played_audio_frames=last['played_audio_frames_during_present'],
                   observed_present_begin_span_ms=(last['present_begin_ns']-first['present_begin_ns'])/1e6,
-                  max_readback_duration_ms=max(r['readback_duration_ns'] for r in frames)/1e6,
-                  max_export_before_present_ms=max(r['export_before_present_ns'] for r in frames)/1e6,
+                  max_readback_duration_ms=None if mode else max(r['readback_duration_ns'] for r in frames)/1e6,
+                  max_export_before_present_ms=None if mode else max(r['export_before_present_ns'] for r in frames)/1e6,
                   movie_thread_creation_ms=(thread['call_end_ns']-thread['call_begin_ns'])/1e6,
                   first_texture_after_first_played_sample_ms=(updates[0]['call_begin_ns']-segments[0]['begin_ns'])/1e6,
                   max_texture_update_ms=max((r['call_end_ns']-r['call_begin_ns'])/1e6 for r in updates),
