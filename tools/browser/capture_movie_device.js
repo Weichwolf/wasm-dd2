@@ -93,16 +93,23 @@ const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex
      __deviceMovie.frames.push({frame:__deviceMovie.frames.length,begin_performance_ms:before,
                                end_performance_ms:performance.now(),context_time:time,
                                ...(clockProfile?{movie_clock_ms:__deviceMovie.last_movie_clock_ms,
+                                                ...(__deviceMovie.movie_clock_unit==='microseconds'?{movie_clock_us:__deviceMovie.last_movie_clock_us}:{}),
                                                 before_clock:beforeClock,after_clock:ac?snapshot(ac):null}:{})});
      return result;
     };
     if(clockProfile){
-     const clock=imports.env.movie_clock;
-     assertClock(clock);
-     imports.env.movie_clock=function(...args){
+     const name=typeof imports.env.movie_clock_us==='function'?'movie_clock_us':'movie_clock';
+     const clock=imports.env[name],precise=name==='movie_clock_us';
+     assertClock(clock);__deviceMovie.movie_clock_unit=precise?'microseconds':'milliseconds';
+     imports.env[name]=function(...args){
       const value=clock.apply(this,args);__deviceMovie.clock_calls++;
-      if(__deviceMovie.clock_calls===1)__deviceMovie.initial_movie_clock_ms=value;
-      __deviceMovie.last_movie_clock_ms=value;return value;
+      if(__deviceMovie.clock_calls===1){
+       __deviceMovie.initial_movie_clock_ms=precise?value/1000:value;
+       if(precise)__deviceMovie.initial_movie_clock_us=value;
+      }
+      __deviceMovie.last_movie_clock_ms=precise?value/1000:value;
+      if(precise)__deviceMovie.last_movie_clock_us=value;
+      return value;
      };
     }
    }

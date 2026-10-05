@@ -65,6 +65,16 @@ def main():
         clock_metadata = dict(lower=lower, upper=lower+size,
                               source_sha256=sha(ROOT/'tools/native_movie_clock_observer.c'),
                               observer_sha256=sha(clock_observer))
+        precise = [s.split() for s in symbols.splitlines() if s.endswith(' dd2_movie_now_us')]
+        if precise:
+            require(len(precise)==1 and len(precise[0])==4, 'unique microsecond-clock symbol required')
+            us_lower,us_size=(int(s,16) for s in precise[0][:2])
+            us_disassembly=subprocess.check_output(['objdump','-d','--disassemble=dd2_movie_now_us',str(binary)],text=True)
+            require('push   %ebp' in us_disassembly and 'mov    %esp,%ebp' in us_disassembly,
+                    'frame-pointer microsecond clock required')
+            (output/'movie-us-clock-disassembly.txt').write_text(us_disassembly)
+            clock_metadata.update(us_lower=us_lower,us_upper=us_lower+us_size,microsecond_clock=True)
+
     asound = output/'asound.conf'
     asound.write_text(f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\n'
                       'pcm.!default { type dd2clock }\n')
@@ -100,6 +110,9 @@ def main():
                 env['LD_PRELOAD']=str(clock_observer)+' '+env['LD_PRELOAD']
                 env.update(DD2_MOVIE_CLOCK_LOG=str(output/'movie-clock.jsonl'),
                            DD2_MOVIE_CLOCK_LOWER=format(lower,'x'), DD2_MOVIE_CLOCK_UPPER=format(lower+size,'x'))
+                if clock_metadata.get('microsecond_clock'):
+                    env.update(DD2_MOVIE_CLOCK_US_LOWER=format(clock_metadata['us_lower'],'x'),
+                               DD2_MOVIE_CLOCK_US_UPPER=format(clock_metadata['us_upper'],'x'))
             if args.video_digest:
                 env['DD2_NATIVE_MOVIE_VIDEO_PIPE']='1'
             process = subprocess.Popen([str(binary)], cwd=ROOT/'DestructionDerby2',

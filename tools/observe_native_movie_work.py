@@ -31,11 +31,11 @@ def sha(path):
 
 def call_sites(binary, function):
     text = subprocess.check_output(['objdump', '-d', '--disassemble='+function, str(binary)], text=True)
-    sites = re.findall(r'call[^\n]*<dd2_movie_now_ms>\n\s*([0-9a-f]+):', text)
+    sites = re.findall(r'call[^\n]*<dd2_movie_now_(?:ms|us)>\n\s*([0-9a-f]+):', text)
     return [int(s, 16) for s in sites], text
 
 
-def validate(clocks, updates, sites, epoch_site, metadata):
+def validate(clocks, updates, sites, epoch_site, metadata, precise=False):
     require(clocks and clocks[0]['site'] == epoch_site and
             sum(c['site'] == epoch_site for c in clocks) == 1, 'unique observed MCI epoch required')
     domain=clocks[0]['clock_domain']
@@ -51,7 +51,14 @@ def validate(clocks, updates, sites, epoch_site, metadata):
                     previous_mono<=c['monotonic_begin_ns']<=c['monotonic_end_ns'],
                     'paired monotonic clock bracket missing or reversed')
             previous_mono=c['monotonic_end_ns']
+    def movie_us(ns):
+        ticks=ns//100
+        scaled=(ticks*1000000)&0xffffffffffffffff
+        if scaled>=1<<63:scaled-=1<<64
+        return (abs(scaled)//10000000)*(1 if scaled>=0 else -1)
     epoch = clocks[0]['time_ns']
+    deadline_us=float(movie_us(epoch))
+    duration_us=(metadata['video_scale']/metadata['video_rate'])*1000000
     pump_records = [c for c in clocks if c['site'] == sites[0]]
     pumps = [c['monotonic_end_ns'] if domain=='CLOCK_MONOTONIC_RAW' else c['time_ns'] for c in pump_records]
     require(pumps and len(updates) == metadata['frames']-1, 'complete movie pump/texture history required')
@@ -68,14 +75,15 @@ def validate(clocks, updates, sites, epoch_site, metadata):
         mono_begin=observed['monotonic_begin_ns'] if domain=='CLOCK_MONOTONIC_RAW' else t
         mono_end=pumps[position]
         elapsed = (t//1_000_000 - epoch//1_000_000) & 0xffffffff
-        require(index*metadata['video_scale']*1000 <= elapsed*metadata['video_rate'],
+        require(movie_us(t)>=deadline_us if precise else index*metadata['video_scale']*1000 <= elapsed*metadata['video_rate'],
                 'texture drawn before its actual elapsed-clock deadline')
+        deadline_us+=duration_us
         nominal = index*metadata['video_scale']*1_000_000_000/metadata['video_rate']
         rows.append(dict(frame=index, pump_time_ns=t, pump_clock_domain=domain,
                          pump_monotonic_bracket_ns=[mono_begin,mono_end], texture_begin_ns=u['call_begin_ns'],
                          elapsed_to_texture_ns=u['call_begin_ns']-mono_end,
                          elapsed_to_texture_upper_ns=u['call_begin_ns']-mono_begin,
-                         pump_after_nominal_ns=t-epoch-nominal))
+                         pump_after_nominal_ns=(movie_us(t)-movie_us(epoch))*1000-nominal if precise else t-epoch-nominal))
     return rows
 
 
@@ -99,6 +107,10 @@ def main():
     sites, pump_disassembly = call_sites(args.binary, 'dd2_movie_pump')
     epochs, start_disassembly = call_sites(args.binary, 'dd2_movie_mci_send')
     require(len(sites) == 3 and len(epochs) == 1, 'unsupported movie clock call graph')
+    precise = binding.get('microsecond_clock', False)
+    require(precise == bool(re.search(r'call[^\n]*<dd2_movie_now_us>', start_disassembly)) and
+            precise == bool(re.search(r'call[^\n]*<dd2_movie_now_us>', pump_disassembly)),
+            'declared clock precision differs from actual MCI/pump calls')
     clocks = [json.loads(s) for s in (capture/'movie-clock.jsonl').read_text().splitlines()]
     require(len(clocks) == binding['calls'] and clocks and
             all(c['clock_domain'] == binding['clock_domain'] for c in clocks),
@@ -106,7 +118,7 @@ def main():
     events = [json.loads(s) for s in (capture/'events.jsonl').read_text().splitlines()]
     validate_frames([r for r in events if r['event'] == 'present'], observed.get('pixel_readback') is False)
     updates = [r for r in events if r['event'] == 'texture_update']
-    rows = validate(clocks, updates, sites, epochs[0], metadata)
+    rows = validate(clocks, updates, sites, epochs[0], metadata, precise)
     negative = []
     for label in ('clock-domain', 'unknown-site', 'reversed-clock', 'texture-before-clock', *(['reversed-monotonic'] if clocks[0]['clock_domain']=='CLOCK_MONOTONIC_RAW' else [])):
         changed = copy.deepcopy(clocks);textures = copy.deepcopy(updates)
@@ -115,7 +127,7 @@ def main():
         elif label == 'reversed-clock': changed[1]['time_ns'] = changed[0]['time_ns']-1
         elif label == 'reversed-monotonic': changed[1]['monotonic_end_ns'] = changed[1]['monotonic_begin_ns']-1
         else: textures[0]['call_begin_ns'] = changed[0].get('monotonic_begin_ns',changed[0]['time_ns'])-1
-        try: validate(changed, textures, sites, epochs[0], metadata)
+        try: validate(changed, textures, sites, epochs[0], metadata, precise)
         except RuntimeError: negative.append(label)
         else: raise RuntimeError('accepted changed work history: '+label)
     (output/'frames.json').write_text(json.dumps(rows)+'\n')
@@ -130,6 +142,7 @@ def main():
                   frames_sha256=sha(output/'frames.json'), call_sites_sha256=sha(output/'call-sites.txt'),
                   frames=len(rows), clock_calls=len(clocks), epoch_site=epochs[0], pump_sites=sites,
                   movie_clock_domain=clocks[0]['clock_domain'],
+                  microsecond_clock=precise,
                   elapsed_to_texture_ms=summary('elapsed_to_texture_ns'),
                   elapsed_to_texture_upper_ms=summary('elapsed_to_texture_upper_ns'),
                   pump_after_nominal_ms=summary('pump_after_nominal_ns'),

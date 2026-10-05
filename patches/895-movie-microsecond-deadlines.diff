@@ -1,0 +1,112 @@
+Match Wine MCIAVI microsecond clock conversion and frame deadlines.
+
+Wine currenttime_us performs QPC integer multiply/divide before converting
+its microseconds to double. MCIAVI_player snapshots that clock and adds each
+PaintFrame duration to the next deadline. Separately flooring the movie epoch
+and each reading to milliseconds can make native/WASM frames due almost
+one millisecond early. Use the microsecond provider and the original double
+next-deadline accumulation. Native mirrors Wine QPC's signed x86 arithmetic;
+browser retains its independently observed output-time source at microsecond
+resolution. Keep the legacy millisecond provider for audio drain polls.
+
+This changes neither decoded pixels nor submitted source PCM. Actual browser
+clock synchronization, original/port scheduling and full audio tails remain
+separate acceptance requirements.
+
+Primary sources:
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/mciavi32/mciavi.c
+https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/mciavi32/mmoutput.c
+
+--- a/dd2_movie.c
++++ b/dd2_movie.c
+@@ -15,8 +15,9 @@
+ extern FILE* dd2_fopen_ci(const char*,const char*);
+ extern int FUN_004132f0(void*,unsigned,unsigned,unsigned);
+ static DD2AVI* movie;
+-static unsigned playing,start_ms,next_frame,window,callback,notify,audio_available;
++static unsigned playing,next_frame,window,callback,notify,audio_available;
+ static unsigned draining,drain_poll_ms;
++static double next_frame_us;
+ static int32_t destination[4];
+ static uint32_t image[640*480];
+ static void finish(unsigned result) {
+@@ -55,18 +56,20 @@
+ int dd2_movie_active(void) { return playing!=0; }
+ void dd2_movie_pump(void) {
+     const DD2AVIInfo* info;
+-    unsigned elapsed,end_frame;
++    unsigned end_frame;
++    double current_us;
+     if(!playing)return;
+-    info=dd2_avi_info(movie);elapsed=dd2_movie_now_ms()-start_ms;
++    info=dd2_avi_info(movie);current_us=dd2_movie_now_us();
+     /* Actual Wine 10 MCI default: last source frame is an exclusive bound.
+      * The AVI decoder retains that frame for its separate source contract. */
+     end_frame=info->frames-1;
+-    while(next_frame<end_frame && (uint64_t)next_frame*info->video_scale*1000<= (uint64_t)elapsed*info->video_rate) {
++    while(next_frame<end_frame && next_frame_us<=current_us) {
+         const uint8_t* rgb=dd2_avi_frame(movie,next_frame);
+         if(!rgb || dd2_movie_render_window(rgb,info->width,info->height,destination,image)) {
+             dd2_movie_audio_stop();finish(8);return; /* MCI_NOTIFY_FAILURE */
+         }
+         dd2_movie_present(image);next_frame++;
++        next_frame_us+=(info->video_scale/(double)info->video_rate)*1000000;
+     }
+     /* MCIAVI_player leaves its video loop immediately after the final draw.
+      * It checks completed wave headers, then sleeps 100 ms before each retry.
+@@ -122,7 +125,7 @@
+          * open WaveOut. Do not discard the entire film on a device failure. */
+         audio_available=dd2_movie_audio_start(dd2_avi_pcm(movie),info->pcm_frames,info->pcm_rate,info->pcm_channels)==0;
+         next_frame=draining=drain_poll_ms=0;callback=params[0];notify=flags&1;
+-        start_ms=dd2_movie_now_ms();playing=1;
++        next_frame_us=dd2_movie_now_us();playing=1;
+         if(flags&2)while(playing) { dd2_movie_pump();dd2_movie_wait(); }
+         return 0;
+     default:return 261;
+--- a/dd2_movie_platform.c
++++ b/dd2_movie_platform.c
+@@ -59,6 +59,9 @@
+ EM_JS(unsigned,movie_clock,(),{
+     return Math.floor(Module._dd2movieOutputTime ? Module._dd2movieOutputTime()*1000 : performance.now())>>>0;
+ });
++EM_JS(double,movie_clock_us,(),{
++    return Math.floor(Module._dd2movieOutputTime ? Module._dd2movieOutputTime()*1000000 : performance.now()*1000);
++});
+ EM_JS(void,movie_present,(const uint32_t* argb),{
+     var canvas=Module.canvas || document.getElementById('canvas');if(!canvas)return;
+     if(canvas.width!==640 || canvas.height!==480) { canvas.width=640;canvas.height=480; }
+@@ -84,6 +87,24 @@
+ #endif
+         clock_gettime(CLOCK_MONOTONIC,&ts);
+     return (unsigned)((uint64_t)ts.tv_sec*1000u+ts.tv_nsec/1000000u);
++#endif
++}
++double dd2_movie_now_us(void) {
++#ifdef DD2_BROWSER
++    return movie_clock_us();
++#else
++    struct timespec ts;
++    uint64_t ticks,scaled;
++#ifdef CLOCK_MONOTONIC_RAW
++    if(clock_gettime(CLOCK_MONOTONIC_RAW,&ts))
++#endif
++        clock_gettime(CLOCK_MONOTONIC,&ts);
++    /* Wine QPC uses 100-ns ticks. MCIAVI currenttime_us performs signed
++     * 64-bit multiply/divide before converting to double. Unsigned multiply
++     * makes its x86 wrap defined here, including the signed quotient. */
++    ticks=(uint64_t)ts.tv_sec*10000000u+ts.tv_nsec/100u;
++    scaled=ticks*1000000u;
++    return (double)((int64_t)scaled/10000000);
+ #endif
+ }
+ void dd2_movie_wait(void) {
+--- a/dd2_movie_platform.h
++++ b/dd2_movie_platform.h
+@@ -3,6 +3,7 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ unsigned dd2_movie_now_ms(void);
++double dd2_movie_now_us(void);
+ void dd2_movie_wait(void);
+ void dd2_movie_present(const uint32_t* argb);
+ int dd2_movie_audio_start(const int16_t*,size_t,unsigned,unsigned);

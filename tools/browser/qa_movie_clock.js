@@ -35,7 +35,7 @@ const root=path.resolve(process.argv[2]);
     Object.defineProperty(ac,'state',{get:()=>state,configurable:true});
     ac.getOutputTimestamp=()=>output;
     const rows=[];
-    function read(phase){rows.push({phase,rendered,output:{...output},state,clock:Module._dd2_movie_now_ms(),done:Module._dd2_movie_audio_done()});}
+    function read(phase){rows.push({phase,rendered,output:{...output},state,clock:Module._dd2_movie_now_ms(),microseconds:Module._dd2_movie_now_us?Module._dd2_movie_now_us():null,done:Module._dd2_movie_audio_done()});}
     read('no-output');
     output={contextTime:0,performanceTime:performance.now()-100};read('zero-output-position');
     output={contextTime:.00005,performanceTime:performance.now()-100};read('sub-millisecond-startup-position');
@@ -49,13 +49,18 @@ const root=path.resolve(process.argv[2]);
     delete ac.state;
     const stopCleared=!Module._dd2movieAc&&!Module._dd2movieSource&&!Module._dd2movieOutputTime;
     const now=performance.now;performance.now=()=>2**32+123.75;
-    const wrappedFallback=Module._dd2_movie_now_ms();performance.now=now;
-    return {opened,sourceExact:exact,scheduled,rows,stopCleared,wrappedFallback};
+    const wrappedFallback=Module._dd2_movie_now_ms();
+    const preciseFallback=Module._dd2_movie_now_us?Module._dd2_movie_now_us():null;
+    performance.now=()=>123456.789;
+    const fractionalFallback=Module._dd2_movie_now_us?Module._dd2_movie_now_us():null;performance.now=now;
+    return {opened,sourceExact:exact,scheduled,rows,stopCleared,wrappedFallback,preciseFallback,fractionalFallback};
    });
    assert(!errors.length,JSON.stringify(errors));assert(result.opened===0&&result.sourceExact&&result.stopCleared,'caller PCM or cleanup differs');
    assert(result.wrappedFallback===123,'unavailable-device performance clock did not wrap');
    const rows=Object.fromEntries(result.rows.map(r=>[r.phase,r]));
    if(program==='production'){
+    assert(result.preciseFallback===(2**32+123.75)*1000&&result.fractionalFallback===123456789,'microsecond clock lost fractional milliseconds or wrapped as a DWORD');
+    assert(rows['no-output'].microseconds===0&&rows['zero-output-position'].microseconds===0,'missing output advanced microsecond clock');
     assert(rows['no-output'].clock===0&&rows['zero-output-position'].clock===0,'unavailable output advanced movie');
     assert(rows['sub-millisecond-startup-position'].clock===0,'clamped startup position advanced movie through silent prefill');
     assert(rows['output-behind-render'].clock>=100&&rows['output-behind-render'].clock<500,'movie clock used rendered audio');

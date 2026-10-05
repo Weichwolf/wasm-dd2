@@ -69,7 +69,11 @@ def validate(browser,device,metadata):
         return [lo+round(begin*1e6)-100000,hi+round(end*1e6)+100000]
     def source_times(bounds):
         return [(consumed(ns)-prefix)*1000/rate for ns in bounds]
-    frames=browser['frames'];rows=[];last=-1;last_clock=browser['initial_movie_clock_ms']
+    precise=browser.get('movie_clock_unit')=='microseconds'
+    require(browser.get('movie_clock_unit','milliseconds') in ('milliseconds','microseconds'),'unknown movie clock unit')
+    frames=browser['frames'];rows=[];last=-1;last_clock=browser['initial_movie_clock_us'] if precise else browser['initial_movie_clock_ms']
+    deadline_us=float(last_clock)
+    duration_us=(metadata['video_scale']/metadata['video_rate'])*1000000
     require(browser['clock_calls']>len(frames) and frames and
             (26<=len(frames)<metadata['frames']-1 if browser['skip'] else len(frames)==metadata['frames']-1),
             'movie presentation/clock extent differs')
@@ -78,9 +82,16 @@ def validate(browser,device,metadata):
         require(frame['frame']==i and last<=begin<=point['begin_performance_ms']<=point['end_performance_ms']<=end,
                 'actual presentation brackets are missing or reordered')
         last=end;clock=frame['movie_clock_ms'];pts=i*metadata['video_scale']*1000/metadata['video_rate']
-        require(clock>=last_clock and clock-browser['initial_movie_clock_ms']>=pts,
-                'movie frame precedes its observed elapsed-clock deadline')
-        last_clock=clock
+        if precise:
+            observed_us=frame['movie_clock_us']
+            require(type(observed_us) is int and clock==observed_us/1000 and
+                    observed_us>=last_clock and observed_us>=deadline_us,
+                    'movie frame precedes its observed elapsed-clock deadline')
+            last_clock=observed_us;deadline_us+=duration_us
+        else:
+            require(clock>=last_clock and clock-browser['initial_movie_clock_ms']>=pts,
+                    'movie frame precedes its observed elapsed-clock deadline')
+            last_clock=clock
         require(0<=point['output_context_time']<=point['context_time'] and
                 0<=point['output_performance_ms']<=point['end_performance_ms']+0.1,
                 'output timestamp is outside rendered/time bounds')
@@ -169,6 +180,7 @@ def main():
                           declared_source_schedule_delay_ms=browser.get('source_schedule_delay_ms',0),
                           scheduled_source_start_ms=browser['events'][0]['scheduled_time']*1000,
                           wasm_sha256=browser['wasm_sha256'],frames=len(details['frames']),
+                          movie_clock_unit=browser.get('movie_clock_unit','milliseconds'),
                           independent_offset_bounds_ns=details['independent_performance_to_monotonic_offset_bounds_ns'],
                           offset_interval_width_ms=details['offset_interval_width_ms'],endpoints=details['endpoints'],
                           video_ahead_source_ms=summarize(details['frames'],'video_ahead_source_bounds_ms'),

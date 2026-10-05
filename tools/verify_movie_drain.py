@@ -32,21 +32,21 @@ def chunk(kind, data):
     return kind+struct.pack('<I', len(data))+data+(b'\0' if len(data)&1 else b'')
 
 
-def short_avi(source):
+def short_avi(source, frames=2):
     rows = list(riff_chunks(source))
     main = bytearray(next(d for k, d in rows if k == b'avih'))
-    struct.pack_into('<I', main, 16, 2)
+    struct.pack_into('<I', main, 16, frames)
     streams = []
     for kind in (b'vids', b'auds'):
         header = bytearray(next(d for k, d in rows if k == b'strh' and d[:4] == kind))
         struct.pack_into('<I', header, 16, 0)
-        struct.pack_into('<I', header, 32, 2 if kind == b'vids' else 1)
+        struct.pack_into('<I', header, 32, frames if kind == b'vids' else 1)
         format_ = next(d for k, d in rows if k == b'strf' and
                        (len(d) >= 40 and d[16:20] == b'cvid' if kind == b'vids' else d[:2] == b'\x02\0'))
         streams.append(chunk(b'LIST', b'strl'+chunk(b'strh', header)+chunk(b'strf', format_)))
-    video = [d for k, d in rows if k == b'00dc'][:2]
+    video = [d for k, d in rows if k == b'00dc'][:frames]
     audio = next(d for k, d in rows if k == b'01wb')[:1024]
-    packets = [(b'00dc', video[0]), (b'01wb', audio), (b'00dc', video[1])]
+    packets = [(b'00dc', video[0]), (b'01wb', audio), *[(b'00dc', d) for d in video[1:]]]
     index = bytearray();offset = 4
     for kind, data in packets:
         index.extend(struct.pack('<4sIII', kind, 0x10, offset, len(data)))

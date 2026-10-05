@@ -1612,6 +1612,44 @@ python3 tools/observe_native_movie_work.py \
   --output /tmp/wasm-dd2/movie-qpc-work
 ```
 
+Patch 895 replaces independently rounded millisecond frame deadlines with
+Wine MCIAVI's microsecond clock and accumulated double next-frame deadline.
+The old calculation could make a frame due almost one millisecond early.
+Native converts the 100-ns QPC ticks with Wine's signed 64-bit multiply/divide
+before conversion to double, including the x86 multiplication wrap. Browser
+uses the same independently observed output-time source at microsecond
+resolution. The separate millisecond audio-drain clock stays unchanged.
+
+`make verify-movie-precision` checks 30 RAW/fallback time conversions, including
+sub-microsecond inputs and signed multiplication overflow. Native ASan/UBSan
+and WASM exercise 32 declared frame-boundary probes with the real AVI/MCI
+code and three original packets; both reject the old production movie source
+on the same deadline check. Six changed-evidence controls fail
+(`movie-precision-1344-make/report.json`). Its validating presentation counter
+does not prove live rendered pixels or original A/V synchronization.
+
+The complete native Intro has 1711 presentations and 56,417 actual clock
+observations. Every observed pump obeys its microsecond deadline: the measured
+minimum lateness is zero, versus -0.940 ms in the preceding millisecond run.
+Independent MONOTONIC brackets still measure texture work without fitting
+(`movie-precision-1342-work/report.json`). The complete browser Intro likewise
+has 1711 presentations with actual microsecond clock imports; independent
+browser/device clock observations and seven changed-clock controls pass
+(`movie-precision-1346-browser-clock-observed/report.json`). Browser device PCM,
+startup delay and native audio tails remain different from the original.
+
+Complete Intro/Outro, early close and unavailable-audio paths through the
+extracted original Play_Movie function pass on native ASan/UBSan and WASM:
+literal display bytes agree between ports, whole submitted source PCM agrees
+with fresh Wine ACM, and deadline/wrap/drain/notify checks pass
+(`movie-precision-1345-playback/report.json`). Real-time Wine short-AVI drain
+and all nine controlled cases per port also pass. These are scoped transport
+and timing regressions, not full original game parity.
+
+```sh
+make verify-movie-precision MOVIE_PRECISION_ARGS='--output /tmp/wasm-dd2/movie-precision --before-movie /tmp/wasm-dd2/before/dd2_movie.c'
+```
+
 The new native Intro's actual SDL readbacks contain 1711 frames and
 2102476800 opaque ARGB bytes. Its streaming SHA256 equals the original-window
 SHA256 recorded in `movie-scale-1000-live-sinks/report.json`; the bounded FIFO

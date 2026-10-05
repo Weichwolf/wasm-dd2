@@ -19,6 +19,7 @@ static FILE *video,*audio,*timeline;
 static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie playback: %s\n",why);exit(1);}}
 FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
 unsigned dd2_movie_now_ms(void){return clock_now;}
+double dd2_movie_now_us(void){return (double)(unsigned)(clock_now-0xfffff000u)*1000;}
 void dd2_movie_wait(void){clock_now+=40;}
 void dd2_movie_present(const uint32_t* argb){
     require(fwrite(argb,4,640*480,video)==640*480,"full actual backend display frame");

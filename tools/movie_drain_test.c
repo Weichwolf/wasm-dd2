@@ -64,6 +64,7 @@ static int closed_at_notify;
 static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie drain device: %s\n",why);exit(1);}}
 FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
 unsigned dd2_movie_now_ms(void){return SDL_GetTicks();}
+double dd2_movie_now_us(void){return (double)SDL_GetPerformanceCounter()*1000000/SDL_GetPerformanceFrequency();}
 void dd2_movie_wait(void){SDL_Delay(1);}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
 int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){
@@ -103,6 +104,7 @@ static unsigned queries[4096];
 static void require(int ok,const char* why){if(!ok){fprintf(stderr,"movie drain: %s\n",why);exit(1);}}
 FILE* dd2_fopen_ci(const char* filename,const char* mode){return fopen(filename,mode);}
 unsigned dd2_movie_now_ms(void){return now_ms;}
+double dd2_movie_now_us(void){return (double)(unsigned)(now_ms-0xfffffff0u)*1000;}
 void dd2_movie_wait(void){now_ms++;}
 void dd2_movie_present(const uint32_t* pixels){require(pixels!=NULL,"rendered frame");frames++;}
 int dd2_movie_audio_start(const int16_t* pcm,size_t count,unsigned rate,unsigned channels){
