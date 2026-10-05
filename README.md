@@ -1099,6 +1099,35 @@ prefix and closes the device; 12 altered PCM controls are rejected
 comparison still rejects its different silence tail. This shutdown correction
 does not establish whole original audio or synchronized A/V timing parity.
 
+Patch 882 also resets completed movie audio before the success notification.
+The shared backend previously left the device running until the game's later
+`MCI_CLOSE`. Wine MCIAVI resets and closes WaveOut before notifying success.
+The corrected path closes native output or the browser AudioContext as soon
+as a drain query reports completion; the later close remains idempotent.
+
+The short original-packet Wine fixture reads its accepted/played journals
+immediately after `MCI_PLAY` returns and before `MCI_CLOSE`: both devices are
+already closed. Native/ASan/UBSan and WASM check nine drain/error cases each,
+including 32-bit clock wrap, and require reset before notification. Four
+completion cases reject the previous production source for that ordering
+(`movie-stop-1026-drain/report.json`). Production source/header snapshots
+keep this component test independent of subsequent builds.
+
+The extracted original `Play_Movie` sequence also passes both full movies,
+early close and unavailable audio on native/ASan/UBSan and WASM. Every actual
+backend frame is compared literally between the targets; complete source PCM
+matches fresh Wine ACM (`movie-stop-1027-playback/report.json`). Chromium's
+movie check records each real stop import against the original
+`Movie_Playing` flag and waits for the actual movie AudioContext to close.
+Successful playback must reset while that flag is still set, before the
+completion callback clears it. These checks do not establish whole original
+audio tails, synchronized original/port clocks or physical output parity.
+Full native device runs preserve all Intro/Outro source bytes at offset zero;
+the strict whole original Intro comparison still rejects the silence tail
+(`movie-stop-1033-comparison/report.json`). Chromium passes both complete
+movies and real key-up/key-down cancellation with exactly one film-source
+stop and a closed context (`movie-stop-1034-browser-proof/report.json`).
+
 Patch 838 fixes corrupted championship names: the computer-name table began at
 an 8-byte offset per human instead of the original 16-byte offset. A real menu
 run through Championship, name entry, Go, Pause/Retire/Yes and View League now

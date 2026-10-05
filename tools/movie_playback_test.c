@@ -37,6 +37,7 @@ int FUN_004132f0(void* hwnd,unsigned message,unsigned result,unsigned device){
     require(hwnd==(void*)1 && message==0x3b9 && device==2,"original notify recipient/device");
     require(result==(skipping?4u:1u),"completion vs aborted notification");
     if(!skipping && !audio_failure)require(dd2_movie_audio_done(),"no successful notify before device drains");
+    require(closed==(audio_failure?0u:1u),"audio reset before notification");
     notifications++;Movie_Playing=0;return 0;
 }
 static MCIERROR mciSendCommandA(unsigned device,unsigned command,unsigned flags,DWORD_PTR pointer){
@@ -55,7 +56,8 @@ int main(int argc,char** argv){
     video=!strcmp(argv[2],"-")?stdout:fopen(argv[2],"wb");audio=fopen(argv[3],"wb");timeline=fopen(argv[4],"w");
     require(video && audio && timeline,"capture files");skipping=atoi(argv[5])==1;audio_failure=atoi(argv[5])==2;
     Play_Movie((uint)(uintptr_t)argv[1]);
-    require(!dd2_movie_active() && !Movie_Playing && notifications==1 && closed==1,"finished/closed state");
+    require(!dd2_movie_active() && !Movie_Playing && notifications==1 &&
+            closed==(!skipping && !audio_failure?2u:1u),"finished/closed state");
     require(!fflush(video) && (video==stdout || !fclose(video)) && !fclose(audio) && !fclose(timeline),"close full capture streams");
     printf("{\"frames\":%u,\"pcm_frames\":%lu,\"rate\":%u,\"channels\":%u,\"pumps\":%u,\"notifications\":%u,\"closed\":%u,\"skip\":%u,\"audio_failure\":%u}\n",
            frames,(unsigned long)pcm_frames,rate,channels,pumps,notifications,closed,skipping,audio_failure);

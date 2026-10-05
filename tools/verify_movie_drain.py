@@ -4,6 +4,9 @@
 The fixture retains two original Cinepak packets and one complete original
 ADPCM block. Wine uses the real-time virtual ALSA device. The port clock is
 controlled; this does not prove full original/live-port A/V timing or PCM tails.
+Wine must close its device before MCI_PLAY returns; native and WASM must reset
+audio before notifying success. A previous production source must fail that
+same notification ordering invariant when supplied as a negative control.
 """
 import argparse
 import hashlib
@@ -60,11 +63,18 @@ def main():
     parser.add_argument('--reference-only', action='store_true')
     parser.add_argument('--mingw', default='i686-w64-mingw32-gcc')
     parser.add_argument('--before-native', type=Path)
+    parser.add_argument('--before-movie-source', type=Path)
     args = parser.parse_args();output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False)
     movie = output/'short.avi';movie.write_bytes(short_avi(ROOT/'DestructionDerby2/Intro.avi'))
-    source = ROOT/'tools/movie_drain_test.c';exe = output/'movie-drain.exe'
+    snapshot=output/'production';snapshot.mkdir()
+    source=snapshot/'movie_drain_test.c';source.write_bytes((ROOT/'tools/movie_drain_test.c').read_bytes())
+    names=('movie','movie_surface','avi','cinepak','msadpcm')
+    if not args.reference_only:
+        for path in [*(ROOT/'build').glob('*.h'), *(ROOT/'build'/f'dd2_{name}.c' for name in names)]:
+            (snapshot/path.name).write_bytes(path.read_bytes())
+    exe = output/'movie-drain.exe'
     subprocess.run([args.mingw, '-O2', '-Wall', '-Wextra', '-Werror',
                     str(source), '-lwinmm', '-o', str(exe)], check=True)
     libraries = build_audio(output/'audio-libraries')
@@ -75,13 +85,15 @@ def main():
                LD_LIBRARY_PATH=':'.join(map(str, libraries)))
     config = f'pcm_type.dd2clock {{ lib "{output}/audio-libraries/$LIB/dd2_clock.so" }}\npcm.!default {{ type dd2clock }}\n'
     actual = wine_probe(exe, reference, env, alsa_config=config,
-                        arguments=('Z:'+str(movie).replace('/', '\\'),), wine_debug='-all,+mciavi')
+                        arguments=tuple('Z:'+str(p).replace('/', '\\') for p in (movie, reference/'audio')),
+                        wine_debug='-all,+mciavi')
     audio = summarize_audio(reference/'audio', require_played=True)
     trace = (reference/'wine.log').read_text(errors='replace')
     marker = re.search(r'MCIAVI_mciPlay Playing from frame=0 to frame=1', trace)
     require(marker is not None, 'actual short-AVI exclusive play endpoint differs')
     painted = [int(n) for n in re.findall(r'MCIAVI_PaintFrame Painting frame (\d+)', trace[marker.end():])]
     require(painted == [0] and 80 <= actual['elapsed_ms'] < 300, 'actual Wine short drain behavior differs')
+    require(actual['device_closed_before_play_return'] is True, 'Wine device not closed before play returned')
     require(len(audio['streams']) == len(audio['played_streams']) == 1 and
             audio['streams'][0]['format'] == 'S16_LE' and audio['played_streams'][0]['played_frames'] >= 1012,
             'real-time PCM16 movie device observation required')
@@ -106,8 +118,8 @@ def main():
     print('Actual real-time Wine short-AVI play:', actual, flush=True)
     if args.reference_only:
         check_space(output);return
-    units = [ROOT/'build'/f'dd2_{name}.c' for name in ('movie', 'movie_surface', 'avi', 'cinepak', 'msadpcm')]
-    common = ['-O2', '-std=gnu99', '-ffunction-sections', '-fdata-sections', '-I'+str(ROOT/'build'),
+    units = [snapshot/f'dd2_{name}.c' for name in names]
+    common = ['-O2', '-std=gnu99', '-ffunction-sections', '-fdata-sections', '-I'+str(snapshot),
               *map(str, units), str(source), '-Wl,--gc-sections']
     native = output/'native';wasm = output/'wasm.js'
     subprocess.run(['gcc', '-m32', '-no-pie', '-fsanitize=address,undefined',
@@ -123,7 +135,8 @@ def main():
             elapsed = 0 if failed == 1 else (done+99)//100*100
             expected = dict(frames=1, elapsed_ms=elapsed,
                             audio_queries=[] if failed == 1 else list(range(0, elapsed+1, 100)),
-                            notifications=1, closed=2 if failed == 2 else 1)
+                            notifications=1, closed=1 if failed == 1 else 2,
+                            closed_at_notify=0 if failed == 1 else 1)
             require(observed == expected, f'{name} actual drain queries/completion differ: {observed}')
             rows.append(dict(done_ms=done, audio_unavailable=failed == 1,
                              output_error=failed == 2, actual=observed))
@@ -135,11 +148,27 @@ def main():
         require(observed == dict(frames=1, elapsed_ms=46, audio_queries=list(range(40, 47)),
                                  notifications=1, closed=1), 'before binary failed for another reason')
         report['before_native'] = dict(rejected=True, binary_sha256=sha(args.before_native), actual=observed)
-    report['sources'] = {str(p.relative_to(ROOT)):sha(p) for p in units}
+    if args.before_movie_source:
+        before_source=snapshot/'before_movie.c';before_source.write_bytes(args.before_movie_source.read_bytes())
+        before=output/'before-native'
+        before_common=[str(before_source) if token==str(units[0]) else token for token in common]
+        subprocess.run(['gcc','-m32','-no-pie','-fsanitize=address,undefined',
+                        '-fno-sanitize-recover=all',*before_common,'-o',str(before)],check=True)
+        rejected=[]
+        for done in (0,46,101,250):
+            result=subprocess.run([str(before),str(movie),str(done),'0'],capture_output=True,text=True,timeout=15)
+            (output/f'before-{done}.log').write_text(result.stdout+result.stderr)
+            require(result.returncode!=0 and 'audio reset before notification' in result.stderr and
+                    'AddressSanitizer' not in result.stderr and 'runtime error:' not in result.stderr,
+                    'old production movie source failed for another reason')
+            rejected.append(dict(done_ms=done,reset_before_notify_rejected=True))
+        report['before_movie_source']=dict(source_sha256=sha(before_source),cases=rejected)
+    report['sources'] = {p.name:sha(p) for p in units}
     report['pass_'] = True
     (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
+    for pcm in (reference/'audio').glob('*.pcm'): pcm.unlink()
     check_space(output)
-    print('Production native/ASan/UBSan and WASM: immediate final draw, 100-ms drain retries, wrap and audio failure pass', flush=True)
+    print('Production native/ASan/UBSan and WASM: final draw, 100-ms drain retries, reset before notify, wrap and audio failure pass', flush=True)
 
 
 if __name__ == '__main__':

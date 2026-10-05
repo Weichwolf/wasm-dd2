@@ -8,24 +8,33 @@ fs.mkdirSync(output,{recursive:false});
 const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
 (async()=>{
  const server=serve(build);await new Promise(r=>server.listen(0,r));let browser;
- const report={scope:'Actual browser engine MCI movie/canvas/22050Hz WebAudio source output; original final clocks and physical DAC/display remain open',cases:[]};
+ const report={scope:'Actual browser engine MCI movie/canvas/22050Hz WebAudio source output and reset before successful notification; original final clocks and physical DAC/display remain open',wasm_sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(build,'index.wasm'))).digest('hex'),cases:[]};
  try{
   browser=await chromium.launch({args:['--no-sandbox']});
   for(const film of originals.films)for(const skip of [false,true]){
    const page=await browser.newPage(),errors=[];
    page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>errors.push('renderer crash'));
    await page.addInitScript(()=>{
-    window.__movie={frames:0,pixels:0,pixelErrors:0,audioBuffers:0,audioErrors:0,pcm:[],rates:[],stops:0};
+    window.__movie={frames:0,pixels:0,pixelErrors:0,audioBuffers:0,audioErrors:0,pcm:[],rates:[],stops:0,resets:[]};
+    window.__movieContexts=[];
+    const observed=new WeakSet();
     let audio,frame;
     function observe(imports){
-     if(!imports?.env?.movie_audio_start)return;
-     const a=imports.env.movie_audio_start,p=imports.env.movie_present;
+     if(!imports?.env?.movie_audio_start || observed.has(imports.env))return;
+     observed.add(imports.env);
+     const a=imports.env.movie_audio_start,p=imports.env.movie_present,s=imports.env.movie_audio_stop;
      imports.env.movie_audio_start=function(pointer,frames,rate,channels){
       audio={pointer,frames,rate,channels};
       try{return a(pointer,frames,rate,channels);}finally{audio=undefined;}
      };
      imports.env.movie_present=function(pointer){
       frame={pointer};try{return p(pointer);}finally{frame=undefined;}
+     };
+     imports.env.movie_audio_stop=function(...args){
+      const reset={moviePlaying:HEAP32[0x462cd4>>2],sourcePresent:!!Module._dd2movieSource};
+      try{return s(...args);}finally{
+       reset.sourceCleared=!Module._dd2movieSource;__movie.resets.push(reset);
+      }
      };
     }
     for(const name of ['instantiate','instantiateStreaming']){
@@ -34,8 +43,11 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
     const create=AudioContext.prototype.createBufferSource;
     AudioContext.prototype.createBufferSource=function(...args){
      const context=this,source=create.apply(this,args),start=source.start,stop=source.stop;
+     let isMovie=false;
      source.start=function(...args){
       if(audio){
+       isMovie=true;
+       __movieContexts.push(context);
        const state=__movie,b=source.buffer,e=audio;state.audioBuffers++;state.rates.push(context.sampleRate);
        let exact=b.length===e.frames && b.sampleRate===e.rate && context.sampleRate===e.rate && b.numberOfChannels===e.channels;
        const pcm=new Int16Array(e.frames*e.channels);
@@ -51,7 +63,7 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
       }
       return start.apply(this,args);
      };
-     source.stop=function(...args){__movie.stops++;return stop.apply(this,args);};
+     source.stop=function(...args){if(isMovie)__movie.stops++;return stop.apply(this,args);};
      return source;
     };
     const put=CanvasRenderingContext2D.prototype.putImageData;
@@ -77,10 +89,17 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
     assert(await page.evaluate(()=>HEAP32[0x462cd4>>2])===1,'key-up skipped movie');
     await page.keyboard.down('d');
    }
-   await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0 && !Module._dd2movieSource,null,{timeout:100000});
+   await page.waitForFunction(()=>HEAP32[0x462cd4>>2]===0 && !Module._dd2movieSource &&
+                              __movieContexts.length===1 && __movieContexts[0].state==='closed',null,{timeout:100000});
    const result=await page.evaluate(()=>__movie);
+   const diagnosis={...result};delete diagnosis.pcm;
+   fs.writeFileSync(path.join(output,`${path.parse(film.file).name.toLowerCase()}-${skip?'skip':'full'}.json`),JSON.stringify(diagnosis,null,2)+'\n');
    assert(!errors.length,JSON.stringify(errors));assert(result.audioBuffers===1 && result.audioErrors===0 && result.pixelErrors===0,'actual movie sink bytes differ');
    assert(result.rates.length===1 && result.rates[0]===22050,'movie introduced output resampling');
+   assert(result.resets.length===(skip?1:2) && result.resets[0].sourcePresent &&
+          result.resets[0].sourceCleared && result.resets[0].moviePlaying===(skip?0:1),
+          'movie audio not reset before completion notification');
+   assert(result.stops===1 && result.resets.every(r=>r.sourceCleared), 'idempotent device reset failed');
    assert(skip ? result.frames>=26 && result.frames<film.metadata.frames-1 : result.frames===film.metadata.frames-1,'wrong actual default MCI movie frame extent');
    const pcm=Buffer.from(result.pcm),reference=fs.readFileSync(path.join(source,path.parse(film.file).name.toLowerCase(),'wine.pcm'));
    assert(crypto.createHash('sha256').update(reference).digest('hex')===film.pcm_sha256,'changed actual source PCM');
@@ -92,6 +111,7 @@ const originals=JSON.parse(fs.readFileSync(path.join(source,'report.json')));
     fs.writeFileSync(path.join(output,result.pcmFile),pcm);
    }
    result.keyUpRetained=skip;result.keyDownClosed=skip;
+   result.movieContextClosed=true;result.resetBeforeSuccessfulNotify=!skip;
    report.cases.push(result);fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
    await page.screenshot({path:path.join(output,`${path.parse(film.file).name.toLowerCase()}-${skip?'skip':'full'}.png`)});
    console.log(`PASS browser ${film.file} skip=${skip}: ${result.frames} actual canvas frames, ${result.pixels} exact pixels, ${pcm.length} exact accepted PCM bytes at 22050Hz`);
