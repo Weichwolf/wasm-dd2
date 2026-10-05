@@ -70,7 +70,8 @@ def observe(read, steady=False):
 
 
 class KeyboardDriver:
-    def __init__(self, steady=False, movement_distance=500, stall_ticks=75, progress_ticks=200):
+    def __init__(self, steady=False, movement_distance=500, stall_ticks=75, progress_ticks=200,
+                 slow_ticks=0, minimum_speed=40):
         self.steady = steady
         self.movement_distance = movement_distance
         self.stall_ticks = stall_ticks
@@ -80,6 +81,9 @@ class KeyboardDriver:
         self.reverse_until = 0
         self.progress = None
         self.last_progress = 0
+        self.slow_ticks = slow_ticks
+        self.minimum_speed = minimum_speed
+        self.slow_since = None
 
     def controls(self, read, tick):
         row = observe(read, self.steady)
@@ -95,11 +99,23 @@ class KeyboardDriver:
             if self.progress is None or 0 < (progress-self.progress) % row['track_strips'] < row['track_strips']/2:
                 self.last_progress = tick
             self.progress = progress
+        slow_stall = False
+        if self.slow_ticks:
+            # Sliding along a wall can advance position/strips while the car
+            # barely accelerates. Allow normal acceleration after reversing,
+            # then recover through real brake/reverse keys if it stays slow.
+            if tick < self.reverse_until or row['speed'] >= self.minimum_speed:
+                self.slow_since = None
+            elif self.slow_since is None:
+                self.slow_since = tick
+            slow_stall = self.slow_since is not None and tick-self.slow_since >= self.slow_ticks
+            row['slow_forward_ticks'] = 0 if self.slow_since is None else tick-self.slow_since
         if tick >= self.reverse_until and (tick - self.last_movement >= self.stall_ticks or
-                self.steady and tick - self.last_progress >= self.progress_ticks):
+                self.steady and tick - self.last_progress >= self.progress_ticks or slow_stall):
             self.reverse_until = tick + 100
             self.last_movement = self.reverse_until
             self.last_progress = self.reverse_until
+            self.slow_since = None
         if tick < self.reverse_until:
             row['wanted'] = ['z', 'Right' if row['heading_error'] > 0 else 'Left']
             row['manoeuvre'] = 'reverse'

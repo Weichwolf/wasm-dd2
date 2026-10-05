@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--timeout', type=int, default=7200)
     parser.add_argument('--speed-limit', type=int, default=250, choices=range(60, 251), metavar='60..250')
+    parser.add_argument('--slow-recovery', action='store_true', help='reverse after 75 physics ticks of low forward speed despite positional movement')
     args = parser.parse_args()
     args.target = 'original'
     initial = (ROOT/'DestructionDerby2/SaveGames').read_bytes()
@@ -41,6 +42,7 @@ def main():
                   port_comparison='pending', chronological_audio='unproven',
                   engine_state_writes=False, binary_sha256=EXE_SHA256,
                   driving_speed_limit=args.speed_limit,
+                  driving_slow_recovery=args.slow_recovery,
                   observer_sources={name:digest((sources/name).read_bytes()) for name in names})
     try:
         def action(ui):
@@ -49,7 +51,7 @@ def main():
                 f'attach {ui.pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT/"tools")!r})\n'
                 f'sys.path.insert(0,{str(sources)!r})\n'
                 'from champ_history_gdb import record_champ_history\n'
-                f'record_champ_history({str(out)!r},natural_champ=True,natural_multiplayer=True,natural_multiplayer_speed={args.speed_limit})\n'
+                f'record_champ_history({str(out)!r},natural_champ=True,natural_multiplayer=True,natural_multiplayer_speed={args.speed_limit},slow_recovery={args.slow_recovery!r})\n'
                 'end\ndetach\nquit\n')
             with (out/'history.log').open('wb') as log:
                 run_bounded(['gdb', '--nx', '-q', '-batch', '-x', str(script)],

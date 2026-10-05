@@ -2501,8 +2501,21 @@ survive and complete their laps, in addition to positive earned/cumulative point
 A destroyed car can naturally end a race and earn points; that does not pass this
 gate. An original attempt can use `--speed-limit 120` to reduce normal accelerator
 input. This only changes the external keyboard policy, never game state or clocks,
-and does not guarantee lap completion. Recorder sources are frozen in the
+and does not guarantee lap completion. `--slow-recovery` additionally requests
+normal brake/reverse input after 75 physics ticks below speed 40. This handles
+wall sliding that still advances the position/strip observations. It is opt-in;
+the legacy default policy remains unchanged. Recorder sources are frozen in the
 capture directory before the original attempt starts.
+
+The slower original attempt was diagnosed from actual pixels and input/driver
+observations: the healthy car slid along the outer wall, and projected capture
+storage for both turns exceeded 2 GiB. Its incomplete report is
+`multiplayer-natural-1420-slow-diagnosis.json`; closed raw images were removed.
+The default policy matches 29,676 actual retained original observations
+(`multiplayer-natural-1422-default-policy-regression.json`). On 12,136 wall-slide
+observations, the opt-in policy supplies additional reverse intentions while
+legacy decisions remain identical (`multiplayer-natural-1423-recovery-intentions.json`).
+These host-policy regressions do not prove a physical finish or game A/V parity.
 
 The comparison covers both turns, real player exchange, positive result totals,
 reopening the cumulative league and actually starting the next round. It checks
