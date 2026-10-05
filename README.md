@@ -46,12 +46,25 @@ without SDL, use `DD2_BUILD_HEADLESS=1 make native`.
 audio bytes and keyboard/virtual-controller transport. `make verify-native-window`
 uses real X11 keys on the game to check menus, CD controls, populated racing,
 acceleration and pause/resume with exact renderer/audio comparisons. Tests need
-Xvfb, xdotool and Python Pillow; output goes to fresh directories under `/tmp`.
+Xvfb, xdotool and Python Pillow. Run with `TMPDIR=/tmp/wasm-dd2` and place
+explicit `--output` directories under `/tmp/wasm-dd2/`.
 These checks cover the SDL boundary, not physical audio/controller hardware or
 complete original game-stream timing.
 `make verify-native-window NATIVE_WINDOW_ARGS='--controller'` additionally
 attaches a virtual SDL device before boot, selects Joystick using real menu
 input and verifies actual player steering, movement, gas, brake and release.
+The native menu driver waits for sixteen observed face-on presentations before
+each frontend key. Merely acknowledging a pad poll can consume a navigation
+edge inside `Button_Pressed`'s seven-plus-two-frame animation, even when the
+slab angle is zero and CD playback was already active. The old ASan window run
+lost Right after Play; the same binary with the observed presentation gate
+reaches Stop, selects Joystick, drives a 20-car race and passes Pause/Resume's
+fractional-sector CD restart. Its ten renderer captures contain 3072000 exact
+pixels, and 30419112 accepted Float32 bytes match the C mixed prefix
+(`native-menu-1519-settled-controller/capture/report.json`). The original CD
+action's two animation calls are retained with the failed-run diagnosis
+(`multiplayer-natural-1518-asan-window-run/diagnosis.json`). This improves the
+verification input schedule and does not change engine menu behavior.
 
 `make verify-browser-pad` launches a live race with a synthetic Gamepad API
 device present at boot. It checks steering endpoints, accelerator/brake/release
@@ -2150,6 +2163,14 @@ The actual 48-key `CREDITZ!` name-entry route also matches all 1812 original
 Outro hashes, preserves the card and exits normally with code zero
 (`movie-clock-1511-credits/report.json`). These are image/source regressions,
 not complete original output or physical timing acceptance.
+
+Normal game startup also passes required activation, full Intro and real-key
+skip on this build, followed by main-menu navigation and a populated 20-car
+race in every case (`movie-clock-1516-normal-startup/report.json`). Complete
+ACM-verified source PCM, observed canvas pixels and submitted shared-mixer
+buffers are preserved. The startup fixture authenticates the bounded original
+source prefix against the retained ACM digest; this does not compare whole
+original device streams or main-menu/race pictures with original images.
 
 The unmuted Intro device capture independently brackets performance time against
 actual consumed samples. With the independent video epoch, video leads source

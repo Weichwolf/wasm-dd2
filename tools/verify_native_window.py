@@ -126,6 +126,8 @@ def main():
                 def edge(key,down):
                     subprocess.run(["xdotool","keydown" if down else "keyup",key],env=env,check=True)
                 def key(code):
+                    if integer(0x936ff4)==0:
+                        settled()
                     # Keep the real key down until ReadPad has sampled it.
                     # A short wall-clock pulse can be entirely inside a busy
                     # audio tick or slab animation, losing the engine edge.
@@ -148,8 +150,11 @@ def main():
                     return result
                 def settled():
                     # Rotate_Slab_On draws eight rotation frames followed by
-                    # fifteen bounce entries. The final four entries are zero;
-                    # five distinct zero-angle flips establish the menu loop.
+                    # fifteen bounce entries, including four final zero angles.
+                    # Button_Pressed also polls keys without handling navigation
+                    # during its seven-plus-two-frame acceptance animation.
+                    # Observe sixteen distinct face-on flips after release so
+                    # the next edge reaches the actual menu input loop.
                     stable=0;previous=-1
                     def ready():
                         nonlocal stable,previous
@@ -157,7 +162,7 @@ def main():
                         if flip!=previous:
                             stable=stable+1 if read(0x46996c,2)==b"\0\0" else 0
                             previous=flip
-                        return stable>=5
+                        return stable>=16
                     wait(ready)
                 capture();key("Right");wait(lambda:"Select Car" in text(0x46975c));capture()
                 key("Left");wait(lambda:"Wrecking" in text(0x46975c))
