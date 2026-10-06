@@ -45,9 +45,10 @@ geometry with texture/material selection, cutout and depth testing; static scene
 and car previews run for all eleven levels on both targets. Material opacity
 uses original UV/CLUT selection, and the preview camera preserves positive Y
 upward. Scene vertices use their static raster-cell or local object origin,
-separate from the retained bounding center. Road contact/topology data,
-billboard orientation, lighting, blending
-and gameplay remain to be implemented. A shared C application now presents the
+separate from the retained bounding center. Owned road graphs and lane cells now
+cover all eleven playable tracks/arenas, with vertical triangle contact heights
+and normals. Vehicle suspension and surface search, billboard orientation,
+lighting, blending and gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. This is an inspection viewer;
 vehicle simulation, opponents and race rules remain pending.
@@ -147,8 +148,14 @@ ASan/UBSan, and rejects six corrupted original scene/mesh streams.
 levels on native, Node/WASM and a sanitized rewrite build, checks visible output
 and cross-target image consistency, and removes completed raw frames. Its scope
 is static scene meshes and neutral palette shade with selected cutout, without
-billboard orientation, lighting or blending. Road contact/topology decoding
-and a complete race remain pending. See `src/render/README.md`.
+billboard orientation, lighting or blending. Vehicle simulation and a complete
+race remain pending. See `src/render/README.md`.
+`make rewrite-road-verify` checks every playable road graph and contact cell
+against an independent original-data reader on native, Node/WASM and ASan/UBSan.
+It includes source attributes, links, missing edge triangles, grid geometry and
+vertical plane samples, plus invalid-link/count/vertex/branch-cycle rejection.
+This is contact geometry coverage; suspension, vehicle motion, off-road behavior
+and lap/checkpoint equivalence remain pending.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,

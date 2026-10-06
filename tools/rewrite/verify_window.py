@@ -184,7 +184,7 @@ def native_checks(output, archive, references, binary, label='native'):
 def build_sanitized(output):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track')]
+             ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window')]
     units += [ROOT / 'src/game/application.c']

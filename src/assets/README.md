@@ -193,8 +193,48 @@ invalid references, extents and scene ownership. Reports remain under `/tmp`;
 raw successful exports are deleted. These checks establish decoded fields, not
 complete rendering behavior or game correctness.
 
+## Road contact geometry
+
+`road.c` owns decoded road vertices, directed links, strips and lane cells.
+Racing section 1 begins with a 32-bit record count. Links address records relative
+to the byte after that count; headers are 36 bytes, followed by 14 bytes per lane
+and four-byte alignment. The decoder follows next, previous and split/merge links,
+including gaps in the source layout (Alpine has a 16-byte gap). It validates the
+complete declared inventory, record extents, nonoverlap, vertex references and
+forward/backward paths returning to the start; invalid cycles fail without an
+unbounded traversal. Arena section 1 contains 1,024 14-byte grid records with
+1,024 vertices. The 31×31 full cells use adjacent rows of the 32×32 grid.
+
+Strip offsets become bounded indices. Source number, first vertex, flags,
+lane-start byte and heading are retained separately from main-loop order.
+Split/merge links can address another branch or the start; they are not assumed
+to be a single optional shortcut. Cell corners use the original signed row
+offset table, including kind 10 in Chalk Canyon. Cells retain separate surface
+flags and heading bytes; these are not texture/material identifiers. The first
+and last lanes suppress the missing triangles selected by `Map_Height` for
+kinds 2–7. Original generated normal bytes are replaced by geometry-based planes.
+
+The original evidence is `Generate_Surface_Normals`, `FUN_00426be4`,
+`Track_Follow`, `Map_Height`, `FUN_00428678` and `Init_Track_Strip_Numbers` in
+`re_out/dd2.c`. The original image's signed row-offset table is read independently
+by the verifier; game modules never read executable addresses.
+
+```sh
+make rewrite-road-verify
+```
+
+This compares every playable level's vertices, graph, source attributes and
+lane geometry on native, Node/WASM and ASan/UBSan, plus both triangle centroid
+contacts against independent integral edge tests and rational plane heights.
+It rejects corrupted original links, extents, types, counts, lane widths,
+vertex references and branch cycles. Synthetic CI checks slopes, shared edges,
+outside/degenerate contact, source ownership, branches, holes and arena limits.
+This covers data and vertical contact geometry, not original suspension,
+off-road recovery, lap/checkpoint equivalence or vehicle motion.
+
 `track.c` assembles the level, texture pages, scene and high-detail car into one
-owned runtime container for levels 1–11 (source codes 1–9, A and B). Racing scene
+owned runtime container for levels 1–11 (source codes 1–9, A and B), together with
+the road/contact geometry. Racing scene
 blocks 1–7 use the original compressed path; arena blocks use their stored path.
 The source archive bytes are borrowed and must outlive the container. Partial
 loads release their owned structures, and the application swaps a successfully

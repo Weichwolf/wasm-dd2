@@ -53,9 +53,14 @@ target_include_directories(dd2_render PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_render PRIVATE softgl dd2_assets)
 dd2_strict_target(dd2_render)
 
-add_library(dd2_assets STATIC src/assets/archive.c src/assets/level.c src/assets/textures.c src/assets/lz.c src/assets/mesh.c src/assets/scene.c src/assets/track.c)
+add_library(dd2_assets STATIC src/assets/archive.c src/assets/level.c src/assets/textures.c src/assets/lz.c src/assets/mesh.c src/assets/scene.c src/assets/track.c src/assets/road.c)
 target_include_directories(dd2_assets PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 dd2_strict_target(dd2_assets)
+
+add_library(dd2_physics STATIC src/physics/road_contact.c)
+target_include_directories(dd2_physics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(dd2_physics PUBLIC dd2_assets m)
+dd2_strict_target(dd2_physics)
 
 add_library(dd2_platform STATIC src/platform/file.c src/platform/window.c)
 target_include_directories(dd2_platform PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -83,6 +88,28 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING)
+    add_executable(dd2_road_test tests/rewrite/road_test.c)
+    target_link_libraries(dd2_road_test PRIVATE dd2_physics)
+    dd2_strict_target(dd2_road_test)
+    if(EMSCRIPTEN)
+        find_program(DD2_NODE NAMES node REQUIRED)
+        target_link_options(dd2_road_test PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node)
+        set_target_properties(dd2_road_test PROPERTIES SUFFIX ".js")
+        add_test(NAME rewrite_road COMMAND "${DD2_NODE}" "$<TARGET_FILE:dd2_road_test>")
+    else()
+        add_test(NAME rewrite_road COMMAND dd2_road_test)
+    endif()
+    set_tests_properties(rewrite_road PROPERTIES TIMEOUT 30)
+
+    add_executable(dd2_road_export tests/rewrite/road_export.c)
+    target_link_libraries(dd2_road_export PRIVATE dd2_physics dd2_platform)
+    dd2_strict_target(dd2_road_export)
+    if(EMSCRIPTEN)
+        target_link_options(dd2_road_export PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node
+            -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
+        set_target_properties(dd2_road_export PROPERTIES SUFFIX ".js")
+    endif()
+
     add_executable(dd2_render_smoke tests/rewrite/render_smoke.c)
     target_link_libraries(dd2_render_smoke PRIVATE dd2_render softgl)
     dd2_strict_target(dd2_render_smoke)
@@ -196,6 +223,7 @@ add_custom_target(format-check
 add_dependencies(dd2_render format-check)
 add_dependencies(dd2_assets format-check)
 add_dependencies(dd2_platform format-check)
+add_dependencies(dd2_physics format-check)
 add_custom_target(format
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/rewrite/quality.py" format
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)

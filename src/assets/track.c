@@ -4,6 +4,7 @@
 #include "assets/bytes.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
+#include "assets/road.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
 
@@ -17,6 +18,7 @@ struct dd2_track {
     dd2_texture_set *textures;
     dd2_scene *scene;
     dd2_mesh *car;
+    dd2_road *road;
 };
 
 static dd2_byte_view dd2_track_file(const dd2_archive *archive, const char *name) {
@@ -75,7 +77,9 @@ dd2_track *dd2_track_create(const dd2_archive *archive, unsigned number) {
         track->level.sections[DD2_LEVEL_SCENE_BLOCKS],
         (dd2_scene_options){.compressed = number <= DD2_TRACK_RACING_COUNT, .limits = limits});
     track->car = dd2_mesh_create(track->level.sections[DD2_LEVEL_CAR_HIGH], limits);
-    if (track->scene == NULL || track->car == NULL) {
+    track->road = dd2_road_create(&track->level, number <= DD2_TRACK_RACING_COUNT ? DD2_ROAD_RACING
+                                                                                  : DD2_ROAD_ARENA);
+    if (track->scene == NULL || track->car == NULL || track->road == NULL) {
         dd2_track_destroy(track);
         return NULL;
     }
@@ -84,6 +88,7 @@ dd2_track *dd2_track_create(const dd2_archive *archive, unsigned number) {
 
 void dd2_track_destroy(dd2_track *track) {
     if (track != NULL) {
+        dd2_road_destroy(track->road);
         dd2_mesh_destroy(track->car);
         dd2_scene_destroy(track->scene);
         dd2_texture_set_destroy(track->textures);
@@ -102,4 +107,7 @@ const dd2_scene *dd2_track_scene(const dd2_track *track) {
 }
 const dd2_mesh *dd2_track_car(const dd2_track *track) {
     return track != NULL ? track->car : NULL;
+}
+const dd2_road *dd2_track_road(const dd2_track *track) {
+    return track != NULL ? track->road : NULL;
 }
