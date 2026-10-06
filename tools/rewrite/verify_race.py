@@ -6,7 +6,10 @@ DNF, result freeze and reset on every track/arena. Ordered source-cell scenarios
 cover complete circuit races in both scoring modes; they are not physically driven
 complete races. A separate full Stockcar race on original circuit 5 drives all
 required laps through physics, using AI only to supply player control inputs.
-Native, Node/WASM and instrumented C are verified separately.
+Time Trial short runs cover all seven circuits with one physical vehicle and
+restoration of finite twenty-car rules. A long Time Trial on circuit 5 completes
+nine laps, beyond the source eight-lap race limit, with independent geometry and
+lap-time checks. Native, Node/WASM and instrumented C are verified separately.
 """
 import argparse
 from datetime import datetime, timezone
@@ -37,13 +40,14 @@ def digest(path):
 class RaceOracle:
     def __init__(self, mode, length, initial_laps, tables):
         self.mode, self.length, self.tables = mode, length, tables
+        self.count = 1 if mode == 2 else COUNT
         self.phase = self.end = self.steps = self.elapsed = self.coast = 0
-        self.finishers, self.alive = 0, COUNT
-        self.drivers = [[0]*10 for _ in range(COUNT)]
+        self.finishers, self.alive = 0, self.count
+        self.drivers = [[0]*10 for _ in range(self.count)]
         for slot, lap in enumerate(initial_laps):
             self.drivers[slot][2:4] = lap[2:4]
         self.order = self.ranked()
-        self.results = [0]*COUNT
+        self.results = [0]*self.count
         self.assign_places()
 
     def ranked(self):
@@ -54,7 +58,7 @@ class RaceOracle:
             if self.length:
                 return 1, -d[2], -d[3], slot
             return 1+d[9], -d[1], 0, slot
-        return sorted(range(COUNT), key=priority)
+        return sorted(range(self.count), key=priority)
 
     def assign_places(self):
         for place, slot in enumerate(self.order, 1):
@@ -95,9 +99,9 @@ class RaceOracle:
 
     def publish(self):
         for d in self.drivers:
-            d[7] = self.tables[self.mode][d[4]-1] if self.length else 0
+            d[7] = self.tables[self.mode][d[4]-1] if self.length and self.mode != 2 else 0
             d[8] = min(999, d[7] + (d[6] if self.mode == 0 else 0))
-        self.results = sorted(range(COUNT), key=lambda slot: (-self.drivers[slot][8], self.drivers[slot][4]))
+        self.results = sorted(range(self.count), key=lambda slot: (-self.drivers[slot][8], self.drivers[slot][4]))
         self.phase = 3
 
     def withdraw(self):
@@ -119,11 +123,13 @@ def course_from_source(meta, decoded, image, code):
         return None
     numbers, length = course_numbers(decoded)
     finish, _, laps = struct.unpack_from('<3H', image, 0x66df0+int(code)*6)
+    original_laps = laps
+    if meta['mode'] == 2: laps = 0
     if (meta['length'], meta['laps']) != (length, laps):
         raise ValueError('Original circuit rules differ')
     if {offset:number for offset,number,_ in meta['strips']} != numbers:
         raise ValueError('Original progress equivalents differ')
-    course = dict(length=length, laps=laps, relative={}, keys={}, first={})
+    course = dict(length=length, laps=laps, original_laps=original_laps, relative={}, keys={}, first={})
     for offset, number, first in meta['strips']:
         course['first'][offset] = first
         for lane in range(decoded['strips'][offset][6]):
@@ -159,9 +165,18 @@ def check(path, decoded, image, code, mode, kind, tables):
         strips = [course['keys'][cell][0] for cell in meta['starts']] if course else []
         previous = baseline = last_live = frozen = None
         physical = route_steps = rows = max_samples = 0
+        prior_times = [[0,0,0,0] for _ in range(race.count)]
         for line in stream:
             row = json.loads(line)
             rows += 1
+            if row['kind'] == 'restored':
+                if mode != 2 or row['rules'] != [COUNT, course['length'], course['original_laps']]:
+                    raise ValueError('Time Trial exit loses original finite rules')
+                if row['state'] != [0,0,0,0,0,0,COUNT] or len(row['cars']) != COUNT or len(row['laps']) != COUNT:
+                    raise ValueError('Time Trial exit fails to restore the twenty-car grid')
+                if any(car[0] != 200 or car[4:] != [0,0,0] for car in row['cars']):
+                    raise ValueError('Time Trial exit fails to reset the field')
+                continue
             if row['kind'] == 'part':
                 reference_row = {key:value for key,value in last_live.items() if key != 'kind'}
                 if {key:value for key,value in row.items() if key != 'kind'} != reference_row:
@@ -201,7 +216,7 @@ def check(path, decoded, image, code, mode, kind, tables):
                 else:
                     active = race.phase in (1, 2)
                     if active:
-                        physical += COUNT
+                        physical += race.count
                         for slot, car in enumerate(row['cars']):
                             if course:
                                 cells = surface.trace(previous['cars'][slot][1:4], car[1:4], lap_oracles[slot].values[5])
@@ -221,9 +236,21 @@ def check(path, decoded, image, code, mode, kind, tables):
             else:
                 raise ValueError('Unexpected race output')
             race.compare(row)
+            if len(row['drivers']) != race.count or (kind == 'live' and len(row['cars']) != race.count):
+                raise ValueError('Race contains inactive vehicles')
+            if course:
+                expected_times = []
+                for slot, oracle in enumerate(lap_oracles):
+                    values = oracle.values
+                    current = prior_times[slot][0]
+                    if not values[10]:
+                        current = 0 if not values[8] else (values[2] if values[11] else values[0]-values[1])
+                    expected_times.append([current, values[2], values[3], values[8]])
+                if row['times'] != expected_times: raise ValueError('Race lap-time snapshot differs')
+                prior_times = expected_times
         if kind == 'route' and (race.phase != 3 or race.end != 1 or not race.drivers[0][5]):
             raise ValueError('Source rules route does not complete the race')
-        if kind == 'live' and (physical != 24000 or frozen is None):
+        if kind == 'live' and (physical != 1200*race.count or frozen is None):
             raise ValueError('Physical/countdown/result lifecycle incomplete')
     return dict(pass_=True, rows=rows, physical_vehicle_steps=physical, source_rule_vehicle_steps=route_steps,
                 finishers=race.finishers, end=race.end, max_progress_samples=max_samples,
@@ -235,7 +262,8 @@ def check_auto(path, decoded, image, code, mode, tables):
         meta = json.loads(next(stream))
         course = course_from_source(meta, decoded, image, code)
         initial = json.loads(next(stream))
-        if initial['kind'] != 'auto-start' or initial['state'] != [0,0,0,0,0,0,COUNT]:
+        count = 1 if mode == 2 else COUNT
+        if initial['kind'] != 'auto-start' or initial['state'] != [0,0,0,0,0,0,count]:
             raise ValueError('Invalid physical full-race start')
         oracle = LapOracle(course, meta['starts'][0])
         surface = SurfaceOracle(decoded, course)
@@ -258,9 +286,10 @@ def check_auto(path, decoded, image, code, mode, tables):
                 max_samples = max(max_samples, len(trace))
                 oracle.tick(trace, bool(row['lap'][10]))
                 if phase == 1:
-                    if oracle.values[11]: end = 1
+                    if mode == 2 and oracle.values[9] > course['original_laps']+1: end = 4
+                    elif oracle.values[11]: end = 1
                     elif oracle.values[10]: end = 2
-                    if end: phase = 2
+                    if end: phase = 3 if mode == 2 and end == 4 else 2
                 else:
                     coast += 1
                     if coast == 600: phase = 3
@@ -268,6 +297,24 @@ def check_auto(path, decoded, image, code, mode, tables):
             if row['state'][:5] != [phase,end,ticks,elapsed,coast]:
                 raise ValueError('Physical full-race phase/clock differs')
             position = row['position']
+        if mode == 2:
+            if final is None or phase != 3 or end != 4 or oracle.values[9] != course['original_laps']+2:
+                raise ValueError('Time Trial does not continue past the original race limit')
+            if final['state'] != [3,4,ticks,elapsed,0,0,1] or len(final['cars']) != 1 or len(final['laps']) != 1:
+                raise ValueError('Time Trial field/ending differs')
+            if final['drivers'][0][4:6] != [1,0] or final['drivers'][0][7:9] != [0,0]:
+                raise ValueError('Time Trial fabricates finish places/points')
+            values = oracle.values
+            if final['times'] != [[values[0]-values[1], values[2], values[3], values[8]]]:
+                raise ValueError('Time Trial result loses lap records')
+            if final['cars'][0][0] != 200+elapsed or final['laps'][0] != projected(oracle):
+                raise ValueError('Time Trial final physical clocks/laps differ')
+            return dict(pass_=True, level=code, physical_time_trial=True, vehicles=1,
+                        original_race_laps=course['original_laps'], completed_laps=values[9]-1,
+                        elapsed_seconds=elapsed*.005, physical_vehicle_steps=elapsed,
+                        independent_player_geometry_queries=surface.queries,
+                        best_lap_seconds=values[3]*.005, last_lap_seconds=values[2]*.005,
+                        max_progress_samples=max_samples, scope='Actual physics past the finite race lap limit; AI supplies control inputs')
         if final is None or phase != 3 or end != 1 or oracle.values[9] != course['laps']+1:
             raise ValueError('Physical race does not complete all required laps')
         if final['kind'] != 'auto-final' or final['state'][:5] != [phase,end,ticks,elapsed,coast]:
@@ -347,9 +394,9 @@ def main():
                 'wasm':['node',str(WORK/'rewrite-wasm/dd2_race_export.js')], 'sanitized':[str(sanitized)]}
     for code in CODES:
         decoded = reference(files[f'LEV{code}\\LEVEL.DAT'], code, rows)
-        for mode_name, mode in (('wreck',0), ('stock',1)):
+        for mode_name, mode in (('wreck',0), ('stock',1), ('trial',2)):
             if code not in '1234567' and mode: continue
-            for kind in ('live','route') if code in '1234567' else ('live',):
+            for kind in ('live','route') if code in '1234567' and mode != 2 else ('live',):
                 targets = {}
                 for target, command in commands.items():
                     check_space(output)
@@ -361,13 +408,14 @@ def main():
                 results.append(item)
                 print(json.dumps(item), flush=True)
     decoded = reference(files['LEV5\\LEVEL.DAT'], '5', rows)
-    targets = {}
-    for target, command in commands.items():
-        path = run([*command,str(archive),'5','stock','auto'], '5-stock-auto-'+target, timeout=360)
-        targets[target] = check_auto(path, decoded, image, '5', 1, tables)
-        path.unlink()
-    results.append(dict(level='5', mode='stock', scenario='auto', targets=targets))
-    print(json.dumps(results[-1]), flush=True)
+    for mode_name, mode in (('stock',1), ('trial',2)):
+        targets = {}
+        for target, command in commands.items():
+            path = run([*command,str(archive),'5',mode_name,'auto'], '5-'+mode_name+'-auto-'+target, timeout=360)
+            targets[target] = check_auto(path, decoded, image, '5', mode, tables)
+            path.unlink()
+        results.append(dict(level='5', mode=mode_name, scenario='auto', targets=targets))
+        print(json.dumps(results[-1]), flush=True)
     sources = [path for folder in ('src','tests/rewrite') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
     sources += [Path(__file__).resolve(), ROOT/'CMakeLists.txt', ROOT/'tools/rewrite/verify_laps.py']
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),

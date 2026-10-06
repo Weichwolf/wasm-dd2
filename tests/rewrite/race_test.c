@@ -1,4 +1,5 @@
 #include "game/accidents.h"
+#include "game/course.h"
 #include "game/laps.h"
 #include "game/race.h"
 #include "physics/damage.h"
@@ -43,6 +44,10 @@ static bool dd2_race_test_same(const dd2_race *first, const dd2_race *second) {
         const dd2_race_driver *left = &first->drivers[slot];
         const dd2_race_driver *right = &second->drivers[slot];
         if (left->finish_step != right->finish_step || left->retired_step != right->retired_step ||
+            left->started_laps != right->started_laps ||
+            left->current_lap_time != right->current_lap_time ||
+            left->last_lap_time != right->last_lap_time ||
+            left->best_lap_time != right->best_lap_time ||
             left->credited_laps != right->credited_laps || left->relative != right->relative ||
             left->place != right->place || left->finish_place != right->finish_place ||
             left->accident_points != right->accident_points ||
@@ -263,11 +268,85 @@ static bool dd2_race_test_withdrawal(void) {
            test.race.phase == DD2_RACE_COUNTDOWN && test.race.steps == 0 &&
            test.race.drivers[0].total_points == 0;
 }
+static bool dd2_race_test_trial(void) {
+    dd2_race race = {0};
+    dd2_lap_driver lap = {0};
+    dd2_vehicle_damage damage = {0};
+    dd2_accident_driver accidents = {0};
+    const dd2_race_observation observation = {
+        .laps = &lap, .damage = &damage, .accidents = &accidents, .count = 1};
+    const dd2_race_rules rules = {
+        .mode = DD2_RACE_TIME_TRIAL, .count = 1, .length = DD2_RACE_TEST_LENGTH};
+    if (!dd2_race_reset(&race, rules, observation)) {
+        return false;
+    }
+    for (unsigned tick = 0; tick < DD2_RACE_START_STEPS; ++tick) {
+        if (!dd2_race_step(&race, observation)) {
+            return false;
+        }
+    }
+    /* Continuous laps cannot trigger finite finish awards or LAST_SURVIVOR. */
+    for (unsigned tick = 1; tick <= DD2_COURSE_LAP_LIMIT + 1; ++tick) {
+        lap.steps = tick;
+        lap.started_laps = tick;
+        lap.credited_laps = tick;
+        lap.last_lap = tick == 1 ? 0 : 1;
+        lap.best_lap = lap.last_lap;
+        lap.lap_start = tick;
+        if (!dd2_race_step(&race, observation) || race.phase != DD2_RACE_RUNNING ||
+            race.end != DD2_RACE_NO_END || race.finishers != 0 ||
+            race.drivers[0].best_lap_time != lap.best_lap) {
+            return false;
+        }
+    }
+    ++lap.steps;
+    if (!dd2_race_step(&race, observation) || race.drivers[0].current_lap_time != 1) {
+        return false;
+    }
+    const dd2_race before = race;
+    lap.finished = true;
+    if (dd2_race_step(&race, observation) || !dd2_race_test_same(&race, &before)) {
+        return false;
+    }
+    lap.finished = false;
+    dd2_race_rules bad = rules;
+    bad.count = 2;
+    if (dd2_race_reset(&race, bad, observation) || !dd2_race_test_same(&race, &before)) {
+        return false;
+    }
+    bad = rules;
+    bad.length = 0;
+    if (dd2_race_reset(&race, bad, observation) || !dd2_race_test_same(&race, &before)) {
+        return false;
+    }
+    bad = rules;
+    bad.laps = 1;
+    if (dd2_race_reset(&race, bad, observation) || !dd2_race_test_same(&race, &before) ||
+        !dd2_race_withdraw(&race) || race.drivers[0].total_points != 0 ||
+        race.drivers[0].finish_place != 0 || race.drivers[0].best_lap_time != 1) {
+        return false;
+    }
+    /* A retiring session freezes current timing throughout the coasting phase. */
+    race = before;
+    damage.retired = true;
+    accidents.retired = true;
+    lap.retired = true;
+    for (unsigned tick = 0; tick <= DD2_RACE_COAST_STEPS; ++tick) {
+        ++lap.steps;
+        if (!dd2_race_step(&race, observation) || race.drivers[0].current_lap_time != 1) {
+            return false;
+        }
+    }
+    return race.phase == DD2_RACE_RESULTS && race.end == DD2_RACE_PLAYER_RETIRED &&
+           race.drivers[0].last_lap_time == 1 && race.drivers[0].total_points == 0;
+}
+
 int main(void) {
     const bool passed =
-        dd2_race_test_finish_order() && dd2_race_test_scores() && dd2_race_test_arena() &&
-        dd2_race_test_rejection() && dd2_race_test_withdrawal() && dd2_race_countdown(NULL) == 0 &&
-        !dd2_race_step(NULL, (dd2_race_observation){0}) && !dd2_race_withdraw(NULL) &&
+        dd2_race_test_trial() && dd2_race_test_finish_order() && dd2_race_test_scores() &&
+        dd2_race_test_arena() && dd2_race_test_rejection() && dd2_race_test_withdrawal() &&
+        dd2_race_countdown(NULL) == 0 && !dd2_race_step(NULL, (dd2_race_observation){0}) &&
+        !dd2_race_withdraw(NULL) &&
         dd2_race_finish_points(DD2_RACE_STOCKCAR, 1) == DD2_RACE_TEST_WIN_POINTS &&
         dd2_race_finish_points(DD2_RACE_WRECKING, 3) == DD2_RACE_TEST_THIRD_POINTS &&
         dd2_race_finish_points(DD2_RACE_STOCKCAR, DD2_RACE_TEST_FIELD) == 0 &&

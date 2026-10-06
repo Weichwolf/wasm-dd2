@@ -11,6 +11,7 @@ enum { DD2_COURSE_LAP_LIMIT = 99 };
 typedef struct dd2_course dd2_course;
 typedef struct {
     uint32_t finish;
+    /* Zero keeps checkpoint/lap timing continuous, without a finish flag. */
     unsigned laps;
 } dd2_course_rules;
 

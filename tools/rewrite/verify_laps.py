@@ -108,7 +108,7 @@ class LapOracle:
                 v[7] = 0
                 v[8] += 1
                 v[9] = v[8]
-                if v[9] > self.course['laps']:
+                if self.course['laps'] and v[9] > self.course['laps']:
                     v[11], v[4] = 1, v[0]
             elif relative == 0 and v[6] == last and v[9] < v[8]:
                 v[9] = v[8]

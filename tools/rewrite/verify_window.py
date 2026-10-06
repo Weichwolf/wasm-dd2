@@ -219,6 +219,54 @@ def native_race_checks(ui, references):
                 countdown_pause=True, real_throttle_after_go=True, frozen_results=True, reset=True)
 
 
+def native_trial_checks(ui, references):
+    ui.command('key', 'F8')
+    ui.command('key', 'p')
+    ui.command('key', 'r')
+    comparisons = []
+    for code in '1234567':
+        start = Image.open(references[(code, 'trial-start')]).convert('RGB')
+        comparisons.append(ui.match(start, code + '-trial-start'))
+        ui.command('key', 'F7')
+        result = Image.open(references[(code, 'trial-results')]).convert('RGB')
+        comparisons.append(ui.match(result, code + '-trial-results'))
+        ui.command('key', 'p')
+        ui.command('keydown', 'w')
+        try:
+            if ui.stable() != result.tobytes(): raise ValueError('Time Trial result advances')
+        finally: ui.command('keyup', 'w')
+        ui.command('key', 'p')
+        ui.command('key', 'r')
+        ui.match(start, code + '-trial-reset')
+        if code != '7': ui.command('key', 'Prior')
+    ui.command('key', 'Prior')
+    arena = Image.open(references[('8', 'race-start')]).convert('RGB')
+    ui.match(arena, 'trial-to-arena')
+    ui.command('key', 'F8')
+    ui.match(arena, 'arena-trial-rejected')
+    for code in '7654321':
+        ui.command('key', 'Next')
+        ui.match(Image.open(references[(code, 'race-start')]).convert('RGB'), 'trial-return-' + code)
+    ui.command('key', 'F8')
+    ui.command('key', 'p')
+    ui.command('key', 'r')
+    start = Image.open(references[('1', 'trial-start')]).convert('RGB')
+    ui.match(start, 'trial-before-throttle')
+    body_region = (160, 340, 480, 456)
+    baseline = start.crop(body_region).tobytes()
+    ui.command('key', 'p')
+    ui.command('keydown', 'w')
+    try: ui.wait(lambda: ui.image().crop(body_region).tobytes() != baseline)
+    finally: ui.command('keyup', 'w')
+    ui.command('key', 'p')
+    ui.stable()
+    ui.command('key', 'r')
+    ui.match(start, 'trial-after-go-reset')
+    ui.command('key', 'Return')
+    return dict(pass_=True, comparisons=comparisons, all_circuits=True,
+                real_keyboard_throttle=True, reset=True, frozen_results=True, arena_rejected=True)
+
+
 def native_checks(output, archive, references, binary, label='native'):
     ui = NativeWindow(output, archive, binary, label)
     results = []
@@ -265,6 +313,8 @@ def native_checks(output, archive, references, binary, label='native'):
         ui.match(expected, 'inspection-after-driving')
         race = native_race_checks(ui, references)
         ui.match(expected, 'inspection-after-race')
+        trial = native_trial_checks(ui, references)
+        ui.match(expected, 'inspection-after-trial')
         ui.command('windowmove', ui.window, 0, 0)
         for size, offset in (((800, 480), (80, 0)), ((640, 600), (0, 60))):
             ui.command('windowsize', ui.window, *size)
@@ -278,7 +328,7 @@ def native_checks(output, archive, references, binary, label='native'):
     finally: ui.close()
     return dict(pass_=True, comparisons=results, real_x11_keys=True,
                 camera_motion_release=True, focus_loss_release=True, track_wrap=True,
-                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race)
+                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race, time_trial=trial)
 
 
 def build_sanitized(output):
@@ -328,7 +378,8 @@ def main():
                             directory=output, timeout=30, stdout=subprocess.DEVNULL, check=True)
                 references[(code, mode)] = path
         for code in CODES:
-            for mode in ('driving', 'race-start', 'race-results'):
+            for mode in (('driving', 'race-start', 'race-results', 'trial-start', 'trial-results')
+                         if code in '1234567' else ('driving', 'race-start', 'race-results')):
                 path = output / f'{code}-{mode}.ppm'
                 run_bounded([str(WORK / 'rewrite-native/dd2_driving_preview'), str(archive), str(path), code,
                              'start' if mode == 'driving' else mode],

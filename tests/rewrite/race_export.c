@@ -74,12 +74,20 @@ static void dd2_race_export_state(const dd2_race *race) {
     for (unsigned index = 0; index < race->rules.count; ++index) {
         printf("%s%u", index == 0 ? "" : ",", race->results[index]);
     }
+    printf("],\"times\":[");
+    for (unsigned slot = 0; slot < race->rules.count; ++slot) {
+        const dd2_race_driver *driver = &race->drivers[slot];
+        printf("%s[%llu,%llu,%llu,%u]", slot == 0 ? "" : ",",
+               (unsigned long long)driver->current_lap_time,
+               (unsigned long long)driver->last_lap_time, (unsigned long long)driver->best_lap_time,
+               driver->started_laps);
+    }
     printf("]");
 }
-static void dd2_race_export_laps(const dd2_lap_driver *laps) {
+static void dd2_race_export_laps(const dd2_lap_driver *laps, unsigned count) {
     printf(",\"laps\":[");
     if (laps != NULL) {
-        for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        for (unsigned slot = 0; slot < count; ++slot) {
             const dd2_lap_driver *lap = &laps[slot];
             printf("%s[%llu,%llu,%u,%u,%d,%d]", slot == 0 ? "" : ",",
                    (unsigned long long)lap->steps, (unsigned long long)lap->finish_step,
@@ -91,9 +99,11 @@ static void dd2_race_export_laps(const dd2_lap_driver *laps) {
 static void dd2_race_export_live(const dd2_driving *driving, const char *kind) {
     printf("{\"kind\":\"%s\",", kind);
     dd2_race_export_state(dd2_driving_race(driving));
-    dd2_race_export_laps(dd2_driving_laps(driving));
-    printf(",\"cars\":[");
-    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+    dd2_race_export_laps(dd2_driving_laps(driving), dd2_driving_vehicle_count(driving));
+    printf(",\"rules\":[%u,%u,%u],\"cars\":[", dd2_driving_vehicle_count(driving),
+           dd2_course_length(dd2_driving_course(driving)),
+           dd2_course_laps(dd2_driving_course(driving)));
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(driving); ++slot) {
         const dd2_vehicle *vehicle = &dd2_driving_vehicles(driving)[slot];
         const dd2_accident_driver *accident = &dd2_driving_accidents(driving)[slot];
         printf("%s[%llu,%.17g,%.17g,%.17g,%llu,%d,%u]", slot == 0 ? "" : ",",
@@ -114,7 +124,7 @@ static void dd2_race_export_meta(const dd2_driving *driving, const dd2_road *roa
     }
     printf("],\"starts\":[");
     const dd2_lap_driver *laps = dd2_driving_laps(driving);
-    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT && laps != NULL; ++slot) {
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(driving) && laps != NULL; ++slot) {
         printf("%s%u", slot == 0 ? "" : ",", laps[slot].cell);
     }
     puts("]}");
@@ -176,6 +186,20 @@ static bool dd2_race_export_driving(unsigned level, const dd2_road *road, dd2_ra
         }
     }
     valid = valid && dd2_race_export_lifecycle(first);
+    if (valid && mode == DD2_RACE_TIME_TRIAL) {
+        valid = dd2_driving_grid_start(first, 1) == NULL &&
+                !dd2_driving_set_race(first, true, (dd2_race_mode)-1) &&
+                dd2_driving_vehicle_count(first) == 1 &&
+                dd2_driving_set_race(first, false, DD2_RACE_WRECKING) &&
+                dd2_driving_vehicle_count(first) == DD2_VEHICLE_FLEET_LIMIT;
+        dd2_course_rules rules = {0};
+        valid = valid && dd2_course_original_rules(level, &rules) &&
+                dd2_course_laps(dd2_driving_course(first)) == rules.laps &&
+                dd2_driving_set_race(first, true, DD2_RACE_STOCKCAR);
+        if (valid) {
+            dd2_race_export_live(first, "restored");
+        }
+    }
     dd2_driving_destroy(first);
     dd2_driving_destroy(second);
     return valid;
@@ -231,7 +255,7 @@ static bool dd2_race_export_route(unsigned level, const dd2_road *road, dd2_race
         if (valid) {
             printf("{\"kind\":\"route\",");
             dd2_race_export_state(&race);
-            dd2_race_export_laps(laps);
+            dd2_race_export_laps(laps, DD2_VEHICLE_FLEET_LIMIT);
             printf(",\"cells\":[");
             for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
                 printf("%s%u", slot == 0 ? "" : ",",
@@ -251,11 +275,11 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
     dd2_ai_driver pilot = {0};
     bool valid = driving != NULL && surface != NULL && dd2_driving_set_race(driving, true, mode);
     if (valid) {
-        valid =
-            dd2_ai_driver_reset(&pilot, (dd2_ai_start){.road = road,
-                                                       .cell = dd2_driving_laps(driving)[0].cell,
-                                                       .slot = 0,
-                                                       .count = DD2_VEHICLE_FLEET_LIMIT});
+        valid = dd2_ai_driver_reset(&pilot,
+                                    (dd2_ai_start){.road = road,
+                                                   .cell = dd2_driving_laps(driving)[0].cell,
+                                                   .slot = 0,
+                                                   .count = dd2_driving_vehicle_count(driving)});
         dd2_race_export_meta(driving, road, mode);
         dd2_race_export_live(driving, "auto-start");
     }
@@ -266,7 +290,7 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
         const dd2_ai_observation observation = {.road = road,
                                                 .surface = surface,
                                                 .vehicles = dd2_driving_vehicles(driving),
-                                                .count = DD2_VEHICLE_FLEET_LIMIT,
+                                                .count = dd2_driving_vehicle_count(driving),
                                                 .slot = 0};
         if (dd2_driving_race(driving)->phase == DD2_RACE_RUNNING) {
             valid = dd2_ai_driver_step(&pilot, &observation, &control);
@@ -274,6 +298,13 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
         valid = valid && dd2_driving_advance(
                              driving, (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS,
                                                           .control = control});
+        if (valid && mode == DD2_RACE_TIME_TRIAL) {
+            dd2_course_rules original = {0};
+            valid = dd2_course_original_rules(level, &original);
+            if (valid && dd2_laps_completed(dd2_driving_laps(driving)) > original.laps) {
+                valid = dd2_driving_withdraw(driving);
+            }
+        }
         if (valid) {
             const dd2_race *race = dd2_driving_race(driving);
             const dd2_lap_driver *lap = dd2_driving_laps(driving);
@@ -293,7 +324,8 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
     if (valid) {
         dd2_race_export_live(driving, "auto-final");
         valid = dd2_driving_race(driving)->phase == DD2_RACE_RESULTS &&
-                dd2_driving_race(driving)->end == DD2_RACE_PLAYER_FINISHED;
+                dd2_driving_race(driving)->end ==
+                    (mode == DD2_RACE_TIME_TRIAL ? DD2_RACE_WITHDRAWN : DD2_RACE_PLAYER_FINISHED);
     }
     dd2_driving_destroy(driving);
     dd2_road_surface_destroy(surface);
@@ -304,14 +336,19 @@ int main(int argc, char **argv) {
     const char codes[] = "123456789AB";
     if (argc != DD2_RACE_EXPORT_ARGUMENTS || strlen(argv[2]) != 1 ||
         strchr(codes, argv[2][0]) == NULL ||
-        (strcmp(argv[3], "wreck") != 0 && strcmp(argv[3], "stock") != 0) ||
+        (strcmp(argv[3], "wreck") != 0 && strcmp(argv[3], "stock") != 0 &&
+         strcmp(argv[3], "trial") != 0) ||
         (strcmp(argv[4], "live") != 0 && strcmp(argv[4], "route") != 0 &&
          strcmp(argv[4], "auto") != 0)) {
         return EXIT_FAILURE;
     }
     const unsigned level = (unsigned)(strchr(codes, argv[2][0]) - codes) + 1;
-    const dd2_race_mode mode =
-        strcmp(argv[3], "stock") == 0 ? DD2_RACE_STOCKCAR : DD2_RACE_WRECKING;
+    dd2_race_mode mode = DD2_RACE_WRECKING;
+    if (strcmp(argv[3], "stock") == 0) {
+        mode = DD2_RACE_STOCKCAR;
+    } else if (strcmp(argv[3], "trial") == 0) {
+        mode = DD2_RACE_TIME_TRIAL;
+    }
     dd2_road *road = dd2_race_export_load(argv[1], argv[2][0]);
     bool valid = false;
     if (road != NULL) {

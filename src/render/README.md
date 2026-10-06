@@ -112,4 +112,9 @@ The same overlay module draws LAP current/required at the upper left on racing
 tracks, showing lap 1 during the partial grid approach and FIN on individual lap
 completion. Arenas omit it. Native/WASM pixel charts independently check the
 LAP02/10 and FIN patterns and clearing of old digits. This is presentation of
-borrowed lap state; countdown, finishing order and race results remain pending.
+borrowed lap state. `race_draw.c` overlays source-timed countdown lights, GO,
+position and scored results. Time Trial replaces the finite LAP/POS display
+with current/last/best clocks and an unlimited lap count; its result panel
+retains those times and completed laps without scores. Timestamp rendering
+uses integer 5 ms ticks, MM:SS.mmm punctuation and a 99:59.995 display cap.
+Session records remain owned by game state; persistent records are pending.

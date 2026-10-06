@@ -20,6 +20,8 @@ unsigned dd2_application_current_lap(void);
 unsigned dd2_application_required_laps(void);
 unsigned dd2_application_completed_laps(void);
 unsigned dd2_application_lap_steps(void);
+unsigned dd2_application_last_lap_steps(void);
+unsigned dd2_application_best_lap_steps(void);
 int dd2_application_laps_finished(void);
 void dd2_application_reset_camera(void);
 void dd2_application_release_input(void);
@@ -28,10 +30,10 @@ int dd2_application_set_driving(int enabled);
 int dd2_application_set_paused(int paused);
 int dd2_application_is_paused(void);
 
-/* Start a fresh race: 0 Wrecking (including arenas), 1 Stockcar (circuits).
+/* Start a fresh race: 0 Wrecking (including arenas), 1 Stockcar, 2 Time Trial (circuits).
  * Phase -1 means no race; otherwise dd2_race_phase. Results remain visible
  * until reset, view change or another race/track selection. */
-int dd2_application_start_race(int stockcar);
+int dd2_application_start_race(int mode);
 int dd2_application_withdraw_race(void);
 int dd2_application_race_phase(void);
 unsigned dd2_application_race_steps(void);

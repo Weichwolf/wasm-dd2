@@ -141,7 +141,7 @@ int dd2_application_current_view(void) {
     if (race == NULL) {
         return 2;
     }
-    return race->rules.mode == DD2_RACE_WRECKING ? 3 : 4;
+    return (int)race->rules.mode + 3;
 }
 
 unsigned dd2_application_collision_count(void) {
@@ -213,7 +213,7 @@ unsigned dd2_application_current_lap(void) {
     }
     const unsigned required = dd2_application_required_laps();
     const unsigned current = lap->started_laps == 0 ? 1 : lap->started_laps;
-    return current < required ? current : required;
+    return required == 0 || current < required ? current : required;
 }
 unsigned dd2_application_completed_laps(void) {
     return dd2_laps_completed(dd2_application_lap());
@@ -223,7 +223,21 @@ unsigned dd2_application_lap_steps(void) {
     if (lap == NULL || lap->started_laps == 0) {
         return 0;
     }
-    const uint64_t ticks = lap->finished ? lap->last_lap : lap->steps - lap->lap_start;
+    const dd2_race *race = dd2_driving_race(dd2_current_application->driving);
+    uint64_t ticks = lap->finished ? lap->last_lap : lap->steps - lap->lap_start;
+    if (race != NULL) {
+        ticks = race->drivers[0].current_lap_time;
+    }
+    return ticks < UINT_MAX ? (unsigned)ticks : UINT_MAX;
+}
+unsigned dd2_application_last_lap_steps(void) {
+    const dd2_lap_driver *lap = dd2_application_lap();
+    const uint64_t ticks = lap == NULL ? 0 : lap->last_lap;
+    return ticks < UINT_MAX ? (unsigned)ticks : UINT_MAX;
+}
+unsigned dd2_application_best_lap_steps(void) {
+    const dd2_lap_driver *lap = dd2_application_lap();
+    const uint64_t ticks = lap == NULL ? 0 : lap->best_lap;
     return ticks < UINT_MAX ? (unsigned)ticks : UINT_MAX;
 }
 int dd2_application_laps_finished(void) {
@@ -270,11 +284,10 @@ int dd2_application_set_driving(int enabled) {
     return 1;
 }
 
-int dd2_application_start_race(int stockcar) {
+int dd2_application_start_race(int mode) {
     dd2_application *application = dd2_current_application;
-    if (application == NULL || (stockcar != 0 && stockcar != 1) ||
-        !dd2_driving_set_race(application->driving, true,
-                              stockcar != 0 ? DD2_RACE_STOCKCAR : DD2_RACE_WRECKING)) {
+    if (application == NULL || (mode < DD2_RACE_WRECKING || mode > DD2_RACE_TIME_TRIAL) ||
+        !dd2_driving_set_race(application->driving, true, (dd2_race_mode)mode)) {
         return 0;
     }
     application->drive = true;
@@ -346,9 +359,12 @@ static dd2_camera_motion dd2_application_motion(const dd2_input *input) {
 }
 
 static void dd2_application_race_input(const dd2_input *input) {
-    if (input->pressed[DD2_KEY_WRECKING] || input->pressed[DD2_KEY_STOCKCAR]) {
-        if (dd2_application_start_race((int)input->pressed[DD2_KEY_STOCKCAR]) == 0) {
-            puts("Stockcar benötigt eine Rennstrecke.");
+    if (input->pressed[DD2_KEY_WRECKING] || input->pressed[DD2_KEY_STOCKCAR] ||
+        input->pressed[DD2_KEY_TIME_TRIAL]) {
+        const int mode = input->pressed[DD2_KEY_TIME_TRIAL] ? DD2_RACE_TIME_TRIAL
+                                                            : (int)input->pressed[DD2_KEY_STOCKCAR];
+        if (dd2_application_start_race(mode) == 0) {
+            puts("Dieser Modus benötigt eine Rennstrecke.");
         }
     }
     if (input->pressed[DD2_KEY_WITHDRAW]) {

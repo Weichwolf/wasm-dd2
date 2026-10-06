@@ -31,7 +31,8 @@ enum {
     DD2_RACE_PIXEL_PLAYER_Y = 379,
     DD2_RACE_PIXEL_OTHER_X = 41,
     DD2_RACE_PIXEL_OTHER_Y = 397,
-    DD2_RACE_PIXEL_POINTS = 980
+    DD2_RACE_PIXEL_POINTS = 980,
+    DD2_TRIAL_PIXEL_ROWS = 7
 };
 
 static bool dd2_race_pixel_color(dd2_renderer *renderer, unsigned xpos, unsigned ypos,
@@ -70,6 +71,81 @@ static bool dd2_race_pixel_lights(dd2_renderer *renderer, const dd2_race *race) 
     }
     return true;
 }
+typedef struct {
+    unsigned left;
+    unsigned bottom;
+} dd2_trial_pixel_origin;
+static bool dd2_race_pixel_glyph(dd2_renderer *renderer, const uint8_t *chart,
+                                 dd2_trial_pixel_origin origin) {
+    enum { DD2_TRIAL_PIXEL_COLUMNS = 5 };
+    for (unsigned row = 0; row < DD2_TRIAL_PIXEL_ROWS; ++row) {
+        for (unsigned column = 0; column < DD2_TRIAL_PIXEL_COLUMNS; ++column) {
+            const bool lit = (chart[row] & (1U << (DD2_TRIAL_PIXEL_COLUMNS - column - 1))) != 0;
+            const uint8_t color[] = {(uint8_t)(lit ? DD2_RACE_PIXEL_FULL : 0),
+                                     (uint8_t)(lit ? DD2_RACE_PIXEL_FULL : 0), 0};
+            const unsigned xpos = origin.left + (column * 2) + 1;
+            const unsigned ypos = origin.bottom + ((DD2_TRIAL_PIXEL_ROWS - row - 1) * 2) + 1;
+            if (!dd2_race_pixel_color(renderer, xpos, ypos, color)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+static bool dd2_race_pixel_trial_chart(dd2_renderer *renderer,
+                                       const uint8_t chart[][DD2_TRIAL_PIXEL_ROWS],
+                                       unsigned result) {
+    enum {
+        DD2_TRIAL_PIXEL_GLYPHS = 9,
+        DD2_TRIAL_PIXEL_PITCH = 12,
+        DD2_TRIAL_PIXEL_LEFT = 132,
+        DD2_TRIAL_PIXEL_TOP = 448,
+        DD2_TRIAL_PIXEL_LINE = 24,
+        DD2_TRIAL_PIXEL_OFFSET = 108
+    };
+    for (unsigned line = 0; line < 3; ++line) {
+        for (unsigned glyph = 0; glyph < DD2_TRIAL_PIXEL_GLYPHS; ++glyph) {
+            const unsigned xpos = DD2_TRIAL_PIXEL_LEFT + (glyph * DD2_TRIAL_PIXEL_PITCH);
+            const unsigned ypos = DD2_TRIAL_PIXEL_TOP - (line * DD2_TRIAL_PIXEL_LINE) -
+                                  (result * DD2_TRIAL_PIXEL_OFFSET);
+            if (!dd2_race_pixel_glyph(renderer, chart[glyph],
+                                      (dd2_trial_pixel_origin){.left = xpos, .bottom = ypos})) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+static bool dd2_race_pixel_trial(dd2_renderer *renderer) {
+    enum { DD2_TRIAL_PIXEL_TICKS = 247 };
+    /* Independent charts for 00:01.235 and saturated 99:59.995. Check all empty
+     * pixels too, and both the live HUD and frozen result HUD. */
+    static const uint8_t chart[][DD2_TRIAL_PIXEL_ROWS] = {
+        {14, 17, 19, 21, 25, 17, 14}, {14, 17, 19, 21, 25, 17, 14}, {0, 4, 4, 0, 4, 4, 0},
+        {14, 17, 19, 21, 25, 17, 14}, {4, 12, 4, 4, 4, 4, 14},      {0, 0, 0, 0, 0, 4, 4},
+        {14, 17, 1, 2, 4, 8, 31},     {30, 1, 1, 14, 1, 1, 30},     {31, 16, 16, 30, 1, 1, 30}};
+    static const uint8_t capped[][DD2_TRIAL_PIXEL_ROWS] = {
+        {14, 17, 17, 15, 1, 1, 14}, {14, 17, 17, 15, 1, 1, 14}, {0, 4, 4, 0, 4, 4, 0},
+        {31, 16, 16, 30, 1, 1, 30}, {14, 17, 17, 15, 1, 1, 14}, {0, 0, 0, 0, 0, 4, 4},
+        {14, 17, 17, 15, 1, 1, 14}, {14, 17, 17, 15, 1, 1, 14}, {31, 16, 16, 30, 1, 1, 30}};
+    dd2_race race = {.rules = {.mode = DD2_RACE_TIME_TRIAL, .count = 1}};
+    for (unsigned maximum = 0; maximum < 2; ++maximum) {
+        const uint64_t ticks = maximum == 0 ? DD2_TRIAL_PIXEL_TICKS : UINT64_MAX;
+        race.drivers[0] = (dd2_race_driver){
+            .current_lap_time = ticks, .last_lap_time = ticks, .best_lap_time = ticks};
+        for (unsigned result = 0; result < 2; ++result) {
+            race.phase = result == 0 ? DD2_RACE_RUNNING : DD2_RACE_RESULTS;
+            if (!dd2_race_pixel_draw(&race) ||
+                !dd2_race_pixel_trial_chart(renderer, maximum == 0 ? chart : capped, result)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     dd2_renderer *renderer = dd2_renderer_create(
         &(dd2_render_options){.width = DD2_RACE_PIXEL_WIDTH, .height = DD2_RACE_PIXEL_HEIGHT});
@@ -115,7 +191,7 @@ int main(void) {
         dd2_race_pixel_color(renderer, DD2_RACE_PIXEL_PLAYER_X, DD2_RACE_PIXEL_PLAYER_Y, yellow) &&
         dd2_race_pixel_color(renderer, DD2_RACE_PIXEL_OTHER_X, DD2_RACE_PIXEL_OTHER_Y, white);
     race.results[0] = DD2_VEHICLE_FLEET_LIMIT;
-    passed = passed && !dd2_race_pixel_draw(&race);
+    passed = passed && !dd2_race_pixel_draw(&race) && dd2_race_pixel_trial(renderer);
     dd2_renderer_destroy(renderer);
     puts(passed ? "race lights/GO/result highlight rendering: PASS" : "race pixel checks: FAIL");
     return passed ? EXIT_SUCCESS : EXIT_FAILURE;

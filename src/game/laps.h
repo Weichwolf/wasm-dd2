@@ -37,7 +37,9 @@ typedef struct {
  * crossings temporarily remove credit; recrossing restores it without earning
  * an extra lap. Lap timing excludes the grid approach, in fixed 5 ms steps.
  * Retirement freezes progress, finish freezes progress/timing; steps still count.
- * Invalid observations/state or counter overflow preserve the complete state. */
+ * A zero-lap course continues timing without finish flags, up to the unsigned
+ * counter limit. Invalid observations/state or counter overflow (including
+ * multiple crossings within one trace) preserve the complete state. */
 bool dd2_laps_reset(dd2_lap_driver *driver, const dd2_course *course, uint32_t cell);
 bool dd2_laps_step(dd2_lap_driver *driver, const dd2_course *course,
                    dd2_lap_observation observation);

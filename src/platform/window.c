@@ -150,6 +150,8 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_WRECKING;
     case SDL_SCANCODE_F6:
         return DD2_KEY_STOCKCAR;
+    case SDL_SCANCODE_F8:
+        return DD2_KEY_TIME_TRIAL;
     case SDL_SCANCODE_F7:
         return DD2_KEY_WITHDRAW;
     case SDL_SCANCODE_ESCAPE:

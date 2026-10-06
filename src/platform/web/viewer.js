@@ -66,7 +66,7 @@ level.addEventListener('change', () => {
 view.addEventListener('change', () => {
   const selected = Number(view.value);
   let changed;
-  if (selected >= 3) changed = Module._dd2_application_start_race(selected === 4 ? 1 : 0);
+  if (selected >= 3) changed = Module._dd2_application_start_race(selected - 3);
   else if (selected === 2) changed = Module._dd2_application_set_driving(1);
   else changed = Module._dd2_application_show_car(selected);
   if (!changed) status.textContent = 'Ansicht konnte nicht geladen werden.';
@@ -98,7 +98,7 @@ function reflectSelection() {
       level.value = String(current);
       view.value = String(Module._dd2_application_current_view());
       pauseButton.disabled = Number(view.value) < 2;
-      view.querySelector('option[value="4"]').disabled = current > 7;
+      for (const mode of [4, 5]) view.querySelector(`option[value="${mode}"]`).disabled = current > 7;
       const phase = Module._dd2_application_race_phase();
       finishButton.disabled = Number(view.value) < 3 || phase === 3;
       pauseButton.textContent = Module._dd2_application_is_paused() ? 'Weiterfahren' : 'Pause';

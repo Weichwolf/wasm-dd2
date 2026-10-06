@@ -60,7 +60,8 @@ int main(int argc, char **argv) {
         strstr(argv[2], "..") != NULL || strlen(argv[3]) != 1 ||
         strchr(codes, argv[3][0]) == NULL ||
         (strcmp(argv[4], "start") != 0 && strcmp(argv[4], "drive") != 0 &&
-         strcmp(argv[4], "race-start") != 0 && strcmp(argv[4], "race-results") != 0)) {
+         strcmp(argv[4], "race-start") != 0 && strcmp(argv[4], "race-results") != 0 &&
+         strcmp(argv[4], "trial-start") != 0 && strcmp(argv[4], "trial-results") != 0)) {
         return EXIT_FAILURE;
     }
     dd2_archive_fixture fixture = {0};
@@ -75,9 +76,11 @@ int main(int argc, char **argv) {
     dd2_mesh_materials *materials =
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     bool passed = driving != NULL && renderer != NULL && materials != NULL;
-    if (strncmp(argv[4], "race-", sizeof("race-") - 1) == 0) {
-        passed = passed && dd2_driving_set_race(driving, true, DD2_RACE_WRECKING);
-        if (strcmp(argv[4], "race-results") == 0) {
+    if (strncmp(argv[4], "race-", sizeof("race-") - 1) == 0 ||
+        strncmp(argv[4], "trial-", sizeof("trial-") - 1) == 0) {
+        const dd2_race_mode mode = argv[4][0] == 't' ? DD2_RACE_TIME_TRIAL : DD2_RACE_WRECKING;
+        passed = passed && dd2_driving_set_race(driving, true, mode);
+        if (strcmp(argv[4], "race-results") == 0 || strcmp(argv[4], "trial-results") == 0) {
             passed = passed && dd2_driving_withdraw(driving);
         }
     }

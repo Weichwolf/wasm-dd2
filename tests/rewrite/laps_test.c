@@ -5,6 +5,7 @@
 #include "game/course.h"
 #include "game/laps.h"
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -165,7 +166,6 @@ static bool dd2_lap_test_rejection(const dd2_road *road, const dd2_course *cours
         passed && !dd2_course_original_rules(0, &rules) &&
         !dd2_course_original_rules(DD2_LAP_TEST_STRIPS, &rules) &&
         !dd2_course_original_rules(1, NULL) &&
-        dd2_course_create(road, (dd2_course_rules){0}) == NULL &&
         dd2_course_create(road, (dd2_course_rules){.laps = 1, .finish = DD2_LAP_TEST_LENGTH}) ==
             NULL &&
         dd2_course_create(road, (dd2_course_rules){.laps = DD2_COURSE_LAP_LIMIT + 1}) == NULL &&
@@ -175,6 +175,43 @@ static bool dd2_lap_test_rejection(const dd2_road *road, const dd2_course *cours
         dd2_laps_completed(NULL) == 0 && dd2_course_length(NULL) == 0 &&
         dd2_course_numbers(NULL) == NULL && dd2_course_relative(NULL, 0) == DD2_ROAD_NO_STRIP;
     dd2_course_destroy(NULL);
+    return passed;
+}
+
+static bool dd2_lap_test_continuous(const dd2_road *road) {
+    dd2_course *course = dd2_course_create(road, (dd2_course_rules){.finish = DD2_LAP_TEST_FINISH});
+    dd2_lap_driver driver = {0};
+    bool passed = course != NULL && dd2_course_laps(course) == 0 &&
+                  dd2_laps_reset(&driver, course, dd2_lap_test_cell(road, 3));
+    const uint32_t finish = dd2_lap_test_cell(road, 4);
+    const uint32_t route[] = {dd2_lap_test_cell(road, 0), dd2_lap_test_cell(road, 1),
+                              dd2_lap_test_cell(road, 2), dd2_lap_test_cell(road, 3), finish};
+    passed = passed && dd2_lap_test_step(&driver, course, finish);
+    /* Beyond both source default limits and the configurable finite limit. */
+    for (unsigned lap = 1; lap <= DD2_COURSE_LAP_LIMIT + 1 && passed; ++lap) {
+        for (size_t cell = 0; cell < sizeof(route) / sizeof(route[0]) && passed; ++cell) {
+            passed = dd2_lap_test_step(&driver, course, route[cell]);
+        }
+        passed = passed && dd2_laps_completed(&driver) == lap && !driver.finished &&
+                 driver.finish_step == 0 && driver.last_lap == DD2_LAP_TEST_LENGTH &&
+                 driver.best_lap == DD2_LAP_TEST_LENGTH;
+    }
+    /* Overflow on the second crossing within one trace must roll back the first
+     * crossing, all timing, and the fixed-step clock as well. */
+    driver.started_laps = UINT_MAX - 1;
+    driver.credited_laps = UINT_MAX - 1;
+    const uint32_t twice[] = {route[0], route[1], route[2], route[3], finish,
+                              route[0], route[1], route[2], route[3], finish};
+    const dd2_lap_driver before = driver;
+    passed = passed &&
+             !dd2_laps_step(&driver, course,
+                            (dd2_lap_observation){.cells = twice,
+                                                  .count = sizeof(twice) / sizeof(twice[0])}) &&
+             driver.started_laps == before.started_laps && driver.steps == before.steps &&
+             driver.cell == before.cell && driver.checkpoint == before.checkpoint &&
+             driver.lap_start == before.lap_start && driver.last_lap == before.last_lap &&
+             driver.best_lap == before.best_lap && !driver.finished;
+    dd2_course_destroy(course);
     return passed;
 }
 
@@ -212,10 +249,11 @@ int main(void) {
     dd2_road *road = dd2_lap_test_road(true);
     dd2_course *course =
         dd2_course_create(road, (dd2_course_rules){.finish = DD2_LAP_TEST_FINISH, .laps = 2});
-    bool passed =
-        road != NULL && course != NULL && dd2_course_length(course) == DD2_LAP_TEST_LENGTH &&
-        dd2_course_strip_count(course) == DD2_LAP_TEST_STRIPS && dd2_lap_test_rules(road, course) &&
-        dd2_lap_test_rejection(road, course) && dd2_lap_test_short_course();
+    bool passed = road != NULL && course != NULL &&
+                  dd2_course_length(course) == DD2_LAP_TEST_LENGTH &&
+                  dd2_course_strip_count(course) == DD2_LAP_TEST_STRIPS &&
+                  dd2_lap_test_rules(road, course) && dd2_lap_test_rejection(road, course) &&
+                  dd2_lap_test_continuous(road) && dd2_lap_test_short_course();
     dd2_course_destroy(course);
     dd2_road_destroy(road);
     road = dd2_lap_test_road(false);

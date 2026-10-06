@@ -60,8 +60,14 @@ unsigned dd2_race_finish_points(dd2_race_mode mode, unsigned place) {
 }
 
 static bool dd2_race_rules_valid(dd2_race_rules rules) {
+    if (rules.count == 0 || rules.count > DD2_VEHICLE_FLEET_LIMIT) {
+        return false;
+    }
+    if (rules.mode == DD2_RACE_TIME_TRIAL) {
+        return rules.count == 1 && rules.length >= 3 && rules.length <= UINT16_MAX &&
+               rules.laps == 0;
+    }
     return (rules.mode == DD2_RACE_STOCKCAR || rules.mode == DD2_RACE_WRECKING) &&
-           rules.count != 0 && rules.count <= DD2_VEHICLE_FLEET_LIMIT &&
            ((rules.length >= 3 && rules.length <= UINT16_MAX && rules.laps != 0 &&
              rules.laps <= DD2_COURSE_LAP_LIMIT) ||
             (rules.length == 0 && rules.laps == 0 && rules.mode == DD2_RACE_WRECKING &&
@@ -84,12 +90,15 @@ static bool dd2_race_observation_valid(const dd2_race *race, dd2_race_observatio
             continue;
         }
         const dd2_lap_driver *lap = &observation.laps[slot];
-        if (lap->relative >= race->rules.length || lap->credited_laps > race->rules.laps + 1 ||
+        const bool continuous = race->rules.mode == DD2_RACE_TIME_TRIAL;
+        if (lap->relative >= race->rules.length ||
+            (!continuous && lap->credited_laps > race->rules.laps + 1) ||
             lap->credited_laps > lap->started_laps || lap->started_laps - lap->credited_laps > 1 ||
-            lap->started_laps > race->rules.laps + 1 ||
-            lap->finished != (lap->credited_laps == race->rules.laps + 1) ||
-            lap->finished != (lap->finish_step != 0) || lap->finish_step > lap->steps ||
-            lap->retired != observation.damage[slot].retired ||
+            (!continuous && lap->started_laps > race->rules.laps + 1) ||
+            lap->finished != (!continuous && lap->credited_laps == race->rules.laps + 1) ||
+            lap->lap_start > lap->steps || lap->last_lap > lap->steps ||
+            lap->best_lap > lap->steps || lap->finished != (lap->finish_step != 0) ||
+            lap->finish_step > lap->steps || lap->retired != observation.damage[slot].retired ||
             (driver->finish_place != 0 && driver->finish_step != lap->finish_step)) {
             return false;
         }
@@ -166,6 +175,19 @@ static void dd2_race_observe(dd2_race *race, dd2_race_observation observation) {
         driver->accident_points = observation.accidents[slot].points;
         if (!driver->retired && observation.damage[slot].retired) {
             driver->retired_step = race->elapsed;
+        }
+        if (race->rules.length != 0) {
+            const dd2_lap_driver *lap = &observation.laps[slot];
+            if (!driver->retired && !observation.damage[slot].retired) {
+                driver->current_lap_time =
+                    lap->finished ? lap->last_lap : lap->steps - lap->lap_start;
+                if (lap->started_laps == 0) {
+                    driver->current_lap_time = 0;
+                }
+            }
+            driver->last_lap_time = lap->last_lap;
+            driver->best_lap_time = lap->best_lap;
+            driver->started_laps = lap->started_laps;
         }
         driver->retired = observation.damage[slot].retired;
         race->alive += (unsigned)!driver->retired;

@@ -20,7 +20,7 @@ typedef struct {
     dd2_vehicle_control control;
 } dd2_driving_frame;
 
-/* Owns the surface/barrier indices and twenty vehicle states; borrows road until
+/* Owns the surface/barrier indices and up to twenty vehicle states; borrows road until
  * destruction. Selects all original grid slots without original memory.
  * A frame advances bounded fixed steps transactionally. Pause discards partial
  * elapsed time; reset restores the same settled field, independent of rendering.
@@ -43,10 +43,10 @@ const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving
 void dd2_driving_set_damage(dd2_driving *driving, bool enabled);
 bool dd2_driving_damage_enabled(const dd2_driving *driving);
 const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving);
-/* Borrow all twenty accident scores/attribution windows. Reset clears every
+/* Borrow vehicle_count accident scores/attribution windows. Reset clears every
  * score; pause freezes the windows. Race/championship standings are separate. */
 const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving);
-/* Racing levels expose source-equivalent courses and all twenty lap states.
+/* Racing levels expose source-equivalent courses and vehicle_count lap states.
  * Arenas return NULL. Progress/timing advances inside each fixed step; pause
  * freezes it, reset restores the grid approach. Finished flags are individual
  * lap completion; mode-specific race endings/results are separate. */
@@ -64,9 +64,12 @@ const double *dd2_driving_wheel_rolls(const dd2_driving *driving);
 uint64_t dd2_driving_pair_collisions(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_grid_start(const dd2_driving *driving, unsigned slot);
 
-/* Start/reset a Wrecking/Stockcar race, or return to the free-driving grid.
+/* Start/reset Wrecking, Stockcar or Time Trial, or return to the free-driving grid.
  * Countdown/results hold all physics and clocks; active race observation is
- * transactional with the complete field. Stockcar arenas are rejected. */
+ * transactional with the complete field. Stockcar/Time Trial arenas are rejected.
+ * Time Trial resets to one physical car and a continuous course; leaving it
+ * restores the original lap limit and twenty-car field. Course pointers are
+ * invalidated by a successful mode change. */
 bool dd2_driving_set_race(dd2_driving *driving, bool enabled, dd2_race_mode mode);
 const dd2_race *dd2_driving_race(const dd2_driving *driving);
 bool dd2_driving_withdraw(dd2_driving *driving);

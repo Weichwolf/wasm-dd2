@@ -107,6 +107,7 @@ async function drivingChecks(page) {
     throw new Error('Reset retains lap state');
   report.laps.reset_clears=true;
   await page.keyboard.press('p');
+  await page.waitForFunction(()=>Module._dd2_application_is_paused()===0);
   await page.keyboard.down('w');await changed(page,baseline);
   await page.locator('#reset').focus();await page.keyboard.up('w');
   await stable(page);
@@ -205,6 +206,7 @@ async function raceChecks(page) {
   // Real held throttle through the countdown: clocks cannot start before GO.
   await page.keyboard.press('r');
   await page.keyboard.press('p');
+  await page.waitForFunction(()=>Module._dd2_application_is_paused()===0);
   await page.keyboard.down('w');
   try {
     await page.waitForFunction(()=>Module._dd2_application_race_steps()>20);
@@ -226,6 +228,62 @@ async function raceChecks(page) {
   await page.keyboard.press('Enter');await match(page,'1','scene');
   report.race={pass_:true,all_levels:true,native_keyboard_modes:true,source_stockcar_points:true,
     countdown_holds_field:true,real_throttle_after_go:true,pause:true,frozen_results:true,reset:true,invalid_mode_rollback:true};
+}
+async function trialChecks(page) {
+  await page.keyboard.press('F8');
+  await page.waitForFunction(()=>Module._dd2_application_current_view()===5);
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  for(const code of '1234567') {
+    await page.selectOption('#level',code);
+    await match(page,code,'trial-start');
+    const grid=await page.evaluate(()=>({count:Module._dd2_application_vehicle_count(),
+      required:Module._dd2_application_required_laps(),current:Module._dd2_application_current_lap(),
+      best:Module._dd2_application_best_lap_steps(),last:Module._dd2_application_last_lap_steps()}));
+    if(JSON.stringify(grid)!==JSON.stringify({count:1,required:0,current:1,best:0,last:0}))throw new Error('Time Trial grid/rules invalid');
+    await page.locator('#finish').click();await match(page,code,'trial-results');
+    if(await page.evaluate(()=>Module._dd2_application_race_points())!==0)throw new Error('Time Trial awards circuit bonus');
+    await page.locator('#pause').click();
+    const baseline=digest(await pixels(page));
+    if(await stable(page)!==baseline)throw new Error('Time Trial result changes');
+    await page.locator('#pause').click();
+    await page.locator('#reset').click();await match(page,code,'trial-start');
+  }
+  await page.selectOption('#level','8');await match(page,'8','race-start');
+  const rejected=await page.evaluate(()=>({bad:Module._dd2_application_start_race(2),count:Module._dd2_application_vehicle_count(),view:Module._dd2_application_current_view()}));
+  if(rejected.bad!==0||rejected.count!==20||rejected.view!==3)throw new Error('Arena Time Trial rejection changed state');
+  await page.selectOption('#level','1');
+  await page.selectOption('#view','5');
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  await match(page,'1','trial-start');
+  await page.keyboard.press('p');
+  await page.waitForFunction(()=>Module._dd2_application_is_paused()===0);
+  await page.keyboard.down('w');
+  try {
+    await page.waitForFunction(()=>Module._dd2_application_lap_steps()>0,null,{timeout:15000});
+    if(await page.evaluate(()=>Module._dd2_application_vehicle_count())!==1)throw new Error('Time Trial resurrects opponents');
+  } catch(error) {
+    report.time_trial_failure=await page.evaluate(()=>({paused:Module._dd2_application_is_paused(),
+      phase:Module._dd2_application_race_phase(),ticks:Module._dd2_application_race_steps(),
+      count:Module._dd2_application_vehicle_count(),lap:Module._dd2_application_current_lap(),
+      time:Module._dd2_application_lap_steps(),health:Module._dd2_application_engine_health(),
+      collisions:Module._dd2_application_collision_count()}));
+    await page.locator('#canvas').screenshot({path:path.join(output,'failed-time-trial-drive.png')});
+    throw error;
+  } finally {await page.keyboard.up('w');}
+  await page.keyboard.press('p');
+  const clock=await page.evaluate(()=>Module._dd2_application_lap_steps());
+  await pause(200);
+  if(await page.evaluate(()=>Module._dd2_application_lap_steps())!==clock)throw new Error('Time Trial pause advances clock');
+  await page.locator('#finish').click();
+  if(await page.evaluate(()=>Module._dd2_application_lap_steps())!==clock)throw new Error('Time Trial withdrawal loses current time');
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-trial-results.png')});
+  await page.selectOption('#view','4');
+  if(await page.evaluate(()=>Module._dd2_application_vehicle_count()!==20||Module._dd2_application_required_laps()!==10))throw new Error('Stockcar loses field/rules after Time Trial');
+  await page.selectOption('#view','5');await page.selectOption('#view','2');
+  if(await page.evaluate(()=>Module._dd2_application_vehicle_count()!==20||Module._dd2_application_required_laps()!==10))throw new Error('Free driving loses field/rules after Time Trial');
+  await page.keyboard.press('Enter');await match(page,'1','scene');
+  report.time_trial={pass_:true,all_circuits:true,one_car:true,continuous_laps:true,real_keyboard_throttle:true,
+                    clocks_pause:true,results:true,reset:true,arena_rejected:true,finite_rules_restored:true};
 }
 async function main() {
   const browser=await chromium.launch({headless:true});
@@ -276,6 +334,7 @@ async function main() {
     report.transactional_invalid_selection=true;
     await drivingChecks(page);
     await raceChecks(page);
+    await trialChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);

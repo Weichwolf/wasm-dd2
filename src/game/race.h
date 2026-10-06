@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum { DD2_RACE_WRECKING, DD2_RACE_STOCKCAR } dd2_race_mode;
+typedef enum { DD2_RACE_WRECKING, DD2_RACE_STOCKCAR, DD2_RACE_TIME_TRIAL } dd2_race_mode;
 typedef enum {
     DD2_RACE_COUNTDOWN,
     DD2_RACE_RUNNING,
@@ -28,13 +28,20 @@ enum { DD2_RACE_START_STEPS = 400, DD2_RACE_COAST_STEPS = 600 };
 typedef struct {
     dd2_race_mode mode;
     unsigned count;
-    /* Zero length/laps selects an arena (Wrecking only). */
+    /* Zero length/laps selects a Wrecking arena. Time Trial requires a
+     * circuit, zero lap limit and exactly one vehicle. */
     uint32_t length;
     unsigned laps;
 } dd2_race_rules;
 typedef struct {
     uint64_t finish_step;
     uint64_t retired_step;
+    /* Lap clocks in 5 ms ticks, latched while alive; coasting freezes a
+     * retired driver's current time. Last/best exclude the grid approach. */
+    uint64_t current_lap_time;
+    uint64_t last_lap_time;
+    uint64_t best_lap_time;
+    unsigned started_laps;
     unsigned credited_laps;
     uint32_t relative;
     unsigned place;
@@ -72,6 +79,8 @@ typedef struct {
  * Finish order is latched by crossing tick, then previous place for simultaneous
  * crossings. Arenas end with fewer than two survivors or player retirement.
  * Stockcar awards source placement points; Wrecking adds actual accident points.
+ * Time Trial has one car and continuous laps, no finish bonuses or automatic
+ * lap-limit ending. Withdrawal/retirement results retain lap times.
  * Original post-race randomized NPC scores are replaced by simulated scores.
  * Invalid rules/observations and counter overflow preserve the complete state. */
 bool dd2_race_reset(dd2_race *race, dd2_race_rules rules, dd2_race_observation grid);

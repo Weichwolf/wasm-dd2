@@ -131,8 +131,7 @@ static bool dd2_course_number(dd2_course *course) {
 
 dd2_course *dd2_course_create(const dd2_road *road, dd2_course_rules rules) {
     const size_t count = dd2_road_strip_count(road);
-    if (road == NULL || count == 0 || count > UINT16_MAX || rules.laps == 0 ||
-        rules.laps > DD2_COURSE_LAP_LIMIT) {
+    if (road == NULL || count == 0 || count > UINT16_MAX || rules.laps > DD2_COURSE_LAP_LIMIT) {
         return NULL;
     }
     dd2_course *course = calloc(1, sizeof(*course));

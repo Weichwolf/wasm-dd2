@@ -66,7 +66,9 @@ visible points/destruction counts. Racing levels now track source-equivalent
 checkpoints, laps, individual completion and lap times for all twenty cars, with
 a lap/finish HUD. Wrecking/Stockcar practice races now have a source-timed
 start countdown, persistent finishing order, retirement/survival endings,
-an explicit coasting phase and frozen twenty-driver results. Detached parts,
+an explicit coasting phase and frozen twenty-driver results. Time Trial now uses
+one physical car on all seven circuits, continuous laps, current/last/best
+lap clocks and timed results on withdrawal or engine retirement. Detached parts,
 smoke, billboard orientation, lighting and blending remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
@@ -75,7 +77,7 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Damage-aware tactics, overturned/off-road recovery, Time Trial/Total Destruction,
+Damage-aware tactics, overturned/off-road recovery, Total Destruction,
 championships and the complete original front end remain pending.
 This is not yet a complete racing game.
 
@@ -138,7 +140,8 @@ left, followed by FIN when that driver completes the required laps. The initial
 grid approach starts lap 1 without crediting a complete lap; reverse finish
 crossings cannot earn another lap. Arenas omit the lap display. F5 starts Wrecking
 Racing on a circuit or a destruction arena; F6 starts Stockcar on a circuit.
-The browser view selector offers the same modes. The two-second start countdown
+F8 starts Time Trial with one car and unlimited laps on a circuit. The browser
+view selector offers the same modes. The two-second start countdown
 holds the settled field and all physics/lap/damage/accident clocks until GO;
 P and loss of focus freeze the countdown as well as an active race. Road position
 uses credited laps and finish-relative progress; finish places latch on each
@@ -153,7 +156,15 @@ Wrecking adds actual simulated accident points to the original 50/25/10 circuit
 bonuses, capped at 999. Arena results use accident points without circuit bonuses.
 No randomized post-race NPC score or progress boost is manufactured. The result
 list sorts total points, breaking ties by road/survival position; the player is
-highlighted yellow. These are practice results; season totals are still pending.
+highlighted yellow. These are practice results; season totals are still pending. Time Trial displays
+CURRENT, LAST and BEST in MM:SS.mmm (5 ms resolution, display capped at
+99:59.995), excluding the partial grid approach. A complete lap updates last/best
+without ending the session. Retirement freezes the current timer before the
+coasting phase; F7 retains the session times immediately. Time Trial awards no
+placement/accident points. R clears the session record and restarts the countdown.
+Returning to Freifahrt or a circuit race restores twenty cars and the original
+finite lap count; selecting an arena changes to Wrecking. Persistent track
+records, their original file compatibility and the full front end remain pending.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -346,11 +357,20 @@ An independent geometric oracle checks the player at every fixed step; final
 field placement/scoring is checked against crossing ticks and source tables.
 This establishes one physically completed circuit race, not complete gameplay or
 all-track completion. Additional complete races, overturned-car elimination,
-recovery, Time Trial, Total Destruction and championships remain to be implemented
+recovery, Total Destruction and championships remain to be implemented
 or verified. Native/browser window checks cover all eleven countdown/results
 views, real mode/exit keys and selectors, held throttle until GO, pause, frozen
 results, invalid arena Stockcar rejection and restart. SoftGL pixel tests check
-source-timed red lights, GO and the yellow player result row. Source-timed lights
+source-timed red lights, GO, the yellow player result row and exact Time Trial
+timestamp pixels, including punctuation. Seven additional short single-car
+scenarios check Time Trial on every circuit, with pause/results/reset and
+restoration of the twenty-car finite-lap field. A long physical Time Trial on
+circuit 5 completes nine laps, continuing beyond its original eight-lap race
+limit. Independent geometry/checkpoint and lap-clock oracles check every tick
+on Native, Node/WASM and ASan/UBSan. Native/browser checks cover all seven
+single-car starts and timed result views, F8/selector entry, real throttle,
+paused clocks, arena rejection and finite-rule restoration. This verifies
+session timing; persistent records and full-game coverage remain open. Source-timed lights
 are currently visual; sound cues and music remain pending.
 
 ## Migration and acceptance

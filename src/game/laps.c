@@ -3,6 +3,7 @@
 #include "assets/road.h"
 #include "game/course.h"
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -16,23 +17,33 @@ bool dd2_laps_reset(dd2_lap_driver *driver, const dd2_course *course, uint32_t c
     return true;
 }
 
-static void dd2_laps_cross(dd2_lap_driver *driver, const dd2_course *course, uint32_t relative) {
+static bool dd2_laps_new_lap(dd2_lap_driver *driver, const dd2_course *course) {
+    if (driver->started_laps == UINT_MAX) {
+        return false;
+    }
+    driver->checkpoint = 0;
+    if (driver->started_laps != 0) {
+        driver->last_lap = driver->steps - driver->lap_start;
+        if (driver->best_lap == 0 || driver->last_lap < driver->best_lap) {
+            driver->best_lap = driver->last_lap;
+        }
+    }
+    driver->lap_start = driver->steps;
+    ++driver->started_laps;
+    driver->credited_laps = driver->started_laps;
+    if (dd2_course_laps(course) != 0 && driver->credited_laps == dd2_course_laps(course) + 1) {
+        driver->finished = true;
+        driver->finish_step = driver->steps;
+    }
+    return true;
+}
+
+static bool dd2_laps_cross(dd2_lap_driver *driver, const dd2_course *course, uint32_t relative) {
     const uint32_t last = dd2_course_length(course) - 1;
     if (relative == 0) {
         if (driver->started_laps == driver->credited_laps && driver->checkpoint == last) {
-            driver->checkpoint = 0;
-            if (driver->started_laps != 0) {
-                driver->last_lap = driver->steps - driver->lap_start;
-                if (driver->best_lap == 0 || driver->last_lap < driver->best_lap) {
-                    driver->best_lap = driver->last_lap;
-                }
-            }
-            driver->lap_start = driver->steps;
-            ++driver->started_laps;
-            driver->credited_laps = driver->started_laps;
-            if (driver->credited_laps == dd2_course_laps(course) + 1) {
-                driver->finished = true;
-                driver->finish_step = driver->steps;
+            if (!dd2_laps_new_lap(driver, course)) {
+                return false;
             }
         } else if (driver->credited_laps != driver->started_laps && driver->relative == last) {
             driver->credited_laps = driver->started_laps;
@@ -47,6 +58,7 @@ static void dd2_laps_cross(dd2_lap_driver *driver, const dd2_course *course, uin
         }
     }
     driver->relative = relative;
+    return true;
 }
 
 static bool dd2_laps_valid(const dd2_lap_driver *driver, const dd2_course *course) {
@@ -55,10 +67,11 @@ static bool dd2_laps_valid(const dd2_lap_driver *driver, const dd2_course *cours
            driver->finish_step <= driver->steps && driver->checkpoint < dd2_course_length(course) &&
            driver->relative < dd2_course_length(course) &&
            driver->relative == dd2_course_relative(course, driver->cell) &&
-           driver->started_laps <= dd2_course_laps(course) + 1 &&
+           (dd2_course_laps(course) == 0 || driver->started_laps <= dd2_course_laps(course) + 1) &&
            driver->credited_laps <= driver->started_laps &&
            driver->started_laps - driver->credited_laps <= 1 &&
-           (driver->finished == (driver->credited_laps == dd2_course_laps(course) + 1)) &&
+           (driver->finished == (dd2_course_laps(course) != 0 &&
+                                 driver->credited_laps == dd2_course_laps(course) + 1)) &&
            (driver->finished == (driver->finish_step != 0));
 }
 
@@ -83,7 +96,9 @@ bool dd2_laps_step(dd2_lap_driver *driver, const dd2_course *course,
         if (cell == DD2_ROAD_NO_STRIP) {
             continue;
         }
-        dd2_laps_cross(&next, course, dd2_course_relative(course, cell));
+        if (!dd2_laps_cross(&next, course, dd2_course_relative(course, cell))) {
+            return false;
+        }
         next.cell = cell;
     }
     *driver = next;
