@@ -4,6 +4,8 @@
 #include "assets/barriers.h"
 #include "assets/road.h"
 #include "game/accidents.h"
+#include "game/course.h"
+#include "game/laps.h"
 #include "game/starting_grid.h"
 #include "physics/barrier_world.h"
 #include "physics/damage.h"
@@ -25,18 +27,21 @@ static const double dd2_driving_wheel_radius = 60;
 static const double dd2_driving_max_frame = 0.25;
 static const double dd2_driving_time_tolerance = 1e-12;
 static const double dd2_driving_heading_tolerance = 1e-10;
+static const double dd2_driving_progress_spacing = 32;
 
 struct dd2_driving {
     const dd2_road *road;
     dd2_road_surface *surface;
     dd2_barriers *barriers;
     dd2_barrier_world *barrier_world;
+    dd2_course *course;
     uint64_t collisions;
     dd2_grid_start starts[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT];
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT];
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_collision_report contacts;
     bool opponents;
     bool damage_enabled;
@@ -115,6 +120,7 @@ bool dd2_driving_reset(dd2_driving *driving) {
         }
     }
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT] = {0};
     const dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_accident_observation observations[DD2_VEHICLE_FLEET_LIMIT] = {0};
@@ -123,6 +129,10 @@ bool dd2_driving_reset(dd2_driving *driving) {
         return false;
     }
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        if (driving->course != NULL &&
+            !dd2_laps_reset(&laps[slot], driving->course, driving->starts[slot].cell)) {
+            return false;
+        }
         if (!dd2_ai_driver_reset(&drivers[slot],
                                  (dd2_ai_start){.road = driving->road,
                                                 .cell = driving->starts[slot].cell,
@@ -136,6 +146,7 @@ bool dd2_driving_reset(dd2_driving *driving) {
         driving->drivers[slot] = drivers[slot];
         driving->damages[slot] = (dd2_vehicle_damage){0};
         driving->accidents[slot] = accidents[slot];
+        driving->laps[slot] = laps[slot];
         driving->wheel_rolls[slot] = 0;
     }
     driving->accumulator = 0;
@@ -158,6 +169,18 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
     driving->opponents = true;
     driving->damage_enabled = true;
     driving->surface = dd2_road_surface_create(road);
+    if (level <= DD2_DRIVING_RACING_LEVELS) {
+        dd2_course_rules rules = {0};
+        if (!dd2_course_original_rules(level, &rules)) {
+            dd2_driving_destroy(driving);
+            return NULL;
+        }
+        driving->course = dd2_course_create(road, rules);
+        if (driving->course == NULL) {
+            dd2_driving_destroy(driving);
+            return NULL;
+        }
+    }
     driving->barriers = dd2_barriers_create(road, level);
     driving->barrier_world = dd2_barrier_world_create(driving->barriers);
     if (driving->surface == NULL || driving->barrier_world == NULL ||
@@ -175,14 +198,58 @@ void dd2_driving_destroy(dd2_driving *driving) {
         dd2_barrier_world_destroy(driving->barrier_world);
         dd2_barriers_destroy(driving->barriers);
         dd2_road_surface_destroy(driving->surface);
+        dd2_course_destroy(driving->course);
         free(driving);
     }
 }
 
+static bool dd2_driving_progress(const dd2_driving *driving, dd2_lap_driver *lap,
+                                 const dd2_vehicle *previous, const dd2_vehicle *vehicle,
+                                 bool retired) {
+    /* Sample actual center motion densely enough to visit narrow source strips.
+     * The local support-height window keeps bridge levels separate. Unsupported
+     * samples cannot advance checkpoints; no global nearest-road projection.
+     * Exceptional displacements beyond the bounded trace earn no progress. */
+    const double distance = hypot(vehicle->position.x - previous->position.x,
+                                  vehicle->position.z - previous->position.z);
+    uint32_t cells[DD2_LAP_TRACE_LIMIT] = {0};
+    if (distance > dd2_driving_progress_spacing * (double)DD2_LAP_TRACE_LIMIT) {
+        cells[0] = DD2_ROAD_NO_STRIP;
+        return dd2_laps_step(lap, driving->course,
+                             (dd2_lap_observation){.cells = cells, .count = 1, .retired = retired});
+    }
+    const unsigned samples = (unsigned)fmax(1, ceil(distance / dd2_driving_progress_spacing));
+    uint32_t preferred = lap->cell;
+    for (unsigned sample = 0; sample < samples; ++sample) {
+        const double fraction = (double)(sample + 1) / (double)samples;
+        const double height =
+            previous->position.y + (fraction * (vehicle->position.y - previous->position.y));
+        dd2_road_contact contact = {0};
+        const bool found = dd2_road_surface_sample(
+            driving->surface,
+            (dd2_surface_query){
+                .point = {.x = previous->position.x +
+                               (fraction * (vehicle->position.x - previous->position.x)),
+                          .z = previous->position.z +
+                               (fraction * (vehicle->position.z - previous->position.z))},
+                .min_height = height - (2 * dd2_driving_ride_height),
+                .max_height = height,
+                .preferred_cell = preferred},
+            &contact, NULL);
+        cells[sample] = found ? contact.cell : DD2_ROAD_NO_STRIP;
+        if (found) {
+            preferred = contact.cell;
+        }
+    }
+    return dd2_laps_step(
+        lap, driving->course,
+        (dd2_lap_observation){.cells = cells, .count = samples, .retired = retired});
+}
+
 static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
                              dd2_ai_driver *drivers, dd2_vehicle_damage *damages,
-                             dd2_accident_driver *accidents, dd2_vehicle_control player,
-                             dd2_vehicle_collision_report *report) {
+                             dd2_accident_driver *accidents, dd2_lap_driver *laps,
+                             dd2_vehicle_control player, dd2_vehicle_collision_report *report) {
     dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_vehicle_control controls[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
@@ -217,6 +284,12 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
     }
     dd2_accident_observation observations[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_driving_observe(vehicles, damages, accidents, observations);
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT && driving->course != NULL; ++slot) {
+        if (!dd2_driving_progress(driving, &laps[slot], &previous[slot], &vehicles[slot],
+                                  damages[slot].retired)) {
+            return false;
+        }
+    }
     return dd2_accidents_step(accidents, (dd2_accident_frame){.contacts = report,
                                                               .vehicles = observations,
                                                               .count = DD2_VEHICLE_FLEET_LIMIT});
@@ -234,12 +307,14 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT] = {0};
     double rolls[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
         vehicles[slot] = driving->vehicles[slot];
         drivers[slot] = driving->drivers[slot];
         damages[slot] = driving->damages[slot];
         accidents[slot] = driving->accidents[slot];
+        laps[slot] = driving->laps[slot];
         rolls[slot] = driving->wheel_rolls[slot];
     }
     double accumulator = driving->accumulator + frame.seconds;
@@ -249,7 +324,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     const unsigned steps =
         (unsigned)floor((accumulator + dd2_driving_time_tolerance) / DD2_VEHICLE_STEP_SECONDS);
     for (unsigned step = 0; step < steps; ++step) {
-        if (!dd2_driving_step(driving, vehicles, drivers, damages, accidents, frame.control,
+        if (!dd2_driving_step(driving, vehicles, drivers, damages, accidents, laps, frame.control,
                               &report) ||
             UINT64_MAX - collisions < report.impacts[0].contacts ||
             UINT64_MAX - pairs < report.impacts[0].pair_contacts) {
@@ -275,6 +350,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         driving->drivers[slot] = drivers[slot];
         driving->damages[slot] = damages[slot];
         driving->accidents[slot] = accidents[slot];
+        driving->laps[slot] = laps[slot];
         driving->wheel_rolls[slot] = rolls[slot];
     }
     driving->pair_collisions = pairs;
@@ -319,6 +395,12 @@ const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving) {
 }
 const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving) {
     return driving != NULL ? driving->accidents : NULL;
+}
+const dd2_course *dd2_driving_course(const dd2_driving *driving) {
+    return driving == NULL ? NULL : driving->course;
+}
+const dd2_lap_driver *dd2_driving_laps(const dd2_driving *driving) {
+    return driving == NULL || driving->course == NULL ? NULL : driving->laps;
 }
 
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving) {

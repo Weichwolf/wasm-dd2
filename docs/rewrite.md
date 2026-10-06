@@ -62,8 +62,9 @@ field, with swept oriented boxes and equal/opposite impulses. Six regional crush
 zones now reduce engine power, retire cars with exhausted front zones and deform
 the rendered body; a player HUD shows regional damage and engine health. Accident
 attribution now credits 90/180/360-degree spins and destroyed opponents, with
-visible points/destruction counts. Detached
-parts, smoke, billboard orientation,
+visible points/destruction counts. Racing levels now track source-equivalent
+checkpoints, laps, individual completion and lap times for all twenty cars, with
+a lap/finish HUD. Detached parts, smoke, billboard orientation,
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
@@ -72,7 +73,8 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Damage-aware tactics, overturned/off-road recovery and race rules remain pending.
+Damage-aware tactics, overturned/off-road recovery, race phases/results and
+mode-specific rules remain pending.
 This is not yet a complete racing game.
 
 ## SoftGL
@@ -129,7 +131,10 @@ controls and can reopen the archive after closing. The damage icon points forwar
 upward: green/yellow/red indicate increasing regional crush, and the lower bar
 shows remaining engine health. PTS shows accident points and KO shows credited
 destructions. Reset restores all twenty cars and clears their damage, scores and
-attribution windows.
+attribution windows. Racing tracks also show LAP current/required at the upper
+left, followed by FIN when that driver completes the required laps. The initial
+grid approach starts lap 1 without crediting a complete lap; reverse finish
+crossings cannot earn another lap. Arenas omit the lap display.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -289,6 +294,21 @@ Assigned high initial speeds are diagnostic stress inputs. The ordinary short
 drives exercise attribution/expiration and can finish without point awards.
 This verifies tuned rewrite accident rules, not original physics/damage parity,
 lap/race rules, championship standings or complete racing gameplay.
+
+`make rewrite-laps-verify` independently reads all 3,246 racing strips and the
+original finish/default-lap table. It checks progress equivalents on Native,
+Node/WASM and ASan/UBSan, including longer-branch shared units and nested nodes.
+All 32 combinations of main-route branch choices complete the required laps
+through ordered source-cell rule traces, with first-crossing, lap timing and
+finish flags. These traces are rule/data checks, not physically driven complete
+races. Six-second twenty-car physical scenarios on every racing level check
+168,000 vehicle steps per target against an independent geometric road-contact
+and sequential-checkpoint oracle; a second field checks equivalent frame
+partitions. Synthetic tests cover reverse/re-crossing, missing units, unsupported
+contacts, retirement, completion freeze and transactional rejection. Actual
+native/browser windows verify the lap overlay, real start-line crossing, paused
+timing and reset; pixel tests check LAP/FIN glyphs. Countdown, finishing order,
+mode-specific race endings/results and championships remain pending.
 
 ## Migration and acceptance
 

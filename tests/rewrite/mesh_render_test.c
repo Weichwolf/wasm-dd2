@@ -5,6 +5,7 @@
 #include "assets/scene.h"
 #include "assets/textures.h"
 #include "game/accidents.h"
+#include "game/laps.h"
 #include "physics/damage.h"
 #include "render/damage_draw.h"
 #include "render/mesh_draw.h"
@@ -169,6 +170,60 @@ static bool dd2_draw_damage_probe(dd2_renderer *renderer, dd2_mesh_materials *ma
     return passed;
 }
 
+enum {
+    DD2_LAP_PIXEL_GLYPHS = 8,
+    DD2_LAP_PIXEL_ROWS = 5,
+    DD2_LAP_PIXEL_COLUMNS = 3,
+    DD2_LAP_PIXEL_LEFT = 8,
+    DD2_LAP_PIXEL_TOP = 11,
+    DD2_LAP_PIXEL_PITCH = 4,
+    DD2_LAP_PIXEL_REQUIRED = 10
+};
+
+static bool dd2_draw_lap_chart(dd2_renderer *renderer, dd2_render_options viewport,
+                               const char *const expected[][DD2_LAP_PIXEL_ROWS], unsigned count) {
+    const uint8_t *pixels = dd2_renderer_pixels(renderer);
+    bool passed = pixels != NULL;
+    for (unsigned glyph = 0; glyph < count && passed; ++glyph) {
+        for (unsigned row = 0; row < DD2_LAP_PIXEL_ROWS && passed; ++row) {
+            for (unsigned column = 0; column < DD2_LAP_PIXEL_COLUMNS && passed; ++column) {
+                const unsigned x_pos = DD2_LAP_PIXEL_LEFT + (glyph * DD2_LAP_PIXEL_PITCH) + column;
+                const size_t y_pos = (size_t)viewport.height - DD2_LAP_PIXEL_TOP - row;
+                const size_t offset =
+                    ((y_pos * (size_t)viewport.width) + x_pos) * DD2_TEST_COLOR_CHANNELS;
+                const uint8_t channel = expected[glyph][row][column] == '1' ? UINT8_MAX : 0;
+                passed = pixels[offset] == channel && pixels[offset + 1] == channel &&
+                         pixels[offset + 2] == channel;
+            }
+        }
+    }
+    return passed;
+}
+
+static bool dd2_draw_lap_pixels(dd2_renderer *renderer, dd2_render_options viewport) {
+    const char *const expected[DD2_LAP_PIXEL_GLYPHS][DD2_LAP_PIXEL_ROWS] = {
+        {"100", "100", "100", "100", "111"}, {"010", "101", "111", "101", "101"},
+        {"110", "101", "110", "100", "100"}, {"111", "101", "101", "101", "111"},
+        {"111", "001", "111", "100", "111"}, {"001", "001", "010", "100", "100"},
+        {"010", "110", "010", "010", "111"}, {"111", "101", "101", "101", "111"}};
+    const char *const finish[3][DD2_LAP_PIXEL_ROWS] = {{"111", "100", "110", "100", "100"},
+                                                       {"111", "010", "010", "010", "111"},
+                                                       {"101", "111", "111", "111", "101"}};
+    dd2_lap_driver lap = {.started_laps = 2};
+    bool passed = dd2_lap_draw(&lap, DD2_LAP_PIXEL_REQUIRED, viewport) &&
+                  !dd2_lap_draw(&lap, 0, viewport) &&
+                  dd2_draw_lap_chart(renderer, viewport, expected, DD2_LAP_PIXEL_GLYPHS);
+    lap.finished = true;
+    passed = passed && dd2_lap_draw(&lap, DD2_LAP_PIXEL_REQUIRED, viewport) &&
+             dd2_draw_lap_chart(renderer, viewport, finish, 3);
+    const uint8_t *pixels = dd2_renderer_pixels(renderer);
+    /* FIN replaces the lap number, including clearing the old digits. */
+    const size_t cleared = (((size_t)viewport.height - DD2_LAP_PIXEL_TOP) * (size_t)viewport.width +
+                            DD2_LAP_PIXEL_LEFT + ((size_t)3 * DD2_LAP_PIXEL_PITCH)) *
+                           DD2_TEST_COLOR_CHANNELS;
+    return passed && pixels != NULL && pixels[cleared] == 0 && pixels[cleared + 1] == 0;
+}
+
 static bool dd2_draw_damage_hud(void) {
     const dd2_render_options viewport = {.width = 320, .height = 240};
     dd2_renderer *renderer = dd2_renderer_create(&viewport);
@@ -219,6 +274,7 @@ static bool dd2_draw_damage_hud(void) {
             }
         }
     }
+    passed = passed && dd2_draw_lap_pixels(renderer, viewport);
     dd2_renderer_destroy(renderer);
     return passed;
 }

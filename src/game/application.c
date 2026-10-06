@@ -3,7 +3,9 @@
 #include "assets/archive.h"
 #include "assets/level.h"
 #include "assets/track.h"
+#include "game/course.h"
 #include "game/driving.h"
+#include "game/laps.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
@@ -179,6 +181,40 @@ unsigned dd2_application_accident_windows(void) {
     return active;
 }
 
+static const dd2_lap_driver *dd2_application_lap(void) {
+    return dd2_current_application == NULL ? NULL
+                                           : dd2_driving_laps(dd2_current_application->driving);
+}
+unsigned dd2_application_required_laps(void) {
+    return dd2_current_application == NULL
+               ? 0
+               : dd2_course_laps(dd2_driving_course(dd2_current_application->driving));
+}
+unsigned dd2_application_current_lap(void) {
+    const dd2_lap_driver *lap = dd2_application_lap();
+    if (lap == NULL) {
+        return 0;
+    }
+    const unsigned required = dd2_application_required_laps();
+    const unsigned current = lap->started_laps == 0 ? 1 : lap->started_laps;
+    return current < required ? current : required;
+}
+unsigned dd2_application_completed_laps(void) {
+    return dd2_laps_completed(dd2_application_lap());
+}
+unsigned dd2_application_lap_steps(void) {
+    const dd2_lap_driver *lap = dd2_application_lap();
+    if (lap == NULL || lap->started_laps == 0) {
+        return 0;
+    }
+    const uint64_t ticks = lap->finished ? lap->last_lap : lap->steps - lap->lap_start;
+    return ticks < UINT_MAX ? (unsigned)ticks : UINT_MAX;
+}
+int dd2_application_laps_finished(void) {
+    const dd2_lap_driver *lap = dd2_application_lap();
+    return (int)(lap != NULL && lap->finished);
+}
+
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
     if (application != NULL) {
@@ -280,6 +316,8 @@ static bool dd2_application_draw(dd2_application *application) {
                        .vehicle = dd2_driving_vehicle(application->driving),
                        .damage = dd2_driving_damage(application->driving),
                        .score = dd2_driving_accidents(application->driving),
+                       .lap = dd2_driving_laps(application->driving),
+                       .required_laps = dd2_course_laps(dd2_driving_course(application->driving)),
                        .wheel_roll = dd2_driving_wheel_roll(application->driving),
                        .opponents = dd2_driving_vehicles(application->driving) + 1,
                        .opponent_damage = dd2_driving_damage(application->driving) + 1,

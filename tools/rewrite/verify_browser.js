@@ -80,6 +80,11 @@ async function drivingChecks(page) {
   for(const code of '123456789AB') {
     await page.selectOption('#level',String(index++));
     await match(page,code,'driving');
+    const lap=await page.evaluate(()=>({current:Module._dd2_application_current_lap(),required:Module._dd2_application_required_laps(),
+      completed:Module._dd2_application_completed_laps(),ticks:Module._dd2_application_lap_steps(),finished:Module._dd2_application_laps_finished()}));
+    const expected=index<=8 ? [10,5,5,5,8,7,5][index-2] : 0;
+    if(lap.current!==(expected ? 1 : 0)||lap.required!==expected||lap.completed!==0||lap.ticks!==0||lap.finished!==0)
+      throw new Error('Initial lap state differs: '+JSON.stringify({code,lap,expected}));
   }
   await page.keyboard.press('PageUp');await match(page,'1','driving');
   await page.waitForFunction(()=>document.querySelector('#view').value==='2' && document.querySelector('#level').value==='1');
@@ -91,8 +96,16 @@ async function drivingChecks(page) {
   await page.keyboard.down('w');
   try {await changed(page,baseline);await pause(1000);} finally {await page.keyboard.up('w');}
   await page.keyboard.press('p');
+  const lapTicks=await page.evaluate(()=>Module._dd2_application_lap_steps());
+  if(lapTicks<=0)throw new Error('Actual forward input never starts lap timing');
+  await pause(300);
+  if(await page.evaluate(()=>Module._dd2_application_lap_steps())!==lapTicks)throw new Error('Pause advances lap timing');
+  report.laps={real_start_line_crossing:true,pause_freezes:true,ticks:lapTicks,initial_states_all_levels:true};
   if(await stable(page)===baseline)throw new Error('Browser throttle did not move vehicle');
   await page.keyboard.press('r');await match(page,'1','driving');
+  if(await page.evaluate(()=>Module._dd2_application_lap_steps()!==0||Module._dd2_application_completed_laps()!==0||Module._dd2_application_laps_finished()!==0))
+    throw new Error('Reset retains lap state');
+  report.laps.reset_clears=true;
   await page.keyboard.press('p');
   await page.keyboard.down('w');await changed(page,baseline);
   await page.locator('#reset').focus();await page.keyboard.up('w');

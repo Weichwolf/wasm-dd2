@@ -158,5 +158,6 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
                                                    .viewport = view.viewport});
     }
     return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
-           (view.score == NULL || dd2_score_draw(view.score, view.viewport));
+           (view.score == NULL || dd2_score_draw(view.score, view.viewport)) &&
+           (view.lap == NULL || dd2_lap_draw(view.lap, view.required_laps, view.viewport));
 }

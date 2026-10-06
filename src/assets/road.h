@@ -41,8 +41,8 @@ typedef struct {
 
 /* Owns decoded vertices, strips and lane cells. Original bytes may be released
  * after creation. Links are bounded indices, never original memory addresses.
- * The main loop starts at strip 0; branch/main lap equivalence and generated
- * original lane-start/progress fields are not yet implemented. */
+ * The main loop starts at strip 0. game/course supplies separate branch/main
+ * lap equivalence; original generated lane-start fields remain unimplemented. */
 dd2_road *dd2_road_create(const dd2_level_data *level, dd2_road_layout layout);
 void dd2_road_destroy(dd2_road *road);
 size_t dd2_road_vertex_count(const dd2_road *road);

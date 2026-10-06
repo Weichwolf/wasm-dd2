@@ -4,6 +4,8 @@
 #include "ai/driver.h"
 #include "assets/road.h"
 #include "game/accidents.h"
+#include "game/course.h"
+#include "game/laps.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -43,6 +45,12 @@ const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving);
 /* Borrow all twenty accident scores/attribution windows. Reset clears every
  * score; pause freezes the windows. Race/championship standings are separate. */
 const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving);
+/* Racing levels expose source-equivalent courses and all twenty lap states.
+ * Arenas return NULL. Progress/timing advances inside each fixed step; pause
+ * freezes it, reset restores the grid approach. Finished flags are individual
+ * lap completion; mode-specific race endings/results are separate. */
+const dd2_course *dd2_driving_course(const dd2_driving *driving);
+const dd2_lap_driver *dd2_driving_laps(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving);
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving);
 uint64_t dd2_driving_collisions(const dd2_driving *driving);

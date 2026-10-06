@@ -3,6 +3,7 @@
 
 #include "assets/track.h"
 #include "game/accidents.h"
+#include "game/laps.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "render/mesh_draw.h"
@@ -16,6 +17,8 @@ typedef struct {
     const dd2_vehicle *vehicle;
     const dd2_vehicle_damage *damage;
     const dd2_accident_driver *score;
+    const dd2_lap_driver *lap;
+    unsigned required_laps;
     double wheel_roll;
     const dd2_vehicle *opponents;
     const dd2_vehicle_damage *opponent_damage;

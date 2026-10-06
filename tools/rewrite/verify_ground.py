@@ -140,7 +140,7 @@ def main():
     units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
               ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision','damage')]
-    units += [ROOT/'src/game/driving.c', ROOT/'src/game/starting_grid.c', ROOT/'src/game/accidents.c', ROOT/'src/platform/file.c']
+    units += [ROOT/'src/game/driving.c', ROOT/'src/game/starting_grid.c', ROOT/'src/game/accidents.c', ROOT/'src/game/course.c', ROOT/'src/game/laps.c', ROOT/'src/platform/file.c']
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]
     sanitized, synthetic = output/'export-sanitized', output/'test-sanitized'
     for source, binary in (('ground_export', sanitized), ('ground_test', synthetic)):

@@ -1,5 +1,6 @@
 #include "archive_fixture.h"
 #include "assets/track.h"
+#include "game/course.h"
 #include "game/driving.h"
 #include "physics/vehicle.h"
 #include "render/driving_draw.h"
@@ -102,6 +103,8 @@ int main(int argc, char **argv) {
                          .vehicle = vehicle,
                          .damage = dd2_driving_damage(driving),
                          .score = dd2_driving_accidents(driving),
+                         .lap = dd2_driving_laps(driving),
+                         .required_laps = dd2_course_laps(dd2_driving_course(driving)),
                          .wheel_roll = dd2_driving_wheel_roll(driving),
                          .opponents = dd2_driving_vehicles(driving) + 1,
                          .opponent_damage = dd2_driving_damage(driving) + 1,

@@ -107,3 +107,9 @@ destructions (KO, two digits) beside the damage icon. The HUD uses compact bitma
 glyphs and a black backdrop, scales with the viewport and restores matrices/depth
 testing. Native/WASM pixel tests independently check the 123 glyph pattern. These
 are current-race accident values; championship standings remain game-rule work.
+
+The same overlay module draws LAP current/required at the upper left on racing
+tracks, showing lap 1 during the partial grid approach and FIN on individual lap
+completion. Arenas omit it. Native/WASM pixel charts independently check the
+LAP02/10 and FIN patterns and clearing of old digits. This is presentation of
+borrowed lap state; countdown, finishing order and race results remain pending.

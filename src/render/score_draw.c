@@ -1,6 +1,8 @@
 #include "render/score_draw.h"
 
 #include "game/accidents.h"
+#include "game/course.h"
+#include "game/laps.h"
 #include "physics/vehicle_collision.h"
 #include "render/renderer.h"
 
@@ -22,7 +24,13 @@ enum {
     DD2_SCORE_GLYPH_S = 12,
     DD2_SCORE_GLYPH_K = 13,
     DD2_SCORE_GLYPH_O = 14,
-    DD2_SCORE_GLYPHS = 15,
+    DD2_SCORE_GLYPH_L = 15,
+    DD2_SCORE_GLYPH_A = 16,
+    DD2_SCORE_GLYPH_SLASH = 17,
+    DD2_SCORE_GLYPH_F = 18,
+    DD2_SCORE_GLYPH_I = 19,
+    DD2_SCORE_GLYPH_N = 20,
+    DD2_SCORE_GLYPHS = 21,
     DD2_SCORE_BAR = 7,
     DD2_SCORE_EDGES = 5,
     DD2_SCORE_LEFT_MIDDLE = 6,
@@ -56,7 +64,13 @@ static const uint8_t dd2_score_glyphs[DD2_SCORE_GLYPHS][DD2_SCORE_GLYPH_HEIGHT] 
     {DD2_SCORE_BAR, DD2_SCORE_MIDDLE, DD2_SCORE_MIDDLE, DD2_SCORE_MIDDLE, DD2_SCORE_MIDDLE},
     {DD2_SCORE_BAR, DD2_SCORE_LEFT, DD2_SCORE_BAR, DD2_SCORE_RIGHT, DD2_SCORE_BAR},
     {DD2_SCORE_EDGES, DD2_SCORE_EDGES, DD2_SCORE_LEFT_MIDDLE, DD2_SCORE_EDGES, DD2_SCORE_EDGES},
-    {DD2_SCORE_BAR, DD2_SCORE_EDGES, DD2_SCORE_EDGES, DD2_SCORE_EDGES, DD2_SCORE_BAR}};
+    {DD2_SCORE_BAR, DD2_SCORE_EDGES, DD2_SCORE_EDGES, DD2_SCORE_EDGES, DD2_SCORE_BAR},
+    {DD2_SCORE_LEFT, DD2_SCORE_LEFT, DD2_SCORE_LEFT, DD2_SCORE_LEFT, DD2_SCORE_BAR},
+    {DD2_SCORE_MIDDLE, DD2_SCORE_EDGES, DD2_SCORE_BAR, DD2_SCORE_EDGES, DD2_SCORE_EDGES},
+    {DD2_SCORE_RIGHT, DD2_SCORE_RIGHT, DD2_SCORE_MIDDLE, DD2_SCORE_LEFT, DD2_SCORE_LEFT},
+    {DD2_SCORE_BAR, DD2_SCORE_LEFT, DD2_SCORE_LEFT_MIDDLE, DD2_SCORE_LEFT, DD2_SCORE_LEFT},
+    {DD2_SCORE_BAR, DD2_SCORE_MIDDLE, DD2_SCORE_MIDDLE, DD2_SCORE_MIDDLE, DD2_SCORE_BAR},
+    {DD2_SCORE_EDGES, DD2_SCORE_BAR, DD2_SCORE_BAR, DD2_SCORE_BAR, DD2_SCORE_EDGES}};
 
 typedef struct {
     float x;
@@ -149,6 +163,66 @@ bool dd2_score_draw(const dd2_accident_driver *score, dd2_render_options viewpor
     const float scale = fminf(2, fminf((float)viewport.width / (float)DD2_SCORE_WIDTH,
                                        (float)viewport.height / (float)DD2_SCORE_HEIGHT));
     dd2_score_lines(score, scale);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    return glGetError() == GL_NO_ERROR;
+}
+
+bool dd2_lap_draw(const dd2_lap_driver *lap, unsigned required, dd2_render_options viewport) {
+    if (lap == NULL || required == 0 || required > DD2_COURSE_LAP_LIMIT ||
+        lap->started_laps > required + 1 || viewport.width <= 0 || viewport.height <= 0) {
+        return false;
+    }
+    unsigned current = lap->started_laps;
+    if (current == 0) {
+        current = 1;
+    }
+    if (current > required) {
+        current = required;
+    }
+    const unsigned glyphs[] = {DD2_SCORE_GLYPH_L,
+                               DD2_SCORE_GLYPH_A,
+                               DD2_SCORE_GLYPH_P,
+                               current / DD2_SCORE_DIGIT_BASE,
+                               current % DD2_SCORE_DIGIT_BASE,
+                               DD2_SCORE_GLYPH_SLASH,
+                               required / DD2_SCORE_DIGIT_BASE,
+                               required % DD2_SCORE_DIGIT_BASE};
+    const unsigned finish[] = {DD2_SCORE_GLYPH_F, DD2_SCORE_GLYPH_I, DD2_SCORE_GLYPH_N};
+    const float scale = fminf(2, fminf((float)viewport.width / (float)DD2_SCORE_WIDTH,
+                                       (float)viewport.height / (float)DD2_SCORE_HEIGHT));
+    const float left = 8 * scale;
+    const float top = (float)viewport.height - (8 * scale);
+    const size_t glyph_count = sizeof(glyphs) / sizeof(glyphs[0]);
+    const float right = left + ((float)DD2_SCORE_GLYPH_PITCH * (float)glyph_count * scale);
+    const float bottom = top - ((DD2_SCORE_GLYPH_HEIGHT + 4) * scale);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, viewport.width, 0, viewport.height, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glColor3f(0, 0, 0);
+    glBegin(GL_TRIANGLES);
+    glVertex2f(left - scale, bottom - scale);
+    glVertex2f(right + scale, bottom - scale);
+    glVertex2f(left - scale, top + scale);
+    glVertex2f(right + scale, bottom - scale);
+    glVertex2f(right + scale, top + scale);
+    glVertex2f(left - scale, top + scale);
+    glColor3f(1, 1, 1);
+    dd2_score_run(lap->finished ? finish : glyphs,
+                  lap->finished ? sizeof(finish) / sizeof(finish[0])
+                                : sizeof(glyphs) / sizeof(glyphs[0]),
+                  (dd2_score_pen){.x = left, .y = bottom + (2 * scale), .scale = scale});
+    glEnd();
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
