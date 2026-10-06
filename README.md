@@ -3826,8 +3826,15 @@ timestamps, trace line numbers, original Flip counts and caller addresses.
 Wine trace timestamps have limited precision and tracing affects the observed
 timing. These are explicit replay inputs, not physical-clock acceptance.
 DLL-internal calls are excluded by their callers. After the original process
-has terminated, a single unreturned entry on the final trace line may be
-reported as an incomplete tail; its return is never invented. Interior gaps,
+has terminated, a single entry at the engine thread's last trace line may be
+reported as an incomplete tail even if other audio threads log afterward.
+Any later engine-thread or unattributed line rejects that tail; its return is
+never invented. An actual 76-line other-thread suffix retains exactly 283,976
+completed returns (`trace-stream-1715-clock-tail/report.json`), and a fresh
+compressed original run exports 1,280,672 returns plus 39 completed callbacks
+(`trace-stream-1722-original/report.json`). Thirteen existing/damaged controls
+and three actual-tail authorization/thread/activity cases reject correctly.
+This verifies capture validation, not port parity. Interior gaps,
 reordered calls and unknown engine callers reject and remove partial exports.
 The audio checkpoint also records the initial save hash. Exporting these inputs
 does not yet compare the ports' complete racing-engine audio scheduling.

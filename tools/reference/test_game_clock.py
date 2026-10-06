@@ -45,6 +45,16 @@ def verify(capture, executable, output):
         raise AssertionError('Terminated tail introduced an invented clock return')
     thread = CALL.fullmatch(selected[0])[2]
     other_thread = f'{int(thread,16)+1:04x}'
+    # Exercise late logging from another thread without treating it as an
+    # engine return. This uses a modified actual trace excerpt as a control.
+    other_thread_trace = output/'terminal-other-thread.txt'
+    other_thread_trace.write_text('\n'.join([*original, original[-2],
+                                            original[0].replace(':'+thread+':', ':'+other_thread+':')])+'\n')
+    late = export_clock(other_thread_trace, executable, output/'terminated-other-thread', allow_terminal_entry=True)
+    if (late['calls'] != 2 or late['terminal_unreturned_entry'].get('trailing_other_thread_lines') != 1 or
+            late['terminal_unreturned_entry']['return_observed'] is not False or
+            (output/'terminated-other-thread/ticks.bin').read_bytes() != expected):
+        raise AssertionError('Other-thread tail introduced an invented clock return')
     cases = {}
     cases['truncated'] = original[:-1]
     cases['missing-entry'] = [original[0], *original[2:]]
@@ -58,11 +68,12 @@ def verify(capture, executable, output):
     cases['reordered-return'] = [original[0], original[2], original[1], *original[3:]]
     cases['terminal-entry-without-termination-authorization'] = [*original, original[-2]]
     cases['interior-unreturned-entry'] = [*original, original[-2], 'unrelated trailing record']
+    cases['later-engine-thread'] = [*original, original[-2], original[0]]
     rejected = {}
     for name, lines in cases.items():
         trace = output/(name+'.txt');trace.write_text('\n'.join(lines)+'\n')
         directory = output/name
-        try:export_clock(trace, executable, directory, allow_terminal_entry=name=='interior-unreturned-entry')
+        try:export_clock(trace, executable, directory, allow_terminal_entry=name in ('interior-unreturned-entry','later-engine-thread'))
         except ValueError as error:
             if (directory/'ticks.bin').exists() or (directory/'observations.bin').exists():
                 raise AssertionError('Failed clock export retained partial replay input')
@@ -73,7 +84,7 @@ def verify(capture, executable, output):
                   terminated_tail_retains_only_observed_returns=True,
                   excerpt_trace_sha256=positive['trace_sha256'], negative_cases=rejected)
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
-    for directory in ('positive','terminated'):
+    for directory in ('positive','terminated','terminated-other-thread'):
         for name in ('ticks.bin', 'observations.bin'):(output/directory/name).unlink()
     for path in output.glob('*.txt'):path.unlink()
     return report

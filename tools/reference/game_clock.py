@@ -60,9 +60,15 @@ def export_clock(trace, executable, output, *, allow_terminal_entry=False):
             # each record has entry/return trace timestamps, entry/return line,
             # completed original Flip count and original return address.
             observations.write(struct.pack('<8sII', b'DD2GC01\0', 1, 32))
+            last_thread_line = {}; last_unattributed_line = 0
             for number, raw_line in enumerate(lines, 1):
                 sha.update(raw_line)
                 line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
+                parts = line.split(':', 2)
+                if len(parts) == 3 and re.fullmatch('[0-9a-f]+', parts[1], re.I):
+                    last_thread_line[parts[1].lower()] = number
+                else:
+                    last_unattributed_line = number
                 if 'ddraw_surface1_Flip iface' in line:
                     flips += 1
                 if '.GetTickCount()' not in line:
@@ -104,13 +110,17 @@ def export_clock(trace, executable, output, *, allow_terminal_entry=False):
             terminal_entry = None
             if pending and allow_terminal_entry and len(pending) == 1:
                 thread, call = next(iter(pending.items()))
-                # A normally terminated capture can stop between TRACE entry
-                # and return. Retain only completed calls and expose the tail.
-                # Interior gaps, other callers/threads and nonterminal entries
-                # still fail; no return value is manufactured.
-                if thread in threads and call[0] in sites and call[3] == number:
+                # Capture cleanup can stop the engine between entry and return
+                # while other Wine audio threads finish logging. Accept only
+                # that engine thread's last attributed line, with no later
+                # unattributed activity. Retain completed returns and explicitly
+                # expose the unreturned entry; never supply a missing value.
+                if (thread in threads and call[0] in sites and
+                        last_thread_line.get(thread) == call[3] and last_unattributed_line <= call[3]):
                     terminal_entry = dict(thread=thread, caller=hex(call[0]), entry_time_ns=call[2],
                                           entry_line=call[3], completed_flips=call[4], return_observed=False)
+                    if call[3] != number:
+                        terminal_entry['trailing_other_thread_lines'] = number-call[3]
                     pending.clear()
             if pending or not total or not flips or counts[hex(SITES[0])] < 1 or counts[hex(SITES[3])] < 1:
                 raise ValueError('Incomplete original engine clock/presentation trace')
