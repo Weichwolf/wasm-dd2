@@ -23,7 +23,7 @@
   kbd { color:#e8ecf2; background:#253044; padding:2px 5px; border-radius:4px }
 </style>
 <header>
-  <div><h1>Destruction Derby 2</h1><p>Strecken und Fahrzeugmodell ansehen</p></div>
+  <div><h1>Destruction Derby 2</h1><p>Strecken erkunden und frei fahren</p></div>
   <label class="file">Originaldatei Dirinfo öffnen<input id="archive" type="file" disabled></label>
 </header>
 <div class="controls">
@@ -34,12 +34,16 @@
     <option value="8">Arena 1</option><option value="9">Arena 2</option>
     <option value="10">Arena 3</option><option value="11">Arena 4</option>
   </select></label>
-  <label>Ansicht <select id="view" disabled><option value="0">Strecke</option><option value="1">Fahrzeugmodell</option></select></label>
-  <button id="reset" disabled>Kamera zurücksetzen</button>
+  <label>Ansicht <select id="view" disabled><option value="0">Strecke</option><option value="1">Fahrzeugmodell</option><option value="2">Freifahrt</option></select></label>
+  <button id="reset" disabled>Zurücksetzen</button>
+  <button id="pause" disabled>Pause</button>
 </div>
 <p id="status" role="status">Renderer wird vorbereitet …</p>
 <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Streckenansicht. Mit den Pfeiltasten drehen."></canvas>
-<p class="help"><kbd>←</kbd> <kbd>→</kbd> drehen · <kbd>↑</kbd> <kbd>↓</kbd> neigen ·
+<p class="help">Freifahrt: <kbd>Enter</kbd> starten/beenden · <kbd>W</kbd>/<kbd>↑</kbd> Gas ·
+  <kbd>S</kbd>/<kbd>↓</kbd> rückwärts · <kbd>A</kbd>/<kbd>D</kbd> oder Pfeile lenken ·
+  <kbd>Leertaste</kbd> bremsen · <kbd>P</kbd> Pause · <kbd>R</kbd> an den Start.<br>
+  Strecken-/Modellansicht: <kbd>←</kbd> <kbd>→</kbd> drehen · <kbd>↑</kbd> <kbd>↓</kbd> neigen ·
   <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> verschieben · Mausrad oder <kbd>+</kbd>/<kbd>−</kbd> zoomen ·
   <kbd>R</kbd> zurücksetzen · <kbd>Tab</kbd> Ansicht wechseln · <kbd>Bild ↑</kbd>/<kbd>Bild ↓</kbd> Strecke wechseln</p>
 <script src="viewer.js"></script>

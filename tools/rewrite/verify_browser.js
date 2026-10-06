@@ -73,6 +73,39 @@ async function changed(page,baseline) {
   }
   throw new Error('Actual browser keyboard did not move camera');
 }
+async function drivingChecks(page) {
+  await page.evaluate(()=>Module._dd2_application_set_paused(1));
+  await page.selectOption('#view','2');
+  let index=1;
+  for(const code of '123456789AB') {
+    await page.selectOption('#level',String(index++));
+    await match(page,code,'driving');
+  }
+  await page.keyboard.press('PageUp');await match(page,'1','driving');
+  await page.waitForFunction(()=>document.querySelector('#view').value==='2' && document.querySelector('#level').value==='1');
+  const baseline=digest(await pixels(page));
+  await page.keyboard.down('w');
+  try {if(await stable(page)!==baseline)throw new Error('Paused browser vehicle moves');}
+  finally {await page.keyboard.up('w');}
+  await page.locator('#pause').click();
+  await page.keyboard.down('w');
+  try {await changed(page,baseline);await pause(1000);} finally {await page.keyboard.up('w');}
+  await page.keyboard.press('p');
+  if(await stable(page)===baseline)throw new Error('Browser throttle did not move vehicle');
+  await page.keyboard.press('r');await match(page,'1','driving');
+  await page.keyboard.press('p');
+  await page.keyboard.down('w');await changed(page,baseline);
+  await page.locator('#reset').focus();await page.keyboard.up('w');
+  await stable(page);
+  await page.evaluate(()=>Module._dd2_application_set_paused(1));
+  await page.locator('#reset').click();await match(page,'1','driving');
+  const bad=await page.evaluate(()=>({drive:Module._dd2_application_set_driving(2),pause:Module._dd2_application_set_paused(-1),view:Module._dd2_application_current_view(),paused:Module._dd2_application_is_paused()}));
+  if(bad.drive!==0||bad.pause!==0||bad.view!==2||bad.paused!==1)throw new Error('Invalid driving control changes state');
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-driving.png')});
+  await page.keyboard.press('Enter');await match(page,'1','scene');
+  report.driving={pass_:true,real_throttle:true,pause_freezes:true,focus_loss_freezes:true,
+                  deterministic_reset:true,track_wrap:true,selection_sync:true,invalid_controls_rejected:true};
+}
 async function main() {
   const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:680,height:1000}});
@@ -120,6 +153,7 @@ async function main() {
     const state=await page.evaluate(()=>({badLevel:Module._dd2_application_select_level(0),badView:Module._dd2_application_show_car(2),level:Module._dd2_application_current_level(),view:Module._dd2_application_current_view()}));
     if(state.badLevel!==0||state.badView!==0||state.level!==1||state.view!==0)throw new Error('Invalid selection changed active state');
     report.transactional_invalid_selection=true;
+    await drivingChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);

@@ -25,7 +25,7 @@ enum {
     DD2_WINDOW_MAX_SIDE = 4096,
     DD2_WINDOW_WAIT_MS = 8
 };
-static const float dd2_window_max_elapsed = 0.05F;
+static const float dd2_window_max_elapsed = 0.25F;
 
 struct dd2_window {
     SDL_Window *native;
@@ -34,6 +34,7 @@ struct dd2_window {
     dd2_render_options size;
     bool held[DD2_KEY_COUNT];
     uint64_t previous;
+    bool focused;
 };
 
 void dd2_window_destroy(dd2_window *window) {
@@ -75,6 +76,7 @@ dd2_window *dd2_window_create(dd2_render_options size) {
         dd2_window_destroy(window);
         return NULL;
     }
+    window->focused = true;
     window->previous = SDL_GetPerformanceCounter();
     return window;
 }
@@ -138,6 +140,12 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_PREVIOUS;
     case SDL_SCANCODE_PAGEUP:
         return DD2_KEY_NEXT;
+    case SDL_SCANCODE_RETURN:
+        return DD2_KEY_DRIVE;
+    case SDL_SCANCODE_P:
+        return DD2_KEY_PAUSE;
+    case SDL_SCANCODE_SPACE:
+        return DD2_KEY_BRAKE;
     case SDL_SCANCODE_ESCAPE:
         return DD2_KEY_QUIT;
     default:
@@ -198,7 +206,10 @@ dd2_input dd2_window_poll(dd2_window *window) {
         case SDL_WINDOWEVENT:
             input.redraw = true;
             if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-                dd2_window_release_input(window);
+                dd2_window_set_focus(window, false);
+            }
+            if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+                dd2_window_set_focus(window, true);
             }
             break;
         default:
@@ -208,7 +219,20 @@ dd2_input dd2_window_poll(dd2_window *window) {
     for (size_t index = 0; index < DD2_KEY_COUNT; ++index) {
         input.held[index] = window->held[index];
     }
+    input.focused = window->focused;
     return input;
+}
+
+void dd2_window_set_focus(dd2_window *window, bool focused) {
+    if (window != NULL) {
+        if (window->focused != focused) {
+            window->previous = SDL_GetPerformanceCounter();
+        }
+        window->focused = focused;
+        if (!focused) {
+            dd2_window_release_input(window);
+        }
+    }
 }
 
 float dd2_window_elapsed(dd2_window *window) {

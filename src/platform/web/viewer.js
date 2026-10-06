@@ -5,7 +5,9 @@ const archive = document.getElementById('archive');
 const level = document.getElementById('level');
 const view = document.getElementById('view');
 const reset = document.getElementById('reset');
+const pauseButton = document.getElementById('pause');
 let loaded = false;
+let reflectedView = -1;
 var Module = {
   canvas,
   noInitialRun: true,
@@ -39,7 +41,7 @@ archive.addEventListener('change', async () => {
     try { Module.callMain(['/Dirinfo']); }
     finally { Module.FS.unlink('/Dirinfo'); }
     loaded = Module._dd2_application_current_level() !== 0;
-    for (const control of [level, view, reset]) control.disabled = !loaded;
+    for (const control of [level, view, reset, pauseButton]) control.disabled = !loaded;
     if (loaded) {
       level.value = String(Module._dd2_application_current_level());
       view.value = '0';
@@ -60,17 +62,21 @@ level.addEventListener('change', () => {
   canvas.focus();
 });
 view.addEventListener('change', () => {
-  if (!Module._dd2_application_show_car(Number(view.value))) status.textContent = 'Ansicht konnte nicht geladen werden.';
+  const selected = Number(view.value);
+  const changed = selected === 2 ? Module._dd2_application_set_driving(1) : Module._dd2_application_show_car(selected);
+  if (!changed) status.textContent = 'Ansicht konnte nicht geladen werden.';
   canvas.focus();
 });
 reset.addEventListener('click', () => { Module._dd2_application_reset_camera(); canvas.focus(); });
+pauseButton.addEventListener('click', () => { Module._dd2_application_set_paused(Module._dd2_application_is_paused() ? 0 : 1); canvas.focus(); });
+canvas.addEventListener('focus', () => { if (loaded) Module._dd2_application_resume_input(); });
 canvas.addEventListener('pointerdown', () => canvas.focus());
 canvas.addEventListener('blur', () => {
   if (loaded) Module._dd2_application_release_input();
 });
 canvas.addEventListener('wheel', event => event.preventDefault(), {passive:false});
 canvas.addEventListener('keydown', event => {
-  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','PageUp','PageDown'].includes(event.key)) event.preventDefault();
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','PageUp','PageDown',' ','Enter'].includes(event.key)) event.preventDefault();
 });
 window.addEventListener('blur', () => {
   if (loaded) Module._dd2_application_release_input();
@@ -85,9 +91,18 @@ function reflectSelection() {
     if (current) {
       level.value = String(current);
       view.value = String(Module._dd2_application_current_view());
+      pauseButton.disabled = view.value !== '2';
+      pauseButton.textContent = Module._dd2_application_is_paused() ? 'Weiterfahren' : 'Pause';
+      reset.textContent = view.value === '2' ? 'An den Start' : 'Kamera zurücksetzen';
+      const selected = Number(view.value);
+      if (selected !== reflectedView) {
+        status.textContent = selected === 2 ? 'Freifahrt bereit. Klicke ins Bild; W gibt Gas, P pausiert.' : 'Ansicht bereit. Klicke ins Bild, um die Kamera zu steuern.';
+        canvas.setAttribute('aria-label', selected === 2 ? 'Freifahrt. W gibt Gas, A und D lenken, Leertaste bremst.' : 'Streckenansicht. Mit den Pfeiltasten drehen.');
+        reflectedView = selected;
+      }
     } else {
       loaded = false;
-      for (const control of [level, view, reset]) control.disabled = true;
+      for (const control of [level, view, reset, pauseButton]) control.disabled = true;
       if (status.textContent.includes('bereit')) status.textContent = 'Ansicht geschlossen. Dirinfo kann erneut geöffnet werden.';
     }
   }

@@ -40,12 +40,12 @@ Static previews show stored scene meshes and the unmodified high-detail car
 shape; they are not complete race frames. Original geometry uses positive Y
 upward; the diagnostic camera preserves it instead of mirroring the car/track.
 The diagnostic camera also intentionally uses orthographic bounds fitting
-rather than the eventual driving camera.
+alongside the perspective driving camera.
 
 `camera.c` now shares that bounds fitting between the headless preview and the
 interactive native/browser application. Its explicit state supports orbit,
 tilt, screen-plane pan and bounded exponential zoom; reset fits the currently
-selected scene or mesh. There is no driving/chase camera yet.
+selected scene or mesh. The separate `driving_draw.c` implements a perspective chase camera.
 
 The `rewrite_mesh_render` CTest checks every pixel of decoded textured quads,
 correct corner/UV order, transparent texels, depth occlusion and switching
@@ -83,3 +83,14 @@ These are consistency bounds for the rewrite renderer, not original image
 parity or evidence of complete rendering policies. Successful PPMs, sanitizer
 executables and raw logs are removed after the report is written. Inspect a
 specific frame only as needed and remove it when its diagnosis is complete.
+
+`driving_draw.c` uses a world-up camera behind the current body heading, with a
+fallback for near-vertical orientation. It applies the full quaternion pose to
+the original high-detail car mesh and draws four independent wheel models from
+level sections 5/6, with front steering and signed travel-based roll. Source
+visual wheel XZ placement differs from the contact rig; rendering uses the visual
+placements (X ±152, front Z 291, rear Z -232), tuned body height and wheel radius,
+and simulated suspension compression. This is presentation tuning, not original
+wheel-transform parity. Lighting, sky policy, animated vehicle materials and
+shadows are still pending. The shared headless driving snapshot tool and actual
+native/browser window checks compare all eleven deterministic starts.

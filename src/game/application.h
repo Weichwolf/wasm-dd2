@@ -10,5 +10,9 @@ int dd2_application_current_level(void);
 int dd2_application_current_view(void);
 void dd2_application_reset_camera(void);
 void dd2_application_release_input(void);
+void dd2_application_resume_input(void);
+int dd2_application_set_driving(int enabled);
+int dd2_application_set_paused(int paused);
+int dd2_application_is_paused(void);
 
 #endif

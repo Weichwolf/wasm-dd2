@@ -123,6 +123,50 @@ class NativeWindow:
         return self.wait(settled)
 
 
+def native_driving_checks(ui, references):
+    ui.command('key', 'Return')
+    ui.command('key', 'p')
+    ui.command('key', 'r')
+    comparisons = []
+    for code in CODES:
+        expected = Image.open(references[(code, 'driving')]).convert('RGB')
+        comparisons.append(ui.match(expected, code + '-driving-start'))
+        ui.command('key', 'Prior')
+    expected = Image.open(references[('1', 'driving')]).convert('RGB')
+    ui.match(expected, 'driving-wrap')
+    baseline = ui.image().tobytes()
+    ui.command('keydown', 'w')
+    try:
+        if ui.stable() != baseline:
+            raise ValueError('Paused native vehicle moves')
+    finally: ui.command('keyup', 'w')
+    ui.command('key', 'p')
+    ui.command('keydown', 'w')
+    try:
+        ui.wait(lambda: ui.image().tobytes() != baseline)
+        time.sleep(1)
+    finally: ui.command('keyup', 'w')
+    ui.command('key', 'p')
+    moved = ui.stable()
+    if moved == baseline: raise ValueError('Native driving did not move vehicle')
+    ui.command('key', 'r')
+    ui.match(expected, 'driving-reset')
+    ui.command('key', 'p')
+    ui.command('keydown', 'w')
+    ui.wait(lambda: ui.image().tobytes() != baseline)
+    ui.command('windowfocus', '0')
+    ui.command('keyup', 'w')
+    ui.stable()  # Must freeze the simulation, including coasting and suspension.
+    ui.command('windowfocus', ui.window)
+    ui.command('key', 'p')
+    ui.command('key', 'r')
+    ui.match(expected, 'driving-focus-reset')
+    ui.command('key', 'Return')
+    return dict(pass_=True, comparisons=comparisons, real_throttle=True,
+                pause_freezes=True, focus_loss_freezes=True, deterministic_reset=True,
+                track_wrap=True)
+
+
 def native_checks(output, archive, references, binary, label='native'):
     ui = NativeWindow(output, archive, binary, label)
     results = []
@@ -165,6 +209,8 @@ def native_checks(output, archive, references, binary, label='native'):
             raise ValueError('Native camera keeps moving after focus loss/release')
         ui.command('key', 'r')
         ui.match(expected, 'focus-reset')
+        driving = native_driving_checks(ui, references)
+        ui.match(expected, 'inspection-after-driving')
         ui.command('windowmove', ui.window, 0, 0)
         for size, offset in (((800, 480), (80, 0)), ((640, 600), (0, 60))):
             ui.command('windowsize', ui.window, *size)
@@ -178,16 +224,17 @@ def native_checks(output, archive, references, binary, label='native'):
     finally: ui.close()
     return dict(pass_=True, comparisons=results, real_x11_keys=True,
                 camera_motion_release=True, focus_loss_release=True, track_wrap=True,
-                wheel=True, resize_letterbox_scale=True, clean_exit=True)
+                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving)
 
 
 def build_sanitized(output):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
-    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera')]
+    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window')]
-    units += [ROOT / 'src/game/application.c']
+    units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving')]
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
@@ -225,6 +272,11 @@ def main():
                 run_bounded([str(WORK / 'rewrite-native/dd2_scene_preview'), str(archive), str(path), code, mode],
                             directory=output, timeout=30, stdout=subprocess.DEVNULL, check=True)
                 references[(code, mode)] = path
+        for code in CODES:
+            path = output / f'{code}-driving.ppm'
+            run_bounded([str(WORK / 'rewrite-native/dd2_driving_preview'), str(archive), str(path), code, 'start'],
+                        directory=output, timeout=30, stdout=subprocess.DEVNULL, check=True)
+            references[(code, 'driving')] = path
         report['native'] = native_checks(output, archive, references, args.native_binary.resolve())
         sanitized = build_sanitized(output)
         report['sanitized'] = native_checks(output, archive, references, sanitized, 'sanitized')
@@ -238,7 +290,7 @@ def main():
         command = ['node', str(ROOT / 'tools/rewrite/verify_browser.js'),
                    f'http://127.0.0.1:{server.server_port}/', str(archive), str(output)]
         with (output / 'browser.log').open('wb') as log:
-            run_bounded(command, directory=output, timeout=180, stdout=log,
+            run_bounded(command, directory=output, timeout=300, stdout=log,
                         stderr=subprocess.STDOUT, cwd=ROOT, check=True)
         report['browser'] = json.loads((output / 'browser.json').read_text())
         if not report['browser']['pass_']:

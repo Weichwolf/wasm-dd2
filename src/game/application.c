@@ -3,9 +3,12 @@
 #include "assets/archive.h"
 #include "assets/level.h"
 #include "assets/track.h"
+#include "game/driving.h"
+#include "physics/vehicle.h"
 #include "platform/file.h"
 #include "platform/window.h"
 #include "render/camera.h"
+#include "render/driving_draw.h"
 #include "render/mesh_draw.h"
 #include "render/renderer.h"
 
@@ -30,6 +33,9 @@ typedef struct {
     dd2_mesh_materials *materials;
     dd2_window *window;
     dd2_camera camera;
+    dd2_driving *driving;
+    bool drive;
+    bool paused;
     int level;
     bool car;
     bool running;
@@ -55,6 +61,7 @@ static void dd2_application_destroy(dd2_application *application) {
     }
     dd2_mesh_materials_destroy(application->materials);
     dd2_renderer_destroy(application->renderer);
+    dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
     dd2_archive_close(application->archive);
     dd2_file_release(&application->file);
@@ -71,14 +78,19 @@ int dd2_application_select_level(int number) {
     dd2_mesh_materials *materials =
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
-    if (materials == NULL || !dd2_application_fit(&camera, track, application->car)) {
+    dd2_driving *driving = dd2_driving_create(dd2_track_road(track), (unsigned)number);
+    if (driving == NULL || materials == NULL ||
+        !dd2_application_fit(&camera, track, application->car)) {
         dd2_mesh_materials_destroy(materials);
+        dd2_driving_destroy(driving);
         dd2_track_destroy(track);
         return 0;
     }
     dd2_mesh_materials_destroy(application->materials);
+    dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
     application->track = track;
+    application->driving = driving;
     application->materials = materials;
     application->camera = camera;
     application->level = number;
@@ -92,6 +104,8 @@ int dd2_application_show_car(int car) {
         !dd2_application_fit(&application->camera, application->track, car != 0)) {
         return 0;
     }
+    application->drive = false;
+    dd2_driving_suspend(application->driving);
     application->car = car != 0;
     application->dirty = true;
     return 1;
@@ -102,21 +116,61 @@ int dd2_application_current_level(void) {
 }
 
 int dd2_application_current_view(void) {
-    return dd2_current_application != NULL ? (int)dd2_current_application->car : -1;
+    const dd2_application *application = dd2_current_application;
+    if (application == NULL) {
+        return -1;
+    }
+    return application->drive ? 2 : (int)application->car;
 }
 
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
     if (application != NULL) {
         application->dirty =
-            dd2_application_fit(&application->camera, application->track, application->car);
+            application->drive
+                ? dd2_driving_reset(application->driving)
+                : dd2_application_fit(&application->camera, application->track, application->car);
     }
 }
 
 void dd2_application_release_input(void) {
     if (dd2_current_application != NULL) {
-        dd2_window_release_input(dd2_current_application->window);
+        dd2_window_set_focus(dd2_current_application->window, false);
+        dd2_driving_suspend(dd2_current_application->driving);
     }
+}
+
+void dd2_application_resume_input(void) {
+    if (dd2_current_application != NULL) {
+        dd2_window_set_focus(dd2_current_application->window, true);
+    }
+}
+
+int dd2_application_set_driving(int enabled) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || (enabled != 0 && enabled != 1)) {
+        return 0;
+    }
+    application->drive = enabled != 0;
+    dd2_driving_suspend(application->driving);
+    dd2_window_release_input(application->window);
+    application->dirty = true;
+    return 1;
+}
+
+int dd2_application_set_paused(int paused) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || (paused != 0 && paused != 1)) {
+        return 0;
+    }
+    application->paused = paused != 0;
+    dd2_driving_suspend(application->driving);
+    dd2_window_release_input(application->window);
+    return 1;
+}
+
+int dd2_application_is_paused(void) {
+    return dd2_current_application != NULL ? (int)dd2_current_application->paused : 0;
 }
 
 static dd2_camera_motion dd2_application_motion(const dd2_input *input) {
@@ -129,8 +183,14 @@ static dd2_camera_motion dd2_application_motion(const dd2_input *input) {
 }
 
 static void dd2_application_input(dd2_application *application, const dd2_input *input) {
+    if (input->pressed[DD2_KEY_DRIVE]) {
+        dd2_application_set_driving(!application->drive);
+    }
+    if (input->pressed[DD2_KEY_PAUSE] && application->drive) {
+        dd2_application_set_paused(!application->paused);
+    }
     if (input->pressed[DD2_KEY_VIEW]) {
-        dd2_application_show_car(application->car ? 0 : 1);
+        dd2_application_show_car(application->drive || application->car ? 0 : 1);
     }
     if (input->pressed[DD2_KEY_NEXT] || input->pressed[DD2_KEY_PREVIOUS]) {
         int next = application->level + (input->pressed[DD2_KEY_NEXT] ? 1 : -1);
@@ -146,7 +206,7 @@ static void dd2_application_input(dd2_application *application, const dd2_input 
     if (input->pressed[DD2_KEY_RESET]) {
         dd2_application_reset_camera();
     }
-    if (input->wheel != 0) {
+    if (input->wheel != 0 && !application->drive) {
         application->dirty =
             dd2_camera_step(&application->camera,
                             (dd2_camera_motion){.zoom = input->wheel > 0 ? -1.0F : 1.0F},
@@ -157,6 +217,15 @@ static void dd2_application_input(dd2_application *application, const dd2_input 
 
 static bool dd2_application_draw(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
+    if (application->drive) {
+        return dd2_driving_draw(
+                   application->materials, application->track,
+                   (dd2_driving_view){
+                       .vehicle = dd2_driving_vehicle(application->driving),
+                       .wheel_roll = dd2_driving_wheel_roll(application->driving),
+                       .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
+               dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
+    }
     dd2_camera_apply(&application->camera,
                      (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
     const bool drawn =
@@ -175,8 +244,30 @@ static void dd2_application_frame(void *context) {
         application->running = false;
     } else {
         dd2_application_input(application, &input);
-        const bool moved = dd2_camera_step(&application->camera, dd2_application_motion(&input),
-                                           dd2_window_elapsed(application->window));
+        const float seconds = dd2_window_elapsed(application->window);
+        bool moved = false;
+        if (application->drive) {
+            if (application->paused || !input.focused) {
+                dd2_driving_suspend(application->driving);
+            } else {
+                const dd2_vehicle_control control = {
+                    .throttle = (double)(input.held[DD2_KEY_UP] || input.held[DD2_KEY_PAN_UP]) -
+                                (double)(input.held[DD2_KEY_DOWN] || input.held[DD2_KEY_PAN_DOWN]),
+                    .brake = (double)input.held[DD2_KEY_BRAKE],
+                    /* World-up camera faces +Z: screen right is local -X. */
+                    .steer = (double)(input.held[DD2_KEY_LEFT] || input.held[DD2_KEY_PAN_LEFT]) -
+                             (double)(input.held[DD2_KEY_RIGHT] || input.held[DD2_KEY_PAN_RIGHT])};
+                if (!dd2_driving_advance(
+                        application->driving,
+                        (dd2_driving_frame){.seconds = seconds, .control = control})) {
+                    puts("Fahrzeug konnte nicht aktualisiert werden. Mit R zurücksetzen.");
+                    dd2_application_set_paused(1);
+                }
+                moved = true;
+            }
+        } else {
+            moved = dd2_camera_step(&application->camera, dd2_application_motion(&input), seconds);
+        }
         if (application->dirty || input.redraw || moved) {
             application->dirty = false;
             if (!dd2_application_draw(application)) {

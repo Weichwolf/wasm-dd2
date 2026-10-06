@@ -51,12 +51,16 @@ and normals. A balanced spatial index now selects the highest road contact
 within a height window, with stable shared-edge ties and finite-input validation.
 The vehicle core now advances a four-wheel rigid body with suspension, traction,
 steering, braking, reverse and vertical landings in fixed steps. Driving
-presentation, collisions/damage, billboard orientation, lighting, blending and
-race gameplay remain to be implemented. A shared C application now presents the
+presentation now connects that core to a perspective chase camera,
+full body orientation and four suspended/steered/rolling wheel models.
+Collisions/damage, billboard orientation, lighting, blending and race gameplay
+remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
-tilt, pan, zoom, reset and track/view selection. This is an inspection viewer;
-live driving, opponents and race rules remain pending.
-This is not yet a playable game.
+tilt, pan, zoom, reset and track/view selection. The same application now offers
+free driving on all eleven levels, using original
+first-grid positions with road-aligned initial orientation, fixed-step frame
+accumulation, pause/reset and focus-loss suspension. Opponents and race rules remain pending.
+This is not yet a complete racing game.
 
 ## SoftGL
 
@@ -98,12 +102,15 @@ ctest --preset rewrite-wasm
 make clean-logs
 ```
 
-`make rewrite-play LEVEL=1` opens the native track/car viewer. `make rewrite-web`
+`make rewrite-play LEVEL=1` opens the native track/car/free-driving application. `make rewrite-web`
 serves the browser viewer at `http://127.0.0.1:8080/`; select the provisioned
 `DestructionDerby2/Dirinfo` file in the page. Assets remain local and are not
 included in the browser distribution. Arrow keys orbit/tilt, WASD pans, plus/minus
 or the wheel zooms, R resets, Tab switches track/car, Page Up/Down changes level,
-and Escape closes the view. The browser can reopen the archive after closing.
+and Escape closes the view. Enter starts/exits free driving; W/Up gives gas,
+S/Down reverses, A/D or Left/Right steers, Space brakes, P pauses and R returns
+to the settled grid start. The browser has equivalent selection/pause/reset
+controls and can reopen the archive after closing.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -152,22 +159,23 @@ ASan/UBSan, and rejects six corrupted original scene/mesh streams.
 levels on native, Node/WASM and a sanitized rewrite build, checks visible output
 and cross-target image consistency, and removes completed raw frames. Its scope
 is static scene meshes and neutral palette shade with selected cutout, without
-billboard orientation, lighting or blending. Vehicle simulation and a complete
-race remain pending. See `src/render/README.md`.
+billboard orientation, lighting or blending. Free driving is checked separately;
+a complete race remains pending. See `src/render/README.md`.
 `make rewrite-road-verify` checks every playable road graph and contact cell
 against an independent original-data reader on native, Node/WASM and ASan/UBSan.
 It includes source attributes, links, missing edge triangles, grid geometry and
 vertical plane samples, plus invalid-link/count/vertex/branch-cycle rejection.
-This is contact geometry coverage; suspension, vehicle motion, off-road behavior
-and lap/checkpoint equivalence remain pending.
+This is contact geometry coverage; the separately tested suspension/vehicle core,
+off-road recovery and
+lap/checkpoint equivalence are outside this geometry check.
 `make rewrite-surface-verify` additionally compares indexed contact selection
 against an exhaustive cell search for 197,750 queries per target across all
 eleven playable levels, including height windows and shared corners. Native,
 Node/WASM and ASan/UBSan agree on selection and work counts. Synthetic checks
 cover stacked surfaces, tolerance chains and nonfinite inputs under fast-math;
 the original-data verifier requires at least 95% pruning of contact tests. See
-`src/physics/README.md` for ownership and tie rules. This index is a foundation
-for vehicle simulation and is not yet used by the inspection viewer.
+`src/physics/README.md` for ownership and tie rules. This index supplies the
+vehicle simulation used in free driving.
 `make rewrite-vehicle-verify` exercises the vehicle core for 264,000 fixed steps
 per target, using 24 distributed starts on every original track/arena. It
 compares sampled positions, velocities, orientations, steering and wheel state
@@ -175,8 +183,8 @@ on native, Node/WASM and ASan/UBSan. Synthetic tests cover independent rest-heig
 calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
 bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
 this establishes the simulation core, not original driving parity or a complete
-race. Vehicle rendering/input/chase-camera integration and collisions/damage
-remain pending. See `src/physics/README.md`.
+race. Vehicle rendering/input/chase-camera integration is checked separately;
+collisions/damage remain pending. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,
@@ -184,8 +192,18 @@ native resizing/letterboxing, invalid browser archives and close/reopen. The
 native lifecycle also runs with ASan/UBSan-instrumented rewrite C modules;
 system SDL2 and pinned release SoftGL remain uninstrumented. The
 native framebuffer comparison is exact; cross-target comparisons use the same
-recorded SIMD edge bounds as the scene verifier. This establishes viewer behavior,
-not original rendering parity or playable-race coverage.
+recorded SIMD edge bounds as the scene verifier. This establishes inspection/free-driving behavior,
+not original rendering parity or complete-race coverage.
+
+`make rewrite-driving-verify` checks fixed-step accumulation, equivalent frame
+partitions, reset, pause and invalid timing/control rejection on both targets.
+An independent original-data reader checks all eleven first-grid positions,
+including generated alternate-branch IDs and the arena height map. Before/after
+acceleration snapshots compare pose/contact state and perspective images on
+native, Node/WASM and ASan/UBSan. The actual window/browser verifier additionally
+checks all eleven paused starts, real throttle events, pause/focus-loss freezing,
+reset, track wrapping and inspection-mode restoration. This covers free driving;
+it does not establish original handling parity, collisions or complete races.
 
 ## Migration and acceptance
 

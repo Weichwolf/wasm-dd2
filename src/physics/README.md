@@ -105,7 +105,7 @@ must match exactly. The largest observed numeric difference is below 2e-8.
 Completed raw samples and instrumented binaries are removed after the report.
 
 The inspection viewer does not yet drive this vehicle. Real driving input,
-vehicle/wheel rendering and chase camera are the next integration work. Distinct
+vehicle/wheel rendering and chase camera are now integrated in free driving. Distinct
 vehicle classes, body/wall/car collisions, upside-down support, damage, detached
 wheels, off-road recovery, AI and race rules remain pending. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named

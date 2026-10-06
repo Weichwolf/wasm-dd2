@@ -23,3 +23,11 @@ files. Original assets are neither served nor bundled.
 Run `make rewrite-play` or `make rewrite-web`; `make rewrite-window-verify`
 exercises actual X11 pixels and Chromium canvas/input. Gamepad, persistent
 storage and audio activation remain to be implemented.
+
+Free driving shares native/browser keyboard mapping with the inspection modes:
+Enter toggles driving, P pauses and Space brakes. Input reports focus state;
+focus loss releases held keys and suspends simulation, including coasting.
+The browser canvas focus bridge also covers focus changes to page controls.
+Focus transitions reset the monotonic timestamp so hidden/unfocused elapsed
+time cannot advance the resumed vehicle. Frame elapsed time is capped at 250 ms;
+the game owner advances bounded 5 ms steps independently of presentation.

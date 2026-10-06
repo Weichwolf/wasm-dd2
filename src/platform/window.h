@@ -23,12 +23,16 @@ typedef enum {
     DD2_KEY_PREVIOUS,
     DD2_KEY_NEXT,
     DD2_KEY_QUIT,
+    DD2_KEY_DRIVE,
+    DD2_KEY_PAUSE,
+    DD2_KEY_BRAKE,
     DD2_KEY_COUNT
 } dd2_key;
 
 typedef struct {
     bool held[DD2_KEY_COUNT];
     bool pressed[DD2_KEY_COUNT];
+    bool focused;
     bool quit;
     bool redraw;
     int wheel;
@@ -43,6 +47,7 @@ void dd2_window_destroy(dd2_window *window);
 bool dd2_window_present(dd2_window *window, const uint8_t *rgba);
 dd2_input dd2_window_poll(dd2_window *window);
 void dd2_window_release_input(dd2_window *window);
+void dd2_window_set_focus(dd2_window *window, bool focused);
 float dd2_window_elapsed(dd2_window *window);
 void dd2_window_wait(void);
 

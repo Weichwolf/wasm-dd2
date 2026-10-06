@@ -18,6 +18,7 @@ struct dd2_track {
     dd2_texture_set *textures;
     dd2_scene *scene;
     dd2_mesh *car;
+    dd2_mesh *wheels[2];
     dd2_road *road;
 };
 
@@ -77,9 +78,12 @@ dd2_track *dd2_track_create(const dd2_archive *archive, unsigned number) {
         track->level.sections[DD2_LEVEL_SCENE_BLOCKS],
         (dd2_scene_options){.compressed = number <= DD2_TRACK_RACING_COUNT, .limits = limits});
     track->car = dd2_mesh_create(track->level.sections[DD2_LEVEL_CAR_HIGH], limits);
+    track->wheels[0] = dd2_mesh_create(track->level.sections[DD2_LEVEL_WHEEL_FIRST], limits);
+    track->wheels[1] = dd2_mesh_create(track->level.sections[DD2_LEVEL_WHEEL_SECOND], limits);
     track->road = dd2_road_create(&track->level, number <= DD2_TRACK_RACING_COUNT ? DD2_ROAD_RACING
                                                                                   : DD2_ROAD_ARENA);
-    if (track->scene == NULL || track->car == NULL || track->road == NULL) {
+    if (track->scene == NULL || track->car == NULL || track->road == NULL ||
+        track->wheels[0] == NULL || track->wheels[1] == NULL) {
         dd2_track_destroy(track);
         return NULL;
     }
@@ -90,6 +94,8 @@ void dd2_track_destroy(dd2_track *track) {
     if (track != NULL) {
         dd2_road_destroy(track->road);
         dd2_mesh_destroy(track->car);
+        dd2_mesh_destroy(track->wheels[0]);
+        dd2_mesh_destroy(track->wheels[1]);
         dd2_scene_destroy(track->scene);
         dd2_texture_set_destroy(track->textures);
         free(track);
@@ -110,4 +116,8 @@ const dd2_mesh *dd2_track_car(const dd2_track *track) {
 }
 const dd2_road *dd2_track_road(const dd2_track *track) {
     return track != NULL ? track->road : NULL;
+}
+
+const dd2_mesh *dd2_track_wheel(const dd2_track *track, unsigned wheel) {
+    return track != NULL && wheel < 4 ? track->wheels[wheel & 1U] : NULL;
 }

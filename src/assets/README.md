@@ -232,10 +232,8 @@ outside/degenerate contact, source ownership, branches, holes and arena limits.
 This covers data and vertical contact geometry, not original suspension,
 off-road recovery, lap/checkpoint equivalence or vehicle motion.
 
-`track.c` assembles the level, texture pages, scene and high-detail car into one
-owned runtime container for levels 1–11 (source codes 1–9, A and B), together with
-the road/contact geometry. Racing scene
-blocks 1–7 use the original compressed path; arena blocks use their stored path.
+`track.c` assembles the level, texture pages, scene, road, high-detail car and
+two reusable wheel meshes (sections 5/6) into one owned runtime container for levels 1–11 (source codes 1–9, A and B). Racing scene blocks 1–7 use the original compressed path; arena blocks use their stored path.
 The source archive bytes are borrowed and must outlive the container. Partial
 loads release their owned structures, and the application swaps a successfully
-loaded container only after its materials and camera are ready.
+loaded container only after its materials, camera and driving state are ready.
