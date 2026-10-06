@@ -2798,11 +2798,17 @@ ten laps alive and earns 210 points, with exact observed quit-boundary car
 metrics. Its first-human prefix contains 6,320 racing draws, 41,886 actual
 clock returns and 85,890 independently checked RNG returns
 (`multiplayer-lane-1564-public-verification/first-human-report.json`). A's
-cumulative points are still zero at the first result; the second turn has not
-yet accumulated the round. This proves the recorded first-human finish and
-host geometry correction; a complete original two-human run and both port
-comparisons remain required. The failed run's closed raw archive packs are removed
-after diagnosis, retaining selected causal chunks, pictures and API/key records.
+cumulative points are zero at the first result. The second human subsequently
+remained alive on lap 10/progress 140 without improvement for 18,336 observed
+physics ticks. The recorder was deliberately interrupted after diagnosis; this
+is not an engine crash or a successful complete reference. Its 17,266 racing
+images, 90,731 clock returns and 158,436 independently checked RNG returns are
+accounted for (`multiplayer-stall-1570-round10/report.json`). The complete gate
+rejects the unfinished history, and automatic native/browser replays did not
+start. This proves the recorded first-human finish and host geometry correction;
+a complete original two-human run and both port comparisons remain required.
+Closed diagnosed archive packs are removed after reporting, retaining selected
+causal chunks, pictures and actual API/key records.
 
 ```sh
 make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-arc-road --road-policy arc-road-predictive --speed-limit 190'
