@@ -2723,7 +2723,7 @@ capture directory before the original attempt starts.
 
 `--road-policy arc-road-predictive` selects the existing read-only time-trial
 keyboard driver for original multiplayer recording. It follows the linked
-road's arc in the initial lane, predicts steering over the observed adaptive
+road's arc, predicts steering over the observed adaptive
 physics batch and releases keys during original pit control. It uses its own
 recovery controls, so combining it with `--slow-recovery` or `--wall-recovery`
 is rejected before starting a capture. The selected driver source is frozen
@@ -2739,6 +2739,21 @@ first-human prefix. This is host recording/input validation, not a completed
 two-human or port comparison. Observed natural quit-boundary driver metrics
 are saved atomically in `history/natural-finishes.json` even if a later turn
 fails; partial finish lists do not constitute completed-history acceptance.
+
+The first arc-policy multiplayer attempt is a diagnosed failure: human A
+completes five laps alive, then remains unfinished at lap six/progress 63.
+Its bounded record contains 10,277 racing images, 76,881 actual clock returns
+and 30,608 independently checked RNG returns
+(`multiplayer-arc-1560-lane-diagnosis/report.json`). Selected read-only original
+strip headers/vertices show that the fraction-based lane selection changes
+the starting global lane across road-width transitions. Original
+`Move_Forward_Strip` instead adjusts the local lane by the old/new strip
+lane-start bytes. A private correction matches that arithmetic on all 33
+selected original strips (`multiplayer-lane-1561-source/geometry-report.json`);
+this is static host geometry evidence, not a successful escape or regular
+finish. The correction still requires an actual complete original run and
+both port comparisons. The failed run's closed raw archive packs are removed
+after diagnosis, retaining selected causal chunks, pictures and API/key records.
 
 ```sh
 make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-arc-road --road-policy arc-road-predictive --speed-limit 190'
