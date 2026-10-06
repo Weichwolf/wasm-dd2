@@ -69,3 +69,11 @@ credits. Championship driver-to-slot ordering remains separate race work.
 guidance, including sixty-second full-field scenarios on every level. Frame
 partition tests compare every vehicle, wheel roll and AI state. Driving tactics,
 overturned/off-road recovery, race rules and damage integration remain pending.
+
+The driving owner now receives the complete contact report inside every fixed
+step, alongside the aggregate counters. `dd2_driving_contact_report` borrows the
+last fixed step of the last successful frame for diagnosis. A reset or successful
+frame with no fixed steps clears that snapshot; a rejected frame preserves it.
+Frame-partition tests compare contacts as well as vehicles/controllers. Gameplay
+modules must consume each report inside the fixed-step transaction, rather than
+reuse the diagnostic snapshot as an event queue or lose intermediate impacts.

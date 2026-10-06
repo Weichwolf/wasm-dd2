@@ -4,6 +4,7 @@
 #include "ai/driver.h"
 #include "assets/road.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,6 +29,10 @@ void dd2_driving_suspend(dd2_driving *driving);
 void dd2_driving_set_opponents(dd2_driving *driving, bool enabled);
 bool dd2_driving_opponents(const dd2_driving *driving);
 const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving);
+/* Borrowed contacts from the last fixed step of the last successful frame.
+ * Reset and a frame without fixed steps publish an empty report. This snapshot
+ * is diagnostic; gameplay consumers process each report inside the fixed step. */
+const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving);
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving);
 uint64_t dd2_driving_collisions(const dd2_driving *driving);

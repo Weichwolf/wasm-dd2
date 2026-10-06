@@ -246,8 +246,11 @@ Three-second drives exercise all twenty bodies on every playable level, comparin
 reset restoration. Synthetic checks cover fast frontal and glancing collisions,
 rotating contacts, three-car impulse transfer, bridge separation, energy loss and
 transactional rejection. Browser checks use a real reverse key to hit another
-car and verify counter reset. This establishes starter-field collision behavior;
-Stationary-field comparisons explicitly disable driving decisions. Distinct
+car and verify counter reset. This establishes starter-field collision behavior.
+Stationary-field comparisons explicitly disable driving decisions. Each 5 ms
+step also checks the full typed contact report: source obstacles, partners,
+chronology, local contact points and reduction back to aggregate impacts. Reports
+publish with all validated bodies; repair-only contacts carry no impulse. Distinct
 vehicle classes, liveries, damage and race rules remain pending.
 
 `make rewrite-ai-verify` independently checks source-linked guidance from every

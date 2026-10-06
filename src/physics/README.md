@@ -233,3 +233,32 @@ radians/s for angular velocity, plus 1e-8 relative tolerance. Stationary-field
 comparisons disable driving decisions; distinct masses/classes, damage and collision
 sound remain pending. Counts record individual solver responses, not unique
 accidents. These checks establish rewrite behavior, not original collision parity.
+
+`dd2_vehicle_collide_fleet_report` exposes every selected ground, barrier and
+car-pair contact of one fixed step in a caller-owned typed report. The bounded
+64-entry array matches the solver's iteration budget: successful responses are
+never silently discarded. Each record identifies the bodies/source obstacle,
+full-step contact fraction, world point/impulse normal, and both body-local
+contact arms at the interpolated pose before overlap correction. Closing speed
+and normal impulse exclude friction and distinguish an impact from zero-impulse
+overlap repair. Ground/barrier contacts use `DD2_VEHICLE_NO_PARTNER` and a zero
+second local point; car pairs use `UINT32_MAX` instead of an obstacle ID. The
+legacy aggregate API uses the same solver. Reports and bodies publish together
+after validation; a failure clears the report and preserves all proposed bodies.
+No callbacks, retained pointers or allocations are involved.
+
+The fleet verifier now reads each 5 ms step's contact report. It independently
+reduces records back to all twenty bodies' aggregate counters/strongest impacts,
+checks chronology, finite geometry, unit normals and source obstacle bounds on
+all eleven levels and three targets. Analytic tests cover frontal/side/rotated
+car contacts, a two-impact chain's global times, a fast roof landing, wall contact
+arms before rebound, zero-impulse recovery, 64-event exhaustion and invalid-state
+rollback. This provides the physical input for damage and accident attribution;
+it does not implement damage, scoring or race rules.
+
+Separate controlled roof landings and wall strikes at 5000 world units/s on each
+original level exercise road-cell, strip-wall and analytic-arena obstacle IDs.
+They check both world report types independently of the coupled three-second
+field, which primarily exercises car pairs. The much faster 200000-unit/s
+analytic cases remain synthetic tests, not an arbitrary-speed guarantee on
+every source slope.

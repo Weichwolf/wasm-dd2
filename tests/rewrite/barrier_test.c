@@ -29,6 +29,9 @@ static const double dd2_barrier_test_half_rotation = 0.16;
 static const double dd2_barrier_test_max_angular = 64;
 static const double dd2_barrier_test_bridge_height = 1000;
 static const double dd2_barrier_test_height = 190;
+static const double dd2_barrier_test_front_time = 0.55;
+static const double dd2_barrier_test_front_arm = 450;
+static const double dd2_barrier_test_impulse = 240000;
 
 static bool dd2_barrier_test_query(const dd2_barrier_world *world) {
     dd2_barrier_contact contact = {0};
@@ -179,6 +182,38 @@ static bool dd2_barrier_test_rotation(const dd2_barrier_world *world) {
     return valid;
 }
 
+static bool dd2_barrier_test_report(const dd2_barrier_world *world) {
+    dd2_vehicle previous = {0};
+    if (!dd2_vehicle_reset(&previous,
+                           (dd2_vehicle_spawn){.position = {.y = dd2_barrier_test_height},
+                                               .yaw = dd2_barrier_test_quarter_turn})) {
+        return false;
+    }
+    previous.velocity.x = dd2_barrier_test_fast_speed;
+    dd2_vehicle next = previous;
+    next.position.x += previous.velocity.x * DD2_VEHICLE_STEP_SECONDS;
+    dd2_vehicle_collision_report report = {0};
+    if (!dd2_vehicle_collide_fleet_report(&next, &previous, 1, NULL, world, &report) ||
+        report.count != 1 || report.pair_contacts != 0 || report.impacts[0].contacts != 1) {
+        printf("Report wall count=%u pairs=%u impacts=%u\n", report.count, report.pair_contacts,
+               report.impacts[0].contacts);
+        return false;
+    }
+    const dd2_vehicle_contact contact = report.contacts[0];
+    /* The fixture's second boundary is the wall at positive X. */
+    return contact.kind == DD2_VEHICLE_CONTACT_BARRIER && contact.first == 0 &&
+           contact.second == DD2_VEHICLE_NO_PARTNER && contact.obstacle == 1 &&
+           fabs(contact.time - dd2_barrier_test_front_time) < dd2_barrier_test_tolerance &&
+           fabs(contact.point.x - (double)DD2_BARRIER_TEST_WALL) < dd2_barrier_test_tolerance &&
+           contact.normal.x == -1 && contact.normal_speed == dd2_barrier_test_fast_speed &&
+           fabs(contact.impulse - dd2_barrier_test_impulse) < dd2_barrier_test_tolerance &&
+           fabs(contact.local_points[0].x) < dd2_barrier_test_tolerance &&
+           fabs(contact.local_points[0].z - dd2_barrier_test_front_arm) <
+               dd2_barrier_test_tolerance &&
+           contact.local_points[1].x == 0 && contact.local_points[1].y == 0 &&
+           contact.local_points[1].z == 0;
+}
+
 int main(void) {
     dd2_surface_test_fixture fixture = {0};
     dd2_surface_test_fixture_init(&fixture, 1);
@@ -188,7 +223,7 @@ int main(void) {
     bool passed = world != NULL && dd2_barriers_count(barriers) == 2 &&
                   dd2_barrier_test_query(world) && dd2_barrier_test_response(world, false) &&
                   dd2_barrier_test_response(world, true) && dd2_barrier_test_overlap(world) &&
-                  dd2_barrier_test_rotation(world);
+                  dd2_barrier_test_rotation(world) && dd2_barrier_test_report(world);
     dd2_barrier_world_destroy(world);
     dd2_barriers_destroy(barriers);
     dd2_road_destroy(road);

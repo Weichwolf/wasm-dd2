@@ -5,6 +5,7 @@
 #include "assets/road.h"
 #include "game/driving.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -67,6 +68,38 @@ static bool dd2_drive_test_same(const dd2_vehicle *first, const dd2_vehicle *sec
            fabs(first->rotation.w - second->rotation.w) < dd2_drive_test_tolerance;
 }
 
+static bool dd2_drive_test_vector(dd2_vehicle_vector first, dd2_vehicle_vector second) {
+    return fabs(first.x - second.x) < dd2_drive_test_tolerance &&
+           fabs(first.y - second.y) < dd2_drive_test_tolerance &&
+           fabs(first.z - second.z) < dd2_drive_test_tolerance;
+}
+
+static bool dd2_drive_test_contacts(const dd2_driving *first, const dd2_driving *second) {
+    const dd2_vehicle_collision_report *left = dd2_driving_contact_report(first);
+    const dd2_vehicle_collision_report *right = dd2_driving_contact_report(second);
+    if (left->count != right->count || left->pair_contacts != right->pair_contacts) {
+        return false;
+    }
+    for (unsigned index = 0; index < left->count; ++index) {
+        const dd2_vehicle_contact left_contact = left->contacts[index];
+        const dd2_vehicle_contact right_contact = right->contacts[index];
+        if (left_contact.kind != right_contact.kind || left_contact.first != right_contact.first ||
+            left_contact.second != right_contact.second ||
+            left_contact.obstacle != right_contact.obstacle ||
+            fabs(left_contact.time - right_contact.time) > dd2_drive_test_tolerance ||
+            fabs(left_contact.normal_speed - right_contact.normal_speed) >
+                dd2_drive_test_tolerance ||
+            fabs(left_contact.impulse - right_contact.impulse) > dd2_drive_test_tolerance ||
+            !dd2_drive_test_vector(left_contact.point, right_contact.point) ||
+            !dd2_drive_test_vector(left_contact.normal, right_contact.normal) ||
+            !dd2_drive_test_vector(left_contact.local_points[0], right_contact.local_points[0]) ||
+            !dd2_drive_test_vector(left_contact.local_points[1], right_contact.local_points[1])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *second) {
     const dd2_ai_driver *first_drivers = dd2_driving_drivers(first);
     const dd2_ai_driver *second_drivers = dd2_driving_drivers(second);
@@ -84,12 +117,25 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
             return false;
         }
     }
-    return true;
+    return dd2_drive_test_contacts(first, second);
+}
+
+static bool dd2_drive_test_clear_contacts(dd2_driving *driving) {
+    const dd2_vehicle_collision_report *report = dd2_driving_contact_report(driving);
+    const unsigned count = report->count;
+    const unsigned pairs = report->pair_contacts;
+    const dd2_vehicle_contact contact = report->contacts[0];
+    return !dd2_driving_advance(driving, (dd2_driving_frame){.seconds = -1}) &&
+           report->count == count && report->pair_contacts == pairs &&
+           report->contacts[0].impulse == contact.impulse &&
+           dd2_driving_advance(driving, (dd2_driving_frame){0}) && report->count == 0 &&
+           report->pair_contacts == 0 && report->impacts[0].contacts == 0;
 }
 
 static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
     const dd2_vehicle initial = *dd2_driving_vehicle(first);
     const dd2_vehicle_control control = {.throttle = 1, .steer = 0.1};
+    bool cleared_contacts = false;
     for (unsigned frame = 0; frame < DD2_DRIVE_TEST_FRAMES; ++frame) {
         if (!dd2_driving_advance(first, (dd2_driving_frame){.seconds = dd2_drive_test_frame_seconds,
                                                             .control = control})) {
@@ -102,8 +148,14 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
                 return false;
             }
         }
+        if (!cleared_contacts && dd2_driving_contact_report(first)->count != 0) {
+            if (!dd2_drive_test_clear_contacts(first) || !dd2_drive_test_clear_contacts(second)) {
+                return false;
+            }
+            cleared_contacts = true;
+        }
     }
-    if (!dd2_drive_test_field(first, second) ||
+    if (!cleared_contacts || !dd2_drive_test_field(first, second) ||
         fabs(dd2_driving_wheel_roll(first) - dd2_driving_wheel_roll(second)) >
             dd2_drive_test_tolerance ||
         dd2_driving_vehicle(first)->steps !=
@@ -111,7 +163,7 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
         return false;
     }
     if (!dd2_driving_reset(first) || !dd2_driving_reset(second) ||
-        !dd2_drive_test_field(first, second) ||
+        !dd2_drive_test_field(first, second) || dd2_driving_contact_report(first)->count != 0 ||
         !dd2_drive_test_same(&initial, dd2_driving_vehicle(first))) {
         return false;
     }
@@ -162,7 +214,8 @@ int main(void) {
                  dd2_drive_test_frames(first, second) && dd2_drive_test_rejection(first);
     }
     dd2_driving *bad = dd2_driving_create(road, 1);
-    passed = passed && bad == NULL && !dd2_driving_advance(NULL, (dd2_driving_frame){0});
+    passed = passed && bad == NULL && !dd2_driving_advance(NULL, (dd2_driving_frame){0}) &&
+             dd2_driving_contact_report(NULL) == NULL;
     dd2_driving_destroy(bad);
     dd2_driving_destroy(first);
     dd2_driving_destroy(second);

@@ -232,6 +232,47 @@ static bool dd2_ground_test_rotation(void) {
     return valid;
 }
 
+static bool dd2_ground_test_report(void) {
+    dd2_ground_test_track track = {0};
+    bool valid = dd2_ground_test_init(&track, false, true);
+    dd2_vehicle previous = {0};
+    valid = valid &&
+            dd2_vehicle_reset(&previous,
+                              (dd2_vehicle_spawn){.position = {.y = dd2_ground_test_drop_height}});
+    previous.rotation = (dd2_vehicle_rotation){.z = 1};
+    previous.velocity.y = dd2_ground_test_fast_velocity;
+    dd2_vehicle next = previous;
+    next.position.y += next.velocity.y * DD2_VEHICLE_STEP_SECONDS;
+    dd2_vehicle_collision_report report = {0};
+    valid = valid &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            report.count > 0 && report.pair_contacts == 0 &&
+            report.impacts[0].contacts == report.count;
+    const dd2_vehicle_contact contact = report.contacts[0];
+    const double height = 2 * DD2_SURFACE_TEST_HEIGHT;
+    const double time = (dd2_ground_test_drop_height - height - dd2_ground_test_body_height) /
+                        (-dd2_ground_test_fast_velocity * DD2_VEHICLE_STEP_SECONDS);
+    valid =
+        valid && contact.kind == DD2_VEHICLE_CONTACT_GROUND && contact.first == 0 &&
+        contact.second == DD2_VEHICLE_NO_PARTNER &&
+        contact.obstacle < dd2_road_cell_count(track.road) &&
+        fabs(contact.time - time) < dd2_ground_test_tolerance &&
+        fabs(contact.point.y - height) < dd2_ground_test_tolerance &&
+        fabs(contact.local_points[0].y - dd2_ground_test_body_height) < dd2_ground_test_tolerance &&
+        contact.local_points[1].x == 0 && contact.local_points[1].y == 0 &&
+        contact.local_points[1].z == 0 && contact.normal.y == 1 &&
+        contact.normal_speed == -dd2_ground_test_fast_velocity && contact.impulse > 0;
+    previous.position.y = height + dd2_ground_test_body_height - dd2_ground_test_overlap;
+    previous.velocity.y = 0;
+    next = previous;
+    valid = valid &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            report.count == 1 && report.contacts[0].time == 0 &&
+            report.contacts[0].normal_speed == 0 && report.contacts[0].impulse == 0;
+    dd2_ground_test_destroy(&track);
+    return valid;
+}
+
 static bool dd2_ground_test_upright(void) {
     dd2_ground_test_track track = {0};
     bool valid = dd2_ground_test_init(&track, false, true);
@@ -254,7 +295,7 @@ int main(void) {
     if (!dd2_ground_test_sweep() || !dd2_ground_test_run(false, false, false) ||
         !dd2_ground_test_run(false, false, true) || !dd2_ground_test_run(true, false, false) ||
         !dd2_ground_test_run(false, true, true) || !dd2_ground_test_fast() ||
-        !dd2_ground_test_rotation() || !dd2_ground_test_upright()) {
+        !dd2_ground_test_rotation() || !dd2_ground_test_upright() || !dd2_ground_test_report()) {
         puts("body ground contacts: FAIL");
         return EXIT_FAILURE;
     }
