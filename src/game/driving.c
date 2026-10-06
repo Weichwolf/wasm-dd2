@@ -7,6 +7,7 @@
 #include "game/course.h"
 #include "game/laps.h"
 #include "game/race.h"
+#include "game/recovery.h"
 #include "game/starting_grid.h"
 #include "physics/barrier_world.h"
 #include "physics/damage.h"
@@ -45,6 +46,7 @@ struct dd2_driving {
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT];
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_recovery_driver recovery[DD2_VEHICLE_FLEET_LIMIT];
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT];
     dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_collision_report contacts;
@@ -158,6 +160,7 @@ bool dd2_driving_reset(dd2_driving *driving) {
         driving->vehicles[slot] = vehicles[slot];
         driving->drivers[slot] = drivers[slot];
         driving->damages[slot] = (dd2_vehicle_damage){0};
+        driving->recovery[slot] = (dd2_recovery_driver){0};
         driving->accidents[slot] = accidents[slot];
         driving->laps[slot] = laps[slot];
         driving->wheel_rolls[slot] = 0;
@@ -264,8 +267,8 @@ static bool dd2_driving_progress(const dd2_driving *driving, dd2_lap_driver *lap
 static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
                              dd2_ai_driver *drivers, dd2_vehicle_damage *damages,
                              dd2_accident_driver *accidents, dd2_lap_driver *laps,
-                             dd2_vehicle_control player, const dd2_race *race,
-                             dd2_vehicle_collision_report *report) {
+                             dd2_recovery_driver *recovery, dd2_vehicle_control player,
+                             const dd2_race *race, dd2_vehicle_collision_report *report) {
     dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_vehicle_control controls[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned slot = 0; slot < driving->count; ++slot) {
@@ -314,7 +317,13 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
     }
     return dd2_accidents_step(accidents, (dd2_accident_frame){.contacts = report,
                                                               .vehicles = observations,
-                                                              .count = driving->count});
+                                                              .count = driving->count}) &&
+           dd2_recovery_step(recovery, vehicles,
+                             (dd2_recovery_frame){.road = driving->road,
+                                                  .surface = driving->surface,
+                                                  .world = driving->barrier_world,
+                                                  .damage = damages,
+                                                  .count = driving->count});
 }
 
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
@@ -328,6 +337,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_recovery_driver recovery[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT] = {0};
     double rolls[DD2_VEHICLE_FLEET_LIMIT] = {0};
@@ -335,6 +345,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         vehicles[slot] = driving->vehicles[slot];
         drivers[slot] = driving->drivers[slot];
         damages[slot] = driving->damages[slot];
+        recovery[slot] = driving->recovery[slot];
         accidents[slot] = driving->accidents[slot];
         laps[slot] = driving->laps[slot];
         rolls[slot] = driving->wheel_rolls[slot];
@@ -347,8 +358,11 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     const unsigned steps =
         (unsigned)floor((accumulator + dd2_driving_time_tolerance) / DD2_VEHICLE_STEP_SECONDS);
     for (unsigned step = 0; step < steps; ++step) {
-        const dd2_race_observation observation = {
-            .laps = laps, .damage = damages, .accidents = accidents, .count = driving->count};
+        const dd2_race_observation observation = {.laps = laps,
+                                                  .damage = damages,
+                                                  .accidents = accidents,
+                                                  .recovery = recovery,
+                                                  .count = driving->count};
         if (driving->racing &&
             (race.phase == DD2_RACE_COUNTDOWN || race.phase == DD2_RACE_RESULTS)) {
             if (!dd2_race_step(&race, observation)) {
@@ -357,8 +371,8 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
             report = (dd2_vehicle_collision_report){0};
             continue;
         }
-        if (!dd2_driving_step(driving, vehicles, drivers, damages, accidents, laps, frame.control,
-                              driving->racing ? &race : NULL, &report) ||
+        if (!dd2_driving_step(driving, vehicles, drivers, damages, accidents, laps, recovery,
+                              frame.control, driving->racing ? &race : NULL, &report) ||
             (driving->racing && !dd2_race_step(&race, observation)) ||
             UINT64_MAX - collisions < report.impacts[0].contacts ||
             UINT64_MAX - pairs < report.impacts[0].pair_contacts) {
@@ -383,6 +397,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         driving->vehicles[slot] = vehicles[slot];
         driving->drivers[slot] = drivers[slot];
         driving->damages[slot] = damages[slot];
+        driving->recovery[slot] = recovery[slot];
         driving->accidents[slot] = accidents[slot];
         driving->laps[slot] = laps[slot];
         driving->wheel_rolls[slot] = rolls[slot];
@@ -427,6 +442,9 @@ bool dd2_driving_damage_enabled(const dd2_driving *driving) {
 }
 const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving) {
     return driving != NULL ? driving->damages : NULL;
+}
+const dd2_recovery_driver *dd2_driving_recovery(const dd2_driving *driving) {
+    return driving != NULL ? driving->recovery : NULL;
 }
 const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving) {
     return driving != NULL ? driving->accidents : NULL;

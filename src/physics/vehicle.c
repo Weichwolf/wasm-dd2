@@ -220,6 +220,19 @@ static dd2_vehicle_vector dd2_vehicle_wheel_force(dd2_vehicle *vehicle, const dd
                            dd2_vehicle_tire_force(vehicle, road, wheel, index, control));
 }
 
+bool dd2_vehicle_refresh_wheels(dd2_vehicle *vehicle, const dd2_road *road,
+                                const dd2_road_surface *surface) {
+    if (road == NULL || surface == NULL || !dd2_vehicle_valid(vehicle)) {
+        return false;
+    }
+    dd2_vehicle next = *vehicle;
+    for (size_t index = 0; index < DD2_VEHICLE_WHEELS; ++index) {
+        (void)dd2_vehicle_wheel_force(&next, road, surface, index, (dd2_vehicle_control){0});
+    }
+    *vehicle = next;
+    return true;
+}
+
 dd2_vehicle_vector dd2_vehicle_angular_response(dd2_vehicle_rotation rotation,
                                                 dd2_vehicle_vector torque) {
     const dd2_vehicle_vector local = dd2_vehicle_rotate(dd2_vehicle_inverse(rotation), torque);

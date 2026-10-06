@@ -47,6 +47,7 @@ class RaceOracle:
         for slot, lap in enumerate(initial_laps):
             self.drivers[slot][2:4] = lap[2:4]
         self.order = self.ranked()
+        self.recovery = [[0,0,0] for _ in range(self.count)]
         self.results = [0]*self.count
         self.assign_places()
 
@@ -64,7 +65,7 @@ class RaceOracle:
         for place, slot in enumerate(self.order, 1):
             self.drivers[slot][4] = place
 
-    def tick(self, laps, cars):
+    def tick(self, laps, cars, recovery=None):
         if self.phase == 3:
             return
         self.steps += 1
@@ -73,6 +74,19 @@ class RaceOracle:
                 self.phase = 1
             return
         self.elapsed += 1
+        if recovery is not None:
+            if len(recovery) != self.count:
+                raise ValueError('Incomplete physical recovery field')
+            for slot,(current,prior) in enumerate(zip(recovery,self.recovery)):
+                if len(current)!=3 or not 0<=current[0]<=400 or current[2]!=int(current[0]!=0):
+                    raise ValueError('Invalid temporary overturn state')
+                if current[1] not in (prior[1],prior[1]+1):
+                    raise ValueError('Recovery counter decreases or skips')
+                if current[1]!=prior[1] and (prior[0] not in (399,400) or cars[slot][-2]):
+                    raise ValueError('Early recovery or repaired engine-retired wreck')
+                if current[0] not in (0,min(400,prior[0]+1)):
+                    raise ValueError('Recovery rest deadline loses physical cadence')
+            self.recovery = [state[:] for state in recovery]
         for slot, d in enumerate(self.drivers):
             retired, points = cars[slot][-2:]
             if retired and not d[9]:
@@ -85,7 +99,8 @@ class RaceOracle:
         for slot in fresh:
             self.finishers += 1
             self.drivers[slot][5] = self.finishers
-        self.alive = sum(not d[9] for d in self.drivers)
+        self.alive = sum(not d[9] and (recovery is None or not recovery[slot][2])
+                         for slot,d in enumerate(self.drivers))
         self.order = self.ranked()
         self.assign_places()
         if self.phase == 1:
@@ -222,11 +237,11 @@ def check(path, decoded, image, code, mode, kind, tables):
                                 cells = surface.trace(previous['cars'][slot][1:4], car[1:4], lap_oracles[slot].values[5])
                                 max_samples = max(max_samples, len(cells))
                                 lap_oracles[slot].tick(cells, bool(car[-2]))
-                        race.tick(row['laps'], row['cars'])
+                        race.tick(row['laps'], row['cars'], row.get('recovery'))
                     else:
                         if row['cars'] != previous['cars'] or row['laps'] != previous['laps']:
                             raise ValueError('Countdown/results advances the physical field')
-                        race.tick(row['laps'], row['cars'])
+                        race.tick(row['laps'], row['cars'], row.get('recovery'))
                 for slot, car in enumerate(row['cars']):
                     if car[0] != 200+race.elapsed or car[4] != race.elapsed:
                         raise ValueError('Race and physical/accident clocks differ')
@@ -383,7 +398,7 @@ def main():
              '-Wformat=2', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision','damage')]
-    units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps','race')]
+    units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps','race','recovery')]
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]
     units += [ROOT/'src/platform/file.c']
     sanitized, synthetic = output/'export-sanitized', output/'rules-sanitized'

@@ -294,3 +294,8 @@ impacts, duplicate contact suppression, harmless support, engine failure,
 transactional invalid-input rejection and deformation on Native and WASM.
 Detached panels/wheels, smoke, repair/pits and race rules are still pending.
 Accident points now consume contact reports and retirement state in `src/game/accidents.c`. These tuned checks do not establish original damage parity.
+
+After discontinuous game recovery, `dd2_vehicle_refresh_wheels` rebuilds real
+wheel mounts, centers, compression, loads and source contacts without advancing
+body motion, steering or the vehicle clock. The game owns the rest deadline and
+landing decision; see `src/game/recovery.md`.

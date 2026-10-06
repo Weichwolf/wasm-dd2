@@ -5,6 +5,7 @@
 #include "assets/road.h"
 #include "game/accidents.h"
 #include "game/driving.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -110,6 +111,13 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
         const dd2_ai_driver other = second_drivers[slot];
         const dd2_vehicle_damage damage = dd2_driving_damage(first)[slot];
         const dd2_vehicle_damage other_damage = dd2_driving_damage(second)[slot];
+        const dd2_recovery_driver recovery = dd2_driving_recovery(first)[slot];
+        const dd2_recovery_driver other_recovery = dd2_driving_recovery(second)[slot];
+        if (recovery.rest_steps != other_recovery.rest_steps ||
+            recovery.recoveries != other_recovery.recoveries ||
+            recovery.overturned != other_recovery.overturned) {
+            return false;
+        }
         const dd2_accident_driver score = dd2_driving_accidents(first)[slot];
         const dd2_accident_driver other_score = dd2_driving_accidents(second)[slot];
         if (score.points != other_score.points || score.destructions != other_score.destructions ||

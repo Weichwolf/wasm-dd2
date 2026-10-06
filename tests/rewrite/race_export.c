@@ -8,6 +8,7 @@
 #include "game/driving.h"
 #include "game/laps.h"
 #include "game/race.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/road_surface.h"
 #include "physics/vehicle.h"
@@ -110,6 +111,12 @@ static void dd2_race_export_live(const dd2_driving *driving, const char *kind) {
                (unsigned long long)vehicle->steps, vehicle->position.x, vehicle->position.y,
                vehicle->position.z, (unsigned long long)accident->steps,
                (int)dd2_driving_damage(driving)[slot].retired, accident->points);
+    }
+    printf("],\"recovery\":[");
+    const dd2_recovery_driver *recovery = dd2_driving_recovery(driving);
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(driving); ++slot) {
+        printf("%s[%u,%llu,%d]", slot == 0 ? "" : ",", recovery[slot].rest_steps,
+               (unsigned long long)recovery[slot].recoveries, (int)recovery[slot].overturned);
     }
     puts("]}");
 }

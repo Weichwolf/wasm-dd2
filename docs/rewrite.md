@@ -77,9 +77,12 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Damage-aware tactics, overturned/off-road recovery, Total Destruction,
+Damage-aware tactics, off-road recovery, Total Destruction,
 championships and the complete original front end remain pending.
-This is not yet a complete racing game.
+Supported overturned cars now have a separate temporary availability state and
+source-timed two-second recovery, with distance-gated opponent righting. Landing
+preserves damage, progress and physical clocks and refreshes real road support.
+See `src/game/recovery.md`. This is not yet a complete racing game.
 
 ## SoftGL
 
@@ -147,7 +150,8 @@ P and loss of focus freeze the countdown as well as an active race. Road positio
 uses credited laps and finish-relative progress; finish places latch on each
 crossing tick, with prior position resolving simultaneous crossings. Player
 completion or retirement ends a circuit session. Arenas end on player retirement
-or fewer than two cars with functioning engines. A tuned three-second coasting
+or fewer than two available cars with functioning engines; a supported resting
+overturn makes a car temporarily unavailable without engine retirement. A tuned three-second coasting
 phase allows later finishers to cross before results freeze. F7 or the browser's
 race-exit button publishes provisional DNF results immediately. R restarts the
 same field/countdown; Enter returns to inspection, and selecting Freifahrt clears
@@ -414,3 +418,9 @@ vereinbarten Compilerflags, reproduzierbare automatisierte Prüfungen, begrenzte
 Diagnostik unter `/tmp/wasm-dd2/` und Commit plus Push nach jedem verifizierten
 Fortschritt, bis sämtliche Spielfunktionen umgesetzt und keine bekannten
 Funktions- oder Kompatibilitätsfehler mehr offen sind.
+
+`make rewrite-recovery-verify` exercises supported rest/righting boundaries and
+220 controlled physical roof-down drops per target at every original grid slot,
+with independently decoded source-plane and wheel contact checks and subsequent
+acceleration. It covers Native, Node/WASM and ASan/UBSan. These are recovery
+subsystem checks, not naturally completed arena races or original handling parity.

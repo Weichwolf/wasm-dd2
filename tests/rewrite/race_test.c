@@ -2,6 +2,7 @@
 #include "game/course.h"
 #include "game/laps.h"
 #include "game/race.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/vehicle_collision.h"
 
@@ -29,6 +30,7 @@ typedef struct {
     dd2_lap_driver laps[DD2_RACE_TEST_CARS];
     dd2_vehicle_damage damage[DD2_RACE_TEST_CARS];
     dd2_accident_driver accidents[DD2_RACE_TEST_CARS];
+    dd2_recovery_driver recovery[DD2_RACE_TEST_CARS];
 } dd2_race_test;
 
 static bool dd2_race_test_same(const dd2_race *first, const dd2_race *second) {
@@ -65,6 +67,7 @@ static dd2_race_observation dd2_race_test_observe(const dd2_race_test *test) {
     return (dd2_race_observation){.laps = test->laps,
                                   .damage = test->damage,
                                   .accidents = test->accidents,
+                                  .recovery = test->recovery,
                                   .count = DD2_RACE_TEST_CARS};
 }
 static bool dd2_race_test_reset(dd2_race_test *test, dd2_race_mode mode, bool arena) {
@@ -341,12 +344,44 @@ static bool dd2_race_test_trial(void) {
            race.drivers[0].last_lap_time == 1 && race.drivers[0].total_points == 0;
 }
 
+static bool dd2_race_test_temporary_overturn(void) {
+    dd2_race_test test = {0};
+    if (!dd2_race_test_reset(&test, DD2_RACE_WRECKING, true) || !dd2_race_test_start(&test)) {
+        return false;
+    }
+    test.recovery[0] = (dd2_recovery_driver){.rest_steps = 1, .overturned = true};
+    if (!dd2_race_test_tick(&test) || test.race.alive != DD2_RACE_TEST_CARS - 1 ||
+        test.race.phase != DD2_RACE_RUNNING || test.race.drivers[0].retired ||
+        test.race.drivers[0].retired_step != 0) {
+        return false;
+    }
+    test.recovery[0] = (dd2_recovery_driver){.recoveries = 1};
+    if (!dd2_race_test_tick(&test) || test.race.alive != DD2_RACE_TEST_CARS) {
+        return false;
+    }
+    for (unsigned slot = 1; slot < DD2_RACE_TEST_CARS; ++slot) {
+        test.recovery[slot] = (dd2_recovery_driver){.rest_steps = 1, .overturned = true};
+    }
+    if (!dd2_race_test_tick(&test) || test.race.end != DD2_RACE_LAST_SURVIVOR ||
+        test.race.alive != 1 || test.race.phase != DD2_RACE_COASTING) {
+        return false;
+    }
+    for (unsigned slot = 0; slot < DD2_RACE_TEST_CARS; ++slot) {
+        if (test.race.drivers[slot].retired || test.race.drivers[slot].retired_step != 0) {
+            return false;
+        }
+        test.recovery[slot] = (dd2_recovery_driver){0};
+    }
+    return dd2_race_test_tick(&test) && test.race.alive == DD2_RACE_TEST_CARS &&
+           test.race.end == DD2_RACE_LAST_SURVIVOR;
+}
+
 int main(void) {
     const bool passed =
-        dd2_race_test_trial() && dd2_race_test_finish_order() && dd2_race_test_scores() &&
-        dd2_race_test_arena() && dd2_race_test_rejection() && dd2_race_test_withdrawal() &&
-        dd2_race_countdown(NULL) == 0 && !dd2_race_step(NULL, (dd2_race_observation){0}) &&
-        !dd2_race_withdraw(NULL) &&
+        dd2_race_test_temporary_overturn() && dd2_race_test_trial() &&
+        dd2_race_test_finish_order() && dd2_race_test_scores() && dd2_race_test_arena() &&
+        dd2_race_test_rejection() && dd2_race_test_withdrawal() && dd2_race_countdown(NULL) == 0 &&
+        !dd2_race_step(NULL, (dd2_race_observation){0}) && !dd2_race_withdraw(NULL) &&
         dd2_race_finish_points(DD2_RACE_STOCKCAR, 1) == DD2_RACE_TEST_WIN_POINTS &&
         dd2_race_finish_points(DD2_RACE_WRECKING, 3) == DD2_RACE_TEST_THIRD_POINTS &&
         dd2_race_finish_points(DD2_RACE_STOCKCAR, DD2_RACE_TEST_FIELD) == 0 &&

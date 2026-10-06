@@ -7,6 +7,7 @@
 #include "game/course.h"
 #include "game/laps.h"
 #include "game/race.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -43,6 +44,9 @@ const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving
 void dd2_driving_set_damage(dd2_driving *driving, bool enabled);
 bool dd2_driving_damage_enabled(const dd2_driving *driving);
 const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving);
+/* Temporary supported overturns and source-timed righting; independent of
+ * engine retirement. Reset clears counters; pause/countdown/results freeze them. */
+const dd2_recovery_driver *dd2_driving_recovery(const dd2_driving *driving);
 /* Borrow vehicle_count accident scores/attribution windows. Reset clears every
  * score; pause freezes the windows. Race/championship standings are separate. */
 const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving);

@@ -3,6 +3,7 @@
 #include "game/accidents.h"
 #include "game/course.h"
 #include "game/laps.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/vehicle_collision.h"
 
@@ -81,6 +82,12 @@ static bool dd2_race_observation_valid(const dd2_race *race, dd2_race_observatio
     }
     for (unsigned slot = 0; slot < observation.count; ++slot) {
         const dd2_race_driver *driver = &race->drivers[slot];
+        if (observation.recovery != NULL &&
+            (observation.recovery[slot].rest_steps > DD2_RECOVERY_REST_STEPS ||
+             observation.recovery[slot].overturned !=
+                 (observation.recovery[slot].rest_steps != 0))) {
+            return false;
+        }
         if ((driver->retired && !observation.damage[slot].retired) ||
             observation.accidents[slot].points > DD2_ACCIDENT_SCORE_LIMIT ||
             observation.accidents[slot].retired != observation.damage[slot].retired) {
@@ -190,7 +197,8 @@ static void dd2_race_observe(dd2_race *race, dd2_race_observation observation) {
             driver->started_laps = lap->started_laps;
         }
         driver->retired = observation.damage[slot].retired;
-        race->alive += (unsigned)!driver->retired;
+        race->alive += (unsigned)(!driver->retired && (observation.recovery == NULL ||
+                                                       !observation.recovery[slot].overturned));
         if (race->rules.length != 0) {
             driver->credited_laps = observation.laps[slot].credited_laps;
             driver->relative = observation.laps[slot].relative;
@@ -239,6 +247,8 @@ bool dd2_race_reset(dd2_race *race, dd2_race_rules rules, dd2_race_observation g
     }
     for (unsigned slot = 0; slot < rules.count; ++slot) {
         if (grid.damage[slot].retired || grid.accidents[slot].points != 0 ||
+            (grid.recovery != NULL &&
+             (grid.recovery[slot].rest_steps != 0 || grid.recovery[slot].recoveries != 0)) ||
             (rules.length != 0 &&
              (grid.laps[slot].steps != 0 || grid.laps[slot].started_laps != 0))) {
             return false;

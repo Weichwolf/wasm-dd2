@@ -41,6 +41,15 @@ rewrite-race-verify: ## verify race phases/results, source rules and a complete 
 	python3 $(ROOT)/tools/rewrite/verify_window.py
 	$(MAKE) clean-logs
 
+
+.PHONY: rewrite-recovery-verify
+rewrite-recovery-verify: ## verify supported overturn recovery and original-data wheel support
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_recovery.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-laps-verify
 
 rewrite-laps-verify: ## verify original course equivalents, lap rules and physical progress

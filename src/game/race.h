@@ -3,6 +3,7 @@
 
 #include "game/accidents.h"
 #include "game/laps.h"
+#include "game/recovery.h"
 #include "physics/damage.h"
 #include "physics/vehicle_collision.h"
 
@@ -70,6 +71,9 @@ typedef struct {
     const dd2_lap_driver *laps;
     const dd2_vehicle_damage *damage;
     const dd2_accident_driver *accidents;
+    /* Optional for rule-only callers: NULL means no temporary overturns.
+     * An overturned car is unavailable for arena survival, not engine-retired. */
+    const dd2_recovery_driver *recovery;
     unsigned count;
 } dd2_race_observation;
 

@@ -47,6 +47,8 @@ traffic choices; the original-data test checks each target's behavior, not exact
 cross-target race trajectories or replay determinism.
 
 Opponent personality/handicaps, difficulty, damage-aware tactics, pit behavior,
-deliberate branch choice, recovery of overturned/off-road cars and complete race
-rules remain pending. This establishes driving/pursuit, not complete original AI
+deliberate branch choice, off-road rescue and complete race
+rules remain pending. The game owner now rights supported resting overturned
+cars after two seconds; distant opponents additionally use the source 8192-unit
+boundary. See `src/game/recovery.md`. This establishes driving/pursuit, not complete original AI
 parity or a complete race.

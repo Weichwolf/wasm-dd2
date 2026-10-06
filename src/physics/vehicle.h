@@ -70,6 +70,11 @@ bool dd2_vehicle_valid(const dd2_vehicle *vehicle);
 dd2_vehicle_vector dd2_vehicle_angular_response(dd2_vehicle_rotation rotation,
                                                 dd2_vehicle_vector torque);
 bool dd2_vehicle_reset(dd2_vehicle *vehicle, dd2_vehicle_spawn spawn);
+/* Refresh the wheel geometry/support after a discontinuous pose change without
+ * advancing body motion, steering or the fixed-step counter. Invalid core state
+ * or missing geometry preserves every wheel. Road and surface must match. */
+bool dd2_vehicle_refresh_wheels(dd2_vehicle *vehicle, const dd2_road *road,
+                                const dd2_road_surface *surface);
 bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
                       dd2_vehicle_control control);
 dd2_vehicle_vector dd2_vehicle_rotate(dd2_vehicle_rotation rotation, dd2_vehicle_vector vector);
