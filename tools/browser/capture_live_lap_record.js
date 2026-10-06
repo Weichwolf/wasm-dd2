@@ -154,23 +154,25 @@ const drivingKeys={a:'a',z:'z',space:'Space',Left:'ArrowLeft',Right:'ArrowRight'
       function assertBounds(a,n){if(a<0||a+n>HEAPU8.length)throw new Error('Readonly geometry bounds');}
       const current=i32(0x7926a4),lane=HEAP8[0x7926ba],initialLanes=HEAPU8[base+4+current+1];
       if(initialLanes<1||lane<0||lane>=initialLanes)throw new Error('Actual initial road lane required');
-      const fraction=(lane+.5)/initialLanes;let offset=0;
+      const fraction=(lane+.5)/initialLanes;
+      const globalLane=(lane+HEAPU8[base+4+current+3])&255;let offset=0;
       for(let index=0;index<4096;index++){
         if(offset<0||offset>=0x100000||offsets.has(offset))throw new Error('Road loop bounds');offsets.add(offset);
         const a=base+4+offset;assertBounds(a,28);segments.push([a,encode(a,28)]);
         const kind=HEAPU8[a],lanes=HEAPU8[a+1],first=data.getUint16(a+16,true);
         if(kind>9||lanes<1||lanes>32)throw new Error('Road strip shape');
         const firstA=first+i32(0x463dcc+kind*8),firstB=first+i32(0x463dd0+kind*8)+lanes+1;
-        const selected=Math.min(lanes-1,Math.floor(fraction*lanes));
+        const requested=((globalLane-HEAPU8[a+3]+128)&255)-128;
+        const selected=Math.max(0,Math.min(lanes-1,requested));
         for(const k of [firstA,firstA+lanes,firstB,firstB+lanes,firstA+selected,firstA+selected+1,firstB+selected,firstB+selected+1])vertexIndices.add(k);
         offset=i32(a+20);if(offset===0)break;
       }
       if(offset!==0)throw new Error('Road loop did not close');
       for(const k of vertexIndices){if(k<0||k>100000)throw new Error('Vertex bounds');segments.push([vertices+k*12,encode(vertices+k*12,12)]);}
       segments.push([0x77cef4,encode(0x77cef4,8)],[0x463dcc,encode(0x463dcc,80)],[0x466df8,encode(0x466df8,2)]);
-      return {segments,strips:offsets.size,vertices:vertexIndices.size,lane_fraction:fraction};
+      return {segments,strips:offsets.size,vertices:vertexIndices.size,lane_fraction:fraction,global_lane:globalLane};
     });
-    report.geometry={strips:geometry.strips,vertices:geometry.vertices,lane_fraction:geometry.lane_fraction};
+    report.geometry={strips:geometry.strips,vertices:geometry.vertices,lane_fraction:geometry.lane_fraction,global_lane:geometry.global_lane};
     await rpc({operation:'geometry',segments:geometry.segments});
     await page.evaluate(()=>{window.__trialDrive=true;});
     const started=Date.now();

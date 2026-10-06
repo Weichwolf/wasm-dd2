@@ -313,6 +313,19 @@ Consequently neither different lap times nor matching name-dialog phases prove
 chronological original racing A/V or a lap beating the provisioned default.
 Full race/audio parity and complete Championship progression remain open.
 
+The browser road-geometry exporter now supplies the vertices selected by the
+corrected driver's initial global lane, rather than the old fraction of each
+strip's width. This keeps the sparse RPC observation consistent with the
+driver at lane-count transitions. An actual production WASM run completes a
+living lap using 280 road strips and 1,129 supplied vertices, enters `D`, shifts
+the record history, saves configuration and restores every declared field
+after a browser-page restart (`lap-record-1565-browser-lane/report.json`).
+All 476 observed keyboard events are trusted; both complete name-dialog cycles
+also pass their actual canvas/indexed-image checks. Successful raw dialog
+images are removed after recording their hashes. This is a browser functional
+regression with the declared edited card input, not a new original raster,
+chronological race/audio or provisioned-default-record proof.
+
 The host road follower accepts `movement_distance`, `stall_ticks` and
 `progress_ticks` tuning without changing its established default policy.
 `python3 tools/verify_road_driver_defaults.py --reference /tmp/wasm-dd2/multiplayer-positive-1251-original-steady --report /tmp/wasm-dd2/road-defaults-verified.json`
