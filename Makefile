@@ -140,6 +140,10 @@ capture-browser-championship-save: ## load an original championship card through
 verify-statistics-ui: ## generate/capture/compare actual persisted statistics menus; STATISTICS_UI_ARGS required
 	python3 $(ROOT)/tools/verify_statistics_ui.py $(STATISTICS_UI_ARGS)
 
+.PHONY: verify-statistics-regression
+verify-statistics-regression: ## compare fresh menu output against an explicitly pinned accepted original manifest; STATISTICS_REGRESSION_ARGS required
+	python3 $(ROOT)/tools/verify_statistics_regression.py $(STATISTICS_REGRESSION_ARGS)
+
 capture-browser-statistics-ui: ## run genuine browser statistics navigation; BROWSER_STATISTICS_UI_ARGS required
 	node $(ROOT)/tools/browser/capture_statistics_ui.js $(BROWSER_STATISTICS_UI_ARGS)
 

@@ -2792,6 +2792,33 @@ The verified production builds pass this gate on all three targets. The report
 is `/tmp/wasm-dd2/statistics-876-final-verified.json`; all 228 negative cases are
 rejected, and successful raw frame comparisons are removed after the report.
 
+`make verify-statistics-regression` compares a fresh native or browser capture
+with that retained accepted manifest after the original raw images have been
+removed. It requires an explicit manifest SHA, validates the original-generated
+card and all 53 navigation states, and requires identical complete frame catalogs
+from the previously accepted Native, Native ASan and WASM comparisons. It checks
+all 2,304 current framebuffer/palette hashes by observed highlight phase. Browser
+captures also require trusted keys and zero actual canvas mismatches. Missing
+input/states, changed card/standings and changed reference images are rejected.
+`--clean` writes a hash ledger before deleting completed raw images. This is a
+regression against the retained original reference, not a fresh original capture,
+chronological A/V or acceptance of other seasons.
+
+The fresh WASM run after the activation/input corrections passes all 53 states,
+2,304 image/palette pairs and seven damaged controls
+(`/tmp/wasm-dd2/statistics-1660-regression.json`). It includes all 20 driver pages,
+all 11 track pages, Championship standings, limits, reopening and title return;
+the complete loaded configuration and card remain unchanged. The Native ASan
+repeat using real X11 keys also passes all 53 states and 2,304 image/palette pairs,
+with six rejected controls (`/tmp/wasm-dd2/statistics-1661-regression.json`).
+
+```sh
+make clean-logs
+make capture-browser-statistics-ui BROWSER_STATISTICS_UI_ARGS='web/dd2 /tmp/wasm-dd2/stats-current-browser /tmp/wasm-dd2/stats-fixture'
+make verify-statistics-regression STATISTICS_REGRESSION_ARGS='--fixture /tmp/wasm-dd2/stats-fixture --capture /tmp/wasm-dd2/stats-current-browser --accepted /tmp/wasm-dd2/statistics-876-final-verified.json --accepted-sha256 adf6e7984325f1c02a3366094e332fa14a394a1ac5e207471cc8caa638924daf --report /tmp/wasm-dd2/stats-current-regression.json --clean'
+make clean-logs
+```
+
 ```sh
 make clean-logs
 make verify-statistics-ui STATISTICS_UI_ARGS='generate --championship /tmp/wasm-dd2/champ-save-fixture --output /tmp/wasm-dd2/stats-fixture'
