@@ -4,6 +4,7 @@
 #include "assets/track.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
+#include "render/damage_draw.h"
 #include "render/mesh_draw.h"
 
 #include <GL/softgl.h>
@@ -115,7 +116,8 @@ static bool dd2_driving_car(dd2_mesh_materials *materials, const dd2_track *trac
     /* The source visual rig differs from the contact rig. Lower the body to fit
      * the suspended wheels; preserve the source visual wheel XZ placements. */
     glTranslatef(0, dd2_draw_body_height, 0);
-    bool drawn = dd2_mesh_draw(materials, dd2_track_car(track), (dd2_track_vertex){0});
+    bool drawn =
+        dd2_mesh_draw_damaged(materials, dd2_track_car(track), (dd2_track_vertex){0}, view.damage);
     glPopMatrix();
     for (unsigned wheel = 0; wheel < DD2_VEHICLE_WHEELS && drawn; ++wheel) {
         const bool front = (wheel & 1U) == 0;
@@ -148,8 +150,11 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
     for (unsigned index = 0; index < view.opponent_count && drawn; ++index) {
         drawn = dd2_driving_car(materials, track,
                                 (dd2_driving_view){.vehicle = &view.opponents[index],
+                                                   .damage = view.opponent_damage == NULL
+                                                                 ? NULL
+                                                                 : &view.opponent_damage[index],
                                                    .wheel_roll = view.opponent_rolls[index],
                                                    .viewport = view.viewport});
     }
-    return drawn;
+    return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport));
 }

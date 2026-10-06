@@ -96,6 +96,7 @@ static void dd2_ai_probe_state(const dd2_driving *driving, unsigned frame) {
 
 static bool dd2_ai_probe_drive(const dd2_road *road, unsigned level) {
     dd2_driving *driving = dd2_driving_create(road, level);
+    dd2_driving_set_damage(driving, false);
     if (driving == NULL || !dd2_driving_opponents(driving)) {
         dd2_driving_destroy(driving);
         return false;

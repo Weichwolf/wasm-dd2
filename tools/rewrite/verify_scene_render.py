@@ -69,6 +69,7 @@ def main():
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     units = [str(ROOT / f'src/assets/{name}.c') for name in ('archive', 'level', 'textures', 'lz', 'mesh', 'scene')]
+    units.append(str(ROOT / 'src/physics/damage.c'))
     units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'mesh_draw', 'camera'))
     sanitized_probe = output / 'dd2_mesh_render_sanitized'
     sanitized_preview = output / 'dd2_scene_preview_sanitized'

@@ -4,6 +4,7 @@
 #include "assets/level.h"
 #include "assets/road.h"
 #include "game/driving.h"
+#include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
 
@@ -106,6 +107,17 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
     for (unsigned slot = 0; slot < dd2_driving_vehicle_count(first); ++slot) {
         const dd2_ai_driver driver = first_drivers[slot];
         const dd2_ai_driver other = second_drivers[slot];
+        const dd2_vehicle_damage damage = dd2_driving_damage(first)[slot];
+        const dd2_vehicle_damage other_damage = dd2_driving_damage(second)[slot];
+        if (damage.steps != other_damage.steps || damage.retired != other_damage.retired) {
+            return false;
+        }
+        for (unsigned region = 0; region < DD2_DAMAGE_REGIONS; ++region) {
+            if (fabs(damage.regions[region] - other_damage.regions[region]) >
+                dd2_drive_test_tolerance) {
+                return false;
+            }
+        }
         if (!dd2_drive_test_same(&dd2_driving_vehicles(first)[slot],
                                  &dd2_driving_vehicles(second)[slot]) ||
             fabs(dd2_driving_wheel_rolls(first)[slot] - dd2_driving_wheel_rolls(second)[slot]) >
@@ -164,6 +176,8 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
     }
     if (!dd2_driving_reset(first) || !dd2_driving_reset(second) ||
         !dd2_drive_test_field(first, second) || dd2_driving_contact_report(first)->count != 0 ||
+        dd2_driving_damage(first)[0].steps != 0 ||
+        dd2_damage_health(&dd2_driving_damage(first)[0]) != 1 ||
         !dd2_drive_test_same(&initial, dd2_driving_vehicle(first))) {
         return false;
     }
@@ -204,7 +218,8 @@ int main(void) {
     dd2_driving *first = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
     dd2_driving *second = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
     dd2_driving *last = dd2_driving_create(road, DD2_DRIVE_TEST_LAST_ARENA);
-    bool passed = first != NULL && second != NULL && last != NULL;
+    bool passed =
+        first != NULL && second != NULL && last != NULL && dd2_driving_damage_enabled(first);
     if (passed) {
         const dd2_vehicle_spawn *spawn = dd2_driving_start(first);
         const dd2_vehicle_spawn *other = dd2_driving_start(last);

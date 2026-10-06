@@ -58,7 +58,10 @@ driving, with continuous collision sweeps, restitution, friction and angular
 response. Body/ground support now uses the original eight-corner contact box,
 with one-sided swept road contacts and a shared ground/barrier solver.
 Car-pair collisions now share the ground/barrier event clock for a 20-car starter
-field, with swept oriented boxes and equal/opposite impulses. Damage, billboard orientation,
+field, with swept oriented boxes and equal/opposite impulses. Six regional crush
+zones now reduce engine power, retire cars with exhausted front zones and deform
+the rendered body; a player HUD shows regional damage and engine health. Detached
+parts, smoke, billboard orientation,
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
@@ -120,7 +123,9 @@ or the wheel zooms, R resets, Tab switches track/car, Page Up/Down changes level
 and Escape closes the view. Enter starts/exits free driving; W/Up gives gas,
 S/Down reverses, A/D or Left/Right steers, Space brakes, P pauses and R returns
 to the settled grid start. The browser has equivalent selection/pause/reset
-controls and can reopen the archive after closing.
+controls and can reopen the archive after closing. The damage icon points forward
+upward: green/yellow/red indicate increasing regional crush, and the lower bar
+shows remaining engine health. Reset restores all twenty cars and their damage.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -194,8 +199,7 @@ calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
 bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
 this establishes the simulation core, not original driving parity or a complete
 race. Vehicle rendering/input/chase-camera integration is checked separately;
-Barrier, body/ground and car-pair response are checked separately; damage remains
-pending. See `src/physics/README.md`.
+Barrier, body/ground and car-pair response are checked separately; the regional damage core is tested separately. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,
@@ -227,7 +231,7 @@ The game owner invokes barrier response after every fixed vehicle step; the
 browser additionally uses a real reverse key to hit an arena boundary and checks
 that reset clears accumulated collision events. Rounded body proxies, road wall
 height, restitution and friction are rewrite tuning. Body/ground contact is
-checked separately; damage and a complete race remain pending.
+checked separately; detached parts and a complete race remain pending.
 
 `make rewrite-ground-verify` independently checks the eight original body-contact
 corners and short/fast sweeps at both triangle centroids of all 19,775 road cells
@@ -251,7 +255,7 @@ Stationary-field comparisons explicitly disable driving decisions. Each 5 ms
 step also checks the full typed contact report: source obstacles, partners,
 chronology, local contact points and reduction back to aggregate impacts. Reports
 publish with all validated bodies; repair-only contacts carry no impulse. Distinct
-vehicle classes, liveries, damage and race rules remain pending.
+vehicle classes, liveries, detached parts and race rules remain pending.
 
 `make rewrite-ai-verify` independently checks source-linked guidance from every
 original racing strip, including branches and loop wrap, with three lane fractions
@@ -260,7 +264,8 @@ twenty-car scenarios on all eleven levels: 2,640,000 vehicle steps per target.
 Checks cover supported movement, decision cadence, reset, stalled reversing and
 frame-partition independence of every vehicle/controller. Real native/browser
 driving checks run too. Controller tuning and floating-point-sensitive traffic
-choices can produce different encounters across targets; this verifies behavior,
+choices can produce different encounters across targets; these long guidance
+scenarios disable damage to isolate controller behavior. This verifies behavior,
 not original AI parity, exact cross-target trajectories or complete race rules.
 See `src/ai/README.md` for parameters and remaining tactics/recovery work.
 

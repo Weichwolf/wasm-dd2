@@ -4,6 +4,8 @@
 #include "assets/mesh.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
+#include "physics/damage.h"
+#include "render/damage_draw.h"
 #include "render/mesh_draw.h"
 #include "render/renderer.h"
 
@@ -126,6 +128,68 @@ static bool dd2_draw_opaque_probe(dd2_renderer *renderer, dd2_mesh_materials *ma
     return passed;
 }
 
+static bool dd2_draw_damage_probe(dd2_renderer *renderer, dd2_mesh_materials *materials) {
+    dd2_mesh *mesh = dd2_draw_fixture((dd2_draw_shape){0});
+    if (mesh == NULL) {
+        return false;
+    }
+    dd2_mesh_vector before[DD2_MESH_CORNERS] = {0};
+    for (unsigned corner = 0; corner < DD2_MESH_CORNERS; ++corner) {
+        before[corner] = dd2_mesh_vertices(mesh)[corner];
+    }
+    const dd2_vehicle_damage damage = {
+        .regions = {[DD2_DAMAGE_SIDE_LEFT] = 1, [DD2_DAMAGE_SIDE_RIGHT] = 1}};
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    bool passed = dd2_mesh_draw_damaged(materials, mesh, (dd2_track_vertex){0}, &damage);
+    const uint8_t *pixels = dd2_renderer_pixels(renderer);
+    for (unsigned row = 0; row < DD2_DRAW_SIDE && passed; ++row) {
+        for (unsigned column = 0; column < DD2_DRAW_SIDE && passed; ++column) {
+            const size_t offset = ((size_t)row * DD2_DRAW_SIDE + column) * DD2_TEST_COLOR_CHANNELS;
+            /* Full middle crush shrinks X to 80% and Y to 65%. Avoid
+             * rasterized boundary pixels while checking both axes. */
+            const unsigned center = DD2_DRAW_SIDE / 2;
+            const bool inside = column > center / 2 && column < center + center / 2 &&
+                                row > center / 2 && row < center + center / 2;
+            const bool outside = column < center / 8 || column > DD2_DRAW_SIDE - center / 8 ||
+                                 row < center / 4 || row > DD2_DRAW_SIDE - center / 4;
+            if (inside || outside) {
+                passed = pixels != NULL && pixels[offset] == 0 && pixels[offset + 2] == 0 &&
+                         pixels[offset + 1] == (inside ? UINT8_MAX : 0);
+            }
+        }
+    }
+    for (unsigned corner = 0; corner < DD2_MESH_CORNERS && passed; ++corner) {
+        const dd2_mesh_vector after = dd2_mesh_vertices(mesh)[corner];
+        passed = before[corner].x == after.x && before[corner].y == after.y &&
+                 before[corner].z == after.z;
+    }
+    dd2_mesh_destroy(mesh);
+    return passed;
+}
+
+static bool dd2_draw_damage_hud(void) {
+    const dd2_render_options viewport = {.width = 320, .height = 240};
+    dd2_renderer *renderer = dd2_renderer_create(&viewport);
+    if (renderer == NULL) {
+        return false;
+    }
+    const dd2_vehicle_damage damage = {.regions = {[DD2_DAMAGE_FRONT_LEFT] = 1}, .retired = true};
+    glViewport(0, 0, viewport.width, viewport.height);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    bool passed = dd2_damage_draw(&damage, viewport);
+    const uint8_t *pixels = dd2_renderer_pixels(renderer);
+    const size_t front_left = ((size_t)43 * (size_t)viewport.width + 16) * DD2_TEST_COLOR_CHANNELS;
+    const size_t front_right = ((size_t)43 * (size_t)viewport.width + 27) * DD2_TEST_COLOR_CHANNELS;
+    const size_t engine_bar = ((size_t)12 * (size_t)viewport.width + 20) * DD2_TEST_COLOR_CHANNELS;
+    passed = passed && pixels != NULL && pixels[front_left] > pixels[front_left + 1] &&
+             pixels[front_right] < pixels[front_right + 1] &&
+             pixels[engine_bar] == pixels[engine_bar + 1] &&
+             pixels[engine_bar + 1] == pixels[engine_bar + 2];
+    dd2_renderer_destroy(renderer);
+    return passed;
+}
+
 static bool dd2_draw_scene_probe(dd2_renderer *renderer, dd2_mesh_materials *materials) {
     uint8_t bytes[DD2_DRAW_SCENE_BYTES] = {0};
     dd2_test_write_le32(bytes, 4);
@@ -234,7 +298,9 @@ static bool dd2_draw_probe(const dd2_texture_set *textures) {
              dd2_mesh_draw(materials, mesh, (dd2_track_vertex){0}) &&
              dd2_draw_pixels(renderer, true);
     passed = passed && dd2_draw_opaque_probe(renderer, materials) &&
-             dd2_draw_scene_probe(renderer, materials) && dd2_draw_cache_probe(renderer, materials);
+             dd2_draw_scene_probe(renderer, materials);
+    passed = passed && dd2_draw_damage_probe(renderer, materials) &&
+             dd2_draw_cache_probe(renderer, materials);
     dd2_mesh_materials_destroy(materials);
     passed =
         passed && glGetError() == GL_NO_ERROR && !dd2_mesh_draw(NULL, mesh, (dd2_track_vertex){0});
@@ -253,7 +319,7 @@ int main(void) {
     if (textures == NULL) {
         return EXIT_FAILURE;
     }
-    const bool passed = dd2_draw_probe(textures);
+    const bool passed = dd2_draw_probe(textures) && dd2_draw_damage_hud();
     dd2_texture_set_destroy(textures);
     if (!passed) {
         return EXIT_FAILURE;

@@ -40,7 +40,7 @@ with the shared car/wheel models and react to collisions. Their decisions borrow
 one simultaneous field before physics advances any body. Controller state commits
 with the frame and resets with every vehicle; pause also freezes all decisions.
 `dd2_driving_set_opponents` can disable decisions for stationary collision probes.
-This is free driving: distinct liveries/vehicle classes, damage, checkpoints,
+This is free driving: distinct liveries/vehicle classes, checkpoints,
 race outcomes, menus, championships, replay, persistence and audio remain pending.
 
 The driving owner also owns copied source barriers and their collision index.
@@ -49,8 +49,9 @@ shared event clock before committing frame state. Frame failure preserves every
 vehicle, wheel roll and collision counter; reset clears both contact and player
 car-pair counters. Rendering borrows the corrected poses. A main-thread read-only
 collision-count bridge lets the browser verification observe a real impact;
-original addresses or synthetic game input are not used. Damage and collision
-sound/effects will consume richer impact events in subsequent gameplay work.
+original addresses or synthetic game input are not used. Regional damage now
+consumes every step report before frame state commits; collision sound and
+additional effects remain pending.
 
 Reset settling also uses the combined collision solver. Body support uses the
 original eight-corner contact box, so inverted and sideways bodies remain on the
@@ -68,7 +69,8 @@ credits. Championship driver-to-slot ordering remains separate race work.
 `make rewrite-ai-verify` checks the shared driving controller and source-linked
 guidance, including sixty-second full-field scenarios on every level. Frame
 partition tests compare every vehicle, wheel roll and AI state. Driving tactics,
-overturned/off-road recovery, race rules and damage integration remain pending.
+overturned/off-road recovery and race rules remain pending. The long AI
+diagnostics disable damage to isolate controller behavior.
 
 The driving owner now receives the complete contact report inside every fixed
 step, alongside the aggregate counters. `dd2_driving_contact_report` borrows the
@@ -77,3 +79,10 @@ frame with no fixed steps clears that snapshot; a rejected frame preserves it.
 Frame-partition tests compare contacts as well as vehicles/controllers. Gameplay
 modules must consume each report inside the fixed-step transaction, rather than
 reuse the diagnostic snapshot as an event queue or lose intermediate impacts.
+
+Damage state commits with the complete vehicle/controller frame. Reset restores
+all six regions and engine health for every car; pause leaves damage unchanged.
+The renderer borrows player/opponent damage for body deformation and the player
+HUD. Read-only application bridges expose player engine health and each region
+for browser checks with real keyboard impacts and reset. Retired vehicles remain
+collidable wrecks. Detached parts, smoke, repairs and accident scoring are pending.

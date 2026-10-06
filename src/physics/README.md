@@ -106,7 +106,7 @@ Completed raw samples and instrumented binaries are removed after the report.
 
 Real driving input, vehicle/wheel rendering and chase camera are integrated in
 free driving. Track barrier response is now a separate post-integration step.
-Distinct vehicle classes, damage, detached
+Distinct vehicle classes, detached
 wheels, off-road recovery and race rules remain pending. Driving decisions are
 now implemented separately under `src/ai/`. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named
@@ -173,7 +173,7 @@ step. Rebound/friction can change both linear and angular travel before the next
 sweep. At most 64 combined responses keep the last checked pose on exhaustion;
 the barrier-only entry point retains its 16-response budget. Failure preserves
 the proposed state. Ground contact is now integrated in free driving and reset
-settling. Car-pair collision is integrated below; damage and automatic off-road
+settling. Car-pair collision is integrated below; detached parts and automatic off-road
 recovery remain pending.
 
 `make rewrite-ground-verify` independently reads the source box and original
@@ -230,7 +230,7 @@ momentum transfer, separate bridge heights and invalid-state rollback.
 levels for 132,000 vehicle steps per target. Component bounds are 0.1 world units
 for position, 0.2 units/s for velocity, 1e-4 for quaternion/wheel roll and 1e-3
 radians/s for angular velocity, plus 1e-8 relative tolerance. Stationary-field
-comparisons disable driving decisions; distinct masses/classes, damage and collision
+comparisons disable driving decisions; distinct masses/classes and collision
 sound remain pending. Counts record individual solver responses, not unique
 accidents. These checks establish rewrite behavior, not original collision parity.
 
@@ -254,7 +254,7 @@ all eleven levels and three targets. Analytic tests cover frontal/side/rotated
 car contacts, a two-impact chain's global times, a fast roof landing, wall contact
 arms before rebound, zero-impulse recovery, 64-event exhaustion and invalid-state
 rollback. This provides the physical input for damage and accident attribution;
-it does not implement damage, scoring or race rules.
+the report itself does not implement damage, scoring or race rules.
 
 Separate controlled roof landings and wall strikes at 5000 world units/s on each
 original level exercise road-cell, strip-wall and analytic-arena obstacle IDs.
@@ -262,3 +262,29 @@ They check both world report types independently of the coupled three-second
 field, which primarily exercises car pairs. The much faster 200000-unit/s
 analytic cases remain synthetic tests, not an arbitrary-speed guarantee on
 every source slope.
+
+## Regional crush and engine failure
+
+`damage.h` owns six normalized crush regions per car: front, middle and rear,
+each split left/right. `dd2_damage_step` consumes every fixed-step contact report
+inside the driving transaction. Validation precedes all writes, including counter
+overflow checks. Support/repair contacts do not damage a car. For each region,
+the strongest weighted impulse in a step contributes once, avoiding duplicate
+loads from repeated solver responses. Reset clears all twenty damage states.
+
+The original retires cars when either front zone is exhausted; this rule is
+retained. Other damage distributions and magnitudes are rewrite tuning: closing
+speed must exceed 500 and impulse per mass must exceed 250; crush is
+`min(1, (impulse - 250) / 6000)`. Lateral weights interpolate across X ±186;
+longitudinal weights interpolate front/middle/rear over Z ±300. Saturation snaps
+within 1e-12 of one for stable fast-math retirement on both targets. Engine health
+is one minus the largest front crush. Partial damage reduces throttle by up to
+40%; retirement suppresses throttle/steering and applies full braking. Wrecks
+remain physical bodies in the shared collision solver.
+
+`dd2_driving_set_damage` disables/freeze damage for isolated diagnostics; actual
+application driving enables damage by default. `rewrite_damage` tests regional
+impacts, duplicate contact suppression, harmless support, engine failure,
+transactional invalid-input rejection and deformation on Native and WASM.
+Detached panels/wheels, smoke, repair/pits, accident points and race rules are
+still pending. These tuned checks do not establish original damage parity.

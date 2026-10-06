@@ -107,13 +107,25 @@ async function drivingChecks(page) {
   await page.locator('#pause').click();
   await page.keyboard.down('s');
   try {
-    await page.waitForFunction(()=>Module._dd2_application_pair_collision_count()>0,null,{timeout:15000});
+    await page.waitForFunction(()=>Module._dd2_application_pair_collision_count()>0 &&
+      Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i)).some(value=>value>0),null,{timeout:15000});
   } finally {await page.keyboard.up('s');}
   await page.keyboard.press('p');await stable(page);
   report.car_pair_collision={real_reverse_key:true,vehicles:20,contacts:await page.evaluate(()=>Module._dd2_application_pair_collision_count())};
+  const damage=await page.evaluate(()=>({health:Module._dd2_application_engine_health(),
+    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i))}));
+  if(![damage.health,...damage.regions].every(value=>Number.isFinite(value)&&value>=0&&value<=1))throw new Error('Invalid vehicle damage');
+  await pause(300);
+  const frozen=await page.evaluate(()=>({health:Module._dd2_application_engine_health(),
+    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i))}));
+  if(JSON.stringify(frozen)!==JSON.stringify(damage))throw new Error('Paused damage changes');
+  report.damage={...damage,real_reverse_key:true,pause_freezes:true};
   await page.locator('#canvas').screenshot({path:path.join(output,'browser-car-pair.png')});
   await page.locator('#reset').click();await match(page,'1','driving');
   if(await page.evaluate(()=>Module._dd2_application_pair_collision_count())!==0)throw new Error('Pair contacts survive reset');
+  if(await page.evaluate(()=>Module._dd2_application_engine_health()!==1 ||
+    Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i)).some(value=>value!==0)))throw new Error('Damage survives reset');
+  report.damage.reset_clears=true;
   await page.selectOption('#level','8');
   await page.locator('#reset').click();
   await page.locator('#pause').click();

@@ -94,3 +94,10 @@ and simulated suspension compression. This is presentation tuning, not original
 wheel-transform parity. Lighting, sky policy, animated vehicle materials and
 shadows are still pending. The shared headless driving snapshot tool and actual
 native/browser window checks compare all eleven deterministic starts.
+
+`dd2_mesh_draw_damaged` deforms copied vertex coordinates using each car's six
+crush zones, without changing owned meshes or wheel geometry. Full local crush
+compresses body X/Y/Z by 20/35/45%; these are visual tuning values. Intact bodies
+use the existing mesh path. A six-cell green/yellow/red HUD points forward upward
+and shows engine health in the lower bar. It uses the shared SoftGL renderer on
+Native and WASM; detached parts and smoke remain pending.

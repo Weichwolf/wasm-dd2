@@ -5,6 +5,8 @@
 #include "assets/mesh.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
+#include "physics/damage.h"
+#include "physics/vehicle.h"
 
 #include <GL/softgl.h>
 #include <stdbool.h>
@@ -166,7 +168,7 @@ static bool dd2_mesh_cutout(dd2_mesh_materials *materials, const dd2_mesh_face *
 }
 
 static bool dd2_mesh_face_draw(dd2_mesh_materials *materials, const dd2_mesh_vector *vertices,
-                               const dd2_mesh_face *face) {
+                               const dd2_mesh_face *face, const dd2_vehicle_damage *damage) {
     dd2_texture_definition definition = {0};
     if (face->textured) {
         if (face->palette_bank >= dd2_texture_palette_bank_count(materials->textures) ||
@@ -208,15 +210,24 @@ static bool dd2_mesh_face_draw(dd2_mesh_materials *materials, const dd2_mesh_vec
                          ((float)definition.corners[corner].v + dd2_material_texel_center) /
                              (float)DD2_TEXTURE_PAGE_SIDE);
         }
-        glVertex3f((float)vertex.x, (float)vertex.y, (float)vertex.z);
+        dd2_vehicle_vector point = {.x = vertex.x, .y = vertex.y, .z = vertex.z};
+        if (damage != NULL) {
+            point = dd2_damage_deform(damage, point);
+        }
+        glVertex3f((float)point.x, (float)point.y, (float)point.z);
     }
     glEnd();
     return true;
 }
 
-bool dd2_mesh_draw(dd2_mesh_materials *materials, const dd2_mesh *mesh, dd2_track_vertex position) {
-    if (materials == NULL || mesh == NULL) {
+bool dd2_mesh_draw_damaged(dd2_mesh_materials *materials, const dd2_mesh *mesh,
+                           dd2_track_vertex position, const dd2_vehicle_damage *damage) {
+    if (materials == NULL || mesh == NULL || (damage != NULL && !dd2_damage_valid(damage))) {
         return false;
+    }
+    bool deformed = false;
+    for (unsigned region = 0; damage != NULL && region < DD2_DAMAGE_REGIONS; ++region) {
+        deformed = deformed || damage->regions[region] != 0;
     }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -225,12 +236,16 @@ bool dd2_mesh_draw(dd2_mesh_materials *materials, const dd2_mesh *mesh, dd2_trac
     const dd2_mesh_vector *vertices = dd2_mesh_vertices(mesh);
     bool passed = true;
     for (size_t index = 0; index < dd2_mesh_face_count(mesh) && passed; ++index) {
-        passed = dd2_mesh_face_draw(materials, vertices, &faces[index]);
+        passed = dd2_mesh_face_draw(materials, vertices, &faces[index], deformed ? damage : NULL);
     }
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_ALPHA_TEST);
     return passed && glGetError() == GL_NO_ERROR;
+}
+
+bool dd2_mesh_draw(dd2_mesh_materials *materials, const dd2_mesh *mesh, dd2_track_vertex position) {
+    return dd2_mesh_draw_damaged(materials, mesh, position, NULL);
 }
 
 bool dd2_scene_draw(dd2_mesh_materials *materials, const dd2_scene *scene) {

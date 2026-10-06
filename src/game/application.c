@@ -4,6 +4,7 @@
 #include "assets/level.h"
 #include "assets/track.h"
 #include "game/driving.h"
+#include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
 #include "platform/window.h"
@@ -145,6 +146,16 @@ unsigned dd2_application_vehicle_count(void) {
                ? dd2_driving_vehicle_count(dd2_current_application->driving)
                : 0;
 }
+double dd2_application_engine_health(void) {
+    return dd2_current_application != NULL
+               ? dd2_damage_health(&dd2_driving_damage(dd2_current_application->driving)[0])
+               : 1;
+}
+double dd2_application_region_damage(unsigned region) {
+    return dd2_current_application != NULL && region < DD2_DAMAGE_REGIONS
+               ? dd2_driving_damage(dd2_current_application->driving)[0].regions[region]
+               : 0;
+}
 
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
@@ -245,8 +256,10 @@ static bool dd2_application_draw(dd2_application *application) {
                    application->materials, application->track,
                    (dd2_driving_view){
                        .vehicle = dd2_driving_vehicle(application->driving),
+                       .damage = dd2_driving_damage(application->driving),
                        .wheel_roll = dd2_driving_wheel_roll(application->driving),
                        .opponents = dd2_driving_vehicles(application->driving) + 1,
+                       .opponent_damage = dd2_driving_damage(application->driving) + 1,
                        .opponent_rolls = dd2_driving_wheel_rolls(application->driving) + 1,
                        .opponent_count = dd2_driving_vehicle_count(application->driving) - 1,
                        .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
