@@ -53,7 +53,7 @@ def cleanup_logs(roots=None, age=3600, keep=()):
             if any(parent == path or path in parent.parents for path in keep):
                 continue
             for name in files:
-                if not (name.endswith('.log') or re.fullmatch(r'.+\.log\.(?:\d+|gz|\d+\.gz)', name) or name.endswith('log.txt')):
+                if not (name.endswith('.log') or re.fullmatch(r'.+\.log\.(?:\d+|gz|zst|\d+\.gz)', name) or name.endswith('log.txt')):
                     continue
                 path = parent / name
                 try:
