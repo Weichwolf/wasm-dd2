@@ -22,7 +22,28 @@ LOG_MAX_AGE ?= 3600
 
 .PHONY: all pipeline provision provision-native decompile assemble symbols image patch check native play-native wasm web verify verify-native-sdl verify-native-window verify-native-quit verify-browser-pad verify-browser-redbook-restart verify-browser-startup verify-wasm verify-parity run shot refcapture verify-cdrom verify-audio-observer verify-redbook verify-redbook-controls verify-redbook-restart verify-redbook-end verify-movie-params verify-movie-codec verify-movie-audio verify-movie-reference verify-shared-audio verify-menu-audio verify-sound-cursor verify-sound-lifetime verify-sound-device verify-keyboard verify-browser-keyboard verify-browser-keyboard-negative verify-clock-replay verify-random-reference refcapture-race-stream verify-reference-race-stream verify-sound-gain verify-sound-resample verify-menu-cycles verify-champ-names verify-reference-video clean help
 
-all: wasm             ## default: patch + WASM build
+all: rewrite-native   ## default on rewrite: readable C + SoftGL native build with strict clang-tidy
+
+.PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
+rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
+	cmake --preset rewrite-native
+	cmake --build --preset rewrite-native
+
+rewrite-wasm: ## configure/build the readable rewrite with Emscripten; native clang-tidy is a separate gate
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && emcmake cmake --preset rewrite-wasm && cmake --build --preset rewrite-wasm'
+
+rewrite-format: ## format only handwritten rewrite C/header files with clang-format 19
+	python3 $(ROOT)/tools/rewrite/quality.py format
+
+rewrite-format-check: ## reject any formatting difference in handwritten rewrite C/header files
+	python3 $(ROOT)/tools/rewrite/quality.py format-check
+
+rewrite-tidy: rewrite-native ## analyze every rewrite C unit with all findings treated as errors
+	python3 $(ROOT)/tools/rewrite/quality.py tidy --build-dir /tmp/wasm-dd2/rewrite-native
+
+rewrite-check: rewrite-format-check rewrite-native ## strict format/build/analysis gate and native renderer bootstrap
+	python3 $(ROOT)/tools/rewrite/quality.py tidy --build-dir /tmp/wasm-dd2/rewrite-native
+	ctest --preset rewrite-native
 
 pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> assemble -> patch -> native+WASM -> 10-level crash test (both targets)
 	@echo "pipeline OK: dd2h.exe -> decompile -> assemble -> patch -> compile (native + WASM) -> run"

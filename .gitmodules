@@ -1,0 +1,3 @@
+[submodule "vendor/softgl"]
+	path = vendor/softgl
+	url = https://github.com/weichwolf/softgl.git

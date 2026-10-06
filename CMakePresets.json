@@ -1,0 +1,33 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "rewrite-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "/tmp/wasm-dd2/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON",
+        "DD2_ENABLE_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "rewrite-native",
+      "inherits": "rewrite-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-19"
+      }
+    },
+    { "name": "rewrite-wasm", "inherits": "rewrite-base" }
+  ],
+  "buildPresets": [
+    { "name": "rewrite-native", "configurePreset": "rewrite-native", "jobs": 4 },
+    { "name": "rewrite-wasm", "configurePreset": "rewrite-wasm", "jobs": 4 }
+  ],
+  "testPresets": [
+    { "name": "rewrite-native", "configurePreset": "rewrite-native", "output": { "outputOnFailure": true } },
+    { "name": "rewrite-wasm", "configurePreset": "rewrite-wasm", "output": { "outputOnFailure": true } }
+  ]
+}

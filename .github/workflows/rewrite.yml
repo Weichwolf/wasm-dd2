@@ -1,0 +1,46 @@
+name: Rewrite C quality and builds
+
+on:
+  push:
+    branches: [rewrite]
+  pull_request:
+    branches: [rewrite]
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    container: debian:trixie
+    steps:
+      - name: Install native tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates make cmake ninja-build python3 clang-19 clang-tidy-19 clang-format-19
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Strict formatting, compiler, analysis and renderer check
+        run: |
+          make clean-logs
+          make rewrite-check
+          make clean-logs
+
+  wasm:
+    runs-on: ubuntu-24.04
+    container: debian:trixie
+    steps:
+      - name: Install WebAssembly tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates make cmake ninja-build python3 clang-format-19 emscripten nodejs
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: WASM build and renderer check
+        run: |
+          make clean-logs
+          make rewrite-wasm
+          ctest --preset rewrite-wasm
+          make clean-logs

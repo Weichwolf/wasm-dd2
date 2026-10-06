@@ -1,4 +1,23 @@
-# wasm-dd2 — Destruction Derby 2 (dd2h.exe) → WebAssembly
+# wasm-dd2 — Readable C rewrite
+
+The active `rewrite` branch prepares a new C11 implementation using SoftGL.
+Start with [the rewrite architecture, build commands and goal](docs/rewrite.md).
+The current scaffold builds and checks the renderer dependency; gameplay is
+still to be implemented. Original bitidentical output is not required for the
+rewrite, which will gain visual improvements incrementally.
+
+```sh
+git submodule update --init --recursive
+make rewrite-check
+make rewrite-wasm
+ctest --preset rewrite-wasm
+```
+
+The reference reconstruction remains on `master` and at the annotated tag
+`reconstruction-baseline` (`b1111bd`). The following documentation describes
+that reference and its explicitly bounded verification evidence.
+
+# Reference reconstruction documentation
 
 A faithful port of the 1996 game **Destruction Derby 2** (`dd2h.exe`, 640x480 build) to reproducible C
 compiling to native and WebAssembly. The engine C is **mechanically derived from the binary via Ghidra**

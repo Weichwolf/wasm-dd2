@@ -1,0 +1,141 @@
+# Readable C rewrite
+
+The `rewrite` branch is the new implementation. `master` retains the executable
+reconstruction; the annotated `reconstruction-baseline` tag records the exact
+starting point (`b1111bd`). That reference has known incomplete full-game
+coverage. It is evidence for behavior, not a claim that every feature is correct.
+
+The active worktree is `/home/cosmo/Git/wasm-dd2`; the reference worktree is
+`/home/cosmo/Git/wasm-dd2-reference`. The local reference shares immutable
+provisioned assets through ignored symlinks and has its own `SaveGames` copy.
+Never modify original assets through those links. Elsewhere, provision the game
+in each reference checkout using its existing `make provision` target.
+
+## Boundaries
+
+New game code is C11 with meaningful types, explicit ownership and named
+functions. Game code must not depend on original absolute addresses, emulated
+x86 registers or the global memory image. Keep the decompilation, patches and
+original comparison tools as reference material during migration.
+
+| Directory | Responsibility |
+| --- | --- |
+| `src/game/` | Game state, menus, race/season transitions, results and replays |
+| `src/physics/` | Vehicle motion, collision and damage |
+| `src/ai/` | Opponent behavior and driving decisions |
+| `src/render/` | SoftGL adapter, camera, geometry, materials and visual effects |
+| `src/audio/` | Effects, CD music, mixing and playback state |
+| `src/assets/` | Typed loaders for original tracks, cars, textures and data |
+| `src/platform/` | Native/browser windows, input, timing and persistence |
+| `tests/rewrite/` | Functional, rendering and platform regression tests |
+
+Only the renderer adapter and an actual triangle/pixel/lifetime bootstrap exist
+so far. This preparation does not implement a playable game. Remaining subsystem
+directories document their boundaries until real code lands.
+
+## SoftGL
+
+`vendor/softgl` is a submodule pinned to
+`7963be1d5b5e1bebbe97ece2c655228c8bc0a838`, the latest published upstream
+version checked during preparation. Subsequent upgrades remain explicit and
+reproducible. To initialize it:
+
+```sh
+git submodule update --init --recursive
+```
+
+For local library development, configure with
+`-DDD2_SOFTGL_DIR=/home/cosmo/Git/softgl`. Published verification uses the pinned
+submodule, and deliberate updates must include renderer regression evidence.
+The renderer and rewrite are C11. Meshoptimizer belongs to SoftGL's separate
+offline asset-preparation tools and is not linked into either runtime. The
+rewrite build does not enable a C++ compiler or build those tools.
+The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
+covering SoftGL's maximum render pool. Browser
+presentation, SDL/input and audio are later platform work. Browser pthread builds
+need HTTPS/localhost and COOP/COEP response headers.
+
+## Build and mandatory quality gates
+
+Use CMake 3.25+, Ninja, Python 3, LLVM 19 (`clang`, `clang-format`, `clang-tidy`),
+Emscripten and Node. Debian's package names are `cmake ninja-build python3
+clang-19 clang-format-19 clang-tidy-19 emscripten nodejs`.
+
+```sh
+make clean-logs
+make rewrite-check
+make rewrite-wasm
+ctest --preset rewrite-wasm
+make clean-logs
+```
+
+`make` builds the native rewrite. Existing explicit reference targets, such as
+`make native`, `make wasm` and the original verification targets, remain
+available. They build the reconstructed engine, not the new implementation.
+
+All rewrite C and header files under `src/` and `tests/rewrite/` are covered by
+`make rewrite-format-check`; `make rewrite-format` applies formatting. Both
+default CMake builds require the format gate before compiling the rewrite. Native
+targets run clang-tidy by default, and `make rewrite-tidy` independently checks
+every translation unit against `compile_commands.json`. LLVM 19 is required so
+formatter changes do not silently alter the style. Analyzer, bugprone, CERT,
+miscellaneous, performance, portability and readability findings are errors.
+Do not add suppressions or `NOLINT` merely to make a gate green.
+
+The requested compile flags apply to the rewrite and SoftGL:
+
+```text
+-Wall -Wextra -Wpedantic
+-Wno-unused-parameter -Wno-unused-function
+-fno-strict-aliasing -ffast-math
+```
+
+Rewrite targets additionally use `-Werror -Wshadow -Wconversion
+-Wstrict-prototypes -Wmissing-prototypes -Wformat=2`. Vendor and reference code
+retain their own quality rules. Fast-math permits arithmetic changes; new physics
+must be verified for stable behavior on native and WASM, including edge cases.
+
+CI on `rewrite` checks formatting, strict native build/analysis and both renderer
+bootstraps. A green bootstrap establishes dependency/build plumbing only.
+
+## Migration and acceptance
+
+First decode original assets into documented structures, then render one
+original track/car through SoftGL. Add native and browser presentation/input,
+then one complete playable race with physics, opponents, effects and music.
+Expand to all tracks, modes, menus, championships, replays, settings and
+save/load, using the reference and original to resolve uncertain behavior.
+
+Keep simulation independent of rendering and give it explicit input and timing.
+Functional tests cover rules, outcomes, navigation and data compatibility.
+Renderer tests cover the new renderer's intended output; original framebuffer
+and PCM equality are not acceptance requirements for this rewrite. Make visual
+improvements incrementally: resolution/filtering, materials/lighting, shadows
+and effects, with image regression and performance evidence on both targets.
+
+After each verified improvement, commit and push. Captures, generated build
+output and logs stay under `/tmp/wasm-dd2/`, below 2 GiB per verification run
+with at least 1 GiB free. Clean logs before/after verification, retain reports
+and remove completed raw captures without deleting files in use.
+
+## Goal
+
+Implementiere im Branch `rewrite` von `/home/cosmo/Git/wasm-dd2` eine vollständig
+spielbare, gut lesbare und modular aufgebaute C11-Neuimplementierung von
+Destruction Derby 2 für Native und WebAssembly mit der gepinnten SoftGL-Bibliothek
+als Renderer; nutze `master`, den Tag `reconstruction-baseline` und das laufende
+Original als Referenzen für Spielverhalten und Datenformate, ersetze schrittweise
+absolute Speicheradressen und Registeremulation durch dokumentierte Typen und
+klare Schnittstellen, implementiere und prüfe alle Strecken, Fahrzeuge, Physik,
+Schadensmodelle, KI, Spielmodi, Menüs, Rennen, Meisterschaften, Wiederholungen,
+Einstellungen, Tastatur- und Gamepad-Steuerung sowie Speichern und Laden
+einschließlich relevanter Randfälle, stelle funktionierende Effekte und
+Redbook-Musik sicher und verbessere die Darstellung kontinuierlich durch höhere
+Auflösung, bessere Texturen, Beleuchtung, Schatten und Effekte; Bitidentität von
+Bild und Ton zum Original ist keine Anforderung, funktionale Korrektheit,
+Stabilität, Datenkompatibilität und gutes Spielverhalten auf beiden Plattformen
+sind verbindlich, ebenso strenges clang-tidy und clang-format mit LLVM 19, die
+vereinbarten Compilerflags, reproduzierbare automatisierte Prüfungen, begrenzte
+Diagnostik unter `/tmp/wasm-dd2/` und Commit plus Push nach jedem verifizierten
+Fortschritt, bis sämtliche Spielfunktionen umgesetzt und keine bekannten
+Funktions- oder Kompatibilitätsfehler mehr offen sind.

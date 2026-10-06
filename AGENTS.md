@@ -10,3 +10,19 @@ after verification work. Do not delete files needed by running processes.
 
 After each successfully verified improvement, commit and push it as requested
 by the user. Do not claim original parity for a diagnostic or partial comparison.
+
+On the `rewrite` branch, read `docs/rewrite.md` before implementation. New game
+modules are handwritten C11 under `src/`, using typed state and explicit ownership
+instead of original absolute addresses or emulated registers. Keep the reference
+reconstruction and original game data available for functional comparisons.
+The rewrite may improve graphics and audio; bitidentical original output is not
+an acceptance requirement. Functional correctness and native/WASM stability are.
+
+Use the pinned `vendor/softgl` submodule by default. Do not alter vendor sources
+as part of a game change; deliberate dependency changes need their own evidence.
+All rewrite C/header files must pass clang-format 19. All rewrite C units must
+pass strict clang-tidy 19 and the compiler flags defined in `CMakeLists.txt`.
+Fix findings instead of disabling checks or adding blanket suppressions. Run
+`make rewrite-check`, `make rewrite-wasm` and `ctest --preset rewrite-wasm` for
+changes affecting the shared build/renderer. Preserve functional comparisons
+and add focused checks when a new gameplay subsystem is implemented.
