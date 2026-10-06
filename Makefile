@@ -26,7 +26,7 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
 .PHONY: rewrite-archive-verify
-.PHONY: rewrite-level-verify rewrite-mesh-verify
+.PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify
 rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
 	cmake --preset rewrite-native
 	cmake --build --preset rewrite-native
@@ -66,6 +66,13 @@ rewrite-mesh-verify: ## compare original scene placements and polygon fields on 
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm
 	python3 $(ROOT)/tools/rewrite/verify_meshes.py
+	$(MAKE) clean-logs
+
+rewrite-scene-verify: ## render original scene/car geometry on native, WASM and ASan/UBSan
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_scene_render.py
 	$(MAKE) clean-logs
 
 pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> assemble -> patch -> native+WASM -> 10-level crash test (both targets)
