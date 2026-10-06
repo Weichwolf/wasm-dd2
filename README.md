@@ -2224,12 +2224,37 @@ fails. The decoder source PCM is external to each capture; retain it only until
 the selected comparisons finish. The decoder uses the system MinGW compiler
 when available and otherwise the provisioned 32-bit MinGW SDK.
 
+`--trace-winmm` additionally observes the actual original movie's WinMM input and
+ACM conversion. The original sends MS-ADPCM to `waveOutWrite`; treating those
+buffers as S16 PCM is incorrect. Separate read-only PE proxies forward the real
+WinMM and ACM arguments, headers, callbacks, last-error values and results. All
+189/44 public exports and all 17 sections of each backend remain unchanged;
+only the private aliases' non-executable Wine DOS-stub marker is neutralized.
+The collector validates full format descriptors, stream lifetime, record/byte
+extents, synchronous conversion and natural close. Actual mapped proxy/backend
+hashes are required. Instrumentation changes timing and is not a playback clock
+or parity proof.
+
+The ALSA and Pulse runs (`movie-wave-1670-alsa/report.json` and
+`movie-wave-1671-pulse/report.json`) each record all 1,492 actual WinMM writes and
+ACM conversions. Both the submitted and converter-consumed 1,527,808 compressed
+bytes equal the original AVI packets literally. The running original's full
+6,039,616-byte ACM output equals the fresh independent decode on both backends.
+ALSA also retains this source interval at offset zero in accepted and consumed
+output, with 2,640/1,616 additional silent bytes. The Pulse accepted stream first
+differs at byte 2,212 and is 172,008 bytes shorter than the decoded source. This
+places the observed difference after the actual ACM output, without fitting
+offsets, changing the port's decoder or claiming a specific downstream cause.
+The strict Pulse source gate still exits nonzero after reporting and cleanup.
+
 ```sh
 make clean-logs
 python3 tools/capture_movie_audio_source.py --output /tmp/wasm-dd2/movie-acm-source
 make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend alsa --source /tmp/wasm-dd2/movie-acm-source --require-exact-source --output /tmp/wasm-dd2/movie-original-alsa'
 # On the diagnosed Wine/Pulse setup this strict source check fails; inspect report.json.
 make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend pulse --source /tmp/wasm-dd2/movie-acm-source --require-exact-source --output /tmp/wasm-dd2/movie-original-pulse'
+# Observe real compressed submissions and the running original's decoded output too.
+make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend alsa --trace-winmm --source /tmp/wasm-dd2/movie-acm-source --require-exact-source --output /tmp/wasm-dd2/movie-original-wave'
 make clean-logs
 ```
 

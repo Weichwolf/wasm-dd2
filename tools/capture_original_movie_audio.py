@@ -25,6 +25,7 @@ from artifacts import WORK, check_space, open_files, prepare_output
 from reference import capture
 from reference.audio import summarize_audio
 from reference.pulse import pulse_server, summarize_pulse
+from reference.wave_observer import summarize as summarize_wave, summarize_acm
 from verify_configuration_persistence import original_args, require
 from verify_movie_avi import original_metadata
 
@@ -77,7 +78,7 @@ def cleanup(output):
     require(capture.original_pid(output / 'work/prefix') is None,
             'Original is still alive in the owned prefix; leave its files intact')
     opened = open_files(); paths = []
-    for directory in (output / 'work', output / 'audio'):
+    for directory in (output / 'work', output / 'audio', output / 'winmm-source'):
         for file in directory.rglob('*'):
             if file.is_file() and not file.is_symlink(): paths.append(file)
     for file in [*output.glob('*.log'), output / 'pulse-server/daemon.log']:
@@ -97,6 +98,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True, help='fresh capture_movie_audio_source.py output')
     parser.add_argument('--backend', choices=('alsa', 'pulse'), default='pulse')
+    parser.add_argument('--trace-winmm', action='store_true', help='also capture actual WinMM MS-ADPCM submissions and ACM decoded PCM')
     parser.add_argument('--require-exact-source', action='store_true',
                         help='exit 1 after reporting/cleanup if the actual source check fails')
     parser.add_argument('--output', type=Path, required=True)
@@ -110,16 +112,20 @@ def main():
         'tools/capture_original_movie_audio.py', 'tools/reference/capture.py', 'tools/reference/pulse.py',
         'tools/reference/pulse_audio.c', 'tools/reference/audio.py', 'tools/reference/wine_audio.c',
         'tools/reference/alsa_clock.c',
+        'tools/reference/wave_observer.py', 'tools/reference/winmm_wave_observer.c',
+        'tools/reference/winmm_timer_observer.h', 'tools/reference/timer_observer.py',
+        'tools/reference/winmm_acm_observer.c',
     )}
     capture.WORK = output / 'work'; capture.WORK.mkdir()
     options = original_args()
     options.mode = 'audio'; options.audio = True; options.audio_backend = args.backend
     options.audio_rate = 22050; options.audio_device = 'clock'; options.audio_tail = .2
     options.reset_errors = False; options.keep_movie = True; options.timeout = 140
+    options.trace_movie_wave = args.trace_winmm
     options.wine_debug = '-all,+iccvid,+mciavi'
     report = dict(scope=__doc__, observations_valid=False, capture_complete=False,
                   original_port_parity='unproven', engine_state_writes=False,
-                  backend=args.backend, keep_movie=True, exe_sha256=capture.EXE_SHA256, exe_modified=False,
+                  backend=args.backend, trace_winmm=args.trace_winmm, keep_movie=True, exe_sha256=capture.EXE_SHA256, exe_modified=False,
                   wine_version=subprocess.check_output(['wine', '--version'], text=True).strip(),
                   original_movie_sha256=sha(ROOT / 'DestructionDerby2/Intro.avi'), source_reference=reference,
                   sources=sources, declared_device_rate=22050, pulse_server=None)
@@ -136,11 +142,22 @@ def main():
         for line in Path(f'/proc/{pid}/maps').read_text().splitlines():
             fields = line.split(maxsplit=5)
             if len(fields) == 6 and Path(fields[5]).name in (
-                    'winepulse.drv', 'winepulse.so', 'winealsa.drv', 'winealsa.so', 'dd2_pulse.so', 'dd2_audio.so'):
+                    'winepulse.drv', 'winepulse.so', 'winealsa.drv', 'winealsa.so', 'dd2_pulse.so', 'dd2_audio.so',
+                    'winmm.dll', '_winmm_real.dll', 'mciavi32.dll', 'msacm32.dll', '_msacm32_real.dll'):
                 path = Path(fields[5]); libraries[str(path)] = dict(sha256=sha(path))
         require(any(Path(name).name == 'wine' + args.backend + '.drv' for name in libraries),
                 'declared actual Wine audio driver is not mapped')
         report['mapped_audio_libraries'] = libraries
+        if args.trace_winmm:
+            observer = json.loads((output / 'wave-observer-build.json').read_text())
+            require(any(Path(p).name == 'winmm.dll' and v['sha256'] == observer['observer_sha256']
+                        for p, v in libraries.items()) and
+                    any(Path(p).name == '_winmm_real.dll' and v['sha256'] == observer['private_backend_sha256']
+                        for p, v in libraries.items()), 'actual forwarded WinMM proxy/backend must be mapped')
+            require(any(Path(p).name == 'msacm32.dll' and v['sha256'] == observer['acm']['observer_sha256']
+                        for p, v in libraries.items()) and
+                    any(Path(p).name == '_msacm32_real.dll' and v['sha256'] == observer['acm']['private_backend_sha256']
+                        for p, v in libraries.items()), 'actual forwarded ACM proxy/backend must be mapped')
 
     if args.backend == 'pulse':
         with pulse_server(output) as (env, server):
@@ -167,10 +184,19 @@ def main():
                 (output / 'audio' / movie[0]['file']).read_bytes(), expected)))
     painted = [int(n) for n in re.findall(r'MCIAVI_PaintFrame Painting frame (\d+)',
                                          (output / 'wine.log').read_text(errors='replace'))]
+    if args.trace_winmm:
+        _, _, format_, blocks = original_metadata(ROOT / 'DestructionDerby2/Intro.avi')
+        report['winmm_source'], submitted = summarize_wave(output / 'winmm-source', format_)
+        report['actual_acm'], consumed, pcm = summarize_acm(output / 'winmm-source', format_)
+        report['compressed_checks'] = [dict(kind=kind, source_check_passed=data == blocks,
+            actual_bytes=len(data), source_bytes=len(blocks), actual_sha256=hashlib.sha256(data).hexdigest(),
+            source_sha256=hashlib.sha256(blocks).hexdigest()) for kind, data in
+            (('winmm-submitted-msadpcm', submitted), ('actual-acm-consumed-msadpcm', consumed))]
+        report['pcm_checks'].append(dict(kind='actual-winmm-acm-decoded', **compare_source(pcm, expected)))
     require(painted == list(range(reference['video_paint_ordinals'])), 'complete ordered original movie paint calls required')
     require(all(sha(ROOT / name) == digest for name, digest in sources.items()), 'capture sources changed during the run')
     report.update(observations_valid=True, capture_complete=True, paint_calls=len(painted),
-                  source_check_passed=all(r['source_check_passed'] for r in report['pcm_checks']))
+                  source_check_passed=all(r['source_check_passed'] for r in report['pcm_checks'] + report.get('compressed_checks', [])))
     (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
     check_space(output)
     cleanup(output)

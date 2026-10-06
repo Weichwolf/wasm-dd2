@@ -378,6 +378,19 @@ def run(game, output, args, on_menu=None):
             (rundir/name).symlink_to(observer/name)
         env['WINEDLLOVERRIDES']='winmm=n;_winmm_real=n'
         env['DD2_TIMER_CAPTURE']='Z:'+str(output/'timer-callbacks.bin').replace('/','\\')
+    if getattr(args, 'trace_movie_wave', False):
+        if not args.audio or args.trace_timer_callbacks:
+            raise ValueError('WinMM source observation requires audio without another WinMM proxy')
+        from reference.wave_observer import build
+        observer = WORK / 'wave-observer'
+        metadata = build(observer)
+        (output / 'wave-observer-build.json').write_text(json.dumps(metadata, indent=2) + '\n')
+        for name in ('winmm.dll', '_winmm_real.dll', 'msacm32.dll', '_msacm32_real.dll'):
+            (rundir / name).symlink_to(observer / name)
+        env['WINEDLLOVERRIDES'] = 'winmm=n;_winmm_real=n;msacm32=n;_msacm32_real=n'
+        directory = output / 'winmm-source'
+        directory.mkdir()
+        env['DD2_WINMM_CAPTURE'] = 'Z:' + str(directory).replace('/', '\\')
     video_collector=None
     movie_collector=None
     if args.trace_movie_video or args.trace_movie_timing:
