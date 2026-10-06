@@ -3,6 +3,7 @@
 #include "assets/bytes.h"
 #include "assets/level.h"
 #include "assets/road.h"
+#include "game/accidents.h"
 #include "game/driving.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
@@ -109,6 +110,16 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
         const dd2_ai_driver other = second_drivers[slot];
         const dd2_vehicle_damage damage = dd2_driving_damage(first)[slot];
         const dd2_vehicle_damage other_damage = dd2_driving_damage(second)[slot];
+        const dd2_accident_driver score = dd2_driving_accidents(first)[slot];
+        const dd2_accident_driver other_score = dd2_driving_accidents(second)[slot];
+        if (score.points != other_score.points || score.destructions != other_score.destructions ||
+            score.partner != other_score.partner || score.remaining != other_score.remaining ||
+            score.quarters != other_score.quarters || score.retired != other_score.retired ||
+            score.steps != other_score.steps ||
+            fabs(score.heading - other_score.heading) > dd2_drive_test_tolerance ||
+            fabs(score.rotation - other_score.rotation) > dd2_drive_test_tolerance) {
+            return false;
+        }
         if (damage.steps != other_damage.steps || damage.retired != other_damage.retired) {
             return false;
         }
@@ -176,7 +187,9 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
     }
     if (!dd2_driving_reset(first) || !dd2_driving_reset(second) ||
         !dd2_drive_test_field(first, second) || dd2_driving_contact_report(first)->count != 0 ||
-        dd2_driving_damage(first)[0].steps != 0 ||
+        dd2_driving_damage(first)[0].steps != 0 || dd2_driving_accidents(first)[0].steps != 0 ||
+        dd2_driving_accidents(first)[0].points != 0 ||
+        dd2_driving_accidents(first)[0].remaining != 0 ||
         dd2_damage_health(&dd2_driving_damage(first)[0]) != 1 ||
         !dd2_drive_test_same(&initial, dd2_driving_vehicle(first))) {
         return false;

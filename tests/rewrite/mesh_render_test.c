@@ -4,10 +4,12 @@
 #include "assets/mesh.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
+#include "game/accidents.h"
 #include "physics/damage.h"
 #include "render/damage_draw.h"
 #include "render/mesh_draw.h"
 #include "render/renderer.h"
+#include "render/score_draw.h"
 
 #include <GL/softgl.h>
 #include <stdbool.h>
@@ -186,6 +188,37 @@ static bool dd2_draw_damage_hud(void) {
              pixels[front_right] < pixels[front_right + 1] &&
              pixels[engine_bar] == pixels[engine_bar + 1] &&
              pixels[engine_bar + 1] == pixels[engine_bar + 2];
+    enum {
+        DD2_DRAW_SCORE_POINTS = 123,
+        DD2_DRAW_SCORE_KILLS = 12,
+        DD2_DRAW_SCORE_X = 60,
+        DD2_DRAW_SCORE_Y = 23,
+        DD2_DRAW_SCORE_PITCH = 4,
+        DD2_DRAW_SCORE_ROWS = 5,
+        DD2_DRAW_SCORE_COLUMNS = 3,
+        DD2_DRAW_SCORE_DIGITS = 3
+    };
+    const dd2_accident_driver score = {.points = DD2_DRAW_SCORE_POINTS,
+                                       .destructions = DD2_DRAW_SCORE_KILLS};
+    const char *const expected[DD2_DRAW_SCORE_DIGITS][DD2_DRAW_SCORE_ROWS] = {
+        {"010", "110", "010", "010", "111"},
+        {"111", "001", "111", "100", "111"},
+        {"111", "001", "111", "001", "111"}};
+    passed = passed && dd2_score_draw(&score, viewport);
+    pixels = dd2_renderer_pixels(renderer);
+    for (unsigned digit = 0; digit < DD2_DRAW_SCORE_DIGITS && passed; ++digit) {
+        for (unsigned row = 0; row < DD2_DRAW_SCORE_ROWS && passed; ++row) {
+            for (unsigned column = 0; column < DD2_DRAW_SCORE_COLUMNS && passed; ++column) {
+                const unsigned x_pos = DD2_DRAW_SCORE_X + (digit * DD2_DRAW_SCORE_PITCH) + column;
+                const unsigned y_pos = DD2_DRAW_SCORE_Y + DD2_DRAW_SCORE_ROWS - row - 1;
+                const size_t offset =
+                    ((size_t)y_pos * (size_t)viewport.width + x_pos) * DD2_TEST_COLOR_CHANNELS;
+                const uint8_t channel = expected[digit][row][column] == '1' ? UINT8_MAX : 0;
+                passed = pixels != NULL && pixels[offset] == channel &&
+                         pixels[offset + 1] == channel && pixels[offset + 2] == channel;
+            }
+        }
+    }
     dd2_renderer_destroy(renderer);
     return passed;
 }

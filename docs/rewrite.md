@@ -60,7 +60,9 @@ with one-sided swept road contacts and a shared ground/barrier solver.
 Car-pair collisions now share the ground/barrier event clock for a 20-car starter
 field, with swept oriented boxes and equal/opposite impulses. Six regional crush
 zones now reduce engine power, retire cars with exhausted front zones and deform
-the rendered body; a player HUD shows regional damage and engine health. Detached
+the rendered body; a player HUD shows regional damage and engine health. Accident
+attribution now credits 90/180/360-degree spins and destroyed opponents, with
+visible points/destruction counts. Detached
 parts, smoke, billboard orientation,
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
@@ -125,7 +127,9 @@ S/Down reverses, A/D or Left/Right steers, Space brakes, P pauses and R returns
 to the settled grid start. The browser has equivalent selection/pause/reset
 controls and can reopen the archive after closing. The damage icon points forward
 upward: green/yellow/red indicate increasing regional crush, and the lower bar
-shows remaining engine health. Reset restores all twenty cars and their damage.
+shows remaining engine health. PTS shows accident points and KO shows credited
+destructions. Reset restores all twenty cars and clears their damage, scores and
+attribution windows.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -268,6 +272,23 @@ choices can produce different encounters across targets; these long guidance
 scenarios disable damage to isolate controller behavior. This verifies behavior,
 not original AI parity, exact cross-target trajectories or complete race rules.
 See `src/ai/README.md` for parameters and remaining tactics/recovery work.
+
+`make rewrite-accidents-verify` checks source-inspired 10/25/50 spin points, 25
+destruction points, the 999 cap and first-contact attribution on both targets.
+Each victim's 1.5-second window remains attached to the first responding partner;
+subsequent contacts do not steal or extend it. Retired instigators cancel credits.
+Six-second twenty-car drives on all eleven original tracks/arenas supply poses,
+retirement flags and actual pair contacts to an independent Python angle-history
+oracle. It checks every scoring state through 264,000 vehicle steps per target
+on Native, Node/WASM and ASan/UBSan, including reset. Real browser input checks
+active attribution, pause and reset; SoftGL pixel tests check the PTS/KO display.
+Two controlled side-impact cases on original arena 8 additionally verify actual
+180/360-degree point awards and engine retirement/destruction credit through the
+physical solver, damage and controls (16,000 further vehicle steps per target).
+Assigned high initial speeds are diagnostic stress inputs. The ordinary short
+drives exercise attribution/expiration and can finish without point awards.
+This verifies tuned rewrite accident rules, not original physics/damage parity,
+lap/race rules, championship standings or complete racing gameplay.
 
 ## Migration and acceptance
 

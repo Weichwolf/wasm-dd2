@@ -6,6 +6,7 @@
 #include "physics/vehicle_collision.h"
 #include "render/damage_draw.h"
 #include "render/mesh_draw.h"
+#include "render/score_draw.h"
 
 #include <GL/softgl.h>
 #include <math.h>
@@ -156,5 +157,6 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
                                                    .wheel_roll = view.opponent_rolls[index],
                                                    .viewport = view.viewport});
     }
-    return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport));
+    return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
+           (view.score == NULL || dd2_score_draw(view.score, view.viewport));
 }

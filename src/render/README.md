@@ -101,3 +101,9 @@ compresses body X/Y/Z by 20/35/45%; these are visual tuning values. Intact bodie
 use the existing mesh path. A six-cell green/yellow/red HUD points forward upward
 and shows engine health in the lower bar. It uses the shared SoftGL renderer on
 Native and WASM; detached parts and smoke remain pending.
+
+`score_draw.c` overlays player accident points (PTS, three digits) and credited
+destructions (KO, two digits) beside the damage icon. The HUD uses compact bitmap
+glyphs and a black backdrop, scales with the viewport and restores matrices/depth
+testing. Native/WASM pixel tests independently check the 123 glyph pattern. These
+are current-race accident values; championship standings remain game-rule work.

@@ -286,5 +286,5 @@ remain physical bodies in the shared collision solver.
 application driving enables damage by default. `rewrite_damage` tests regional
 impacts, duplicate contact suppression, harmless support, engine failure,
 transactional invalid-input rejection and deformation on Native and WASM.
-Detached panels/wheels, smoke, repair/pits, accident points and race rules are
-still pending. These tuned checks do not establish original damage parity.
+Detached panels/wheels, smoke, repair/pits and race rules are still pending.
+Accident points now consume contact reports and retirement state in `src/game/accidents.c`. These tuned checks do not establish original damage parity.

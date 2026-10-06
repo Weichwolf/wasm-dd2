@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
                      (dd2_driving_view){
                          .vehicle = vehicle,
                          .damage = dd2_driving_damage(driving),
+                         .score = dd2_driving_accidents(driving),
                          .wheel_roll = dd2_driving_wheel_roll(driving),
                          .opponents = dd2_driving_vehicles(driving) + 1,
                          .opponent_damage = dd2_driving_damage(driving) + 1,

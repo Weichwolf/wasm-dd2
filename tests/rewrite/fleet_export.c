@@ -1,3 +1,4 @@
+#include "accident_trace.h"
 #include "assets/archive.h"
 #include "assets/barriers.h"
 #include "assets/bytes.h"
@@ -21,6 +22,7 @@ enum {
     DD2_FLEET_PROBE_RACING = 7,
     DD2_FLEET_PROBE_CARS = 20,
     DD2_FLEET_PROBE_FRAMES = 120,
+    DD2_FLEET_PROBE_SCORE_FRAMES = 240,
     DD2_FLEET_PROBE_SAMPLE = 20,
     DD2_FLEET_PROBE_PARTS = 5,
     DD2_FLEET_PROBE_WORLD_STEPS = 64
@@ -99,6 +101,31 @@ static void dd2_fleet_probe_contacts(const dd2_vehicle_collision_report *report,
                contact.local_points[1].y, contact.local_points[1].z);
     }
     puts("]}");
+}
+
+static void dd2_fleet_probe_scoring(const dd2_driving *driving, unsigned step) {
+    dd2_test_accident_write(
+        (dd2_test_accident_trace){.vehicles = dd2_driving_vehicles(driving),
+                                  .damages = dd2_driving_damage(driving),
+                                  .scores = dd2_driving_accidents(driving),
+                                  .contacts = dd2_driving_contact_report(driving),
+                                  .count = dd2_driving_vehicle_count(driving)},
+        step);
+}
+
+static void dd2_fleet_probe_snapshot(const dd2_driving *driving, unsigned frame,
+                                     bool accident_probe) {
+    dd2_fleet_probe_state(driving, frame);
+    if (accident_probe) {
+        dd2_fleet_probe_scoring(driving, frame * DD2_FLEET_PROBE_PARTS);
+    }
+}
+
+static void dd2_fleet_probe_tick(const dd2_driving *driving, unsigned step, bool accident_probe) {
+    dd2_fleet_probe_contacts(dd2_driving_contact_report(driving), step, false);
+    if (accident_probe) {
+        dd2_fleet_probe_scoring(driving, step);
+    }
 }
 
 static bool dd2_fleet_probe_world_hit(dd2_vehicle previous, const dd2_road_surface *surface,
@@ -185,20 +212,13 @@ static bool dd2_fleet_probe_world(const dd2_road *road, const dd2_driving *drivi
     return valid;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 3 || strlen(argv[2]) != 1 || strchr("123456789AB", argv[2][0]) == NULL) {
-        return EXIT_FAILURE;
-    }
-    const char code = argv[2][0];
-    const unsigned level = code <= '9' ? (unsigned)(code - '0') : (unsigned)(code - 'A') + 10;
-    dd2_road *road = dd2_fleet_probe_load(argv[1], code);
-    dd2_driving *driving = dd2_driving_create(road, level);
-    dd2_driving_set_opponents(driving, false);
+static bool dd2_fleet_probe_drive(dd2_driving *driving, unsigned level, bool accident_probe) {
     bool valid = driving != NULL && dd2_driving_vehicle_count(driving) == DD2_FLEET_PROBE_CARS;
     if (valid) {
-        dd2_fleet_probe_state(driving, 0);
+        dd2_fleet_probe_snapshot(driving, 0, accident_probe);
     }
-    for (unsigned frame = 0; frame < DD2_FLEET_PROBE_FRAMES && valid; ++frame) {
+    const unsigned frames = accident_probe ? DD2_FLEET_PROBE_SCORE_FRAMES : DD2_FLEET_PROBE_FRAMES;
+    for (unsigned frame = 0; frame < frames && valid; ++frame) {
         const dd2_vehicle_control control =
             level <= DD2_FLEET_PROBE_RACING
                 ? (dd2_vehicle_control){.throttle = -1}
@@ -208,12 +228,12 @@ int main(int argc, char **argv) {
                 driving,
                 (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS, .control = control});
             if (valid) {
-                dd2_fleet_probe_contacts(dd2_driving_contact_report(driving),
-                                         (frame * DD2_FLEET_PROBE_PARTS) + part + 1, false);
+                dd2_fleet_probe_tick(driving, (frame * DD2_FLEET_PROBE_PARTS) + part + 1,
+                                     accident_probe);
             }
         }
         if (valid && (frame + 1) % DD2_FLEET_PROBE_SAMPLE == 0) {
-            dd2_fleet_probe_state(driving, frame + 1);
+            dd2_fleet_probe_snapshot(driving, frame + 1, false);
         }
     }
     if (valid) {
@@ -225,10 +245,26 @@ int main(int argc, char **argv) {
                 dd2_driving_collisions(driving) == 0 &&
                 dd2_driving_contact_report(driving)->count == 0;
         if (valid) {
-            dd2_fleet_probe_state(driving, 0);
+            dd2_fleet_probe_snapshot(driving, 0, accident_probe);
         }
     }
-    valid = valid && dd2_fleet_probe_world(road, driving, level);
+    return valid;
+}
+
+int main(int argc, char **argv) {
+    if ((argc != 3 && argc != 4) || strlen(argv[2]) != 1 ||
+        strchr("123456789AB", argv[2][0]) == NULL ||
+        (argc == 4 && strcmp(argv[3], "accidents") != 0)) {
+        return EXIT_FAILURE;
+    }
+    const char code = argv[2][0];
+    const unsigned level = code <= '9' ? (unsigned)(code - '0') : (unsigned)(code - 'A') + 10;
+    dd2_road *road = dd2_fleet_probe_load(argv[1], code);
+    dd2_driving *driving = dd2_driving_create(road, level);
+    const bool accident_probe = argc == 4;
+    dd2_driving_set_opponents(driving, accident_probe);
+    const bool valid = dd2_fleet_probe_drive(driving, level, accident_probe) &&
+                       dd2_fleet_probe_world(road, driving, level);
     dd2_driving_destroy(driving);
     dd2_road_destroy(road);
     return valid ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -30,6 +30,15 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-barrier-verify
 .PHONY: rewrite-ground-verify
 .PHONY: rewrite-fleet-verify
+.PHONY: rewrite-accidents-verify
+
+rewrite-accidents-verify: ## verify source-inspired accident rules in full fields on original tracks
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_accidents.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-ai-verify
 .PHONY: rewrite-driving-verify
 .PHONY: rewrite-vehicle-verify

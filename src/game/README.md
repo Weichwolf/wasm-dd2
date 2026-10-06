@@ -85,4 +85,50 @@ all six regions and engine health for every car; pause leaves damage unchanged.
 The renderer borrows player/opponent damage for body deformation and the player
 HUD. Read-only application bridges expose player engine health and each region
 for browser checks with real keyboard impacts and reset. Retired vehicles remain
-collidable wrecks. Detached parts, smoke, repairs and accident scoring are pending.
+collidable wrecks. Detached parts, smoke and repairs are pending.
+
+## Accident points and attribution
+
+`accidents.h` owns per-driver race accident points, destruction counts and the
+currently attributed victim window. The original `CheckPointScoring @00433d34`
+credits 90/180/360-degree spins with 10/25/50 points, destruction with 25 points
+plus one destruction, and caps points at 999. Source pair collision handlers
+`@0043a096`/`@0043a230` arm both untracked, living victims for 75 game ticks.
+The source main loop processes those ticks every 20 ms; the rewrite represents
+this 1.5-second interval with 300 fixed 5 ms steps.
+
+Attribution latches to the first responding partner and does not refresh on
+repeated solver events or transfer to later contacts. The signed shortest heading
+changes accumulate within the window; the largest 90/180-degree threshold reached
+is retained even if the victim turns back. A complete spin scores immediately,
+other thresholds score on expiration. Retirement during the window instead gives
+destruction credit; a retired instigator cancels the credit. Wrecks cannot arm new
+windows or resurrect without reset. Standing contacts/repair chatter are ignored
+using the same tuned speed >500 and impulse-per-mass >250 gates as regional damage.
+Near-vertical forward axes retain the last horizontal heading. These sampling and
+collision gates are rewrite tuning; this is not original fixed-point parity.
+
+The driving owner consumes each full contact report after damage in the same
+transaction. Scores, windows and their tick counters commit with all twenty
+vehicles/controllers, remain unchanged on frame failure/pause and clear on reset.
+The diagnostic contact snapshot is not used as a delayed event queue. PTS/KO are
+rendered from borrowed player state; read-only application bridges expose points,
+destructions and the number of active windows for actual browser checks.
+
+`rewrite_accidents` tests both spin directions, wrap, peak retention, no stolen or
+refreshed attribution, expiration, destruction/cancellation, repeated wreck hits,
+score saturation, harmless contacts and transactional rejection. Driving tests
+compare every scoring field for equivalent frame partitions.
+`make rewrite-accidents-verify` replays original-track physical observations and
+actual contacts through an independent angle-history/deadline oracle on Native,
+WASM and ASan/UBSan. Collision encounters may vary between targets; each target's
+actual observations must satisfy the same scoring rules. Checkpoints, laps, race
+outcomes, driver/class mapping and championship points remain separate work.
+
+Two controlled side-impact cases on original arena 8 verify actual 180/360-degree
+awards and credited engine retirement from the shared physical/damage pipeline.
+These assigned high-speed stress inputs are independent owned fields; they do
+not mutate game data or demonstrate normal driving/original handling parity.
+The ordinary six-second game-owner profiles exercise attribution/expiration
+and may finish without point awards. Synthetic rules cover the 90-degree tier
+and 999 cap separately.

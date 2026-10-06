@@ -2,6 +2,7 @@
 #define DD2_RENDER_DRIVING_DRAW_H
 
 #include "assets/track.h"
+#include "game/accidents.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "render/mesh_draw.h"
@@ -14,6 +15,7 @@
 typedef struct {
     const dd2_vehicle *vehicle;
     const dd2_vehicle_damage *damage;
+    const dd2_accident_driver *score;
     double wheel_roll;
     const dd2_vehicle *opponents;
     const dd2_vehicle_damage *opponent_damage;

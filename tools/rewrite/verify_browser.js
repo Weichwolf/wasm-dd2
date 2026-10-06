@@ -113,11 +113,17 @@ async function drivingChecks(page) {
   await page.keyboard.press('p');await stable(page);
   report.car_pair_collision={real_reverse_key:true,vehicles:20,contacts:await page.evaluate(()=>Module._dd2_application_pair_collision_count())};
   const damage=await page.evaluate(()=>({health:Module._dd2_application_engine_health(),
-    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i))}));
+    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i)),
+    points:Module._dd2_application_accident_points(),destructions:Module._dd2_application_destructions(),
+    windows:Module._dd2_application_accident_windows()}));
   if(![damage.health,...damage.regions].every(value=>Number.isFinite(value)&&value>=0&&value<=1))throw new Error('Invalid vehicle damage');
+  if(!Number.isInteger(damage.points)||damage.points<0||damage.points>999||
+    !Number.isInteger(damage.destructions)||damage.destructions<0||damage.destructions>19||damage.windows<1)throw new Error('Impact attribution/score invalid');
   await pause(300);
   const frozen=await page.evaluate(()=>({health:Module._dd2_application_engine_health(),
-    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i))}));
+    regions:Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i)),
+    points:Module._dd2_application_accident_points(),destructions:Module._dd2_application_destructions(),
+    windows:Module._dd2_application_accident_windows()}));
   if(JSON.stringify(frozen)!==JSON.stringify(damage))throw new Error('Paused damage changes');
   report.damage={...damage,real_reverse_key:true,pause_freezes:true};
   await page.locator('#canvas').screenshot({path:path.join(output,'browser-car-pair.png')});
@@ -126,6 +132,10 @@ async function drivingChecks(page) {
   if(await page.evaluate(()=>Module._dd2_application_engine_health()!==1 ||
     Array.from({length:6},(_,i)=>Module._dd2_application_region_damage(i)).some(value=>value!==0)))throw new Error('Damage survives reset');
   report.damage.reset_clears=true;
+  if(await page.evaluate(()=>Module._dd2_application_accident_points()!==0 ||
+    Module._dd2_application_destructions()!==0 || Module._dd2_application_accident_windows()!==0))throw new Error('Accident scores survive reset');
+  report.accidents={points:damage.points,destructions:damage.destructions,active_windows:damage.windows,
+    real_reverse_key:true,pause_freezes:true,reset_clears:true};
   await page.selectOption('#level','8');
   await page.locator('#reset').click();
   await page.locator('#pause').click();

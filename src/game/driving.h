@@ -3,6 +3,7 @@
 
 #include "ai/driver.h"
 #include "assets/road.h"
+#include "game/accidents.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -39,6 +40,9 @@ const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving
 void dd2_driving_set_damage(dd2_driving *driving, bool enabled);
 bool dd2_driving_damage_enabled(const dd2_driving *driving);
 const dd2_vehicle_damage *dd2_driving_damage(const dd2_driving *driving);
+/* Borrow all twenty accident scores/attribution windows. Reset clears every
+ * score; pause freezes the windows. Race/championship standings are separate. */
+const dd2_accident_driver *dd2_driving_accidents(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving);
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving);
 uint64_t dd2_driving_collisions(const dd2_driving *driving);

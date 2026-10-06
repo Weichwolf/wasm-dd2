@@ -231,10 +231,10 @@ def build_sanitized(output):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
-    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw')]
+    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'vehicle_collision', 'damage')]
-    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving', 'starting_grid')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving', 'starting_grid', 'accidents')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),

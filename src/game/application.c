@@ -156,6 +156,28 @@ double dd2_application_region_damage(unsigned region) {
                ? dd2_driving_damage(dd2_current_application->driving)[0].regions[region]
                : 0;
 }
+unsigned dd2_application_accident_points(void) {
+    return dd2_current_application != NULL
+               ? dd2_driving_accidents(dd2_current_application->driving)[0].points
+               : 0;
+}
+unsigned dd2_application_destructions(void) {
+    return dd2_current_application != NULL
+               ? dd2_driving_accidents(dd2_current_application->driving)[0].destructions
+               : 0;
+}
+unsigned dd2_application_accident_windows(void) {
+    unsigned active = 0;
+    if (dd2_current_application != NULL) {
+        const dd2_accident_driver *drivers =
+            dd2_driving_accidents(dd2_current_application->driving);
+        for (unsigned slot = 0; slot < dd2_driving_vehicle_count(dd2_current_application->driving);
+             ++slot) {
+            active += (unsigned)(drivers[slot].remaining != 0);
+        }
+    }
+    return active;
+}
 
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
@@ -257,6 +279,7 @@ static bool dd2_application_draw(dd2_application *application) {
                    (dd2_driving_view){
                        .vehicle = dd2_driving_vehicle(application->driving),
                        .damage = dd2_driving_damage(application->driving),
+                       .score = dd2_driving_accidents(application->driving),
                        .wheel_roll = dd2_driving_wheel_roll(application->driving),
                        .opponents = dd2_driving_vehicles(application->driving) + 1,
                        .opponent_damage = dd2_driving_damage(application->driving) + 1,
