@@ -23,6 +23,7 @@ jobs:
           submodules: recursive
       - name: Strict formatting, compiler, analysis and renderer check
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make clean-logs
           python3 tools/rewrite/ci.py native
           make clean-logs
@@ -40,6 +41,7 @@ jobs:
           submodules: recursive
       - name: WASM build and renderer check
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make clean-logs
           python3 tools/rewrite/ci.py wasm
           make clean-logs
