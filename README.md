@@ -3125,6 +3125,15 @@ remain unchanged. The same public tool rejects an actual unfinished 100-draw
 run (`multiplayer-approach-1694-two-turns/validation.json`). This verifies host
 recording feasibility and its bounded rejection, not port, score or A/V parity.
 
+The full four-slot original recorder now also completes both ten-lap turns alive
+with this policy, preserves their earned 10/25 points and starts the next actual
+round. It captures 14,492 racing indexed/palette pairs, 35 checkpoints, 103,289
+actual clock returns and 81,107 RNG triples. Frozen observer sources stay
+unchanged, and lossless archives keep the complete run below 2 GiB
+(`multiplayer-approach-1702-original-full/regular-recording-validation.json`).
+This is original-only regular-recording evidence; port comparison and complete
+chronological audio/video acceptance remain separate requirements.
+
 ```sh
 make clean-logs
 make capture-multiplayer-driver-probe MULTIPLAYER_DRIVER_PROBE_ARGS='--output /tmp/wasm-dd2/multiplayer-driver-probe'
