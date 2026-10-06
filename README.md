@@ -2151,6 +2151,49 @@ changes 768 values (`browser-device-1140-source/roundtrip-report.json`). This
 identifies a provider-conversion issue for further work; the production movie
 source conversion has not been changed by this diagnostic.
 
+`make verify-browser-s16-output` now sends all 65,536 S16 values through the
+unchanged production movie import, once per channel in opposite order, and
+compares the real accepted and consumed Chromium ALSA output. It also compiles
+two explicitly experimental encodings: Chromium's own `ToFloat` and asymmetric
+division (`n/32768` for negative values, `n/32767` otherwise). The independently
+pinned Chromium C++ header predicts the device conversion. In the public run
+(`browser-s16-1648-public-fixture/report.json`), canonical conversion changes
+65,534 of 131,072 samples, Chromium's reciprocal multiplication changes 1,536,
+and asymmetric division changes none. The source position comes from the
+observed start argument and the actual first silent device-buffer write;
+there is no fitted waveform alignment. Every whole device/fixture comparison
+still fails because the complete stream includes startup/tail silence.
+
+With `--pulse`, the same actual WASM binaries run against an owned PulseAudio
+server whose declared default rate and null-sink rate are both 22,050 Hz. A
+read-only observer forwards actual `pa_stream_write` calls unchanged and saves
+accepted buffers before Pulse takes ownership. On its Float32 client output,
+canonical conversion changes no source samples, while asymmetric division
+changes 65,534. The fixture's unchanged negative channel identifies each
+synthetic source frame; complete ordered coverage and the Float32 values are
+checked separately from the untrimmed whole-stream comparison. This Pulse check
+does not observe daemon consumption or establish source/output timing. Merely
+setting the sink rate is insufficient: a private setup with the server's
+44,100-Hz default produced actual 44,100-Hz Chromium client writes despite a
+22,050-Hz AudioContext (`browser-s16-1645-pulse-probe`).
+
+The public run rejects 48 damaged data, clock, order and encoding cases and
+removes completed raw PCM/journals after its report and hash ledger are written.
+It records the actual Pulse client-library hash, server configuration, browser
+version and production/experimental WASM hashes. These mutually incompatible
+output encodings are evidence against applying an unconditional S16 correction
+to production. Shared original/port output format and timing remain open; this
+synthetic device diagnosis is not original movie or whole-game acceptance.
+The verifier downloads the exact guarded primary sources into its temporary
+directory, or accepts existing `--chromium-sources`/`--pulse-sources` bundles.
+It requires the recorded Chromium 154.0.8037.92 build and rejects other versions.
+
+```sh
+make clean-logs
+make verify-browser-s16-output BROWSER_S16_OUTPUT_ARGS='--pulse --output /tmp/wasm-dd2/browser-s16-output'
+make clean-logs
+```
+
 Patch 889 prepares the complete browser movie AudioBuffer before opening
 its real-time AudioContext. Previously a running context could render empty
 quanta during the whole-source PCM copy. The standalone
