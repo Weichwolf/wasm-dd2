@@ -207,6 +207,19 @@ verify-reference-race-stream: native wasm ## compare every captured original rac
 verify-keyboard: ## compare actual Wine USER32 modifier/Alt/F10 messages with native SDL and WASM
 	python3 $(ROOT)/tools/verify_keyboard.py $(KEYBOARD_ARGS)
 
+.PHONY: capture-window-focus capture-native-window-focus capture-browser-window-focus verify-window-focus
+capture-window-focus: ## bounded unchanged-original activation/held-key/message-wait observations; WINDOW_FOCUS_ARGS required
+	python3 $(ROOT)/tools/capture_window_focus.py $(WINDOW_FOCUS_ARGS)
+
+capture-native-window-focus: ## actual native SDL focus transitions and read-only engine states; WINDOW_FOCUS_NATIVE_ARGS required
+	python3 $(ROOT)/tools/capture_native_window_focus.py $(WINDOW_FOCUS_NATIVE_ARGS)
+
+capture-browser-window-focus: ## headed trusted browser focus with Playwright focus emulation disabled; WINDOW_FOCUS_BROWSER_ARGS required
+	TMPDIR=/tmp/wasm-dd2 xvfb-run -a $(NODE) $(ROOT)/tools/browser/capture_window_focus.js $(WINDOW_FOCUS_BROWSER_ARGS)
+
+verify-window-focus: ## fail on actual port focus-state differences from the Original; WINDOW_FOCUS_VERIFY_ARGS required
+	python3 $(ROOT)/tools/verify_window_focus.py $(WINDOW_FOCUS_VERIFY_ARGS)
+
 verify-browser-keyboard: web ## trusted browser named-key release/press through normal intro to menus
 	$(NODE) $(ROOT)/tools/browser/qa_keyboard.js $(ROOT)/web/dd2 $(BROWSER_KEYBOARD_OUTPUT)
 

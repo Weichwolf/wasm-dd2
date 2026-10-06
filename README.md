@@ -81,6 +81,42 @@ passes virtual detach and its exact renderer/X11/audio checks
 (`pad-disconnect-1569-work/report.json`). These are input transport checks;
 physical HID hardware and complete original game A/V parity remain unproven.
 
+Window focus remains an observed input/platform difference. A separate unchanged
+original capture uses real X11 Left input, a hidden second USER32 window and four
+read-only hardware breakpoints. After the ordinary foreground change, the
+original `WM_ACTIVATEAPP` return has activation zero and stored timer zero,
+retains the held Left flag, and enters `WaitMessage`. Releasing Left outside the
+game retains that engine flag. The original callback counter continues increasing
+while the stored timer is zero; cancelling the second startup timer does not
+cancel the first. Message wakes can still advance the menu, so this is not a
+proof that deactivation freezes all game state
+(`focus-1582-public-original/report.json`). Successful raw output and the private
+Wine prefix are removed after the processed report and SHA ledger are written.
+
+Actual native SDL input clears the held flag on focus loss and leaves activation
+and the stored timer unchanged. Actual headed Chromium has trusted blur/focus
+events but likewise leaves engine activation/timer unchanged; it retains the
+flag. Playwright's forced focus mode must be disabled on its own protocol session
+before page creation to observe this browser transition. Public captures reproduce
+both differences (`focus-1584-public-native/report.json` and
+`focus-1587-public-browser/report.json`). The comparison deliberately fails for
+both ports and rejects eight damaged Original observation cases. It checks the
+declared activation/timer/Left semantics, not framebuffer, PCM, physical timing,
+all keys or complete focus recovery (`focus-1588-comparison/report.json`).
+An earlier diagnostic reactivation entered repeated primary-surface restoration
+under Wine; its cause and successful original resumption remain unproven. These
+are diagnosed differences, not a completed focus fix or original game parity.
+
+```sh
+make clean-logs
+make capture-window-focus WINDOW_FOCUS_ARGS='--output /tmp/wasm-dd2/focus-original'
+make capture-native-window-focus WINDOW_FOCUS_NATIVE_ARGS='--binary /tmp/wasm-dd2/native-build/dd2-native --output /tmp/wasm-dd2/focus-native'
+make capture-browser-window-focus WINDOW_FOCUS_BROWSER_ARGS='/tmp/wasm-dd2/browser-build/web /tmp/wasm-dd2/focus-browser'
+make verify-window-focus WINDOW_FOCUS_VERIFY_ARGS='--original /tmp/wasm-dd2/focus-original/report.json --native /tmp/wasm-dd2/focus-native/report.json --browser /tmp/wasm-dd2/focus-browser/report.json --negative-controls --report /tmp/wasm-dd2/focus-comparison.json'
+# Comparison currently exits nonzero for the documented port differences.
+make clean-logs
+```
+
 The WASM builds disable LLVM FastISel. With Debian Emscripten 3.1.69 / LLVM 19, its
 folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
 `AI_Com_Server` on level 10. SelectionDAG emits the required 32-bit addition.
