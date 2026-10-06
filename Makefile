@@ -26,6 +26,7 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
 .PHONY: rewrite-archive-verify
+.PHONY: rewrite-level-verify
 rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
 	cmake --preset rewrite-native
 	cmake --build --preset rewrite-native
@@ -51,6 +52,13 @@ rewrite-archive-verify: ## verify all original archive entries on native, WASM a
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm
 	python3 $(ROOT)/tools/rewrite/verify_archive.py
+	$(MAKE) clean-logs
+
+rewrite-level-verify: ## compare all original level fields and textures on native, WASM and ASan/UBSan
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_levels.py
 	$(MAKE) clean-logs
 
 pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> assemble -> patch -> native+WASM -> 10-level crash test (both targets)

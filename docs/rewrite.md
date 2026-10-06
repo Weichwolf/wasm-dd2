@@ -32,8 +32,11 @@ original comparison tools as reference material during migration.
 The renderer adapter has an actual triangle/pixel/lifetime bootstrap. The first
 asset module validates the original `Dirinfo` archive and exposes borrowed file
 views; all 114 original entries have been checked on native, Node/WASM and
-ASan/UBSan against an independent reader. See `src/assets/README.md` for format
-and ownership details. Typed geometry/textures and gameplay remain to be
+ASan/UBSan against an independent reader. Typed level sections, signed road
+vertices, UV definitions and all original texture pages are also decoded and
+checked for all 13 level containers. A real SoftGL texture-upload/cutout pixel
+test runs on both targets. See `src/assets/README.md` for format and ownership
+details. Polygon meshes, their scene rendering and gameplay remain to be
 implemented. This is not yet a playable game.
 
 ## SoftGL
@@ -99,10 +102,13 @@ retain their own quality rules. Fast-math permits arithmetic changes; new physic
 must be verified for stable behavior on native and WASM, including edge cases.
 
 CI on `rewrite` checks formatting, strict native build/analysis and both renderer
-bootstraps, plus asset archive bounds/lookup checks without proprietary data.
+bootstraps, plus archive/level/texture bounds and texture rendering checks without proprietary data.
 With the original data provisioned, `make rewrite-archive-verify` also compares
-all archive entries on both targets and an ASan/UBSan build. These checks cover
-the archive interface and renderer plumbing; gameplay coverage is still pending.
+all archive entries on both targets and an ASan/UBSan build.
+`make rewrite-level-verify` independently compares every level section extent,
+decoded vertex/UV field, the full 2 MiB index atlas and all 32 RGBA pages for each
+of the 13 original level containers. These checks cover data decoding and renderer
+plumbing; scene rendering and gameplay coverage are still pending.
 
 ## Migration and acceptance
 

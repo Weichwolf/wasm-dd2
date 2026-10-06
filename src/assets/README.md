@@ -50,3 +50,61 @@ Node/WASM and ASan/UBSan must agree, reject eight corrupted original archives
 without crashes or sanitizer diagnostics, and accept an archive with unnecessary
 tail padding removed. Only the Node test binary enables host filesystem access.
 The bounded report stays under `/tmp/wasm-dd2/`; completed raw output is removed.
+
+## Level data and textures
+
+`level.h` decodes a borrowed `LEVEL.DAT` view into 29 read-only sections, with
+explicit vertex and texture-definition accessors. The first 116 bytes are 29
+little-endian 32-bit offsets relative to the file start, as established by
+`FUN_00445ca8`. Consecutive offsets define section lengths; the last section
+ends at the declared file length. Equal offsets are valid empty sections. The
+decoder checks every extent before publishing a view, without modifying or
+relocating any bytes. Failed decoding/access clears the output value.
+
+The known sections are scene blocks (0), road records (1), signed 32-bit XYZ road
+vertices (2), sprites (3), texture definitions (4), and low/medium/high car shapes
+(15/16/17). Road vertices occupy 12 bytes each; negative values are decoded
+without relying on implementation-defined unsigned-to-signed casts. Section 4
+contains a 32-bit count and 12-byte definitions: a 16-bit texture page/flags word,
+a reserved 16-bit word and four byte-sized UV pairs. The reserved word is zero
+in every shipped definition; the polygon selects its palette bank. Other
+sections remain borrowed views until their individual formats are implemented.
+
+`textures.h` assembles the original `TX0` through `TXn` files into an owned
+256-by-8192 index atlas (32 pages). PAL, CLT and optional ECL lookup bytes remain
+borrowed and must outlive the texture set. The atlas view expires at destruction;
+RGBA pages are written into caller-owned buffers. Invalid page/bank/shade/output
+arguments leave that buffer unchanged.
+
+`sub_415000`, `Load_Textures` and `LoadImage` establish the texture layout. TX0
+starts with a 32-bit image count and 16-byte descriptors. Each descriptor has
+16-bit format, byte width, height, X and Y fields followed by six bytes unused
+by the loader. Images follow in descriptor order across all TX files. Each
+has a `TEXT` marker followed by width times height expanded 8-bit texels; format
+4 and 8 both use these expanded bytes. A file boundary separates whole images.
+Images may cross page boundaries and overlap earlier images; original loading
+order determines the final texels. Bounds, markers, counts and every part's
+complete extent are checked before returning a texture set.
+
+CLT contains palette banks of 16 shade rows by 256 index mappings; ECL appends
+additional banks. `draw_text_half`/`FUN_0041033a` establish the lookup
+`bank * 4096 + shade * 256 + texel`; its byte selects an RGB color in the
+1024-byte PAL table. The source palette's fourth byte is unused. The neutral
+shade is 8. Cutout follows the original low-nibble rule, independent of the
+mapped palette index. Other blending/lighting policies belong to the renderer.
+
+```sh
+make rewrite-level-verify
+```
+
+This runs the strict native checks and four CTests on native and Node/WASM,
+then ASan/UBSan checks and an independent complete comparison for all 13 shipped
+level containers. Every section offset/length, signed vertex and UV field, all
+atlas bytes, all 32 cutout RGBA pages at neutral shade, and dark/bright samples
+from the last palette bank are compared byte for byte. Six corrupted original
+inputs must be rejected on all three targets without crashes/sanitizer errors.
+Successful asset exports are deleted immediately after comparison; reports stay
+under `/tmp/wasm-dd2/`. These are asset-format checks, not full-game parity claims.
+CI uses synthetic data to cover null/bounds/format cases, cross-page loading,
+multiple TX parts, base/ECL palette banks, shade/cutout selection and an actual
+SoftGL upload/alpha-test render covering every framebuffer pixel.
