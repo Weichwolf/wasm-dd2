@@ -102,6 +102,18 @@ async function drivingChecks(page) {
   const bad=await page.evaluate(()=>({drive:Module._dd2_application_set_driving(2),pause:Module._dd2_application_set_paused(-1),view:Module._dd2_application_current_view(),paused:Module._dd2_application_is_paused()}));
   if(bad.drive!==0||bad.pause!==0||bad.view!==2||bad.paused!==1)throw new Error('Invalid driving control changes state');
   await page.locator('#canvas').screenshot({path:path.join(output,'browser-driving.png')});
+  if(await page.evaluate(()=>Module._dd2_application_vehicle_count())!==20)throw new Error('Starter field is incomplete');
+  if(await page.evaluate(()=>Module._dd2_application_pair_collision_count())!==0)throw new Error('Reset retains old pair contacts');
+  await page.locator('#pause').click();
+  await page.keyboard.down('s');
+  try {
+    await page.waitForFunction(()=>Module._dd2_application_pair_collision_count()>0,null,{timeout:15000});
+  } finally {await page.keyboard.up('s');}
+  await page.keyboard.press('p');await stable(page);
+  report.car_pair_collision={real_reverse_key:true,vehicles:20,contacts:await page.evaluate(()=>Module._dd2_application_pair_collision_count())};
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-car-pair.png')});
+  await page.locator('#reset').click();await match(page,'1','driving');
+  if(await page.evaluate(()=>Module._dd2_application_pair_collision_count())!==0)throw new Error('Pair contacts survive reset');
   await page.selectOption('#level','8');
   await page.locator('#reset').click();
   await page.locator('#pause').click();

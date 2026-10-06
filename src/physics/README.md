@@ -106,7 +106,7 @@ Completed raw samples and instrumented binaries are removed after the report.
 
 Real driving input, vehicle/wheel rendering and chase camera are integrated in
 free driving. Track barrier response is now a separate post-integration step.
-Distinct vehicle classes, car-pair collisions, damage, detached
+Distinct vehicle classes, damage, detached
 wheels, off-road recovery, AI and race rules remain pending. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named
 synthetic behavior, not original driving parity or complete race correctness.
@@ -172,7 +172,8 @@ step. Rebound/friction can change both linear and angular travel before the next
 sweep. At most 64 combined responses keep the last checked pose on exhaustion;
 the barrier-only entry point retains its 16-response budget. Failure preserves
 the proposed state. Ground contact is now integrated in free driving and reset
-settling. Car-pair collision, damage and automatic off-road recovery remain pending.
+settling. Car-pair collision is integrated below; damage and automatic off-road
+recovery remain pending.
 
 `make rewrite-ground-verify` independently reads the source box and original
 road planes. Short/fast vertical sweeps at both triangle centroids of every cell
@@ -194,3 +195,40 @@ responses' difference while requiring the same support outcome; other drops
 require equal response counts. The observed maximum difference is about 0.1245
 units/s on the Arena A spinning drop. These are sub-coordinate movement
 tolerances, not a claim of bitidentical dynamics or exact replay determinism.
+
+## Vehicle pairs and starter field
+
+`car_contact.c` sweeps the source 372 x 260 x 900 oriented contact boxes against
+each other. A relative-motion sphere test prunes distant pairs. Fifteen separating
+axes provide continuous translation intervals within each angular piece. Rotation
+uses midpoint orientations with conservative chord padding, targeting 0.01 radians
+per piece and at most 64 pieces. This gives a small contact skin for normal fixed
+steps, not exact continuously rotating mesh collision. Face contacts clip the
+incident face against reference side planes and use its area centroid, so adding
+duplicate or collinear clipping vertices cannot move the impulse point. Relative
+quaternion difference/sum gives stable angles even for tiny rotations. Edge contacts use closest supported
+edge points. Bridge-separated boxes do not collide merely because their XZ
+footprints intersect. Geometry queries allocate nothing.
+
+`dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
+one earliest-event clock for ground, barriers and pairs. It anchors time ties to
+the global earliest event, then uses body/pair order. Equal-mass pair response
+uses restitution 0.2, friction 0.25, world inertia and opposite impulses at a
+shared contact point. Each response rechecks every body's remaining motion;
+initial overlaps receive symmetric separation. The 64-response budget keeps
+the last checked poses on exhaustion. Validation or final-state failure preserves
+every proposed body and clears known-size event outputs. Typed stack copies keep
+the solve transactional without per-step allocations; WASM consumers reserve
+256 KiB stack space. `collision_math.h` shares the existing vector, rotation and
+impulse calculations with single-body ground/barrier entry points.
+
+Synthetic Native/WASM/ASan tests check analytic fast frontal contact times and
+rebound speed, glancing angular response, energy loss, rotating impact, three-car
+momentum transfer, separate bridge heights and invalid-state rollback.
+`make rewrite-fleet-verify` checks the full original starter field on all eleven
+levels for 132,000 vehicle steps per target. Component bounds are 0.1 world units
+for position, 0.2 units/s for velocity, 1e-4 for quaternion/wheel roll and 1e-3
+radians/s for angular velocity, plus 1e-8 relative tolerance. Other cars currently
+hold their brakes; driving AI, distinct masses/classes, damage and collision
+sound remain pending. Counts record individual solver responses, not unique
+accidents. These checks establish rewrite behavior, not original collision parity.

@@ -100,14 +100,14 @@ def main():
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     assets_units = [ROOT / f'src/assets/{name}.c' for name in
                     ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
-    physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'vehicle_collision')]
+    physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'vehicle_collision')]
     render_units = [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'driving_draw')]
-    game = ROOT / 'src/game/driving.c'
+    game_units = [ROOT / f'src/game/{name}.c' for name in ('driving', 'starting_grid')]
     preview, test = output / 'preview-sanitized', output / 'timing-sanitized'
-    run([tool('clang'), *flags, *map(str, assets_units + physics_units + render_units), str(game),
+    run([tool('clang'), *flags, *map(str, assets_units + physics_units + render_units + game_units),
          str(ROOT / 'tests/rewrite/driving_preview.c'), str(WORK / 'rewrite-native/softgl/libsoftgl.a'),
          '-lm', '-o', str(preview)], 'preview-build')
-    run([tool('clang'), *flags, *map(str, assets_units + physics_units), str(game),
+    run([tool('clang'), *flags, *map(str, assets_units + physics_units + game_units),
          str(ROOT / 'tests/rewrite/driving_test.c'), '-lm', '-o', str(test)], 'timing-build')
     run([str(test)], 'timing-sanitized')
     commands = {'native': [str(WORK / 'rewrite-native/dd2_driving_preview')],

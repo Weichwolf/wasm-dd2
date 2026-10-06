@@ -57,13 +57,15 @@ Source track barriers and analytic arena boundaries now participate in free
 driving, with continuous collision sweeps, restitution, friction and angular
 response. Body/ground support now uses the original eight-corner contact box,
 with one-sided swept road contacts and a shared ground/barrier solver.
-Car-pair collisions, damage, billboard orientation,
+Car-pair collisions now share the ground/barrier event clock for a 20-car starter
+field, with swept oriented boxes and equal/opposite impulses. Damage, billboard orientation,
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
 free driving on all eleven levels, using original
-first-grid positions with road-aligned initial orientation, fixed-step frame
-accumulation, pause/reset and focus-loss suspension. Opponents and race rules remain pending.
+all twenty source-grid positions with road-aligned initial orientation, fixed-step frame
+accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
+respond to impacts while holding their brakes. Opponent driving AI and race rules remain pending.
 This is not yet a complete racing game.
 
 ## SoftGL
@@ -88,6 +90,8 @@ covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
 software surfaces, with shared keyboard input and monotonic timing. Gamepad,
 persistence and audio remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
+Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
+solver and nested geometry queries; the SDK's default 64 KiB is insufficient.
 
 ## Build and mandatory quality gates
 
@@ -188,8 +192,8 @@ calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
 bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
 this establishes the simulation core, not original driving parity or a complete
 race. Vehicle rendering/input/chase-camera integration is checked separately;
-Barrier and body/ground response are checked separately; car-pair collisions
-and damage remain pending. See `src/physics/README.md`.
+Barrier, body/ground and car-pair response are checked separately; damage remains
+pending. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,
@@ -221,7 +225,7 @@ The game owner invokes barrier response after every fixed vehicle step; the
 browser additionally uses a real reverse key to hit an arena boundary and checks
 that reset clears accumulated collision events. Rounded body proxies, road wall
 height, restitution and friction are rewrite tuning. Body/ground contact is
-checked separately; car-pair collisions, damage and a complete race remain pending.
+checked separately; damage and a complete race remain pending.
 
 `make rewrite-ground-verify` independently checks the eight original body-contact
 corners and short/fast sweeps at both triangle centroids of all 19,775 road cells
@@ -231,6 +235,17 @@ and browser checks run as well. Ground and barriers now share earliest-contact
 response, including during reset settling. Body corners and bounded angular
 chords form a collision proxy; this is not exact mesh collision or original
 handling parity. See `src/physics/README.md` for solver bounds and tuning.
+
+`make rewrite-fleet-verify` independently reconstructs all 220 starter slots from
+the original road graphs, lane quads, headings and special SCA grid. Arena layouts
+use continuous trigonometry rather than original integer sine/height rounding.
+Three-second drives exercise all twenty bodies on every playable level, comparing
+132,000 vehicle steps per target on Native, Node/WASM and ASan/UBSan, with complete
+reset restoration. Synthetic checks cover fast frontal and glancing collisions,
+rotating contacts, three-car impulse transfer, bridge separation, energy loss and
+transactional rejection. Browser checks use a real reverse key to hit another
+car and verify counter reset. This establishes starter-field collision behavior;
+distinct vehicle classes, liveries, damage, driving AI and race rules remain pending.
 
 ## Migration and acceptance
 

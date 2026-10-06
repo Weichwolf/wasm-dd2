@@ -96,11 +96,15 @@ int main(int argc, char **argv) {
                vehicle->velocity.y, vehicle->velocity.z, vehicle->rotation.x, vehicle->rotation.y,
                vehicle->rotation.z, vehicle->rotation.w, (unsigned long long)vehicle->steps,
                contacts, (unsigned long long)dd2_driving_collisions(driving));
-        passed = dd2_driving_draw(materials, track,
-                                  (dd2_driving_view){.vehicle = vehicle,
-                                                     .wheel_roll = dd2_driving_wheel_roll(driving),
-                                                     .viewport = {.width = DD2_PREVIEW_WIDTH,
-                                                                  .height = DD2_PREVIEW_HEIGHT}}) &&
+        passed = dd2_driving_draw(
+                     materials, track,
+                     (dd2_driving_view){
+                         .vehicle = vehicle,
+                         .wheel_roll = dd2_driving_wheel_roll(driving),
+                         .opponents = dd2_driving_vehicles(driving) + 1,
+                         .opponent_rolls = dd2_driving_wheel_rolls(driving) + 1,
+                         .opponent_count = dd2_driving_vehicle_count(driving) - 1,
+                         .viewport = {.width = DD2_PREVIEW_WIDTH, .height = DD2_PREVIEW_HEIGHT}}) &&
                  dd2_preview_image(renderer, argv[2]);
     }
     dd2_mesh_materials_destroy(materials);

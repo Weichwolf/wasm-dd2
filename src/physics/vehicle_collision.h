@@ -9,12 +9,13 @@
 
 typedef struct {
     unsigned contacts;
+    unsigned pair_contacts;
     double normal_speed;
     double impulse; /* impulse / mass */
     dd2_vehicle_vector point;
 } dd2_vehicle_impact;
 
-enum { DD2_VEHICLE_BODY_CORNERS = 8 };
+enum { DD2_VEHICLE_BODY_CORNERS = 8, DD2_VEHICLE_FLEET_LIMIT = 20 };
 /* Source contact box in local body coordinates. Out-of-range indices return
  * zero. The collision proxy is separate from visual mesh bounds. */
 dd2_vehicle_vector dd2_vehicle_body_corner(unsigned corner);
@@ -37,5 +38,16 @@ bool dd2_vehicle_collide_barriers(dd2_vehicle *vehicle, const dd2_vehicle *previ
 bool dd2_vehicle_collide_world(dd2_vehicle *vehicle, const dd2_vehicle *previous,
                                const dd2_road_surface *surface, const dd2_barrier_world *world,
                                dd2_vehicle_impact *impact);
+
+/* All bodies share one earliest-event clock for this already integrated step.
+ * Pair impulses use equal mass and opposite linear/angular impulses. Ground,
+ * barriers and pair contacts are rechecked after every event. Arrays must hold
+ * count bodies (1..20); proposed/previous may alias for overlap repair. Impact
+ * output, when supplied, holds count entries. Validation/solver failure preserves
+ * every proposed body and clears outputs; an invalid count leaves the impact
+ * array untouched because its extent is unknown. Queries allocate nothing. */
+bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previous, unsigned count,
+                               const dd2_road_surface *surface, const dd2_barrier_world *world,
+                               dd2_vehicle_impact *impacts, unsigned *pair_contacts);
 
 #endif

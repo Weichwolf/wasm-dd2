@@ -13,6 +13,9 @@
 typedef struct {
     const dd2_vehicle *vehicle;
     double wheel_roll;
+    const dd2_vehicle *opponents;
+    const double *opponent_rolls;
+    unsigned opponent_count;
     dd2_render_options viewport;
 } dd2_driving_view;
 bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track, dd2_driving_view view);

@@ -1,6 +1,8 @@
 #include "physics/vehicle_collision.h"
 
 #include "physics/barrier_world.h"
+#include "physics/car_contact.h"
+#include "physics/collision_math.h"
 #include "physics/road_surface.h"
 #include "physics/vehicle.h"
 
@@ -38,52 +40,6 @@ static const dd2_vehicle_vector dd2_collision_corners[DD2_VEHICLE_BODY_CORNERS] 
 dd2_vehicle_vector dd2_vehicle_body_corner(unsigned corner) {
     return corner < DD2_VEHICLE_BODY_CORNERS ? dd2_collision_corners[corner]
                                              : (dd2_vehicle_vector){0};
-}
-
-static dd2_vehicle_vector dd2_collision_add(dd2_vehicle_vector first, dd2_vehicle_vector second) {
-    return (dd2_vehicle_vector){
-        .x = first.x + second.x, .y = first.y + second.y, .z = first.z + second.z};
-}
-static dd2_vehicle_vector dd2_collision_scale(dd2_vehicle_vector vector, double factor) {
-    return (dd2_vehicle_vector){
-        .x = vector.x * factor, .y = vector.y * factor, .z = vector.z * factor};
-}
-static double dd2_collision_dot(dd2_vehicle_vector first, dd2_vehicle_vector second) {
-    return (first.x * second.x) + (first.y * second.y) + (first.z * second.z);
-}
-static dd2_vehicle_vector dd2_collision_cross(dd2_vehicle_vector first, dd2_vehicle_vector second) {
-    return (dd2_vehicle_vector){.x = (first.y * second.z) - (first.z * second.y),
-                                .y = (first.z * second.x) - (first.x * second.z),
-                                .z = (first.x * second.y) - (first.y * second.x)};
-}
-static double dd2_collision_rotation_dot(dd2_vehicle_rotation first, dd2_vehicle_rotation second) {
-    return (first.x * second.x) + (first.y * second.y) + (first.z * second.z) +
-           (first.w * second.w);
-}
-static dd2_vehicle_rotation dd2_collision_normalize(dd2_vehicle_rotation rotation) {
-    const double scale = 1 / sqrt(dd2_collision_rotation_dot(rotation, rotation));
-    return (dd2_vehicle_rotation){.x = rotation.x * scale,
-                                  .y = rotation.y * scale,
-                                  .z = rotation.z * scale,
-                                  .w = rotation.w * scale};
-}
-static dd2_vehicle_rotation dd2_collision_rotation(dd2_vehicle_rotation first,
-                                                   dd2_vehicle_rotation second, double time) {
-    const double sign = dd2_collision_rotation_dot(first, second) < 0 ? -1 : 1;
-    return dd2_collision_normalize(
-        (dd2_vehicle_rotation){.x = first.x + (((sign * second.x) - first.x) * time),
-                               .y = first.y + (((sign * second.y) - first.y) * time),
-                               .z = first.z + (((sign * second.z) - first.z) * time),
-                               .w = first.w + (((sign * second.w) - first.w) * time)});
-}
-static dd2_vehicle_rotation dd2_collision_turn(const dd2_vehicle *vehicle, double seconds) {
-    const dd2_vehicle_vector half = dd2_collision_scale(vehicle->angular_velocity, seconds / 2);
-    const dd2_vehicle_rotation rotation = vehicle->rotation;
-    return dd2_collision_normalize((dd2_vehicle_rotation){
-        .x = rotation.x + (half.x * rotation.w) + (half.y * rotation.z) - (half.z * rotation.y),
-        .y = rotation.y + (half.y * rotation.w) + (half.z * rotation.x) - (half.x * rotation.z),
-        .z = rotation.z + (half.z * rotation.w) + (half.x * rotation.y) - (half.y * rotation.x),
-        .w = rotation.w - (half.x * rotation.x) - (half.y * rotation.y) - (half.z * rotation.z)});
 }
 
 static bool dd2_collision_sweep(const dd2_vehicle *start, const dd2_vehicle *end,
@@ -179,27 +135,6 @@ static bool dd2_collision_ground_sweep(const dd2_vehicle *start, const dd2_vehic
         }
     }
     return found;
-}
-
-static double dd2_collision_effective_mass(const dd2_vehicle *vehicle, dd2_vehicle_vector arm,
-                                           dd2_vehicle_vector axis) {
-    const dd2_vehicle_vector response =
-        dd2_vehicle_angular_response(vehicle->rotation, dd2_collision_cross(arm, axis));
-    return 1 + dd2_collision_dot(axis, dd2_collision_cross(response, arm));
-}
-
-static void dd2_collision_impulse(dd2_vehicle *vehicle, dd2_vehicle_vector arm,
-                                  dd2_vehicle_vector impulse) {
-    vehicle->velocity = dd2_collision_add(vehicle->velocity, impulse);
-    vehicle->angular_velocity = dd2_collision_add(
-        vehicle->angular_velocity,
-        dd2_vehicle_angular_response(vehicle->rotation, dd2_collision_cross(arm, impulse)));
-}
-
-static dd2_vehicle_vector dd2_collision_point_velocity(const dd2_vehicle *vehicle,
-                                                       dd2_vehicle_vector arm) {
-    return dd2_collision_add(vehicle->velocity,
-                             dd2_collision_cross(vehicle->angular_velocity, arm));
 }
 
 static void dd2_collision_response(dd2_vehicle *vehicle, dd2_barrier_contact contact, bool ground,
@@ -312,4 +247,237 @@ bool dd2_vehicle_collide_world(dd2_vehicle *vehicle, const dd2_vehicle *previous
         return false;
     }
     return dd2_collision_resolve(vehicle, previous, surface, world, impact);
+}
+
+typedef struct {
+    dd2_barrier_contact contact;
+    unsigned first;
+    unsigned second;
+    bool ground;
+    bool pair;
+} dd2_fleet_event;
+enum {
+    DD2_FLEET_EVENT_LIMIT =
+        DD2_VEHICLE_FLEET_LIMIT + (DD2_VEHICLE_FLEET_LIMIT * (DD2_VEHICLE_FLEET_LIMIT - 1) / 2)
+};
+
+static bool dd2_fleet_contact(const dd2_vehicle *start, const dd2_vehicle *end, unsigned count,
+                              const dd2_road_surface *surface, const dd2_barrier_world *world,
+                              dd2_fleet_event *event) {
+    dd2_fleet_event events[DD2_FLEET_EVENT_LIMIT] = {0};
+    unsigned found = 0;
+    double earliest = 1;
+    for (unsigned body = 0; body < count; ++body) {
+        dd2_barrier_contact contact = {0};
+        bool touching =
+            world != NULL && dd2_collision_sweep(&start[body], &end[body], world, &contact);
+        dd2_barrier_contact floor = {0};
+        const bool ground = surface != NULL &&
+                            dd2_collision_ground_sweep(&start[body], &end[body], surface, &floor) &&
+                            (!touching || floor.time <= contact.time);
+        if (ground) {
+            contact = floor;
+            touching = true;
+        }
+        if (touching) {
+            events[found++] =
+                (dd2_fleet_event){.contact = contact, .first = body, .ground = ground};
+            earliest = fmin(earliest, contact.time);
+        }
+    }
+    for (unsigned first = 0; first < count; ++first) {
+        for (unsigned second = first + 1; second < count; ++second) {
+            dd2_car_contact contact = {0};
+            if (dd2_car_contact_sweep(&start[first], &end[first], &start[second], &end[second],
+                                      &contact)) {
+                events[found++] = (dd2_fleet_event){.first = first,
+                                                    .second = second,
+                                                    .pair = true,
+                                                    .contact = {.time = contact.time,
+                                                                .penetration = contact.penetration,
+                                                                .normal = contact.normal,
+                                                                .point = contact.point}};
+                earliest = fmin(earliest, contact.time);
+            }
+        }
+    }
+    /* Stable world/body order before pair lexicographic order, anchored globally
+     * to earliest time. A tolerance chain must not depend on visitation order. */
+    for (unsigned index = 0; index < found; ++index) {
+        if (events[index].contact.time <= earliest + dd2_collision_time_tolerance) {
+            *event = events[index];
+            return true;
+        }
+    }
+    return false;
+}
+
+static void dd2_fleet_pair_impulse(dd2_vehicle *first, dd2_vehicle *second,
+                                   dd2_vehicle_vector first_arm, dd2_vehicle_vector second_arm,
+                                   dd2_vehicle_vector impulse) {
+    dd2_collision_impulse(first, first_arm, impulse);
+    dd2_collision_impulse(second, second_arm, dd2_collision_scale(impulse, -1));
+}
+static dd2_vehicle_vector dd2_fleet_relative(const dd2_vehicle *first, const dd2_vehicle *second,
+                                             dd2_vehicle_vector first_arm,
+                                             dd2_vehicle_vector second_arm) {
+    return dd2_collision_add(
+        dd2_collision_point_velocity(first, first_arm),
+        dd2_collision_scale(dd2_collision_point_velocity(second, second_arm), -1));
+}
+
+static void dd2_fleet_pair_response(dd2_vehicle *first, dd2_vehicle *second,
+                                    dd2_barrier_contact contact, dd2_vehicle_impact *first_impact,
+                                    dd2_vehicle_impact *second_impact) {
+    const dd2_vehicle_vector first_arm =
+        dd2_collision_add(contact.point, dd2_collision_scale(first->position, -1));
+    const dd2_vehicle_vector second_arm =
+        dd2_collision_add(contact.point, dd2_collision_scale(second->position, -1));
+    const double speed =
+        dd2_collision_dot(dd2_fleet_relative(first, second, first_arm, second_arm), contact.normal);
+    if (speed >= 0) {
+        return;
+    }
+    const double mass = dd2_collision_effective_mass(first, first_arm, contact.normal) +
+                        dd2_collision_effective_mass(second, second_arm, contact.normal);
+    const double impulse = -(1 + dd2_collision_restitution) * speed / mass;
+    dd2_fleet_pair_impulse(first, second, first_arm, second_arm,
+                           dd2_collision_scale(contact.normal, impulse));
+    const dd2_vehicle_vector relative = dd2_fleet_relative(first, second, first_arm, second_arm);
+    dd2_vehicle_vector tangent = dd2_collision_add(
+        relative,
+        dd2_collision_scale(contact.normal, -dd2_collision_dot(relative, contact.normal)));
+    const double length = sqrt(dd2_collision_dot(tangent, tangent));
+    if (length > dd2_collision_motion_tolerance) {
+        tangent = dd2_collision_scale(tangent, 1 / length);
+        const double friction_mass = dd2_collision_effective_mass(first, first_arm, tangent) +
+                                     dd2_collision_effective_mass(second, second_arm, tangent);
+        const double friction = fmin(dd2_collision_friction * impulse, length / friction_mass);
+        dd2_fleet_pair_impulse(first, second, first_arm, second_arm,
+                               dd2_collision_scale(tangent, -friction));
+    }
+    dd2_vehicle_impact *outputs[] = {first_impact, second_impact};
+    for (unsigned index = 0; index < 2; ++index) {
+        if (-speed > outputs[index]->normal_speed) {
+            outputs[index]->normal_speed = -speed;
+            outputs[index]->impulse = impulse;
+            outputs[index]->point = contact.point;
+        }
+    }
+}
+
+static bool dd2_fleet_validate(dd2_vehicle *vehicles, const dd2_vehicle *previous, unsigned count,
+                               dd2_vehicle_impact *impacts, unsigned *pair_contacts) {
+    if (pair_contacts != NULL) {
+        *pair_contacts = 0;
+    }
+    if (count == 0 || count > DD2_VEHICLE_FLEET_LIMIT) {
+        return false;
+    }
+    if (impacts != NULL) {
+        for (unsigned body = 0; body < count; ++body) {
+            impacts[body] = (dd2_vehicle_impact){0};
+        }
+    }
+    if (vehicles == NULL || previous == NULL) {
+        return false;
+    }
+    for (unsigned body = 0; body < count; ++body) {
+        if (!dd2_vehicle_valid(&vehicles[body]) || !dd2_vehicle_valid(&previous[body])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void dd2_fleet_response(dd2_vehicle *next, dd2_fleet_event event,
+                               dd2_vehicle_impact *events) {
+    if (event.pair) {
+        dd2_fleet_pair_response(&next[event.first], &next[event.second], event.contact,
+                                &events[event.first], &events[event.second]);
+        ++events[event.second].contacts;
+        ++events[event.first].pair_contacts;
+        ++events[event.second].pair_contacts;
+        const dd2_vehicle_vector correction = dd2_collision_scale(
+            event.contact.normal, (event.contact.penetration / 2) + dd2_collision_clearance);
+        next[event.first].position = dd2_collision_add(next[event.first].position, correction);
+        next[event.second].position =
+            dd2_collision_add(next[event.second].position, dd2_collision_scale(correction, -1));
+    } else {
+        dd2_collision_response(&next[event.first], event.contact, event.ground,
+                               &events[event.first]);
+        next[event.first].position = dd2_collision_add(
+            next[event.first].position,
+            dd2_collision_scale(event.contact.normal,
+                                event.contact.penetration + dd2_collision_clearance));
+    }
+    ++events[event.first].contacts;
+}
+
+typedef struct {
+    double seconds;
+    bool stop;
+} dd2_fleet_remaining;
+static void dd2_fleet_remainder(dd2_vehicle *start, dd2_vehicle *next, unsigned count,
+                                dd2_fleet_remaining remaining) {
+    for (unsigned body = 0; body < count; ++body) {
+        start[body] = next[body];
+        if (!remaining.stop) {
+            next[body].position = dd2_collision_add(
+                start[body].position, dd2_collision_scale(next[body].velocity, remaining.seconds));
+            next[body].rotation = dd2_collision_turn(&next[body], remaining.seconds);
+        }
+    }
+}
+
+bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previous, unsigned count,
+                               const dd2_road_surface *surface, const dd2_barrier_world *world,
+                               dd2_vehicle_impact *impacts, unsigned *pair_contacts) {
+    if (!dd2_fleet_validate(vehicles, previous, count, impacts, pair_contacts)) {
+        return false;
+    }
+    dd2_vehicle start[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_vehicle next[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_vehicle_impact events[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned body = 0; body < count; ++body) {
+        start[body] = previous[body];
+        next[body] = vehicles[body];
+    }
+    double remaining = DD2_VEHICLE_STEP_SECONDS;
+    unsigned pairs = 0;
+    for (unsigned iteration = 0; iteration < DD2_COLLISION_ITERATIONS; ++iteration) {
+        dd2_fleet_event event = {0};
+        if (!dd2_fleet_contact(start, next, count, surface, world, &event)) {
+            break;
+        }
+        for (unsigned body = 0; body < count; ++body) {
+            next[body].position = dd2_collision_position(start[body].position, next[body].position,
+                                                         event.contact.time);
+            next[body].rotation = dd2_collision_rotation(start[body].rotation, next[body].rotation,
+                                                         event.contact.time);
+        }
+        dd2_fleet_response(next, event, events);
+        pairs += (unsigned)event.pair;
+        remaining *= 1 - event.contact.time;
+        /* Exhaustion retains every body's last checked pose, never unchecked residual motion. */
+        dd2_fleet_remainder(
+            start, next, count,
+            (dd2_fleet_remaining){.seconds = remaining,
+                                  .stop = iteration + 1 == DD2_COLLISION_ITERATIONS});
+    }
+    for (unsigned body = 0; body < count; ++body) {
+        if (!dd2_vehicle_valid(&next[body])) {
+            return false;
+        }
+    }
+    for (unsigned body = 0; body < count; ++body) {
+        vehicles[body] = next[body];
+        if (impacts != NULL) {
+            impacts[body] = events[body];
+        }
+    }
+    if (pair_contacts != NULL) {
+        *pair_contacts = pairs;
+    }
+    return true;
 }

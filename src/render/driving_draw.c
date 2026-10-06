@@ -3,6 +3,7 @@
 #include "assets/level.h"
 #include "assets/track.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 #include "render/mesh_draw.h"
 
 #include <GL/softgl.h>
@@ -137,10 +138,18 @@ static bool dd2_driving_car(dd2_mesh_materials *materials, const dd2_track *trac
 bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
                       dd2_driving_view view) {
     if (materials == NULL || track == NULL || view.vehicle == NULL || view.viewport.width <= 0 ||
-        view.viewport.height <= 0) {
+        view.viewport.height <= 0 || view.opponent_count >= DD2_VEHICLE_FLEET_LIMIT ||
+        (view.opponent_count != 0 && (view.opponents == NULL || view.opponent_rolls == NULL))) {
         return false;
     }
     dd2_driving_camera(view);
-    return dd2_scene_draw(materials, dd2_track_scene(track)) &&
-           dd2_driving_car(materials, track, view);
+    bool drawn = dd2_scene_draw(materials, dd2_track_scene(track)) &&
+                 dd2_driving_car(materials, track, view);
+    for (unsigned index = 0; index < view.opponent_count && drawn; ++index) {
+        drawn = dd2_driving_car(materials, track,
+                                (dd2_driving_view){.vehicle = &view.opponents[index],
+                                                   .wheel_roll = view.opponent_rolls[index],
+                                                   .viewport = view.viewport});
+    }
+    return drawn;
 }

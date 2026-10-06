@@ -208,7 +208,7 @@ def main():
            '-Werror','-Wshadow','-Wconversion','-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
            '-fsanitize=address,undefined','-fno-omit-frame-pointer']
     units=[ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
-    units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','vehicle_collision')]
+    units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision')]
     sanitized=output/'export-sanitized';test=output/'test-sanitized'
     for name,binary in (('barrier_export',sanitized),('barrier_test',test)):
         run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),'-lm','-o',str(binary)],name+'-build')

@@ -133,6 +133,19 @@ unsigned dd2_application_collision_count(void) {
     return count < UINT_MAX ? (unsigned)count : UINT_MAX;
 }
 
+unsigned dd2_application_pair_collision_count(void) {
+    if (dd2_current_application == NULL) {
+        return 0;
+    }
+    const uint64_t count = dd2_driving_pair_collisions(dd2_current_application->driving);
+    return count < UINT_MAX ? (unsigned)count : UINT_MAX;
+}
+unsigned dd2_application_vehicle_count(void) {
+    return dd2_current_application != NULL
+               ? dd2_driving_vehicle_count(dd2_current_application->driving)
+               : 0;
+}
+
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
     if (application != NULL) {
@@ -233,6 +246,9 @@ static bool dd2_application_draw(dd2_application *application) {
                    (dd2_driving_view){
                        .vehicle = dd2_driving_vehicle(application->driving),
                        .wheel_roll = dd2_driving_wheel_roll(application->driving),
+                       .opponents = dd2_driving_vehicles(application->driving) + 1,
+                       .opponent_rolls = dd2_driving_wheel_rolls(application->driving) + 1,
+                       .opponent_count = dd2_driving_vehicle_count(application->driving) - 1,
                        .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
                dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
     }

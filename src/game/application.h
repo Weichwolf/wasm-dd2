@@ -9,6 +9,8 @@ int dd2_application_show_car(int car);
 int dd2_application_current_level(void);
 int dd2_application_current_view(void);
 unsigned dd2_application_collision_count(void);
+unsigned dd2_application_pair_collision_count(void);
+unsigned dd2_application_vehicle_count(void);
 void dd2_application_reset_camera(void);
 void dd2_application_release_input(void);
 void dd2_application_resume_input(void);

@@ -139,8 +139,8 @@ def main():
              '-fsanitize=address,undefined','-fno-omit-frame-pointer']
     units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
-              ('road_contact','road_surface','vehicle','barrier_world','vehicle_collision')]
-    units += [ROOT/'src/game/driving.c', ROOT/'src/platform/file.c']
+              ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision')]
+    units += [ROOT/'src/game/driving.c', ROOT/'src/game/starting_grid.c', ROOT/'src/platform/file.c']
     sanitized, synthetic = output/'export-sanitized', output/'test-sanitized'
     for source, binary in (('ground_export', sanitized), ('ground_test', synthetic)):
         run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/rewrite/{source}.c'),
