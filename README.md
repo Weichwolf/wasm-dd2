@@ -2723,7 +2723,8 @@ capture directory before the original attempt starts.
 
 `--road-policy arc-road-predictive` selects the existing read-only time-trial
 keyboard driver for original multiplayer recording. It follows the linked
-road's arc, predicts steering over the observed adaptive
+road's arc using the strip lane-start bytes to preserve the initial lane,
+predicts steering over the observed adaptive
 physics batch and releases keys during original pit control. It uses its own
 recovery controls, so combining it with `--slow-recovery` or `--wall-recovery`
 is rejected before starting a capture. The selected driver source is frozen
@@ -2748,11 +2749,18 @@ and 30,608 independently checked RNG returns
 strip headers/vertices show that the fraction-based lane selection changes
 the starting global lane across road-width transitions. Original
 `Move_Forward_Strip` instead adjusts the local lane by the old/new strip
-lane-start bytes. A private correction matches that arithmetic on all 33
-selected original strips (`multiplayer-lane-1561-source/geometry-report.json`);
-this is static host geometry evidence, not a successful escape or regular
-finish. The correction still requires an actual complete original run and
-both port comparisons. The failed run's closed raw archive packs are removed
+lane-start bytes. The corrected public driver matches that arithmetic on all
+33 selected original strips, using the frozen failed-original policy as the
+negative baseline (`multiplayer-lane-1564-public-verification/geometry-report.json`).
+An actual original attempt with this byte-identical driver completes human A's
+ten laps alive and earns 210 points, with exact observed quit-boundary car
+metrics. Its first-human prefix contains 6,320 racing draws, 41,886 actual
+clock returns and 85,890 independently checked RNG returns
+(`multiplayer-lane-1564-public-verification/first-human-report.json`). A's
+cumulative points are still zero at the first result; the second turn has not
+yet accumulated the round. This proves the recorded first-human finish and
+host geometry correction; a complete original two-human run and both port
+comparisons remain required. The failed run's closed raw archive packs are removed
 after diagnosis, retaining selected causal chunks, pictures and API/key records.
 
 ```sh

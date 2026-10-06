@@ -99,6 +99,7 @@ class ArcRoadKeyboardDriver:
         self.indices={}
         self.strips={}
         self.lane_fraction=None
+        self.global_lane=None
         self.anchor=None
         self.moved_tick=0
         self.reverse_until=0
@@ -115,13 +116,16 @@ class ArcRoadKeyboardDriver:
         a=vertex+i32(0x463dcc+kind*8)
         b=vertex+i32(0x463dd0+kind*8)+lanes+1
         points=[]
-        lane=min(lanes-1,math.floor(self.lane_fraction*lanes))
+        lane_start=read(address+3,1)[0]
+        requested_lane=(self.global_lane-lane_start+128)%256-128
+        lane=max(0,min(lanes-1,requested_lane))
         for k in (a+lane,a+lane+1,b+lane,b+lane+1):
             raw=read(vertices+k*12,12)
             points.append([int.from_bytes(raw[j:j+4],'little',signed=True) for j in (0,8)])
         result=dict(center=[sum(p[j] for p in points)/4 for j in (0,1)],
                     next=i32(address+20),previous=i32(address+24),kind=kind,
-                    number=int.from_bytes(read(address+14,2),'little'))
+                    number=int.from_bytes(read(address+14,2),'little'),
+                    lane_start=lane_start,lane=lane,requested_lane=requested_lane)
         self.strips[offset]=result
         return result
 
@@ -138,6 +142,9 @@ class ArcRoadKeyboardDriver:
         # Keep the starting lane instead of crossing the whole starting grid
         # to the road midpoint. FUN_00428678 uses these same four lane vertices.
         self.lane_fraction=(lane+.5)/lanes
+        # Move_Forward_Strip preserves the lane plus the strip's lane-start
+        # byte; taking a fraction of each new width changes that identity.
+        self.global_lane=(lane+read(base+4+current+3,1)[0])%256
         # The main loop starts at offset zero. The checkpoint count is not
         # the number of all FD strips: Generate_Strip_Normals and
         # Init_Track_Strip_Numbers also traverse separate kind-8 branches.
@@ -195,6 +202,8 @@ class ArcRoadKeyboardDriver:
         strip=self.strip(read,offset)
         row.update(road_offset=offset,road_kind=strip['kind'],road_number=strip['number'],
                    road_lane_fraction=self.lane_fraction,
+                   road_global_lane=self.global_lane,road_lane=strip['lane'],
+                   road_lane_start=strip['lane_start'],road_requested_lane=strip['requested_lane'],
                    road_branch=index is None,
                    pit_in=int.from_bytes(read(0x46704c,4),'little'),
                    pit_stop=int.from_bytes(read(0x467054,4),'little'))
