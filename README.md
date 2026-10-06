@@ -3065,6 +3065,22 @@ and hashed. Native/browser replay and multiplayer input validation also accept
 its actual Space handbrake transitions. Full frame, API, input-owner, positive
 score and regular-finish requirements still apply.
 
+The arc driver now watches confirmed lap progress as well as physical movement.
+Reverse recovery lasts 120 physics ticks, followed by at least 480 ticks before
+another attempt. It retains backwards steering and a minimum escape turn
+instead of forcing neutral steering; handbrake remains released while reversing.
+This changes the external real-key recording policy, not game state or either
+port's engine.
+
+In an actual original first-human probe, the car stopped advancing at lap two,
+checkpoint 153. A bounded steered reverse changed its heading, and forward
+checkpoint progress resumed. The current policy reproduces all 5,488 retained
+observed intentions, including 38 reversing observations; the 2,911 intentions
+before the first recovery equal the previous policy. These are car-state and
+counterfactual controller checks (`multiplayer-steered-1681-current-intentions/report.json`),
+not completed multiplayer or original/port A/V acceptance. Both living finishes
+and the complete replay gates remain required.
+
 `multiplayer-arc-1559-host-checks/report.json` checks a balanced prefix of 44
 actual original key transitions, including handbrake press/release, rejects
 five altered key/frame/player/direction/extent cases and both incompatible

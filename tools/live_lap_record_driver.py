@@ -103,6 +103,10 @@ class ArcRoadKeyboardDriver:
         self.anchor=None
         self.moved_tick=0
         self.reverse_until=0
+        self.progress_best=None
+        self.last_progress_tick=None
+        self.next_recovery_tick=0
+        self.reverse_turn=0
 
     def strip(self,read,offset):
         if offset in self.strips:return self.strips[offset]
@@ -211,8 +215,23 @@ class ArcRoadKeyboardDriver:
         error=(angle-row['heading']+6144)%4096-2048
         if self.anchor is None or math.dist(self.anchor,row['position'])>=300:
             self.anchor=row['position'][:];self.moved_tick=tick
-        if tick>=self.reverse_until and tick-self.moved_tick>=180 and abs(row['speed'])<10:
-            self.reverse_until=tick+180;self.moved_tick=self.reverse_until
+        # Sliding or backing along a wall can move the position anchor without
+        # advancing the confirmed lap checkpoints. Bound each reverse attempt
+        # and leave a forward interval before trying it again.
+        progress=row['lap']*row['track_strips']+row['lap_progress']
+        if self.progress_best is None or progress>self.progress_best:
+            self.progress_best=progress;self.last_progress_tick=tick
+        stalled=tick-self.last_progress_tick
+        recovery=(not row['pit_in'] and tick>=self.reverse_until and tick>=self.next_recovery_tick
+                  and (stalled>=600 and abs(row['speed'])<80
+                       or tick-self.moved_tick>=180 and abs(row['speed'])<10))
+        if recovery:
+            self.reverse_until=tick+120
+            self.next_recovery_tick=tick+600
+            self.moved_tick=self.reverse_until
+            self.reverse_turn=160 if error>=0 else -160
+        row.update(best_observed_progress=self.progress_best,stalled_progress_ticks=stalled,
+                   progress_recovery_started=recovery)
         reverse=tick<self.reverse_until
         desired=-error*.75+row['yaw_rate']*4
         backwards=row['speed']<-5 or reverse and row['speed']<=5
@@ -220,7 +239,11 @@ class ArcRoadKeyboardDriver:
         fast=abs(error)>500 and abs(row['speed'])<80
         limit=80 if abs(error)>300 else 140 if distance>800 else 190
         wanted=['z'] if reverse else ['a'] if row['speed']<limit else ['z'] if row['speed']>limit+25 else []
-        if reverse:desired=0;fast=False
+        if reverse:
+            # Neutral steering retraces the obstruction. Keep the normal
+            # backwards steering and a minimum escape turn, without handbrake.
+            fast=False
+            if backwards and abs(desired)<160:desired=self.reverse_turn
         row.update(target=target,heading_error=error,road_distance=distance,route_index=index,
             target_steering=max(-400 if fast else -240,min(400 if fast else 240,desired)),
             wanted=wanted,manoeuvre='reverse' if reverse else 'forward',
