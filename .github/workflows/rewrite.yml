@@ -24,7 +24,7 @@ jobs:
       - name: Strict formatting, compiler, analysis and renderer check
         run: |
           make clean-logs
-          make rewrite-check
+          python3 tools/rewrite/ci.py native
           make clean-logs
 
   wasm:
@@ -41,6 +41,5 @@ jobs:
       - name: WASM build and renderer check
         run: |
           make clean-logs
-          make rewrite-wasm
-          ctest --preset rewrite-wasm
+          python3 tools/rewrite/ci.py wasm
           make clean-logs
