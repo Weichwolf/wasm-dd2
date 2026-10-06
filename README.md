@@ -3081,6 +3081,16 @@ counterfactual controller checks (`multiplayer-steered-1681-current-intentions/r
 not completed multiplayer or original/port A/V acceptance. Both living finishes
 and the complete replay gates remain required.
 
+The off-road recovery timer now defers another reverse attempt when actual
+forward motion closes the distance to the road. A previous original attempt
+kept backing away on grass at lap seven, checkpoint 43, despite repeatedly
+approaching the lane. The corrected first-human trial completes all ten laps
+alive. All 18,648 observed controller decisions reproduce from the frozen
+source; nine actual approach deferrals are followed by renewed checkpoint
+progress (`multiplayer-approach-1683-original/validation.json`). This verifies
+that host-policy case; both-player and complete Native/WASM A/V gates remain
+open.
+
 `multiplayer-arc-1559-host-checks/report.json` checks a balanced prefix of 44
 actual original key transitions, including handbrake press/release, rejects
 five altered key/frame/player/direction/extent cases and both incompatible

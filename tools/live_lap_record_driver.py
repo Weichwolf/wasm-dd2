@@ -107,6 +107,7 @@ class ArcRoadKeyboardDriver:
         self.last_progress_tick=None
         self.next_recovery_tick=0
         self.reverse_turn=0
+        self.approach_distance=None
 
     def strip(self,read,offset):
         if offset in self.strips:return self.strips[offset]
@@ -222,6 +223,18 @@ class ArcRoadKeyboardDriver:
         if self.progress_best is None or progress>self.progress_best:
             self.progress_best=progress;self.last_progress_tick=tick
         stalled=tick-self.last_progress_tick
+        # Off-road forward motion can rejoin the lane long before it reaches
+        # the previous maximum lap checkpoint. Do not undo that real approach
+        # with another timed reverse merely because the checkpoint stays fixed.
+        approaching=False
+        if distance<=800:
+            self.approach_distance=None
+        elif tick<self.reverse_until or row['speed']<=5 or self.approach_distance is None:
+            self.approach_distance=distance
+        elif distance<self.approach_distance-100:
+            self.approach_distance=distance
+            self.next_recovery_tick=max(self.next_recovery_tick,tick+600)
+            approaching=True
         recovery=(not row['pit_in'] and tick>=self.reverse_until and tick>=self.next_recovery_tick
                   and (stalled>=600 and abs(row['speed'])<80
                        or tick-self.moved_tick>=180 and abs(row['speed'])<10))
@@ -231,7 +244,7 @@ class ArcRoadKeyboardDriver:
             self.moved_tick=self.reverse_until
             self.reverse_turn=160 if error>=0 else -160
         row.update(best_observed_progress=self.progress_best,stalled_progress_ticks=stalled,
-                   progress_recovery_started=recovery)
+                   progress_recovery_started=recovery,road_approach_progress=approaching)
         reverse=tick<self.reverse_until
         desired=-error*.75+row['yaw_rate']*4
         backwards=row['speed']<-5 or reverse and row['speed']<=5
