@@ -4235,6 +4235,19 @@ presentations and rejects an unsupported getter. An unfinished final Flip is
 reported without inventing an image or seed, and accepted only for a single
 terminal DirectDraw-only trace suffix on the engine thread; interior gaps fail.
 
+A fresh losslessly compressed original recording after the bootstrap-log
+correction also passes the joint production-engine gate
+(`/tmp/wasm-dd2/trace-stream-1750-joint-av/report.json`). Native, native ASan and
+the production browser each match 837 complete indexed/palette presentations,
+per-frame RNG and 4,307,552 accepted PCM bytes from that same actual original
+run, using all twelve observed keyboard edges and the recorded clock/audio
+services. The original has one further presentation after this independently
+observed shared audio endpoint; that picture is explicitly outside the joint
+comparison. Startup images with unattached original device palettes also remain
+explicitly qualified. This validates the new capture path for the bounded
+menu/loading/replay/return scenario; complete living-race audio, full intro,
+all game functions and physical timing remain open.
+
 To capture this evidence, add `--trace-video` to the original command together
 with `--trace-keyboard --keep-movie`, then export its video after the original
 capture completes. Use a fresh directory for each run:
