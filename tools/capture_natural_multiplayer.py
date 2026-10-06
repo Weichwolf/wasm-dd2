@@ -17,12 +17,15 @@ from artifacts import check_space, run_bounded
 from verify_championship_save import setup, execute
 from verify_configuration_persistence import ROOT, EXE_SHA256, digest, require
 from natural_multiplayer_protocol import ACTIONS, KEYS, NAMES, SCOPE
+from verify_natural_multiplayer import history
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--timeout', type=int, default=7200)
+    parser.add_argument('--require-completed-laps', action='store_true',
+                        help='reject destroyed finishes; both humans must survive and complete their laps')
     parser.add_argument('--speed-limit', type=int, default=250, choices=range(60, 251), metavar='60..250')
     parser.add_argument('--slow-recovery', action='store_true', help='reverse after 75 physics ticks of low forward speed despite positional movement')
     parser.add_argument('--wall-recovery', action='store_true', help='retain a minimum steering target during reverse recovery when road alignment would cancel the turn')
@@ -52,6 +55,7 @@ def main():
                   driving_speed_limit=args.speed_limit,
                   driving_slow_recovery=args.slow_recovery,
                   driving_wall_recovery=args.wall_recovery,
+                  required_completed_laps=args.require_completed_laps,
                   observer_sources={name:digest((sources/name).read_bytes()) for name in names})
     try:
         def action(ui):
@@ -78,9 +82,15 @@ def main():
                     'Both races must finish naturally')
         meta.update(initial_save_sha256=digest(initial), binary_sha256=EXE_SHA256)
         path.write_text(json.dumps(meta, indent=2)+'\n')
+        # Validate the actual complete API/input history, both result screens,
+        # cumulative points and next round before accepting the recording.
+        validated = history(out/'history', 'original', args.require_completed_laps)
         report.update(pass_=True, racing_frames=len(meta['race_frames']),
                       clock_calls=meta['clock_calls'], rng_calls=meta['rng_calls'],
-                      finishes=meta['final_races'])
+                      finishes=meta['final_races'], human_points=validated[-1],
+                      completed_laps=all(final['driver']['dead'] == 0 and
+                                         final['driver']['finished_laps'] == 1
+                                         for final in meta['final_races']))
     finally:
         (out/'report.json').write_text(json.dumps(report, indent=2)+'\n')
         check_space(out)

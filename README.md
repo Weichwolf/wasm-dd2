@@ -2725,6 +2725,24 @@ Use actual current native/web build paths in these commands. A sanitizer capture
 can be included with `--asan /tmp/wasm-dd2/natural-multi-asan/history`.
 The regular-finish gate is `--require-completed-laps`: it requires both humans to
 survive and complete their laps, in addition to positive earned/cumulative points.
+Pass it to both the original recorder and the final comparator. The recorder
+now validates its complete observed API/input history, both result screens,
+positive accumulated points and next-round continuation before reporting
+success, including when destroyed natural finishes are allowed. For a regular
+original recording with the preserved-lane policy:
+
+```sh
+make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-multi-regular-original --road-policy arc-road-predictive --speed-limit 190 --require-completed-laps --timeout 21600'
+```
+
+The public recorder acceptance path was checked against an existing actual
+two-human destroyed original recording: its default still accepts that trace,
+the living-finish gate rejects it, and altered RNG bytes, lost continuation
+points and invented source-input provenance now reject where the previous
+recorder accepted them (`multiplayer-gate-1567-host/report.json`). These are
+host acceptance checks with external capture orchestration bypassed; they do
+not constitute a new original run, living completion or port A/V comparison.
+
 A destroyed car can naturally end a race and earn points; that does not pass this
 gate. An original attempt can use `--speed-limit 120` to reduce normal accelerator
 input. This only changes the external keyboard policy, never game state or clocks,
