@@ -148,12 +148,45 @@ reconstructs the actual pre-863 window unit from the ordered series, since later
 activation patches prevent reversing 863 directly on today's dependent unit.
 These checks cover the declared activation/timer/Left and message-wait semantics,
 not framebuffer, PCM, physical timing, all keys or complete focus recovery.
-An earlier diagnostic reactivation entered repeated primary-surface restoration
-under Wine; its cause and successful original resumption remain unproven.
+Original recovery remains a failing reference check under Wine 10.0. A new
+`make capture-original-focus-recovery` uses ordinary USER32 foreground requests,
+restores the minimized game window with `ShowWindow(SW_RESTORE)`, and sends a
+fresh physical Left press/release after reactivation. It separately records
+`capture_complete` and `recovery_`, and exits with status 1 when the active
+release is not processed. With `--observe-ddraw-returns`, four read-only hardware
+breakpoints record bounded real `Lock`, `Flip` and `Restore` returns. The public
+run (`focus-recovery-1630-public/report.json`) records eight alternating
+`Flip` returns at 0x412cc1 with `DDERR_SURFACELOST` (0x887601c2) and `Restore`
+returns at 0x412cd5 with `DDERR_WRONGMODE` (0x8876024b). Primary and back surfaces
+have the same vtable and Restore function; reactivation sets the stored timer
+to 49, and USER32 confirms the restored game is the foreground window, but
+the subsequent actual key release is not processed. The call loop does not
+return to message processing. Closed raw output is removed after the report
+and file-hash ledger are written.
+The same public capture without GDB (`focus-recovery-1631-public-undebugged/report.json`)
+also completes with `recovery_=false` and repeated restoration messages. Both
+record the installed Wine version and hashes of the actual mapped `ddraw.dll`
+and `wined3d.dll`, and require USER32 to confirm the restored game is foreground
+before testing a fresh key release. The earlier bounded Original/native/browser
+focus-state gate still passes all three inactive samples and rejects all 16
+damaged observation cases (`focus-recovery-1632-regression/report.json`); it does
+not accept the failing recovery case.
+
+Separate undebugged private captures reproduce the restoration loop both on
+bare Xvfb and with xfwm4 started before Wine. Restoring the actual minimized
+window fixes the foreground request but does not remove the loop. A physical
+8-bit Xvfb display fails to reach the menu and a standard pre-launch
+`ChangeDisplaySettings(8)` request on the 16-bit display is rejected with
+`DISP_CHANGE_BADMODE`; neither is successful recovery evidence. Wine's
+[surface Restore implementation](https://github.com/wine-mirror/wine/blob/wine-10.0/dlls/ddraw/surface.c)
+can return WRONGMODE for a display/surface format mismatch or a still-lost
+device. The exact internal branch and a working reference setup remain open;
+the observed HRESULT does not establish a Windows-original engine defect.
 The bounded focus comparison does not prove original whole-game parity.
 
 ```sh
 make clean-logs
+make capture-original-focus-recovery ORIGINAL_FOCUS_RECOVERY_ARGS='--output /tmp/wasm-dd2/recovery-original --observe-ddraw-returns'
 make verify-keyboard-focus KEYBOARD_FOCUS_ARGS='--output /tmp/wasm-dd2/keyboard-focus --mingw i686-w64-mingw32-gcc --negative-controls --clean'
 make capture-window-focus WINDOW_FOCUS_ARGS='--output /tmp/wasm-dd2/focus-original'
 make capture-native-window-focus WINDOW_FOCUS_NATIVE_ARGS='--binary /tmp/wasm-dd2/native-build/dd2-native --output /tmp/wasm-dd2/focus-native'
