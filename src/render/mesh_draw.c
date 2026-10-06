@@ -16,7 +16,11 @@ enum {
     DD2_MATERIAL_NEUTRAL_SHADE = 8,
     DD2_MATERIAL_PAGE_MASK = 31,
     DD2_MATERIAL_COLOR_MASK = 255,
-    DD2_MATERIAL_BLUE_SHIFT = 16
+    DD2_MATERIAL_BLUE_SHIFT = 16,
+    DD2_MATERIAL_VARIANTS = 2,
+    DD2_MATERIAL_OPACITY_MASK = 15,
+    DD2_MATERIAL_OPAQUE = 1,
+    DD2_MATERIAL_CUTOUT = 2
 };
 
 static const float dd2_material_texel_center = 0.5F;
@@ -26,13 +30,15 @@ struct dd2_mesh_materials {
     const dd2_texture_set *textures;
     size_t count;
     GLuint *pages;
+    uint8_t *cutouts;
     uint8_t *rgba;
 };
 
 dd2_mesh_materials *dd2_mesh_materials_create(const dd2_level_data *level,
                                               const dd2_texture_set *textures) {
     const size_t banks = dd2_texture_palette_bank_count(textures);
-    if (level == NULL || textures == NULL || banks == 0) {
+    if (level == NULL || textures == NULL || banks == 0 ||
+        level->texture_definition_count > (SIZE_MAX - 1) / banks) {
         return NULL;
     }
     dd2_mesh_materials *materials = calloc(1, sizeof(*materials));
@@ -41,10 +47,11 @@ dd2_mesh_materials *dd2_mesh_materials_create(const dd2_level_data *level,
     }
     materials->level = level;
     materials->textures = textures;
-    materials->count = banks * DD2_TEXTURE_PAGE_COUNT;
+    materials->count = banks * DD2_TEXTURE_PAGE_COUNT * DD2_MATERIAL_VARIANTS;
+    materials->cutouts = calloc((banks * level->texture_definition_count) + 1, 1);
     materials->pages = calloc(materials->count, sizeof(*materials->pages));
     materials->rgba = malloc(DD2_TEXTURE_PAGE_RGBA_BYTES);
-    if (materials->pages == NULL || materials->rgba == NULL) {
+    if (materials->pages == NULL || materials->rgba == NULL || materials->cutouts == NULL) {
         dd2_mesh_materials_destroy(materials);
         return NULL;
     }
@@ -62,13 +69,16 @@ void dd2_mesh_materials_destroy(dd2_mesh_materials *materials) {
             }
         }
     }
+    free(materials->cutouts);
     free(materials->pages);
     free(materials->rgba);
     free(materials);
 }
 
 static bool dd2_mesh_material_bind(dd2_mesh_materials *materials, dd2_texture_sample sample) {
-    const size_t index = ((size_t)sample.palette_bank * DD2_TEXTURE_PAGE_COUNT) + sample.page;
+    const size_t index = ((((size_t)sample.palette_bank * DD2_TEXTURE_PAGE_COUNT) + sample.page) *
+                          DD2_MATERIAL_VARIANTS) +
+                         (sample.cutout ? 1U : 0U);
     if (index >= materials->count) {
         return false;
     }
@@ -101,17 +111,72 @@ static bool dd2_mesh_material_bind(dd2_mesh_materials *materials, dd2_texture_sa
     return true;
 }
 
+static bool dd2_mesh_cutout_scan(dd2_mesh_materials *materials, const dd2_mesh_face *face,
+                                 const dd2_texture_definition *definition) {
+    unsigned min_u = definition->corners[0].u;
+    unsigned max_u = min_u;
+    unsigned min_v = definition->corners[0].v;
+    unsigned max_v = min_v;
+    for (size_t corner = 1; corner < DD2_TEXTURE_CORNERS; ++corner) {
+        const dd2_texture_uv coordinates = definition->corners[corner];
+        if (coordinates.u < min_u) {
+            min_u = coordinates.u;
+        }
+        if (coordinates.u > max_u) {
+            max_u = coordinates.u;
+        }
+        if (coordinates.v < min_v) {
+            min_v = coordinates.v;
+        }
+        if (coordinates.v > max_v) {
+            max_v = coordinates.v;
+        }
+    }
+    const dd2_byte_view atlas = dd2_texture_indices(materials->textures);
+    const size_t page = definition->page_flags & DD2_MATERIAL_PAGE_MASK;
+    for (unsigned row = min_v; row <= max_v; ++row) {
+        for (unsigned column = min_u; column <= max_u; ++column) {
+            const uint8_t texel = atlas.data[(page * DD2_TEXTURE_PAGE_PIXELS) +
+                                             ((size_t)row * DD2_TEXTURE_PAGE_SIDE) + column];
+            if ((texel & DD2_MATERIAL_OPACITY_MASK) == 0) {
+                uint8_t mapped = 0;
+                return dd2_texture_palette_index(
+                           materials->textures,
+                           (dd2_palette_sample){.palette_bank = face->palette_bank,
+                                                .shade = DD2_MATERIAL_NEUTRAL_SHADE,
+                                                .index = texel},
+                           &mapped) &&
+                       mapped == 0;
+            }
+        }
+    }
+    return false;
+}
+
+static bool dd2_mesh_cutout(dd2_mesh_materials *materials, const dd2_mesh_face *face,
+                            const dd2_texture_definition *definition) {
+    const size_t index =
+        ((size_t)face->palette_bank * materials->level->texture_definition_count) + face->texture;
+    if (materials->cutouts[index] == 0) {
+        materials->cutouts[index] = dd2_mesh_cutout_scan(materials, face, definition)
+                                        ? DD2_MATERIAL_CUTOUT
+                                        : DD2_MATERIAL_OPAQUE;
+    }
+    return materials->cutouts[index] == DD2_MATERIAL_CUTOUT;
+}
+
 static bool dd2_mesh_face_draw(dd2_mesh_materials *materials, const dd2_mesh_vector *vertices,
                                const dd2_mesh_face *face) {
     dd2_texture_definition definition = {0};
     if (face->textured) {
-        if (!dd2_level_texture_definition(materials->level, face->texture, &definition) ||
+        if (face->palette_bank >= dd2_texture_palette_bank_count(materials->textures) ||
+            !dd2_level_texture_definition(materials->level, face->texture, &definition) ||
             !dd2_mesh_material_bind(
                 materials,
                 (dd2_texture_sample){.page = definition.page_flags & DD2_MATERIAL_PAGE_MASK,
                                      .palette_bank = face->palette_bank,
                                      .shade = DD2_MATERIAL_NEUTRAL_SHADE,
-                                     .cutout = true})) {
+                                     .cutout = dd2_mesh_cutout(materials, face, &definition)})) {
             return false;
         }
         glEnable(GL_TEXTURE_2D);

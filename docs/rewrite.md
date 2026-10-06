@@ -40,8 +40,10 @@ details. Compressed scene blocks, object placements and polygon meshes are now
 decoded into owned C structures and independently checked for all eleven playable
 level containers, including car/sky/wheel shapes. SoftGL now renders stored mesh
 geometry with texture/material selection, cutout and depth testing; static scene
-and car previews run for all eleven levels on both targets. Road surfaces,
-billboard orientation, lighting, blending and gameplay remain to be implemented.
+and car previews run for all eleven levels on both targets. Material opacity
+uses original UV/CLUT selection, and the preview camera preserves positive Y
+upward. Road contact/topology data, billboard orientation, lighting, blending
+and gameplay remain to be implemented.
 This is not yet a playable game.
 
 ## SoftGL
@@ -120,8 +122,9 @@ ASan/UBSan, and rejects six corrupted original scene/mesh streams.
 `make rewrite-scene-verify` renders scene/car previews for all eleven playable
 levels on native, Node/WASM and a sanitized rewrite build, checks visible output
 and cross-target image consistency, and removes completed raw frames. Its scope
-is static meshes, neutral palette shade and cutout, without road surfaces,
-billboard orientation, lighting or blending. See `src/render/README.md`.
+is static scene meshes and neutral palette shade with selected cutout, without
+billboard orientation, lighting or blending. Road contact/topology decoding
+and a complete race remain pending. See `src/render/README.md`.
 
 ## Migration and acceptance
 

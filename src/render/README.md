@@ -14,19 +14,33 @@ definition, page (`page_flags & 31`) and palette bank. UVs address texel centers
 Texture rows use source V order. Per-context material caches borrow the level
 and texture set and own lazily uploaded pages keyed by page/palette bank; both
 borrowed sources must outlive the cache. Page ownership is independent of the
-conversion scratch buffer and all GL textures are deleted with the cache.
+conversion scratch buffer and all GL textures are deleted with the cache. Sources remain immutable for
+the cache lifetime; animation/remapping will need explicit cache updates.
 
-This initial renderer uses neutral palette shade 8, nearest sampling and source
-low-nibble cutout with alpha testing. It retains stored sprite quad geometry.
+This initial renderer uses neutral palette shade 8 and nearest sampling.
+Cutout is selected per UV definition and palette bank, following `Modify_TDF`
+and the primitive initializers `FUN_00418f30`/`FUN_0041a3b4`: find the first source
+texel with zero low nibble in its UV rectangle, and mask the material only when
+that texel's neutral CLUT lookup maps to palette index zero. Index zero is the
+criterion even when its RGB color is nonblack. Other materials are opaque,
+including nonzero palette mappings of zero-low-nibble texels. Scanning includes
+UV endpoints to match this renderer's texel-center sampling and handle degenerate
+single-texel regions. Both opacity variants of the same page/bank have separate
+GL textures. Choices are cached per definition/bank rather than rescanning per
+face/frame. It retains stored sprite quad geometry.
 Lighting, billboard/tilted sprite behavior, fog, blending, animated/vehicle
-material remapping, sky policy and original road strips remain pending. Static
-previews show the scene object layer and unmodified high-detail car shape;
-they are not complete track/race frames. The diagnostic camera also intentionally
+material remapping and sky policy remain pending. The reference draws track
+visuals as scene meshes; road-strip metadata belongs to contact/topology rules.
+Static previews show stored scene meshes and the unmodified high-detail car
+shape; they are not complete race frames. Original geometry uses positive Y
+upward; the diagnostic camera preserves it instead of mirroring the car/track. The diagnostic camera also intentionally
 uses orthographic bounds fitting rather than the eventual driving camera.
 
 The `rewrite_mesh_render` CTest checks every pixel of decoded textured quads,
 correct corner/UV order, transparent texels, depth occlusion and switching
-palette banks between queued draws. It runs without original assets on native
+palette banks between queued draws, and opaque/cutout variants sharing the same
+page/bank. Colored palette index zero and a nonzero mapping of source index zero
+ensure this checks palette indices rather than inferred RGB brightness. It runs without original assets on native
 and Node/WASM. The original-asset diagnostic can be run directly after building:
 
 ```sh

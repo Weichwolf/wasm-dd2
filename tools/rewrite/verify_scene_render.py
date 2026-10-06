@@ -20,7 +20,7 @@ PIXELS = 640 * 480
 
 def compare_images(reference, candidate):
     # Cross-target image consistency for this renderer. This is not a comparison
-    # with the original game; missing road/billboard/lighting policies remain.
+    # with the original game; billboard/lighting/gameplay policies remain pending.
     left, right = reference.read_bytes(), candidate.read_bytes()
     if not left.startswith(HEADER) or not right.startswith(HEADER) or len(left) != len(HEADER) + PIXELS * 3 or len(right) != len(left):
         raise ValueError('Invalid image extent')
@@ -100,7 +100,7 @@ def main():
     binaries = [WORK / 'rewrite-native/dd2_scene_preview', WORK / 'rewrite-wasm/dd2_scene_preview.js',
                 WORK / 'rewrite-wasm/dd2_scene_preview.wasm', sanitized_probe, sanitized_preview, softgl]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(), original_sha256=ORIGINAL_SHA256,
-                  scope='static mesh rendering with neutral palette, stored sprite quads and cutout; road surfaces, lighting, billboards, blending and gameplay pending',
+                  scope='static mesh rendering with neutral palette, stored sprite quads and UV/CLUT-selected opacity; lighting, billboards, blending, road contact/topology and gameplay pending',
                   comparisons=images, calls=calls,
                   sanitizer_scope='rewrite C units instrumented; pinned SoftGL linked from native release build',
                   source_sha256={p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in sources},

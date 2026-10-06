@@ -204,13 +204,35 @@ static bool dd2_test_pixel(unsigned color, dd2_byte_buffer pixels, size_t index)
            pixels.data[offset + 2] == DD2_TEST_PALETTE_BLUE && pixels.data[offset + 3] == UINT8_MAX;
 }
 
+static bool dd2_test_palette_lookup(const dd2_texture_set *textures) {
+    uint8_t result = UINT8_MAX;
+    const dd2_palette_sample neutral = {.shade = DD2_TEST_NEUTRAL_SHADE, .index = DD2_TEST_TEXEL_A};
+    return dd2_texture_palette_index(textures, neutral, &result) && result == DD2_TEST_TEXEL_A &&
+           dd2_texture_palette_index(textures,
+                                     (dd2_palette_sample){.palette_bank = 1,
+                                                          .shade = DD2_TEST_NEUTRAL_SHADE,
+                                                          .index = DD2_TEST_TEXEL_A},
+                                     &result) &&
+           result == DD2_TEST_TEXEL_A + 1 &&
+           dd2_texture_palette_index(textures, (dd2_palette_sample){.index = DD2_TEST_TEXEL_A},
+                                     &result) &&
+           result == UINT8_MAX - DD2_TEST_TEXEL_A &&
+           !dd2_texture_palette_index(NULL, neutral, &result) && result == 0 &&
+           !dd2_texture_palette_index(textures, neutral, NULL) &&
+           !dd2_texture_palette_index(textures, (dd2_palette_sample){.palette_bank = 2}, &result) &&
+           result == 0 &&
+           !dd2_texture_palette_index(textures, (dd2_palette_sample){.shade = DD2_TEXTURE_SHADES},
+                                      &result) &&
+           result == 0;
+}
+
 static bool dd2_test_texture_views(dd2_texture_set *textures, dd2_byte_buffer pixels) {
     const dd2_byte_view indices = dd2_texture_indices(textures);
     dd2_texture_sample sample = {.page = 0, .palette_bank = 0, .shade = DD2_TEST_NEUTRAL_SHADE};
     const size_t edge = DD2_TEXTURE_PAGE_PIXELS - 2;
-    if (dd2_texture_image_count(textures) != 2 || dd2_texture_palette_bank_count(textures) != 2 ||
-        indices.size != DD2_TEST_ATLAS_BYTES || indices.data[edge] != DD2_TEST_TEXEL_A ||
-        indices.data[edge + 1] != DD2_TEST_TEXEL_B ||
+    if (!dd2_test_palette_lookup(textures) || dd2_texture_image_count(textures) != 2 ||
+        dd2_texture_palette_bank_count(textures) != 2 || indices.size != DD2_TEST_ATLAS_BYTES ||
+        indices.data[edge] != DD2_TEST_TEXEL_A || indices.data[edge + 1] != DD2_TEST_TEXEL_B ||
         indices.data[DD2_TEXTURE_PAGE_PIXELS] != DD2_TEST_TEXEL_E ||
         indices.data[DD2_TEXTURE_PAGE_PIXELS + DD2_TEXTURE_PAGE_SIDE - 2] != DD2_TEST_TEXEL_C ||
         !dd2_texture_page_rgba(textures, sample, pixels) ||

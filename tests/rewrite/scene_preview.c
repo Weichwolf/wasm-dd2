@@ -75,7 +75,6 @@ static void dd2_preview_camera(dd2_preview_bounds bounds) {
     glLoadIdentity();
     glRotatef(dd2_preview_pitch, 1.0F, 0.0F, 0.0F);
     glRotatef(dd2_preview_yaw, 0.0F, 1.0F, 0.0F);
-    glScalef(1.0F, -1.0F, 1.0F);
     glTranslatef(-(bounds.min[0] + bounds.max[0]) / 2, -(bounds.min[1] + bounds.max[1]) / 2,
                  -(bounds.min[2] + bounds.max[2]) / 2);
 }

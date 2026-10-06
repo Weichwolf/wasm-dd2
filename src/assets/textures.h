@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 enum {
     DD2_TEXTURE_PAGE_SIDE = 256,
@@ -31,6 +32,18 @@ typedef struct {
     unsigned shade;
     bool cutout;
 } dd2_texture_sample;
+
+typedef struct {
+    unsigned palette_bank;
+    unsigned shade;
+    uint8_t index;
+} dd2_palette_sample;
+
+/* Resolves one source texel index through a base/ECL shade row. Failed lookup
+ * clears the result. This also allows material policies to distinguish palette
+ * index zero from a nonzero index with the same RGB color. */
+bool dd2_texture_palette_index(const dd2_texture_set *textures, dd2_palette_sample sample,
+                               uint8_t *result);
 
 /* Create validates all TX parts and owns the assembled index atlas. PAL, CLT
  * and optional ECL bytes are borrowed and must outlive this object. No GL/OS

@@ -166,6 +166,35 @@ dd2_byte_view dd2_texture_indices(const dd2_texture_set *textures) {
                : (dd2_byte_view){0};
 }
 
+static const uint8_t *dd2_texture_lookup(const dd2_texture_set *textures,
+                                         dd2_palette_sample sample) {
+    if (textures == NULL || sample.palette_bank >= dd2_texture_palette_bank_count(textures) ||
+        sample.shade >= DD2_TEXTURE_SHADES) {
+        return NULL;
+    }
+    size_t offset = (size_t)sample.palette_bank * DD2_TEXTURE_CLUT_BANK_BYTES;
+    const uint8_t *cluts = textures->cluts.data;
+    if (offset >= textures->cluts.size) {
+        offset -= textures->cluts.size;
+        cluts = textures->extra_cluts.data;
+    }
+    return cluts + offset + ((size_t)sample.shade * DD2_TEXTURE_PAGE_SIDE);
+}
+
+bool dd2_texture_palette_index(const dd2_texture_set *textures, dd2_palette_sample sample,
+                               uint8_t *result) {
+    if (result == NULL) {
+        return false;
+    }
+    *result = 0;
+    const uint8_t *lookup = dd2_texture_lookup(textures, sample);
+    if (lookup == NULL) {
+        return false;
+    }
+    *result = lookup[sample.index];
+    return true;
+}
+
 bool dd2_texture_page_rgba(const dd2_texture_set *textures, dd2_texture_sample sample,
                            dd2_byte_buffer output) {
     if (textures == NULL || sample.page >= DD2_TEXTURE_PAGE_COUNT ||
@@ -174,13 +203,8 @@ bool dd2_texture_page_rgba(const dd2_texture_set *textures, dd2_texture_sample s
         output.size < DD2_TEXTURE_PAGE_RGBA_BYTES) {
         return false;
     }
-    size_t bank_offset = (size_t)sample.palette_bank * DD2_TEXTURE_CLUT_BANK_BYTES;
-    const uint8_t *cluts = textures->cluts.data;
-    if (bank_offset >= textures->cluts.size) {
-        bank_offset -= textures->cluts.size;
-        cluts = textures->extra_cluts.data;
-    }
-    const uint8_t *lookup = cluts + bank_offset + ((size_t)sample.shade * DD2_TEXTURE_PAGE_SIDE);
+    const uint8_t *lookup = dd2_texture_lookup(
+        textures, (dd2_palette_sample){.palette_bank = sample.palette_bank, .shade = sample.shade});
     const uint8_t *indices = textures->atlas + ((size_t)sample.page * DD2_TEXTURE_PAGE_PIXELS);
     for (size_t index = 0; index < DD2_TEXTURE_PAGE_PIXELS; ++index) {
         const uint8_t texel = indices[index];

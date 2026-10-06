@@ -91,7 +91,11 @@ additional banks. `draw_text_half`/`FUN_0041033a` establish the lookup
 `bank * 4096 + shade * 256 + texel`; its byte selects an RGB color in the
 1024-byte PAL table. The source palette's fourth byte is unused. The neutral
 shade is 8. Cutout follows the original low-nibble rule, independent of the
-mapped palette index. Other blending/lighting policies belong to the renderer.
+mapped palette index. Material cutout selection and other blending/lighting policies belong to the
+renderer; low-nibble zero alone does not imply that every material is masked.
+`dd2_texture_palette_index` exposes a checked base/ECL shade lookup so the
+renderer can test the actual palette index, independent of its RGB color.
+Failed lookup clears the output index.
 
 ```sh
 make rewrite-level-verify
