@@ -39,6 +39,16 @@ unsigned char dd2_keystate[256];
  * Alt combinations and F10. Only bit31 of lparam is consumed by DD2; this
  * bridge does not claim scan-code/layout or character-message fidelity. */
 static int alt_pressed;
+/* Synchronize GetKeyState without delivering a window message. USER32 keeps
+ * physical states separate from the keys latched by DD2's WndProc: releasing
+ * a key in another foreground process updates GetKeyState, but does not send
+ * KEYUP to the inactive game. */
+void dd2_key_state(unsigned int vk, int down)
+{
+    if (vk < 256) dd2_keystate[vk]=down ? 1 : 0;
+    if (vk>=0xa0 && vk<=0xa5)
+        dd2_keystate[0x10u+(vk-0xa0u)/2]=dd2_keystate[vk&~1u] || dd2_keystate[vk|1u];
+}
 void dd2_key_event(unsigned int vk, int down)
 {
     unsigned int message=down ? 0x100u : 0x101u, generic=vk;
@@ -51,11 +61,8 @@ void dd2_key_event(unsigned int vk, int down)
     } else if (vk==0x79 || (!control && alt)) {
         message=down ? 0x104u : 0x105u; alt_pressed=0;
     }
-    if (vk < 256) dd2_keystate[vk]=down ? 1 : 0;
-    if (vk>=0xa0 && vk<=0xa5) {
-        generic=0x10u+(vk-0xa0u)/2;
-        dd2_keystate[generic]=dd2_keystate[vk&~1u] || dd2_keystate[vk|1u];
-    }
+    dd2_key_state(vk,down);
+    if (vk>=0xa0 && vk<=0xa5) generic=0x10u+(vk-0xa0u)/2;
     FUN_004132f0((void*)(uintptr_t)*(uint32_t*)(uintptr_t)0x46047c,
                 message,generic,down ? 0u : 0x80000000u);
 }

@@ -93,22 +93,44 @@ proof that deactivation freezes all game state
 (`focus-1582-public-original/report.json`). Successful raw output and the private
 Wine prefix are removed after the processed report and SHA ledger are written.
 
-Actual native SDL input clears the held flag on focus loss and leaves activation
-and the stored timer unchanged. Actual headed Chromium has trusted blur/focus
-events but likewise leaves engine activation/timer unchanged; it retains the
-flag. Playwright's forced focus mode must be disabled on its own protocol session
-before page creation to observe this browser transition. Public captures reproduce
-both differences (`focus-1584-public-native/report.json` and
-`focus-1587-public-browser/report.json`). The comparison deliberately fails for
-both ports and rejects eight damaged Original observation cases. It checks the
+Native X11 input now preserves the original held flag across focus loss and
+outside release (`focus-input-1604-native/report.json`, production ASan build).
+SDL's focus reset and reconciliation must not become engine keyboard messages.
+The adapter uses the original X11 events to distinguish physical input, and
+queries physical key states separately for `GetKeyState`. An independent Wine
+USER32 oracle and actual XTEST input in separate foreground windows match all
+nine declared state/message-count samples: Left, both Shift sides, left Control,
+and A first pressed outside the game. SDL also discards a later ordinary-key
+release if its corresponding press occurred outside; the X11 event watch queues
+that missing release without changing SDL keyboard state. A genuine release
+immediately before FocusOut, queued while the fixture is stopped, is preserved.
+The actual previous adapter fails the same test
+(`focus-input-1600-user32-x11/report.json`). This is bounded X11 input/API
+evidence, not Windows layout, AltGr, other SDL backends or whole-game parity.
+The 104 modifier/Alt/Ctrl/repeat/F1-F24 records still match USER32 across native
+SDL, sanitized native bridges and WASM bridges
+(`focus-input-1601-modifiers/report.json`). Native renderer/X11 pixels, accepted
+Float32 audio bytes and virtual controller tests also pass
+(`focus-input-1602-sdl/report.json`). Successful raw outputs are removed after
+the reports and cleanup ledgers are written.
+
+Native activation and stored timer still remain unchanged. Actual headed
+Chromium likewise retains the flag but leaves engine activation/timer unchanged.
+Playwright's forced focus mode must be disabled on its own protocol session
+before page creation to observe this browser transition
+(`focus-1587-public-browser/report.json`). The strict comparison still fails for
+both ports, with six activation/timer differences each; all three native held
+flag observations now match the Original. Eight damaged Original observation
+cases are rejected (`focus-input-1605-comparison/report.json`). It checks the
 declared activation/timer/Left semantics, not framebuffer, PCM, physical timing,
-all keys or complete focus recovery (`focus-1588-comparison/report.json`).
+all keys or complete focus recovery.
 An earlier diagnostic reactivation entered repeated primary-surface restoration
 under Wine; its cause and successful original resumption remain unproven. These
 are diagnosed differences, not a completed focus fix or original game parity.
 
 ```sh
 make clean-logs
+make verify-keyboard-focus KEYBOARD_FOCUS_ARGS='--output /tmp/wasm-dd2/keyboard-focus --mingw i686-w64-mingw32-gcc --negative-controls --clean'
 make capture-window-focus WINDOW_FOCUS_ARGS='--output /tmp/wasm-dd2/focus-original'
 make capture-native-window-focus WINDOW_FOCUS_NATIVE_ARGS='--binary /tmp/wasm-dd2/native-build/dd2-native --output /tmp/wasm-dd2/focus-native'
 make capture-browser-window-focus WINDOW_FOCUS_BROWSER_ARGS='/tmp/wasm-dd2/browser-build/web /tmp/wasm-dd2/focus-browser'

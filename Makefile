@@ -207,6 +207,10 @@ verify-reference-race-stream: native wasm ## compare every captured original rac
 verify-keyboard: ## compare actual Wine USER32 modifier/Alt/F10 messages with native SDL and WASM
 	python3 $(ROOT)/tools/verify_keyboard.py $(KEYBOARD_ARGS)
 
+.PHONY: verify-keyboard-focus
+verify-keyboard-focus: ## compare actual native X11 focus/key states and message counts with Wine USER32; KEYBOARD_FOCUS_ARGS required
+	python3 $(ROOT)/tools/verify_keyboard_focus.py $(KEYBOARD_FOCUS_ARGS)
+
 .PHONY: capture-window-focus capture-native-window-focus capture-browser-window-focus verify-window-focus
 capture-window-focus: ## bounded unchanged-original activation/held-key/message-wait observations; WINDOW_FOCUS_ARGS required
 	python3 $(ROOT)/tools/capture_window_focus.py $(WINDOW_FOCUS_ARGS)

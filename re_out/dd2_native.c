@@ -3,12 +3,17 @@
  * through the same Win32 key/joystick bridge as the browser. Engine code and
  * the deterministic headless harness remain shared. */
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
+#ifdef SDL_VIDEO_DRIVER_X11
+#include <X11/keysym.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "dd2_native.h"
 
 extern void dd2_key_event(unsigned,int);
+extern void dd2_key_state(unsigned,int);
 extern unsigned char dd2_keystate[256];
 extern void dd2_pad_update(int,unsigned,unsigned,unsigned);
 extern int FUN_004132f0(void*,unsigned,unsigned,unsigned);
@@ -22,6 +27,22 @@ static unsigned native_rate;
 static SDL_Joystick* native_joystick;
 static SDL_GameController* native_controller;
 static int native_polling;
+#ifdef SDL_VIDEO_DRIVER_X11
+/* SDL 2.32 sends ResetKeyboard KEYUPs before FOCUS_LOST and reconciles held
+ * keys after FOCUS_GAINED. Neither is a physical key message for USER32.
+ * X11's SYSWMEVENT precedes the corresponding translated SDL key event, so
+ * retain its provenance rather than guessing from timestamps or lookahead. */
+static Display* native_xdisplay;
+static Window native_xwindow;
+static void* native_xlibrary;
+static int (*native_query_keymap)(Display*,char[32]);
+static KeyCode (*native_keysym_keycode)(Display*,KeySym);
+static unsigned native_xkeycode[SDL_NUM_SCANCODES];
+static unsigned native_raw_keycode;
+static Uint32 native_raw_keytype;
+static Uint32 native_missing_keyup_event;
+static int native_keyboard_watch(void*,SDL_Event*);
+#endif
 static uint32_t native_pixels[640*480];
 
 static void native_fail(const char* operation){
@@ -29,12 +50,18 @@ static void native_fail(const char* operation){
 }
 int dd2_native_enabled(void){return native_window!=NULL;}
 static void native_shutdown(void){
+#ifdef SDL_VIDEO_DRIVER_X11
+    if(native_xdisplay)SDL_DelEventWatch(native_keyboard_watch,NULL);
+#endif
     dd2_native_movie_audio_stop();
     dd2_native_audio_stop();
     if(native_controller)SDL_GameControllerClose(native_controller);
     else if(native_joystick)SDL_JoystickClose(native_joystick);
     SDL_DestroyTexture(native_texture);SDL_DestroyRenderer(native_renderer);
     SDL_DestroyWindow(native_window);SDL_Quit();
+#ifdef SDL_VIDEO_DRIVER_X11
+    if(native_xlibrary)SDL_UnloadObject(native_xlibrary);
+#endif
 }
 static unsigned native_vk(SDL_Scancode key){
     if(key>=SDL_SCANCODE_A && key<=SDL_SCANCODE_Z)return 0x41u+key-SDL_SCANCODE_A;
@@ -58,6 +85,58 @@ static unsigned native_vk(SDL_Scancode key){
     default:return 0;
     }
 }
+#ifdef SDL_VIDEO_DRIVER_X11
+static void native_keyboard_map(void){
+    unsigned scancode;
+    for(scancode=0;scancode<SDL_NUM_SCANCODES;scancode++){
+        unsigned vk=native_vk((SDL_Scancode)scancode);
+        SDL_Keycode code=SDL_GetKeyFromScancode((SDL_Scancode)scancode);
+        KeySym symbol=0;
+        /* Printable symbols use SDL's current layout, rather than assuming
+         * the physical letter's US symbol. Special keys have X11 keysyms. */
+        if(vk && code>0 && code<SDLK_SCANCODE_MASK)
+            symbol=code<=0xff ? (KeySym)code : (KeySym)(0x01000000u|(unsigned)code);
+        if(vk>=0x70 && vk<=0x87)symbol=XK_F1+vk-0x70;
+        switch(vk){
+        case 8:symbol=XK_BackSpace;break;case 9:symbol=XK_Tab;break;
+        case 0x0d:symbol=scancode==SDL_SCANCODE_KP_ENTER ? XK_KP_Enter : XK_Return;break;
+        case 0x1b:symbol=XK_Escape;break;
+        case 0x21:symbol=XK_Page_Up;break;case 0x22:symbol=XK_Page_Down;break;
+        case 0x23:symbol=XK_End;break;case 0x24:symbol=XK_Home;break;
+        case 0x25:symbol=XK_Left;break;case 0x26:symbol=XK_Up;break;
+        case 0x27:symbol=XK_Right;break;case 0x28:symbol=XK_Down;break;
+        case 0x2d:symbol=XK_Insert;break;case 0x2e:symbol=XK_Delete;break;
+        case 0xa0:symbol=XK_Shift_L;break;case 0xa1:symbol=XK_Shift_R;break;
+        case 0xa2:symbol=XK_Control_L;break;case 0xa3:symbol=XK_Control_R;break;
+        case 0xa4:symbol=XK_Alt_L;break;case 0xa5:symbol=XK_Alt_R;break;
+        }
+        native_xkeycode[scancode]=symbol ? native_keysym_keycode(native_xdisplay,symbol) : 0;
+    }
+}
+/* SDL reconciles only modifiers held in another foreground application.
+ * A subsequent real release of an ordinary outside key is discarded because
+ * SDL still considers it up. Observe that state before X11 translation and
+ * queue the missing USER32 release; do not alter SDL's keyboard state. */
+static int native_keyboard_watch(void* data,SDL_Event* event){
+    const SDL_SysWMmsg* wm;const XEvent* raw;unsigned scancode;
+    (void)data;
+    if(event->type!=SDL_SYSWMEVENT || !native_xdisplay)return 0;
+    wm=event->syswm.msg;
+    if(!wm || wm->subsystem!=SDL_SYSWM_X11)return 0;
+    raw=&wm->msg.x11.event;
+    if(raw->type!=KeyRelease || raw->xkey.window!=native_xwindow)return 0;
+    for(scancode=0;scancode<SDL_NUM_SCANCODES;scancode++)
+        if(native_xkeycode[scancode]==raw->xkey.keycode){
+            unsigned vk=native_vk((SDL_Scancode)scancode);
+            if(vk && !SDL_GetKeyboardState(NULL)[scancode]){
+                SDL_Event release={0};release.type=native_missing_keyup_event;release.user.code=(Sint32)vk;
+                SDL_PushEvent(&release);
+            }
+            break;
+        }
+    return 0;
+}
+#endif
 static void native_pad(void){
     unsigned buttons=0;int index;
     if(!native_joystick || !SDL_JoystickGetAttached(native_joystick)){
@@ -90,24 +169,75 @@ static void native_pad(void){
 }
 void dd2_native_poll(void){
     SDL_Event event;
+#ifdef SDL_VIDEO_DRIVER_X11
+    int keyboard_sync=0;
+#endif
     if(!native_window || native_polling)return;
     native_polling=1;
     while(SDL_PollEvent(&event)){
+#ifdef SDL_VIDEO_DRIVER_X11
+        if(native_xdisplay && event.type==native_missing_keyup_event)
+            dd2_key_event((unsigned)event.user.code,0);
+        if(native_xdisplay && event.type==SDL_SYSWMEVENT){
+            const SDL_SysWMmsg* wm=event.syswm.msg;
+            native_raw_keytype=0;
+            if(wm && wm->subsystem==SDL_SYSWM_X11){
+                const XEvent* raw=&wm->msg.x11.event;
+                if(raw->xany.window==native_xwindow &&
+                        (raw->type==KeyPress || raw->type==KeyRelease)){
+                    native_raw_keytype=raw->type==KeyPress ? SDL_KEYDOWN : SDL_KEYUP;
+                    native_raw_keycode=raw->xkey.keycode;
+                }
+            }
+        }
+        if(native_xdisplay && event.type==SDL_KEYMAPCHANGED)native_keyboard_map();
+#endif
+        if(event.type==SDL_WINDOWEVENT &&
+                (event.window.event==SDL_WINDOWEVENT_FOCUS_LOST ||
+                 event.window.event==SDL_WINDOWEVENT_FOCUS_GAINED)){
+#ifdef SDL_VIDEO_DRIVER_X11
+            keyboard_sync=1;
+#endif
+        }
         /* The original consumes WM_CLOSE in its window procedure. Route the
          * request there too; normal exit remains the game's Quit action. */
         if(event.type==SDL_QUIT)FUN_004132f0((void*)1,0x10,0,0);
         if(event.type==SDL_KEYDOWN || event.type==SDL_KEYUP){
             unsigned vk=native_vk(event.key.keysym.scancode);
-            if(vk)dd2_key_event(vk,event.type==SDL_KEYDOWN);
-        }
-        if(event.type==SDL_WINDOWEVENT && event.window.event==SDL_WINDOWEVENT_FOCUS_LOST){
-            unsigned vk;
-            /* Release physical sides first so aggregate modifier entries do
-             * not generate duplicate transitions during focus cleanup. */
-            for(vk=0xa0;vk<=0xa5;vk++)if(dd2_keystate[vk])dd2_key_event(vk,0);
-            for(vk=0;vk<256;vk++)if(dd2_keystate[vk])dd2_key_event(vk,0);
+            int physical=1;
+#ifdef SDL_VIDEO_DRIVER_X11
+            if(native_xdisplay && event.key.windowID==SDL_GetWindowID(native_window)){
+                physical=event.type==native_raw_keytype;
+                if(physical && event.key.keysym.scancode<SDL_NUM_SCANCODES)
+                    native_xkeycode[event.key.keysym.scancode]=native_raw_keycode;
+                native_raw_keytype=0;
+                /* Reconciliation exposes physical states without a window
+                 * key message. ResetKeyboard releases need XQueryKeymap
+                 * below: the physical key can still be held outside. */
+                if(!physical){
+                    keyboard_sync=1;
+                    if(vk && (event.type==SDL_KEYDOWN || SDL_GetKeyboardFocus()==native_window))
+                        dd2_key_state(vk,event.type==SDL_KEYDOWN);
+                }
+            }
+#endif
+            if(vk && physical)dd2_key_event(vk,event.type==SDL_KEYDOWN);
         }
     }
+#ifdef SDL_VIDEO_DRIVER_X11
+    if(native_xdisplay && (keyboard_sync || SDL_GetKeyboardFocus()!=native_window)){
+        char keys[32];unsigned scancode,vk;
+        unsigned char known[256]={0},down[256]={0};
+        native_query_keymap(native_xdisplay,keys);
+        for(scancode=0;scancode<SDL_NUM_SCANCODES;scancode++){
+            unsigned keycode=native_xkeycode[scancode];vk=native_vk((SDL_Scancode)scancode);
+            if(vk && keycode && keycode<256){
+                known[vk]=1;down[vk]|=(keys[keycode/8] & (1u<<(keycode%8)))!=0;
+            }
+        }
+        for(vk=0;vk<256;vk++)if(known[vk])dd2_key_state(vk,down[vk]);
+    }
+#endif
     native_pad();native_polling=0;
 }
 void dd2_native_init(void){
@@ -119,6 +249,7 @@ void dd2_native_init(void){
      * into the WM_CLOSE request that the original window procedure ignores. */
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS,"1");
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_GAMECONTROLLER))native_fail("initialize");
+    SDL_EventState(SDL_SYSWMEVENT,SDL_ENABLE);
     atexit(native_shutdown);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"0");
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");
@@ -129,6 +260,24 @@ void dd2_native_init(void){
     if(SDL_RenderSetLogicalSize(native_renderer,640,480))native_fail("set display size");
     native_texture=SDL_CreateTexture(native_renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,640,480);
     if(!native_texture)native_fail("create indexed display texture");
+#ifdef SDL_VIDEO_DRIVER_X11
+    {
+        SDL_SysWMinfo wm;SDL_VERSION(&wm.version);
+        if(SDL_GetWindowWMInfo(native_window,&wm) && wm.subsystem==SDL_SYSWM_X11){
+            native_xdisplay=wm.info.x11.display;native_xwindow=wm.info.x11.window;
+            native_xlibrary=SDL_LoadObject("libX11.so.6");
+            if(!native_xlibrary)native_fail("load X11 keyboard state");
+            native_query_keymap=(int (*)(Display*,char[32]))SDL_LoadFunction(native_xlibrary,"XQueryKeymap");
+            if(!native_query_keymap)native_fail("query X11 keyboard state");
+            native_keysym_keycode=(KeyCode (*)(Display*,KeySym))SDL_LoadFunction(native_xlibrary,"XKeysymToKeycode");
+            if(!native_keysym_keycode)native_fail("map X11 keyboard state");
+            native_keyboard_map();
+            native_missing_keyup_event=SDL_RegisterEvents(1);
+            if(native_missing_keyup_event==(Uint32)-1)native_fail("register X11 key release");
+            SDL_AddEventWatch(native_keyboard_watch,NULL);
+        }
+    }
+#endif
     for(index=0;index<SDL_NumJoysticks();index++){
         if(SDL_IsGameController(index)){
             native_controller=SDL_GameControllerOpen(index);

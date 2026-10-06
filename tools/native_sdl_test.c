@@ -60,12 +60,9 @@ int main(void){
     require(dd2_keystate[0x10] && dd2_keystate[0xa1],"remaining physical shift stays down");
     event(SDL_SCANCODE_RSHIFT,0);require(!dd2_keystate[0x10],"last shift releases generic shift");
     event(SDL_SCANCODE_LSHIFT,1);event(SDL_SCANCODE_RSHIFT,1);event(SDL_SCANCODE_A,1);
-    {
-        unsigned before=keyboard_messages;
-        SDL_Event e={0};e.type=SDL_WINDOWEVENT;e.window.event=SDL_WINDOWEVENT_FOCUS_LOST;SDL_PushEvent(&e);dd2_native_poll();
-        require(keyboard_messages==before+3,"focus cleanup releases physical keys without extra generic modifier events");
-    }
-    require(!dd2_keystate[0x41] && !dd2_keystate[0x10] && !dd2_keystate[0xa0] && !dd2_keystate[0xa1],"focus loss releases held keys and both modifier sides");
+    /* Actual focus and physical GetKeyState are checked against USER32 by
+     * verify_keyboard_focus.py; a pushed focus event cannot emulate them. */
+    event(SDL_SCANCODE_LSHIFT,0);event(SDL_SCANCODE_RSHIFT,0);event(SDL_SCANCODE_A,0);
     require(SDL_JoystickDetachVirtual(index)==0,"detach held boot-time controller");
     dd2_native_poll();
     require(!present && padx==32768 && pady==32768 && padb==0,"detached SDL controller releases backend input");
