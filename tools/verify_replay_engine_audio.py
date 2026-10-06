@@ -40,6 +40,7 @@ def validate(target, original, source, clock, services, initial, planned, accept
             'completed actual replay engine required')
     require(target['initial_save_sha256'] == digest(initial) and
             target['game_clock_sha256'] == clock['ticks_sha256'] and
+            target.get('game_clock_encoding','raw') == clock.get('ticks_encoding','raw') and
             target['audio_services_sha256'] == services['input_sha256'], 'replay input provenance differs')
     require(target['completion'] == source['completion'] and
             target['restored'] == source['start_state'], 'natural replay completion/restoration differs')
@@ -167,6 +168,7 @@ def verify(args):
         require(failed['binary_sha256'] == inputs['native']['binary_sha256'] and
                 failed['schedule'][3]['release_flip'] == inputs['native']['schedule'][3]['release_flip']+offset and
                 failed['audio_services_sha256'] == services['input_sha256'] and
+                failed.get('game_clock_encoding','raw') == clock.get('ticks_encoding','raw') and
                 failed['game_clock_sha256'] == clock['ticks_sha256'],
                 'actual perturbed keyboard input provenance differs')
         if args.keyboard_input:
@@ -219,10 +221,11 @@ def verify(args):
         try: validate(bad,original,source,clock,services,initial,planned,accepted,played)
         except RuntimeError: negative[name] = dict(rejected=True)
         else: raise AssertionError('damaged replay evidence accepted: '+name)
-    for name in ('keyedge','card','pad'):
+    for name in ('keyedge','card','pad','clock-encoding'):
         bad = copy.deepcopy(inputs['native'])
         if name == 'keyedge': bad['input_history']['inputs'][0]['observation']['completed_flips'] += 1
         elif name == 'card': bad['input_history']['endpoint']['card_sha256'] = '0'*64
+        elif name == 'clock-encoding': bad['game_clock_encoding'] = 'raw' if clock.get('ticks_encoding','raw') == 'DD2TKR1' else 'DD2TKR1'
         else: next(e for e in bad['input_history']['inputs'] if e.get('pad_consumed'))['observation']['pressed'] = 0
         try: validate(bad,original,source,clock,services,initial,planned,accepted,played)
         except RuntimeError: negative[name] = dict(rejected=True)

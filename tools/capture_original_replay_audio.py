@@ -36,12 +36,16 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--trace-keyboard',action='store_true',help='record original window-procedure keyboard messages with Wine +msg')
     parser.add_argument('--compress-trace',action='store_true',help='write lossless wine.log.zst for streaming audio/video/input readers')
+    parser.add_argument('--ticks-encoding',choices=('raw','DD2TKR1'),default='raw',help='lossless storage of every actual game-clock return')
+    parser.add_argument('--compress-clock-observations',action='store_true',help='losslessly compress every original clock observation')
+    parser.add_argument('--clock-max-calls',type=int,default=10000000,help='explicit bounded logical call count, at most 0xffffffff')
     parser.add_argument('--keep-movie',action='store_true',help='let the original intro finish naturally before menu input')
     parser.add_argument('--trace-video',action='store_true',help='record every successful original DirectDraw presentation without debugger stops')
     parser.add_argument('--trace-video-rng',action='store_true',help='also read the original RNG seed at each presentation; requires --trace-video')
     parser.add_argument('--video-archive',action='store_true',help='losslessly archive closed presentation blocks; requires --trace-video')
     parser.add_argument('--video-max-frames',type=int,default=4096,help='at most 60000 with --video-archive, otherwise 4096')
     args=parser.parse_args();initial,payload,producer=fixture(args.fixture)
+    if not 1<=args.clock_max_calls<=0xffffffff:parser.error('--clock-max-calls must fit a positive DWORD')
     if args.trace_video_rng and not args.trace_video:parser.error('--trace-video-rng requires --trace-video')
     if (args.video_archive and not args.trace_video) or not 1<=args.video_max_frames<=(60000 if args.video_archive else 4096):
         parser.error('video archival requires --trace-video and a bounded 1..60000 frame count; raw limit is 4096')
@@ -64,6 +68,9 @@ def main():
                                   startup_escape=not options.keep_movie,trace_video=options.trace_video,
                                   trace_video_rng=options.trace_video_rng,
                                   compress_trace=options.compress_trace,
+                                  ticks_encoding=args.ticks_encoding,
+                                  compress_clock_observations=args.compress_clock_observations,
+                                  clock_max_calls=args.clock_max_calls,
                                   video_archive=options.video_archive,video_max_frames=options.video_max_frames)
     def driver(pid,output,env,deadline,rundir):
         ui=RealtimeUI(pid,rundir,output,env,deadline)
@@ -113,7 +120,9 @@ def main():
         audio.update(exe_sha256=EXE_SHA256,exe_modified=False,virtual_device_rate=44100,
             virtual_device='clock',wine_debug=options.wine_debug,movie_autoskip=not options.keep_movie)
         (out/'audio/summary.json').write_text(json.dumps(audio,indent=2)+'\n')
-        clock=export_clock(out/'wine.log',game/'dd2h.exe',out/'game-clock',allow_terminal_entry=True)
+        clock=export_clock(out/'wine.log',game/'dd2h.exe',out/'game-clock',allow_terminal_entry=True,
+            ticks_encoding=args.ticks_encoding,compress_observations=args.compress_clock_observations,
+            max_calls=args.clock_max_calls)
         callbacks=original_report(out,game/'dd2h.exe',allow_terminal=True)
         (out/'timer-callbacks.json').write_text(json.dumps(callbacks,indent=2)+'\n')
         report.update(pass_=True,clock_calls=clock['calls'],completed_callbacks=len(callbacks['completed_callbacks']))

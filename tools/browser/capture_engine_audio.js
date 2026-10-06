@@ -9,10 +9,13 @@ const services=fs.readFileSync(path.resolve(servicesArg)),clock=fs.readFileSync(
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const save=fs.readFileSync(fixtureArg?path.join(path.resolve(fixtureArg),'original.card'):
  path.resolve(__dirname,'../../DestructionDerby2/SaveGames'));
-let replay=null;
+let replay=null,clockEncoding='raw';
 if(fixtureArg){
  const producer=JSON.parse(fs.readFileSync(path.join(path.resolve(fixtureArg),'report.json')));
  const reference=JSON.parse(fs.readFileSync(path.resolve(scheduleArg)));
+ clockEncoding=reference.game_clock_encoding??'raw';
+ assert(['raw','DD2TKR1'].includes(clockEncoding),'explicit supported original clock encoding required');
+ if(clockEncoding==='DD2TKR1')assert(clock.subarray(0,8).equals(Buffer.from('DD2TKR1\0')),'original clock run header differs');
  const layout=layoutArg?JSON.parse(fs.readFileSync(path.resolve(layoutArg))):null;
  const video=videoArg?JSON.parse(fs.readFileSync(path.resolve(videoArg))):null;
  if(video)assert(video.pass_ && video.debugger===false && video.engine_state_writes===false &&
@@ -193,6 +196,7 @@ budget();
     'if(populate&&!error)FS.writeFile("/persist/SaveGames",Uint8Array.from(atob('+JSON.stringify(save.toString('base64'))+'),c=>c.charCodeAt(0)));done(error);});};});'+
     'Module.preRun.unshift(function(){delete ENV.DD2_REALTIME;FS.mkdirTree("/tmp/wasm-dd2");'+
     'ENV.DD2_AUDIO_SERVICES="/tmp/wasm-dd2/services.bin";ENV.DD2_TICK_REPLAY="/tmp/wasm-dd2/ticks.bin";'+
+    'ENV.DD2_TICK_REPLAY_FORMAT='+JSON.stringify(clockEncoding)+';'+
     'ENV.DD2_AUDIO_SERVICE_REPORT="/tmp/wasm-dd2/clock-complete.json";ENV.DD2_MIXPCM="/tmp/wasm-dd2/mixed.pcm";'+
     'ENV.DD2_SNDLOG="/tmp/wasm-dd2/sound.log";ENV.DD2_RACE_STREAM="/tmp/wasm-dd2/race-stream.jsonl";'+
     'Module.addRunDependency("engine-audio-inputs");'+
@@ -274,7 +278,7 @@ budget();
   fs.writeFileSync(path.join(output,'clock-complete.json'),JSON.stringify(captured.complete)+'\n');
   const report={scope:'Actual browser startup and attract race with own engine controls and observed services; interactive scheduling/video/hardware are separate',
    intro,start_state:start,end_state:end,engine_state_writes:false,errors,initial_save_sha256:hash(save),
-   wasm_sha256:hash(fs.readFileSync(path.join(build,'index.wasm'))),game_clock_sha256:hash(clock),audio_services_sha256:hash(services),
+   wasm_sha256:hash(fs.readFileSync(path.join(build,'index.wasm'))),game_clock_sha256:hash(clock),game_clock_encoding:clockEncoding,audio_services_sha256:hash(services),
    audio_services:captured.complete,sink:captured.sink,accepted_sha256:hash(pcm)};
   if(replay){
    report.scope='Actual replay engine with trusted Playwright keys and observed clock/audio services; key positions and first Enter release are diagnostic scheduling, original OS event identity/video/physical timing remain open';

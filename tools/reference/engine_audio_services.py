@@ -9,7 +9,6 @@ not a full-game parity result. The input retains original trace provenance.
 import argparse
 import hashlib
 import json
-import mmap
 from pathlib import Path
 import re
 import struct
@@ -20,8 +19,10 @@ sys.path.insert(0,str(ROOT/'tools'))
 from artifacts import WORK,check_space,prepare_output
 if __package__:
     from .trace_log import read_trace
+    from .game_clock import observation_records
 else:
     from trace_log import read_trace
+    from game_clock import observation_records
 
 ROW=struct.Struct('<12I')
 KINDS={'create':1,'duplicate':2,'release':3,'SetCurrentPosition':4,'SetPan':5,
@@ -135,15 +136,15 @@ def export(capture,mixer,output):
     if trace_digest.hexdigest()!=sha or mixing or status or active_callbacks:
         raise ValueError('Incomplete or changed original service trace')
     events.sort(key=lambda e:(e['line'],e['priority']))
-    with (capture/'game-clock/observations.bin').open('rb') as f:
-        with mmap.mmap(f.fileno(),0,access=mmap.ACCESS_READ) as mem:
-            if len(mem)!=16+clock['calls']*32 or mem[:16]!=struct.pack('<8sII',b'DD2GC01\0',1,32):
-                raise ValueError('Incomplete original clock observations')
-            call_index=0
-            for e in events:
-                while call_index<clock['calls'] and struct.unpack_from('<I',mem,16+call_index*32+20)[0]<e['line']:call_index+=1
-                e['clock_calls']=call_index;e['flip']=event_flip[e['line']]
-                if e['flip'] is None:raise ValueError('Missing original event presentation position')
+    with observation_records(capture/'game-clock',clock) as rows:
+        call_index=0
+        current=next(rows,None)
+        for e in events:
+            while current is not None and current[3]<e['line']:
+                call_index+=1
+                current=next(rows,None)
+            e['clock_calls']=call_index;e['flip']=event_flip[e['line']]
+            if e['flip'] is None:raise ValueError('Missing original event presentation position')
     # Preserve both callers in the literal order. The production service
     # scheduler keeps the callback continuation while main APIs execute.
     # Reject malformed contexts and overlapping timer callbacks; neither a

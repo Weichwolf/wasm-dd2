@@ -309,6 +309,10 @@ verify-original-race-audio: patch ## compare chronological original racing PCM, 
 verify-original-game-clock: ## reject damaged original relay clock traces and invented terminal returns; ORIGINAL_GAME_CLOCK_ARGS required
 	python3 $(ROOT)/tools/reference/test_game_clock.py $(ORIGINAL_GAME_CLOCK_ARGS)
 
+.PHONY: verify-original-clock-storage
+verify-original-clock-storage: ## compare every actual clock/observation and audio-service byte in raw/compact exports; CLOCK_STORAGE_ARGS required
+	python3 $(ROOT)/tools/reference/test_clock_storage.py $(CLOCK_STORAGE_ARGS)
+
 run: wasm ## run the WASM demo under node at LEVEL=$(LEVEL)
 	cd $(GAMEDIR) && DD2_FRAMEDIR=/tmp/wrun $(NODE) $(OUTJS) $(LEVEL)
 

@@ -80,8 +80,12 @@ def main():
         first['release_flip']+=args.diagnostic_release_offset
         first['release_scope']='diagnostic perturbation of observed window-procedure release'
     out,game=setup(args,initial);binary=args.binary.resolve();clock=original/'game-clock/ticks.bin'
+    clock_proof=json.loads((original/'game-clock/report.json').read_text())
+    clock_encoding=clock_proof.get('ticks_encoding','raw')
+    require(clock_encoding in ('raw','DD2TKR1'),'explicit supported original clock encoding required')
     report=dict(scope=__doc__,pass_=False,scenario='original-replay',engine_state_writes=False,
         binary_sha256=digest(binary.read_bytes()),initial_save_sha256=digest(initial),schedule=planned,
+        game_clock_encoding=clock_encoding,
         game_clock_sha256=digest(clock.read_bytes()),audio_services_sha256=digest((services/'services.bin').read_bytes()))
     if args.keyboard_input:report['keyboard_input_sha256']=digest(args.keyboard_input.read_bytes())
     if args.diagnostic_release_offset is not None:report['diagnostic_release_offset']=args.diagnostic_release_offset
@@ -100,6 +104,7 @@ def main():
                 stdout=subprocess.PIPE,stderr=log)
             number=display.stdout.readline().decode().strip();require(number,'Xvfb failed')
             overrides=dict(DD2_REALTIME=None,DD2_TICK_REPLAY=str(clock),
+                DD2_TICK_REPLAY_FORMAT=clock_encoding,
                 DD2_AUDIO_SERVICES=str(services/'services.bin'),DD2_MIXPCM=str(out/'mixed.pcm'),
                 DD2_AUDIO_SERVICE_REPORT=str(out/'clock-complete.json'),DD2_SNDLOG=str(out/'sound.log'),
                 DD2_RACE_STREAM=str(out/'race-stream.jsonl'),ASAN_OPTIONS='detect_leaks=0:abort_on_error=1')

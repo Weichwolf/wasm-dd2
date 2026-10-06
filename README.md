@@ -4467,3 +4467,33 @@ make clean-logs
 make verify-clock-runs CLOCK_RUNS_ARGS='--original-ticks /tmp/wasm-dd2/original-capture/game-clock/ticks.bin --output /tmp/wasm-dd2/clock-runs-check'
 make clean-logs
 ```
+
+Complete original clock observation storage
+-------------------------------------------
+
+`export_clock` retains raw DWORD inputs by default. Opt-in `DD2TKR1` clock runs
+and Zstandard observations preserve every actual return and every 32-byte
+entry/return/presentation record. Exports independently decode their stored
+inputs and check counts and logical hashes before accepting them. The bounded
+call limit is explicit and remains within DWORD widths. The audio-service
+exporter streams observations and validates the complete count/hash and compressed
+tail, including when its last event precedes the final clock call.
+
+`/tmp/wasm-dd2/clock-runs-1765-storage/report.json` verifies both formats against
+the complete unchanged original replay trace: 532,981 literal returns and
+observations, and identical 5,893-event audio-service inputs. Clock data shrinks
+from 2,131,924 to 9,760 bytes; observations from 17,055,408 to 2,041,116 bytes.
+Eight controls reject partial, extra or changed observations, damaged compressed
+tails, early-reader tail corruption and exceeded bounds. Successful raw outputs
+are removed after the report. This is storage/scheduling evidence, not a new
+whole-engine audio/video acceptance.
+
+The original replay producer exposes `--ticks-encoding DD2TKR1`,
+`--compress-clock-observations` and `--clock-max-calls`. Native/browser replay
+consumers select the recorded format explicitly, and the comparison rejects
+format-provenance mismatches. These capture options are prepared for subsequent
+whole-engine comparisons; complete long-race A/V acceptance remains open.
+
+```sh
+make verify-original-clock-storage CLOCK_STORAGE_ARGS='--capture /tmp/wasm-dd2/original-capture --executable DestructionDerby2/dd2h.exe --mixer /tmp/wasm-dd2/original-mixer --services /tmp/wasm-dd2/original-services --output /tmp/wasm-dd2/clock-storage-check'
+```
