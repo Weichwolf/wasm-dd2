@@ -2258,6 +2258,31 @@ make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend alsa --tr
 make clean-logs
 ```
 
+`make observe-original-pulse-overflow` observes a bounded set of actual taken
+overflow paths in the supported 32-bit Wine Pulse driver. It requires the exact
+installed driver hash and mapped instruction bytes, an unchanged original Intro
+and an owned live prefix. Two hardware breakpoints read the cursor and pending
+byte count before and after the overflow branch; no game state or return value
+is replaced. GDB suspends threads and changes timing. Unknown driver versions
+are rejected instead of guessing offsets.
+
+The paired reports `movie-pulse-1674-overflow/report.json` and
+`movie-wave-1675-pulse/report.json` bind the same original PID and start token.
+Twelve actual before/after observations verify cursor advancement by the
+overflow amount and pending-byte clamping to capacity, totaling 1,752 discarded
+bytes at those observed branches. This is a bounded sample, not the complete
+movie loss count. The full original ACM output still equals all 6,039,616 source
+bytes; accepted Pulse output has 6,019,648 bytes and first differs at byte
+390,740. The observations establish a real discard mechanism, without explaining
+every lost byte, proving uninstrumented playback or establishing port parity.
+
+Start a Pulse movie capture in another terminal, then attach while its Intro
+runs. Use its own output prefix; the observer detaches before the capture ends.
+
+```sh
+make observe-original-pulse-overflow ORIGINAL_PULSE_OVERFLOW_ARGS='--prefix /tmp/wasm-dd2/movie-original-pulse/work/prefix --output /tmp/wasm-dd2/movie-pulse-overflow --seconds 15 --max-events 12'
+```
+
 Patch 889 prepares the complete browser movie AudioBuffer before opening
 its real-time AudioContext. Previously a running context could render empty
 quanta during the whole-source PCM copy. The standalone
