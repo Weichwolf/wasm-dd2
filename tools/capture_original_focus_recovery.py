@@ -31,7 +31,10 @@ def digest(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--observe-ddraw-returns', action='store_true')
+    observers = parser.add_mutually_exclusive_group()
+    observers.add_argument('--observe-ddraw-returns', action='store_true')
+    observers.add_argument('--observe-wine-restore', action='store_true',
+                           help='read guarded Debian Wine 10.0 Restore format/error sites and original returns')
     parser.add_argument('--mingw', default=shutil.which('i686-w64-mingw32-gcc') or
                         str(ROOT / 'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
     args = parser.parse_args()
@@ -43,11 +46,12 @@ def main():
     source_names = ['tools/capture_original_focus_recovery.py',
                     'tools/reference/window_focus_recovery_probe.c',
                     'tools/reference/capture.py']
-    if args.observe_ddraw_returns:
+    observe = args.observe_ddraw_returns or args.observe_wine_restore
+    if observe:
         source_names.append('tools/original_focus_recovery_observer.py')
     report = dict(scope=__doc__.strip(), capture_complete=False, recovery_=False,
                   original_port_full_parity='unproven', engine_state_writes=False,
-                  debugger=args.observe_ddraw_returns, xvfb_depth=16,
+                  debugger=observe, wine_restore_inspection=args.observe_wine_restore, xvfb_depth=16,
                   wine_version=subprocess.check_output(['wine', '--version'], text=True).strip(),
                   exe_sha256=digest(ROOT / 'DestructionDerby2/dd2h.exe'),
                   sources={name: digest(ROOT / name) for name in source_names},
@@ -106,11 +110,11 @@ def main():
             report['actions'].append(dict(foreground_target=target, host_ns=time.monotonic_ns()))
 
         try:
-            if args.observe_ddraw_returns:
+            if observe:
                 script = out / 'observer.gdb'
                 script.write_text('set pagination off\nset confirm off\nset auto-solib-add off\n' +
                     f'attach {pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT / "tools")!r})\n' +
-                    f'from original_focus_recovery_observer import run\nrun({str(out)!r})\nend\ndetach\nquit\n')
+                    f'from original_focus_recovery_observer import run\nrun({str(out)!r},inspect_wine={args.observe_wine_restore!r})\nend\ndetach\nquit\n')
                 observer_log = (out / 'observer.log').open('wb')
                 debugger = subprocess.Popen(['gdb', '--nx', '-q', '-batch', '-x', str(script)],
                     env=env, stdout=observer_log, stderr=observer_log)
