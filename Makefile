@@ -26,7 +26,7 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
 .PHONY: rewrite-archive-verify
-.PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify rewrite-road-verify
+.PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify rewrite-road-verify rewrite-surface-verify
 .PHONY: rewrite-play rewrite-web rewrite-window-verify
 rewrite-play: rewrite-native ## open the interactive track/car viewer with provisioned original assets
 	/tmp/wasm-dd2/rewrite-native/dd2_app "$(GAMEDIR)/Dirinfo" "$(LEVEL)"
@@ -94,6 +94,14 @@ rewrite-road-verify: ## compare all playable road graphs, lane cells and contact
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm
 	python3 $(ROOT)/tools/rewrite/verify_roads.py
+	$(MAKE) clean-logs
+
+rewrite-surface-verify: ## verify indexed surface queries against exhaustive original-cell search
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_roads.py
+	python3 $(ROOT)/tools/rewrite/verify_surfaces.py
 	$(MAKE) clean-logs
 
 pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> assemble -> patch -> native+WASM -> 10-level crash test (both targets)

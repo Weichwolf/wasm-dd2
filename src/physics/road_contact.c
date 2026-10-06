@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 /* World-coordinate tolerance, not a fraction of an arbitrarily large cell. */
-static const double dd2_contact_edge_tolerance = 1e-6;
+static const double dd2_contact_edge_tolerance = DD2_ROAD_EDGE_TOLERANCE;
 
 typedef struct {
     double value[3];
@@ -21,8 +21,29 @@ static dd2_contact_vector dd2_contact_difference(dd2_track_vertex first, dd2_tra
                                           (double)first.z - (double)second.z}};
 }
 
+static bool dd2_contact_bounds(const dd2_track_vertex vertices[3], dd2_road_point point) {
+    double min_x = (double)vertices[0].x;
+    double max_x = min_x;
+    double min_z = (double)vertices[0].z;
+    double max_z = min_z;
+    for (size_t index = 1; index < 3; ++index) {
+        min_x = fmin(min_x, (double)vertices[index].x);
+        max_x = fmax(max_x, (double)vertices[index].x);
+        min_z = fmin(min_z, (double)vertices[index].z);
+        max_z = fmax(max_z, (double)vertices[index].z);
+    }
+    return point.x >= min_x - DD2_ROAD_EDGE_TOLERANCE &&
+           point.x <= max_x + DD2_ROAD_EDGE_TOLERANCE &&
+           point.z >= min_z - DD2_ROAD_EDGE_TOLERANCE && point.z <= max_z + DD2_ROAD_EDGE_TOLERANCE;
+}
+
 static bool dd2_contact_triangle(const dd2_track_vertex vertices[3], dd2_road_point point,
                                  dd2_road_contact *result) {
+    /* Per-edge tolerance alone can extend an acute corner arbitrarily far.
+     * Clip to world-distance bounds before interpolation and BVH selection. */
+    if (!dd2_contact_bounds(vertices, point)) {
+        return false;
+    }
     const dd2_contact_vector edge = dd2_contact_difference(vertices[1], vertices[0]);
     const dd2_contact_vector other = dd2_contact_difference(vertices[2], vertices[0]);
     const double area = (edge.value[0] * other.value[2]) - (edge.value[2] * other.value[0]);

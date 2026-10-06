@@ -19,6 +19,9 @@ typedef struct {
     unsigned triangle;
 } dd2_road_contact;
 
+/* Shared numerical edge distance for contact tests and conservative search bounds. */
+#define DD2_ROAD_EDGE_TOLERANCE 1e-6
+
 /* Vertical contact with one known lane cell. Inclusive edges, no extrapolation;
  * missing/degenerate triangles fail, and failure clears result. Finite inputs
  * in world coordinates are required. Normal is unit length and positive Y.

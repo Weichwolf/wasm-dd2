@@ -47,7 +47,9 @@ uses original UV/CLUT selection, and the preview camera preserves positive Y
 upward. Scene vertices use their static raster-cell or local object origin,
 separate from the retained bounding center. Owned road graphs and lane cells now
 cover all eleven playable tracks/arenas, with vertical triangle contact heights
-and normals. Vehicle suspension and surface search, billboard orientation,
+and normals. A balanced spatial index now selects the highest road contact
+within a height window, with stable shared-edge ties and finite-input validation.
+Vehicle suspension, billboard orientation,
 lighting, blending and gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. This is an inspection viewer;
@@ -156,6 +158,14 @@ It includes source attributes, links, missing edge triangles, grid geometry and
 vertical plane samples, plus invalid-link/count/vertex/branch-cycle rejection.
 This is contact geometry coverage; suspension, vehicle motion, off-road behavior
 and lap/checkpoint equivalence remain pending.
+`make rewrite-surface-verify` additionally compares indexed contact selection
+against an exhaustive cell search for 197,750 queries per target across all
+eleven playable levels, including height windows and shared corners. Native,
+Node/WASM and ASan/UBSan agree on selection and work counts. Synthetic checks
+cover stacked surfaces, tolerance chains and nonfinite inputs under fast-math;
+the original-data verifier requires at least 95% pruning of contact tests. See
+`src/physics/README.md` for ownership and tie rules. This index is a foundation
+for vehicle simulation and is not yet used by the inspection viewer.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,
