@@ -53,6 +53,10 @@ target_include_directories(dd2_render PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_render PRIVATE softgl)
 dd2_strict_target(dd2_render)
 
+add_library(dd2_assets STATIC src/assets/archive.c)
+target_include_directories(dd2_assets PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+dd2_strict_target(dd2_assets)
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(dd2_render_smoke tests/rewrite/render_smoke.c)
@@ -68,6 +72,21 @@ if(BUILD_TESTING)
         add_test(NAME rewrite_render_smoke COMMAND dd2_render_smoke)
     endif()
     set_tests_properties(rewrite_render_smoke PROPERTIES TIMEOUT 30)
+
+    add_executable(dd2_archive_test tests/rewrite/archive_test.c)
+    target_link_libraries(dd2_archive_test PRIVATE dd2_assets)
+    dd2_strict_target(dd2_archive_test)
+    if(EMSCRIPTEN)
+        # Host filesystem access is confined to the test executable. Game assets
+        # will enter the shared decoder through the platform's byte storage.
+        target_link_options(dd2_archive_test PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node
+            -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
+        set_target_properties(dd2_archive_test PROPERTIES SUFFIX ".js")
+        add_test(NAME rewrite_archive COMMAND "${DD2_NODE}" "$<TARGET_FILE:dd2_archive_test>")
+    else()
+        add_test(NAME rewrite_archive COMMAND dd2_archive_test)
+    endif()
+    set_tests_properties(rewrite_archive PROPERTIES TIMEOUT 30)
 endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -75,6 +94,7 @@ add_custom_target(format-check
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/rewrite/quality.py" format-check
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)
 add_dependencies(dd2_render format-check)
+add_dependencies(dd2_assets format-check)
 add_custom_target(format
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/rewrite/quality.py" format
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)

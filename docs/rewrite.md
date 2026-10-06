@@ -29,9 +29,12 @@ original comparison tools as reference material during migration.
 | `src/platform/` | Native/browser windows, input, timing and persistence |
 | `tests/rewrite/` | Functional, rendering and platform regression tests |
 
-Only the renderer adapter and an actual triangle/pixel/lifetime bootstrap exist
-so far. This preparation does not implement a playable game. Remaining subsystem
-directories document their boundaries until real code lands.
+The renderer adapter has an actual triangle/pixel/lifetime bootstrap. The first
+asset module validates the original `Dirinfo` archive and exposes borrowed file
+views; all 114 original entries have been checked on native, Node/WASM and
+ASan/UBSan against an independent reader. See `src/assets/README.md` for format
+and ownership details. Typed geometry/textures and gameplay remain to be
+implemented. This is not yet a playable game.
 
 ## SoftGL
 
@@ -96,7 +99,10 @@ retain their own quality rules. Fast-math permits arithmetic changes; new physic
 must be verified for stable behavior on native and WASM, including edge cases.
 
 CI on `rewrite` checks formatting, strict native build/analysis and both renderer
-bootstraps. A green bootstrap establishes dependency/build plumbing only.
+bootstraps, plus asset archive bounds/lookup checks without proprietary data.
+With the original data provisioned, `make rewrite-archive-verify` also compares
+all archive entries on both targets and an ASan/UBSan build. These checks cover
+the archive interface and renderer plumbing; gameplay coverage is still pending.
 
 ## Migration and acceptance
 

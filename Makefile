@@ -25,6 +25,7 @@ LOG_MAX_AGE ?= 3600
 all: rewrite-native   ## default on rewrite: readable C + SoftGL native build with strict clang-tidy
 
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
+.PHONY: rewrite-archive-verify
 rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
 	cmake --preset rewrite-native
 	cmake --build --preset rewrite-native
@@ -44,6 +45,13 @@ rewrite-tidy: rewrite-native ## analyze every rewrite C unit with all findings t
 rewrite-check: rewrite-format-check rewrite-native ## strict format/build/analysis gate and native renderer bootstrap
 	python3 $(ROOT)/tools/rewrite/quality.py tidy --build-dir /tmp/wasm-dd2/rewrite-native
 	ctest --preset rewrite-native
+
+rewrite-archive-verify: ## verify all original archive entries on native, WASM and ASan/UBSan
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_archive.py
+	$(MAKE) clean-logs
 
 pipeline: decompile assemble patch native verify wasm verify-wasm ## FULL from-binary chain: dd2h.exe -> Ghidra -> assemble -> patch -> native+WASM -> 10-level crash test (both targets)
 	@echo "pipeline OK: dd2h.exe -> decompile -> assemble -> patch -> compile (native + WASM) -> run"
