@@ -3166,6 +3166,10 @@ traces; `--trace-keyboard` adds original window-procedure messages. Its full
 route uses genuine driving keys and requires both living finishes, but has
 not yet passed a complete no-debugger two-turn run. Neither operation proves
 matched original/port clocks, chronological video/PCM or physical timing.
+The same input helper also passes 41 real no-debugger key effects for empty
+Backspace, an ignored ninth character and cancellation without changing the
+original names, unlock fields or card
+(`/tmp/wasm-dd2/multiplayer-realtime-1737-name-limits/report.json`).
 
 ```sh
 make clean-logs
