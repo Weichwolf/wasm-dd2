@@ -389,6 +389,10 @@ compare-native-movie-device: ## compare unshifted native movie device PCM with W
 verify-browser-s16-output: patch ## diagnose every S16 value through actual Chromium ALSA and optional Pulse; BROWSER_S16_OUTPUT_ARGS required
 	python3 $(ROOT)/tools/verify_browser_s16_output.py $(BROWSER_S16_OUTPUT_ARGS)
 
+.PHONY: capture-original-movie-audio
+capture-original-movie-audio: ## audit full original Intro against fresh Wine ACM PCM on ALSA or Pulse; ORIGINAL_MOVIE_AUDIO_ARGS required
+	python3 $(ROOT)/tools/capture_original_movie_audio.py $(ORIGINAL_MOVIE_AUDIO_ARGS)
+
 .PHONY: verify-movie-write-recovery
 verify-movie-write-recovery: patch ## compare recoverable ALSA source writes with real Wine and sanitized native; MOVIE_WRITE_RECOVERY_ARGS required
 	python3 $(ROOT)/tools/verify_movie_write_recovery.py $(MOVIE_WRITE_RECOVERY_ARGS)

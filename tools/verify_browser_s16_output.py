@@ -12,7 +12,6 @@ No fitted waveform alignment, original parity or production codec fix is claimed
 """
 import argparse
 import array
-from contextlib import contextmanager
 import copy
 import hashlib
 import json
@@ -21,11 +20,11 @@ from pathlib import Path
 import shutil
 import subprocess
 import struct
-import time
 from urllib.request import urlopen
 
 from artifacts import WORK, check_space, open_files, prepare_output, run_bounded
 from reference.audio import build_audio, summarize_audio
+from reference.pulse import pulse_server, summarize_pulse as pulse_streams
 from verify_configuration_persistence import ROOT, require
 
 VERSION = '154.0.8037.92'
@@ -105,75 +104,12 @@ def mismatches(actual, expected):
     return sum(x != y for x, y in zip(a, b))
 
 
-@contextmanager
-def pulse_server(output):
-    directory = output / 'pulse-server'; directory.mkdir()
-    runtime = directory / 'runtime'; runtime.mkdir(mode=0o700)
-    config = directory / 'daemon.conf'
-    config.write_text('default-sample-rate = 22050\nalternate-sample-rate = 22050\n'
-                      'default-sample-format = float32le\n')
-    socket = directory / 'socket'
-    startup = directory / 'startup.conf'
-    startup.write_text(f'load-module module-native-protocol-unix socket={socket} auth-anonymous=1\n'
-                       'load-module module-null-sink sink_name=dd2 rate=22050 channels=2 format=float32le\n'
-                       'set-default-sink dd2\n')
-    env = {k: v for k, v in os.environ.items() if not k.startswith(('DD2_', 'PULSE_'))}
-    env.update(PULSE_CONFIG=str(config), PULSE_RUNTIME_PATH=str(runtime), PULSE_STATE_PATH=str(runtime),
-               XDG_RUNTIME_DIR=str(runtime), DBUS_SESSION_BUS_ADDRESS='unix:path=' + str(directory / 'no-session-bus'),
-               DBUS_SYSTEM_BUS_ADDRESS='unix:path=' + str(directory / 'no-system-bus'), LC_ALL='C')
-    command = ['pulseaudio', '-n', '--daemonize=no', '--use-pid-file=no', '--exit-idle-time=-1',
-               '--log-target=stderr', '-F', str(startup)]
-    with (directory / 'daemon.log').open('w') as log:
-        process = subprocess.Popen(command, env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-        try:
-            deadline = time.monotonic() + 10
-            while not socket.exists():
-                require(process.poll() is None and time.monotonic() < deadline, 'owned Pulse server did not start')
-                time.sleep(.05)
-            env['PULSE_SERVER'] = 'unix:' + str(socket)
-            info = subprocess.check_output(['pactl', '--server=' + env['PULSE_SERVER'], 'info'],
-                                           env=env, text=True, timeout=5)
-            require('Default Sample Specification: float32le 2ch 22050Hz' in info,
-                    'Pulse server must declare the source rate, rather than silently resample it')
-            (directory / 'server-info.txt').write_text(info)
-            version = subprocess.check_output(['pulseaudio', '--version'], text=True).strip()
-            metadata = dict(command=command, pid=process.pid, version=version,
-                            configuration_sha256=sha(config), startup_sha256=sha(startup),
-                            server_info_sha256=sha(directory / 'server-info.txt'))
-            yield env, metadata
-        finally:
-            if process.poll() is None:
-                process.terminate()
-                try: process.wait(timeout=5)
-                except subprocess.TimeoutExpired: process.kill(); process.wait()
-            (directory / 'terminal.json').write_text(json.dumps(dict(exit_code=process.returncode)) + '\n')
-
-
 def summarize_pulse(directory):
-    require(not (directory / 'error.txt').exists(), 'Pulse observer reported a capture error')
-    journals = list(directory.glob('pulse-*.jsonl'))
-    require(len(journals) == 1 and set(directory.glob('*.pcm')) == {journals[0].with_suffix('.pcm')},
-            'one actual Pulse accepted stream and journal required')
-    journal = journals[0]; events = [json.loads(line) for line in journal.read_text().splitlines()]
-    require(len(events) > 2 and events[0]['event'] == 'format' and events[-1]['event'] == 'close' and
-            events[0]['rate'] == 22050 and events[0]['channels'] == 2 and
-            events[0]['format'] == 'float32le' and events[0]['frame_bytes'] == 8,
+    streams = pulse_streams(directory, require_closed=True)
+    require(len(streams) == 1 and streams[0]['rate'] == 22050 and streams[0]['channels'] == 2 and
+            streams[0]['format'] == 'float32le' and streams[0]['frame_bytes'] == 8,
             'complete Pulse Float32 22050-Hz stereo lifetime required')
-    total = 0; last_time = events[0]['time_ns']
-    for event in events[1:-1]:
-        require(event['event'] == 'write' and event['result'] == 0 and
-                last_time <= event['call_begin_ns'] <= event['call_end_ns'] <= event['time_ns'] and
-                event['offset_frames'] == total and event['requested_bytes'] > 0 and
-                event['requested_bytes'] % 8 == 0, 'invalid or nonsequential real Pulse write')
-        total += event['requested_bytes'] // 8; last_time = event['time_ns']
-    require(events[-1]['result'] == 0 and events[-1]['time_ns'] >= last_time and
-            events[-1]['frames'] == total and journal.with_suffix('.pcm').stat().st_size == total * 8,
-            'Pulse accepted extent/close differs')
-    library = Path(events[0]['client_library']).resolve()
-    return dict(scope='actual accepted Pulse client writes; daemon consumption and output timing unproven',
-                **{**events[0], 'client_library': str(library)}, accepted_frames=total, closed=True,
-                file=journal.with_suffix('.pcm').name, events=journal.name,
-                sha256=sha(journal.with_suffix('.pcm')), client_library_sha256=sha(library))
+    return streams[0]
 
 
 def validate_pulse(actual, expected_source, canonical_source):
@@ -220,6 +156,7 @@ def main():
     immutable = {path: sha(path) for path in (
         Path(__file__), ROOT / 'tools/browser/qa_s16_output.js', ROOT / 'tools/reference/browser_s16_reference.cc',
         ROOT / 'tools/reference/pulse_audio.c', ROOT / 'tools/reference/wine_audio.c', ROOT / 'tools/reference/alsa_clock.c',
+        ROOT / 'tools/reference/pulse.py',
     )}
     pulse_enabled = args.pulse or args.pulse_sources is not None
     if args.chromium_sources is None:
@@ -400,6 +337,7 @@ def main():
                   cases=cases, pulse_cases=pulse_cases, pulse_server=pulse_metadata,
                   pulse_primary_sources=pulse_sources,
                   pulse_observer_sha256=sha(ROOT / 'tools/reference/pulse_audio.c') if pulse_enabled else None,
+                  pulse_capture_helper_sha256=sha(ROOT / 'tools/reference/pulse.py') if pulse_enabled else None,
                   negative_controls=negative)
     (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
     # Only completed fixture raw output is removed; preserve hashes and reports.

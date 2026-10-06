@@ -309,6 +309,10 @@ def run(game, output, args, on_menu=None):
     with (game / "dd2h.exe").open("rb") as executable:
         if hashlib.file_digest(executable, "sha256").hexdigest() != EXE_SHA256:
             raise ValueError("Reference EXE differs from the supported unmodified dd2h.exe")
+    audio_backend = getattr(args, 'audio_backend', 'alsa')
+    if audio_backend not in ('alsa', 'pulse') or (audio_backend == 'pulse' and
+            (not args.audio or args.reset_errors or args.trace_movie_timing or args.trace_movie_video)):
+        raise ValueError('Pulse client capture requires audio mode without ALSA faults or movie-clock collectors')
     _, libraries = build_cdrom(game, WORK / "cdrom")
     prefix = WORK / "prefix"
     if original_pid(prefix):
@@ -342,16 +346,24 @@ def run(game, output, args, on_menu=None):
                LD_LIBRARY_PATH=":".join(map(str, libraries)) +
                    (":" + env["LD_LIBRARY_PATH"] if env.get("LD_LIBRARY_PATH") else ""))
     if args.audio:
-        audio_libraries=build_audio(WORK/"audio")
+        if audio_backend == 'pulse':
+            from reference.pulse import build_pulse
+            audio_libraries = build_pulse(WORK / 'audio')
+        else:
+            audio_libraries=build_audio(WORK/"audio")
         (output/"audio").mkdir()
-        env.update(DD2_AUDIO_CAPTURE=str(output/"audio"),DD2_AUDIO_RATE=str(args.audio_rate))
-        env["LD_PRELOAD"]+=" dd2_audio.so"
+        if audio_backend == 'pulse':
+            env.update(DD2_PULSE_CAPTURE=str(output / 'audio'), DD2_AUDIO_PROCESS='dd2h.exe')
+            env['LD_PRELOAD'] += ' dd2_pulse.so'
+        else:
+            env.update(DD2_AUDIO_CAPTURE=str(output/"audio"),DD2_AUDIO_RATE=str(args.audio_rate))
+            env["LD_PRELOAD"]+=" dd2_audio.so"
         env["LD_LIBRARY_PATH"]=":".join(map(str,audio_libraries))+":"+env["LD_LIBRARY_PATH"]
         if args.reset_errors:
             build_reset_fault(audio_libraries)
             env.update(DD2_AUDIO_PROCESS='dd2h.exe',DD2_RESET_FAULT_LOG=str(output/'reset-fault.jsonl'))
             env['LD_PRELOAD']='dd2_reset_fault.so '+env['LD_PRELOAD']
-        if args.audio_device=="clock":
+        if audio_backend == 'alsa' and args.audio_device=="clock":
             library=json.dumps(str(WORK/"audio"/"$LIB"/"dd2_clock.so"))
             alsa.write_text(f'pcm_type.dd2clock {{ lib {library} }}\npcm.!default {{ type dd2clock }}\n')
     if args.trace_cd:
@@ -443,7 +455,7 @@ def run(game, output, args, on_menu=None):
                     raise RuntimeError(f"Unexpected directory at {link}")
                 link.symlink_to(target)
             settings = [(r"HKLM\Software\Wine\Drives", "d:", "cdrom"),
-                        (r"HKCU\Software\Wine\Drivers", "Audio", "alsa")]
+                        (r"HKCU\Software\Wine\Drivers", "Audio", audio_backend)]
             if args.trace_game_clock or args.trace_multimedia_timer:
                 relay = []
                 if args.trace_game_clock:

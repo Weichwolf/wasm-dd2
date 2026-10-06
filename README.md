@@ -2194,6 +2194,45 @@ make verify-browser-s16-output BROWSER_S16_OUTPUT_ARGS='--pulse --output /tmp/wa
 make clean-logs
 ```
 
+`make capture-original-movie-audio` audits the unchanged original's complete
+Intro against a fresh actual Wine ACM decode. `--backend alsa` records both
+accepted writes and clocked-device consumption; `--backend pulse` records
+accepted client writes on an owned 22,050-Hz Pulse server. The report binds the
+original EXE, AVI, decoder fixture, capture sources and mapped Wine audio drivers.
+It requires the natural return to Main Menu, an unchanged save card and all
+1,711 ordered movie paint calls. Paint calls do not prove pixel equality.
+
+The ALSA run (`movie-source-1658-alsa/report.json`) matches all 6,039,616 source
+bytes at offset zero in both streams. It retains the distinction between that
+source match and whole-stream equality: the accepted stream has 2,640 additional
+silent bytes, and the consumed stream has 1,640. The Pulse run
+(`movie-source-1656-pulse/report.json`) is a valid complete capture but fails the
+source check: its first mismatch is byte 24,784, and it is 12,880 bytes shorter
+than the source. The current-source repeat
+(`movie-source-1659-pulse/report.json`) differs already at byte 2,212 and is
+115,128 bytes shorter. An earlier private run differs at byte 26,988 with yet
+another extent, so a fixed padding correction is not justified. Neither backend result
+establishes original/port parity or a shared A/V clock; Pulse daemon consumption
+is not observed. The browser fixture regression using the shared Pulse helper
+also passes all five real-backend cases and rejects 48 damaged cases
+(`browser-s16-1657-regression/report.json`).
+
+The capture writes its report and a bounded mismatch checkpoint, then removes
+its closed raw PCM, journals, logs and owned Wine prefix with a hash ledger.
+`--require-exact-source` exits nonzero after that cleanup when the source check
+fails. The decoder source PCM is external to each capture; retain it only until
+the selected comparisons finish. The decoder uses the system MinGW compiler
+when available and otherwise the provisioned 32-bit MinGW SDK.
+
+```sh
+make clean-logs
+python3 tools/capture_movie_audio_source.py --output /tmp/wasm-dd2/movie-acm-source
+make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend alsa --source /tmp/wasm-dd2/movie-acm-source --require-exact-source --output /tmp/wasm-dd2/movie-original-alsa'
+# On the diagnosed Wine/Pulse setup this strict source check fails; inspect report.json.
+make capture-original-movie-audio ORIGINAL_MOVIE_AUDIO_ARGS='--backend pulse --source /tmp/wasm-dd2/movie-acm-source --require-exact-source --output /tmp/wasm-dd2/movie-original-pulse'
+make clean-logs
+```
+
 Patch 889 prepares the complete browser movie AudioBuffer before opening
 its real-time AudioContext. Previously a running context could render empty
 quanta during the whole-source PCM copy. The standalone
