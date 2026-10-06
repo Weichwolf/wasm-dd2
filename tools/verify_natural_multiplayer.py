@@ -22,7 +22,7 @@ from verify_normal_arena_history import (STATE, compare_frames, compare_checkpoi
 from verify_champ_season import EXE
 
 CODES = dict(Return='Enter', Escape='Escape', Up='ArrowUp', Down='ArrowDown',
-             Left='ArrowLeft', Right='ArrowRight', a='KeyA', z='KeyZ')
+             Left='ArrowLeft', Right='ArrowRight', a='KeyA', z='KeyZ', space='Space')
 
 
 def load(path):
@@ -41,7 +41,7 @@ def driving_events(meta, events):
         if event['player'] != expected_player:
             raise ValueError('Driving action assigned to the wrong hotseat player')
         frame = transition['frame']
-        if not previous <= frame < len(meta['race_frames']) or transition['key'] not in ('a', 'z', 'Left', 'Right'):
+        if not previous <= frame < len(meta['race_frames']) or transition['key'] not in ('a', 'z', 'Left', 'Right', 'space'):
             raise ValueError('Invalid driving frame or key')
         boundary = meta['final_races'][OVERS.index(event['action'])] if transition.get('finish') else meta['race_frames'][frame]
         if any(event[k] != boundary[k] for k in (*STATE, 'player', 'clock_calls', 'rng_calls', 'draws', 'pad_polls')):

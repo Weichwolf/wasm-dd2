@@ -26,7 +26,11 @@ def main():
     parser.add_argument('--speed-limit', type=int, default=250, choices=range(60, 251), metavar='60..250')
     parser.add_argument('--slow-recovery', action='store_true', help='reverse after 75 physics ticks of low forward speed despite positional movement')
     parser.add_argument('--wall-recovery', action='store_true', help='retain a minimum steering target during reverse recovery when road alignment would cancel the turn')
+    parser.add_argument('--road-policy', choices=('steady-persistent', 'arc-road-predictive'),
+                        default='steady-persistent', help='original-only keyboard policy; ports replay its recorded transitions')
     args = parser.parse_args()
+    if args.road_policy == 'arc-road-predictive' and (args.slow_recovery or args.wall_recovery):
+        parser.error('The arc road policy has its own recovery controls')
     args.target = 'original'
     initial = (ROOT/'DestructionDerby2/SaveGames').read_bytes()
     require(len(initial) == 0x20000 and all(struct.unpack_from('<I', initial, i*0x200)[0] == 0 for i in range(15)),
@@ -37,11 +41,14 @@ def main():
     names = ['champ_history_gdb.py', 'natural_champ_driver.py',
              'natural_multiplayer_protocol.py', 'natural_multiplayer_ui.json',
              'multiplayer_results_protocol.py', 'multiplayer_results_ui.json']
+    if args.road_policy == 'arc-road-predictive':
+        names.append('live_lap_record_driver.py')
     for name in names:
         shutil.copyfile(ROOT/'tools'/name, sources/name)
     report = dict(scope=SCOPE, operation='original-history', pass_=False,
                   port_comparison='pending', chronological_audio='unproven',
                   engine_state_writes=False, binary_sha256=EXE_SHA256,
+                  driving_policy=args.road_policy,
                   driving_speed_limit=args.speed_limit,
                   driving_slow_recovery=args.slow_recovery,
                   driving_wall_recovery=args.wall_recovery,
@@ -53,7 +60,7 @@ def main():
                 f'attach {ui.pid}\npython\nimport sys\nsys.path.insert(0,{str(ROOT/"tools")!r})\n'
                 f'sys.path.insert(0,{str(sources)!r})\n'
                 'from champ_history_gdb import record_champ_history\n'
-                f'record_champ_history({str(out)!r},natural_champ=True,natural_multiplayer=True,natural_multiplayer_speed={args.speed_limit},slow_recovery={args.slow_recovery!r},wall_recovery={args.wall_recovery!r})\n'
+                f'record_champ_history({str(out)!r},natural_champ=True,natural_multiplayer=True,natural_multiplayer_speed={args.speed_limit},slow_recovery={args.slow_recovery!r},wall_recovery={args.wall_recovery!r},road_policy={args.road_policy!r})\n'
                 'end\ndetach\nquit\n')
             with (out/'history.log').open('wb') as log:
                 run_bounded(['gdb', '--nx', '-q', '-batch', '-x', str(script)],

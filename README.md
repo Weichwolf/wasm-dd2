@@ -2721,6 +2721,29 @@ wall sliding that still advances the position/strip observations. It is opt-in;
 the legacy default policy remains unchanged. Recorder sources are frozen in the
 capture directory before the original attempt starts.
 
+`--road-policy arc-road-predictive` selects the existing read-only time-trial
+keyboard driver for original multiplayer recording. It follows the linked
+road's arc in the initial lane, predicts steering over the observed adaptive
+physics batch and releases keys during original pit control. It uses its own
+recovery controls, so combining it with `--slow-recovery` or `--wall-recovery`
+is rejected before starting a capture. The selected driver source is frozen
+and hashed. Native/browser replay and multiplayer input validation also accept
+its actual Space handbrake transitions. Full frame, API, input-owner, positive
+score and regular-finish requirements still apply.
+
+`multiplayer-arc-1559-host-checks/report.json` checks a balanced prefix of 44
+actual original key transitions, including handbrake press/release, rejects
+five altered key/frame/player/direction/extent cases and both incompatible
+recovery options, and confirms the full multiplayer gate rejects the earlier
+first-human prefix. This is host recording/input validation, not a completed
+two-human or port comparison. Observed natural quit-boundary driver metrics
+are saved atomically in `history/natural-finishes.json` even if a later turn
+fails; partial finish lists do not constitute completed-history acceptance.
+
+```sh
+make capture-natural-multiplayer NATURAL_MULTIPLAYER_CAPTURE_ARGS='--output /tmp/wasm-dd2/natural-arc-road --road-policy arc-road-predictive --speed-limit 190'
+```
+
 The slower original attempt was diagnosed from actual pixels and input/driver
 observations: the healthy car slid along the outer wall, and projected capture
 storage for both turns exceeded 2 GiB. Its incomplete report is

@@ -303,7 +303,7 @@ async function tap(page,key,timing=null,raceStart=null){
       const event=drivingInputs[history.drivingCursor];
       if(event.frame<frame){history.error='Recorded driving presentation was skipped';break;}
       if(event.frame!==frame||(event.finish?!physical.quit:!recordRace))break;
-      const code={a:'KeyA',z:'KeyZ',Left:'ArrowLeft',Right:'ArrowRight'}[event.key];
+      const code={a:'KeyA',z:'KeyZ',Left:'ArrowLeft',Right:'ArrowRight',space:'Space'}[event.key];
       if(!code){history.error='Unsupported original driving key';break;}
       history.inputs.push({action:history.index,code,down:event.down,frame,finish:!!event.finish,level:physical.level,ticks:physical.ticks});
       window.dispatchEvent(new KeyboardEvent(event.down?'keydown':'keyup',{code}));

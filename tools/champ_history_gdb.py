@@ -30,7 +30,7 @@ import multiplayer_loaded_protocol
 import natural_multiplayer_protocol
 
 
-def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False, wall_recovery=False, native_api_return_log=None):
+def record_champ_history(output, steps=95, target='original', game_frame_delay_ms=0, normal_arena=False, full_video=False, natural_champ=False, driving_reference=None, steady_driver=False, natural_season=False, result_tables=False, result_reference=None, result_race_mode=None, natural_multiplayer=False, natural_multiplayer_speed=250, slow_recovery=False, wall_recovery=False, native_api_return_log=None, road_policy='steady-persistent'):
     if native_api_return_log and target != 'native':
         raise ValueError('Provider return observations are only available for native captures')
     protocol = multiplayer_loaded_protocol if result_tables == 'multiplayer-loaded' else multiplayer_results_protocol if result_tables == 'multiplayer' else race_results_protocol
@@ -46,6 +46,12 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             card_wanted[step] = {(f['phase'],f['card_phase']) for f in meta['frames']}
     if not 60 <= natural_multiplayer_speed <= 250:
         raise ValueError('Natural multiplayer throttle limit must be 60..250')
+    if road_policy not in ('steady-persistent', 'arc-road-predictive'):
+        raise ValueError('Unsupported original road recording policy')
+    if road_policy == 'arc-road-predictive' and (target != 'original' or not natural_multiplayer):
+        raise ValueError('Arc road policy requires the original natural multiplayer route; ports replay recorded keys')
+    if road_policy == 'arc-road-predictive' and (slow_recovery or wall_recovery):
+        raise ValueError('The arc road policy has its own recovery controls')
     if natural_multiplayer and (not natural_champ or natural_season or result_tables):
         raise ValueError('Natural multiplayer requires its dedicated natural championship route')
     if result_tables and (normal_arena or full_video or natural_champ or natural_season):
@@ -81,6 +87,9 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     driving_held = []
     last_control_tick = None
     def new_driver():
+        if road_policy == 'arc-road-predictive':
+            from live_lap_record_driver import ArcRoadKeyboardDriver
+            return ArcRoadKeyboardDriver()
         return KeyboardDriver(steady=True, movement_distance=100, progress_ticks=1200,
                               slow_ticks=75 if slow_recovery else 0,
                               escape_steering=96 if wall_recovery else 0) if natural_multiplayer else KeyboardDriver(steady=steady_driver)
@@ -100,7 +109,11 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         # These are actual provider counters, not reference-derived lengths.
         clock_count_address = int(gdb.parse_and_eval('&dd2_tick_calls'))
         rng_count_address = int(gdb.parse_and_eval('&g_rand_calls'))
-    driver_source_sha256 = hashlib.sha256(Path(natural_champ_driver.__file__).read_bytes()).hexdigest() if original and natural_champ else None
+    driver_source = natural_champ_driver
+    if road_policy == 'arc-road-predictive':
+        import live_lap_record_driver
+        driver_source = live_lap_record_driver
+    driver_source_sha256 = hashlib.sha256(Path(driver_source.__file__).read_bytes()).hexdigest() if original and natural_champ else None
     draw_pc = (0x412ca0 if full_video else 0x420c9c) if original else int(gdb.parse_and_eval('&PutDispEnv' if full_video else '&Draw_All'))
     pad_pc = 0x422da4 if original else int(gdb.parse_and_eval('&FUN_00422da4'))
     rng_entry = 0x456cc6 if original else int(gdb.parse_and_eval('&rand'))
@@ -153,7 +166,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             subprocess.run([*command, 'keydown' if down else 'keyup', key],
                            check=True, timeout=5, stdout=subprocess.DEVNULL)
         else:
-            vk = dict(Return=0x0d, Escape=0x1b, Up=0x26, Down=0x28, Left=0x25, Right=0x27, a=0x41, z=0x5a)[key]
+            vk = dict(Return=0x0d, Escape=0x1b, Up=0x26, Down=0x28, Left=0x25, Right=0x27, a=0x41, z=0x5a, space=0x20)[key]
             gdb.execute(f'call (void)dd2_key_event({vk}, {int(down)})')
         event('key', key=key, down=down, action=key_index)
 
@@ -375,6 +388,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     if natural_champ:
                         final_race.update(driver=driver_metrics(read))
                         final_races.append(final_race)
+                        # Preserve observed quit-boundary metrics if a later
+                        # hotseat turn fails before complete history metadata.
+                        finish_path = root/'natural-finishes.json'
+                        finish_temp = finish_path.with_suffix('.json.tmp')
+                        finish_temp.write_text(json.dumps(dict(
+                            scope='Actual observed natural quit boundaries; partial finish lists do not establish complete multiplayer or game acceptance',
+                            target=target,finishes=final_races),indent=2)+'\n')
+                        finish_temp.replace(finish_path)
                     if integer(0x795df4) <= 14 or integer(0x9376a8):
                         raise RuntimeError('Arena left gameplay without natural finish')
                     if natural_champ:
@@ -522,7 +543,7 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             result_tables=result_tables,
             natural_championship=natural_champ, natural_season=natural_season, natural_multiplayer=natural_multiplayer,
             actions=actions, driving_inputs=driving_inputs,
-            driving_policy=('steady-persistent' if natural_multiplayer else 'steady' if steady_driver else 'default') if original and natural_champ else None,
+            driving_policy=(road_policy if natural_multiplayer else 'steady' if steady_driver else 'default') if original and natural_champ else None,
             driving_source_sha256=driver_source_sha256,
             driving_speed_limit=natural_multiplayer_speed if natural_multiplayer and original else None,
             driving_slow_recovery=slow_recovery if natural_multiplayer and original else None,
