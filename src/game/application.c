@@ -6,6 +6,7 @@
 #include "game/course.h"
 #include "game/driving.h"
 #include "game/laps.h"
+#include "game/race.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
@@ -27,7 +28,7 @@
 #include <emscripten.h>
 #endif
 
-enum { DD2_APP_WIDTH = 640, DD2_APP_HEIGHT = 480 };
+enum { DD2_APP_WIDTH = 640, DD2_APP_HEIGHT = 480, DD2_APP_RACING_LEVELS = 7 };
 static const float dd2_app_wheel_seconds = 0.15F;
 
 typedef struct {
@@ -84,6 +85,14 @@ int dd2_application_select_level(int number) {
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
     dd2_driving *driving = dd2_driving_create(dd2_track_road(track), (unsigned)number);
+    const dd2_race *previous_race = dd2_driving_race(application->driving);
+    if (driving != NULL && previous_race != NULL &&
+        !dd2_driving_set_race(driving, true,
+                              number > DD2_APP_RACING_LEVELS ? DD2_RACE_WRECKING
+                                                             : previous_race->rules.mode)) {
+        dd2_driving_destroy(driving);
+        driving = NULL;
+    }
     if (driving == NULL || materials == NULL ||
         !dd2_application_fit(&camera, track, application->car)) {
         dd2_mesh_materials_destroy(materials);
@@ -125,7 +134,14 @@ int dd2_application_current_view(void) {
     if (application == NULL) {
         return -1;
     }
-    return application->drive ? 2 : (int)application->car;
+    const dd2_race *race = dd2_driving_race(application->driving);
+    if (!application->drive) {
+        return (int)application->car;
+    }
+    if (race == NULL) {
+        return 2;
+    }
+    return race->rules.mode == DD2_RACE_WRECKING ? 3 : 4;
 }
 
 unsigned dd2_application_collision_count(void) {
@@ -243,11 +259,66 @@ int dd2_application_set_driving(int enabled) {
     if (application == NULL || (enabled != 0 && enabled != 1)) {
         return 0;
     }
+    if (dd2_driving_race(application->driving) != NULL &&
+        !dd2_driving_set_race(application->driving, false, DD2_RACE_WRECKING)) {
+        return 0;
+    }
     application->drive = enabled != 0;
     dd2_driving_suspend(application->driving);
     dd2_window_release_input(application->window);
     application->dirty = true;
     return 1;
+}
+
+int dd2_application_start_race(int stockcar) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || (stockcar != 0 && stockcar != 1) ||
+        !dd2_driving_set_race(application->driving, true,
+                              stockcar != 0 ? DD2_RACE_STOCKCAR : DD2_RACE_WRECKING)) {
+        return 0;
+    }
+    application->drive = true;
+    application->paused = false;
+    application->dirty = true;
+    dd2_window_release_input(application->window);
+    return 1;
+}
+
+int dd2_application_withdraw_race(void) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || !application->drive || !dd2_driving_withdraw(application->driving)) {
+        return 0;
+    }
+    application->dirty = true;
+    dd2_window_release_input(application->window);
+    return 1;
+}
+
+int dd2_application_race_phase(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    return race == NULL ? -1 : (int)race->phase;
+}
+
+unsigned dd2_application_race_steps(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    if (race == NULL) {
+        return 0;
+    }
+    return race->steps < UINT_MAX ? (unsigned)race->steps : UINT_MAX;
+}
+
+unsigned dd2_application_race_place(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    return race == NULL ? 0 : race->drivers[0].place;
+}
+
+unsigned dd2_application_race_points(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    return race == NULL || race->phase != DD2_RACE_RESULTS ? 0 : race->drivers[0].total_points;
 }
 
 int dd2_application_set_paused(int paused) {
@@ -274,10 +345,22 @@ static dd2_camera_motion dd2_application_motion(const dd2_input *input) {
         .pan_y = (float)((int)input->held[DD2_KEY_PAN_DOWN] - (int)input->held[DD2_KEY_PAN_UP])};
 }
 
+static void dd2_application_race_input(const dd2_input *input) {
+    if (input->pressed[DD2_KEY_WRECKING] || input->pressed[DD2_KEY_STOCKCAR]) {
+        if (dd2_application_start_race((int)input->pressed[DD2_KEY_STOCKCAR]) == 0) {
+            puts("Stockcar benötigt eine Rennstrecke.");
+        }
+    }
+    if (input->pressed[DD2_KEY_WITHDRAW]) {
+        dd2_application_withdraw_race();
+    }
+}
+
 static void dd2_application_input(dd2_application *application, const dd2_input *input) {
     if (input->pressed[DD2_KEY_DRIVE]) {
         dd2_application_set_driving(!application->drive);
     }
+    dd2_application_race_input(input);
     if (input->pressed[DD2_KEY_PAUSE] && application->drive) {
         dd2_application_set_paused(!application->paused);
     }
@@ -317,6 +400,7 @@ static bool dd2_application_draw(dd2_application *application) {
                        .damage = dd2_driving_damage(application->driving),
                        .score = dd2_driving_accidents(application->driving),
                        .lap = dd2_driving_laps(application->driving),
+                       .race = dd2_driving_race(application->driving),
                        .required_laps = dd2_course_laps(dd2_driving_course(application->driving)),
                        .wheel_roll = dd2_driving_wheel_roll(application->driving),
                        .opponents = dd2_driving_vehicles(application->driving) + 1,

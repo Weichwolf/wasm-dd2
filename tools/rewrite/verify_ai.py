@@ -100,7 +100,7 @@ def main():
         return [json.loads(s) for s in content.splitlines() if s.startswith('{')]
     units=[ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision','damage')]
-    units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps')]
+    units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps','race')]
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]+[ROOT/'src/platform/file.c']
     flags=['-std=c11','-O1','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests/rewrite'),
            '-Wall','-Wextra','-Wpedantic','-Wno-unused-parameter','-Wno-unused-function',

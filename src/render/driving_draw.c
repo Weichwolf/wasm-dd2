@@ -2,10 +2,12 @@
 
 #include "assets/level.h"
 #include "assets/track.h"
+#include "game/race.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
 #include "render/damage_draw.h"
 #include "render/mesh_draw.h"
+#include "render/race_draw.h"
 #include "render/score_draw.h"
 
 #include <GL/softgl.h>
@@ -157,7 +159,11 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
                                                    .wheel_roll = view.opponent_rolls[index],
                                                    .viewport = view.viewport});
     }
+    if (drawn && view.race != NULL && view.race->phase == DD2_RACE_RESULTS) {
+        return dd2_race_draw(view.race, view.viewport);
+    }
     return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
            (view.score == NULL || dd2_score_draw(view.score, view.viewport)) &&
-           (view.lap == NULL || dd2_lap_draw(view.lap, view.required_laps, view.viewport));
+           (view.lap == NULL || dd2_lap_draw(view.lap, view.required_laps, view.viewport)) &&
+           (view.race == NULL || dd2_race_draw(view.race, view.viewport));
 }

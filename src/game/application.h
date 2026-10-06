@@ -28,4 +28,14 @@ int dd2_application_set_driving(int enabled);
 int dd2_application_set_paused(int paused);
 int dd2_application_is_paused(void);
 
+/* Start a fresh race: 0 Wrecking (including arenas), 1 Stockcar (circuits).
+ * Phase -1 means no race; otherwise dd2_race_phase. Results remain visible
+ * until reset, view change or another race/track selection. */
+int dd2_application_start_race(int stockcar);
+int dd2_application_withdraw_race(void);
+int dd2_application_race_phase(void);
+unsigned dd2_application_race_steps(void);
+unsigned dd2_application_race_place(void);
+unsigned dd2_application_race_points(void);
+
 #endif

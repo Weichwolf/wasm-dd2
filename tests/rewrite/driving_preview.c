@@ -2,6 +2,7 @@
 #include "assets/track.h"
 #include "game/course.h"
 #include "game/driving.h"
+#include "game/race.h"
 #include "physics/vehicle.h"
 #include "render/driving_draw.h"
 #include "render/mesh_draw.h"
@@ -58,7 +59,8 @@ int main(int argc, char **argv) {
     if (argc != DD2_PREVIEW_ARGUMENTS || strncmp(argv[2], allowed, sizeof(allowed) - 1) != 0 ||
         strstr(argv[2], "..") != NULL || strlen(argv[3]) != 1 ||
         strchr(codes, argv[3][0]) == NULL ||
-        (strcmp(argv[4], "start") != 0 && strcmp(argv[4], "drive") != 0)) {
+        (strcmp(argv[4], "start") != 0 && strcmp(argv[4], "drive") != 0 &&
+         strcmp(argv[4], "race-start") != 0 && strcmp(argv[4], "race-results") != 0)) {
         return EXIT_FAILURE;
     }
     dd2_archive_fixture fixture = {0};
@@ -73,6 +75,12 @@ int main(int argc, char **argv) {
     dd2_mesh_materials *materials =
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     bool passed = driving != NULL && renderer != NULL && materials != NULL;
+    if (strncmp(argv[4], "race-", sizeof("race-") - 1) == 0) {
+        passed = passed && dd2_driving_set_race(driving, true, DD2_RACE_WRECKING);
+        if (strcmp(argv[4], "race-results") == 0) {
+            passed = passed && dd2_driving_withdraw(driving);
+        }
+    }
     if (strcmp(argv[4], "drive") == 0) {
         enum { DD2_PREVIEW_DRIVE_FRAMES = 120 };
         for (unsigned frame = 0; frame < DD2_PREVIEW_DRIVE_FRAMES && passed; ++frame) {
@@ -103,6 +111,7 @@ int main(int argc, char **argv) {
                          .vehicle = vehicle,
                          .damage = dd2_driving_damage(driving),
                          .score = dd2_driving_accidents(driving),
+                         .race = dd2_driving_race(driving),
                          .lap = dd2_driving_laps(driving),
                          .required_laps = dd2_course_laps(dd2_driving_course(driving)),
                          .wheel_roll = dd2_driving_wheel_roll(driving),

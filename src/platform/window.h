@@ -26,6 +26,9 @@ typedef enum {
     DD2_KEY_DRIVE,
     DD2_KEY_PAUSE,
     DD2_KEY_BRAKE,
+    DD2_KEY_WRECKING,
+    DD2_KEY_STOCKCAR,
+    DD2_KEY_WITHDRAW,
     DD2_KEY_COUNT
 } dd2_key;
 

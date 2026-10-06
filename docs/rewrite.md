@@ -64,8 +64,10 @@ the rendered body; a player HUD shows regional damage and engine health. Acciden
 attribution now credits 90/180/360-degree spins and destroyed opponents, with
 visible points/destruction counts. Racing levels now track source-equivalent
 checkpoints, laps, individual completion and lap times for all twenty cars, with
-a lap/finish HUD. Detached parts, smoke, billboard orientation,
-lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
+a lap/finish HUD. Wrecking/Stockcar practice races now have a source-timed
+start countdown, persistent finishing order, retirement/survival endings,
+an explicit coasting phase and frozen twenty-driver results. Detached parts,
+smoke, billboard orientation, lighting and blending remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
 free driving on all eleven levels, using
@@ -73,8 +75,8 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Damage-aware tactics, overturned/off-road recovery, race phases/results and
-mode-specific rules remain pending.
+Damage-aware tactics, overturned/off-road recovery, Time Trial/Total Destruction,
+championships and the complete original front end remain pending.
 This is not yet a complete racing game.
 
 ## SoftGL
@@ -134,7 +136,24 @@ destructions. Reset restores all twenty cars and clears their damage, scores and
 attribution windows. Racing tracks also show LAP current/required at the upper
 left, followed by FIN when that driver completes the required laps. The initial
 grid approach starts lap 1 without crediting a complete lap; reverse finish
-crossings cannot earn another lap. Arenas omit the lap display.
+crossings cannot earn another lap. Arenas omit the lap display. F5 starts Wrecking
+Racing on a circuit or a destruction arena; F6 starts Stockcar on a circuit.
+The browser view selector offers the same modes. The two-second start countdown
+holds the settled field and all physics/lap/damage/accident clocks until GO;
+P and loss of focus freeze the countdown as well as an active race. Road position
+uses credited laps and finish-relative progress; finish places latch on each
+crossing tick, with prior position resolving simultaneous crossings. Player
+completion or retirement ends a circuit session. Arenas end on player retirement
+or fewer than two cars with functioning engines. A tuned three-second coasting
+phase allows later finishers to cross before results freeze. F7 or the browser's
+race-exit button publishes provisional DNF results immediately. R restarts the
+same field/countdown; Enter returns to inspection, and selecting Freifahrt clears
+the race rules. Stockcar awards original position bonuses (100/75/50/.../0);
+Wrecking adds actual simulated accident points to the original 50/25/10 circuit
+bonuses, capped at 999. Arena results use accident points without circuit bonuses.
+No randomized post-race NPC score or progress boost is manufactured. The result
+list sorts total points, breaking ties by road/survival position; the player is
+highlighted yellow. These are practice results; season totals are still pending.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -307,8 +326,32 @@ and sequential-checkpoint oracle; a second field checks equivalent frame
 partitions. Synthetic tests cover reverse/re-crossing, missing units, unsupported
 contacts, retirement, completion freeze and transactional rejection. Actual
 native/browser windows verify the lap overlay, real start-line crossing, paused
-timing and reset; pixel tests check LAP/FIN glyphs. Countdown, finishing order,
-mode-specific race endings/results and championships remain pending.
+timing and reset; pixel tests check LAP/FIN glyphs. Complete races and results
+are covered by the separate race verifier.
+
+`make rewrite-race-verify` checks all eleven original levels in Wrecking mode
+and all seven circuits in Stockcar mode on Native, Node/WASM and ASan/UBSan.
+Each short physical scenario holds the complete field during countdown, drives
+six seconds, checks every driver's geometric checkpoint/lap progress and race
+position against independent Python oracles, then verifies DNF publication,
+result freeze, frame partitioning, pause/rejection and full reset. Independent
+readers supply the original lap/course and both placement-point tables. Fourteen
+ordered twenty-driver source-cell scenarios complete every circuit/mode through
+lap rules and coasting results; these are rules traces, not physical races.
+A separate complete Stockcar race on original circuit 5 uses the real twenty-car
+physics, AI, damage, accidents, checkpoints and race owner through all eight
+required laps and result publication. The existing AI supplies only ordinary
+player control inputs; no position, lap, damage or race-state injection is used.
+An independent geometric oracle checks the player at every fixed step; final
+field placement/scoring is checked against crossing ticks and source tables.
+This establishes one physically completed circuit race, not complete gameplay or
+all-track completion. Additional complete races, overturned-car elimination,
+recovery, Time Trial, Total Destruction and championships remain to be implemented
+or verified. Native/browser window checks cover all eleven countdown/results
+views, real mode/exit keys and selectors, held throttle until GO, pause, frozen
+results, invalid arena Stockcar rejection and restart. SoftGL pixel tests check
+source-timed red lights, GO and the yellow player result row. Source-timed lights
+are currently visual; sound cues and music remain pending.
 
 ## Migration and acceptance
 

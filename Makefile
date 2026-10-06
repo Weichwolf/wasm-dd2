@@ -31,6 +31,16 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-ground-verify
 .PHONY: rewrite-fleet-verify
 .PHONY: rewrite-accidents-verify
+.PHONY: rewrite-race-verify
+
+rewrite-race-verify: ## verify race phases/results, source rules and a complete physical race
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_race.py
+	python3 $(ROOT)/tools/rewrite/verify_window.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-laps-verify
 
 rewrite-laps-verify: ## verify original course equivalents, lap rules and physical progress

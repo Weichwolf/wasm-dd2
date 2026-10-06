@@ -165,6 +165,68 @@ async function drivingChecks(page) {
   report.driving={pass_:true,real_throttle:true,pause_freezes:true,focus_loss_freezes:true,
                   deterministic_reset:true,track_wrap:true,selection_sync:true,invalid_controls_rejected:true};
 }
+async function raceChecks(page) {
+  await page.keyboard.press('F5');
+  await page.waitForFunction(()=>Module._dd2_application_current_view()===3);
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  let index=1;
+  for(const code of '123456789AB') {
+    await page.selectOption('#level',String(index++));
+    await match(page,code,'race-start');
+    const before=await page.evaluate(()=>({phase:Module._dd2_application_race_phase(),ticks:Module._dd2_application_race_steps(),
+      lap:Module._dd2_application_lap_steps(),place:Module._dd2_application_race_place()}));
+    if(before.phase!==0||before.ticks!==0||before.lap!==0||before.place<1||before.place>20)throw new Error('Initial race state invalid');
+    await page.keyboard.down('w');
+    try {await pause(120);if(await page.evaluate(()=>Module._dd2_application_race_steps())!==0)throw new Error('Paused countdown advances');}
+    finally {await page.keyboard.up('w');}
+    await page.locator('#finish').click();await match(page,code,'race-results');
+    const points=await page.evaluate(()=>Module._dd2_application_race_points());
+    await page.locator('#pause').click();
+    await page.keyboard.down('w');
+    try {
+      const baseline=digest(await pixels(page));
+      if(await stable(page)!==baseline || await page.evaluate(()=>Module._dd2_application_race_points())!==points)
+        throw new Error('Published race results advance');
+    } finally {await page.keyboard.up('w');}
+    await page.locator('#pause').click();
+    await page.locator('#reset').click();await match(page,code,'race-start');
+  }
+  const rejected=await page.evaluate(()=>({bad:Module._dd2_application_start_race(1),view:Module._dd2_application_current_view(),
+    phase:Module._dd2_application_race_phase(),badMode:Module._dd2_application_start_race(2)}));
+  if(rejected.bad!==0||rejected.badMode!==0||rejected.view!==3||rejected.phase!==0)throw new Error('Invalid race changed arena state');
+  await page.selectOption('#level','1');
+  await page.keyboard.press('F6');
+  await page.waitForFunction(()=>Module._dd2_application_current_view()===4);
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  await match(page,'1','race-start');
+  await page.keyboard.press('F7');
+  await page.waitForFunction(()=>Module._dd2_application_race_phase()===3);
+  if(await page.evaluate(()=>Module._dd2_application_race_points())!==100)throw new Error('Stockcar source grid points differ');
+  // Real held throttle through the countdown: clocks cannot start before GO.
+  await page.keyboard.press('r');
+  await page.keyboard.press('p');
+  await page.keyboard.down('w');
+  try {
+    await page.waitForFunction(()=>Module._dd2_application_race_steps()>20);
+    const during=await page.evaluate(()=>({phase:Module._dd2_application_race_phase(),lap:Module._dd2_application_lap_steps(),
+      collisions:Module._dd2_application_collision_count()}));
+    if(during.phase!==0||during.lap!==0||during.collisions!==0)throw new Error('Countdown permits physical progress');
+    await page.waitForFunction(()=>Module._dd2_application_race_phase()===1,null,{timeout:15000});
+    await page.waitForFunction(()=>Module._dd2_application_lap_steps()>0,null,{timeout:15000});
+  } finally {await page.keyboard.up('w');}
+  await page.keyboard.press('p');
+  const ticks=await page.evaluate(()=>Module._dd2_application_race_steps());
+  await pause(200);
+  if(await page.evaluate(()=>Module._dd2_application_race_steps())!==ticks)throw new Error('Pause advances active race');
+  await page.locator('#finish').click();
+  await page.waitForFunction(()=>Module._dd2_application_race_phase()===3);
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-race-results.png')});
+  await page.selectOption('#view','2');
+  if(await page.evaluate(()=>Module._dd2_application_race_phase())!==-1)throw new Error('Free driving retains race');
+  await page.keyboard.press('Enter');await match(page,'1','scene');
+  report.race={pass_:true,all_levels:true,native_keyboard_modes:true,source_stockcar_points:true,
+    countdown_holds_field:true,real_throttle_after_go:true,pause:true,frozen_results:true,reset:true,invalid_mode_rollback:true};
+}
 async function main() {
   const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:680,height:1000}});
@@ -213,6 +275,7 @@ async function main() {
     if(state.badLevel!==0||state.badView!==0||state.level!==1||state.view!==0)throw new Error('Invalid selection changed active state');
     report.transactional_invalid_selection=true;
     await drivingChecks(page);
+    await raceChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);

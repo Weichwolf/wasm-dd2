@@ -6,6 +6,7 @@
 #include "game/accidents.h"
 #include "game/course.h"
 #include "game/laps.h"
+#include "game/race.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -62,5 +63,12 @@ const double *dd2_driving_wheel_rolls(const dd2_driving *driving);
 /* Player contact counts include individual solver responses, not unique crashes. */
 uint64_t dd2_driving_pair_collisions(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_grid_start(const dd2_driving *driving, unsigned slot);
+
+/* Start/reset a Wrecking/Stockcar race, or return to the free-driving grid.
+ * Countdown/results hold all physics and clocks; active race observation is
+ * transactional with the complete field. Stockcar arenas are rejected. */
+bool dd2_driving_set_race(dd2_driving *driving, bool enabled, dd2_race_mode mode);
+const dd2_race *dd2_driving_race(const dd2_driving *driving);
+bool dd2_driving_withdraw(dd2_driving *driving);
 
 #endif
