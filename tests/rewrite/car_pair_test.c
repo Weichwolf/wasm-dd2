@@ -302,8 +302,71 @@ static bool dd2_pair_test_bridge_and_invalid(void) {
             impacts[0].contacts == 0 && impacts[1].contacts == 0 && pairs == 0;
     return valid;
 }
+static bool dd2_pair_test_common_motion(void) {
+    static const double angles[] = {0, 0.25, 1.1, 1.5707963267948966, 2.9};
+    static const double common_speed = 1000;
+    for (size_t angle = 0; angle < sizeof(angles) / sizeof(angles[0]); ++angle) {
+        dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
+        for (unsigned body = 0; body < DD2_VEHICLE_FLEET_LIMIT; ++body) {
+            const double along = (double)body * 2 * dd2_pair_test_front_arm;
+            if (!dd2_vehicle_reset(
+                    &previous[body],
+                    (dd2_vehicle_spawn){.position = {.x = sin(angles[angle]) * along,
+                                                     .y = dd2_pair_test_height,
+                                                     .z = cos(angles[angle]) * along},
+                                        .yaw = angles[angle]})) {
+                return false;
+            }
+            previous[body].velocity = (dd2_vehicle_vector){.x = common_speed * cos(angles[angle]),
+                                                           .z = -common_speed * sin(angles[angle])};
+        }
+        dd2_vehicle next[DD2_VEHICLE_FLEET_LIMIT] = {0};
+        dd2_pair_test_motion(previous, next, DD2_VEHICLE_FLEET_LIMIT);
+        dd2_vehicle_collision_report report = {0};
+        if (!dd2_vehicle_collide_fleet_report(next, previous, DD2_VEHICLE_FLEET_LIMIT, NULL, NULL,
+                                              &report) ||
+            report.count != 0) {
+            printf("Common motion angle=%.17g contacts=%u\n", angles[angle], report.count);
+            return false;
+        }
+        for (unsigned body = 0; body < DD2_VEHICLE_FLEET_LIMIT; ++body) {
+            const double travel =
+                ((next[body].position.x - previous[body].position.x) * cos(angles[angle])) -
+                ((next[body].position.z - previous[body].position.z) * sin(angles[angle]));
+            if (fabs(travel - (common_speed * DD2_VEHICLE_STEP_SECONDS)) >
+                dd2_pair_test_tolerance) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+static bool dd2_pair_test_small_closing(void) {
+    static const double separation = 2e-6;
+    static const double travel = 4e-5;
+    dd2_vehicle previous[DD2_PAIR_TEST_BODIES] = {0};
+    if (!dd2_pair_test_reset(&previous[0], 0) ||
+        !dd2_pair_test_reset(&previous[1], (2 * dd2_pair_test_front_arm) + separation)) {
+        return false;
+    }
+    previous[0].velocity.z = travel / DD2_VEHICLE_STEP_SECONDS;
+    dd2_vehicle next[DD2_PAIR_TEST_BODIES] = {0};
+    dd2_pair_test_motion(previous, next, DD2_PAIR_TEST_BODIES);
+    dd2_car_contact contact = {0};
+    if (!dd2_car_contact_sweep(&previous[0], &next[0], &previous[1], &next[1], &contact) ||
+        fabs(contact.time - (separation / travel)) > dd2_pair_test_tolerance) {
+        return false;
+    }
+    dd2_vehicle_collision_report report = {0};
+    return dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
+                                            &report) &&
+           report.count == 1 && report.contacts[0].impulse > 0;
+}
+
 int main(void) {
-    if (!dd2_pair_test_head_on(false) || !dd2_pair_test_head_on(true) ||
+    if (!dd2_pair_test_common_motion() || !dd2_pair_test_small_closing() ||
+        !dd2_pair_test_head_on(false) || !dd2_pair_test_head_on(true) ||
         !dd2_pair_test_glancing() || !dd2_pair_test_contact_continuity() ||
         !dd2_pair_test_rotation() || !dd2_pair_test_chain() ||
         !dd2_pair_test_bridge_and_invalid() || !dd2_pair_test_report_bound() ||

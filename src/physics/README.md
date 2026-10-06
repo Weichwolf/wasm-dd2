@@ -209,7 +209,13 @@ incident face against reference side planes and use its area centroid, so adding
 duplicate or collinear clipping vertices cannot move the impulse point. Relative
 quaternion difference/sum gives stable angles even for tiny rotations. Edge contacts use closest supported
 edge points. Bridge-separated boxes do not collide merely because their XZ
-footprints intersect. Geometry queries allocate nothing.
+footprints intersect. Geometry queries allocate nothing. Relative normal travel
+within the existing 1e-6 world-unit contact tolerance is treated as stationary.
+This prevents subtraction noise from creating time-zero contacts in a touching
+field moving as one rigid convoy. Closing motion beyond the tolerance still
+uses the analytic entry interval and produces impulses. A twenty-body regression
+covers five headings with common lateral motion; a separate low-speed collision
+checks that the tolerance preserves real near-contact impacts.
 
 `dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
 one earliest-event clock for ground, barriers and pairs. It anchors time ties to

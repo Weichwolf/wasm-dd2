@@ -114,8 +114,11 @@ static dd2_car_axis_interval dd2_car_axis_window(const dd2_car_box *first,
                                       .depth = depth,
                                       .overlap_normal = dd2_collision_scale(axis, sign),
                                       .valid = true};
-    if (velocity == 0) {
-        interval.separated = depth < 0;
+    /* Equal world motion can leave tiny subtraction noise in the relative
+     * displacement. Use the existing positional tolerance for normal travel
+     * over this sweep, so touching boxes do not manufacture closing events. */
+    if (fabs(velocity) <= dd2_car_contact_tolerance) {
+        interval.separated = depth < -dd2_car_contact_tolerance;
         return interval;
     }
     const double first_time = (-radius - distance) / velocity;
@@ -161,7 +164,7 @@ static dd2_car_interval dd2_car_translation(const dd2_car_box *first, const dd2_
             const dd2_vehicle_vector motion =
                 dd2_collision_add(finish, dd2_collision_scale(begin, -1));
             if (overlap <= dd2_car_contact_tolerance &&
-                dd2_collision_dot(motion, window.overlap_normal) >= 0) {
+                dd2_collision_dot(motion, window.overlap_normal) >= -dd2_car_contact_tolerance) {
                 return (dd2_car_interval){0};
             }
             return (dd2_car_interval){.depth = fmax(0, overlap),
