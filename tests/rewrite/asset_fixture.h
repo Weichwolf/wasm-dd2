@@ -74,9 +74,12 @@ static inline dd2_texture_sources dd2_test_texture_sources(dd2_test_texture_fixt
     fixture->second[DD2_TEST_WORD_BYTES] = DD2_TEST_TEXEL_E;
     fixture->second[DD2_TEST_WORD_BYTES + 1] = DD2_TEST_TEXEL_F;
     for (size_t color = 0; color < DD2_TEXTURE_PAGE_SIDE; ++color) {
-        fixture->palette[color * DD2_TEST_COLOR_CHANNELS] = (uint8_t)color;
+        /* PAL is BGR plus an unused byte. Distinct R/B values expose swaps in
+         * both the decoder and the real SoftGL texture/mesh pixel probes. */
+        fixture->palette[color * DD2_TEST_COLOR_CHANNELS] = DD2_TEST_PALETTE_BLUE;
         fixture->palette[(color * DD2_TEST_COLOR_CHANNELS) + 1] = (uint8_t)(UINT8_MAX - color);
-        fixture->palette[(color * DD2_TEST_COLOR_CHANNELS) + 2] = DD2_TEST_PALETTE_BLUE;
+        fixture->palette[(color * DD2_TEST_COLOR_CHANNELS) + 2] = (uint8_t)color;
+        fixture->palette[(color * DD2_TEST_COLOR_CHANNELS) + 3] = DD2_TEST_UNUSED_BYTE;
         for (size_t shade = 0; shade < DD2_TEXTURE_SHADES; ++shade) {
             fixture->cluts[(shade * DD2_TEXTURE_PAGE_SIDE) + color] =
                 (uint8_t)(shade == DD2_TEST_NEUTRAL_SHADE ? color : UINT8_MAX - color);

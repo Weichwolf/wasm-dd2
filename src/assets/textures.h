@@ -54,7 +54,7 @@ size_t dd2_texture_image_count(const dd2_texture_set *textures);
 size_t dd2_texture_palette_bank_count(const dd2_texture_set *textures);
 dd2_byte_view dd2_texture_indices(const dd2_texture_set *textures);
 
-/* A page is 256x256 RGBA8, with row zero corresponding to source V=0. Shade
+/* Converts BGR-reserved PAL entries to 256x256 RGBA8; source V=0 is row zero. Shade
  * ranges from 0 to 15; the original neutral lookup row is 8. Palette banks are
  * selected by polygons, not the reserved word in the texture definition.
  * Cutout makes texels whose low nibble is zero transparent, as in the original.

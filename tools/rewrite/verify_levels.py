@@ -65,7 +65,8 @@ def page_rgba(indices, palette, lookup, cutout):
     colors = indices.translate(lookup)
     output = bytearray(len(indices) * 4)
     for channel in range(3):
-        output[channel::4] = colors.translate(palette[channel::4])
+        # LEVEL.PAL stores Windows RGBQUAD entries: B, G, R, reserved.
+        output[channel::4] = colors.translate(palette[2 - channel::4])
     if cutout:
         alpha = bytes(0 if index % 16 == 0 else 255 for index in range(256))
         output[3::4] = indices.translate(alpha)

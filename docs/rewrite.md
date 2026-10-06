@@ -35,7 +35,9 @@ views; all 114 original entries have been checked on native, Node/WASM and
 ASan/UBSan against an independent reader. Typed level sections, signed road
 vertices, UV definitions and all original texture pages are also decoded and
 checked for all 13 level containers. A real SoftGL texture-upload/cutout pixel
-test runs on both targets. See `src/assets/README.md` for format and ownership
+test runs on both targets. PAL colors use BGR source order, checked against all
+256 loaded entries in an unmodified original race under Wine. See
+`src/assets/README.md` for format and ownership
 details. Compressed scene blocks, object placements and polygon meshes are now
 decoded into owned C structures and independently checked for all eleven playable
 level containers, including car/sky/wheel shapes. SoftGL now renders stored mesh

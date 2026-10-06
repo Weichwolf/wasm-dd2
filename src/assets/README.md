@@ -88,8 +88,10 @@ complete extent are checked before returning a texture set.
 
 CLT contains palette banks of 16 shade rows by 256 index mappings; ECL appends
 additional banks. `draw_text_half`/`FUN_0041033a` establish the lookup
-`bank * 4096 + shade * 256 + texel`; its byte selects an RGB color in the
-1024-byte PAL table. The source palette's fourth byte is unused. The neutral
+`bank * 4096 + shade * 256 + texel`; its byte selects a BGR entry in the
+1024-byte PAL table. Convert BGR to RGB for the output page; the source palette's
+fourth byte is unused and never supplies output alpha. `SetPalette` swaps the
+same channels before publishing DirectDraw palette entries. The neutral
 shade is 8. Cutout follows the original low-nibble rule, independent of the
 mapped palette index. Material cutout selection and other blending/lighting policies belong to the
 renderer; low-nibble zero alone does not imply that every material is masked.
@@ -112,6 +114,21 @@ under `/tmp/wasm-dd2/`. These are asset-format checks, not full-game parity clai
 CI uses synthetic data to cover null/bounds/format cases, cross-page loading,
 multiple TX parts, base/ECL palette banks, shade/cutout selection and an actual
 SoftGL upload/alpha-test render covering every framebuffer pixel.
+The synthetic PAL fixture has distinct red/blue values and a non-alpha reserved
+byte, so decoder and mesh/texture pixel tests reject the previous RGB assumption.
+
+With Wine installed, this checks all 256 palette entries and complete CLT/ECL
+bytes against a normal player race in the unmodified original:
+
+```sh
+make clean-logs
+python3 tools/rewrite/verify_original_palette.py
+make clean-logs
+```
+
+The diagnostic sends real X11 inputs, reads only the loaded palette and CLUT
+banks, retains hashes and removes completed raw logs. These are read-only asset
+observations rather than full-game or framebuffer parity checks.
 
 ## Scene objects and polygon meshes
 

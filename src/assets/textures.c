@@ -211,7 +211,7 @@ bool dd2_texture_page_rgba(const dd2_texture_set *textures, dd2_texture_sample s
         const size_t palette_offset = (size_t)lookup[texel] * DD2_RGBA_CHANNELS;
         for (size_t channel = 0; channel < DD2_RGBA_CHANNELS - 1; ++channel) {
             output.data[(index * DD2_RGBA_CHANNELS) + channel] =
-                textures->palette.data[palette_offset + channel];
+                textures->palette.data[palette_offset + (DD2_RGBA_CHANNELS - 2 - channel)];
         }
         output.data[(index * DD2_RGBA_CHANNELS) + DD2_RGBA_CHANNELS - 1] =
             sample.cutout && (texel & DD2_TEXTURE_OPACITY_MASK) == 0 ? 0 : DD2_OPAQUE_ALPHA;
