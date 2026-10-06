@@ -3134,6 +3134,17 @@ unchanged, and lossless archives keep the complete run below 2 GiB
 This is original-only regular-recording evidence; port comparison and complete
 chronological audio/video acceptance remain separate requirements.
 
+Fresh native-ASan and production-browser captures now pass the complete regular
+two-human comparison against that original recording. Every one of the 14,492
+racing indexed pictures and palettes matches literally, with identical observed
+clock returns, independently calculated RNG, key transitions, natural living
+finishes, earned 10/25 points, standings and next-round state. All 35 checkpoints
+match; selected race-start and reopened league images also match. Twelve altered
+input/clock/RNG/finish/score/frame/palette cases are rejected
+(`multiplayer-regular-1706-pipeline/comparison.json`). Successful raw comparisons
+are removed after reporting. Chronological PCM, menu animation, physical timing
+and a complete season remain unproven by this scenario.
+
 ```sh
 make clean-logs
 make capture-multiplayer-driver-probe MULTIPLAYER_DRIVER_PROBE_ARGS='--output /tmp/wasm-dd2/multiplayer-driver-probe'
