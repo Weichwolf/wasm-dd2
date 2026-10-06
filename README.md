@@ -4436,3 +4436,34 @@ bytes at the first `Draw_All` entry. Reproduce the comparison of an existing
 capture with `make verify-reference-video REFCAP=/tmp/dd2-ref-150`. This checks
 one checkpoint; systematic full-run comparisons and original audio output
 validation remain pending.
+
+Lossless recorded clock runs
+----------------------------
+
+Patch 905 accepts `DD2_TICK_REPLAY_FORMAT=DD2TKR1` with `DD2_TICK_REPLAY`.
+The eight-byte `DD2TKR1\0` header is followed by little-endian DWORD value/count
+pairs. Each logical call still returns one original DWORD and advances the
+existing call counter and audio service gates. Default raw DWORD inputs retain
+their meaning, including values resembling the run header. Partial, zero,
+overflowing and unconsumed runs fail, including unconsumed logical calls within
+the final physical record. Live timing is unchanged.
+
+`tools/reference/clock_runs.py` packs actual original clock inputs and checks
+every decoded DWORD against the source count and SHA. The production reader
+verification at `/tmp/wasm-dd2/clock-runs-1760-verification/report.json` passes
+Native, Native ASan and Node/WASM: all 532,981 actual original returns compare
+literally in both raw and run formats. They occupy 9,760 encoded bytes instead
+of 2,131,924 raw bytes (1,219 runs). The 47 target controls include DWORD wrap,
+10,000,001 repeated logical calls, invalid formats and genuinely executed
+Native/WASM close-check mutants that incorrectly accept a missing logical call.
+Four independent Python decoder controls reject damaged input. The actual SDL
+startup regression also passes all seven recorded/live-clock controls
+(`/tmp/wasm-dd2/clock-runs-1761-sdl/report.json`). This proves
+lossless input transport; full engine and original audio/video parity remain
+separate requirements.
+
+```sh
+make clean-logs
+make verify-clock-runs CLOCK_RUNS_ARGS='--original-ticks /tmp/wasm-dd2/original-capture/game-clock/ticks.bin --output /tmp/wasm-dd2/clock-runs-check'
+make clean-logs
+```

@@ -199,6 +199,10 @@ capture-browser-replay-history: ## capture actual browser replay racing canvas/p
 verify-clock-replay: ## exact captured uint32 game-clock inputs; reject missing, partial and leftover records on native/WASM
 	python3 $(ROOT)/tools/verify_clock_replay.py $(CLOCK_REPLAY_ARGS)
 
+.PHONY: verify-clock-runs
+verify-clock-runs: patch ## compare lossless actual clock DWORDs through native/ASan/WASM readers; CLOCK_RUNS_ARGS required
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/verify_clock_runs.py" $(CLOCK_RUNS_ARGS)'
+
 verify-random-reference: ## compute actual original Watcom random records; reject state/result differences and arithmetic mutation
 	python3 $(ROOT)/tools/verify_random_reference.py $(RANDOM_REFERENCE_ARGS)
 
