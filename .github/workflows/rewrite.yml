@@ -17,7 +17,7 @@ jobs:
       - name: Install native tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates make cmake ninja-build python3 clang-19 clang-tidy-19 clang-format-19
+          apt-get install -y --no-install-recommends git ca-certificates make cmake ninja-build python3 clang-19 clang-tidy-19 clang-format-19 libsdl2-dev
       - uses: actions/checkout@v4
         with:
           submodules: recursive

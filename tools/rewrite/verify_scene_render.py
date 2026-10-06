@@ -69,7 +69,7 @@ def main():
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     units = [str(ROOT / f'src/assets/{name}.c') for name in ('archive', 'level', 'textures', 'lz', 'mesh', 'scene')]
-    units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'mesh_draw'))
+    units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'mesh_draw', 'camera'))
     sanitized_probe = output / 'dd2_mesh_render_sanitized'
     sanitized_preview = output / 'dd2_scene_preview_sanitized'
     softgl = WORK / 'rewrite-native/softgl/libsoftgl.a'
@@ -95,7 +95,8 @@ def main():
             images.append(dict(level=code, mode=mode, comparisons=comparisons))
             native.unlink()
             print(json.dumps(dict(level=code, mode=mode, pass_=True)), flush=True)
-    sources = ['src/render/mesh_draw.c', 'src/render/mesh_draw.h', 'tests/rewrite/mesh_render_test.c',
+    sources = ['src/render/mesh_draw.c', 'src/render/mesh_draw.h', 'src/render/camera.c',
+               'src/render/camera.h', 'tests/rewrite/mesh_render_test.c',
                'tests/rewrite/scene_preview.c', 'tools/rewrite/verify_scene_render.py', 'CMakeLists.txt']
     binaries = [WORK / 'rewrite-native/dd2_scene_preview', WORK / 'rewrite-wasm/dd2_scene_preview.js',
                 WORK / 'rewrite-wasm/dd2_scene_preview.wasm', sanitized_probe, sanitized_preview, softgl]

@@ -192,3 +192,10 @@ checks overlapping decompression, signed extremes, textured/lit/sprite records,
 invalid references, extents and scene ownership. Reports remain under `/tmp`;
 raw successful exports are deleted. These checks establish decoded fields, not
 complete rendering behavior or game correctness.
+
+`track.c` assembles the level, texture pages, scene and high-detail car into one
+owned runtime container for levels 1–11 (source codes 1–9, A and B). Racing scene
+blocks 1–7 use the original compressed path; arena blocks use their stored path.
+The source archive bytes are borrowed and must outlive the container. Partial
+loads release their owned structures, and the application swaps a successfully
+loaded container only after its materials and camera are ready.

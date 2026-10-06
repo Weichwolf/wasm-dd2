@@ -27,12 +27,26 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
 .PHONY: rewrite-archive-verify
 .PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify
+.PHONY: rewrite-play rewrite-web rewrite-window-verify
+rewrite-play: rewrite-native ## open the interactive track/car viewer with provisioned original assets
+	/tmp/wasm-dd2/rewrite-native/dd2_app "$(GAMEDIR)/Dirinfo" "$(LEVEL)"
+
+rewrite-web: rewrite-wasm ## serve the browser track/car viewer on localhost:8080; select Dirinfo locally
+	python3 $(ROOT)/tools/rewrite/serve.py
+
+rewrite-window-verify: ## verify real native/browser presentation, input, resize and lifecycle
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_window.py
+	$(MAKE) clean-logs
+
 rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
 	cmake --preset rewrite-native
 	cmake --build --preset rewrite-native
 
 rewrite-wasm: ## configure/build the readable rewrite with Emscripten; native clang-tidy is a separate gate
-	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && emcmake cmake --preset rewrite-wasm && cmake --build --preset rewrite-wasm'
+	bash -c 'source "$(ROOT)/tools/emscripten_env.sh" && python3 "$(ROOT)/tools/rewrite/build_wasm.py"'
 
 rewrite-format: ## format only handwritten rewrite C/header files with clang-format 19
 	python3 $(ROOT)/tools/rewrite/quality.py format

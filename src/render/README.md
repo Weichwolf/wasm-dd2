@@ -42,6 +42,11 @@ upward; the diagnostic camera preserves it instead of mirroring the car/track.
 The diagnostic camera also intentionally uses orthographic bounds fitting
 rather than the eventual driving camera.
 
+`camera.c` now shares that bounds fitting between the headless preview and the
+interactive native/browser application. Its explicit state supports orbit,
+tilt, screen-plane pan and bounded exponential zoom; reset fits the currently
+selected scene or mesh. There is no driving/chase camera yet.
+
 The `rewrite_mesh_render` CTest checks every pixel of decoded textured quads,
 correct corner/UV order, transparent texels, depth occlusion and switching
 palette banks between queued draws, and opaque/cutout variants sharing the same

@@ -1,0 +1,227 @@
+#include "platform/window.h"
+
+#include "render/renderer.h"
+
+#include <SDL.h>
+#include <SDL_blendmode.h>
+#include <SDL_events.h>
+#include <SDL_hints.h>
+#include <SDL_keycode.h>
+#include <SDL_mouse.h>
+#include <SDL_pixels.h>
+#include <SDL_rect.h>
+#include <SDL_scancode.h>
+#include <SDL_surface.h>
+#include <SDL_timer.h>
+#include <SDL_video.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+enum {
+    DD2_WINDOW_CHANNELS = 4,
+    DD2_WINDOW_PIXEL_BITS = 32,
+    DD2_WINDOW_MAX_SIDE = 4096,
+    DD2_WINDOW_WAIT_MS = 8
+};
+static const float dd2_window_max_elapsed = 0.05F;
+
+struct dd2_window {
+    SDL_Window *native;
+    SDL_Surface *frame;
+    uint8_t *top_rows;
+    dd2_render_options size;
+    bool held[DD2_KEY_COUNT];
+    uint64_t previous;
+};
+
+void dd2_window_destroy(dd2_window *window) {
+    if (window != NULL) {
+        SDL_FreeSurface(window->frame);
+        SDL_DestroyWindow(window->native);
+        free(window->top_rows);
+        free(window);
+        SDL_Quit();
+    }
+}
+
+dd2_window *dd2_window_create(dd2_render_options size) {
+    if (size.width <= 0 || size.height <= 0 || size.width > DD2_WINDOW_MAX_SIDE ||
+        size.height > DD2_WINDOW_MAX_SIDE) {
+        return NULL;
+    }
+    dd2_window *window = calloc(1, sizeof(*window));
+    if (window == NULL) {
+        return NULL;
+    }
+    SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
+    SDL_SetHint("SDL_EMSCRIPTEN_KEYBOARD_ELEMENT", "#canvas");
+    window->size = size;
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        dd2_window_destroy(window);
+        return NULL;
+    }
+    window->native =
+        SDL_CreateWindow("Destruction Derby 2 - Streckenansicht", SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED, size.width, size.height, SDL_WINDOW_RESIZABLE);
+    window->top_rows = malloc((size_t)size.width * (size_t)size.height * DD2_WINDOW_CHANNELS);
+    if (window->native != NULL && window->top_rows != NULL) {
+        window->frame = SDL_CreateRGBSurfaceWithFormatFrom(
+            window->top_rows, size.width, size.height, DD2_WINDOW_PIXEL_BITS,
+            size.width * DD2_WINDOW_CHANNELS, SDL_PIXELFORMAT_RGBA32);
+    }
+    if (window->frame == NULL || SDL_SetSurfaceBlendMode(window->frame, SDL_BLENDMODE_NONE) != 0) {
+        dd2_window_destroy(window);
+        return NULL;
+    }
+    window->previous = SDL_GetPerformanceCounter();
+    return window;
+}
+
+static SDL_Rect dd2_window_rectangle(const dd2_window *window, const SDL_Surface *surface) {
+    SDL_Rect rectangle = {.w = surface->w, .h = surface->h};
+    if ((int64_t)surface->w * window->size.height > (int64_t)surface->h * window->size.width) {
+        rectangle.w = (int)((int64_t)surface->h * window->size.width / window->size.height);
+    } else {
+        rectangle.h = (int)((int64_t)surface->w * window->size.height / window->size.width);
+    }
+    rectangle.x = (surface->w - rectangle.w) / 2;
+    rectangle.y = (surface->h - rectangle.h) / 2;
+    return rectangle;
+}
+
+bool dd2_window_present(dd2_window *window, const uint8_t *rgba) {
+    if (window == NULL || rgba == NULL) {
+        return false;
+    }
+    const size_t stride = (size_t)window->size.width * DD2_WINDOW_CHANNELS;
+    for (size_t row = 0; row < (size_t)window->size.height; ++row) {
+        const size_t source = ((size_t)window->size.height - row - 1) * stride;
+        for (size_t column = 0; column < stride; ++column) {
+            window->top_rows[(row * stride) + column] = rgba[source + column];
+        }
+    }
+    SDL_Surface *surface = SDL_GetWindowSurface(window->native);
+    if (surface == NULL) {
+        return false;
+    }
+    SDL_Rect rectangle = dd2_window_rectangle(window, surface);
+    return SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0)) == 0 &&
+           SDL_BlitScaled(window->frame, NULL, surface, &rectangle) == 0 &&
+           SDL_UpdateWindowSurface(window->native) == 0;
+}
+
+static dd2_key dd2_window_key(SDL_Scancode code) {
+    switch (code) {
+    case SDL_SCANCODE_LEFT:
+        return DD2_KEY_LEFT;
+    case SDL_SCANCODE_RIGHT:
+        return DD2_KEY_RIGHT;
+    case SDL_SCANCODE_UP:
+        return DD2_KEY_UP;
+    case SDL_SCANCODE_DOWN:
+        return DD2_KEY_DOWN;
+    case SDL_SCANCODE_A:
+        return DD2_KEY_PAN_LEFT;
+    case SDL_SCANCODE_D:
+        return DD2_KEY_PAN_RIGHT;
+    case SDL_SCANCODE_W:
+        return DD2_KEY_PAN_UP;
+    case SDL_SCANCODE_S:
+        return DD2_KEY_PAN_DOWN;
+    case SDL_SCANCODE_R:
+        return DD2_KEY_RESET;
+    case SDL_SCANCODE_TAB:
+        return DD2_KEY_VIEW;
+    case SDL_SCANCODE_PAGEDOWN:
+        return DD2_KEY_PREVIOUS;
+    case SDL_SCANCODE_PAGEUP:
+        return DD2_KEY_NEXT;
+    case SDL_SCANCODE_ESCAPE:
+        return DD2_KEY_QUIT;
+    default:
+        return DD2_KEY_COUNT;
+    }
+}
+
+void dd2_window_release_input(dd2_window *window) {
+    if (window != NULL) {
+        SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
+        for (size_t index = 0; index < DD2_KEY_COUNT; ++index) {
+            window->held[index] = false;
+        }
+    }
+}
+
+static void dd2_window_keyboard(dd2_window *window, dd2_input *input,
+                                const SDL_KeyboardEvent *event) {
+    dd2_key key = dd2_window_key(event->keysym.scancode);
+    if (event->keysym.sym == SDLK_PLUS || event->keysym.sym == SDLK_EQUALS ||
+        event->keysym.sym == SDLK_KP_PLUS) {
+        key = DD2_KEY_ZOOM_IN;
+    } else if (event->keysym.sym == SDLK_MINUS || event->keysym.sym == SDLK_KP_MINUS) {
+        key = DD2_KEY_ZOOM_OUT;
+    }
+    if (key == DD2_KEY_COUNT) {
+        return;
+    }
+    const bool down = event->type == SDL_KEYDOWN;
+    if (down && event->repeat == 0 && !window->held[key]) {
+        input->pressed[key] = true;
+    }
+    window->held[key] = down;
+}
+
+dd2_input dd2_window_poll(dd2_window *window) {
+    dd2_input input = {0};
+    if (window == NULL) {
+        input.quit = true;
+        return input;
+    }
+    SDL_Event event = {0};
+    while (SDL_PollEvent(&event) != 0) {
+        switch (event.type) {
+        case SDL_QUIT:
+            input.quit = true;
+            break;
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+            dd2_window_keyboard(window, &input, &event.key);
+            break;
+        case SDL_MOUSEWHEEL:
+            if (event.wheel.y != 0) {
+                const int direction = event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1 : 1;
+                input.wheel += (event.wheel.y > 0 ? 1 : -1) * direction;
+            }
+            break;
+        case SDL_WINDOWEVENT:
+            input.redraw = true;
+            if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                dd2_window_release_input(window);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    for (size_t index = 0; index < DD2_KEY_COUNT; ++index) {
+        input.held[index] = window->held[index];
+    }
+    return input;
+}
+
+float dd2_window_elapsed(dd2_window *window) {
+    if (window == NULL) {
+        return 0;
+    }
+    const uint64_t current = SDL_GetPerformanceCounter();
+    const float seconds =
+        (float)((double)(current - window->previous) / (double)SDL_GetPerformanceFrequency());
+    window->previous = current;
+    return seconds < dd2_window_max_elapsed ? seconds : dd2_window_max_elapsed;
+}
+
+void dd2_window_wait(void) {
+    SDL_Delay(DD2_WINDOW_WAIT_MS);
+}

@@ -4,10 +4,10 @@
 #include "assets/mesh.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
+#include "render/camera.h"
 #include "render/mesh_draw.h"
 #include "render/renderer.h"
 
-#include <GL/softgl.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -23,62 +23,6 @@ enum {
     DD2_PREVIEW_RGB_CHANNELS = 3,
     DD2_PREVIEW_MIN_PIXELS = 100
 };
-static const float dd2_preview_pitch = 55.0F;
-static const float dd2_preview_yaw = 30.0F;
-static const float dd2_preview_padding = 1.2F;
-
-typedef struct {
-    float min[3];
-    float max[3];
-    bool valid;
-} dd2_preview_bounds;
-
-static void dd2_preview_mesh_bounds(dd2_preview_bounds *bounds, const dd2_mesh *mesh,
-                                    dd2_track_vertex position) {
-    const dd2_mesh_vector *vertices = dd2_mesh_vertices(mesh);
-    for (size_t index = 0; index < dd2_mesh_vertex_count(mesh); ++index) {
-        const float values[] = {(float)position.x + (float)vertices[index].x,
-                                (float)position.y + (float)vertices[index].y,
-                                (float)position.z + (float)vertices[index].z};
-        for (size_t axis = 0; axis < 3; ++axis) {
-            if (!bounds->valid || values[axis] < bounds->min[axis]) {
-                bounds->min[axis] = values[axis];
-            }
-            if (!bounds->valid || values[axis] > bounds->max[axis]) {
-                bounds->max[axis] = values[axis];
-            }
-        }
-        bounds->valid = true;
-    }
-}
-
-static void dd2_preview_camera(dd2_preview_bounds bounds) {
-    float radius = 1;
-    for (size_t axis = 0; axis < 3; ++axis) {
-        const float span = bounds.max[axis] - bounds.min[axis];
-        if (span > radius) {
-            radius = span;
-        }
-    }
-    radius *= dd2_preview_padding / 2;
-    const float aspect = (float)DD2_PREVIEW_WIDTH / (float)DD2_PREVIEW_HEIGHT;
-    glViewport(0, 0, DD2_PREVIEW_WIDTH, DD2_PREVIEW_HEIGHT);
-    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glDisable(GL_CULL_FACE);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-radius * aspect, radius * aspect, -radius, radius, -radius * 4, radius * 4);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glRotatef(dd2_preview_pitch, 1.0F, 0.0F, 0.0F);
-    glRotatef(dd2_preview_yaw, 0.0F, 1.0F, 0.0F);
-    glTranslatef(-(bounds.min[0] + bounds.max[0]) / 2, -(bounds.min[1] + bounds.max[1]) / 2,
-                 -(bounds.min[2] + bounds.max[2]) / 2);
-}
-
 static bool dd2_preview_image(dd2_renderer *renderer, const char *path) {
     const uint8_t *pixels = dd2_renderer_pixels(renderer);
     if (pixels == NULL) {
@@ -110,16 +54,10 @@ static bool dd2_preview_image(dd2_renderer *renderer, const char *path) {
 
 static bool dd2_preview_draw(const dd2_level_data *level, const dd2_texture_set *textures,
                              const dd2_scene *scene, const dd2_mesh *car, const char *path) {
-    dd2_preview_bounds bounds = {0};
-    if (car != NULL) {
-        dd2_preview_mesh_bounds(&bounds, car, (dd2_track_vertex){0});
-    } else {
-        const dd2_scene_object *objects = dd2_scene_objects(scene);
-        for (size_t index = 0; index < dd2_scene_object_count(scene); ++index) {
-            dd2_preview_mesh_bounds(&bounds, objects[index].mesh, objects[index].origin);
-        }
-    }
-    if (!bounds.valid) {
+    dd2_camera camera = {0};
+    const bool fitted =
+        car != NULL ? dd2_camera_fit_mesh(&camera, car) : dd2_camera_fit_scene(&camera, scene);
+    if (!fitted) {
         return false;
     }
     dd2_renderer *renderer = dd2_renderer_create(
@@ -128,7 +66,8 @@ static bool dd2_preview_draw(const dd2_level_data *level, const dd2_texture_set 
         return false;
     }
     dd2_mesh_materials *materials = dd2_mesh_materials_create(level, textures);
-    dd2_preview_camera(bounds);
+    dd2_camera_apply(
+        &camera, (dd2_render_options){.width = DD2_PREVIEW_WIDTH, .height = DD2_PREVIEW_HEIGHT});
     const bool drawn = car != NULL ? dd2_mesh_draw(materials, car, (dd2_track_vertex){0})
                                    : dd2_scene_draw(materials, scene);
     const bool passed = drawn && dd2_preview_image(renderer, path);

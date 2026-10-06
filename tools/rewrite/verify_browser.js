@@ -1,0 +1,139 @@
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const {chromium} = require('../browser/playwright');
+const [url, archive, output] = process.argv.slice(2);
+if (!output || !path.resolve(output).startsWith('/tmp/wasm-dd2/')) throw new Error('Use /tmp/wasm-dd2/');
+const report = {pass_:false, scope:'Actual rewrite browser canvas/input, not original parity', comparisons:[]};
+const errors = [];
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+const digest = data => crypto.createHash('sha256').update(data).digest('hex');
+function reference(code, mode) {
+  const raw = fs.readFileSync(path.join(output, `${code}-${mode}.ppm`));
+  const header = Buffer.from('P6\n640 480\n255\n');
+  if (!raw.subarray(0,header.length).equals(header)) throw new Error('Invalid reference');
+  return raw.subarray(header.length);
+}
+async function pixels(page) {
+  const encoded = await page.evaluate(() => {
+    const rgba = document.querySelector('#canvas').getContext('2d').getImageData(0,0,640,480).data;
+    const rgb = new Uint8Array(640*480*3);
+    for (let source=0,target=0;source<rgba.length;source+=4) {
+      rgb[target++]=rgba[source];rgb[target++]=rgba[source+1];rgb[target++]=rgba[source+2];
+    }
+    let binary='';
+    for(let i=0;i<rgb.length;i+=32768) binary+=String.fromCharCode(...rgb.subarray(i,i+32768));
+    return btoa(binary);
+  });
+  return Buffer.from(encoded,'base64');
+}
+function compare(expected,actual) {
+  if(actual.length!==expected.length) throw new Error('Canvas size differs');
+  let changed=0,total=0;
+  for(let i=0;i<actual.length;i+=3) {
+    let different=false;
+    for(let channel=0;channel<3;channel++) {
+      const error=Math.abs(actual[i+channel]-expected[i+channel]);
+      total+=error;different||=error!==0;
+    }
+    if(different)changed++;
+  }
+  return {changed_pixels:changed,mean_channel_error:total/actual.length,
+          pass_:changed<=640*480*.01 && total/actual.length<=.5,
+          expected_sha256:digest(expected),actual_sha256:digest(actual)};
+}
+async function match(page,code,mode) {
+  const expected=reference(code,mode), deadline=Date.now()+15000;
+  let result;
+  while(Date.now()<deadline) {
+    result=compare(expected,await pixels(page));
+    if(result.pass_) {report.comparisons.push({code,mode,...result});return;}
+    await pause(60);
+  }
+  await page.locator('#canvas').screenshot({path:path.join(output,'failed-canvas.png')});
+  throw new Error(`Canvas ${code}/${mode} differs: ${JSON.stringify(result)}`);
+}
+async function stable(page) {
+  let previous,since=Date.now();
+  const deadline=Date.now()+10000;
+  while(Date.now()<deadline) {
+    const current=digest(await pixels(page));
+    if(current!==previous)since=Date.now();previous=current;
+    if(Date.now()-since>=1000)return current;
+    await pause(60);
+  }
+  throw new Error('Camera keeps moving after input release');
+}
+async function changed(page,baseline) {
+  const deadline=Date.now()+10000;
+  while(Date.now()<deadline) {
+    if(digest(await pixels(page))!==baseline)return;
+    await pause(50);
+  }
+  throw new Error('Actual browser keyboard did not move camera');
+}
+async function main() {
+  const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:680,height:1000}});
+  page.on('pageerror',error=>errors.push(String(error)));
+  page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+  try {
+    await page.goto(url);
+    await page.waitForFunction(()=>!document.querySelector('#archive').disabled,null,{timeout:60000});
+    report.cross_origin_isolated=await page.evaluate(()=>crossOriginIsolated);
+    if(!report.cross_origin_isolated)throw new Error('Browser workers are not isolated');
+    await page.setInputFiles('#archive',{name:'Dirinfo',mimeType:'application/octet-stream',buffer:Buffer.alloc(1024)});
+    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('konnte nicht geladen'),null,{timeout:15000});
+    if(await page.evaluate(()=>Module._dd2_application_current_level())!==0)throw new Error('Invalid archive accepted');
+    await page.setInputFiles('#archive',archive);
+    await page.waitForFunction(()=>Module._dd2_application_current_level()===1,null,{timeout:60000});
+    report.invalid_file_recovery=true;
+    await page.evaluate(()=>{window.observedKeys=[];document.querySelector('#canvas').addEventListener('keydown',e=>window.observedKeys.push({key:e.key,trusted:e.isTrusted}));});
+    let index=1;
+    for(const code of '123456789AB') {
+      await page.selectOption('#level',String(index++));await match(page,code,'scene');
+      await page.selectOption('#view','1');await match(page,code,'car');
+      await page.selectOption('#view','0');await match(page,code,'scene');
+    }
+    await page.keyboard.press('PageUp');await match(page,'1','scene');
+    await page.waitForFunction(()=>document.querySelector('#level').value==='1');
+    await page.keyboard.press('Tab');await match(page,'1','car');
+    await page.waitForFunction(()=>document.querySelector('#view').value==='1');
+    await page.keyboard.press('Tab');await match(page,'1','scene');
+    report.keyboard_selection_sync=true;
+    const baseline=digest(await pixels(page));
+    for(const key of ['ArrowRight','ArrowUp','a','w','+','-']) {
+      await page.keyboard.down(key);
+      try {await changed(page,baseline);} finally {await page.keyboard.up(key);}
+      if(await stable(page)===baseline)throw new Error('Camera did not move: '+key);
+      await page.keyboard.press('r');await match(page,'1','scene');
+    }
+    await page.mouse.move(330,500);await page.mouse.wheel(0,-120);await changed(page,baseline);
+    await page.locator('#reset').click();await match(page,'1','scene');
+    await page.keyboard.down('ArrowRight');await changed(page,baseline);
+    await page.locator('#reset').focus();await page.keyboard.up('ArrowRight');
+    const blurred=await stable(page);await page.locator('#canvas').focus();
+    if(await stable(page)!==blurred)throw new Error('Camera continues after canvas focus loss');
+    await page.locator('#reset').click();await match(page,'1','scene');
+    report.camera_motion_release=true;report.canvas_focus_release=true;report.wheel=true;
+    const state=await page.evaluate(()=>({badLevel:Module._dd2_application_select_level(0),badView:Module._dd2_application_show_car(2),level:Module._dd2_application_current_level(),view:Module._dd2_application_current_view()}));
+    if(state.badLevel!==0||state.badView!==0||state.level!==1||state.view!==0)throw new Error('Invalid selection changed active state');
+    report.transactional_invalid_selection=true;
+    await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
+    await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
+    await page.waitForFunction(()=>document.querySelector('#level').disabled);
+    await page.setInputFiles('#archive',archive);
+    await page.waitForFunction(()=>Module._dd2_application_current_level()===1);await match(page,'1','scene');
+    report.shutdown_restart=true;
+    report.keyboard_events=await page.evaluate(()=>window.observedKeys);
+    if(!report.keyboard_events.length||report.keyboard_events.some(event=>!event.trusted))throw new Error('Actual trusted browser keys required');
+    if(errors.length)throw new Error('Browser errors: '+errors.join('\n'));
+    report.browser_errors=[];report.pass_=true;
+  } finally {
+    report.errors=errors;
+    fs.writeFileSync(path.join(output,'browser.json'),JSON.stringify(report,null,2)+'\n');
+    await browser.close();
+  }
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

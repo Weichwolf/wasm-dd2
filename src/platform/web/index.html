@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DD2 · Streckenansicht</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; font: 16px system-ui,sans-serif; background:#10151b; color:#e8ecf2 }
+  body { margin:0; padding:28px 20px; max-width:960px; margin-inline:auto }
+  header { display:flex; gap:20px; align-items:center; justify-content:space-between; flex-wrap:wrap }
+  h1 { margin:0; font-size:1.6rem; letter-spacing:-.03em }
+  header p { color:#aeb9c8; margin:6px 0 0 }
+  button,select,.file { border:1px solid #465469; border-radius:8px; background:#202b3b; color:inherit; padding:10px 14px; font:inherit }
+  button,.file { cursor:pointer }
+  button:hover,.file:hover { background:#2d3c51 }
+  button:disabled,select:disabled { opacity:.45; cursor:default }
+  :focus-visible { outline:3px solid #79c6ff; outline-offset:3px }
+  input[type=file] { display:block; max-width:260px; margin-top:8px; font:inherit }
+  .controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:24px 0 16px }
+  canvas { display:block; background:#000; width:100%; height:auto; aspect-ratio:4/3; max-width:800px; margin:auto; border-radius:8px }
+  #status { min-height:1.5em; color:#aeb9c8 }
+  .help { line-height:1.8; color:#aeb9c8; max-width:800px; margin:18px auto }
+  kbd { color:#e8ecf2; background:#253044; padding:2px 5px; border-radius:4px }
+</style>
+<header>
+  <div><h1>Destruction Derby 2</h1><p>Strecken und Fahrzeugmodell ansehen</p></div>
+  <label class="file">Originaldatei Dirinfo öffnen<input id="archive" type="file" disabled></label>
+</header>
+<div class="controls">
+  <label>Strecke <select id="level" disabled>
+    <option value="1">1 · Pine Hills</option><option value="2">2</option>
+    <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+    <option value="6">6</option><option value="7">7</option>
+    <option value="8">Arena 1</option><option value="9">Arena 2</option>
+    <option value="10">Arena 3</option><option value="11">Arena 4</option>
+  </select></label>
+  <label>Ansicht <select id="view" disabled><option value="0">Strecke</option><option value="1">Fahrzeugmodell</option></select></label>
+  <button id="reset" disabled>Kamera zurücksetzen</button>
+</div>
+<p id="status" role="status">Renderer wird vorbereitet …</p>
+<canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Streckenansicht. Mit den Pfeiltasten drehen."></canvas>
+<p class="help"><kbd>←</kbd> <kbd>→</kbd> drehen · <kbd>↑</kbd> <kbd>↓</kbd> neigen ·
+  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> verschieben · Mausrad oder <kbd>+</kbd>/<kbd>−</kbd> zoomen ·
+  <kbd>R</kbd> zurücksetzen · <kbd>Tab</kbd> Ansicht wechseln · <kbd>Bild ↑</kbd>/<kbd>Bild ↓</kbd> Strecke wechseln</p>
+<script src="viewer.js"></script>
+<script async src="dd2_app.js"></script>
+</html>

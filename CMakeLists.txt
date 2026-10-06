@@ -48,14 +48,38 @@ function(dd2_strict_target target)
     endif()
 endfunction()
 
-add_library(dd2_render STATIC src/render/renderer.c src/render/mesh_draw.c)
+add_library(dd2_render STATIC src/render/renderer.c src/render/mesh_draw.c src/render/camera.c)
 target_include_directories(dd2_render PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_render PRIVATE softgl dd2_assets)
 dd2_strict_target(dd2_render)
 
-add_library(dd2_assets STATIC src/assets/archive.c src/assets/level.c src/assets/textures.c src/assets/lz.c src/assets/mesh.c src/assets/scene.c)
+add_library(dd2_assets STATIC src/assets/archive.c src/assets/level.c src/assets/textures.c src/assets/lz.c src/assets/mesh.c src/assets/scene.c src/assets/track.c)
 target_include_directories(dd2_assets PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 dd2_strict_target(dd2_assets)
+
+add_library(dd2_platform STATIC src/platform/file.c src/platform/window.c)
+target_include_directories(dd2_platform PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+if(EMSCRIPTEN)
+    target_compile_options(dd2_platform PRIVATE -sUSE_SDL=2)
+    target_link_options(dd2_platform INTERFACE -sUSE_SDL=2)
+else()
+    find_package(SDL2 REQUIRED CONFIG)
+    target_link_libraries(dd2_platform PUBLIC SDL2::SDL2)
+endif()
+dd2_strict_target(dd2_platform)
+
+add_executable(dd2_app src/game/application.c)
+target_link_libraries(dd2_app PRIVATE dd2_assets dd2_render dd2_platform)
+dd2_strict_target(dd2_app)
+if(EMSCRIPTEN)
+    target_link_options(dd2_app PRIVATE -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1
+        -sINITIAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 -sINVOKE_RUN=0
+        "-sEXPORTED_RUNTIME_METHODS=['FS','callMain']"
+        "-sEXPORTED_FUNCTIONS=['_main','_dd2_application_select_level','_dd2_application_show_car','_dd2_application_current_level','_dd2_application_current_view','_dd2_application_reset_camera','_dd2_application_release_input']")
+    set_target_properties(dd2_app PROPERTIES SUFFIX ".js")
+    configure_file(src/platform/web/index.html "${CMAKE_BINARY_DIR}/index.html" COPYONLY)
+    configure_file(src/platform/web/viewer.js "${CMAKE_BINARY_DIR}/viewer.js" COPYONLY)
+endif()
 
 include(CTest)
 if(BUILD_TESTING)
@@ -171,6 +195,7 @@ add_custom_target(format-check
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)
 add_dependencies(dd2_render format-check)
 add_dependencies(dd2_assets format-check)
+add_dependencies(dd2_platform format-check)
 add_custom_target(format
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/rewrite/quality.py" format
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)

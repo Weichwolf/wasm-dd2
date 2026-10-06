@@ -47,7 +47,10 @@ uses original UV/CLUT selection, and the preview camera preserves positive Y
 upward. Scene vertices use their static raster-cell or local object origin,
 separate from the retained bounding center. Road contact/topology data,
 billboard orientation, lighting, blending
-and gameplay remain to be implemented.
+and gameplay remain to be implemented. A shared C application now presents the
+eleven track/car views in a native SDL window and a browser canvas, with orbit,
+tilt, pan, zoom, reset and track/view selection. This is an inspection viewer;
+vehicle simulation, opponents and race rules remain pending.
 This is not yet a playable game.
 
 ## SoftGL
@@ -68,15 +71,19 @@ The renderer and rewrite are C11. Meshoptimizer belongs to SoftGL's separate
 offline asset-preparation tools and is not linked into either runtime. The
 rewrite build does not enable a C++ compiler or build those tools.
 The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
-covering SoftGL's maximum render pool. Browser
-presentation, SDL/input and audio are later platform work. Browser pthread builds
+covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
+software surfaces, with shared keyboard input and monotonic timing. Gamepad,
+persistence and audio remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
 
 ## Build and mandatory quality gates
 
 Use CMake 3.25+, Ninja, Python 3, LLVM 19 (`clang`, `clang-format`, `clang-tidy`),
-Emscripten and Node. Debian's package names are `cmake ninja-build python3
-clang-19 clang-format-19 clang-tidy-19 emscripten nodejs`.
+Emscripten, Node and SDL2 development headers. Debian's package names are
+`cmake ninja-build python3 clang-19 clang-format-19 clang-tidy-19 emscripten
+nodejs libsdl2-dev`. The window verifier additionally needs Pillow, Xvfb,
+xdotool, Chromium and Playwright (the repository's browser launcher supports
+Debian's system Chromium).
 
 ```sh
 make clean-logs
@@ -85,6 +92,19 @@ make rewrite-wasm
 ctest --preset rewrite-wasm
 make clean-logs
 ```
+
+`make rewrite-play LEVEL=1` opens the native track/car viewer. `make rewrite-web`
+serves the browser viewer at `http://127.0.0.1:8080/`; select the provisioned
+`DestructionDerby2/Dirinfo` file in the page. Assets remain local and are not
+included in the browser distribution. Arrow keys orbit/tilt, WASD pans, plus/minus
+or the wheel zooms, R resets, Tab switches track/car, Page Up/Down changes level,
+and Escape closes the view. The browser can reopen the archive after closing.
+
+The WASM builder uses a private writable ports cache under
+`/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
+Existing system headers/libraries are reused through file links; SDL is built
+privately. An explicit `EM_CACHE` overrides this default. The SDK package files
+are not modified. Builds and reusable dependencies remain outside the source tree.
 
 `make` builds the native rewrite. Existing explicit reference targets, such as
 `make native`, `make wasm` and the original verification targets, remain
@@ -129,6 +149,15 @@ and cross-target image consistency, and removes completed raw frames. Its scope
 is static scene meshes and neutral palette shade with selected cutout, without
 billboard orientation, lighting or blending. Road contact/topology decoding
 and a complete race remain pending. See `src/render/README.md`.
+`make rewrite-window-verify` compares all eleven actual native window and browser
+canvas track/car views against the shared C preview, exercises real keyboard and
+wheel events, focus-loss release, camera reset, selection synchronization,
+native resizing/letterboxing, invalid browser archives and close/reopen. The
+native lifecycle also runs with ASan/UBSan-instrumented rewrite C modules;
+system SDL2 and pinned release SoftGL remain uninstrumented. The
+native framebuffer comparison is exact; cross-target comparisons use the same
+recorded SIMD edge bounds as the scene verifier. This establishes viewer behavior,
+not original rendering parity or playable-race coverage.
 
 ## Migration and acceptance
 
