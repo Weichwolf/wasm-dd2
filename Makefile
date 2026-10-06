@@ -155,6 +155,10 @@ generate-multiplayer-save: ## produce a positive-score original multiplayer card
 capture-natural-multiplayer: ## record natural original hotseat turns with clock/RNG and racing pictures; NATURAL_MULTIPLAYER_CAPTURE_ARGS required
 	python3 $(ROOT)/tools/capture_natural_multiplayer.py $(NATURAL_MULTIPLAYER_CAPTURE_ARGS)
 
+.PHONY: capture-multiplayer-driver-probe
+capture-multiplayer-driver-probe: ## preflight living original hotseat finishes with one hardware observer; MULTIPLAYER_DRIVER_PROBE_ARGS required
+	python3 $(ROOT)/tools/capture_multiplayer_driver_probe.py $(MULTIPLAYER_DRIVER_PROBE_ARGS)
+
 verify-natural-multiplayer: ## compare positive-score original/native/browser hotseat racing histories; NATURAL_MULTIPLAYER_VERIFY_ARGS required
 	python3 $(ROOT)/tools/verify_natural_multiplayer.py $(NATURAL_MULTIPLAYER_VERIFY_ARGS)
 

@@ -3106,6 +3106,31 @@ progress (`multiplayer-approach-1683-original/validation.json`). This verifies
 that host-policy case; both-player and complete Native/WASM A/V gates remain
 open.
 
+`make capture-multiplayer-driver-probe` first checks whether a host driver can
+finish the actual original's two first-round hotseat races alive. It uses the
+same real menu route and X11 driving keys, with one hardware breakpoint and
+bounded car-state journals. It does not record every API call or racing picture.
+Each required turn must reach a natural finish with `dead == 0` and
+`finished_laps == 1`; the save card and frozen source hashes must remain
+unchanged. `--turns 1` explicitly restricts the probe to the first human.
+`--driver-source` can supply a candidate keyboard policy, which is copied and
+hash-bound before launch. GDB changes timing, so successful preflight does not
+guarantee completion under the full recorder's overhead. The complete API,
+racing video, PCM, score and Native/WASM comparisons remain separate gates.
+
+The corrected policy completes both actual original turns alive in the fresh
+preflight: 688.5 and 724.8 seconds, with 26,182 and 19,005 observed draws. Both
+cars finish their ten laps without retirement; source hashes and the input card
+remain unchanged. The same public tool rejects an actual unfinished 100-draw
+run (`multiplayer-approach-1694-two-turns/validation.json`). This verifies host
+recording feasibility and its bounded rejection, not port, score or A/V parity.
+
+```sh
+make clean-logs
+make capture-multiplayer-driver-probe MULTIPLAYER_DRIVER_PROBE_ARGS='--output /tmp/wasm-dd2/multiplayer-driver-probe'
+make clean-logs
+```
+
 `multiplayer-arc-1559-host-checks/report.json` checks a balanced prefix of 44
 actual original key transitions, including handbrake press/release, rejects
 five altered key/frame/player/direction/extent cases and both incompatible
