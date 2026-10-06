@@ -28,5 +28,8 @@ typedef struct {
  * Searching, wheel suspension and off-road recovery belong to the vehicle step. */
 bool dd2_road_contact_cell(const dd2_road *road, size_t cell, dd2_road_point point,
                            dd2_road_contact *result);
+/* Same contact primitive for a specific active triangle (0 or 1). */
+bool dd2_road_contact_triangle(const dd2_road *road, size_t cell, unsigned triangle,
+                               dd2_road_point point, dd2_road_contact *result);
 
 #endif

@@ -253,3 +253,161 @@ bool dd2_road_surface_sample(const dd2_road_surface *surface, dd2_surface_query 
     }
     return search.found;
 }
+
+static const double dd2_surface_time_tolerance = 1e-10;
+static const double dd2_surface_coordinate_limit = 2147483648.0;
+static const double dd2_surface_recovery_limit = 1000;
+
+typedef struct {
+    const dd2_road_surface *surface;
+    dd2_surface_sweep sweep;
+    dd2_surface_bounds bounds;
+    dd2_surface_hit hit;
+    dd2_surface_statistics statistics;
+    double earliest;
+    bool found;
+    bool selecting;
+} dd2_surface_sweep_search;
+
+static bool dd2_surface_intersects(dd2_surface_bounds first, dd2_surface_bounds second) {
+    for (size_t axis = 0; axis < 2; ++axis) {
+        if (first.min[axis] > second.max[axis] || first.max[axis] < second.min[axis]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static double dd2_surface_plane_distance(dd2_road_position point, dd2_track_vertex origin,
+                                         const dd2_road_contact *plane) {
+    return ((point.x - (double)origin.x) * plane->normal[0]) +
+           ((point.y - (double)origin.y) * plane->normal[1]) +
+           ((point.z - (double)origin.z) * plane->normal[2]);
+}
+
+static bool dd2_surface_triangle_sweep(const dd2_road *road, uint32_t cell, unsigned triangle,
+                                       dd2_surface_sweep sweep, dd2_surface_hit *hit) {
+    /* The first vertex of each triangle is also its corresponding quad corner. */
+    const dd2_track_vertex origin =
+        dd2_road_vertices(road)[dd2_road_cells(road)[cell].vertices[(size_t)triangle * 2]];
+    dd2_road_contact plane = {0};
+    if (!dd2_road_contact_triangle(road, cell, triangle,
+                                   (dd2_road_point){.x = (double)origin.x, .z = (double)origin.z},
+                                   &plane)) {
+        return false;
+    }
+    const double start = dd2_surface_plane_distance(sweep.start, origin, &plane);
+    const double end = dd2_surface_plane_distance(sweep.end, origin, &plane);
+    double time = 0;
+    double penetration = 0;
+    if (start < 0) {
+        if (start < -sweep.recovery) {
+            return false;
+        }
+        penetration = -start;
+    } else {
+        if (end >= start || end > 0) {
+            return false;
+        }
+        time = start / (start - end);
+    }
+    const dd2_road_position point = {.x = sweep.start.x + ((sweep.end.x - sweep.start.x) * time),
+                                     .y = sweep.start.y + ((sweep.end.y - sweep.start.y) * time),
+                                     .z = sweep.start.z + ((sweep.end.z - sweep.start.z) * time)};
+    if (!dd2_road_contact_triangle(road, cell, triangle,
+                                   (dd2_road_point){.x = point.x, .z = point.z}, &plane)) {
+        return false;
+    }
+    *hit = (dd2_surface_hit){.time = time,
+                             .penetration = penetration,
+                             .point = {.x = point.x, .y = plane.height, .z = point.z},
+                             .road = plane};
+    return true;
+}
+
+static void dd2_surface_sweep_consider(dd2_surface_sweep_search *search,
+                                       dd2_surface_hit candidate) {
+    if (!search->selecting) {
+        if (!search->found || candidate.time < search->earliest) {
+            search->earliest = candidate.time;
+        }
+        search->found = true;
+    } else if (candidate.time <= search->earliest + dd2_surface_time_tolerance &&
+               (!search->found || candidate.road.cell < search->hit.road.cell ||
+                (candidate.road.cell == search->hit.road.cell &&
+                 candidate.road.triangle < search->hit.road.triangle))) {
+        search->hit = candidate;
+        search->found = true;
+    }
+}
+
+static void dd2_surface_sweep_visit(dd2_surface_sweep_search *search) {
+    uint32_t pending[DD2_SURFACE_STACK_SIZE] = {0};
+    size_t count = 1;
+    while (count != 0) {
+        const dd2_surface_node *node = &search->surface->nodes[pending[--count]];
+        ++search->statistics.bounds_tests;
+        if (!dd2_surface_intersects(node->bounds, search->bounds)) {
+            continue;
+        }
+        if (node->count == 0) {
+            pending[count++] = node->right;
+            pending[count++] = node->left;
+            continue;
+        }
+        for (size_t entry = node->first; entry < (size_t)node->first + node->count; ++entry) {
+            const dd2_surface_entry *candidate = &search->surface->entries[entry];
+            ++search->statistics.bounds_tests;
+            if (!dd2_surface_intersects(candidate->bounds, search->bounds)) {
+                continue;
+            }
+            ++search->statistics.cell_tests;
+            for (unsigned triangle = 0; triangle < 2; ++triangle) {
+                dd2_surface_hit hit = {0};
+                if (dd2_surface_triangle_sweep(search->surface->road, candidate->cell, triangle,
+                                               search->sweep, &hit)) {
+                    dd2_surface_sweep_consider(search, hit);
+                }
+            }
+        }
+    }
+}
+
+static bool dd2_surface_position_valid(const dd2_road_position *position) {
+    return dd2_numeric_finite(&position->x) && dd2_numeric_finite(&position->y) &&
+           dd2_numeric_finite(&position->z) && fabs(position->x) <= dd2_surface_coordinate_limit &&
+           fabs(position->y) <= dd2_surface_coordinate_limit &&
+           fabs(position->z) <= dd2_surface_coordinate_limit;
+}
+
+bool dd2_road_surface_sweep(const dd2_road_surface *surface, dd2_surface_sweep sweep,
+                            dd2_surface_hit *result, dd2_surface_statistics *statistics) {
+    if (statistics != NULL) {
+        *statistics = (dd2_surface_statistics){0};
+    }
+    if (result == NULL) {
+        return false;
+    }
+    *result = (dd2_surface_hit){0};
+    if (surface == NULL || !dd2_surface_position_valid(&sweep.start) ||
+        !dd2_surface_position_valid(&sweep.end) || !dd2_numeric_finite(&sweep.recovery) ||
+        sweep.recovery < 0 || sweep.recovery > dd2_surface_recovery_limit) {
+        return false;
+    }
+    dd2_surface_sweep_search search = {
+        .surface = surface,
+        .sweep = sweep,
+        .bounds = {.min = {fmin(sweep.start.x, sweep.end.x), fmin(sweep.start.z, sweep.end.z)},
+                   .max = {fmax(sweep.start.x, sweep.end.x), fmax(sweep.start.z, sweep.end.z)}}};
+    dd2_surface_sweep_visit(&search);
+    if (search.found) {
+        search.selecting = true;
+        search.found = false;
+        dd2_surface_sweep_visit(&search);
+    }
+    *result = search.hit;
+    if (statistics != NULL) {
+        *statistics = search.statistics;
+    }
+    return search.found;
+}

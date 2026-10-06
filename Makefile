@@ -28,6 +28,7 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-archive-verify
 .PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify rewrite-road-verify rewrite-surface-verify
 .PHONY: rewrite-barrier-verify
+.PHONY: rewrite-ground-verify
 .PHONY: rewrite-driving-verify
 .PHONY: rewrite-vehicle-verify
 .PHONY: rewrite-play rewrite-web rewrite-window-verify
@@ -36,6 +37,15 @@ rewrite-play: rewrite-native ## open the interactive track/car viewer with provi
 
 rewrite-web: rewrite-wasm ## serve the browser track/car viewer on localhost:8080; select Dirinfo locally
 	python3 $(ROOT)/tools/rewrite/serve.py
+
+rewrite-ground-verify: ## verify source body/road contacts and free driving on all targets
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_ground.py
+	python3 $(ROOT)/tools/rewrite/verify_driving.py
+	python3 $(ROOT)/tools/rewrite/verify_window.py
+	$(MAKE) clean-logs
 
 rewrite-barrier-verify: ## verify source walls, continuous contacts and driving response
 	$(MAKE) clean-logs

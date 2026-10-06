@@ -106,8 +106,7 @@ Completed raw samples and instrumented binaries are removed after the report.
 
 Real driving input, vehicle/wheel rendering and chase camera are integrated in
 free driving. Track barrier response is now a separate post-integration step.
-Distinct vehicle classes, body/ground and car-pair collisions, upside-down
-support, damage, detached
+Distinct vehicle classes, car-pair collisions, damage, detached
 wheels, off-road recovery, AI and race rules remain pending. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named
 synthetic behavior, not original driving parity or complete race correctness.
@@ -132,7 +131,7 @@ linear/angular impulses at the contact point. Initial overlaps are corrected,
 and moving away from a touching surface is allowed. After at most 16 responses,
 the last corrected pose is kept rather than accepting unchecked residual travel.
 Failure leaves the proposed vehicle untouched. The game owner retains a
-resettable 64-bit count of barrier contacts for events and verification.
+resettable 64-bit count of collision contacts for events and verification.
 
 `make rewrite-barrier-verify` independently checks all 6,492 original collision
 lines (including diagonal widening/narrowing boundaries) and four arena radii,
@@ -145,3 +144,53 @@ free-driving snapshots and real window/browser lifecycle/input checks run too;
 a real browser reverse key drives into an arena boundary. This establishes
 barrier geometry/response, not original fixed-point collision/damage parity,
 other-car collision or complete race correctness.
+
+## Body ground support
+
+The surface index also supports allocation-free one-sided point/triangle sweeps.
+It enumerates active triangles in intersecting XZ bounds, intersects the motion
+with their planes and tests the crossing point inside the actual triangle.
+This catches a fast crossing even when both endpoints lie outside the triangle.
+Two passes anchor time ties to the global earliest contact (1e-10), then prefer
+the lowest cell and triangle. Bounded initial overlap recovery ignores higher
+surfaces already above the start; upward motion from a touching road is allowed.
+Finite input validation remains effective under fast-math. Vertical samples
+retain their existing height-window and preferred-cell semantics.
+
+`dd2_vehicle_collide_world` sweeps the eight source contact-box corners from
+`Get_Corner_Positions` (X ±186, Y ±130, Z ±450). These are source collision
+dimensions, separate from the visual body offset and mesh bounds. Inverted,
+sideways and spinning cars now have body support, using inelastic normal impulses
+and tuned friction 0.8 with the same world inertia as the suspension/barriers.
+Initial ground overlap recovery is limited to 25 units along the normal. Short
+angular chords approximate rotated corner paths (target 0.02 radians, at most
+16 pieces). Corner time ties prefer source order. This is a corner-contact proxy,
+not exact mesh/triangle collision or an exact continuous rotating-box solver.
+
+Ground and barrier contacts share earliest selection and the remaining fixed
+step. Rebound/friction can change both linear and angular travel before the next
+sweep. At most 64 combined responses keep the last checked pose on exhaustion;
+the barrier-only entry point retains its 16-response budget. Failure preserves
+the proposed state. Ground contact is now integrated in free driving and reset
+settling. Car-pair collision, damage and automatic off-road recovery remain pending.
+
+`make rewrite-ground-verify` independently reads the source box and original
+road planes. Short/fast vertical sweeps at both triangle centroids of every cell
+include missing triangles and bridge overlap. Each level also runs three seconds
+of upright, inverted, sliding and spinning drops from its original grid position.
+Native, Node/WASM and ASan/UBSan compare contacts and sampled motion. Synthetic
+tests additionally check an outside-to-outside crossing, bridge separation,
+upward escape, bounded overlap repair, inverted/sideways rest, slope/sliding
+friction, a 200,000-unit/s drop, fast rotation, impulse energy loss, unchanged
+upright suspension and transactional nonfinite rejection. These checks establish
+body-ground behavior, not original collision parity or complete races.
+
+The original-data check covers 79,100 sweeps and 26,400 dynamics steps per target.
+Analytic plane comparisons require 1e-8 absolute or 1e-10 relative error and exact
+source contact selection. Dynamics use explicit absolute bounds: position 0.1
+world units, velocity 0.2 units/s, quaternion components 1e-4 and angular velocity
+1e-3 radians/s (plus 1e-8 relative). Spinning drops permit two grazing solver
+responses' difference while requiring the same support outcome; other drops
+require equal response counts. The observed maximum difference is about 0.1245
+units/s on the Arena A spinning drop. These are sub-coordinate movement
+tolerances, not a claim of bitidentical dynamics or exact replay determinism.

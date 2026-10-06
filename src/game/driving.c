@@ -161,8 +161,11 @@ bool dd2_driving_reset(dd2_driving *driving) {
         return false;
     }
     for (unsigned step = 0; step < DD2_DRIVING_SETTLE_STEPS; ++step) {
+        const dd2_vehicle previous = vehicle;
         if (!dd2_vehicle_step(&vehicle, driving->road, driving->surface,
-                              (dd2_vehicle_control){.brake = 1})) {
+                              (dd2_vehicle_control){.brake = 1}) ||
+            !dd2_vehicle_collide_world(&vehicle, &previous, driving->surface,
+                                       driving->barrier_world, NULL)) {
             return false;
         }
     }
@@ -221,7 +224,8 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         const dd2_vehicle previous = vehicle;
         dd2_vehicle_impact impact = {0};
         if (!dd2_vehicle_step(&vehicle, driving->road, driving->surface, frame.control) ||
-            !dd2_vehicle_collide_barriers(&vehicle, &previous, driving->barrier_world, &impact) ||
+            !dd2_vehicle_collide_world(&vehicle, &previous, driving->surface,
+                                       driving->barrier_world, &impact) ||
             UINT64_MAX - collisions < impact.contacts) {
             return false;
         }

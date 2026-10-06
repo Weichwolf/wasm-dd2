@@ -55,7 +55,9 @@ presentation now connects that core to a perspective chase camera,
 full body orientation and four suspended/steered/rolling wheel models.
 Source track barriers and analytic arena boundaries now participate in free
 driving, with continuous collision sweeps, restitution, friction and angular
-response. Body/ground and car-pair collisions, damage, billboard orientation,
+response. Body/ground support now uses the original eight-corner contact box,
+with one-sided swept road contacts and a shared ground/barrier solver.
+Car-pair collisions, damage, billboard orientation,
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
@@ -186,7 +188,7 @@ calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
 bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
 this establishes the simulation core, not original driving parity or a complete
 race. Vehicle rendering/input/chase-camera integration is checked separately;
-Barrier response is checked separately; body/ground and car-pair collisions
+Barrier and body/ground response are checked separately; car-pair collisions
 and damage remain pending. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
@@ -218,8 +220,17 @@ correction, escape, angular travel, energy loss and invalid-state rollback.
 The game owner invokes barrier response after every fixed vehicle step; the
 browser additionally uses a real reverse key to hit an arena boundary and checks
 that reset clears accumulated collision events. Rounded body proxies, road wall
-height, restitution and friction are rewrite tuning. Body/ground contact,
-car-pair collisions, damage and a complete race remain separate work.
+height, restitution and friction are rewrite tuning. Body/ground contact is
+checked separately; car-pair collisions, damage and a complete race remain pending.
+
+`make rewrite-ground-verify` independently checks the eight original body-contact
+corners and short/fast sweeps at both triangle centroids of all 19,775 road cells
+on Native, Node/WASM and ASan/UBSan. Four original-grid drops per level exercise
+upright, inverted, sliding and spinning bodies; existing free-driving window
+and browser checks run as well. Ground and barriers now share earliest-contact
+response, including during reset settling. Body corners and bounded angular
+chords form a collision proxy; this is not exact mesh collision or original
+handling parity. See `src/physics/README.md` for solver bounds and tuning.
 
 ## Migration and acceptance
 

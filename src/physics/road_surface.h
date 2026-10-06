@@ -22,6 +22,23 @@ typedef struct {
     size_t cell_tests;
 } dd2_surface_statistics;
 
+typedef struct {
+    double x;
+    double y;
+    double z;
+} dd2_road_position;
+typedef struct {
+    dd2_road_position start;
+    dd2_road_position end;
+    double recovery; /* Maximum initial overlap, measured along the normal. */
+} dd2_surface_sweep;
+typedef struct {
+    double time;
+    double penetration;
+    dd2_road_position point;
+    dd2_road_contact road;
+} dd2_surface_hit;
+
 /* Owns a balanced XZ bounds hierarchy; borrows immutable road geometry, which
  * must outlive it. Creation/destruction are separate from allocation-free queries.
  * Returns the highest contact within the inclusive height window. Heights within
@@ -32,5 +49,13 @@ dd2_road_surface *dd2_road_surface_create(const dd2_road *road);
 void dd2_road_surface_destroy(dd2_road_surface *surface);
 bool dd2_road_surface_sample(const dd2_road_surface *surface, dd2_surface_query query,
                              dd2_road_contact *result, dd2_surface_statistics *statistics);
+
+/* One-sided point/triangle sweep. Finds the earliest downward crossing, also
+ * when both endpoints are outside a triangle. Repairs bounded initial overlaps;
+ * deeper surfaces above the start are ignored, preserving bridge separation.
+ * Earliest-time ties prefer lowest cell, then triangle. Invalid inputs clear
+ * outputs. No allocations; the road must remain immutable. */
+bool dd2_road_surface_sweep(const dd2_road_surface *surface, dd2_surface_sweep sweep,
+                            dd2_surface_hit *result, dd2_surface_statistics *statistics);
 
 #endif

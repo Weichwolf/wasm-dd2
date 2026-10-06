@@ -79,29 +79,37 @@ static bool dd2_contact_triangle(const dd2_track_vertex vertices[3], dd2_road_po
     return true;
 }
 
-bool dd2_road_contact_cell(const dd2_road *road, size_t cell, dd2_road_point point,
-                           dd2_road_contact *result) {
+bool dd2_road_contact_triangle(const dd2_road *road, size_t cell, unsigned triangle,
+                               dd2_road_point point, dd2_road_contact *result) {
     if (result == NULL) {
         return false;
     }
     *result = (dd2_road_contact){0};
-    if (cell >= dd2_road_cell_count(road)) {
+    if (cell >= dd2_road_cell_count(road) || triangle >= 2) {
         return false;
     }
     const dd2_road_cell *surface = &dd2_road_cells(road)[cell];
     const dd2_track_vertex *vertices = dd2_road_vertices(road);
     static const size_t corners[2][3] = {{0, 1, 3}, {2, 3, 1}};
+    if ((surface->triangle_mask & (1U << triangle)) == 0) {
+        return false;
+    }
+    dd2_track_vertex points[3] = {0};
+    for (size_t corner = 0; corner < 3; ++corner) {
+        points[corner] = vertices[surface->vertices[corners[triangle][corner]]];
+    }
+    if (dd2_contact_triangle(points, point, result)) {
+        result->cell = (uint32_t)cell;
+        result->triangle = triangle;
+        return true;
+    }
+    return false;
+}
+
+bool dd2_road_contact_cell(const dd2_road *road, size_t cell, dd2_road_point point,
+                           dd2_road_contact *result) {
     for (unsigned triangle = 0; triangle < 2; ++triangle) {
-        if ((surface->triangle_mask & (1U << triangle)) == 0) {
-            continue;
-        }
-        dd2_track_vertex points[3] = {0};
-        for (size_t corner = 0; corner < 3; ++corner) {
-            points[corner] = vertices[surface->vertices[corners[triangle][corner]]];
-        }
-        if (dd2_contact_triangle(points, point, result)) {
-            result->cell = (uint32_t)cell;
-            result->triangle = triangle;
+        if (dd2_road_contact_triangle(road, cell, triangle, point, result)) {
             return true;
         }
     }
