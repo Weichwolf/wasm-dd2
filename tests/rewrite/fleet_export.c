@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
     const unsigned level = code <= '9' ? (unsigned)(code - '0') : (unsigned)(code - 'A') + 10;
     dd2_road *road = dd2_fleet_probe_load(argv[1], code);
     dd2_driving *driving = dd2_driving_create(road, level);
+    dd2_driving_set_opponents(driving, false);
     bool valid = driving != NULL && dd2_driving_vehicle_count(driving) == DD2_FLEET_PROBE_CARS;
     if (valid) {
         dd2_fleet_probe_state(driving, 0);

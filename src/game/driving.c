@@ -1,5 +1,6 @@
 #include "game/driving.h"
 
+#include "ai/driver.h"
 #include "assets/barriers.h"
 #include "assets/road.h"
 #include "game/starting_grid.h"
@@ -30,6 +31,8 @@ struct dd2_driving {
     uint64_t collisions;
     dd2_grid_start starts[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT];
+    bool opponents;
     uint64_t pair_collisions;
     double accumulator;
     double wheel_rolls[DD2_VEHICLE_FLEET_LIMIT];
@@ -88,8 +91,19 @@ bool dd2_driving_reset(dd2_driving *driving) {
             return false;
         }
     }
+    dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        if (!dd2_ai_driver_reset(&drivers[slot],
+                                 (dd2_ai_start){.road = driving->road,
+                                                .cell = driving->starts[slot].cell,
+                                                .slot = slot,
+                                                .count = DD2_VEHICLE_FLEET_LIMIT})) {
+            return false;
+        }
+    }
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
         driving->vehicles[slot] = vehicles[slot];
+        driving->drivers[slot] = drivers[slot];
         driving->wheel_rolls[slot] = 0;
     }
     driving->accumulator = 0;
@@ -108,6 +122,7 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
         return NULL;
     }
     driving->road = road;
+    driving->opponents = true;
     driving->surface = dd2_road_surface_create(road);
     driving->barriers = dd2_barriers_create(road, level);
     driving->barrier_world = dd2_barrier_world_create(driving->barriers);
@@ -130,6 +145,35 @@ void dd2_driving_destroy(dd2_driving *driving) {
     }
 }
 
+static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
+                             dd2_ai_driver *drivers, dd2_vehicle_control player,
+                             dd2_vehicle_impact *impacts) {
+    dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_vehicle_control controls[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        previous[slot] = vehicles[slot];
+        controls[slot] = (dd2_vehicle_control){.brake = 1};
+    }
+    controls[0] = player;
+    for (unsigned slot = 1; slot < DD2_VEHICLE_FLEET_LIMIT && driving->opponents; ++slot) {
+        const dd2_ai_observation observation = {.road = driving->road,
+                                                .surface = driving->surface,
+                                                .vehicles = previous,
+                                                .count = DD2_VEHICLE_FLEET_LIMIT,
+                                                .slot = slot};
+        if (!dd2_ai_driver_step(&drivers[slot], &observation, &controls[slot])) {
+            return false;
+        }
+    }
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        if (!dd2_vehicle_step(&vehicles[slot], driving->road, driving->surface, controls[slot])) {
+            return false;
+        }
+    }
+    return dd2_vehicle_collide_fleet(vehicles, previous, DD2_VEHICLE_FLEET_LIMIT, driving->surface,
+                                     driving->barrier_world, impacts, NULL);
+}
+
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     if (driving == NULL || !dd2_numeric_finite(&frame.seconds) || frame.seconds < 0 ||
         frame.seconds > dd2_driving_max_frame || !dd2_numeric_finite(&frame.control.throttle) ||
@@ -139,9 +183,11 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         return false;
     }
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
     double rolls[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
         vehicles[slot] = driving->vehicles[slot];
+        drivers[slot] = driving->drivers[slot];
         rolls[slot] = driving->wheel_rolls[slot];
     }
     double accumulator = driving->accumulator + frame.seconds;
@@ -150,20 +196,8 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     const unsigned steps =
         (unsigned)floor((accumulator + dd2_driving_time_tolerance) / DD2_VEHICLE_STEP_SECONDS);
     for (unsigned step = 0; step < steps; ++step) {
-        dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
         dd2_vehicle_impact impacts[DD2_VEHICLE_FLEET_LIMIT] = {0};
-        unsigned pair_contacts = 0;
-        for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
-            previous[slot] = vehicles[slot];
-            const dd2_vehicle_control control =
-                slot == 0 ? frame.control : (dd2_vehicle_control){.brake = 1};
-            if (!dd2_vehicle_step(&vehicles[slot], driving->road, driving->surface, control)) {
-                return false;
-            }
-        }
-        if (!dd2_vehicle_collide_fleet(vehicles, previous, DD2_VEHICLE_FLEET_LIMIT,
-                                       driving->surface, driving->barrier_world, impacts,
-                                       &pair_contacts) ||
+        if (!dd2_driving_step(driving, vehicles, drivers, frame.control, impacts) ||
             UINT64_MAX - collisions < impacts[0].contacts ||
             UINT64_MAX - pairs < impacts[0].pair_contacts) {
             return false;
@@ -185,6 +219,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     accumulator = fmax(0, accumulator - ((double)steps * DD2_VEHICLE_STEP_SECONDS));
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
         driving->vehicles[slot] = vehicles[slot];
+        driving->drivers[slot] = drivers[slot];
         driving->wheel_rolls[slot] = rolls[slot];
     }
     driving->pair_collisions = pairs;
@@ -197,6 +232,19 @@ void dd2_driving_suspend(dd2_driving *driving) {
     if (driving != NULL) {
         driving->accumulator = 0;
     }
+}
+
+void dd2_driving_set_opponents(dd2_driving *driving, bool enabled) {
+    if (driving != NULL) {
+        driving->opponents = enabled;
+        driving->accumulator = 0;
+    }
+}
+bool dd2_driving_opponents(const dd2_driving *driving) {
+    return driving != NULL && driving->opponents;
+}
+const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving) {
+    return driving != NULL ? driving->drivers : NULL;
 }
 
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving) {

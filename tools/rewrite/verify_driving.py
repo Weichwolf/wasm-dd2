@@ -103,6 +103,7 @@ def main():
     physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'vehicle_collision')]
     render_units = [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'driving_draw')]
     game_units = [ROOT / f'src/game/{name}.c' for name in ('driving', 'starting_grid')]
+    game_units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     preview, test = output / 'preview-sanitized', output / 'timing-sanitized'
     run([tool('clang'), *flags, *map(str, assets_units + physics_units + render_units + game_units),
          str(ROOT / 'tests/rewrite/driving_preview.c'), str(WORK / 'rewrite-native/softgl/libsoftgl.a'),

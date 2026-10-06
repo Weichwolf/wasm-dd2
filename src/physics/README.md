@@ -107,7 +107,8 @@ Completed raw samples and instrumented binaries are removed after the report.
 Real driving input, vehicle/wheel rendering and chase camera are integrated in
 free driving. Track barrier response is now a separate post-integration step.
 Distinct vehicle classes, damage, detached
-wheels, off-road recovery, AI and race rules remain pending. The current probes
+wheels, off-road recovery and race rules remain pending. Driving decisions are
+now implemented separately under `src/ai/`. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named
 synthetic behavior, not original driving parity or complete race correctness.
 
@@ -228,7 +229,7 @@ momentum transfer, separate bridge heights and invalid-state rollback.
 `make rewrite-fleet-verify` checks the full original starter field on all eleven
 levels for 132,000 vehicle steps per target. Component bounds are 0.1 world units
 for position, 0.2 units/s for velocity, 1e-4 for quaternion/wheel roll and 1e-3
-radians/s for angular velocity, plus 1e-8 relative tolerance. Other cars currently
-hold their brakes; driving AI, distinct masses/classes, damage and collision
+radians/s for angular velocity, plus 1e-8 relative tolerance. Stationary-field
+comparisons disable driving decisions; distinct masses/classes, damage and collision
 sound remain pending. Counts record individual solver responses, not unique
 accidents. These checks establish rewrite behavior, not original collision parity.

@@ -127,6 +127,7 @@ def main():
     units += [ROOT/f'src/physics/{name}.c' for name in
               ('road_contact','road_surface','vehicle','barrier_world','car_contact','vehicle_collision')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving')]
+    units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]
     units += [ROOT/'src/platform/file.c']
     sanitized, synthetic = output/'export-sanitized', output/'test-sanitized'
     for name,binary in (('fleet_export',sanitized),('car_pair_test',synthetic)):

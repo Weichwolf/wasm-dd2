@@ -35,9 +35,12 @@ Page Up/Down changes track. Browser controls call the same main-thread C bridge.
 
 `make rewrite-driving-verify` covers independent original start positions,
 frame partition equivalence, pause/reset/rejection and actual native/browser
-input/presentation. Other nineteen cars currently hold their brakes, are rendered
-with the shared car/wheel models and react to collisions. This is free driving:
-driving AI, distinct liveries/vehicle classes, damage, checkpoints,
+input/presentation. Other nineteen cars drive by default, are rendered
+with the shared car/wheel models and react to collisions. Their decisions borrow
+one simultaneous field before physics advances any body. Controller state commits
+with the frame and resets with every vehicle; pause also freezes all decisions.
+`dd2_driving_set_opponents` can disable decisions for stationary collision probes.
+This is free driving: distinct liveries/vehicle classes, damage, checkpoints,
 race outcomes, menus, championships, replay, persistence and audio remain pending.
 
 The driving owner also owns copied source barriers and their collision index.
@@ -61,3 +64,8 @@ body is sampled, reset restores all twenty, and a level 1 impact must move the
 other car. Actual browser input also exercises a car-pair impact and reset.
 Collision counts describe solver responses, not unique accident events or damage
 credits. Championship driver-to-slot ordering remains separate race work.
+
+`make rewrite-ai-verify` checks the shared driving controller and source-linked
+guidance, including sixty-second full-field scenarios on every level. Frame
+partition tests compare every vehicle, wheel roll and AI state. Driving tactics,
+overturned/off-road recovery, race rules and damage integration remain pending.

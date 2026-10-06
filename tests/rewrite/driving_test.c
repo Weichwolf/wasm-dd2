@@ -1,3 +1,4 @@
+#include "ai/driver.h"
 #include "asset_fixture.h"
 #include "assets/bytes.h"
 #include "assets/level.h"
@@ -66,6 +67,26 @@ static bool dd2_drive_test_same(const dd2_vehicle *first, const dd2_vehicle *sec
            fabs(first->rotation.w - second->rotation.w) < dd2_drive_test_tolerance;
 }
 
+static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *second) {
+    const dd2_ai_driver *first_drivers = dd2_driving_drivers(first);
+    const dd2_ai_driver *second_drivers = dd2_driving_drivers(second);
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(first); ++slot) {
+        const dd2_ai_driver driver = first_drivers[slot];
+        const dd2_ai_driver other = second_drivers[slot];
+        if (!dd2_drive_test_same(&dd2_driving_vehicles(first)[slot],
+                                 &dd2_driving_vehicles(second)[slot]) ||
+            fabs(dd2_driving_wheel_rolls(first)[slot] - dd2_driving_wheel_rolls(second)[slot]) >
+                dd2_drive_test_tolerance ||
+            driver.cell != other.cell || driver.lane != other.lane ||
+            driver.base_lane != other.base_lane || driver.target != other.target ||
+            driver.stuck_steps != other.stuck_steps ||
+            driver.reverse_steps != other.reverse_steps || driver.steps != other.steps) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
     const dd2_vehicle initial = *dd2_driving_vehicle(first);
     const dd2_vehicle_control control = {.throttle = 1, .steer = 0.1};
@@ -82,14 +103,16 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
             }
         }
     }
-    if (!dd2_drive_test_same(dd2_driving_vehicle(first), dd2_driving_vehicle(second)) ||
+    if (!dd2_drive_test_field(first, second) ||
         fabs(dd2_driving_wheel_roll(first) - dd2_driving_wheel_roll(second)) >
             dd2_drive_test_tolerance ||
         dd2_driving_vehicle(first)->steps !=
             DD2_DRIVE_TEST_RESET_STEPS + (DD2_DRIVE_TEST_FRAMES * DD2_DRIVE_TEST_PARTS)) {
         return false;
     }
-    if (!dd2_driving_reset(first) || !dd2_drive_test_same(&initial, dd2_driving_vehicle(first))) {
+    if (!dd2_driving_reset(first) || !dd2_driving_reset(second) ||
+        !dd2_drive_test_field(first, second) ||
+        !dd2_drive_test_same(&initial, dd2_driving_vehicle(first))) {
         return false;
     }
     /* A partial frame followed by pause must not leak into resumed simulation. */

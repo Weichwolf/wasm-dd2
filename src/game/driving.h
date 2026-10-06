@@ -1,6 +1,7 @@
 #ifndef DD2_GAME_DRIVING_H
 #define DD2_GAME_DRIVING_H
 
+#include "ai/driver.h"
 #include "assets/road.h"
 #include "physics/vehicle.h"
 
@@ -17,12 +18,16 @@ typedef struct {
  * destruction. Selects all original grid slots without original memory.
  * A frame advances bounded fixed steps transactionally. Pause discards partial
  * elapsed time; reset restores the same settled field, independent of rendering.
- * Slot zero is the player; other bodies hold their brakes until driving AI exists. */
+ * Slot zero is the player; other bodies use driving AI by default. */
 dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level);
 void dd2_driving_destroy(dd2_driving *driving);
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame);
 bool dd2_driving_reset(dd2_driving *driving);
 void dd2_driving_suspend(dd2_driving *driving);
+/* Disable driving decisions for stationary-field collision comparisons. */
+void dd2_driving_set_opponents(dd2_driving *driving, bool enabled);
+bool dd2_driving_opponents(const dd2_driving *driving);
+const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving);
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving);
 uint64_t dd2_driving_collisions(const dd2_driving *driving);

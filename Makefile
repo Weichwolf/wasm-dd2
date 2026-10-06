@@ -30,6 +30,7 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-barrier-verify
 .PHONY: rewrite-ground-verify
 .PHONY: rewrite-fleet-verify
+.PHONY: rewrite-ai-verify
 .PHONY: rewrite-driving-verify
 .PHONY: rewrite-vehicle-verify
 .PHONY: rewrite-play rewrite-web rewrite-window-verify
@@ -44,6 +45,16 @@ rewrite-ground-verify: ## verify source body/road contacts and free driving on a
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm
 	python3 $(ROOT)/tools/rewrite/verify_ground.py
+	python3 $(ROOT)/tools/rewrite/verify_driving.py
+	python3 $(ROOT)/tools/rewrite/verify_window.py
+	$(MAKE) clean-logs
+
+rewrite-ai-verify: ## verify source-linked guidance and sixty-second opponent drives on all targets
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_ai.py
+	python3 $(ROOT)/tools/rewrite/verify_fleet.py
 	python3 $(ROOT)/tools/rewrite/verify_driving.py
 	python3 $(ROOT)/tools/rewrite/verify_window.py
 	$(MAKE) clean-logs

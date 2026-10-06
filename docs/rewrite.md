@@ -62,10 +62,12 @@ field, with swept oriented boxes and equal/opposite impulses. Damage, billboard 
 lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
-free driving on all eleven levels, using original
+free driving on all eleven levels, using
 all twenty source-grid positions with road-aligned initial orientation, fixed-step frame
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
-respond to impacts while holding their brakes. Opponent driving AI and race rules remain pending.
+respond to impacts. Opponents now follow source road paths, brake for curves,
+avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
+Damage-aware tactics, overturned/off-road recovery and race rules remain pending.
 This is not yet a complete racing game.
 
 ## SoftGL
@@ -245,7 +247,19 @@ reset restoration. Synthetic checks cover fast frontal and glancing collisions,
 rotating contacts, three-car impulse transfer, bridge separation, energy loss and
 transactional rejection. Browser checks use a real reverse key to hit another
 car and verify counter reset. This establishes starter-field collision behavior;
-distinct vehicle classes, liveries, damage, driving AI and race rules remain pending.
+Stationary-field comparisons explicitly disable driving decisions. Distinct
+vehicle classes, liveries, damage and race rules remain pending.
+
+`make rewrite-ai-verify` independently checks source-linked guidance from every
+original racing strip, including branches and loop wrap, with three lane fractions
+and three lookahead lengths. Native, Node/WASM and ASan/UBSan also run sixty-second
+twenty-car scenarios on all eleven levels: 2,640,000 vehicle steps per target.
+Checks cover supported movement, decision cadence, reset, stalled reversing and
+frame-partition independence of every vehicle/controller. Real native/browser
+driving checks run too. Controller tuning and floating-point-sensitive traffic
+choices can produce different encounters across targets; this verifies behavior,
+not original AI parity, exact cross-target trajectories or complete race rules.
+See `src/ai/README.md` for parameters and remaining tactics/recovery work.
 
 ## Migration and acceptance
 
