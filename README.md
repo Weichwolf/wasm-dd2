@@ -3145,6 +3145,35 @@ input/clock/RNG/finish/score/frame/palette cases are rejected
 are removed after reporting. Chronological PCM, menu animation, physical timing
 and a complete season remain unproven by this scenario.
 
+`tools/capture_original_multiplayer_audio.py` now provides a separate real-time
+original recorder without debugger pauses. Its `--menu-only` route enters A/B
+through 22 genuine X11 keys and requires the selected two-human Wrecking mode,
+an actual running first race and an unchanged memory/file card. Main-menu
+`Button_Pressed` waits for Return release before changing menus; driver-name
+directions instead repeat while held. `tools/original_realtime_ui.py` releases
+Return after the observed pad acknowledgement and releases name directions
+after one observed grid change, checking the final selection for overshoot.
+It keeps one XTEST connection and checks the storage budget once per second,
+also immediately before a key, avoiding repeated directory walks during each
+selection poll. Both observations and X11 input leave engine memory unchanged.
+
+The fresh production menu-only capture passes
+(`/tmp/wasm-dd2/multiplayer-realtime-1738-original/report.json`), with all 44
+key edges independently checked against paired original window-procedure calls
+and returns (`handled-key-validation.json`). The recorder
+captures clocked original audio and lossless compressed DirectSound/DirectDraw
+traces; `--trace-keyboard` adds original window-procedure messages. Its full
+route uses genuine driving keys and requires both living finishes, but has
+not yet passed a complete no-debugger two-turn run. Neither operation proves
+matched original/port clocks, chronological video/PCM or physical timing.
+
+```sh
+make clean-logs
+python3 tools/capture_original_multiplayer_audio.py --menu-only --trace-keyboard \
+  --output /tmp/wasm-dd2/fresh-multiplayer-menu-audio
+make clean-logs
+```
+
 ```sh
 make clean-logs
 make capture-multiplayer-driver-probe MULTIPLAYER_DRIVER_PROBE_ARGS='--output /tmp/wasm-dd2/multiplayer-driver-probe'
@@ -3692,6 +3721,12 @@ line positions describe the decompressed original bytes. Both raw and compressed
 files at one logical path are rejected, as are damaged/truncated streams. Other
 movie/menu trace tools still require the default raw log. `make clean-logs`
 also removes old compressed logs while preserving open files and symlinks.
+Wine prefix initialization and registry provisioning use `WINEDEBUG=-all`;
+the actual game retains the requested trace channels. This avoids unrestricted
+bootstrap relay output before the prefix's relay filter has been installed.
+The fresh 1738 menu/audio recording retains 11,864,505 decompressed trace bytes
+and all 44 real menu key edges after this correction; full-game timing and
+original/port PCM remain separate requirements.
 
 An actual original trace shrinks from 929,637,950 to 21,574,842 bytes with all
 399,932 clock observations, 119 completed callbacks and 8,704 mixer operations

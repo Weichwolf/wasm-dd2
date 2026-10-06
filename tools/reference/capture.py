@@ -462,9 +462,13 @@ def run(game, output, args, on_menu=None):
             if not display:
                 raise RuntimeError("Xvfb did not start")
             env["DISPLAY"] = ":" + display
+            # Relay tracing belongs to the observed game. An unconfigured
+            # prefix traces every Wine bootstrap API before RelayInclude is
+            # installed, producing enormous unrelated logs and timing out.
+            bootstrap_env = {**env, 'WINEDEBUG': '-all'}
             if not (prefix / "drive_c/windows/system32/kernel32.dll").exists():
                 print("Initializing private 32-bit Wine prefix...", flush=True)
-                subprocess.run(["wineboot", "--init"], env=env, stdout=wine_log, stderr=wine_log,
+                subprocess.run(["wineboot", "--init"], env=bootstrap_env, stdout=wine_log, stderr=wine_log,
                                check=True, timeout=60)
             dosdevices = prefix / "dosdevices"
             for name, target in (("d:", rundir), ("d::", device)):
@@ -489,7 +493,7 @@ def run(game, output, args, on_menu=None):
                                  (r'HKCU\Software\Wine\Debug', 'RelayFromInclude', 'dd2h.exe')])
             for key, value, data in settings:
                 subprocess.run(["wine", "reg", "add", key, "/v", value, "/t", "REG_SZ", "/d", data, "/f"],
-                               env=env, stdout=wine_log, stderr=wine_log, check=True, timeout=30)
+                               env=bootstrap_env, stdout=wine_log, stderr=wine_log, check=True, timeout=30)
             # Drive types are read at Wine startup; registry writes need a restart.
             subprocess.run(["wineserver", "-k"], env=env, check=True, timeout=10)
             subprocess.run(["wineserver", "-w"], env=env, check=True, timeout=10)
