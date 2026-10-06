@@ -1,11 +1,14 @@
 #include "game/driving.h"
 
+#include "assets/barriers.h"
 #include "assets/level.h"
 #include "assets/road.h"
+#include "physics/barrier_world.h"
 #include "physics/numeric.h"
 #include "physics/road_contact.h"
 #include "physics/road_surface.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <math.h>
 #include <stddef.h>
@@ -32,6 +35,9 @@ static const double dd2_driving_time_tolerance = 1e-12;
 struct dd2_driving {
     const dd2_road *road;
     dd2_road_surface *surface;
+    dd2_barriers *barriers;
+    dd2_barrier_world *barrier_world;
+    uint64_t collisions;
     dd2_vehicle_spawn spawn;
     dd2_vehicle vehicle;
     double accumulator;
@@ -163,6 +169,7 @@ bool dd2_driving_reset(dd2_driving *driving) {
     driving->vehicle = vehicle;
     driving->accumulator = 0;
     driving->wheel_roll = 0;
+    driving->collisions = 0;
     return true;
 }
 
@@ -177,8 +184,10 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
     }
     driving->road = road;
     driving->surface = dd2_road_surface_create(road);
-    if (driving->surface == NULL || !dd2_driving_spawn(driving, level) ||
-        !dd2_driving_reset(driving)) {
+    driving->barriers = dd2_barriers_create(road, level);
+    driving->barrier_world = dd2_barrier_world_create(driving->barriers);
+    if (driving->surface == NULL || driving->barrier_world == NULL ||
+        !dd2_driving_spawn(driving, level) || !dd2_driving_reset(driving)) {
         dd2_driving_destroy(driving);
         return NULL;
     }
@@ -187,6 +196,8 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
 
 void dd2_driving_destroy(dd2_driving *driving) {
     if (driving != NULL) {
+        dd2_barrier_world_destroy(driving->barrier_world);
+        dd2_barriers_destroy(driving->barriers);
         dd2_road_surface_destroy(driving->surface);
         free(driving);
     }
@@ -203,12 +214,18 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     dd2_vehicle vehicle = driving->vehicle;
     double accumulator = driving->accumulator + frame.seconds;
     double roll = driving->wheel_roll;
+    uint64_t collisions = driving->collisions;
     const unsigned steps =
         (unsigned)floor((accumulator + dd2_driving_time_tolerance) / DD2_VEHICLE_STEP_SECONDS);
     for (unsigned step = 0; step < steps; ++step) {
-        if (!dd2_vehicle_step(&vehicle, driving->road, driving->surface, frame.control)) {
+        const dd2_vehicle previous = vehicle;
+        dd2_vehicle_impact impact = {0};
+        if (!dd2_vehicle_step(&vehicle, driving->road, driving->surface, frame.control) ||
+            !dd2_vehicle_collide_barriers(&vehicle, &previous, driving->barrier_world, &impact) ||
+            UINT64_MAX - collisions < impact.contacts) {
             return false;
         }
+        collisions += impact.contacts;
         const dd2_vehicle_vector forward =
             dd2_vehicle_rotate(vehicle.rotation, (dd2_vehicle_vector){.z = 1});
         const double speed = (vehicle.velocity.x * forward.x) + (vehicle.velocity.y * forward.y) +
@@ -220,6 +237,7 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     driving->vehicle = vehicle;
     driving->accumulator = accumulator;
     driving->wheel_roll = roll;
+    driving->collisions = collisions;
     return true;
 }
 
@@ -239,4 +257,8 @@ double dd2_driving_wheel_roll(const dd2_driving *driving) {
 
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving) {
     return driving != NULL ? &driving->spawn : NULL;
+}
+
+uint64_t dd2_driving_collisions(const dd2_driving *driving) {
+    return driving != NULL ? driving->collisions : 0;
 }

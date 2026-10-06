@@ -102,6 +102,18 @@ async function drivingChecks(page) {
   const bad=await page.evaluate(()=>({drive:Module._dd2_application_set_driving(2),pause:Module._dd2_application_set_paused(-1),view:Module._dd2_application_current_view(),paused:Module._dd2_application_is_paused()}));
   if(bad.drive!==0||bad.pause!==0||bad.view!==2||bad.paused!==1)throw new Error('Invalid driving control changes state');
   await page.locator('#canvas').screenshot({path:path.join(output,'browser-driving.png')});
+  await page.selectOption('#level','8');
+  await page.locator('#reset').click();
+  await page.locator('#pause').click();
+  await page.keyboard.down('s');
+  try {
+    await page.waitForFunction(()=>Module._dd2_application_collision_count()>0,null,{timeout:15000});
+  } finally {await page.keyboard.up('s');}
+  await page.keyboard.press('p');await stable(page);
+  report.barrier_collision={real_reverse_key:true,contacts:await page.evaluate(()=>Module._dd2_application_collision_count())};
+  await page.locator('#reset').click();await match(page,'8','driving');
+  if(await page.evaluate(()=>Module._dd2_application_collision_count())!==0)throw new Error('Reset retains old collision events');
+  await page.selectOption('#level','1');await match(page,'1','driving');
   await page.keyboard.press('Enter');await match(page,'1','scene');
   report.driving={pass_:true,real_throttle:true,pause_freezes:true,focus_loss_freezes:true,
                   deterministic_reset:true,track_wrap:true,selection_sync:true,invalid_controls_rejected:true};

@@ -53,8 +53,10 @@ The vehicle core now advances a four-wheel rigid body with suspension, traction,
 steering, braking, reverse and vertical landings in fixed steps. Driving
 presentation now connects that core to a perspective chase camera,
 full body orientation and four suspended/steered/rolling wheel models.
-Collisions/damage, billboard orientation, lighting, blending and race gameplay
-remain to be implemented. A shared C application now presents the
+Source track barriers and analytic arena boundaries now participate in free
+driving, with continuous collision sweeps, restitution, friction and angular
+response. Body/ground and car-pair collisions, damage, billboard orientation,
+lighting, blending and race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
 free driving on all eleven levels, using original
@@ -184,7 +186,8 @@ calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
 bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
 this establishes the simulation core, not original driving parity or a complete
 race. Vehicle rendering/input/chase-camera integration is checked separately;
-collisions/damage remain pending. See `src/physics/README.md`.
+Barrier response is checked separately; body/ground and car-pair collisions
+and damage remain pending. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,
@@ -203,7 +206,20 @@ acceleration snapshots compare pose/contact state and perspective images on
 native, Node/WASM and ASan/UBSan. The actual window/browser verifier additionally
 checks all eleven paused starts, real throttle events, pause/focus-loss freezing,
 reset, track wrapping and inspection-mode restoration. This covers free driving;
-it does not establish original handling parity, collisions or complete races.
+it does not establish original handling parity or complete races.
+
+`make rewrite-barrier-verify` checks all 6,492 source collision segments and four
+analytic arena radii against an independent original-data reader. For each target,
+13,048 swept queries compare indexed earliest contacts against exhaustive shape
+intersection, including the height separation between bridge levels. Native,
+Node/WASM and ASan/UBSan agree on contact selection and work counts. Synthetic
+checks cover fast head-on/glancing impacts, distant endpoint tangency, overlap
+correction, escape, angular travel, energy loss and invalid-state rollback.
+The game owner invokes barrier response after every fixed vehicle step; the
+browser additionally uses a real reverse key to hit an arena boundary and checks
+that reset clears accumulated collision events. Rounded body proxies, road wall
+height, restitution and friction are rewrite tuning. Body/ground contact,
+car-pair collisions, damage and a complete race remain separate work.
 
 ## Migration and acceptance
 

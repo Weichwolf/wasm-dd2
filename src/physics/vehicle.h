@@ -64,6 +64,11 @@ typedef struct {
  * This implements a tunable four-wheel rigid body, not original fixed-point
  * parity. Body/wall/car collisions, damage, detached wheels and recovery remain
  * separate work; an inverted body has no tire support. */
+bool dd2_vehicle_valid(const dd2_vehicle *vehicle);
+/* Inverse world inertia divided by mass, for collision impulses. Requires a
+ * validated rotation; torque is an impulse moment divided by body mass. */
+dd2_vehicle_vector dd2_vehicle_angular_response(dd2_vehicle_rotation rotation,
+                                                dd2_vehicle_vector torque);
 bool dd2_vehicle_reset(dd2_vehicle *vehicle, dd2_vehicle_spawn spawn);
 bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
                       dd2_vehicle_control control);

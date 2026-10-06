@@ -92,7 +92,10 @@ static bool dd2_vehicle_vector_valid(const dd2_vehicle_vector *vector, double li
            dd2_vehicle_number_valid(&vector->z, limit);
 }
 
-static bool dd2_vehicle_state_valid(const dd2_vehicle *vehicle) {
+bool dd2_vehicle_valid(const dd2_vehicle *vehicle) {
+    if (vehicle == NULL) {
+        return false;
+    }
     const dd2_vehicle_rotation *rotation = &vehicle->rotation;
     return dd2_vehicle_vector_valid(&vehicle->position, dd2_vehicle_position_limit) &&
            dd2_vehicle_vector_valid(&vehicle->velocity, dd2_vehicle_velocity_limit) &&
@@ -217,6 +220,14 @@ static dd2_vehicle_vector dd2_vehicle_wheel_force(dd2_vehicle *vehicle, const dd
                            dd2_vehicle_tire_force(vehicle, road, wheel, index, control));
 }
 
+dd2_vehicle_vector dd2_vehicle_angular_response(dd2_vehicle_rotation rotation,
+                                                dd2_vehicle_vector torque) {
+    const dd2_vehicle_vector local = dd2_vehicle_rotate(dd2_vehicle_inverse(rotation), torque);
+    return dd2_vehicle_rotate(rotation, (dd2_vehicle_vector){.x = local.x / dd2_vehicle_inertia.x,
+                                                             .y = local.y / dd2_vehicle_inertia.y,
+                                                             .z = local.z / dd2_vehicle_inertia.z});
+}
+
 static void dd2_vehicle_integrate_rotation(dd2_vehicle *vehicle, dd2_vehicle_vector torque) {
     const dd2_vehicle_rotation rotation = vehicle->rotation;
     const dd2_vehicle_rotation inverse = dd2_vehicle_inverse(rotation);
@@ -285,7 +296,7 @@ static void dd2_vehicle_landing(dd2_vehicle *vehicle, const dd2_vehicle *previou
 
 bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
                       dd2_vehicle_control control) {
-    if (vehicle == NULL || road == NULL || surface == NULL || !dd2_vehicle_state_valid(vehicle) ||
+    if (vehicle == NULL || road == NULL || surface == NULL || !dd2_vehicle_valid(vehicle) ||
         vehicle->steps == UINT64_MAX || !dd2_vehicle_number_valid(&control.throttle, 1) ||
         !dd2_vehicle_number_valid(&control.brake, 1) || control.brake < 0 ||
         !dd2_vehicle_number_valid(&control.steer, 1)) {
@@ -313,7 +324,7 @@ bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road
     dd2_vehicle_integrate_rotation(&next, torque);
     dd2_vehicle_landing(&next, vehicle, surface);
     ++next.steps;
-    if (!dd2_vehicle_state_valid(&next)) {
+    if (!dd2_vehicle_valid(&next)) {
         return false;
     }
     *vehicle = next;

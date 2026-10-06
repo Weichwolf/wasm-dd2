@@ -90,11 +90,12 @@ int main(int argc, char **argv) {
             contacts += (unsigned)vehicle->wheels[wheel].grounded;
         }
         printf("{\"position\":[%.17g,%.17g,%.17g],\"velocity\":[%.17g,%.17g,%.17g],"
-               "\"rotation\":[%.17g,%.17g,%.17g,%.17g],\"steps\":%llu,\"contacts\":%u}\n",
+               "\"rotation\":[%.17g,%.17g,%.17g,%.17g],\"steps\":%llu,\"contacts\":%u,"
+               "\"collisions\":%llu}\n",
                vehicle->position.x, vehicle->position.y, vehicle->position.z, vehicle->velocity.x,
                vehicle->velocity.y, vehicle->velocity.z, vehicle->rotation.x, vehicle->rotation.y,
                vehicle->rotation.z, vehicle->rotation.w, (unsigned long long)vehicle->steps,
-               contacts);
+               contacts, (unsigned long long)dd2_driving_collisions(driving));
         passed = dd2_driving_draw(materials, track,
                                   (dd2_driving_view){.vehicle = vehicle,
                                                      .wheel_roll = dd2_driving_wheel_roll(driving),

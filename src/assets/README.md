@@ -1,239 +1,156 @@
-# Assets
+# Physics
 
-Decode original tracks, cars, textures and other data into documented structures.
-Validate lengths, offsets and ownership at loading boundaries. Original files
-remain ignored/provisioned data; do not embed assets or memory dumps in source.
+Own vehicle motion, collision and damage with an explicit simulation step.
+Keep rendering and operating-system calls out of this module. Verify stable
+behavior on native and WASM, including fast-math edge cases.
 
-`archive.h` provides a validated, read-only view of the original `Dirinfo`
-container. The caller owns the loaded bytes. The archive owns its directory
-index; returned `dd2_asset` values borrow the caller's bytes and contain the
-exact declared length, excluding sector padding. Close the archive before
-releasing its bytes, and stop using asset views when those bytes are released.
-Opening failures leave the output archive null. Failed entry/lookups clear the
-output asset. Null close is valid.
+`road_contact.c` provides vertical contact with one known road/arena lane cell.
+It selects an active triangle in XZ, includes shared edges, rejects missing or
+zero-area triangles and returns its interpolated height and unit normal with
+positive Y. Calculations use double precision and convert source coordinates
+before subtracting, avoiding signed integer overflow at coordinate extremes.
+Queries must be finite. Edge tolerance is 1e-6 in world coordinates, converted
+to each edge's barycentric scale; it cannot grow with the cell size. An expanded
+triangle bounding rectangle also limits extrapolation at acute corners. Points
+beyond this numerical tolerance fail. Signed-coordinate extremes and a point
+one unit outside an extremely large cell are checked on both targets.
 
-The original `Read_Directory`, `FUN_00415498` and `File_Load` in `re_out/dd2.c`
-establish this on-disk layout:
+`road_surface.c` selects a contact without knowing its cell beforehand. Create
+one surface index for a decoded road and destroy it before destroying that road:
+the index owns its balanced XZ bounds hierarchy and borrows immutable geometry.
+Construction and destruction allocate; queries have no allocations, rendering
+or operating-system calls. Both construction and traversal are iterative.
 
-| Offset in each 24-byte directory row | Field |
-| --- | --- |
-| 0 | 18-byte field containing a null-terminated ASCII name |
-| 18 | Little-endian unsigned 16-bit sector number |
-| 20 | Little-endian unsigned 32-bit logical file length |
+A query supplies XZ coordinates, a finite inclusive height window and an optional
+preferred cell (`DD2_ROAD_NO_STRIP` for none). It returns the highest eligible
+contact. Contacts within 1e-6 below the global maximum form a tie: the preferred
+cell wins if eligible, otherwise the lowest cell index wins. Two traversal
+passes anchor ties to the global maximum, avoiding order-dependent tolerance
+chains. Height windows distinguish stacked road surfaces; they do not model
+wheel travel, motion through walls or recovery outside the track. Invalid
+coordinates/windows fail and clear the result and optional statistics. An
+integer byte-representation check rejects NaN and infinity even with the
+required fast-math compiler flags.
 
-A row whose first name byte is zero ends the directory. Ignore bytes after the
-name's first null: the shipped font entry contains unrelated bytes in this
-padding. Sector size is 2048 bytes, and data starts at sector 5. The original
-reads `0x2808` directory bytes even though five reserved sectors contain only
-`0x2800` bytes; the last eight bytes belong to the first payload. Termination,
-rather than scanning unused rows, is essential. File views use the declared
-logical size, without the original loader's sector-rounded overread.
+Synthetic CTests run on native and WASM. `make rewrite-road-verify` checks the
+original contact geometry against independent plane calculations with ASan/UBSan
+as well. Source contact normals are not used, and original fixed-point height
+rounding is not a rewrite requirement. `make rewrite-surface-verify` also compares
+surface selection with an exhaustive, ID-ordered cell search on all eleven
+original levels, on native, Node/WASM and ASan/UBSan. Each target checks 197,750
+queries covering both triangle centroids with three height windows and all cell
+corners. The oracle uses the separately verified contact primitive, without the
+index hierarchy. Selection traces and work counts agree across targets. The
+index performs about 4.1–4.8 actual cell contact tests per query on average,
+including both passes, and the verifier requires at least 95% pruning relative
+to a full cell scan. These counts describe the sampled queries, not a guarantee
+for arbitrary geometry or a timing benchmark.
 
-The decoder checks the directory read extent, name termination/ASCII, duplicate
-names, sector placement and payload bounds before returning an index. Lookup
-uses exact original spelling, including backslashes. No OS file access, absolute
-game address, original memory image or register emulation is involved. The following modules decode level, mesh and texture data; audio formats remain
-to be implemented.
+Synthetic tests include stacked planes, strict height boundaries, shared edges,
+preferred-cell ties, tolerance chains, acute corners, coordinate extremes and
+NaN/infinity under fast-math. These checks establish contact selection, not
+driving parity.
 
-`rewrite_archive` in CTest covers valid views, exact lookup, null/invalid
-arguments, truncated headers, duplicate/invalid names, missing termination,
-out-of-range sectors/lengths and a zero-length view exactly at EOF. It runs
-without proprietary assets in CI. With provisioned data, run:
+## Vehicle core
 
-```sh
-make rewrite-archive-verify
-```
+`vehicle.c` advances a typed four-wheel rigid body in fixed 5 ms steps. State is
+position, linear/world angular velocity, a unit quaternion, front steering angle
+and four wheel contact/force records. It owns no allocations and retains no
+geometry pointers. `dd2_vehicle_reset` accepts structured position/yaw start
+data; `dd2_vehicle_step` borrows a road and its matching surface index for one
+step. The caller must preserve that geometry and accumulate simulation time
+independently of presentation. Wheel outputs describe the beginning of the last
+step. Invalid controls/core state and out-of-bounds results fail transactionally.
+Start/control data use structs so finite-value checks remain effective under
+fast-math; a standalone floating yaw argument was experimentally rejected after
+its NaN check was optimized away.
 
-This checks all 114 original entries against an independent Python directory
-reader using exact names, offsets, lengths and full-payload FNV-1a64. Native,
-Node/WASM and ASan/UBSan must agree, reject eight corrupted original archives
-without crashes or sanitizer diagnostics, and accept an archive with unnecessary
-tail padding removed. Only the Node test binary enables host filesystem access.
-The bounded report stays under `/tmp/wasm-dd2/`; completed raw output is removed.
+Coordinates retain +Y up, local +Z forward and local +X right. The original wheel
+rig (`FUN_00440bf4 @ 00440bf4`, tables in the provisioned image) has local centers
+at X ±186, Y -130, Z ±450. The rewrite uses those XZ locations and the same fully
+extended center Y, with mounts at -60, 70 units of suspension travel and a tuned
+60-unit wheel radius. Wheel order matches the rig: front right, rear right,
+front left, rear left. These dimensions are separate from pending animated
+wheel geometry.
 
-## Level data and textures
+Each wheel samples a finite vertical window and preferred previous cell. A
+nonnegative spring/damper load acts along the road normal. Projected wheel
+forward/right directions apply drive, braking, rolling resistance and lateral
+grip, bounded together by available load and surface friction. The original
+playable roads contain surface classes 0 and 1; class 1 has half grip, matching
+the ratio of the original friction/traction tables. Front wheels steer with a
+limited slew rate; reverse steering follows force direction naturally. No tire
+force acts without a reachable upright contact. Linear gravity and drag,
+rigid-body torque including the gyroscopic term, and normalized quaternion
+integration update the pose. A swept vertical landing window limits penetration
+at full compression and keeps a vehicle below a bridge on its existing surface.
+This is vertical road contact, not a general swept body/wall collision solver.
 
-`level.h` decodes a borrowed `LEVEL.DAT` view into 29 read-only sections, with
-explicit vertex and texture-definition accessors. The first 116 bytes are 29
-little-endian 32-bit offsets relative to the file start, as established by
-`FUN_00445ca8`. Consecutive offsets define section lengths; the last section
-ends at the declared file length. Equal offsets are valid empty sections. The
-decoder checks every extent before publishing a view, without modifying or
-relocating any bytes. Failed decoding/access clears the output value.
+The current default spring, damper, acceleration, steering and speed curve are
+rewrite tuning in world units/seconds. They are not a transcription of the
+original fixed-point update cadence or its visual suspension recurrence. On a
+flat road, spring coefficient 90 and gravity 2500 give a rest height of
+`190 - 2500 / (4 * 90) = 183.055555...`, checked independently in the synthetic
+tests. Tests also cover acceleration, stopping, reverse motion/steering, slopes,
+reduced grip, flight without ground controls, bridge selection, fast downward
+travel, rotation and transactional NaN/infinity rejection.
 
-The known sections are scene blocks (0), road records (1), signed 32-bit XYZ road
-vertices (2), sprites (3), texture definitions (4), and low/medium/high car shapes
-(15/16/17). Road vertices occupy 12 bytes each; negative values are decoded
-without relying on implementation-defined unsigned-to-signed casts. Section 4
-contains a 32-bit count and 12-byte definitions: a 16-bit texture page/flags word,
-a reserved 16-bit word and four byte-sized UV pairs. The reserved word is zero
-in every shipped definition; the polygon selects its palette bank. Other
-sections remain borrowed views until their individual formats are implemented.
+`make rewrite-vehicle-verify` exercises 24 distributed cell starts on each of the
+eleven original tracks/arenas, alternating nominal height and drops. Five seconds
+per start include settling, forward throttle/steering, braking and reverse:
+264,000 simulation steps per target. Every 20 steps, native, Node/WASM and
+ASan/UBSan compare pose, velocity, orientation, steering and wheel load/compression
+within absolute 1e-5 or relative 1e-8 tolerance; discrete contacts and summaries
+must match exactly. The largest observed numeric difference is below 2e-8.
+Completed raw samples and instrumented binaries are removed after the report.
 
-`textures.h` assembles the original `TX0` through `TXn` files into an owned
-256-by-8192 index atlas (32 pages). PAL, CLT and optional ECL lookup bytes remain
-borrowed and must outlive the texture set. The atlas view expires at destruction;
-RGBA pages are written into caller-owned buffers. Invalid page/bank/shade/output
-arguments leave that buffer unchanged.
+Real driving input, vehicle/wheel rendering and chase camera are integrated in
+free driving. Track barrier response is now a separate post-integration step.
+Distinct vehicle classes, body/ground and car-pair collisions, upside-down
+support, damage, detached
+wheels, off-road recovery, AI and race rules remain pending. The current probes
+can leave the road and fall; they establish cross-target dynamics and the named
+synthetic behavior, not original driving parity or complete race correctness.
 
-`sub_415000`, `Load_Textures` and `LoadImage` establish the texture layout. TX0
-starts with a 32-bit image count and 16-byte descriptors. Each descriptor has
-16-bit format, byte width, height, X and Y fields followed by six bytes unused
-by the loader. Images follow in descriptor order across all TX files. Each
-has a `TEXT` marker followed by width times height expanded 8-bit texels; format
-4 and 8 both use these expanded bytes. A file boundary separates whole images.
-Images may cross page boundaries and overlap earlier images; original loading
-order determines the final texels. Bounds, markers, counts and every part's
-complete extent are checked before returning a texture set.
+`barrier_world.c` borrows immutable source barriers and owns a balanced 3D bounds
+index. A swept circular horizontal footprint and vertical interval intersect the
+finite line part and rounded endpoints. Enumerated circle/line/height intervals
+catch fast travel across a thin barrier without per-frame position sampling.
+Ray coordinates avoid distant quadratic discriminant cancellation. Earliest
+contact selection uses two passes, followed by lowest owned barrier-ID ties
+within 1e-10; depth-first traversal is bounded and allocates nothing. Arena
+contacts use the original analytic radius, at any height as in the reference.
+Road walls have a tuned height of 400 units to keep bridge levels independent.
 
-CLT contains palette banks of 16 shade rows by 256 index mappings; ECL appends
-additional banks. `draw_text_half`/`FUN_0041033a` establish the lookup
-`bank * 4096 + shade * 256 + texel`; its byte selects a BGR entry in the
-1024-byte PAL table. Convert BGR to RGB for the output page; the source palette's
-fourth byte is unused and never supplies output alpha. `SetPalette` swaps the
-same channels before publishing DirectDraw palette entries. The neutral
-shade is 8. Cutout follows the original low-nibble rule, independent of the
-mapped palette index. Material cutout selection and other blending/lighting policies belong to the
-renderer; low-nibble zero alone does not imply that every material is masked.
-`dd2_texture_palette_index` exposes a checked base/ECL shade lookup so the
-renderer can test the actual palette index, independent of its RGB color.
-Failed lookup clears the output index.
+`vehicle_collision.c` resolves the proposed fixed step using five overlapping
+rounded body lobes (186-unit radius along Z ±264, matching a 372 x 900 footprint)
+and a 130-unit vertical half-height. Lobes follow full body orientation; rotation
+arcs conservatively inflate the swept chords. These are gameplay proxies, not
+exact mesh collision shapes. Earliest contacts split the remaining motion;
+restitution 0.2, bounded friction 0.25 and mass-normalized world inertia apply
+linear/angular impulses at the contact point. Initial overlaps are corrected,
+and moving away from a touching surface is allowed. After at most 16 responses,
+the last corrected pose is kept rather than accepting unchecked residual travel.
+Failure leaves the proposed vehicle untouched. The game owner retains a
+resettable 64-bit count of barrier contacts for events and verification.
 
-```sh
-make rewrite-level-verify
-```
+`make rewrite-barrier-verify` independently checks all 6,492 original collision
+lines (including diagonal widening/narrowing boundaries) and four arena radii,
+plus 13,048 earliest swept queries per target against exhaustive geometric
+boundary-event enumeration. Native, Node/WASM and ASan/UBSan agree on discrete
+selection/work counts and numerical contacts. CTests exercise fast head-on and
+glancing response, energy loss, overlap correction, escaping contact, rotation,
+separate heights, distant tangency and nonfinite rollback. Full original-data
+free-driving snapshots and real window/browser lifecycle/input checks run too;
+a real browser reverse key drives into an arena boundary. This establishes
+barrier geometry/response, not original fixed-point collision/damage parity,
+other-car collision or complete race correctness.
 
-This runs the strict native checks and the synthetic CTests on native and Node/WASM,
-then ASan/UBSan checks and an independent complete comparison for all 13 shipped
-level containers. Every section offset/length, signed vertex and UV field, all
-atlas bytes, all 32 cutout RGBA pages at neutral shade, and dark/bright samples
-from the last palette bank are compared byte for byte. Six corrupted original
-inputs must be rejected on all three targets without crashes/sanitizer errors.
-Successful asset exports are deleted immediately after comparison; reports stay
-under `/tmp/wasm-dd2/`. These are asset-format checks, not full-game parity claims.
-CI uses synthetic data to cover null/bounds/format cases, cross-page loading,
-multiple TX parts, base/ECL palette banks, shade/cutout selection and an actual
-SoftGL upload/alpha-test render covering every framebuffer pixel.
-The synthetic PAL fixture has distinct red/blue values and a non-alpha reserved
-byte, so decoder and mesh/texture pixel tests reject the previous RGB assumption.
-
-With Wine installed, this checks all 256 palette entries and complete CLT/ECL
-bytes against a normal player race in the unmodified original:
-
-```sh
-make clean-logs
-python3 tools/rewrite/verify_original_palette.py
-make clean-logs
-```
-
-The diagnostic sends real X11 inputs, reads only the loaded palette and CLUT
-banks, retains hashes and removes completed raw logs. These are read-only asset
-observations rather than full-game or framebuffer parity checks.
-Add `--scene-origins --output /tmp/wasm-dd2/rewrite-original-origins` to check
-every vertex origin in the original's loaded scene blocks as well. It captures
-only their small position tables and compares them with decoded source centers
-and shape flags; no full memory image is saved.
-
-## Scene objects and polygon meshes
-
-`lz.h` decodes the original size-prefixed LZ stream into caller-owned storage.
-Control bits run least significant first: one copies a literal, zero reads a
-12-bit backward distance and a length of 3–18 bytes. Overlapping copies are
-intentional. Truncated tokens, backward references before the output start,
-output overflow and mismatched declared size fail; the written count is cleared
-on failure. Input/output storage must not overlap. Trailing source alignment is
-allowed, and a failed output can contain partial data.
-
-`scene.h` decodes section 0. Its first word is the offset-table byte length;
-each 32-bit offset starts a block. Racing levels 1–7 use compressed blocks with
-a 16 KiB output limit; arenas 8/9/A/B use raw blocks. A decoded block starts with
-an object count and 16-byte instance rows: mesh-relative offset and signed XYZ
-bounding center. Static shape vertices are relative to a 32768-unit raster-cell
-center, not to that bounding center. `origin` is computed per axis as
-`floor(coordinate / 32768) * 32768 + 16384`, matching `Setup_Object_Block`.
-Header flag bit 7 instead selects local vertices and uses the source center as
-the origin. Both positions are retained; the renderer and its bounds use
-`origin`. Negative coordinates and signed limits are handled without signed
-right shifts or overflow. Mesh extents end at the next distinct mesh offset or
-the block end.
-Repeated mesh offsets are valid. Each instance owns a decoded mesh; destruction
-also handles partial failures. An empty scene section is valid. Input bytes can
-be released after decoding; scene objects and meshes are owned by the scene.
-
-`mesh.h` retains the shape flag byte at offset 4 and decodes the 44-byte shape
-header, vertex/normal counts at offsets 10/12 and relative vector/normal/polygon
-offsets at 32/36/40. Vectors are signed
-16-bit XYZ plus a retained auxiliary word, eight bytes each. Polygon groups
-start with a 16-bit count, opcode byte and flags byte; zero flags terminate.
-Opcodes 0–43 encode flat/textured/Gouraud triangles and quads plus sprite quads.
-Lit Gouraud records have one common color and separate corner normal references;
-unlit Gouraud records have per-corner colors. The decoder retains opcode,
-group flags, attribute word, raw color words, material references and corner
-indices/normals, checking every reference and record extent. Rendering policies
-for billboard orientation, shading, fog and blending belong to the renderer.
-
-The format evidence is `Decompress`, `Decrunch_Object_Block`,
-`Setup_Object_Block`, `Set_Object`, `Pre_Rotate` and the polygon dispatch handlers
-in `re_out/dd2.c`. The reference patch `030-gpoly-byteoff-…` corrects Ghidra's
-short-pointer scaling: handler offsets describe bytes, not scaled short indices.
-The new decoder never relocates original bytes or uses game memory addresses.
-
-```sh
-make rewrite-mesh-verify
-```
-
-An independent Python decoder compares every exported bounding center, vertex
-origin, shape flag, vector, normal
-and decoded face field for all eleven playable original levels, including known
-standalone wheel, sky and vehicle shapes (sections 5–21). This covers 6,328 meshes
-and 76,856 faces on native, Node/WASM and ASan/UBSan. Six corrupted original
-scene/mesh inputs must fail without crashes or sanitizer findings. Synthetic CI
-checks overlapping decompression, signed extremes, textured/lit/sprite records,
-invalid references, extents and scene ownership. Reports remain under `/tmp`;
-raw successful exports are deleted. These checks establish decoded fields, not
-complete rendering behavior or game correctness.
-
-## Road contact geometry
-
-`road.c` owns decoded road vertices, directed links, strips and lane cells.
-Racing section 1 begins with a 32-bit record count. Links address records relative
-to the byte after that count; headers are 36 bytes, followed by 14 bytes per lane
-and four-byte alignment. The decoder follows next, previous and split/merge links,
-including gaps in the source layout (Alpine has a 16-byte gap). It validates the
-complete declared inventory, record extents, nonoverlap, vertex references and
-forward/backward paths returning to the start; invalid cycles fail without an
-unbounded traversal. Arena section 1 contains 1,024 14-byte grid records with
-1,024 vertices. The 31×31 full cells use adjacent rows of the 32×32 grid.
-
-Strip offsets become bounded indices. Source number, first vertex, flags,
-lane-start byte and heading are retained separately from main-loop order.
-Split/merge links can address another branch or the start; they are not assumed
-to be a single optional shortcut. Cell corners use the original signed row
-offset table, including kind 10 in Chalk Canyon. Cells retain separate surface
-flags and heading bytes; these are not texture/material identifiers. The first
-and last lanes suppress the missing triangles selected by `Map_Height` for
-kinds 2–7. Original generated normal bytes are replaced by geometry-based planes.
-
-The original evidence is `Generate_Surface_Normals`, `FUN_00426be4`,
-`Track_Follow`, `Map_Height`, `FUN_00428678` and `Init_Track_Strip_Numbers` in
-`re_out/dd2.c`. The original image's signed row-offset table is read independently
-by the verifier; game modules never read executable addresses.
-
-```sh
-make rewrite-road-verify
-```
-
-This compares every playable level's vertices, graph, source attributes and
-lane geometry on native, Node/WASM and ASan/UBSan, plus both triangle centroid
-contacts against independent integral edge tests and rational plane heights.
-It rejects corrupted original links, extents, types, counts, lane widths,
-vertex references and branch cycles. Synthetic CI checks slopes, shared edges,
-outside/degenerate contact, source ownership, branches, holes and arena limits.
-This covers data and vertical contact geometry, not original suspension,
-off-road recovery, lap/checkpoint equivalence or vehicle motion.
-
-`track.c` assembles the level, texture pages, scene, road, high-detail car and
-two reusable wheel meshes (sections 5/6) into one owned runtime container for levels 1–11 (source codes 1–9, A and B). Racing scene blocks 1–7 use the original compressed path; arena blocks use their stored path.
-The source archive bytes are borrowed and must outlive the container. Partial
-loads release their owned structures, and the application swaps a successfully
-loaded container only after its materials, camera and driving state are ready.
+`barriers.c` copies the source collision boundaries into an owned container,
+independent of road/archive lifetime. Each racing strip contributes first/last
+lane boundaries using the collision offsets from `Barrier_Collision` and
+`Barrier_Corner_Collision`; triangular widening/narrowing cells use their active
+diagonal edge. All main and alternate branch strips participate. Arena boundaries
+retain the original radii: 14,990, 14,600, 14,400 and 14,400 units. They use an
+analytic circle rather than the square height grid. Source executable tables
+are used only by the independent verifier; runtime constants/data are typed C.

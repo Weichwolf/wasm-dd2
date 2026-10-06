@@ -99,8 +99,8 @@ def main():
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     assets_units = [ROOT / f'src/assets/{name}.c' for name in
-                    ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
-    physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle')]
+                    ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+    physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'vehicle_collision')]
     render_units = [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'driving_draw')]
     game = ROOT / 'src/game/driving.c'
     preview, test = output / 'preview-sanitized', output / 'timing-sanitized'
@@ -135,7 +135,7 @@ def main():
                         if not all(math.isclose(a, b, abs_tol=1e-5, rel_tol=1e-8)
                                    for a, b in zip(baseline[field], state[field])):
                             raise ValueError('Simulation state differs: ' + field)
-                    if baseline['contacts'] != state['contacts']:
+                    if baseline['contacts'] != state['contacts'] or baseline['collisions'] != state['collisions']:
                         raise ValueError('Wheel contacts differ')
                     results[platform] = compare_images(output / 'native.ppm', path)
                     if platform == 'sanitized' and results[platform]['changed_pixels'] != 0:

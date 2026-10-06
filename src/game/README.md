@@ -32,5 +32,13 @@ Page Up/Down changes track. Browser controls call the same main-thread C bridge.
 
 `make rewrite-driving-verify` covers independent original start positions,
 frame partition equivalence, pause/reset/rejection and actual native/browser
-input/presentation. This is free driving: opponents, collision/damage, checkpoints,
+input/presentation. This is free driving: opponents, car-pair/body-ground collision, damage, checkpoints,
 race outcomes, menus, championships, replay, persistence and audio remain pending.
+
+The driving owner also owns copied source barriers and their collision index.
+Each accepted vehicle step resolves barrier contacts before committing frame
+state. Frame failure preserves both the vehicle and collision counter; reset
+clears the counter. Rendering borrows the corrected pose. A main-thread read-only
+collision-count bridge lets the browser verification observe a real impact;
+original addresses or synthetic game input are not used. Damage and collision
+sound/effects will consume richer impact events in subsequent gameplay work.

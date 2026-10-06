@@ -104,9 +104,44 @@ within absolute 1e-5 or relative 1e-8 tolerance; discrete contacts and summaries
 must match exactly. The largest observed numeric difference is below 2e-8.
 Completed raw samples and instrumented binaries are removed after the report.
 
-The inspection viewer does not yet drive this vehicle. Real driving input,
-vehicle/wheel rendering and chase camera are now integrated in free driving. Distinct
-vehicle classes, body/wall/car collisions, upside-down support, damage, detached
+Real driving input, vehicle/wheel rendering and chase camera are integrated in
+free driving. Track barrier response is now a separate post-integration step.
+Distinct vehicle classes, body/ground and car-pair collisions, upside-down
+support, damage, detached
 wheels, off-road recovery, AI and race rules remain pending. The current probes
 can leave the road and fall; they establish cross-target dynamics and the named
 synthetic behavior, not original driving parity or complete race correctness.
+
+`barrier_world.c` borrows immutable source barriers and owns a balanced 3D bounds
+index. A swept circular horizontal footprint and vertical interval intersect the
+finite line part and rounded endpoints. Enumerated circle/line/height intervals
+catch fast travel across a thin barrier without per-frame position sampling.
+Ray coordinates avoid distant quadratic discriminant cancellation. Earliest
+contact selection uses two passes, followed by lowest owned barrier-ID ties
+within 1e-10; depth-first traversal is bounded and allocates nothing. Arena
+contacts use the original analytic radius, at any height as in the reference.
+Road walls have a tuned height of 400 units to keep bridge levels independent.
+
+`vehicle_collision.c` resolves the proposed fixed step using five overlapping
+rounded body lobes (186-unit radius along Z ±264, matching a 372 x 900 footprint)
+and a 130-unit vertical half-height. Lobes follow full body orientation; rotation
+arcs conservatively inflate the swept chords. These are gameplay proxies, not
+exact mesh collision shapes. Earliest contacts split the remaining motion;
+restitution 0.2, bounded friction 0.25 and mass-normalized world inertia apply
+linear/angular impulses at the contact point. Initial overlaps are corrected,
+and moving away from a touching surface is allowed. After at most 16 responses,
+the last corrected pose is kept rather than accepting unchecked residual travel.
+Failure leaves the proposed vehicle untouched. The game owner retains a
+resettable 64-bit count of barrier contacts for events and verification.
+
+`make rewrite-barrier-verify` independently checks all 6,492 original collision
+lines (including diagonal widening/narrowing boundaries) and four arena radii,
+plus 13,048 earliest swept queries per target against exhaustive geometric
+boundary-event enumeration. Native, Node/WASM and ASan/UBSan agree on discrete
+selection/work counts and numerical contacts. CTests exercise fast head-on and
+glancing response, energy loss, overlap correction, escaping contact, rotation,
+separate heights, distant tangency and nonfinite rollback. Full original-data
+free-driving snapshots and real window/browser lifecycle/input checks run too;
+a real browser reverse key drives into an arena boundary. This establishes
+barrier geometry/response, not original fixed-point collision/damage parity,
+other-car collision or complete race correctness.

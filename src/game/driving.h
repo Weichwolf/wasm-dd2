@@ -5,6 +5,7 @@
 #include "physics/vehicle.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct dd2_driving dd2_driving;
 typedef struct {
@@ -23,6 +24,7 @@ bool dd2_driving_reset(dd2_driving *driving);
 void dd2_driving_suspend(dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_start(const dd2_driving *driving);
 const dd2_vehicle *dd2_driving_vehicle(const dd2_driving *driving);
+uint64_t dd2_driving_collisions(const dd2_driving *driving);
 double dd2_driving_wheel_roll(const dd2_driving *driving);
 
 #endif

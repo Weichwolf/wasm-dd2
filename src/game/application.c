@@ -12,8 +12,10 @@
 #include "render/mesh_draw.h"
 #include "render/renderer.h"
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,6 +123,14 @@ int dd2_application_current_view(void) {
         return -1;
     }
     return application->drive ? 2 : (int)application->car;
+}
+
+unsigned dd2_application_collision_count(void) {
+    if (dd2_current_application == NULL) {
+        return 0;
+    }
+    const uint64_t count = dd2_driving_collisions(dd2_current_application->driving);
+    return count < UINT_MAX ? (unsigned)count : UINT_MAX;
 }
 
 void dd2_application_reset_camera(void) {
