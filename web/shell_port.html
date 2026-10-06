@@ -101,6 +101,18 @@
         document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='hidden') _persist(); });
         window.addEventListener('pagehide', _persist);
         window.addEventListener('beforeunload', _persist);
+        // Enter the original registered WM_ACTIVATEAPP handler. Duplicate
+        // blur/visibility events must not create another multimedia timer.
+        var windowFocus = function(){
+          Module._dd2_window_focus(document.visibilityState==='visible' && document.hasFocus() ? 1 : 0);
+        };
+        window.addEventListener('blur', windowFocus);
+        window.addEventListener('focus', windowFocus);
+        document.addEventListener('visibilitychange', windowFocus);
+        // These events wake WaitMessage even while activation stays zero.
+        // Keyboard messages are counted by the shared C input bridge.
+        for (var _event of ['mousemove','mousedown','mouseup','wheel','resize'])
+          window.addEventListener(_event, function(){ Module._dd2_window_message(); });
         // Route real keyboard events to the engine: keydown/keyup -> dd2_browser_key_event(code, down).
         var send = function(code, down){
           try { Module.ccall('dd2_browser_key_event', 'number', ['string','number'], [code, down]); }
@@ -139,6 +151,7 @@
         };
         requestAnimationFrame(padPoll);
         canvas.focus();
+        windowFocus();
       }
     };
     canvas.addEventListener('click', ()=>canvas.focus());

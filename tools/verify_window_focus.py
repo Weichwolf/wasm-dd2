@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Check recorded focus-loss semantics; mismatching ports return a failing gate.
 
-This compares activation, stored timer cancellation and one held input flag.
+This compares activation, stored timer cancellation and one held input flag,
+and requires actual port message waits, inactive wakes and surviving callbacks.
 It does not accept resumption, framebuffer, PCM, timing or whole-game parity.
 """
 import argparse
@@ -56,6 +57,34 @@ def original(report):
     return rows
 
 
+def port(captured,target):
+    require(captured['pass_'] and captured['target']==target and captured['operation']=='window-focus-capture' and
+            captured['engine_state_writes'] is False,'completed read-only '+target+' capture required')
+    expected=({'tools/capture_native_window_focus.py','tools/verify_native_replay.py','re_out/dd2_native.c',
+               're_out/dd2_input.c','re_out/dd2_window.h','patches/904-platform-window-activation-wait.diff'} if target=='native'
+              else {'tools/browser/capture_window_focus.js','web/shell_port.html','re_out/dd2_input.c',
+                    're_out/dd2_window.h','patches/904-platform-window-activation-wait.diff','tools/build_web.sh'})
+    require(set(captured['sources'])==expected,'complete target source identity required: '+target)
+    for name,sha in captured['sources'].items():
+        require(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==sha,'target source differs: '+name)
+    rows=samples(captured)
+    require(rows['key-down-active']['flags'][12:14]=='01','target never held Left: '+target)
+    if target=='browser':
+        require(captured['playwright_focus_emulation_disabled_requests']>0 and
+                any(row['type']=='blur' and row['trusted'] for row in captured['events']) and
+                any(row['type']=='resize' and row['trusted'] for row in captured['events']),
+                'real browser focus loss/window wake not observed')
+    require(rows['inactive-start'].get('wait_entered',0)>rows['baseline'].get('wait_entered',0),
+            'actual port message wait missing: '+target)
+    require('inactive-window-message' in rows and
+            rows['inactive-window-message']['active']==0 and
+            rows['inactive-window-message'].get('wait_returned',-1)>rows['inactive-start'].get('wait_returned',-1),
+            'window message did not wake an inactive port: '+target)
+    require(rows['inactive-held']['timer_fires']>rows['inactive-start']['timer_fires'],
+            'port stopped surviving multimedia callback: '+target)
+    return rows
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--original',type=Path,required=True)
@@ -86,16 +115,19 @@ def main():
     for target,path in [('native',args.native),('browser',args.browser)]:
         if path is None:continue
         captured=json.loads(path.read_text())
-        require(captured['pass_'] and captured['target']==target and captured['operation']=='window-focus-capture' and
-                captured['engine_state_writes'] is False,'completed read-only '+target+' capture required')
-        for name,sha in captured['sources'].items():
-            require(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==sha,'target source differs: '+name)
-        rows=samples(captured)
-        require(rows['key-down-active']['flags'][12:14]=='01','target never held Left: '+target)
-        if target=='browser':
-            require(captured['playwright_focus_emulation_disabled_requests']>0 and
-                    any(row['type']=='blur' and row['trusted'] for row in captured['events']),
-                    'real browser focus loss not observed')
+        rows=port(captured,target)
+        if args.negative_controls:
+            def damage_row(r,label,**values):
+                next(x for x in r['samples'] if x['label']==label).update(values)
+            cases=[('missing-message-wait',lambda r:damage_row(r,'inactive-start',wait_entered=0)),
+                   ('inactive-message-did-not-wake',lambda r:damage_row(r,'inactive-window-message',wait_returned=rows['inactive-start']['wait_returned'])),
+                   ('surviving-callback-stopped',lambda r:damage_row(r,'inactive-held',timer_fires=rows['inactive-start']['timer_fires'])),
+                   ('lost-source-identity',lambda r:r.update(sources={}))]
+            for name,mutate in cases:
+                damaged=copy.deepcopy(captured);mutate(damaged)
+                try:port(damaged,target)
+                except ValueError:report['negative_controls'].append(dict(case=target+'-'+name,rejected=True))
+                else:raise AssertionError('Damaged port capture accepted: '+target+'/'+name)
         differences=[]
         for label in LABELS:
             for field in ('active','timer','flags'):

@@ -20,7 +20,7 @@ game=out/'game';game.mkdir(exist_ok=False)
 for asset in (root/'DestructionDerby2').iterdir():
     if asset.name=='SaveGames':shutil.copyfile(asset,game/asset.name)
     else:(game/asset.name).symlink_to(asset,target_is_directory=asset.is_dir())
-report=dict(scope=__doc__.strip(),target='native',operation='window-focus-capture',engine_state_writes=False,original_port_full_parity='unproven',pass_=False,samples=[],binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),sources={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in ('tools/capture_native_window_focus.py','tools/verify_native_replay.py','re_out/dd2_native.c','re_out/dd2_input.c')})
+report=dict(scope=__doc__.strip(),target='native',operation='window-focus-capture',engine_state_writes=False,original_port_full_parity='unproven',pass_=False,samples=[],binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),sources={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in ('tools/capture_native_window_focus.py','tools/verify_native_replay.py','re_out/dd2_native.c','re_out/dd2_input.c','re_out/dd2_window.h','patches/904-platform-window-activation-wait.diff')})
 ui=sink=server=None
 with (out/'xvfb.log').open('wb') as log:
     try:
@@ -32,6 +32,7 @@ with (out/'xvfb.log').open('wb') as log:
         def sample(label):
             row=dict(label=label,active=ui.integer(0x46042c),timer=ui.integer(0x460474),timer_fires=ui.integer(0x460484),
                      phase=ui.integer(0x4699cc),cf=ui.integer(0x462ff0),flags=ui.read(0x46303f,17).hex(),
+                     wait_entered=ui.integer(ui.table['g_dd2_window_wait_entered']),wait_returned=ui.integer(ui.table['g_dd2_window_wait_returned']),
                      flips=ui.integer(ui.table['g_frameno']),host_ns=time.monotonic_ns())
             report['samples'].append(row);return row
         sample('baseline');ui.edge('Left',True);ui.wait(lambda:ui.read(0x463045,1)==b'\1');sample('key-down-active')
@@ -39,7 +40,13 @@ with (out/'xvfb.log').open('wb') as log:
             sink=subprocess.Popen(['xmessage','-title','DD2 native focus sink','-timeout','30','focus target'],env=ui.env,stdout=sinklog,stderr=sinklog)
             ui.wait(lambda:subprocess.run(['xdotool','search','--name','^DD2 native focus sink$'],env=ui.env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0)
             subprocess.run(['xdotool','search','--name','^DD2 native focus sink$','windowfocus','--sync'],env=ui.env,check=True,timeout=5)
-            time.sleep(.2);sample('inactive-start');time.sleep(1.3);sample('inactive-held')
+            ui.wait(lambda:ui.integer(0x46042c)==0 and ui.integer(ui.table['g_dd2_window_wait_entered'])>0)
+            sample('inactive-start')
+            returned=ui.integer(ui.table['g_dd2_window_wait_returned'])
+            window=subprocess.check_output(['xdotool','search','--name','^Destruction Derby 2$'],env=ui.env,text=True).splitlines()[-1]
+            subprocess.run(['xdotool','mousemove','--window',window,'10','10'],env=ui.env,check=True,timeout=5)
+            ui.wait(lambda:ui.integer(ui.table['g_dd2_window_wait_returned'])>returned)
+            sample('inactive-window-message');time.sleep(1.3);sample('inactive-held')
             ui.edge('Left',False);time.sleep(.3);sample('released-in-sink')
             window=subprocess.check_output(['xdotool','search','--name','^Destruction Derby 2$'],env=ui.env,text=True).splitlines()[-1]
             subprocess.run(['xdotool','windowfocus','--sync',window],env=ui.env,check=True,timeout=5)

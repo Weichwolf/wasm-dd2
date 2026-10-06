@@ -44,7 +44,7 @@ emcc $OBJS -o "$OUTDIR/index.html" \
   -sGLOBAL_BASE=10485760 -sSTACK_SIZE=16777216 -sINITIAL_MEMORY=268435456 \
   -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=0 -sERROR_ON_UNDEFINED_SYMBOLS=0 --emit-symbol-map \
   -sASYNCIFY -sASYNCIFY_STACK_SIZE=131072 \
-  -sEXPORTED_FUNCTIONS='["_main","_dd2_browser_key_event","_dd2_pad_update","_malloc","_free"]' \
+  -sEXPORTED_FUNCTIONS='["_main","_dd2_browser_key_event","_dd2_pad_update","_dd2_window_focus","_dd2_window_message","_dd2_window_wait_count","_malloc","_free"]' \
   -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","stringToUTF8","lengthBytesUTF8","ENV","FS"]' \
   -lidbfs.js \
   --shell-file "$ROOT/web/shell_port.html" \

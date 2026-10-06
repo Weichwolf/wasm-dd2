@@ -11,6 +11,8 @@
 #include "dd2_native.h"
 extern unsigned char dd2_keystate[256];
 static unsigned down_count,up_count;
+void dd2_window_message(void){}
+void dd2_window_focus(int active){(void)active;}
 static void require(int ok,const char* why){if(!ok){fprintf(stderr,"keyboard focus bridge: %s\n",why);exit(1);}}
 void dd2_pad_update(int connected,unsigned x,unsigned y,unsigned buttons){(void)connected;(void)x;(void)y;(void)buttons;}
 int FUN_004132f0(void* window,unsigned message,unsigned key,unsigned flags){

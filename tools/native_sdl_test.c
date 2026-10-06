@@ -10,6 +10,8 @@
 
 extern unsigned char dd2_keystate[256];
 static unsigned keyboard_messages,last_message,last_vk,last_flags;
+void dd2_window_message(void){}
+void dd2_window_focus(int active){(void)active;}
 static int present,closes;
 static unsigned padx,pady,padb;
 void Translate_Keypress(unsigned vk,unsigned flags){(void)vk;(void)flags;}

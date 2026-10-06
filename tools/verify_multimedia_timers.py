@@ -44,6 +44,10 @@ def verify(original,output):
             run_bounded(['patch','-p1','-s','-F0','--fuzz=0','-d',str(old_directory)],
                         directory=output,timeout=10,check=True,stdin=patch,stdout=subprocess.DEVNULL)
     shutil.copyfile(old_directory/'dd2h_stubs.c',baseline)
+    # Later platform patches also edit USER32 activation. Reconstruct its
+    # actual pre-863 unit rather than reversing 863 on today's dependent code.
+    old_window=output/'old-window.c'
+    shutil.copyfile(old_directory/'dd2_win32.c',old_window)
     shutil.rmtree(old_directory)
     mutants={'old-timers':baseline}
     skip=output/'skip-replay.c'
@@ -52,12 +56,6 @@ def verify(original,output):
     if text.count(anchor)!=1:raise ValueError('Corrected timer poll required')
     skip.write_text(text.replace(anchor,'    if(!getenv("DD2_REALTIME"))return;\n'+anchor))
     mutants['skip-replay']=skip
-    old_window=output/'old-window.c'
-    window_diff=output/'old-window.diff'
-    window_diff.write_text('--- a/dd2_win32.c'+
-                          (ROOT/'patches/863-independent-multimedia-timers.diff').read_text().split('--- a/dd2_win32.c')[1])
-    run_bounded(['patch','-R','-p1','--fuzz=0','--output='+str(old_window),str(window),str(window_diff)],
-                directory=output,timeout=10,check=True,stdout=subprocess.DEVNULL)
     mutants['old-window']=current
     clock=output/'clock.bin'
     clock.write_bytes(struct.pack('<8sIIII',b'DD2AC01\0',44100,1,5,0)+
@@ -132,7 +130,7 @@ def verify(original,output):
     report=dict(scope=__doc__.strip(),pass_=True,original=source,targets=results,negative_cases=negatives,
                 source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [current,window,ROOT/'tools/multimedia_timer_test.c']})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
-    for path in [baseline,skip,old_window,window_diff,clock,positive]:path.unlink()
+    for path in [baseline,skip,old_window,clock,positive]:path.unlink()
     for path in [output/'clock.bin.json']:path.unlink(missing_ok=True)
     check_space(output)
     return report

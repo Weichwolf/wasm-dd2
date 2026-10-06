@@ -81,7 +81,7 @@ passes virtual detach and its exact renderer/X11/audio checks
 (`pad-disconnect-1569-work/report.json`). These are input transport checks;
 physical HID hardware and complete original game A/V parity remain unproven.
 
-Window focus remains an observed input/platform difference. A separate unchanged
+Window focus now enters the registered original activation handler. A separate unchanged
 original capture uses real X11 Left input, a hidden second USER32 window and four
 read-only hardware breakpoints. After the ordinary foreground change, the
 original `WM_ACTIVATEAPP` return has activation zero and stored timer zero,
@@ -114,19 +114,43 @@ Float32 audio bytes and virtual controller tests also pass
 (`focus-input-1602-sdl/report.json`). Successful raw outputs are removed after
 the reports and cleanup ledgers are written.
 
-Native activation and stored timer still remain unchanged. Actual headed
-Chromium likewise retains the flag but leaves engine activation/timer unchanged.
-Playwright's forced focus mode must be disabled on its own protocol session
-before page creation to observe this browser transition
-(`focus-1587-public-browser/report.json`). The strict comparison still fails for
-both ports, with six activation/timer differences each; all three native held
-flag observations now match the Original. Eight damaged Original observation
-cases are rejected (`focus-input-1605-comparison/report.json`). It checks the
-declared activation/timer/Left semantics, not framebuffer, PCM, physical timing,
-all keys or complete focus recovery.
+Patch 904 forwards native SDL and browser focus transitions to the registered
+original `WM_ACTIVATEAPP` procedure. Both ports now set activation and the stored
+timer to zero on actual focus loss while retaining the held Left flag. The
+independent first callback continues running. `WaitMessage` waits for a new
+platform window/input message, yielding while servicing audio, CD, multimedia
+timers and movies; it does not consume an engine clock return or change the
+frame counter. A real mouse movement wakes the inactive native window, and a
+trusted resize wakes the inactive Chromium window. Reactivation registers the
+new stored ID 49. Actual production ASan/native and WASM captures pass the strict
+Original activation/timer/Left comparison with no differences
+(`focus-activation-1611-native/report.json`,
+`focus-activation-1618-browser-context/report.json`,
+`focus-activation-1619-comparison/report.json`). The gate also requires actual
+wait entry, an inactive message wake and a surviving callback, and rejects 16
+damaged Original/port observation cases.
+
+Browser focus captures need `xfwm4`, `xprop` and `xdotool` on an isolated Xvfb
+display. They start an owned window manager only if none exists, use independent
+browser contexts/windows, and disable Playwright focus emulation on its own
+protocol sessions before creating pages. Earlier hidden-tab resize and
+opener-popup attempts did not establish the inactive message wake; their failed
+captures are not acceptance evidence. Native uses
+[SDL_WaitEventTimeout with a NULL event](https://wiki.libsdl.org/SDL2/SDL_WaitEventTimeout)
+to leave input queued for the normal provenance adapter.
+The existing 104 USER32 keyboard records and exact SDL renderer/X11/audio tests
+still pass (`focus-activation-1609-modifiers/report.json`,
+`focus-activation-1608-sdl/report.json`). A fresh undebugged Original registration
+capture also verifies six production startup/independent timer cases on native,
+ASan and WASM and rejects nine regressions
+(`focus-activation-1621-timer-regression/report.json`). The timer checker
+reconstructs the actual pre-863 window unit from the ordered series, since later
+activation patches prevent reversing 863 directly on today's dependent unit.
+These checks cover the declared activation/timer/Left and message-wait semantics,
+not framebuffer, PCM, physical timing, all keys or complete focus recovery.
 An earlier diagnostic reactivation entered repeated primary-surface restoration
-under Wine; its cause and successful original resumption remain unproven. These
-are diagnosed differences, not a completed focus fix or original game parity.
+under Wine; its cause and successful original resumption remain unproven.
+The bounded focus comparison does not prove original whole-game parity.
 
 ```sh
 make clean-logs
@@ -135,7 +159,6 @@ make capture-window-focus WINDOW_FOCUS_ARGS='--output /tmp/wasm-dd2/focus-origin
 make capture-native-window-focus WINDOW_FOCUS_NATIVE_ARGS='--binary /tmp/wasm-dd2/native-build/dd2-native --output /tmp/wasm-dd2/focus-native'
 make capture-browser-window-focus WINDOW_FOCUS_BROWSER_ARGS='/tmp/wasm-dd2/browser-build/web /tmp/wasm-dd2/focus-browser'
 make verify-window-focus WINDOW_FOCUS_VERIFY_ARGS='--original /tmp/wasm-dd2/focus-original/report.json --native /tmp/wasm-dd2/focus-native/report.json --browser /tmp/wasm-dd2/focus-browser/report.json --negative-controls --report /tmp/wasm-dd2/focus-comparison.json'
-# Comparison currently exits nonzero for the documented port differences.
 make clean-logs
 ```
 

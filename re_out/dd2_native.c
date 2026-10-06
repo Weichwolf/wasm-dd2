@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dd2_native.h"
+#include "dd2_window.h"
 
 extern void dd2_key_event(unsigned,int);
 extern void dd2_key_state(unsigned,int);
@@ -198,7 +199,11 @@ void dd2_native_poll(void){
 #ifdef SDL_VIDEO_DRIVER_X11
             keyboard_sync=1;
 #endif
+            dd2_window_focus(event.window.event==SDL_WINDOWEVENT_FOCUS_GAINED);
         }
+        if(event.type==SDL_WINDOWEVENT || event.type==SDL_MOUSEMOTION ||
+                event.type==SDL_MOUSEBUTTONDOWN || event.type==SDL_MOUSEBUTTONUP ||
+                event.type==SDL_MOUSEWHEEL || event.type==SDL_QUIT)dd2_window_message();
         /* The original consumes WM_CLOSE in its window procedure. Route the
          * request there too; normal exit remains the game's Quit action. */
         if(event.type==SDL_QUIT)FUN_004132f0((void*)1,0x10,0,0);
@@ -239,6 +244,14 @@ void dd2_native_poll(void){
     }
 #endif
     native_pad();native_polling=0;
+}
+void dd2_native_wait(unsigned milliseconds){
+    if(native_window && !native_polling){
+        /* NULL leaves the event queued for the normal input/provenance
+         * adapter. Joystick-only events do not wake USER32 WaitMessage. */
+        SDL_WaitEventTimeout(NULL,(int)milliseconds);
+        dd2_native_poll();
+    }
 }
 void dd2_native_init(void){
     int index;

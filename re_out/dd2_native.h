@@ -6,6 +6,7 @@
 void dd2_native_init(void);
 int dd2_native_enabled(void);
 void dd2_native_poll(void);
+void dd2_native_wait(unsigned milliseconds);
 void dd2_native_present(const unsigned char*,const unsigned char*);
 void dd2_native_audio(const float*,unsigned,unsigned);
 void dd2_native_audio_stop(void);
@@ -17,5 +18,6 @@ void dd2_native_movie_audio_stop(void);
 #define dd2_native_init() ((void)0)
 #define dd2_native_enabled() 0
 #define dd2_native_poll() ((void)0)
+#define dd2_native_wait(milliseconds) ((void)0)
 #endif
 #endif

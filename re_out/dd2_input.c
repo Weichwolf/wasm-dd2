@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include "dd2_window.h"
 
 extern void Translate_Keypress(unsigned int vkey, unsigned int lparam_flags);
 extern int FUN_004132f0(void*,unsigned,unsigned,unsigned);
@@ -63,6 +64,7 @@ void dd2_key_event(unsigned int vk, int down)
     }
     dd2_key_state(vk,down);
     if (vk>=0xa0 && vk<=0xa5) generic=0x10u+(vk-0xa0u)/2;
+    dd2_window_message();
     FUN_004132f0((void*)(uintptr_t)*(uint32_t*)(uintptr_t)0x46047c,
                 message,generic,down ? 0u : 0x80000000u);
 }
