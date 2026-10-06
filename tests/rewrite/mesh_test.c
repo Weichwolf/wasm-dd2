@@ -180,8 +180,7 @@ static bool dd2_test_mesh_bounds(void) {
     return dd2_expect_bad_mesh(view);
 }
 
-static bool dd2_test_scene(void) {
-    uint8_t bytes[DD2_TEST_SCENE_BYTES] = {0};
+static void dd2_test_scene_fixture(uint8_t *bytes) {
     dd2_test_write_le32(bytes, 4);
     dd2_test_write_le32(bytes + 4, 1);
     dd2_test_write_le32(bytes + DD2_TEST_SCENE_INSTANCE, DD2_TEST_SCENE_MESH - 4);
@@ -189,6 +188,58 @@ static bool dd2_test_scene(void) {
     dd2_test_write_le32(bytes + DD2_TEST_SCENE_Y, DD2_TEST_Y);
     dd2_test_write_le32(bytes + DD2_TEST_SCENE_Z, DD2_TEST_Z);
     dd2_test_mesh_fixture(bytes + DD2_TEST_SCENE_MESH, DD2_TEST_TEXTURE_QUAD);
+}
+
+static bool dd2_test_scene_origins(void) {
+    typedef struct {
+        int32_t coordinate;
+        int32_t center;
+    } dd2_origin_case;
+    /* Cover truncation versus floor for negative values, exact cell boundaries
+     * and full signed-coordinate limits without relying on signed shifts. */
+    const dd2_origin_case cases[] = {{0, 16384},
+                                     {-1, -16384},
+                                     {32767, 16384},
+                                     {32768, 49152},
+                                     {-32768, -16384},
+                                     {-32769, -49152},
+                                     {INT32_MIN, INT32_MIN + 16384},
+                                     {INT32_MAX, INT32_MAX - 16383}};
+    const dd2_scene_options options = {.limits = {.texture_definitions = 1, .palette_banks = 1}};
+    uint8_t bytes[DD2_TEST_SCENE_BYTES] = {0};
+    dd2_test_scene_fixture(bytes);
+    for (unsigned local = 0; local < 2; ++local) {
+        const uint8_t flags = (uint8_t)(1U | (local != 0 ? DD2_MESH_LOCAL_ORIGIN : 0U));
+        bytes[DD2_TEST_SCENE_MESH + 4] = flags;
+        for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); ++index) {
+            const int32_t coordinate = cases[index].coordinate;
+            dd2_test_write_le32(bytes + DD2_TEST_SCENE_X, (uint32_t)coordinate);
+            dd2_test_write_le32(bytes + DD2_TEST_SCENE_Y, (uint32_t)coordinate);
+            dd2_test_write_le32(bytes + DD2_TEST_SCENE_Z, (uint32_t)coordinate);
+            dd2_scene *scene =
+                dd2_scene_create((dd2_byte_view){.data = bytes, .size = sizeof(bytes)}, options);
+            if (scene == NULL) {
+                return false;
+            }
+            const dd2_scene_object *objects = dd2_scene_objects(scene);
+            const int32_t expected = local != 0 ? coordinate : cases[index].center;
+            const bool passed =
+                objects[0].position.x == coordinate && objects[0].position.y == coordinate &&
+                objects[0].position.z == coordinate && objects[0].origin.x == expected &&
+                objects[0].origin.y == expected && objects[0].origin.z == expected &&
+                dd2_mesh_flags(objects[0].mesh) == flags;
+            dd2_scene_destroy(scene);
+            if (!passed) {
+                return false;
+            }
+        }
+    }
+    return dd2_mesh_flags(NULL) == 0;
+}
+
+static bool dd2_test_scene(void) {
+    uint8_t bytes[DD2_TEST_SCENE_BYTES] = {0};
+    dd2_test_scene_fixture(bytes);
     const dd2_scene_options options = {.limits = {.texture_definitions = 1, .palette_banks = 1}};
     const dd2_byte_view view = {.data = bytes, .size = sizeof(bytes)};
     dd2_scene *scene = dd2_scene_create(view, options);
@@ -216,7 +267,8 @@ static bool dd2_test_scene(void) {
 }
 
 int main(void) {
-    if (!dd2_test_lz() || !dd2_test_mesh_bounds() || !dd2_test_scene()) {
+    if (!dd2_test_lz() || !dd2_test_mesh_bounds() || !dd2_test_scene() ||
+        !dd2_test_scene_origins()) {
         return EXIT_FAILURE;
     }
     puts("{\"scope\":\"object decompression, typed meshes and scene ownership\",\"pass\":true}");

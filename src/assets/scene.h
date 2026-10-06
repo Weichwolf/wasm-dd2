@@ -16,7 +16,10 @@ typedef struct {
 } dd2_scene_options;
 
 typedef struct {
+    /* Source bounding center; static vertices use the raster-cell origin.
+     * Header flag bit 7 selects local vertices relative to this center. */
     dd2_track_vertex position;
+    dd2_track_vertex origin;
     dd2_mesh *mesh;
 } dd2_scene_object;
 

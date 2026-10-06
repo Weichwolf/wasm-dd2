@@ -1,6 +1,7 @@
 #include "assets/scene.h"
 
 #include "assets/bytes.h"
+#include "assets/level.h"
 #include "assets/lz.h"
 #include "assets/mesh.h"
 
@@ -13,8 +14,27 @@ enum {
     DD2_SCENE_WORD_BYTES = 4,
     DD2_SCENE_INSTANCE_BYTES = 16,
     DD2_SCENE_MAX_BLOCK_BYTES = 16384,
-    DD2_SCENE_MAX_BLOCKS = 4096
+    DD2_SCENE_MAX_BLOCKS = 4096,
+    DD2_SCENE_CELL_SIDE = 32768,
+    DD2_SCENE_CELL_CENTER = DD2_SCENE_CELL_SIDE / 2
 };
+
+static int32_t dd2_scene_cell_center(int32_t coordinate) {
+    int32_t cell = coordinate / DD2_SCENE_CELL_SIDE;
+    if (coordinate < 0 && coordinate % DD2_SCENE_CELL_SIDE != 0) {
+        --cell;
+    }
+    return (cell * DD2_SCENE_CELL_SIDE) + DD2_SCENE_CELL_CENTER;
+}
+
+static dd2_track_vertex dd2_scene_origin(dd2_track_vertex position, const dd2_mesh *mesh) {
+    if ((dd2_mesh_flags(mesh) & DD2_MESH_LOCAL_ORIGIN) != 0) {
+        return position;
+    }
+    return (dd2_track_vertex){.x = dd2_scene_cell_center(position.x),
+                              .y = dd2_scene_cell_center(position.y),
+                              .z = dd2_scene_cell_center(position.z)};
+}
 
 struct dd2_scene {
     size_t block_count;
@@ -60,11 +80,12 @@ static bool dd2_scene_block(dd2_scene *scene, dd2_byte_view bytes, dd2_mesh_limi
         if (mesh == NULL) {
             return false;
         }
+        const dd2_track_vertex position = {
+            .x = dd2_read_le_i32(row + DD2_SCENE_WORD_BYTES),
+            .y = dd2_read_le_i32(row + ((size_t)2 * DD2_SCENE_WORD_BYTES)),
+            .z = dd2_read_le_i32(row + ((size_t)3 * DD2_SCENE_WORD_BYTES))};
         scene->objects[scene->object_count++] = (dd2_scene_object){
-            .mesh = mesh,
-            .position = {.x = dd2_read_le_i32(row + DD2_SCENE_WORD_BYTES),
-                         .y = dd2_read_le_i32(row + ((size_t)2 * DD2_SCENE_WORD_BYTES)),
-                         .z = dd2_read_le_i32(row + ((size_t)3 * DD2_SCENE_WORD_BYTES))}};
+            .mesh = mesh, .position = position, .origin = dd2_scene_origin(position, mesh)};
     }
     return true;
 }

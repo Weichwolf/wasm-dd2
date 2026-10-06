@@ -55,7 +55,8 @@ static bool dd2_mesh_export_face(FILE *file, const dd2_mesh_face *face) {
 }
 
 static bool dd2_mesh_export_mesh(FILE *file, const dd2_mesh *mesh) {
-    if (!dd2_mesh_export_word(file, (uint32_t)dd2_mesh_vertex_count(mesh)) ||
+    if (!dd2_mesh_export_word(file, dd2_mesh_flags(mesh)) ||
+        !dd2_mesh_export_word(file, (uint32_t)dd2_mesh_vertex_count(mesh)) ||
         !dd2_mesh_export_word(file, (uint32_t)dd2_mesh_normal_count(mesh)) ||
         !dd2_mesh_export_word(file, (uint32_t)dd2_mesh_face_count(mesh)) ||
         !dd2_mesh_export_vectors(file, dd2_mesh_vertices(mesh), dd2_mesh_vertex_count(mesh)) ||
@@ -81,6 +82,9 @@ static bool dd2_mesh_export_scene(FILE *file, const dd2_scene *scene) {
         if (!dd2_mesh_export_word(file, (uint32_t)objects[index].position.x) ||
             !dd2_mesh_export_word(file, (uint32_t)objects[index].position.y) ||
             !dd2_mesh_export_word(file, (uint32_t)objects[index].position.z) ||
+            !dd2_mesh_export_word(file, (uint32_t)objects[index].origin.x) ||
+            !dd2_mesh_export_word(file, (uint32_t)objects[index].origin.y) ||
+            !dd2_mesh_export_word(file, (uint32_t)objects[index].origin.z) ||
             !dd2_mesh_export_mesh(file, objects[index].mesh)) {
             return false;
         }

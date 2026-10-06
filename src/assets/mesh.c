@@ -9,6 +9,7 @@
 
 enum {
     DD2_MESH_HEADER_BYTES = 44,
+    DD2_MESH_FLAGS_OFFSET = 4,
     DD2_MESH_VERTEX_COUNT_OFFSET = 10,
     DD2_MESH_NORMAL_COUNT_OFFSET = 12,
     DD2_MESH_VERTICES_OFFSET = 32,
@@ -25,6 +26,7 @@ enum {
 };
 
 struct dd2_mesh {
+    uint8_t flags;
     size_t vertex_count;
     size_t normal_count;
     size_t face_count;
@@ -163,6 +165,7 @@ dd2_mesh *dd2_mesh_create(dd2_byte_view bytes, dd2_mesh_limits limits) {
     if (mesh == NULL) {
         return NULL;
     }
+    mesh->flags = bytes.data[DD2_MESH_FLAGS_OFFSET];
     mesh->vertex_count = vertex_count;
     mesh->normal_count = normal_count;
     mesh->vertices = calloc(vertex_count + 1, sizeof(*mesh->vertices));
@@ -190,6 +193,9 @@ void dd2_mesh_destroy(dd2_mesh *mesh) {
         free(mesh->faces);
         free(mesh);
     }
+}
+uint8_t dd2_mesh_flags(const dd2_mesh *mesh) {
+    return mesh != NULL ? mesh->flags : 0;
 }
 
 size_t dd2_mesh_vertex_count(const dd2_mesh *mesh) {

@@ -116,7 +116,7 @@ static bool dd2_preview_draw(const dd2_level_data *level, const dd2_texture_set 
     } else {
         const dd2_scene_object *objects = dd2_scene_objects(scene);
         for (size_t index = 0; index < dd2_scene_object_count(scene); ++index) {
-            dd2_preview_mesh_bounds(&bounds, objects[index].mesh, objects[index].position);
+            dd2_preview_mesh_bounds(&bounds, objects[index].mesh, objects[index].origin);
         }
     }
     if (!bounds.valid) {

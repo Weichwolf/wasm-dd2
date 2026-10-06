@@ -44,7 +44,9 @@ level containers, including car/sky/wheel shapes. SoftGL now renders stored mesh
 geometry with texture/material selection, cutout and depth testing; static scene
 and car previews run for all eleven levels on both targets. Material opacity
 uses original UV/CLUT selection, and the preview camera preserves positive Y
-upward. Road contact/topology data, billboard orientation, lighting, blending
+upward. Scene vertices use their static raster-cell or local object origin,
+separate from the retained bounding center. Road contact/topology data,
+billboard orientation, lighting, blending
 and gameplay remain to be implemented.
 This is not yet a playable game.
 

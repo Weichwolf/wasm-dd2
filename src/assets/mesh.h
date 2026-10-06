@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum { DD2_MESH_CORNERS = 4, DD2_MESH_OPCODE_COUNT = 44 };
+enum { DD2_MESH_CORNERS = 4, DD2_MESH_OPCODE_COUNT = 44, DD2_MESH_LOCAL_ORIGIN = 128 };
 
 typedef struct dd2_mesh dd2_mesh;
 
@@ -44,6 +44,7 @@ typedef struct {
  * stream termination, record extents and vertex/normal/material references. */
 dd2_mesh *dd2_mesh_create(dd2_byte_view bytes, dd2_mesh_limits limits);
 void dd2_mesh_destroy(dd2_mesh *mesh);
+uint8_t dd2_mesh_flags(const dd2_mesh *mesh);
 size_t dd2_mesh_vertex_count(const dd2_mesh *mesh);
 size_t dd2_mesh_normal_count(const dd2_mesh *mesh);
 size_t dd2_mesh_face_count(const dd2_mesh *mesh);

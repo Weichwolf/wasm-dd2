@@ -11,6 +11,7 @@ import fcntl
 import hashlib
 import json
 from pathlib import Path
+import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,11 +21,56 @@ from original_realtime_ui import OriginalRealtimeUI
 from reference.capture import EXE_SHA256
 from rewrite.verify_archive import ORIGINAL_SHA256
 from rewrite.verify_levels import assets
+from rewrite.verify_meshes import decompress
 from verify_configuration_persistence import WINE_WORK, original_args, run_original
 
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def scene_origins(ui, files, code):
+    level = files[f'LEV{code}\\LEVEL.DAT']
+    start, end = struct.unpack_from('<2I', level)
+    section = level[start:end]
+    count = struct.unpack_from('<I', section)[0] // 4
+    offsets = struct.unpack_from(f'<{count}I', section)
+    blocks = [decompress(section[start:end]) if code in '1234567' else section[start:end]
+              for start, end in zip(offsets, (*offsets[1:], len(section)))]
+    active = ui.read(0x7892a0, 14 * 4)
+    counts = struct.unpack('<14I', ui.read(0x7892d8, 14 * 4))
+    actual_origins, expected_origins = bytearray(), bytearray()
+    observed = []
+    for slot, block in enumerate(struct.unpack('<14i', active)):
+        if block < 0:
+            continue
+        if block >= len(blocks) or counts[slot] > 32:
+            raise ValueError('Original active scene block/count outside bounds')
+        data = blocks[block]
+        source_count, = struct.unpack_from('<I', data)
+        if counts[slot] != source_count:
+            raise ValueError('Loaded scene count differs from source block')
+        origins = ui.read(0x7876a0 + slot * 0x200, source_count * 16)
+        for index in range(source_count):
+            shape, *position = struct.unpack_from('<I3i', data, 4 + index * 16)
+            flags = data[shape + 4]
+            expected = position if flags & 128 else [(axis & -32768) + 16384 for axis in position]
+            actual = origins[index * 16:index * 16 + 12]
+            encoded = struct.pack('<3i', *expected)
+            if actual != encoded:
+                raise ValueError(f'Loaded original vertex origin differs: block {block}, object {index}; '
+                                 f'actual {struct.unpack("<3i", actual)}, expected {expected}')
+            actual_origins.extend(actual)
+            expected_origins.extend(encoded)
+        observed.append(dict(slot=slot, block=block, objects=source_count))
+    if active != ui.read(0x7892a0, 14 * 4):
+        raise ValueError('Active scene changed during bounded non-atomic observation')
+    if not observed or not actual_origins:
+        raise ValueError('No loaded original scene objects were observed')
+    return dict(scope='Loaded original scene vertex origins, not rendered-frame parity',
+                objects=len(actual_origins) // 12, blocks=observed,
+                every_origin_matches=True, actual_sha256=digest(actual_origins),
+                expected_sha256=digest(expected_origins))
 
 
 def observe(ui, files):
@@ -63,6 +109,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--game-dir', type=Path, default=ROOT / 'DestructionDerby2')
     parser.add_argument('--output', type=Path, default=WORK / 'rewrite-original-palette')
+    parser.add_argument('--scene-origins', action='store_true',
+                        help='Also check loaded original static/local scene vertex origins')
     args = parser.parse_args()
     output = prepare_output(args.output)
     if WORK not in output.parents:
@@ -83,6 +131,8 @@ def main():
         ui = OriginalRealtimeUI(pid, rundir, destination, env, deadline)
         try:
             report['observation'] = observe(ui, files)
+            if args.scene_origins:
+                report['scene_origins'] = scene_origins(ui, files, report['observation']['level'])
         finally:
             ui.stop()
 

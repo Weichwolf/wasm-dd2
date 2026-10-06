@@ -97,7 +97,7 @@ def mesh_words(data, limits, counts):
     counts['faces'] += face_count
     counts['vertices'] += vertex_count
     counts['normals'] += normal_count
-    return [vertex_count, normal_count, face_count, *vectors, *faces]
+    return [data[4], vertex_count, normal_count, face_count, *vectors, *faces]
 
 
 def level_expected(files, code):
@@ -113,6 +113,7 @@ def level_expected(files, code):
     block_count = first // 4
     blocks = struct.unpack_from(f'<{block_count}I', scene)
     objects = []
+    world_vertices = set()
     counts = dict(meshes=0, faces=0, vertices=0, normals=0, opcodes=Counter())
     for start, end in zip(blocks, (*blocks[1:], len(scene))):
         block = decompress(scene[start:end]) if code in '1234567' else scene[start:end]
@@ -121,7 +122,14 @@ def level_expected(files, code):
         for mesh, x, y, z in rows:
             end = min((row[0] for row in rows if row[0] > mesh), default=len(block))
             assert mesh >= 4 + count * 16 and mesh < end
-            objects.append([x, y, z, *mesh_words(block[mesh:end], limits, counts)])
+            origin = (x, y, z) if block[mesh + 4] & 128 else tuple(
+                (coordinate // 32768) * 32768 + 16384 for coordinate in (x, y, z))
+            vertices = struct.unpack_from('<I', block, mesh + 32)[0]
+            vertex_count = struct.unpack_from('<H', block, mesh + 10)[0]
+            for vector in range(vertex_count):
+                local = struct.unpack_from('<3h', block, mesh + vertices + vector * 8)
+                world_vertices.add(tuple(base + axis for base, axis in zip(origin, local)))
+            objects.append([x, y, z, *origin, *mesh_words(block[mesh:end], limits, counts)])
     result = bytearray(code.encode('ascii'))
     def words(values):
         result.extend(struct.pack(f'<{len(values)}I', *(value & 0xffffffff for value in values)))
@@ -132,7 +140,13 @@ def level_expected(files, code):
         if sections[section]:
             words([section, *mesh_words(sections[section], limits, counts)])
     words([22])
-    return bytes(result), dict(level=code, blocks=block_count, objects=len(objects), **counts)
+    road_vertices = set(struct.iter_unpack('<3i', sections[2]))
+    if code in '1234567' and not road_vertices <= world_vertices:
+        raise ValueError('Racing road vertices do not all align with scene vertex origins')
+    return bytes(result), dict(level=code, blocks=block_count, objects=len(objects),
+                               scene_world_vertices=len(world_vertices),
+                               unique_road_vertices=len(road_vertices),
+                               road_vertices_in_scene=len(road_vertices & world_vertices), **counts)
 
 
 def original_mutations(original, files):

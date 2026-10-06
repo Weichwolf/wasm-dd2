@@ -129,6 +129,10 @@ make clean-logs
 The diagnostic sends real X11 inputs, reads only the loaded palette and CLUT
 banks, retains hashes and removes completed raw logs. These are read-only asset
 observations rather than full-game or framebuffer parity checks.
+Add `--scene-origins --output /tmp/wasm-dd2/rewrite-original-origins` to check
+every vertex origin in the original's loaded scene blocks as well. It captures
+only their small position tables and compares them with decoded source centers
+and shape flags; no full memory image is saved.
 
 ## Scene objects and polygon meshes
 
@@ -144,13 +148,21 @@ allowed, and a failed output can contain partial data.
 each 32-bit offset starts a block. Racing levels 1–7 use compressed blocks with
 a 16 KiB output limit; arenas 8/9/A/B use raw blocks. A decoded block starts with
 an object count and 16-byte instance rows: mesh-relative offset and signed XYZ
-placement. Mesh extents end at the next distinct mesh offset or the block end.
+bounding center. Static shape vertices are relative to a 32768-unit raster-cell
+center, not to that bounding center. `origin` is computed per axis as
+`floor(coordinate / 32768) * 32768 + 16384`, matching `Setup_Object_Block`.
+Header flag bit 7 instead selects local vertices and uses the source center as
+the origin. Both positions are retained; the renderer and its bounds use
+`origin`. Negative coordinates and signed limits are handled without signed
+right shifts or overflow. Mesh extents end at the next distinct mesh offset or
+the block end.
 Repeated mesh offsets are valid. Each instance owns a decoded mesh; destruction
 also handles partial failures. An empty scene section is valid. Input bytes can
 be released after decoding; scene objects and meshes are owned by the scene.
 
-`mesh.h` decodes the 44-byte shape header, vertex/normal counts at offsets 10/12
-and relative vector/normal/polygon offsets at 32/36/40. Vectors are signed
+`mesh.h` retains the shape flag byte at offset 4 and decodes the 44-byte shape
+header, vertex/normal counts at offsets 10/12 and relative vector/normal/polygon
+offsets at 32/36/40. Vectors are signed
 16-bit XYZ plus a retained auxiliary word, eight bytes each. Polygon groups
 start with a 16-bit count, opcode byte and flags byte; zero flags terminate.
 Opcodes 0–43 encode flat/textured/Gouraud triangles and quads plus sprite quads.
@@ -170,7 +182,8 @@ The new decoder never relocates original bytes or uses game memory addresses.
 make rewrite-mesh-verify
 ```
 
-An independent Python decoder compares every exported placement, vector, normal
+An independent Python decoder compares every exported bounding center, vertex
+origin, shape flag, vector, normal
 and decoded face field for all eleven playable original levels, including known
 standalone wheel, sky and vehicle shapes (sections 5–21). This covers 6,328 meshes
 and 76,856 faces on native, Node/WASM and ASan/UBSan. Six corrupted original

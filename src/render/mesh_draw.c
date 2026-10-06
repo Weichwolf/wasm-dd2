@@ -239,7 +239,7 @@ bool dd2_scene_draw(dd2_mesh_materials *materials, const dd2_scene *scene) {
     }
     const dd2_scene_object *objects = dd2_scene_objects(scene);
     for (size_t index = 0; index < dd2_scene_object_count(scene); ++index) {
-        if (!dd2_mesh_draw(materials, objects[index].mesh, objects[index].position)) {
+        if (!dd2_mesh_draw(materials, objects[index].mesh, objects[index].origin)) {
             return false;
         }
     }
