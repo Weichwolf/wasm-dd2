@@ -49,11 +49,13 @@ separate from the retained bounding center. Owned road graphs and lane cells now
 cover all eleven playable tracks/arenas, with vertical triangle contact heights
 and normals. A balanced spatial index now selects the highest road contact
 within a height window, with stable shared-edge ties and finite-input validation.
-Vehicle suspension, billboard orientation,
-lighting, blending and gameplay remain to be implemented. A shared C application now presents the
+The vehicle core now advances a four-wheel rigid body with suspension, traction,
+steering, braking, reverse and vertical landings in fixed steps. Driving
+presentation, collisions/damage, billboard orientation, lighting, blending and
+race gameplay remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. This is an inspection viewer;
-vehicle simulation, opponents and race rules remain pending.
+live driving, opponents and race rules remain pending.
 This is not yet a playable game.
 
 ## SoftGL
@@ -166,6 +168,15 @@ cover stacked surfaces, tolerance chains and nonfinite inputs under fast-math;
 the original-data verifier requires at least 95% pruning of contact tests. See
 `src/physics/README.md` for ownership and tie rules. This index is a foundation
 for vehicle simulation and is not yet used by the inspection viewer.
+`make rewrite-vehicle-verify` exercises the vehicle core for 264,000 fixed steps
+per target, using 24 distributed starts on every original track/arena. It
+compares sampled positions, velocities, orientations, steering and wheel state
+on native, Node/WASM and ASan/UBSan. Synthetic tests cover independent rest-height
+calculations, acceleration/braking/reverse, steering, grip, slopes, flight,
+bridges, fast landings and invalid-input rejection. Parameters are rewrite tuning;
+this establishes the simulation core, not original driving parity or a complete
+race. Vehicle rendering/input/chase-camera integration and collisions/damage
+remain pending. See `src/physics/README.md`.
 `make rewrite-window-verify` compares all eleven actual native window and browser
 canvas track/car views against the shared C preview, exercises real keyboard and
 wheel events, focus-loss release, camera reset, selection synchronization,

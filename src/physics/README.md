@@ -48,6 +48,65 @@ for arbitrary geometry or a timing benchmark.
 
 Synthetic tests include stacked planes, strict height boundaries, shared edges,
 preferred-cell ties, tolerance chains, acute corners, coordinate extremes and
-NaN/infinity under fast-math. The viewer does not yet use this physics module.
-Wheel suspension, drivetrain, steering, jumps, collisions and damage remain to
-be implemented; these checks establish contact selection, not driving parity.
+NaN/infinity under fast-math. These checks establish contact selection, not
+driving parity.
+
+## Vehicle core
+
+`vehicle.c` advances a typed four-wheel rigid body in fixed 5 ms steps. State is
+position, linear/world angular velocity, a unit quaternion, front steering angle
+and four wheel contact/force records. It owns no allocations and retains no
+geometry pointers. `dd2_vehicle_reset` accepts structured position/yaw start
+data; `dd2_vehicle_step` borrows a road and its matching surface index for one
+step. The caller must preserve that geometry and accumulate simulation time
+independently of presentation. Wheel outputs describe the beginning of the last
+step. Invalid controls/core state and out-of-bounds results fail transactionally.
+Start/control data use structs so finite-value checks remain effective under
+fast-math; a standalone floating yaw argument was experimentally rejected after
+its NaN check was optimized away.
+
+Coordinates retain +Y up, local +Z forward and local +X right. The original wheel
+rig (`FUN_00440bf4 @ 00440bf4`, tables in the provisioned image) has local centers
+at X ±186, Y -130, Z ±450. The rewrite uses those XZ locations and the same fully
+extended center Y, with mounts at -60, 70 units of suspension travel and a tuned
+60-unit wheel radius. Wheel order matches the rig: front right, rear right,
+front left, rear left. These dimensions are separate from pending animated
+wheel geometry.
+
+Each wheel samples a finite vertical window and preferred previous cell. A
+nonnegative spring/damper load acts along the road normal. Projected wheel
+forward/right directions apply drive, braking, rolling resistance and lateral
+grip, bounded together by available load and surface friction. The original
+playable roads contain surface classes 0 and 1; class 1 has half grip, matching
+the ratio of the original friction/traction tables. Front wheels steer with a
+limited slew rate; reverse steering follows force direction naturally. No tire
+force acts without a reachable upright contact. Linear gravity and drag,
+rigid-body torque including the gyroscopic term, and normalized quaternion
+integration update the pose. A swept vertical landing window limits penetration
+at full compression and keeps a vehicle below a bridge on its existing surface.
+This is vertical road contact, not a general swept body/wall collision solver.
+
+The current default spring, damper, acceleration, steering and speed curve are
+rewrite tuning in world units/seconds. They are not a transcription of the
+original fixed-point update cadence or its visual suspension recurrence. On a
+flat road, spring coefficient 90 and gravity 2500 give a rest height of
+`190 - 2500 / (4 * 90) = 183.055555...`, checked independently in the synthetic
+tests. Tests also cover acceleration, stopping, reverse motion/steering, slopes,
+reduced grip, flight without ground controls, bridge selection, fast downward
+travel, rotation and transactional NaN/infinity rejection.
+
+`make rewrite-vehicle-verify` exercises 24 distributed cell starts on each of the
+eleven original tracks/arenas, alternating nominal height and drops. Five seconds
+per start include settling, forward throttle/steering, braking and reverse:
+264,000 simulation steps per target. Every 20 steps, native, Node/WASM and
+ASan/UBSan compare pose, velocity, orientation, steering and wheel load/compression
+within absolute 1e-5 or relative 1e-8 tolerance; discrete contacts and summaries
+must match exactly. The largest observed numeric difference is below 2e-8.
+Completed raw samples and instrumented binaries are removed after the report.
+
+The inspection viewer does not yet drive this vehicle. Real driving input,
+vehicle/wheel rendering and chase camera are the next integration work. Distinct
+vehicle classes, body/wall/car collisions, upside-down support, damage, detached
+wheels, off-road recovery, AI and race rules remain pending. The current probes
+can leave the road and fall; they establish cross-target dynamics and the named
+synthetic behavior, not original driving parity or complete race correctness.
