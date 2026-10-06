@@ -82,6 +82,7 @@ class OriginalRealtimeUI(OriginalUI):
                       mode_ring=self.read(0x46a258, 4).hex(),
                       type_ring=self.read(0x46a5dc, 4).hex(),
                       result_ring=(self.read(0x46a3e4, 4) + self.read(0x46a3fc, 4)).hex(),
+                      race_over_ring=(self.read(0x46b660, 4) + self.read(0x46b678, 4)).hex(),
                       type=self.integer(0x4673f4), mode=self.integer(0x4673f8),
                       car=self.integer(0x467400), track=self.integer(0x4673fc),
                       player=self.integer(0x93decc), count=self.integer(0x467658),

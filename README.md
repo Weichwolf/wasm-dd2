@@ -3170,6 +3170,15 @@ The same input helper also passes 41 real no-debugger key effects for empty
 Backspace, an ignored ninth character and cancellation without changing the
 original names, unlock fields or card
 (`/tmp/wasm-dd2/multiplayer-realtime-1737-name-limits/report.json`).
+The first no-debugger ten-lap turn completes alive with a natural finish and
+no retirement (`multiplayer-realtime-1739-original/report.json`), but that
+whole capture fails at its handoff acknowledgement and is not accepted as
+two completed turns. `Race_Over` uses selectors at `0x46b660/0x46b678`, separate
+from the other results menu. Observing those actual fields fixes Down/Return
+acknowledgement; a fresh real retirement probe reaches the running second
+human and preserves the card
+(`/tmp/wasm-dd2/multiplayer-realtime-1751-handoff/report.json`). This short
+probe does not prove a second living finish or original/port A/V parity.
 
 ```sh
 make clean-logs
