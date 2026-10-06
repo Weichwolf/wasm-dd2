@@ -153,8 +153,9 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
         timeline.flush()
         return row
 
-    def breakpoint(pc, condition=None):
+    def breakpoint(pc, condition=None, enabled=True):
         point = gdb.Breakpoint(f'*0x{pc:x}', type=kind)
+        point.enabled = enabled
         point.silent = True
         if condition:
             point.condition = condition
@@ -282,6 +283,15 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
     breakpoint(draw_pc)
     breakpoint(pad_pc)
     expected_clock_callers = (0x423c2d, 0x423ecd, 0x424007, 0x424024, 0x424040)
+    # Only four slots are active. Reuse the original's fixed entry/return
+    # locations instead of retaining two new Python breakpoint objects for
+    # every API call. Disable the old location before enabling the next one.
+    reuse_original_points = original and not api_return_log
+    if reuse_original_points:
+        rng_points = {rng_entry: rng_point, 0x456cde: breakpoint(0x456cde, enabled=False)}
+        clock_points = {clock_entry: clock_point}
+        for caller in expected_clock_callers:
+            clock_points[caller] = breakpoint(caller, enabled=False)
     try:
         while True:
             gdb.execute('continue')
@@ -298,9 +308,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     rng.append((rng_before, after, eax))
                     event('rand', before=rng_before, after=after, result=eax, caller=hex(rng_caller))
                     next_pc = rng_entry
-                rng_point.delete()
+                if reuse_original_points:
+                    rng_point.enabled = False
+                    rng_point = rng_points[next_pc]
+                    rng_point.enabled = True
+                else:
+                    rng_point.delete()
+                    rng_point = breakpoint(next_pc)
                 rng_pc = next_pc
-                rng_point = breakpoint(rng_pc)
             elif pc == clock_pc:
                 if pc == clock_entry:
                     clock_caller = word(int(gdb.parse_and_eval('$esp')) & 0xffffffff)
@@ -311,9 +326,14 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     clocks.append(eax)
                     event('GetTickCount', value=eax, caller=hex(clock_caller))
                     next_pc = clock_entry
-                clock_point.delete()
+                if reuse_original_points:
+                    clock_point.enabled = False
+                    clock_point = clock_points[next_pc]
+                    clock_point.enabled = True
+                else:
+                    clock_point.delete()
+                    clock_point = breakpoint(next_pc, clock_condition if next_pc == clock_entry else None)
                 clock_pc = next_pc
-                clock_point = breakpoint(clock_pc, clock_condition if next_pc == clock_entry else None)
             elif pc == pad_pc:
                 flags = read(0x46303e, 17)
                 caller = word(int(gdb.parse_and_eval('$esp')) & 0xffffffff)
@@ -444,6 +464,17 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                 if stage == 'held':
                     send(actions[key_index - 1], False)
                     stage = 'release'
+                if stage == 'pause-ready':
+                    # The original Pause_Mode rejects current_frame < 2.
+                    # Keep the first race checkpoint, then wait for a real
+                    # gameplay draw before sending the recorded Escape edge.
+                    if not game_caller or integer(0x462ff0) < 2:
+                        continue
+                    key_index += 1
+                    key_flag = flag_for(actions[key_index - 1])
+                    stage = 'down'
+                    send(actions[key_index - 1], True)
+                    continue
                 if stage != 'settle':
                     continue
                 race_start = key_index in natural_multiplayer_protocol.STARTS if natural_multiplayer else key_index in protocol.STARTS if result_tables else ((key_index in NATURAL_SEASON_STARTS or key_index==len(actions) and integer(0x936ff4) in range(1,13)) if natural_season else key_index in (10,21) if natural_champ else key_index == len(keys) if normal_arena else key_index >= 10 and (key_index - 10) % 17 == 0 and key_index <= 78)
@@ -494,6 +525,10 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
                     break
                 if key_index == len(actions):
                     break
+                if (not natural_champ and not normal_arena and actions[key_index] == 'Escape' and
+                        1 <= integer(0x936ff4) <= 12 and integer(0x462ff0) < 2):
+                    stage = 'pause-ready'
+                    continue
                 key_index += 1
                 key_flag = flag_for(actions[key_index - 1])
                 stage = 'down'
@@ -551,6 +586,8 @@ def record_champ_history(output, steps=95, target='original', game_frame_delay_m
             racing_image_format='indexed-zlib' if natural_champ else 'indexed-raw',
             natural_finish=bool(final_race), final_race=final_race, final_races=final_races, race_frames=race_frames,
             full_video=full_video, presentation_boundary='PutDispEnv' if full_video else None, presentations=presentations,
+            hardware_breakpoints=dict(api_locations_reused=reuse_original_points,
+                objects_created=len(points), active_at_complete=sum(point.is_valid() and point.enabled for point in points)),
             elapsed_seconds=time.monotonic() - start_time), indent=2) + '\n')
     except Exception as failure:
         # Keep one bounded causal checkpoint before batch GDB closes the

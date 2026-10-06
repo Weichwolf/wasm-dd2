@@ -171,6 +171,23 @@ async function tap(page,key,timing=null,raceStart=null){
    const present=CanvasRenderingContext2D.prototype.putImageData;
    const readText=(a,n)=>{let text='';for(let i=0;i<n&&HEAPU8[a+i];i++)text+=String.fromCharCode(HEAPU8[a+i]);return text;};
    const encode=(a,n)=>{let text='';for(let i=0;i<n;i+=16384)text+=String.fromCharCode(...HEAPU8.subarray(a+i,a+Math.min(i+16384,n)));return btoa(text);};
+   const pressHistoryKey=(history,physical)=>{
+    const key=history.keys[history.index++];
+    history.code={Return:'Enter',Escape:'Escape',Up:'ArrowUp',Down:'ArrowDown',Left:'ArrowLeft',Right:'ArrowRight'}[key];
+    history.keyLevel=physical.level;
+    history.mask={Return:physical.level>=1&&physical.level<=12?1:0x4000,Escape:0x1008,Up:0x10,Down:0x40,Left:0x80,Right:0x20}[key];
+    if(resultTables){
+     const vk={Return:13,Escape:27,Up:38,Down:40,Left:37,Right:39}[key],bits=[1,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768];
+     const i=[0,1,2,3,4,5,8,6,9,7,10,11,12,13].find(i=>HEAPU8[0x46302c+i]===vk);
+     if(i===undefined)history.error='Actual result key is unmapped';else history.mask=bits[i];
+    }
+    if(!history.code)history.error='Unknown reference key';
+    else{
+     history.stage='down';history.steady=0;
+     history.inputs.push({action:history.index,code:history.code,down:true,level:physical.level,cf:HEAP32[0x462ff0>>2],ticks:physical.ticks});
+     window.dispatchEvent(new KeyboardEvent('keydown',{code:history.code}));
+    }
+   };
    CanvasRenderingContext2D.prototype.putImageData=function(...args){
     const result=present.apply(this,args);
     if(this.canvas.id!=='canvas'||typeof HEAP16==='undefined')return result;
@@ -220,6 +237,9 @@ async function tap(page,key,timing=null,raceStart=null){
       history.inputs.push({action:history.index,code:history.code,down:false,level:physical.level,ticks:physical.ticks});
       history.stage='release';
      }else if(history.stage==='release'&&(masks&history.mask)===0){history.stage='settle';history.steady=0;}
+     if(history.stage==='pause-ready'&&physical.level>=1&&physical.level<=12&&physical.quit===0&&physical.ticks>0&&HEAP32[0x462ff0>>2]>=2){
+      pressHistoryKey(history,physical);
+     }
      if(history.stage==='settle'){
       const go=naturalMultiplayer?naturalMultiplayerPlan.starts.includes(history.index):resultTables?resultPlan.starts.includes(history.index):naturalSeason?apiKeys[history.index]==='natural-finish'||history.index===apiKeys.length&&seasonEnd.level>0:naturalChamp?[10,21].includes(history.index):normalArena?history.index===apiKeys.length:history.index>=10&&history.index<=78&&(history.index-10)%17===0;
       const expectedLevel=naturalMultiplayer?naturalMultiplayerPlan.start_states[naturalMultiplayerPlan.starts.indexOf(history.index)]?.level:resultTables?resultPlan.start_states[resultPlan.starts.indexOf(history.index)]?.level:naturalSeason?(history.index===apiKeys.length?seasonEnd.level:[1,2,5,7,10][(history.index-10)/11]):history.index===10?1:2;
@@ -322,21 +342,11 @@ async function tap(page,key,timing=null,raceStart=null){
      }
      else if(history.index===history.keys.length+(normalArena?1:0)){history.done=true;}
      else{
-      const key=history.keys[history.index++];
-      history.code={Return:'Enter',Escape:'Escape',Up:'ArrowUp',Down:'ArrowDown',Left:'ArrowLeft',Right:'ArrowRight'}[key];
-      history.keyLevel=physical.level;
-      history.mask={Return:physical.level>=1&&physical.level<=12?1:0x4000,Escape:0x1008,Up:0x10,Down:0x40,Left:0x80,Right:0x20}[key];
-      if(resultTables){
-       const vk={Return:13,Escape:27,Up:38,Down:40,Left:37,Right:39}[key],bits=[1,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768];
-       const i=[0,1,2,3,4,5,8,6,9,7,10,11,12,13].find(i=>HEAPU8[0x46302c+i]===vk);
-       if(i===undefined)history.error='Actual result key is unmapped';else history.mask=bits[i];
-      }
-      if(!history.code)history.error='Unknown reference key';
-      else{
-       history.stage='down';history.steady=0;
-       history.inputs.push({action:history.index,code:history.code,down:true,level:physical.level,ticks:physical.ticks});
-       window.dispatchEvent(new KeyboardEvent('keydown',{code:history.code}));
-      }
+      // Pause_Mode ignores Escape until the real engine frame counter reaches 2.
+      // Keep the race-start checkpoint, then wait for a later live presentation.
+      if(!naturalChamp&&!normalArena&&history.keys[history.index]==='Escape'&&physical.level>=1&&physical.level<=12&&HEAP32[0x462ff0>>2]<2){
+       history.stage='pause-ready';history.steady=0;
+      }else pressHistoryKey(history,physical);
      }
     }
     return result;

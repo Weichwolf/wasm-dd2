@@ -2529,8 +2529,23 @@ native helper calls the normal `dd2_key_event` bridge for one pad poll per key
 and checks the real renderer output; native window-system input and hardware audio
 are not exercised. Ordinary race finishes, promotion/relegation and complete
 chronological streams still need acceptance checks. The five-race retirement
-case above covers elimination; its browser clock/RNG comparison remains open.
-Use fresh capture directories; stale output is rejected.
+case covers elimination. A fresh original/native/browser comparison passes all
+184 recorded clock returns and 2,610 calculated RNG calls, five complete
+standings and 20 league framebuffers/palettes. The browser also matches all 96
+checkpoint states and rejects altered RNG, API extent and loading checkpoints
+(`hardware-reuse-1700-browser-verification.json`). This is controlled API replay
+for five retirements, not complete living races or chronological A/V parity.
+
+The original API observer reuses ten breakpoint locations with only four active
+hardware slots instead of accumulating Python breakpoint objects for every API
+entry/return. All five actual clock-return caller locations are exercised by
+this original route. Original, native and browser history recorders preserve the
+first race checkpoint, then wait for actual `current_frame >= 2` before the next
+Escape: the original `Pause_Mode` ignores earlier pause input. The prior original
+and browser traces fail this route; the corrected observers pass without writing
+engine fields or changing original API returns
+(`hardware-reuse-1700-verification.json`). Use fresh capture directories;
+stale output is rejected.
 
 Patch 847 restores the original replay script's WORD packets and two-byte cursor
 steps. DWORD cursors skipped a packet whenever the control changed, leaving
