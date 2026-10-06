@@ -3164,7 +3164,7 @@ and returns (`handled-key-validation.json`). The recorder
 captures clocked original audio and lossless compressed DirectSound/DirectDraw
 traces; `--trace-keyboard` adds original window-procedure messages. Its full
 route uses genuine driving keys and requires both living finishes, but has
-not yet passed a complete no-debugger two-turn run. Neither operation proves
+now passed a complete no-debugger two-turn run. Neither operation proves
 matched original/port clocks, chronological video/PCM or physical timing.
 The same input helper also passes 41 real no-debugger key effects for empty
 Backspace, an ignored ninth character and cancellation without changing the
@@ -3179,6 +3179,14 @@ acknowledgement; a fresh real retirement probe reaches the running second
 human and preserves the card
 (`/tmp/wasm-dd2/multiplayer-realtime-1751-handoff/report.json`). This short
 probe does not prove a second living finish or original/port A/V parity.
+The complete fresh two-turn recording subsequently passes
+(`/tmp/wasm-dd2/multiplayer-realtime-1752-original/report.json`): both humans
+finish all ten laps alive, with natural finishes and no retirement, after
+31,011/30,588 accepted driving observations. The actual first-human handoff
+and unchanged memory/file card are required, and frozen capture sources stay
+unchanged throughout. Original clocked audio is recorded; this feasibility
+capture does not yet include the complete game-clock/callback/video inputs
+needed for an original/native/browser comparison of those living races.
 
 ```sh
 make clean-logs
