@@ -66,6 +66,9 @@ int main(void){
         require(keyboard_messages==before+3,"focus cleanup releases physical keys without extra generic modifier events");
     }
     require(!dd2_keystate[0x41] && !dd2_keystate[0x10] && !dd2_keystate[0xa0] && !dd2_keystate[0xa1],"focus loss releases held keys and both modifier sides");
+    require(SDL_JoystickDetachVirtual(index)==0,"detach held boot-time controller");
+    dd2_native_poll();
+    require(!present && padx==32768 && pady==32768 && padb==0,"detached SDL controller releases backend input");
     {SDL_Event e={0};e.type=SDL_QUIT;SDL_PushEvent(&e);dd2_native_poll();}
     require(closes==1,"WM_CLOSE reaches the original window procedure");
     for(step=0;step<2;step++){

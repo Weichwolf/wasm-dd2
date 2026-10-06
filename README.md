@@ -68,8 +68,18 @@ verification input schedule and does not change engine menu behavior.
 
 `make verify-browser-pad` launches a live race with a synthetic Gamepad API
 device present at boot. It checks steering endpoints, accelerator/brake/release
-values in car physics, actual player movement and browser errors. It does not
-exercise physical HID hardware.
+values in car physics, actual player movement, disconnect/reconnect and browser
+errors. The shell reports an absent device to the WinMM backend; previously
+disconnected Gamepad API entries left the last accelerator/brake buttons held.
+Both `connected=false` and a missing device now release live car throttle, and
+reconnecting restores the controls. Failed original `joyGetPos` polling skips
+buttons and retains its previous analogue byte (`dd2h.exe` 0x4231a0..0x423211);
+the shell preserves that behavior instead of resetting engine steering. The
+same unchanged WASM fails the disconnect test with the old production shell
+and passes with the current template. The independent native SDL fixture also
+passes virtual detach and its exact renderer/X11/audio checks
+(`pad-disconnect-1569-work/report.json`). These are input transport checks;
+physical HID hardware and complete original game A/V parity remain unproven.
 
 The WASM builds disable LLVM FastISel. With Debian Emscripten 3.1.69 / LLVM 19, its
 folded unsigned memory offsets trap on valid wrapping 32-bit engine addresses in
