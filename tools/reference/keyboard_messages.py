@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'))
 from artifacts import WORK, check_space
 from reference.game_clock import EXE, RETURN, SITES
+from reference.trace_log import read_trace
 from verify_original_race_audio import validate_capture
 
 MESSAGE = re.compile(rb'([^:]+):([0-9a-f]+):(Call|Ret) +window proc 004132F0 '
@@ -33,7 +34,7 @@ def observe(capture, fixture):
     if not clock['pass_'] or clock['original_exe_sha256'] != EXE or clock['debugger']:
         raise ValueError('Verified unchanged original non-debugger clock required')
     pending = {}; edges = []; flips = clocks = 0; sha = hashlib.sha256()
-    with (capture/'wine.log').open('rb') as lines:
+    with read_trace(capture/'wine.log') as lines:
         for number, raw in enumerate(lines, 1):
             sha.update(raw)
             if b'ddraw_surface1_Flip iface' in raw: flips += 1

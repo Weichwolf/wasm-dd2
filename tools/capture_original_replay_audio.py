@@ -35,6 +35,7 @@ def main():
     parser.add_argument('--fixture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--trace-keyboard',action='store_true',help='record original window-procedure keyboard messages with Wine +msg')
+    parser.add_argument('--compress-trace',action='store_true',help='write lossless wine.log.zst for streaming audio/video/input readers')
     parser.add_argument('--keep-movie',action='store_true',help='let the original intro finish naturally before menu input')
     parser.add_argument('--trace-video',action='store_true',help='record every successful original DirectDraw presentation without debugger stops')
     parser.add_argument('--trace-video-rng',action='store_true',help='also read the original RNG seed at each presentation; requires --trace-video')
@@ -49,6 +50,7 @@ def main():
                 debugger=False,original_exe_sha256=EXE_SHA256,initial_save_sha256=digest(initial),input_keys=[])
     options=original_args()
     options.mode='audio';options.audio=True;options.audio_rate=44100;options.audio_device='clock'
+    options.compress_trace=args.compress_trace
     options.trace_cd=True;options.trace_game_clock=True;options.trace_timer_callbacks=True
     # Flip records are required to order sound services against completed
     # presentations. Relay and dsound alone record clocks/PCM but omit Flips.
@@ -61,6 +63,7 @@ def main():
     report['capture_options']=dict(wine_debug=options.wine_debug,keep_movie=options.keep_movie,
                                   startup_escape=not options.keep_movie,trace_video=options.trace_video,
                                   trace_video_rng=options.trace_video_rng,
+                                  compress_trace=options.compress_trace,
                                   video_archive=options.video_archive,video_max_frames=options.video_max_frames)
     def driver(pid,output,env,deadline,rundir):
         ui=RealtimeUI(pid,rundir,output,env,deadline)

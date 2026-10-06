@@ -13,6 +13,10 @@ import re
 import struct
 
 from game_clock import verified_sites,EXE
+if __package__:
+    from .trace_log import read_trace
+else:
+    from trace_log import read_trace
 
 ROW=struct.Struct('<12I2Q2I')
 MARKER=re.compile(r'DD2_TIMER record=(\d+) type=(\d+) id=(\d+)')
@@ -104,7 +108,7 @@ def original_report(capture,executable,*,allow_terminal=False):
             (r['period'],r['resolution'],r['flags'],r['callback'],r['user'])!=(400,10,1,0x41345c,0) for r in registrations):
         raise ValueError('Original timer registration identity differs')
     expected={r['serial']:r for r in report['records']};seen={};trace_sha=hashlib.sha256()
-    with (capture/'wine.log').open('rb') as lines:
+    with read_trace(capture/'wine.log') as lines:
         for number,raw in enumerate(lines,1):
             trace_sha.update(raw)
             if b'DD2_TIMER record=' not in raw:continue

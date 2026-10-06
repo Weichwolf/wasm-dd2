@@ -18,6 +18,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from artifacts import WORK,check_space
 from reference.game_clock import EXE,RETURN,SITES
 from reference.video_archive import Records
+from reference.trace_log import read_trace
 
 HEADER=struct.Struct('<32I')
 BYTES=HEADER.size+307200+2048
@@ -80,7 +81,7 @@ def observe(capture):
     if archive_manifest and archive_manifest['raw_sha256']!=sha.hexdigest():
         raise ValueError('Original video archive whole-stream digest differs')
     seen=flips=calls=0;trace=hashlib.sha256();pending=None
-    with (capture/'wine.log').open('rb') as lines:
+    with read_trace(capture/'wine.log') as lines:
         for number,raw in enumerate(lines,1):
             trace.update(raw)
             if b'ddraw_surface1_Flip iface' in raw:

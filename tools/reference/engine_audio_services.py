@@ -18,6 +18,10 @@ import sys
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'tools'))
 from artifacts import WORK,check_space,prepare_output
+if __package__:
+    from .trace_log import read_trace
+else:
+    from trace_log import read_trace
 
 ROW=struct.Struct('<12I')
 KINDS={'create':1,'duplicate':2,'release':3,'SetCurrentPosition':4,'SetPan':5,
@@ -57,7 +61,7 @@ def export(capture,mixer,output):
             block=None;last_block_line=None
     def source(sid):return timeline['sources'][sid]
     def music(sid):return source(sid)['format']['channels']==2
-    with (capture/'wine.log').open('rb') as lines:
+    with read_trace(capture/'wine.log') as lines:
         trace_digest=hashlib.sha256()
         for number,raw in enumerate(lines,1):
             trace_digest.update(raw)

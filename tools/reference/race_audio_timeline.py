@@ -5,8 +5,12 @@ Source cursors and mixer gain observations remain assertions, never corrections.
 """
 import copy
 from decimal import Decimal
-import hashlib
 import re
+
+if __package__:
+    from .trace_log import text_lines, trace_digest
+else:
+    from trace_log import text_lines, trace_digest
 
 
 def original_timeline(path):
@@ -27,7 +31,7 @@ def original_timeline(path):
                 raise ValueError('Incomplete original source mix')
             operations.append(dict(operation='end', block=block['id']))
 
-    for line_number, line in enumerate(path.read_text(errors='replace').splitlines(), 1):
+    for line_number, line in enumerate(text_lines(path), 1):
         match = re.fullmatch(r'\[VCD READ\] lba=(\d+) sectors=(\d+) begin_ns=(\d+) end_ns=(\d+)', line)
         if match:
             if len(cd_locks) != 1:
@@ -178,6 +182,6 @@ def original_timeline(path):
     target={source['device'] for source in sources}
     if len(target)!=1:raise ValueError('Expected one original effects/CD primary device')
     target=target.pop()
-    return dict(scope=__doc__.strip(),trace_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+    return dict(scope=__doc__.strip(),trace_sha256=trace_digest(path),
                 sources=sources,operations=operations,control_calls=control_calls,
                 blocks=blocks,devices=devices,target_device=target)

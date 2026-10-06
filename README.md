@@ -3682,6 +3682,29 @@ at process launch and can include the intro and automatic transition from the
 menu to the attract demo. The EXE and engine memory remain unmodified; no GDB
 stops occur in audio mode. Use fresh output directories and keep these original
 PCM files outside Git.
+
+Use `--compress-trace` in `tools/reference/capture.py` or
+`tools/capture_original_replay_audio.py` for longer clock/callback/mixer runs.
+The original writes directly into a lossless Zstandard stream, `wine.log.zst`;
+the clock, callback, racing-mixer, audio-service, replay-video and keyboard
+readers accept that stream without loading the complete log. Report hashes and
+line positions describe the decompressed original bytes. Both raw and compressed
+files at one logical path are rejected, as are damaged/truncated streams. Other
+movie/menu trace tools still require the default raw log. `make clean-logs`
+also removes old compressed logs while preserving open files and symlinks.
+
+An actual original trace shrinks from 929,637,950 to 21,574,842 bytes with all
+399,932 clock observations, 119 completed callbacks and 8,704 mixer operations
+unchanged (`trace-stream-1710-comparison/report.json`). A fresh compressed
+original replay records 913,279,987 bytes in 20,008,427 bytes. Its 757 video
+records (including 287 racing pictures), 24 paired keyboard records and 5,349
+mixer operations match the prior raw readers literally
+(`trace-stream-1716-replay-readers/report.json`). The unchanged production mixer
+on native, native-ASan and WASM also reproduces all 3,866,968 accepted original
+PCM bytes, with seven rejected controls (`trace-stream-1717-replay-mixer/report.json`).
+These are capture/storage and scoped mixer comparisons; ordinary racing engine
+audio/video scheduling and whole-game parity remain separate requirements.
+
 The bounded audio tail now starts when the original selects its Main Menu
 polygon list and clears the startup/CD restart flag after the slab animation.
 The retained legacy `screen` field is a byte of a cached CLUT pointer, not a

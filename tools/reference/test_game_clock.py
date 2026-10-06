@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 
 from game_clock import CALL, RETURN, EXE, export_clock
+from trace_log import text_lines
 
 
 def verify(capture, executable, output):
@@ -14,7 +15,8 @@ def verify(capture, executable, output):
         raise ValueError('Unmodified original non-debugger capture required')
     output.mkdir(parents=True, exist_ok=False)
     flip = None; entries = {}; selected = []; values = []
-    with (capture/'wine.log').open() as lines:
+    lines = text_lines(capture/'wine.log')
+    try:
         for line in lines:
             text = line.rstrip('\r\n')
             if flip is None and 'ddraw_surface1_Flip iface' in text:
@@ -25,6 +27,8 @@ def verify(capture, executable, output):
             if returned and int(returned[5],16) in (0x423c2d, 0x424024):
                 selected.extend((entries.pop(returned[2]), text));values.append(int(returned[4],16))
                 if len(values) == 2:break
+    finally:
+        lines.close()
     if flip is None or len(values) != 2:
         raise ValueError('Actual race clock and presentation excerpt required')
     original = [flip, *selected]

@@ -19,6 +19,10 @@ import sys
 import time
 from cdrom import build_cdrom
 from audio import build_audio, build_reset_fault, summarize_audio
+if __package__:
+    from .trace_log import write_trace
+else:
+    from trace_log import write_trace
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -162,6 +166,8 @@ def main():
     parser.add_argument('--video-max-frames',type=int,default=4096,help='bounded presentation count; at most 60000 with --video-archive')
     parser.add_argument("--wine-debug", default="-all",
                         help="explicit Wine trace channels for API/format diagnostics; tracing alters timing")
+    parser.add_argument('--compress-trace', action='store_true',
+                        help='write lossless wine.log.zst for streaming clock/callback/racing-mixer/video readers; other trace tools require the default raw log')
     parser.add_argument("--keep-movie", action="store_true",
                         help="play the original intro through completion during reference capture")
     from menu_keys import KEYS
@@ -447,7 +453,8 @@ def run(game, output, args, on_menu=None):
             engine_log.flush()
         return current
 
-    with (output / "wine.log").open("wb") as wine_log, (output / "xvfb.log").open("wb") as xlog:
+    trace_path = output / ('wine.log.zst' if getattr(args, 'compress_trace', False) else 'wine.log')
+    with write_trace(output / 'wine.log', compressed=getattr(args, 'compress_trace', False)) as wine_log, (output / "xvfb.log").open("wb") as xlog:
         try:
             xserver = subprocess.Popen(["Xvfb", "-displayfd", "1", "-screen", "0", "640x480x16"],
                                       stdout=subprocess.PIPE, stderr=xlog, start_new_session=True)
@@ -575,7 +582,7 @@ def run(game, output, args, on_menu=None):
                             time.sleep(args.audio_tail)
                         return
                 if wine.poll() is not None:
-                    raise RuntimeError(f"Original exited before checkpoint ({wine.returncode}); see {output / 'wine.log'}")
+                    raise RuntimeError(f"Original exited before checkpoint ({wine.returncode}); see {trace_path}")
                 time.sleep(0.05)
             raise TimeoutError(f"Original did not reach {args.mode} checkpoint in {args.timeout}s")
         finally:

@@ -13,6 +13,11 @@ from pathlib import Path
 import re
 import struct
 
+if __package__:
+    from .trace_log import read_trace
+else:
+    from trace_log import read_trace
+
 SITES = (0x423c2d, 0x423ecd, 0x424007, 0x424024, 0x424040)
 EXE = '0f993e063436262e37c03b914882a442936fa298b4ea0999ed51bfd00e0658b2'
 CALL = re.compile(r'([^:]+):([0-9a-f]+):Call (KERNEL32|kernelbase)\.GetTickCount\(\) ret=([0-9a-f]+)$', re.I)
@@ -50,7 +55,7 @@ def export_clock(trace, executable, output, *, allow_terminal_entry=False):
     first = last = previous = None
     sha = hashlib.sha256()
     try:
-        with trace.open('rb') as lines, (output/'ticks.bin').open('wb') as ticks, (output/'observations.bin').open('wb') as observations:
+        with read_trace(trace) as lines, (output/'ticks.bin').open('wb') as ticks, (output/'observations.bin').open('wb') as observations:
             # observations: eight-byte magic, u32 version and record width;
             # each record has entry/return trace timestamps, entry/return line,
             # completed original Flip count and original return address.
