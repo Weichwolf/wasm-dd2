@@ -36,8 +36,10 @@ ASan/UBSan against an independent reader. Typed level sections, signed road
 vertices, UV definitions and all original texture pages are also decoded and
 checked for all 13 level containers. A real SoftGL texture-upload/cutout pixel
 test runs on both targets. See `src/assets/README.md` for format and ownership
-details. Polygon meshes, their scene rendering and gameplay remain to be
-implemented. This is not yet a playable game.
+details. Compressed scene blocks, object placements and polygon meshes are now
+decoded into owned C structures and independently checked for all eleven playable
+level containers, including car/sky/wheel shapes. Scene rendering and gameplay
+remain to be implemented. This is not yet a playable game.
 
 ## SoftGL
 
@@ -109,6 +111,9 @@ all archive entries on both targets and an ASan/UBSan build.
 decoded vertex/UV field, the full 2 MiB index atlas and all 32 RGBA pages for each
 of the 13 original level containers. These checks cover data decoding and renderer
 plumbing; scene rendering and gameplay coverage are still pending.
+`make rewrite-mesh-verify` compares every decoded object placement, mesh vector,
+normal and polygon field in all eleven playable levels on native, Node/WASM and
+ASan/UBSan, and rejects six corrupted original scene/mesh streams.
 
 ## Migration and acceptance
 

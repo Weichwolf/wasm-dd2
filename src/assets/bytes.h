@@ -35,4 +35,9 @@ static inline int32_t dd2_read_le_i32(const uint8_t *bytes) {
     return value <= INT32_MAX ? (int32_t)value : -1 - (int32_t)(UINT32_MAX - value);
 }
 
+static inline int16_t dd2_read_le_i16(const uint8_t *bytes) {
+    const uint16_t value = dd2_read_le16(bytes);
+    return (int16_t)(value <= INT16_MAX ? (int)value : -1 - (int)(UINT16_MAX - value));
+}
+
 #endif

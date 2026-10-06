@@ -32,8 +32,8 @@ logical size, without the original loader's sector-rounded overread.
 The decoder checks the directory read extent, name termination/ASCII, duplicate
 names, sector placement and payload bounds before returning an index. Lookup
 uses exact original spelling, including backslashes. No OS file access, absolute
-game address, original memory image or register emulation is involved. Game data
-still needs typed level, mesh, texture and audio decoders.
+game address, original memory image or register emulation is involved. The following modules decode level, mesh and texture data; audio formats remain
+to be implemented.
 
 `rewrite_archive` in CTest covers valid views, exact lookup, null/invalid
 arguments, truncated headers, duplicate/invalid names, missing termination,
@@ -97,7 +97,7 @@ mapped palette index. Other blending/lighting policies belong to the renderer.
 make rewrite-level-verify
 ```
 
-This runs the strict native checks and four CTests on native and Node/WASM,
+This runs the strict native checks and the synthetic CTests on native and Node/WASM,
 then ASan/UBSan checks and an independent complete comparison for all 13 shipped
 level containers. Every section offset/length, signed vertex and UV field, all
 atlas bytes, all 32 cutout RGBA pages at neutral shade, and dark/bright samples
@@ -108,3 +108,53 @@ under `/tmp/wasm-dd2/`. These are asset-format checks, not full-game parity clai
 CI uses synthetic data to cover null/bounds/format cases, cross-page loading,
 multiple TX parts, base/ECL palette banks, shade/cutout selection and an actual
 SoftGL upload/alpha-test render covering every framebuffer pixel.
+
+## Scene objects and polygon meshes
+
+`lz.h` decodes the original size-prefixed LZ stream into caller-owned storage.
+Control bits run least significant first: one copies a literal, zero reads a
+12-bit backward distance and a length of 3–18 bytes. Overlapping copies are
+intentional. Truncated tokens, backward references before the output start,
+output overflow and mismatched declared size fail; the written count is cleared
+on failure. Input/output storage must not overlap. Trailing source alignment is
+allowed, and a failed output can contain partial data.
+
+`scene.h` decodes section 0. Its first word is the offset-table byte length;
+each 32-bit offset starts a block. Racing levels 1–7 use compressed blocks with
+a 16 KiB output limit; arenas 8/9/A/B use raw blocks. A decoded block starts with
+an object count and 16-byte instance rows: mesh-relative offset and signed XYZ
+placement. Mesh extents end at the next distinct mesh offset or the block end.
+Repeated mesh offsets are valid. Each instance owns a decoded mesh; destruction
+also handles partial failures. An empty scene section is valid. Input bytes can
+be released after decoding; scene objects and meshes are owned by the scene.
+
+`mesh.h` decodes the 44-byte shape header, vertex/normal counts at offsets 10/12
+and relative vector/normal/polygon offsets at 32/36/40. Vectors are signed
+16-bit XYZ plus a retained auxiliary word, eight bytes each. Polygon groups
+start with a 16-bit count, opcode byte and flags byte; zero flags terminate.
+Opcodes 0–43 encode flat/textured/Gouraud triangles and quads plus sprite quads.
+Lit Gouraud records have one common color and separate corner normal references;
+unlit Gouraud records have per-corner colors. The decoder retains opcode,
+group flags, attribute word, raw color words, material references and corner
+indices/normals, checking every reference and record extent. Rendering policies
+for billboard orientation, shading, fog and blending belong to the renderer.
+
+The format evidence is `Decompress`, `Decrunch_Object_Block`,
+`Setup_Object_Block`, `Set_Object`, `Pre_Rotate` and the polygon dispatch handlers
+in `re_out/dd2.c`. The reference patch `030-gpoly-byteoff-…` corrects Ghidra's
+short-pointer scaling: handler offsets describe bytes, not scaled short indices.
+The new decoder never relocates original bytes or uses game memory addresses.
+
+```sh
+make rewrite-mesh-verify
+```
+
+An independent Python decoder compares every exported placement, vector, normal
+and decoded face field for all eleven playable original levels, including known
+standalone wheel, sky and vehicle shapes (sections 5–21). This covers 6,328 meshes
+and 76,856 faces on native, Node/WASM and ASan/UBSan. Six corrupted original
+scene/mesh inputs must fail without crashes or sanitizer findings. Synthetic CI
+checks overlapping decompression, signed extremes, textured/lit/sprite records,
+invalid references, extents and scene ownership. Reports remain under `/tmp`;
+raw successful exports are deleted. These checks establish decoded fields, not
+complete rendering behavior or game correctness.
