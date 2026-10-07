@@ -318,7 +318,7 @@ material laws, initial-normal-speed metadata and position repair are retained;
 reported velocity passes include work before and after restart. The result
 reports the single restart explicitly. Three arena-B regressions cover a captured
 five-contact cycle, simultaneous sloped-ground/wall/flat-ground support and a
-ten-contact, nine-body chain which needs 3,467 accelerated iterations, with
+ten-contact, eight-body chain which needs 3,467 accelerated iterations, with
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

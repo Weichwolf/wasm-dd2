@@ -4,18 +4,45 @@ Depends: 0017
 
 ## Contract
 
-Restart accelerated contacts only after64 passes without a0.1% residual improvement. A slowly converging solve can use the entire existing4096-pass budget. Preserve the single restart, every contact, material law, tolerance and independent acceptance check.
+Restart accelerated contacts only after 64 passes without a 0.1% residual
+improvement. A slowly converging solve can use the entire existing 4,096-pass
+budget. Preserve the single restart, every contact, material law, tolerance and
+independent acceptance check.
 
 ## Evidence
 
-Production6fc2fe2 arena-B WASM fails at race step52320. A bounded first-failure capture contains ten contacts across nine connected bodies. The accelerated solve reaches tolerance in3467 passes, while the unconditional restart at2048 exhausts4096 total passes with0.00072143 units/s residual. Ordinary coordinates alone also fail the unchanged budget. The new independent-material regression rejects the old implementation.
+Production 6fc2fe2 arena-B WASM fails at race step 52,320. A bounded first-failure
+capture contains ten contacts across eight connected bodies. Acceleration reaches
+tolerance in 3,467 passes; an unconditional restart at 2,048 exhausts the budget
+with a residual of 0.00072143 units/s. Ordinary coordinates alone also fail the
+unchanged budget. The new independent-material regression rejects the old code.
 
-The candidate restarts only on measured stagnation. The new ten-contact query completes in3467 passes with no restart; the prior five-contact cycle still completes in477 passes with one restart. All nine frozen queries and ten analytic material cases pass on Native, WASM and fully instrumented ASan/UBSan, with contact/cone/energy/impulse/clearance/clock checks unchanged. Conditioned chains and joint supports also pass. Reports: /tmp/wasm-dd2/rewrite-arenaB-restart-failure/replay-report.json, candidate-material-report.json and sanitized-contact-report.json.
+Published 4f0aeac restarts only on measured stagnation. The new query completes
+in 3,467 passes without restarting; the prior five-contact cycle still completes
+in 477 passes with one restart. All nine frozen queries and ten analytic material
+cases pass on Native, WASM and fully instrumented ASan/UBSan. Contact, cone,
+energy, impulse, clearance and clock checks are unchanged. Conditioned chains and
+joint supports also pass.
+
+Mandatory gates pass: make rewrite-check (31 Native CTests, clang-format 19 and
+strict clang-tidy 19 across 141 owned C/header files), make rewrite-wasm and
+ctest --preset rewrite-wasm (30 CTests). Source, binary and log identities are
+recorded in /tmp/wasm-dd2/rewrite-arenaB-restart-failure/quality-report.json;
+replay-report.json and sanitized-contact-report.json record the diagnosis and
+instrumented checks.
 
 ## Next
 
-Production gates pass: make rewrite-check (31 Native CTests, clang-format19 and strict clang-tidy19 across141 owned C/header files), make rewrite-wasm and ctest --preset rewrite-wasm (30 CTests). Exact source/binary/log receipts are in /tmp/wasm-dd2/rewrite-arenaB-restart-failure/quality-report.json. Continue natural race acceptance in0002; a private WASM arena-B replay is running. The old6fc2fe2 race run is terminal: Native passes natural retirement; WASM and sanitized both abort advancement. Its compact terminal report is /tmp/wasm-dd2/rewrite-restart-arenaB-verification/terminal-report.json. The Native-only alternative-target AI prototype worsens travel for slots12/13 and is rejected.
+Continue natural race acceptance in 0002. The production-equivalent private WASM
+replay passes the captured query but aborts at step 52,337. Its completed trace
+was compacted after recording candidate-race-report.json. A fresh bounded capture
+of that next failure runs under /tmp/wasm-dd2/rewrite-arenaB-stagnation-failure/.
+The older 6fc2fe2 race run is terminal: Native reaches natural retirement; WASM
+and sanitized builds abort advancement. Full natural races remain unaccepted.
 
 ## Accept
 
-The old implementation fails the new independent regression; all nine contact regressions and analytic laws pass on Native/WASM/ASan with strict LLVM19 and required shared build gates. Publish only this convergence contract; complete natural races remain0002.
+The old implementation fails the new independent regression; all nine contact
+regressions and analytic laws pass on Native/WASM/ASan with strict LLVM 19 and
+mandatory shared build gates. This closes the convergence contract only;
+complete natural races remain in 0002.
