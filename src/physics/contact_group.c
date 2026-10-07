@@ -802,6 +802,11 @@ static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
                                        const dd2_group_newton_state *state,
                                        dd2_group_linear_system *system) {
     bool released[DD2_VEHICLE_CONTACT_LIMIT] = {false};
+    /* Keep the selected support unloaded throughout this private branch.
+     * Its normal inequality still participates in physical acceptance. */
+    if (state->model.method == DD2_GROUP_NEWTON_RELEASE) {
+        released[state->model.selected_contact] = true;
+    }
     const unsigned count = workspace->query->contact_count;
     for (unsigned attempt = 0; attempt <= count; ++attempt) {
         dd2_group_newton_matrix(workspace, state, system);
@@ -985,17 +990,15 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
     return dd2_group_newton_direction(workspace, state, system);
 }
 
-/* Explore higher or released world pressure while retaining every constraint.
+/* Explore higher world pressure while retaining every constraint.
  * Equilibrate friction with all normal loads held fixed before the constitutive
  * refinement. Cone projection and the final physical law still apply. */
-static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, dd2_group_newton_model model,
+static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, unsigned index,
                                     dd2_group_linear_system *system) {
-    const unsigned index = model.selected_contact;
     const double pressure = workspace->constraints[index].normal_impulse;
-    const double increment = model.method == DD2_GROUP_NEWTON_RELEASE ? -pressure : pressure;
-    workspace->constraints[index].normal_impulse += increment;
+    workspace->constraints[index].normal_impulse += pressure;
     dd2_group_apply(workspace, index,
-                    dd2_collision_scale(workspace->query->contacts[index].normal, increment));
+                    dd2_collision_scale(workspace->query->contacts[index].normal, pressure));
     if (!dd2_group_motion_finite(workspace)) {
         return false;
     }
@@ -1028,14 +1031,13 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
                                     dd2_group_newton_model model) {
     const dd2_group_newton_state original = dd2_group_newton_prepare(workspace, model);
     dd2_group_linear_system system = {.dimensions = original.dimensions};
-    if (dd2_group_newton_pressure(model.method) &&
-        !dd2_group_pressure_seed(workspace, model, &system)) {
+    const bool seeded = model.method == DD2_GROUP_NEWTON_LOAD;
+    if (seeded && !dd2_group_pressure_seed(workspace, model.selected_contact, &system)) {
         dd2_group_restore(workspace, &original.base, original.motion);
         return false;
     }
-    dd2_group_newton_state prepared = dd2_group_newton_pressure(model.method)
-                                          ? dd2_group_newton_prepare(workspace, model)
-                                          : original;
+    dd2_group_newton_state prepared =
+        seeded ? dd2_group_newton_prepare(workspace, model) : original;
     if (!dd2_group_refinement_seed(workspace, &prepared, &system)) {
         dd2_group_restore(workspace, &original.base, original.motion);
         return false;

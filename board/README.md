@@ -35,7 +35,7 @@ its game requirements or acceptance rules.
 | [0028](closed/0028_championship-coupled-supports.md) | Coupled supports in scheduled racing | closed |
 | [0029](closed/0029_championship-next-advancement.md) | Scheduled racing advancement through the captured failures | closed |
 | [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
-| [0031](active/0031_championship-mixed-support-advancement.md) | Next championship mixed-support advancement failure | active |
+| [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -112,10 +112,20 @@ The unchanged-bound natural season crosses 118,647 and next fails round 2 at
 128,036. Production-equivalent sparse capture and two actual replays identify
 six cars with eleven contacts (six world/five pair); velocity remains above
 tolerance at 4,096 passes. The advancement contract closes under 0030; the next
-failure remains active under 0031. Full physical seasons, remaining arena
+failure is subsequently resolved under 0031. Full physical seasons, remaining arena
 completion and all-game acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-linear-118647/report.json and
 /tmp/wasm-dd2/rewrite-season-after-118647/report.json.
+
+Direct zero-impulse release directions now advance the saved 128,036 input to
+128,037 on Native and instrumented C. Twenty-seven captured queries and 362
+orderings, strict LLVM19/Native/WASM gates, eleven-level actual input and
+original-data ground checks, and six scoped race targets pass on three variants.
+The unmodified natural season retains identical round-1 results and reaches
+round-2 tick 150,000; its diagnostic prefix matches exactly. The advancement
+contract closes under 0031. The season attempt is still running under 0025/0004;
+full seasons, the remaining arena and all-game acceptance remain open. Receipt:
+/tmp/wasm-dd2/rewrite-release-128036/advancement-report.json.
 
 ## Workflow and acceptance
 

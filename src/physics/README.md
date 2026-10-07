@@ -398,11 +398,16 @@ under the unchanged physical law can replace the best candidate.
 World loads can approach an inadmissible pressure root while a valid root exists
 on another active branch. After restart, local typed models try doubling each
 loaded small-slip world support and releasing each loaded world support, in both
-world-only and mixed fields. Each seed applies the changed normal impulse and
-solves linear friction equilibrium with every normal load held fixed, then
-projects friction into the cones and applies analytic constitutive refinement.
-A released support stays in the system and can load again if refinement requires
-it. Every original contact contributes to final physical acceptance.
+world-only and mixed fields. A higher-load seed applies the changed normal
+impulse and solves linear friction equilibrium with every normal load held fixed,
+then projects friction into the cones and applies analytic constitutive refinement.
+A release direction instead fits the selected support's normal and tangential
+impulses to zero while refitting the remaining coupled equations. It starts
+from the exact outer state, avoiding the fixed-load friction seed's different
+active branch. Subsequent release directions retain those zero-impulse rows;
+backtracking, cone projection and the unchanged physical residual still apply.
+Every original contact, including the released support's normal inequality,
+contributes to final physical acceptance. Ordinary sweeps can reload a support.
 One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
@@ -445,11 +450,13 @@ tick 101,640 checks the positive pressure branch through all six row permutation
 A three-body/five-contact query captured at tick 93,231 checks a released world
 support with two loaded car pairs through all 120 contact permutations.
 A three-world-support query captured at tick 118,647 checks the sliding-to-linear
-transition through all six row permutations.
+transition through all six row permutations. A six-body/eleven-contact query
+captured at tick 128,036 checks a separating wall with the remaining ten supports
+loaded. Twenty-two rotations/reversals retain the same independent checks.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-six frozen queries retain
+twenty-seven frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Twenty-six captured dense-contact
+almost parallel ground/wall supports. Twenty-seven captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -296,15 +296,20 @@ Twenty rotations/reversals of a four-body, ten-contact championship query check
 these independent transitions.
 After restart, world-only and mixed fields also compare private pressure seeds:
 double each loaded small-slip world support or release each loaded world support.
-Each seed equilibrates linear friction with all normal loads held fixed, then
-applies the bounded analytic constitutive refinement. Released contacts remain
-in the system and can load again. The fixed-load solve and refinement reuse one
+Higher-load seeds equilibrate linear friction with all normal loads held fixed,
+then apply the bounded analytic constitutive refinement. Release directions
+instead fit the selected support's normal and tangent impulses to zero while
+refitting the remaining coupled equations, starting from the same exact outer
+state. Released contacts retain their normal inequalities in physical acceptance
+and can reload in ordinary sweeps. The fixed-load solve and refinement reuse one
 matrix; every candidate remains subject to the unchanged final physical law,
 finite residual reduction and exact rollback. At most two models per contact
 plus two base models use bounded automatic storage; ordinary pass limits and
 material acceptance remain unchanged. All six orderings of a three-world-contact
 query check higher pressure, and all 120 permutations of a three-body/five-contact
-query check released world support with loaded car pairs.
+query check released world support with loaded car pairs. Twenty-two additional
+rotations/reversals of a six-body/eleven-contact query check coupled release
+without a fixed-load seed.
 World-only fields also privately refine the existing linear friction direction
 after restart, allowing a sliding support to return to the linear branch while
 pressures settle. The full seed and up to sixteen steps retain all contact,

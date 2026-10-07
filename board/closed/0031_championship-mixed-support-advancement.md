@@ -1,5 +1,5 @@
 Type: Work item
-Title: Resolve the next championship mixed-support advancement failure
+Title: Coupled world-release directions in scheduled racing
 Depends: 0030
 
 ## Contract
@@ -42,12 +42,43 @@ pass 4,096 is about 4.11e+05. These are sparse
 standalone observations, not a valid root or production correction.
 Receipt: /tmp/wasm-dd2/rewrite-season-after-118647/sparse-analysis.json.
 
+Independent unit-mobility analysis finds a physical root with contact 1 (driver
+4's wall) unloaded and separating at 0.07392688476743503 units/s. The other ten
+normal loads remain positive; the constitutive residual is below 8.4e-13.
+Keeping every normal loaded found no admissible root in the tested branches.
+This is an independent contact-equation diagnosis, not original-output parity.
+
+Private ablations compare the old fixed-load friction seed with selected
+zero-normal/tangent rows. Keeping those rows alone advances the canonical query
+but fails rotation 2. Starting the coupled release fit directly from the exact
+outer state passes the query and all 22 rotations/reversals, plus all existing
+physical regressions. The production change uses that direct fit, preserving
+all ordinary bounds, material laws, tolerances and physical acceptance.
+Receipts: /tmp/wasm-dd2/rewrite-season-after-118647/mixed-root-candidates.json
+and /tmp/wasm-dd2/rewrite-season-after-118647/release-refit-experiments.json.
+Production Native and instrumented C advance the saved owner input to tick
+128,037. Both standalone queries converge at velocity pass 641, with one restart,
+residual below 1.4e-13 and 56 position passes below 9.7e-10. All strict LLVM19
+checks, 34 Native and 32 WASM CTests pass. Twenty-seven frozen queries and 362
+orderings retain independent physical checks on Native, WASM and instrumented C.
+All eleven original-data ground checks and actual Native/sanitized/Chromium
+window/input flows pass. Circuit-2/live and the complete eight-lap Circuit-5
+race pass on all three variants; the scoped race receipt marks full_suite false.
+
+The unmodified natural first-season attempt retains identical round-1 results,
+and the production prefix reaches round-2 tick 150,000 without the old failure.
+Its diagnostic prefix matches exactly. This proves advancement under unchanged
+controls and bounds; the full season is still running and remains unproved.
+The solver's Native static frame remains 350,904 bytes; the actual WASM fixtures
+pass with the reserved 1 MiB stack. Immutable advancement receipt:
+/tmp/wasm-dd2/rewrite-release-128036/advancement-report.json.
+
 ## Next
 
-Diagnose the six-body, eleven-contact velocity failure using sparse iteration
-and unit-mobility/Jacobian checkpoints. Preserve existing frozen-query, analytic,
-actual application and original-data checks. Complete physical campaigns remain
-under 0025/0004; natural arena completion and movement/tactics retain 0002/0016.
+Continue the live unchanged-bound first-season attempt under 0025/0004, and
+record its terminal outcome. Capture any new contact failure only if it occurs.
+Natural arena completion and movement/tactics remain under 0002/0016. This work
+item closes only the captured advancement contract.
 
 ## Accept
 
@@ -57,3 +88,8 @@ remain valid on Native/WASM, with sanitizer coverage and mandatory strict
 LLVM19/Native/WASM gates. Ordinary racing continues beyond this failure without
 state, damage, lap or result injection. Close only this advancement contract;
 full-season and all-game acceptance require their complete evidence.
+
+The advancement contract is proved by the saved-input checks, independent
+physical fixtures, strict gates, original-data/actual-input regressions and the
+natural prefix in advancement-report.json. Full-season/all-game acceptance
+remains open.
