@@ -13,6 +13,12 @@ typedef struct {
     bool unresolved; /* Conservative time bound; no physical point or impulse. */
 } dd2_car_contact;
 
+typedef struct {
+    const dd2_vehicle *first;
+    const dd2_vehicle *second;
+    double margin;
+} dd2_car_neighborhood;
+
 /* Source-sized oriented boxes, including roll/pitch and separate bridge heights.
  * Continuous translation/rotation with conservative endpoint envelopes for
  * rotating SAT axes, refined until an actual-pose SAT check confirms contact.
@@ -27,4 +33,15 @@ typedef struct {
 bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *first_end,
                            const dd2_vehicle *second_start, const dd2_vehicle *second_end,
                            dd2_car_contact *contact);
+/* Static neighborhood query for a contact group. Margin is finite, nonnegative
+ * and at most the 504-unit body radius. Every normalized separating axis must
+ * have a gap no larger than margin; this is SAT proximity, not Euclidean
+ * distance. Penetration is the signed minimum axis depth (negative for a gap).
+ * A successful query has time zero and unresolved false, including stationary
+ * touching/separating pairs. This does not certify a swept impact; callers keep
+ * the earliest-event clock and distinguish support from the primary collision.
+ * Query and body pointers are borrowed only during the call. Object storage
+ * preserves nonfinite margin bits for validation under fast-math.
+ * Clears output on failure, leaves inputs untouched and makes no allocations. */
+bool dd2_car_contact_proximity(const dd2_car_neighborhood *query, dd2_car_contact *contact);
 #endif

@@ -260,6 +260,23 @@ Collective overlap correction and coupled wall/pair response convergence remain
 separate, unresolved solver work; continuous face points do not establish
 complete arena gameplay.
 
+`dd2_car_contact_proximity` queries a static contact neighborhood for the planned
+collective solver. Every normalized separating axis must have a gap at most the
+requested margin (finite, 0 through the 504-unit body radius). This defines SAT
+proximity; a diagonally separated pair's Euclidean distance can exceed that
+margin. The result retains signed minimum axis depth, so a negative penetration
+describes a nearby gap. Its face clipping admits that margin while retaining the
+same deepest-edge band. A successful static query has time zero and is resolved;
+stationary touching or separating neighbors are eligible support constraints,
+without becoming primary swept collision events. Inputs remain untouched and
+failed/invalid queries clear the output. The existing sweep still uses its 1e-6
+tolerance and earliest-event clock. `rewrite_car_proximity` checks 108 analytic
+face contacts (all local axes, both directions, full orientations and distant
+translations), 2,304 independent eight-corner projection queries over all
+fifteen axes, exact margin boundaries, reversed pairs and fast-math nonfinite
+rejection. This query is a prerequisite for joint response; the published fleet
+solver still uses individual contact responses.
+
 `dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
 one earliest-event clock for ground, barriers and pairs. It anchors time ties to
 the global earliest event, then uses body/pair order. Equal-mass pair response

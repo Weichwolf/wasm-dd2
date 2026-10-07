@@ -1,6 +1,7 @@
 #include "physics/car_contact.h"
 
 #include "physics/collision_math.h"
+#include "physics/numeric.h"
 #include "physics/vehicle.h"
 
 #include <math.h>
@@ -344,7 +345,7 @@ static dd2_car_band dd2_car_band_direction(const dd2_car_box *incident, unsigned
 
 static dd2_vehicle_vector dd2_car_face_contact(const dd2_car_box *reference,
                                                const dd2_car_box *incident, unsigned face,
-                                               dd2_vehicle_vector outward) {
+                                               dd2_vehicle_vector outward, double front_tolerance) {
     const dd2_vehicle_vector center =
         dd2_collision_add(reference->center, dd2_collision_scale(outward, dd2_car_half[face]));
     unsigned incident_axis = 0;
@@ -389,8 +390,8 @@ static dd2_vehicle_vector dd2_car_face_contact(const dd2_car_box *reference,
      * every original front-patch point, extending its allowed height by at most
      * one contact tolerance. The midpoint below halves that offset. The SAT
      * normal/time still use the actual geometry. */
-    const double front = dd2_car_contact_tolerance + band.front_offset +
-                         dd2_collision_dot(outward, reference_center);
+    const double front =
+        front_tolerance + band.front_offset + dd2_collision_dot(outward, reference_center);
     polygon = dd2_car_clip(polygon, (dd2_vehicle_vector){0}, band.direction, front);
     if (polygon.count == 0) {
         return dd2_collision_scale(dd2_collision_add(center, incident_center), 1.0 / 2);
@@ -462,19 +463,22 @@ static dd2_vehicle_vector dd2_car_edge_contact(const dd2_car_box *first, const d
 }
 
 static dd2_vehicle_vector dd2_car_point(const dd2_car_box *first, const dd2_car_box *second,
-                                        dd2_car_interval hit) {
+                                        dd2_car_interval hit, double front_tolerance) {
     if (hit.axis < DD2_CAR_AXES) {
-        return dd2_car_face_contact(first, second, hit.axis, dd2_collision_scale(hit.normal, -1));
+        return dd2_car_face_contact(first, second, hit.axis, dd2_collision_scale(hit.normal, -1),
+                                    front_tolerance);
     }
     if (hit.axis < DD2_CAR_AXES * 2) {
-        return dd2_car_face_contact(second, first, hit.axis - DD2_CAR_AXES, hit.normal);
+        return dd2_car_face_contact(second, first, hit.axis - DD2_CAR_AXES, hit.normal,
+                                    front_tolerance);
     }
     const unsigned cross = hit.axis - (DD2_CAR_AXES * 2);
     return dd2_car_edge_contact(first, second, cross / DD2_CAR_AXES, cross % DD2_CAR_AXES,
                                 hit.normal);
 }
 
-static dd2_car_interval dd2_car_static(const dd2_car_box *first, const dd2_car_box *second) {
+static dd2_car_interval dd2_car_static(const dd2_car_box *first, const dd2_car_box *second,
+                                       double margin) {
     dd2_car_interval axes[DD2_CAR_SAT_AXES] = {0};
     double minimum = 4 * dd2_car_radius;
     const dd2_vehicle_vector relative =
@@ -489,7 +493,7 @@ static dd2_car_interval dd2_car_static(const dd2_car_box *first, const dd2_car_b
         const double distance = dd2_collision_dot(relative, axis);
         const double depth =
             dd2_car_projection(first, axis) + dd2_car_projection(second, axis) - fabs(distance);
-        if (depth < -dd2_car_contact_tolerance) {
+        if (depth < -margin) {
             return (dd2_car_interval){.depth = depth};
         }
         minimum = fmin(minimum, depth);
@@ -598,7 +602,8 @@ static bool dd2_car_refine(dd2_car_sweep *sweep, double begin, double end, dd2_c
                 dd2_car_box_at(sweep->first.start, sweep->first.end, next_begin);
             const dd2_car_box actual_second =
                 dd2_car_box_at(sweep->second.start, sweep->second.end, next_begin);
-            const dd2_car_interval narrow = dd2_car_static(&actual_first, &actual_second);
+            const dd2_car_interval narrow =
+                dd2_car_static(&actual_first, &actual_second, dd2_car_contact_tolerance);
             if (narrow.depth >= -dd2_car_contact_tolerance) {
                 *hit = narrow;
                 hit->depth = fmax(0, narrow.depth);
@@ -651,12 +656,13 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
                            .remaining = DD2_CAR_REFINEMENT_LIMIT};
     const dd2_car_box initial_first = dd2_car_box_at(first_start, first_end, 0);
     const dd2_car_box initial_second = dd2_car_box_at(second_start, second_end, 0);
-    const dd2_car_interval overlap = dd2_car_static(&initial_first, &initial_second);
+    const dd2_car_interval overlap =
+        dd2_car_static(&initial_first, &initial_second, dd2_car_contact_tolerance);
     if (overlap.found && overlap.depth > dd2_car_contact_tolerance) {
-        *contact =
-            (dd2_car_contact){.penetration = overlap.depth,
-                              .normal = overlap.normal,
-                              .point = dd2_car_point(&initial_first, &initial_second, overlap)};
+        *contact = (dd2_car_contact){.penetration = overlap.depth,
+                                     .normal = overlap.normal,
+                                     .point = dd2_car_point(&initial_first, &initial_second,
+                                                            overlap, dd2_car_contact_tolerance)};
         return true;
     }
     for (unsigned piece = 0; piece < pieces; ++piece) {
@@ -672,11 +678,35 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
         }
         const dd2_car_box first = dd2_car_box_at(first_start, first_end, found_time);
         const dd2_car_box second = dd2_car_box_at(second_start, second_end, found_time);
-        *contact = (dd2_car_contact){.time = found_time,
-                                     .penetration = hit.depth,
-                                     .normal = hit.normal,
-                                     .point = dd2_car_point(&first, &second, hit)};
+        *contact = (dd2_car_contact){
+            .time = found_time,
+            .penetration = hit.depth,
+            .normal = hit.normal,
+            .point = dd2_car_point(&first, &second, hit, dd2_car_contact_tolerance)};
         return true;
     }
     return false;
+}
+
+bool dd2_car_contact_proximity(const dd2_car_neighborhood *query, dd2_car_contact *contact) {
+    if (contact == NULL) {
+        return false;
+    }
+    *contact = (dd2_car_contact){0};
+    if (query == NULL || !dd2_vehicle_valid(query->first) || !dd2_vehicle_valid(query->second) ||
+        !dd2_numeric_finite(&query->margin) || query->margin < 0 ||
+        query->margin > dd2_car_radius) {
+        return false;
+    }
+    const dd2_car_box first_box = dd2_car_box_at(query->first, query->first, 0);
+    const dd2_car_box second_box = dd2_car_box_at(query->second, query->second, 0);
+    const dd2_car_interval hit = dd2_car_static(&first_box, &second_box, query->margin);
+    if (!hit.found) {
+        return false;
+    }
+    *contact = (dd2_car_contact){.penetration = hit.depth,
+                                 .normal = hit.normal,
+                                 .point = dd2_car_point(&first_box, &second_box, hit,
+                                                        query->margin + dd2_car_contact_tolerance)};
+    return true;
 }
