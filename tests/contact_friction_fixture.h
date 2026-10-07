@@ -2656,6 +2656,54 @@ static const dd2_group_contact dd2_friction_championship_position_contacts[] = {
      .friction = 0.25},
 };
 
+/* Query SHA256: 6d87ab2fa1aadc3d15a5b3f0e321155704202f63041a47f75d80f575feeaf152 */
+static const dd2_vehicle dd2_friction_championship_ground_bodies[] = {
+    {.position = {.x = 26184.530502673388, .y = 8796.7289321242679, .z = 66411.176502958217},
+     .velocity = {.x = 0.87394441874540085, .y = -0.79887496174183426, .z = -1.4856242123322676},
+     .rotation = {.x = -0.88025229191365706,
+                  .y = -0.15081162119913127,
+                  .z = 0.24724805884367196,
+                  .w = 0.3758725247874336},
+     .angular_velocity = {.x = -0.0077064775241598975,
+                          .y = 0.015156502090802958,
+                          .z = -0.0097852166539637402}},
+    {.position = {.x = 26314.559371112911, .y = 8959.2917269055761, .z = 67038.94453705124},
+     .velocity = {.x = 20.154062606412715, .y = -4.8414670708487844, .z = 2.3042185103860922},
+     .rotation = {.x = -0.020415978763860452,
+                  .y = -0.15138447120744433,
+                  .z = -0.11567323186467374,
+                  .w = 0.98147115755804948},
+     .angular_velocity = {.x = 0.0027303288785726345,
+                          .y = 0.011145455637371368,
+                          .z = -0.00061976295770872379}},
+};
+static const dd2_group_contact dd2_friction_championship_ground_contacts[] = {
+    {.first = 0,
+     .second = 1,
+     .point = {.x = 26243.775025599527, .y = 8840.0640784764946, .z = 66554.594667131241},
+     .normal = {.x = 0.07963704616277327, .y = -0.67195140004241982, .z = -0.73630106400812723},
+     .penetration = 0,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 26172.834868577324, .y = 8951.7364111166789, .z = 66124.175243415404},
+     .normal = {.x = -0.7158534795374869, .y = 0, .z = 0.69825052512266161},
+     .penetration = -0.00010000107439414024,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 26575.86986229747, .y = 8703.8204198192743, .z = 66714.849901598005},
+     .normal = {.x = 0.22940131075702708, .y = 0.97325399246863586, .z = -0.012316848899706152},
+     .penetration = -9.9993803200186635e-05,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 25793.191143049306, .y = 8889.637238124169, .z = 66107.503104318428},
+     .normal = {.x = 0.23847320662905652, .y = 0.97110977950740995, .z = -0.0087364675427198443},
+     .penetration = -0.00010057138978860253,
+     .friction = 0.80000000000000004},
+};
+
 static const dd2_friction_case dd2_friction_cases[] = {
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
@@ -2758,6 +2806,12 @@ static const dd2_friction_case dd2_friction_cases[] = {
      .body_count = 2,
      .contact_count = 7,
      .name = "championship circuit 2 position supports",
+     .require_position_prediction = true},
+    {.initial = dd2_friction_championship_ground_bodies,
+     .contacts = dd2_friction_championship_ground_contacts,
+     .body_count = 2,
+     .contact_count = 4,
+     .name = "championship circuit 2 tilted ground supports",
      .require_position_prediction = true},
 };
 

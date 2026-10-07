@@ -63,12 +63,53 @@ Velocity converges in 12 passes at 2.4753696444140237e-8; position exhausts
 4,096 passes at 2.2943640119247986e-9. This is another position failure, with
 different support normals. Receipt: /tmp/wasm-dd2/rewrite-season-66070/report.json.
 
+
+Two sparse position-iteration records identify the new failure: all four
+multipliers remain positive, including two distinct ground-plane supports.
+Their common position Gram system has condition number about 79,107. Ordinary
+relaxation still leaves active-row residual 2.2943640119247986e-9 after 4,096
+passes. An independent double-precision solve yields four positive multipliers
+and residuals below 3e-20, confirming a feasible least-norm translation.
+
+Production now fits active position equations using exact unit translations.
+Satisfied unloaded rows enforce zero pressure. Negative fitted pressures are
+released and refitted, at most contact_count + 1 times. Singular systems leave
+state unchanged. All original inequalities remain checked; non-finite or
+non-improving candidates restore exact offsets/multipliers. The existing delay,
+period, solver bounds, tolerances and material laws remain unchanged.
+
+Native/WASM/ASan/UBSan pass twenty captured queries, fifty-two captured-query
+orderings, twenty analytic friction cases and seventy-two analytic position
+cases (24 coincident-row, 48 tilted-plane with active/released supports).
+Strict LLVM19 and all 34 Native/32 WASM CTests pass. The new captured query
+converges at position pass 512 with residual 5.4210108624275222e-20 and one
+prediction; the saved production step advances from 66,070 to 66,071.
+The production natural season again completes round 1 at tick 287,087 with
+exactly the previous twenty driver scores, advances past 66,070 and fails
+round 2 at tick 81,622. AI/frame/championship validity pass; player health is
+0.29167128978005974 and credited laps remain zero. This is a failed season
+attempt, not complete gameplay. A sparse diagnostic matches every production checkpoint/result exactly, and
+production/diagnostic replays reproduce the same failed 31,216-byte input.
+Drivers 13/14 form eight contacts (seven world, one pair). Velocity exhausts
+4,096 passes at residual 1.5853764431892486e-5; position is not reached.
+Receipt: /tmp/wasm-dd2/rewrite-season-81622/report.json. Actual Native SDL,
+instrumented SDL and Chromium/WASM input checks pass all eleven levels.
+Original-data ground checks pass all eleven levels on Native/WASM/instrumented
+C (79,100 queries and 26,400 physical steps per target). Scoped Circuit-2 live
+and complete Circuit-5 Stockcar races pass six target scopes; full_suite=false.
+Each eight-lap Circuit-5 run naturally completes 167,472 ticks with 3,341,440
+vehicle steps, player place 2/75 points and two finishers. These scopes do not
+prove all races or seasons. Successful raw output is hashed, reported and
+removed; the failed 81,622 input/query remains available. Receipt:
+/tmp/wasm-dd2/rewrite-position-66070/report.json.
+
 ## Next
 
-Inspect sparse position multipliers and the four response columns in the new
-66,070 reproducer before choosing further changes. Keep the position
-improvement's targeted proof separate from natural season completion. Full
-seasons and remaining gameplay retain their existing owners.
+Freeze and inspect sparse velocity multipliers, material branches and correction
+attempts in the reproduced 81,622 eight-contact query before choosing further
+changes. Preserve all constraints, rollback, material laws and bounds. Continue
+ordinary racing after its correction; keep full campaigns and remaining gameplay
+under their existing owners.
 
 ## Accept
 

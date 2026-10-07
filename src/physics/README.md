@@ -372,9 +372,12 @@ query checks the shared low-speed law at the later tick-66,449 failure. A
 two-body/seven-contact Circuit-2 query captures the tick-86,643 failure, with six
 world supports and one car pair. A second two-body/seven-contact query captures
 the tick-107,550 position-repair failure, with five nearly coincident wall
-inequalities of different strength. Fourteen rotations/reversals of each query
+inequalities of different strength. A four-contact query captures the later
+trajectory's tick-66,070 position failure with two differently tilted ground
+planes, a wall and one car pair. All twenty-four orderings of those four equations
+retain the same independent physical checks. Fourteen rotations/reversals of each query
 (twenty-eight total) check convergence without depending on captured row order. All
-nineteen frozen queries retain
+twenty frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
@@ -416,7 +419,19 @@ budget, 1e-9 position tolerance and ordinary 1.8 relaxation remain unchanged.
 `rewrite_contact_group` also checks twenty-four independent analytic least-norm
 cases with weaker duplicated world or pair rows and rotated/reversed orderings.
 These verify translation, every inequality and unchanged motion/clocks separately
-from the captured gameplay state. Every body's remaining motion is swept again after correction.
+from the captured gameplay state. If the residual remains above tolerance after
+that prediction, a bounded active-equation fit uses exact unit-multiplier
+translations to assemble the coupled position Gram matrix. Unloaded satisfied
+rows enforce zero pressure; active rows enforce their required gaps. A fit with
+negative pressure releases that row and refits all remaining equations. Each
+refit releases at least one row, so at most contact_count + 1 solves are needed.
+Singular fits leave state unchanged. The final finite candidate must reduce the
+full residual for every original row, or restore exact offsets and multipliers.
+It reuses the velocity solver's checked Gaussian elimination and pivot floor;
+there are no allocations or additional ordinary sweeps. Forty-eight analytic
+tilted-plane cases provide known least-norm KKT solutions and inactive-plane
+slack at three inclinations with rotated/reversed rows, independently checking
+pressure release, centered pair translation and unchanged motion/clocks. Every body's remaining motion is swept again after correction.
 
 Report incident speed retains actual initial closing/primary impact speed, and
 also represents pressure transferred through another contact as effective normal

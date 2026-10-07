@@ -406,11 +406,140 @@ static bool dd2_group_test_position_redundancy(void) {
     return true;
 }
 
+enum { DD2_GROUP_TILTED_ROWS = 4 };
+static const double dd2_group_tilted_angles[] = {0.01, 0.02, 0.05};
+static const double dd2_group_tilted_left_pressure = 2.5;
+static const double dd2_group_tilted_solution_tolerance = 1e-8;
+
+typedef struct {
+    double angle;
+    bool release;
+    bool reversed;
+    unsigned start;
+} dd2_group_tilted_order;
+
+static bool dd2_group_test_position_body(const dd2_vehicle *body, dd2_vehicle_vector expected) {
+    const dd2_vehicle_vector difference =
+        dd2_collision_add(body->position, dd2_collision_scale(expected, -1));
+    return dd2_collision_dot(body->velocity, body->velocity) == 0 &&
+           dd2_collision_dot(body->angular_velocity, body->angular_velocity) == 0 &&
+           body->steps == 0 && body->rotation.w == 1 && body->rotation.x == 0 &&
+           body->rotation.y == 0 && body->rotation.z == 0 &&
+           fabs(difference.x) < dd2_group_tilted_solution_tolerance &&
+           fabs(difference.y) < dd2_group_tilted_solution_tolerance &&
+           fabs(difference.z) < dd2_group_tilted_solution_tolerance;
+}
+
+static bool dd2_group_test_position_rows(const dd2_group_query *query,
+                                         const dd2_group_solution *solution) {
+    for (unsigned index = 0; index < query->contact_count; ++index) {
+        const dd2_group_contact contact = query->contacts[index];
+        dd2_vehicle_vector relative = query->bodies[contact.first].position;
+        if (contact.second != DD2_VEHICLE_NO_PARTNER) {
+            relative = dd2_collision_add(
+                relative, dd2_collision_scale(query->bodies[contact.second].position, -1));
+        }
+        const double clearance =
+            (contact.second == DD2_VEHICLE_NO_PARTNER ? 1 : 2) * dd2_group_test_clearance;
+        const dd2_group_response response = solution->contacts[index];
+        if (dd2_collision_dot(relative, contact.normal) <
+                contact.penetration + clearance - dd2_group_position_tolerance ||
+            response.normal_impulse != 0 ||
+            dd2_collision_dot(response.friction_impulse, response.friction_impulse) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Known KKT solutions: pair pressure 1, wall .25, ground pressures 1/2.
+ * The released variant has ground pressures 2.5/0 and slack sin(angle)^2
+ * at the inactive floor. The four-row equality fit then needs negative
+ * pressure there, which must be released rather than clipped. */
+static bool dd2_group_test_tilted_order(dd2_group_tilted_order order) {
+    dd2_vehicle bodies[DD2_GROUP_TEST_PAIR] = {0};
+    if (!dd2_vehicle_reset(&bodies[0], (dd2_vehicle_spawn){0}) ||
+        !dd2_vehicle_reset(&bodies[1], (dd2_vehicle_spawn){0})) {
+        return false;
+    }
+    const double sine = sin(order.angle);
+    const double cosine = cos(order.angle);
+    const double ground = order.release ? dd2_group_tilted_left_pressure : 3;
+    const dd2_vehicle_vector expected[] = {{.x = order.release ? ground * sine : -sine,
+                                            .y = 1 + (ground * cosine),
+                                            .z = dd2_group_position_wall_limit},
+                                           {.y = -1}};
+    const double left = (sine * expected[0].x) + (cosine * expected[0].y);
+    const double right =
+        -(sine * expected[0].x) + (cosine * expected[0].y) - (order.release ? sine * sine : 0);
+    const dd2_group_contact original[DD2_GROUP_TILTED_ROWS] = {
+        {.first = 0,
+         .second = 1,
+         .normal = {.y = 1},
+         .penetration = 2 + (ground * cosine) - (2 * dd2_group_test_clearance)},
+        {.first = 0,
+         .second = DD2_VEHICLE_NO_PARTNER,
+         .normal = {.z = 1},
+         .penetration = dd2_group_position_wall_limit - dd2_group_test_clearance},
+        {.first = 0,
+         .second = DD2_VEHICLE_NO_PARTNER,
+         .normal = {.x = sine, .y = cosine},
+         .penetration = left - dd2_group_test_clearance},
+        {.first = 0,
+         .second = DD2_VEHICLE_NO_PARTNER,
+         .normal = {.x = -sine, .y = cosine},
+         .penetration = right - dd2_group_test_clearance}};
+    dd2_group_contact contacts[DD2_GROUP_TILTED_ROWS] = {0};
+    for (unsigned index = 0; index < DD2_GROUP_TILTED_ROWS; ++index) {
+        const unsigned offset = order.reversed ? DD2_GROUP_TILTED_ROWS - index : index;
+        contacts[index] = original[(order.start + offset) % DD2_GROUP_TILTED_ROWS];
+    }
+    const dd2_group_query query = {.bodies = bodies,
+                                   .body_count = DD2_GROUP_TEST_PAIR,
+                                   .contacts = contacts,
+                                   .contact_count = DD2_GROUP_TILTED_ROWS};
+    dd2_group_solution result = {0};
+    if (!dd2_contact_group_solve(&query, &result) || result.count != DD2_GROUP_TILTED_ROWS ||
+        result.position_passes > DD2_GROUP_POSITION_PASS_LIMIT ||
+        result.position_error >= dd2_group_position_tolerance ||
+        !dd2_group_test_position_body(&bodies[0], expected[0]) ||
+        !dd2_group_test_position_body(&bodies[1], expected[1]) ||
+        !dd2_group_test_position_rows(&query, &result)) {
+        return false;
+    }
+    printf("Analytic tilted supports: angle=%.3f released=%u start=%u reversed=%u passes=%u "
+           "predictions=%u\n",
+           order.angle, (unsigned)order.release, order.start, (unsigned)order.reversed,
+           result.position_passes, result.position_predictions);
+    return true;
+}
+
+static bool dd2_group_test_tilted_supports(void) {
+    for (unsigned angle = 0;
+         angle < sizeof(dd2_group_tilted_angles) / sizeof(dd2_group_tilted_angles[0]); ++angle) {
+        for (unsigned release = 0; release < DD2_GROUP_TEST_PAIR; ++release) {
+            for (unsigned reversed = 0; reversed < DD2_GROUP_TEST_PAIR; ++reversed) {
+                for (unsigned start = 0; start < DD2_GROUP_TILTED_ROWS; ++start) {
+                    if (!dd2_group_test_tilted_order(
+                            (dd2_group_tilted_order){.angle = dd2_group_tilted_angles[angle],
+                                                     .release = release != 0,
+                                                     .reversed = reversed != 0,
+                                                     .start = start})) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     if (!dd2_group_test_cascade() || !dd2_group_test_friction(false) ||
         !dd2_group_test_friction(true) || !dd2_group_test_rocking(false) ||
         !dd2_group_test_rocking(true) || !dd2_group_test_chain() || !dd2_group_test_invalid() ||
-        !dd2_group_test_infeasible() || !dd2_group_test_position_redundancy()) {
+        !dd2_group_test_infeasible() || !dd2_group_test_position_redundancy() ||
+        !dd2_group_test_tilted_supports()) {
         puts("joint support projection: FAIL");
         return EXIT_FAILURE;
     }

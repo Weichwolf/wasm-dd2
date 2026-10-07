@@ -60,7 +60,14 @@ cases pass on Native, WASM and ASan/UBSan. Actual Native/sanitized/Chromium inpu
 natural season again
 completes round 1 with the same scores, then fails round 2 at tick 66,070; a
 31,216-byte replay and exact sparse trace identify a different four-contact
-position failure. Full-campaign acceptance remains open. A separately
+position failure. A guarded active-position fit now advances that input. Twenty captured queries,
+fifty-two reorderings and seventy-two analytic position cases pass on three
+targets. The natural season advances past 66,070 to a new second-round failure
+at 81,622. Production-equivalent input/query replay identifies an eight-contact
+velocity failure; position is not reached. All eleven actual Native/sanitized/
+Chromium input checks, all eleven original-data ground checks and six scoped
+Circuit-2/live plus Circuit-5/eight-lap target scopes pass.
+Full-campaign acceptance remains open. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 

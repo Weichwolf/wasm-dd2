@@ -1179,6 +1179,78 @@ static bool dd2_group_position_prediction(dd2_group_workspace *workspace,
     return false;
 }
 
+static void dd2_group_position_rows(const dd2_group_workspace *workspace,
+                                    const bool released[DD2_VEHICLE_CONTACT_LIMIT],
+                                    dd2_group_linear_system *system) {
+    for (unsigned column = 0; column < workspace->query->contact_count; column++) {
+        dd2_vehicle_vector response[DD2_VEHICLE_FLEET_LIMIT] = {0};
+        dd2_group_position_delta(workspace, response,
+                                 (dd2_group_position_shift){.index = column, .impulse = 1});
+        for (unsigned row = 0; row < workspace->query->contact_count; row++) {
+            const dd2_group_contact contact = workspace->query->contacts[row];
+            const double identity = row == column ? 1 : 0;
+            system->entries[row][column] =
+                released[row] ? identity
+                              : dd2_collision_dot(dd2_group_relative_offset(contact, response),
+                                                  contact.normal);
+        }
+    }
+    for (unsigned row = 0; row < workspace->query->contact_count; row++) {
+        system->entries[row][system->dimensions] =
+            released[row] ? 0 : dd2_group_required_offset(workspace->query->contacts[row]);
+    }
+}
+
+/* Solve the active least-norm translation equations from exact unit responses.
+ * Each refit releases at least one negative multiplier, so contact_count + 1
+ * solves suffice. Singular systems leave the iterate unchanged. All contacts
+ * remain in the finite residual; an unhelpful fit restores exact state. */
+static bool dd2_group_position_fit(dd2_group_workspace *workspace,
+                                   dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
+                                   double *error) {
+    const dd2_group_position_state original = dd2_group_position_save(workspace, offsets);
+    bool released[DD2_VEHICLE_CONTACT_LIMIT] = {false};
+    for (unsigned i = 0; i < workspace->query->contact_count; i++) {
+        const dd2_group_contact contact = workspace->query->contacts[i];
+        const double remaining =
+            dd2_group_required_offset(contact) -
+            dd2_collision_dot(dd2_group_relative_offset(contact, offsets), contact.normal);
+        released[i] = workspace->constraints[i].position_impulse <= dd2_group_active_tolerance &&
+                      remaining <= 0;
+    }
+    dd2_group_linear_system system = {.dimensions = workspace->query->contact_count};
+    for (unsigned attempt = 0; attempt <= workspace->query->contact_count; attempt++) {
+        dd2_group_position_rows(workspace, released, &system);
+        if (!dd2_group_linear_solve(&system, system.dimensions)) {
+            return false;
+        }
+        bool negative = false;
+        for (unsigned i = 0; i < workspace->query->contact_count; i++) {
+            if (!released[i] && system.direction[i] < 0) {
+                released[i] = true;
+                negative = true;
+            }
+        }
+        if (negative) {
+            continue;
+        }
+        for (unsigned i = 0; i < workspace->query->contact_count; i++) {
+            workspace->constraints[i].position_impulse = system.direction[i];
+        }
+        dd2_group_position_rebuild(workspace, offsets);
+        if (dd2_group_position_finite(workspace, offsets)) {
+            const double predicted = dd2_group_position_error(workspace, offsets);
+            if (dd2_numeric_finite(&predicted) && predicted < *error) {
+                *error = predicted;
+                return true;
+            }
+        }
+        dd2_group_position_restore(workspace, offsets, &original);
+        return false;
+    }
+    return false;
+}
+
 static bool dd2_group_positions(dd2_group_workspace *workspace, dd2_group_solution *result) {
     dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned pass = 0; pass < DD2_GROUP_PASSES; ++pass) {
@@ -1205,6 +1277,10 @@ static bool dd2_group_positions(dd2_group_workspace *workspace, dd2_group_soluti
         if (pass + 1 >= DD2_GROUP_NEWTON_DELAY && (pass + 1) % DD2_GROUP_NEWTON_PERIOD == 0) {
             result->position_predictions += (unsigned)dd2_group_position_prediction(
                 workspace, offsets, &result->position_error);
+            if (result->position_error >= dd2_group_position_tolerance) {
+                result->position_predictions +=
+                    (unsigned)dd2_group_position_fit(workspace, offsets, &result->position_error);
+            }
         }
 
         if (result->position_error < dd2_group_position_tolerance) {

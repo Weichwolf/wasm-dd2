@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Nineteen captured dense-contact
+almost parallel ground/wall supports. Twenty captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -271,7 +271,13 @@ preserve independent physical checks. A bounded position prediction transfers
 multipliers toward stronger near-parallel inequalities, rebuilds response offsets
 and projects recipients. It retains all contacts and accepts only a smaller
 finite full residual; rejection restores exact state. Twenty-four independent
-analytic position cases check least-norm translation and unchanged motion/clocks. The solver retains the stronger physical correction
+analytic position cases check least-norm translation and unchanged motion/clocks.
+If needed, an active-position equation fit uses exact coupled translation
+responses, releases negative pressure and refits within contact_count + 1 solves.
+Singular or non-improving fits preserve exact state. All twenty-four row
+orderings of the new four-contact query and forty-eight analytic tilted-plane
+cases check clearance, least-norm translation and released supports.
+The solver retains the stronger physical correction
 with unchanged material law, bounds and Coulomb acceptance.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or

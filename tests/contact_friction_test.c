@@ -9,7 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { DD2_FRICTION_PASS_LIMIT = 4096, DD2_FRICTION_PAIR = 2, DD2_FRICTION_COUPLED_CONTACTS = 7 };
+enum {
+    DD2_FRICTION_PASS_LIMIT = 4096,
+    DD2_FRICTION_PAIR = 2,
+    DD2_FRICTION_COUPLED_CONTACTS = 7,
+    DD2_FRICTION_GROUND_CONTACTS = 4
+};
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
 static const double dd2_friction_clearance = 1e-4;
@@ -262,6 +267,52 @@ static bool dd2_friction_permutations(bool position) {
     return true;
 }
 
+static bool dd2_friction_order_next(unsigned order[DD2_FRICTION_GROUND_CONTACTS]) {
+    unsigned pivot = DD2_FRICTION_GROUND_CONTACTS - 1;
+    while (pivot > 0 && order[pivot - 1] >= order[pivot]) {
+        --pivot;
+    }
+    if (pivot == 0) {
+        return false;
+    }
+    unsigned successor = DD2_FRICTION_GROUND_CONTACTS - 1;
+    while (order[successor] <= order[pivot - 1]) {
+        --successor;
+    }
+    const unsigned saved = order[pivot - 1];
+    order[pivot - 1] = order[successor];
+    order[successor] = saved;
+    for (unsigned left = pivot, right = DD2_FRICTION_GROUND_CONTACTS - 1; left < right;
+         ++left, --right) {
+        const unsigned value = order[left];
+        order[left] = order[right];
+        order[right] = value;
+    }
+    return true;
+}
+
+static bool dd2_friction_ground_orderings(void) {
+    unsigned order[DD2_FRICTION_GROUND_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_GROUND_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_GROUND_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_GROUND_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_championship_ground_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {.initial = dd2_friction_championship_ground_bodies,
+                                            .contacts = contacts,
+                                            .body_count = DD2_FRICTION_PAIR,
+                                            .contact_count = DD2_FRICTION_GROUND_CONTACTS,
+                                            .name = "championship ground support ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order));
+    return true;
+}
+
 int main(void) {
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
@@ -289,7 +340,8 @@ int main(void) {
             return EXIT_FAILURE;
         }
     }
-    if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true)) {
+    if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true) ||
+        !dd2_friction_ground_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }
