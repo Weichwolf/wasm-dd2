@@ -294,7 +294,18 @@ tangential mobility matrix; a slip-direction mass can oscillate when that
 matrix has unequal eigenvalues. A frozen three-car chain from the native
 frame-partition test checks convergence, normal complementarity, Coulomb
 friction and conserved linear momentum. Normal complementarity and projected friction must converge within 1e-7
-units/s, with a 4,096-pass bound. A separate equal-mass, least-norm position solve
+units/s, with a 4,096-pass bound. Consecutive impulse steps also provide a
+secant prediction for slowly converging coupled supports. Its normal impulses
+and tangential friction are projected into their admissible cones, and every
+quantity is checked before application. A prediction is accepted only with a
+strictly smaller finite physical residual. Rejection restores exact saved motion
+and impulses. The velocity/position tolerances and pass bound are unchanged.
+`rewrite_contact_group_conditioning` freezes an original arena-9 four-car event
+which previously exceeded that bound. It checks released/active normals,
+Coulomb sliding/sticking, conserved linear/angular momentum, energy loss,
+position clearance, centered repair and unchanged orientation/physical clocks,
+including accepted and rejected predictions. These checks cover response at a
+certified pose; natural arena completion is verified separately. A separate equal-mass, least-norm position solve
 requires complementarity within 1e-9 world units, uses signed support gaps and
 preserves shared motion without changing velocity, spin or physical clocks.
 Every body's remaining motion is swept again after correction.

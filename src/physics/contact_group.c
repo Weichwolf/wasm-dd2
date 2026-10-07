@@ -16,6 +16,7 @@ static const double dd2_group_active_tolerance = 1e-10;
 static const double dd2_group_normal_relaxation = 1.5;
 static const double dd2_group_position_relaxation = 1.8;
 static const double dd2_group_axis_tolerance = 1e-8;
+static const double dd2_group_secant_floor = 1e-30;
 
 typedef struct {
     dd2_vehicle_vector arms[2];
@@ -205,8 +206,172 @@ static double dd2_group_velocity_error(const dd2_group_workspace *workspace) {
     return error;
 }
 
+typedef struct {
+    double normal[DD2_VEHICLE_CONTACT_LIMIT];
+    dd2_vehicle_vector friction[DD2_VEHICLE_CONTACT_LIMIT];
+} dd2_group_iterate;
+
+typedef struct {
+    dd2_group_iterate image;
+    dd2_group_iterate step;
+    bool ready;
+} dd2_group_history;
+
+typedef struct {
+    dd2_vehicle_vector velocity;
+    dd2_vehicle_vector spin;
+} dd2_group_motion;
+
+typedef enum {
+    DD2_GROUP_EXTRAPOLATION_SKIPPED,
+    DD2_GROUP_EXTRAPOLATION_REJECTED,
+    DD2_GROUP_EXTRAPOLATION_ACCEPTED
+} dd2_group_extrapolation;
+
+static dd2_group_iterate dd2_group_values(const dd2_group_workspace *workspace) {
+    dd2_group_iterate values = {0};
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        values.normal[index] = workspace->constraints[index].normal_impulse;
+        values.friction[index] = workspace->constraints[index].friction;
+    }
+    return values;
+}
+
+static dd2_group_iterate dd2_group_subtract(const dd2_group_iterate *left,
+                                            const dd2_group_iterate *right, unsigned count) {
+    dd2_group_iterate difference = {0};
+    for (unsigned index = 0; index < count; ++index) {
+        difference.normal[index] = left->normal[index] - right->normal[index];
+        difference.friction[index] = dd2_collision_add(
+            left->friction[index], dd2_collision_scale(right->friction[index], -1));
+    }
+    return difference;
+}
+
+static double dd2_group_iterate_dot(const dd2_group_iterate *left, const dd2_group_iterate *right,
+                                    unsigned count) {
+    double product = 0;
+    for (unsigned index = 0; index < count; ++index) {
+        product += (left->normal[index] * right->normal[index]) +
+                   dd2_collision_dot(left->friction[index], right->friction[index]);
+    }
+    return product;
+}
+
+static bool dd2_group_predict(const dd2_group_workspace *workspace, const dd2_group_iterate *image,
+                              const dd2_group_iterate *previous, double factor,
+                              dd2_group_iterate *candidate) {
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const double predicted =
+            image->normal[index] - (factor * (image->normal[index] - previous->normal[index]));
+        dd2_vehicle_vector tangent = dd2_collision_add(
+            image->friction[index],
+            dd2_collision_scale(
+                dd2_collision_add(image->friction[index],
+                                  dd2_collision_scale(previous->friction[index], -1)),
+                -factor));
+        const double squared = dd2_collision_dot(tangent, tangent);
+        if (!dd2_numeric_finite(&predicted) || !dd2_group_vector_finite(&tangent) ||
+            !dd2_numeric_finite(&squared)) {
+            return false;
+        }
+        const double normal = fmax(0, predicted);
+        const double limit = workspace->query->contacts[index].friction * normal;
+        const double magnitude = sqrt(squared);
+        if (magnitude > limit) {
+            tangent = dd2_collision_scale(tangent, limit / magnitude);
+        }
+        candidate->normal[index] = normal;
+        candidate->friction[index] = tangent;
+    }
+    return true;
+}
+
+static bool dd2_group_motion_finite(const dd2_group_workspace *workspace) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        const dd2_vehicle *vehicle = &workspace->query->bodies[body];
+        if (!dd2_group_vector_finite(&vehicle->velocity) ||
+            !dd2_group_vector_finite(&vehicle->angular_velocity)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void dd2_group_restore(dd2_group_workspace *workspace, const dd2_group_iterate *image,
+                              const dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT]) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        workspace->query->bodies[body].velocity = motion[body].velocity;
+        workspace->query->bodies[body].angular_velocity = motion[body].spin;
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        workspace->constraints[index].normal_impulse = image->normal[index];
+        workspace->constraints[index].friction = image->friction[index];
+    }
+}
+
+typedef struct {
+    const dd2_group_history *history;
+    const dd2_group_iterate *image;
+    const dd2_group_iterate *step;
+} dd2_group_prediction;
+
+static dd2_group_extrapolation dd2_group_extrapolate(dd2_group_workspace *workspace,
+                                                     const dd2_group_prediction *prediction,
+                                                     double *error) {
+    const dd2_group_history *history = prediction->history;
+    const dd2_group_iterate *image = prediction->image;
+    const dd2_group_iterate *step = prediction->step;
+    const unsigned count = workspace->query->contact_count;
+    const dd2_group_iterate difference = dd2_group_subtract(step, &history->step, count);
+    const double denominator = dd2_group_iterate_dot(&difference, &difference, count);
+    if (!dd2_numeric_finite(&denominator) || denominator <= dd2_group_secant_floor) {
+        return DD2_GROUP_EXTRAPOLATION_SKIPPED;
+    }
+    const double factor = dd2_group_iterate_dot(&difference, step, count) / denominator;
+    dd2_group_iterate candidate = {0};
+    if (!dd2_numeric_finite(&factor) ||
+        !dd2_group_predict(workspace, image, &history->image, factor, &candidate)) {
+        return DD2_GROUP_EXTRAPOLATION_REJECTED;
+    }
+    dd2_vehicle_vector impulses[DD2_VEHICLE_CONTACT_LIMIT] = {0};
+    for (unsigned index = 0; index < count; ++index) {
+        impulses[index] =
+            dd2_collision_add(dd2_collision_scale(workspace->query->contacts[index].normal,
+                                                  candidate.normal[index] - image->normal[index]),
+                              dd2_collision_add(candidate.friction[index],
+                                                dd2_collision_scale(image->friction[index], -1)));
+        if (!dd2_group_vector_finite(&impulses[index])) {
+            return DD2_GROUP_EXTRAPOLATION_REJECTED;
+        }
+    }
+    dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        const dd2_vehicle *vehicle = &workspace->query->bodies[body];
+        motion[body] = (dd2_group_motion){vehicle->velocity, vehicle->angular_velocity};
+    }
+    for (unsigned index = 0; index < count; ++index) {
+        dd2_group_apply(workspace, index, impulses[index]);
+        workspace->constraints[index].normal_impulse = candidate.normal[index];
+        workspace->constraints[index].friction = candidate.friction[index];
+    }
+    if (dd2_group_motion_finite(workspace)) {
+        const double predicted_error = dd2_group_velocity_error(workspace);
+        if (dd2_numeric_finite(&predicted_error) && predicted_error < *error) {
+            *error = predicted_error;
+            return DD2_GROUP_EXTRAPOLATION_ACCEPTED;
+        }
+    }
+    /* Restore exact saved motion; reversing rejected impulses would accumulate
+     * rounding drift through the same poorly conditioned contact chain. */
+    dd2_group_restore(workspace, image, motion);
+    return DD2_GROUP_EXTRAPOLATION_REJECTED;
+}
+
 static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solution *result) {
+    dd2_group_history history = {0};
     for (unsigned pass = 0; pass < DD2_GROUP_PASSES; ++pass) {
+        const dd2_group_iterate before = dd2_group_values(workspace);
         for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
             const dd2_group_contact contact = workspace->query->contacts[index];
             dd2_group_constraint *constraint = &workspace->constraints[index];
@@ -229,6 +394,24 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
         if (result->velocity_error < dd2_group_velocity_tolerance) {
             return true;
         }
+        const dd2_group_iterate image = dd2_group_values(workspace);
+        const dd2_group_iterate step =
+            dd2_group_subtract(&image, &before, workspace->query->contact_count);
+        if (history.ready) {
+            /* A secant through consecutive impulse fixed-point steps predicts
+             * slow modes. Project its normal/friction cones, then accept only
+             * a finite candidate with strictly smaller physical residual. */
+            const dd2_group_prediction prediction = {&history, &image, &step};
+            const dd2_group_extrapolation outcome =
+                dd2_group_extrapolate(workspace, &prediction, &result->velocity_error);
+            result->accelerated_passes += (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_ACCEPTED);
+            result->rejected_extrapolations +=
+                (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_REJECTED);
+            if (result->velocity_error < dd2_group_velocity_tolerance) {
+                return true;
+            }
+        }
+        history = (dd2_group_history){.image = image, .step = step, .ready = true};
     }
     return false;
 }

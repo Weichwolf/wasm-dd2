@@ -37,8 +37,10 @@ typedef struct {
     unsigned count;
     unsigned velocity_passes;
     unsigned position_passes;
-    double velocity_error; /* Normal complementarity and projected friction, units/s. */
-    double position_error; /* Normal position complementarity, world units. */
+    unsigned accelerated_passes;      /* Accepted finite predictions reducing physical residual. */
+    unsigned rejected_extrapolations; /* Invalid or non-improving candidates, without drift. */
+    double velocity_error;            /* Normal complementarity and projected friction, units/s. */
+    double position_error;            /* Normal position complementarity, world units. */
 } dd2_group_solution;
 
 /* Inelastic joint support response and equal-mass, least-norm position repair.
