@@ -16,6 +16,8 @@ static const double dd2_group_active_tolerance = 1e-10;
 static const double dd2_group_position_relaxation = 1.8;
 static const double dd2_group_axis_tolerance = 1e-8;
 static const double dd2_group_secant_floor = 1e-30;
+static const double dd2_group_micro_slip = 0.1;
+static const double dd2_group_max_friction_softness = 1e12;
 
 typedef struct {
     dd2_vehicle_vector arms[2];
@@ -170,17 +172,33 @@ static dd2_group_friction dd2_group_friction_candidate(const dd2_group_workspace
                                                        unsigned index) {
     const dd2_group_contact contact = workspace->query->contacts[index];
     const dd2_group_constraint *constraint = &workspace->constraints[index];
+    const double limit = contact.friction * constraint->normal_impulse;
+    dd2_group_friction candidate = {.mass = constraint->tangent_mass};
+    if (limit == 0) {
+        return candidate;
+    }
+    /* Implicit regularized car-body friction: below 0.1 world units/s, the
+     * opposing impulse grows linearly with slip; above it, Coulomb saturation
+     * is unchanged. The tiny creep avoids ambiguous stick/slip branches in
+     * tightly coupled bodies. Static world supports retain exact sticking.
+     * The softness cap keeps vanishing pressure finite; its maximum affected
+     * cone radius is only 1e-13 impulse units. */
+    const double softness =
+        dd2_group_pair(contact)
+            ? dd2_group_micro_slip /
+                  fmax(limit, dd2_group_micro_slip / dd2_group_max_friction_softness)
+            : 0;
+    candidate.mass += softness;
     const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
     const dd2_vehicle_vector slip = dd2_collision_add(
         velocity,
         dd2_collision_scale(contact.normal, -dd2_collision_dot(velocity, contact.normal)));
-    dd2_group_friction candidate = {
-        .impulse = dd2_collision_add(constraint->friction,
-                                     dd2_collision_scale(slip, -1 / constraint->tangent_mass)),
-        .mass = constraint->tangent_mass};
+    const dd2_vehicle_vector gradient =
+        dd2_collision_add(slip, dd2_collision_scale(constraint->friction, softness));
+    candidate.impulse =
+        dd2_collision_add(constraint->friction, dd2_collision_scale(gradient, -1 / candidate.mass));
     /* Project even without current slip: a released normal constraint cannot
      * retain friction from an earlier iteration with a larger normal impulse. */
-    const double limit = contact.friction * constraint->normal_impulse;
     const double magnitude = sqrt(dd2_collision_dot(candidate.impulse, candidate.impulse));
     if (magnitude > limit) {
         candidate.impulse = dd2_collision_scale(candidate.impulse, limit / magnitude);

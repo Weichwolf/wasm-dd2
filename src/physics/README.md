@@ -288,13 +288,22 @@ corner/probe identity, so swept chord error cannot duplicate an instantaneous
 support. The retained contact preserves primary impact metadata and the deepest
 queried gap for position repair. A rotating roof-down regression checks distinct
 support records, subsequent event chronology, energy loss and road clearance. Primary restitution/friction is
-applied once; `contact_group.c` then solves inelastic normal and Coulomb-friction
-constraints together. Friction uses a fixed step bounded by the trace of the
-tangential mobility matrix; a slip-direction mass can oscillate when that
+applied once; `contact_group.c` then solves inelastic normal and friction
+constraints together. Static world supports use Coulomb sliding/sticking. Car
+pairs use a continuous low-speed friction law: with cone radius `L = mu * N`,
+the tangential impulse is `-L * slip / max(0.1, length(slip))`. Below 0.1 world
+units/s the opposing impulse grows linearly with final slip; above that threshold
+it saturates at the same Coulomb limit. This permits bounded microscopic creep
+(1/9,000 of the 900-unit body length per second) between cars. It is documented
+rewrite material tuning, rather than original physics parity or ideal sticking
+between cars. The implicit friction softness is capped at 1e12 to keep vanishing
+pressure finite; the cap affects only cone radii at or below 1e-13 impulse units.
+Friction uses a fixed step bounded by the trace of the tangential mobility
+matrix; a slip-direction mass can oscillate when that
 matrix has unequal eigenvalues. A frozen three-car chain from the native
-frame-partition test checks convergence, normal complementarity, Coulomb
-friction and conserved linear momentum. Normal complementarity and projected friction must converge within 1e-7
-units/s, with a 4,096-pass bound. Consecutive impulse steps also provide a
+frame-partition test checks convergence, normal complementarity, the car-pair
+friction law and conserved linear momentum. Normal complementarity and projected
+friction must converge within 1e-7 units/s, with a 4,096-pass bound. Consecutive impulse steps also provide a
 secant prediction for slowly converging coupled supports. Its normal impulses
 and tangential friction are projected into their admissible cones, and every
 quantity is checked before application. A prediction is accepted only with a
@@ -307,12 +316,21 @@ eight-body/eight-support WASM event from arena 8 previously exceeded the bound
 despite those predictions; the exact coordinate response converges with the
 same residual tolerance and iteration bound.
 `rewrite_contact_group_conditioning` freezes that event and the original-data
-arena-9 four-car rewrite event which previously exceeded the bound. Both check released/active normals,
-Coulomb sliding/sticking, conserved linear/angular momentum, energy loss,
+arena-9 four-car rewrite event which previously exceeded the bound. Both check
+released/active normals,
+the car-pair friction law, conserved linear/angular momentum, energy loss,
 position clearance, centered repair and unchanged orientation/physical clocks,
 including accepted and rejected predictions. These checks cover response at a
-certified pose; natural arena completion is verified separately. A separate equal-mass, least-norm position solve
-requires complementarity within 1e-9 world units, uses signed support gaps and
+certified pose; natural arena completion is verified separately.
+`rewrite_contact_friction` adds ten analytic two-body cases across the linear/saturated transition and six
+frozen original-data arena-9 rewrite queries with 15/7/22/10/19/11 contacts. Its
+independent checks reconstruct linear/angular impulses from the published
+responses, check the constitutive law in final velocity units, and retain normal
+complementarity, friction cones, energy loss, clearance, orientation and clocks.
+The stored poses retain their captured values; they are rewrite simulation
+states, not original executable trajectories. Passing these cases does not
+establish complete natural arena behavior. A separate equal-mass, least-norm
+position solve requires complementarity within 1e-9 world units, uses signed support gaps and
 preserves shared motion without changing velocity, spin or physical clocks.
 Every body's remaining motion is swept again after correction.
 

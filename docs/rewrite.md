@@ -213,7 +213,11 @@ pursuit targets. Dense pursuit fields can exhaust the shared 64-contact solver
 budget; the solver then retains checked poses instead of accepting residual
 travel. The fleet solver now collects connected support neighborhoods at the actual
 swept event time, applies primary restitution once, and jointly solves inelastic
-normal/friction support and position repair. A 456-case synthetic convoy
+normal/friction support and position repair. World supports retain Coulomb sticking;
+car-pair friction permits at most 0.1 world units/s of low-speed creep, with
+unchanged Coulomb saturation above that threshold. Six captured dense-contact
+queries and independent analytic/material checks cover this rewrite tuning; see
+`src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or
 clock changes. Groups beyond the report budget retain conservative serial
 response. Full natural arena completion and dense-field behavior remain subject

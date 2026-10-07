@@ -21,6 +21,7 @@ enum {
 static const double dd2_conditioning_tolerance = 1e-6;
 static const double dd2_conditioning_position_tolerance = 1e-8;
 static const double dd2_conditioning_clearance = 0.0002;
+static const double dd2_conditioning_micro_slip = 0.1;
 
 typedef struct {
     const dd2_vehicle *initial;
@@ -204,10 +205,13 @@ static bool dd2_conditioning_contact(const dd2_vehicle *bodies,
                                                               dd2_conditioning_position_tolerance) {
         return false;
     }
-    return slip <= dd2_conditioning_tolerance ||
-           (fabs(friction - limit) < dd2_conditioning_tolerance &&
-            fabs(dd2_collision_dot(response.friction_impulse, tangent) + (friction * slip)) <
-                dd2_conditioning_tolerance);
+    if (limit == 0) {
+        return friction == 0;
+    }
+    const dd2_vehicle_vector residual = dd2_collision_add(
+        tangent, dd2_collision_scale(response.friction_impulse,
+                                     fmax(dd2_conditioning_micro_slip, slip) / limit));
+    return sqrt(dd2_collision_dot(residual, residual)) < dd2_conditioning_tolerance;
 }
 
 static bool dd2_conditioning_run(const dd2_conditioning_case *scenario) {

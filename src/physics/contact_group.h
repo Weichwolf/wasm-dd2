@@ -44,6 +44,9 @@ typedef struct {
 } dd2_group_solution;
 
 /* Inelastic joint support response and equal-mass, least-norm position repair.
+ * Car-pair friction is regularized below 0.1 world units/s: linear opposing impulse
+ * within the cone, full Coulomb saturation above that microscopic slip speed.
+ * Static-world supports preserve Coulomb sticking. This is rewrite tuning.
  * This operates on the fleet owner's private working copies; convergence or
  * final-state failure can leave those copies changed. The owner must discard
  * them transactionally on failure. Invalid input is rejected before mutation.

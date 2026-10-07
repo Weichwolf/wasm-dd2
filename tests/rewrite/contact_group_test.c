@@ -15,6 +15,7 @@ static const double dd2_group_test_speed = 10;
 static const double dd2_group_test_sliding = 100;
 static const double dd2_group_test_sticking = 0.1;
 static const double dd2_group_test_coefficient = 0.25;
+static const double dd2_group_test_micro_slip = 0.1;
 static const double dd2_group_test_arm = 186;
 static const double dd2_group_test_height = 130;
 static const double dd2_group_test_roll = 0.1;
@@ -225,12 +226,12 @@ static bool dd2_group_test_chain(void) {
                 dd2_group_test_tolerance) {
             return false;
         }
-        /* A sliding contact saturates Coulomb friction opposite its slip;
-         * a sticking contact stays within the cone and has zero tangential speed. */
-        if (slip_length > dd2_group_test_tolerance &&
-            (fabs(tangent_length - limit) > dd2_group_test_tolerance ||
-             fabs(dd2_collision_dot(response.friction_impulse, slip) +
-                  (tangent_length * slip_length)) > dd2_group_test_tolerance)) {
+        /* Independent constitutive check: low-speed friction is linear in
+         * final slip, with Coulomb saturation above the documented threshold. */
+        const dd2_vehicle_vector residual = dd2_collision_add(
+            slip, dd2_collision_scale(response.friction_impulse,
+                                      fmax(dd2_group_test_micro_slip, slip_length) / limit));
+        if (sqrt(dd2_collision_dot(residual, residual)) > dd2_group_test_tolerance) {
             return false;
         }
     }
