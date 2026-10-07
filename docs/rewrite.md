@@ -106,7 +106,13 @@ rewrite build does not enable a C++ compiler or build those tools.
 The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
 covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
 software surfaces, with shared keyboard input and monotonic timing. Gamepad,
-persistence and audio remain pending. Browser pthread builds
+persistence and audio playback remain pending. Typed sound-bank/WAVE readers
+now preserve all 45 original effects, including their independent playback
+frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
+Redbook tracks; source/binary-identified three-target verification compares every
+decoded sample byte. See `make rewrite-audio-assets-verify` and
+`src/assets/README.md`. The mixer, audible effects/music, transport controls and
+their application integration remain to be implemented. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
 Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
 solver and nested geometry queries; the SDK's default 64 KiB is insufficient.

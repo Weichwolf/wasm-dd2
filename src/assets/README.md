@@ -193,6 +193,47 @@ invalid references, extents and scene ownership. Reports remain under `/tmp`;
 raw successful exports are deleted. These checks establish decoded fields, not
 complete rendering behavior or game correctness.
 
+## Sound effects and Redbook PCM
+
+`audio.h` exposes bounded, immutable RIFF/WAVE and raw CDDA sample views.
+WAVE PCM supports unsigned 8-bit and signed little-endian 16-bit mono/stereo.
+The decoder checks the complete RIFF extent, format/rate/block alignment,
+every chunk extent and odd-byte padding. Unknown chunks are skipped; duplicate
+format/data chunks fail. Format and data may appear in either order. The sample
+accessor returns signed 16-bit values and validates frame/channel bounds, even
+for caller-constructed views. Failed decodes clear their outputs; an empty PCM
+stream is valid and has no accessible samples.
+
+SBK banks retain their 16-byte header and 28-byte sound-record layout without
+rewriting original bytes with runtime handles. A bank owns up to 64 decoded
+metadata records, borrowing its immutable WAVE samples from the supplied bytes.
+Those bytes must outlive the bank and every playback user. Repeated sample
+extents are permitted. Partial failure frees the bank; destruction accepts NULL.
+Loop flags, playback frequency and channel flags are retained separately.
+The bank frequency often differs from the WAVE sample rate; the playback owner
+must select its actual frequency explicitly.
+
+The format evidence is `FUN_00416404`, `DSLoadSoundBuffer` and `Play_Sound` in
+the reference reconstruction. `Redbook/track02.cdda` through `track19.cdda`
+are provisioned lossless little-endian 16-bit stereo PCM at 44,100 Hz. CDDA
+views validate four-byte frame alignment. Disc selection, looping, pause and
+device output belong to the audio runtime rather than the asset decoder.
+
+```sh
+make rewrite-audio-assets-verify
+```
+
+The verifier checks every decoded sample and metadata field of all 45 original
+effects against Python's independent WAVE reader, then every PCM byte and format
+field of all 18 provisioned Redbook tracks on Native, Node/WASM and ASan/UBSan.
+It checks the provisioned track hashes and sector/frame lengths. Exports are
+bounded to one track, compared in chunks and deleted immediately on success;
+reports retain source/binary/input hashes under `/tmp/wasm-dd2/`. Synthetic CI
+also covers signed extremes, both sample widths/channel counts, all WAVE
+truncations, duplicate/reordered chunks, padding, malformed formats/banks,
+shared samples and immutable input. These establish audio asset compatibility;
+mixing, audible playback, game sound cues and CD transport remain pending.
+
 ## Road contact geometry
 
 `road.c` owns decoded road vertices, directed links, strips and lane cells.

@@ -25,7 +25,7 @@ LOG_MAX_AGE ?= 3600
 all: rewrite-native   ## default on rewrite: readable C + SoftGL native build with strict clang-tidy
 
 .PHONY: rewrite-native rewrite-wasm rewrite-check rewrite-format rewrite-format-check rewrite-tidy
-.PHONY: rewrite-archive-verify
+.PHONY: rewrite-archive-verify rewrite-audio-assets-verify
 .PHONY: rewrite-level-verify rewrite-mesh-verify rewrite-scene-verify rewrite-road-verify rewrite-surface-verify
 .PHONY: rewrite-barrier-verify
 .PHONY: rewrite-ground-verify
@@ -147,6 +147,13 @@ rewrite-tidy: rewrite-native ## analyze every rewrite C unit with all findings t
 rewrite-check: rewrite-format-check rewrite-native ## strict format/build/analysis gate and native renderer bootstrap
 	python3 $(ROOT)/tools/rewrite/quality.py tidy --build-dir /tmp/wasm-dd2/rewrite-native
 	ctest --preset rewrite-native
+
+rewrite-audio-assets-verify: ## verify all original sound effects and Redbook PCM on native/WASM/sanitized
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_audio_assets.py
+	$(MAKE) clean-logs
 
 rewrite-archive-verify: ## verify all original archive entries on native, WASM and ASan/UBSan
 	$(MAKE) clean-logs
