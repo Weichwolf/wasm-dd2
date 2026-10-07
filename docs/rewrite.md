@@ -82,7 +82,7 @@ avoid traffic and pursue other cars in arenas, including timed reverse maneuvers
 Stalling is detected from both low forward speed and insufficient accepted
 horizontal movement, so retained solver velocities cannot mask a blocked car.
 Damage-aware tactics, off-road recovery,
-championships and the complete original front end remain pending.
+complete championship application flows and the original front end remain pending.
 Handwritten single-player league rules now own score/rank/division permutations,
 stable-ID grid mapping, tie sorting and promotion/relegation. The production
 Native/WASM component and fully instrumented ASan/UBSan version match 6,241
@@ -92,8 +92,15 @@ while keeping driver IDs stable and human zero independent of start position.
 `make rewrite-grid-verify` checks assigned starts, actual short physical drives
 and mode/reset ownership on all eleven original levels. Its promotion scores
 initialize fixtures; they do not establish completed championships.
-Championship rounds, actual result consumption,
-history/unlocks, menus and saved seasons still need their owning controller.
+A typed single-player championship controller now owns original schedules,
+exactly-once actual result consumption, standings, continuing/terminal outcomes,
+unlocks and the five-record history window including the current season. Its
+session owns decoded tracks and assigned physical fields; failed next-track
+preparation preserves current results. `make rewrite-championship-verify` checks
+synthetic season rules separately from actual first scheduled ten-lap circuit
+sessions and missing-next-track rollback on Native, WASM and ASan/UBSan. See
+`src/game/championship.md`. Application/menu integration, complete physical
+campaigns, driver naming, multiplayer and compatible saved seasons remain open.
 Supported overturned cars now have a separate temporary availability state and
 source-timed two-second recovery, with distance-gated opponent righting. Landing
 preserves damage, progress and physical clocks and refreshes real road support.

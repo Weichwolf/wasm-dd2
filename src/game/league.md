@@ -20,8 +20,10 @@ each adjacent boundary. All three swaps use the same final standings snapshot.
 Transfers retain points; starting a new season clears them and reranks the new
 divisions. Player first in the highest division wins the championship; last in
 the lowest division is eliminated. Those terminal outcomes retain final scores.
-The owning championship controller must handle rounds, history, unlocks, menus,
-actual race results and saving separately; this module does not implement them.
+The consuming `championship_session.h` now owns scheduled fields and feeds their
+naturally completed results into the league exactly once. `championship.h` owns
+rounds, copied history, unlocks and continuation; see `championship.md`.
+Application/menu and save integration remain separate pending contracts.
 
 `make rewrite-league-verify` compares 6,240 explicit original-x86 transfer, clear,
 sort and end-of-season cases plus the original initial league on Native, WASM and

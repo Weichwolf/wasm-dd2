@@ -23,14 +23,26 @@ championship results. Use `make rewrite-grid-verify`. Production reports:
 in its parent directory. All 32 Native/31 WASM CTests and strict LLVM19 for
 146 owned C/header files and actual Native/browser presentation checks pass.
 Grid ownership is verified separately under closed 0023.
-The championship owner, real season
-results, menus and persistence still need their consuming implementation.
+The typed single-player championship owner now connects actual scheduled races
+to these standings and assigned fields. Closed-round copies, original schedules,
+explicit result/season continuation, unlocks, terminal outcomes and the five-record
+history window are implemented. Strict LLVM19 for 152 files, all 33 Native/32 WASM
+CTests, synthetic progression rules on all three targets and natural first ten-lap
+circuit results in both modes on Native/WASM/ASan/UBSan pass. Native/WASM next-track
+failure rollback passes; its sanitized run and final identity checks remain pending
+in active 0024. Reports are under
+`/tmp/wasm-dd2/rewrite-championship-integration/`. These scoped first-round and
+synthetic-season checks do not establish full physically driven championships.
+Complete campaigns, menus, names, multiplayer and persistence still need their
+consuming implementation.
 
 ## Next
 
-Implement the championship owner with `dd2_driving_create_grid` and exactly-once
-result consumption using game/league.h. Add original schedules, history/unlocks
-and consuming front-end/save flows.
+Finish the remaining 0024 verification, then connect the owning session to real
+Native/browser championship entry, scores, results and continuation. Prepare
+renderer resources transactionally before replacing borrowed track data. Add
+names, profile-wide unlock retention, complete physical campaigns, multiplayer
+and compatible save/load.
 
 ## Accept
 

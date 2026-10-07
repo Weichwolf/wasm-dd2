@@ -30,6 +30,7 @@ its game requirements or acceptance rules.
 | [0020](closed/0020_delayed-coupled-contact-corrections.md) | Delayed coupled-contact corrections | closed |
 | [0021](closed/0021_contact-jacobian-accuracy.md) | Late contact Jacobian accuracy | closed |
 | [0022](closed/0022_contact-active-branch-predictions.md) | Contact active-branch predictions | closed |
+| [0024](active/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | active |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
 
 Continue stabilizing ordinary races, then connect the proven league foundation
