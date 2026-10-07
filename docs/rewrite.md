@@ -146,8 +146,9 @@ plus pause, mute, reset, close and sanitized lifetime. Pitch, levels and impact
 attenuation are rewrite tuning. Skid/crowd/commentary/menu effects, automatic
 game-state music selection and saved audio settings remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
-Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
-solver and nested geometry queries; the SDK's default 64 KiB is insufficient.
+Physics consumers reserve a 1 MiB WASM stack for the bounded coupled-contact
+matrix, transactional twenty-body solver and nested geometry queries; the SDK's
+default 64 KiB is insufficient.
 
 ## Build and mandatory quality gates
 
@@ -228,11 +229,15 @@ normal/friction support and position repair. Pair proximity now determines the p
 querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World supports retain Coulomb sticking;
 car-pair friction permits at most 0.1 world units/s of low-speed creep, with
-unchanged Coulomb saturation above that threshold. Nine captured dense-contact
+unchanged Coulomb saturation above that threshold. Twelve captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
-accelerated solves retain their remaining iterations; see
+accelerated solves retain their remaining iterations. After 512 ordinary sweeps,
+guarded numerical Newton corrections can resolve slow coupled normal/friction
+modes in either phase, using bounded automatic storage and no allocations. Every
+accepted correction reduces the finite physical residual and clears ordinary
+secant history; rejection restores exact motion. See
 `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or
 clock changes. Groups beyond the report budget retain conservative serial

@@ -9,7 +9,17 @@
 #include <math.h>
 #include <stddef.h>
 
-enum { DD2_GROUP_PASSES = 4096, DD2_GROUP_STALLED_PASSES = 64 };
+enum {
+    DD2_GROUP_PASSES = 4096,
+    DD2_GROUP_STALLED_PASSES = 64,
+    DD2_GROUP_NEWTON_AXES = 3,
+    DD2_GROUP_NEWTON_DIMENSIONS = DD2_GROUP_NEWTON_AXES * DD2_VEHICLE_CONTACT_LIMIT,
+    DD2_GROUP_NEWTON_PERIOD = 32,
+    DD2_GROUP_NEWTON_DELAY = 512,
+    DD2_GROUP_NEWTON_SEARCHES = 16
+};
+static const double dd2_group_newton_difference = 1e-5;
+static const double dd2_group_newton_pivot_floor = 1e-12;
 static const double dd2_group_clearance = 1e-4;
 static const double dd2_group_progress_fraction = 0.999;
 static const double dd2_group_velocity_tolerance = 1e-7;
@@ -387,6 +397,276 @@ static dd2_group_extrapolation dd2_group_extrapolate(dd2_group_workspace *worksp
     return DD2_GROUP_EXTRAPOLATION_REJECTED;
 }
 
+typedef struct {
+    dd2_vehicle_vector axes[DD2_GROUP_NEWTON_AXES];
+} dd2_group_basis;
+
+typedef struct {
+    dd2_group_iterate base;
+    dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_group_basis basis[DD2_VEHICLE_CONTACT_LIMIT];
+    double residual[DD2_GROUP_NEWTON_DIMENSIONS];
+    size_t dimensions;
+} dd2_group_newton_state;
+
+typedef struct {
+    double entries[DD2_GROUP_NEWTON_DIMENSIONS][DD2_GROUP_NEWTON_DIMENSIONS + 1];
+    double direction[DD2_GROUP_NEWTON_DIMENSIONS];
+    size_t dimensions;
+} dd2_group_linear_system;
+
+static dd2_group_basis dd2_group_contact_basis(dd2_vehicle_vector normal) {
+    const dd2_vehicle_vector reference =
+        fabs(normal.x) < 0.5 ? (dd2_vehicle_vector){.x = 1} : (dd2_vehicle_vector){.y = 1};
+    dd2_vehicle_vector tangent = dd2_collision_cross(normal, reference);
+    tangent = dd2_collision_scale(tangent, 1 / sqrt(dd2_collision_dot(tangent, tangent)));
+    return (dd2_group_basis){.axes = {normal, tangent, dd2_collision_cross(normal, tangent)}};
+}
+
+static void dd2_group_residuals(const dd2_group_workspace *workspace,
+                                const dd2_group_newton_state *state, double *residual) {
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_group_constraint *constraint = &workspace->constraints[index];
+        const dd2_group_friction friction = dd2_group_friction_candidate(workspace, index);
+        const double speed = dd2_collision_dot(dd2_group_velocity(workspace, index),
+                                               workspace->query->contacts[index].normal);
+        const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
+        residual[offset] =
+            constraint->normal_mass *
+            (constraint->normal_impulse -
+             fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass)));
+        const dd2_vehicle_vector difference =
+            dd2_collision_add(constraint->friction, dd2_collision_scale(friction.impulse, -1));
+        residual[offset + 1] =
+            friction.mass * dd2_collision_dot(difference, state->basis[index].axes[1]);
+        residual[offset + 2] =
+            friction.mass * dd2_collision_dot(difference, state->basis[index].axes[2]);
+    }
+}
+
+static dd2_group_newton_state dd2_group_newton_prepare(const dd2_group_workspace *workspace) {
+    dd2_group_newton_state state = {.base = dd2_group_values(workspace),
+                                    .dimensions = DD2_GROUP_NEWTON_AXES *
+                                                  (size_t)workspace->query->contact_count};
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        state.motion[body] = (dd2_group_motion){workspace->query->bodies[body].velocity,
+                                                workspace->query->bodies[body].angular_velocity};
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        state.basis[index] = dd2_group_contact_basis(workspace->query->contacts[index].normal);
+    }
+    dd2_group_residuals(workspace, &state, state.residual);
+    return state;
+}
+
+static void dd2_group_newton_apply(dd2_group_workspace *workspace,
+                                   const dd2_group_newton_state *state,
+                                   const dd2_group_iterate *candidate) {
+    dd2_group_restore(workspace, &state->base, state->motion);
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_vehicle_vector impulse = dd2_collision_add(
+            dd2_collision_scale(workspace->query->contacts[index].normal,
+                                candidate->normal[index] - state->base.normal[index]),
+            dd2_collision_add(candidate->friction[index],
+                              dd2_collision_scale(state->base.friction[index], -1)));
+        dd2_group_apply(workspace, index, impulse);
+        workspace->constraints[index].normal_impulse = candidate->normal[index];
+        workspace->constraints[index].friction = candidate->friction[index];
+    }
+}
+
+static double dd2_group_newton_perturb(dd2_group_iterate *candidate,
+                                       const dd2_group_newton_state *state, size_t column) {
+    const size_t index = column / DD2_GROUP_NEWTON_AXES;
+    const size_t axis = column % DD2_GROUP_NEWTON_AXES;
+    const double value =
+        axis == 0 ? state->base.normal[index]
+                  : dd2_collision_dot(state->base.friction[index], state->basis[index].axes[axis]);
+    const double change = dd2_group_newton_difference * fmax(1, fabs(value));
+    *candidate = state->base;
+    if (axis == 0) {
+        candidate->normal[index] += change;
+    } else {
+        candidate->friction[index] =
+            dd2_collision_add(candidate->friction[index],
+                              dd2_collision_scale(state->basis[index].axes[axis], change));
+    }
+    return change;
+}
+
+static void dd2_group_newton_matrix(dd2_group_workspace *workspace,
+                                    const dd2_group_newton_state *state,
+                                    dd2_group_linear_system *system) {
+    for (size_t column = 0; column < state->dimensions; ++column) {
+        dd2_group_iterate candidate = {0};
+        const double change = dd2_group_newton_perturb(&candidate, state, column);
+        dd2_group_newton_apply(workspace, state, &candidate);
+        double residual[DD2_GROUP_NEWTON_DIMENSIONS] = {0};
+        dd2_group_residuals(workspace, state, residual);
+        for (size_t row = 0; row < state->dimensions; ++row) {
+            system->entries[row][column] = (residual[row] - state->residual[row]) / change;
+        }
+    }
+    dd2_group_restore(workspace, &state->base, state->motion);
+    for (size_t row = 0; row < state->dimensions; ++row) {
+        system->entries[row][state->dimensions] = -state->residual[row];
+    }
+}
+
+static size_t dd2_group_linear_pivot(const dd2_group_linear_system *system, size_t column) {
+    size_t pivot = column;
+    for (size_t row = column + 1; row < system->dimensions; ++row) {
+        if (fabs(system->entries[row][column]) > fabs(system->entries[pivot][column])) {
+            pivot = row;
+        }
+    }
+    return pivot;
+}
+
+static bool dd2_group_linear_eliminate(dd2_group_linear_system *system, size_t column) {
+    const size_t pivot = dd2_group_linear_pivot(system, column);
+    if (fabs(system->entries[pivot][column]) < dd2_group_newton_pivot_floor) {
+        return false;
+    }
+    if (pivot != column) {
+        for (size_t entry = column; entry <= system->dimensions; ++entry) {
+            const double value = system->entries[column][entry];
+            system->entries[column][entry] = system->entries[pivot][entry];
+            system->entries[pivot][entry] = value;
+        }
+    }
+    for (size_t row = column + 1; row < system->dimensions; ++row) {
+        const double factor = system->entries[row][column] / system->entries[column][column];
+        for (size_t entry = column; entry <= system->dimensions; ++entry) {
+            system->entries[row][entry] -= factor * system->entries[column][entry];
+        }
+    }
+    return true;
+}
+
+static bool dd2_group_linear_solve(dd2_group_linear_system *system, size_t dimensions) {
+    for (size_t column = 0; column < dimensions; ++column) {
+        if (!dd2_group_linear_eliminate(system, column)) {
+            return false;
+        }
+    }
+    for (size_t remaining = dimensions; remaining > 0; --remaining) {
+        const size_t row = remaining - 1;
+        double value = system->entries[row][dimensions];
+        for (size_t column = row + 1; column < dimensions; ++column) {
+            value -= system->entries[row][column] * system->direction[column];
+        }
+        system->direction[row] = value / system->entries[row][row];
+        if (!dd2_numeric_finite(&system->direction[row])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+typedef struct {
+    const dd2_group_newton_state *state;
+    const double *direction;
+    double factor;
+} dd2_group_newton_prediction;
+
+static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *workspace,
+                                                    dd2_group_newton_prediction prediction) {
+    dd2_group_iterate candidate = prediction.state->base;
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
+        candidate.normal[index] =
+            fmax(0, candidate.normal[index] + (prediction.factor * prediction.direction[offset]));
+        candidate.friction[index] = dd2_collision_add(
+            candidate.friction[index],
+            dd2_collision_add(
+                dd2_collision_scale(prediction.state->basis[index].axes[1],
+                                    prediction.factor * prediction.direction[offset + 1]),
+                dd2_collision_scale(prediction.state->basis[index].axes[2],
+                                    prediction.factor * prediction.direction[offset + 2])));
+        const double magnitude =
+            sqrt(dd2_collision_dot(candidate.friction[index], candidate.friction[index]));
+        const double limit = workspace->query->contacts[index].friction * candidate.normal[index];
+        if (magnitude > limit) {
+            candidate.friction[index] =
+                dd2_collision_scale(candidate.friction[index], limit / magnitude);
+        }
+    }
+    return candidate;
+}
+
+/* Cold numerical Newton corrections preserve the same projected contact
+ * equations. The bounded dense matrix uses automatic storage, never allocation.
+ * Singular directions are skipped. Every rejected/backtracked trial restores
+ * exact motion, and only a smaller physical residual is accepted. */
+static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
+    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace);
+    dd2_group_linear_system system = {.dimensions = state.dimensions};
+    dd2_group_newton_matrix(workspace, &state, &system);
+    if (!dd2_group_linear_solve(&system, state.dimensions)) {
+        return false;
+    }
+    dd2_group_newton_prediction prediction = {&state, system.direction, 1};
+    for (unsigned attempt = 0; attempt < DD2_GROUP_NEWTON_SEARCHES; ++attempt) {
+        const dd2_group_iterate candidate = dd2_group_newton_candidate(workspace, prediction);
+        dd2_group_newton_apply(workspace, &state, &candidate);
+        const double predicted_error = dd2_group_velocity_error(workspace);
+        if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&predicted_error) &&
+            predicted_error < *error) {
+            *error = predicted_error;
+            return true;
+        }
+        prediction.factor /= 2;
+    }
+    dd2_group_restore(workspace, &state.base, state.motion);
+    return false;
+}
+
+static bool dd2_group_newton_advance(dd2_group_workspace *workspace, unsigned pass,
+                                     dd2_group_solution *result) {
+    if (pass + 1 < DD2_GROUP_NEWTON_DELAY || (pass + 1) % DD2_GROUP_NEWTON_PERIOD != 0) {
+        return false;
+    }
+    const bool corrected = dd2_group_newton(workspace, &result->velocity_error);
+    result->accelerated_passes += (unsigned)corrected;
+    return corrected;
+}
+
+static void dd2_group_sweep(dd2_group_workspace *workspace) {
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_group_contact contact = workspace->query->contacts[index];
+        dd2_group_constraint *constraint = &workspace->constraints[index];
+        const double speed =
+            dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
+        /* Exact unilateral coordinate response avoids amplifying coupled
+         * friction modes; guarded corrections handle slow convergence. */
+        const double next = fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass));
+        dd2_group_apply(workspace, index,
+                        dd2_collision_scale(contact.normal, next - constraint->normal_impulse));
+        constraint->normal_impulse = next;
+        const dd2_group_friction candidate = dd2_group_friction_candidate(workspace, index);
+        dd2_group_apply(
+            workspace, index,
+            dd2_collision_add(candidate.impulse, dd2_collision_scale(constraint->friction, -1)));
+        constraint->friction = candidate.impulse;
+    }
+}
+
+static void dd2_group_accelerate(dd2_group_workspace *workspace, const dd2_group_iterate *before,
+                                 dd2_group_history *history, dd2_group_solution *result) {
+    const dd2_group_iterate image = dd2_group_values(workspace);
+    const dd2_group_iterate step =
+        dd2_group_subtract(&image, before, workspace->query->contact_count);
+    if (history->ready) {
+        const dd2_group_prediction prediction = {history, &image, &step};
+        const dd2_group_extrapolation outcome =
+            dd2_group_extrapolate(workspace, &prediction, &result->velocity_error);
+        result->accelerated_passes += (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_ACCEPTED);
+        result->rejected_extrapolations += (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_REJECTED);
+    }
+    *history = (dd2_group_history){.image = image, .step = step, .ready = true};
+}
+
 static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solution *result) {
     dd2_group_history history = {0};
     dd2_group_motion initial[DD2_VEHICLE_FLEET_LIMIT] = {0};
@@ -399,48 +679,26 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
     bool accelerated = true;
     for (unsigned pass = 0; pass < DD2_GROUP_PASSES; ++pass) {
         const dd2_group_iterate before = dd2_group_values(workspace);
-        for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
-            const dd2_group_contact contact = workspace->query->contacts[index];
-            dd2_group_constraint *constraint = &workspace->constraints[index];
-            const double speed =
-                dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
-            /* Exact unilateral coordinate response avoids amplifying coupled
-             * friction modes; the guarded secant handles slow convergence. */
-            const double next =
-                fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass));
-            dd2_group_apply(workspace, index,
-                            dd2_collision_scale(contact.normal, next - constraint->normal_impulse));
-            constraint->normal_impulse = next;
-            const dd2_group_friction candidate = dd2_group_friction_candidate(workspace, index);
-            dd2_group_apply(workspace, index,
-                            dd2_collision_add(candidate.impulse,
-                                              dd2_collision_scale(constraint->friction, -1)));
-            constraint->friction = candidate.impulse;
-        }
+        dd2_group_sweep(workspace);
         result->velocity_passes = pass + 1;
         result->velocity_error = dd2_group_velocity_error(workspace);
         if (result->velocity_error < dd2_group_velocity_tolerance) {
             return true;
         }
+        const bool corrected = dd2_group_newton_advance(workspace, pass, result);
+        if (corrected) {
+            /* A Newton correction changes the fixed-point image. Do not mix
+             * its displacement into an ordinary-sweep secant or retain stale
+             * history across that correction. */
+            history.ready = false;
+        } else if (accelerated) {
+            dd2_group_accelerate(workspace, &before, &history, result);
+        }
+        if (result->velocity_error < dd2_group_velocity_tolerance) {
+            return true;
+        }
         if (!accelerated) {
             continue;
-        }
-        const dd2_group_iterate image = dd2_group_values(workspace);
-        const dd2_group_iterate step =
-            dd2_group_subtract(&image, &before, workspace->query->contact_count);
-        if (history.ready) {
-            /* A secant through consecutive impulse fixed-point steps predicts
-             * slow modes. Project its normal/friction cones, then accept only
-             * a finite candidate with strictly smaller physical residual. */
-            const dd2_group_prediction prediction = {&history, &image, &step};
-            const dd2_group_extrapolation outcome =
-                dd2_group_extrapolate(workspace, &prediction, &result->velocity_error);
-            result->accelerated_passes += (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_ACCEPTED);
-            result->rejected_extrapolations +=
-                (unsigned)(outcome == DD2_GROUP_EXTRAPOLATION_REJECTED);
-            if (result->velocity_error < dd2_group_velocity_tolerance) {
-                return true;
-            }
         }
         if (result->velocity_error < progress_error * dd2_group_progress_fraction) {
             progress_error = result->velocity_error;
@@ -449,19 +707,15 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
             ++stalled;
         }
         if (stalled >= DD2_GROUP_STALLED_PASSES) {
-            /* Locally improving secants can keep revisiting a worse cycle.
-             * Restart once from the exact input motion, with zero accumulated
-             * impulses and ordinary coordinate steps. Retain every contact and
-             * keep both phases within the existing total pass budget. A slowly
-             * converging accelerated solve retains its remaining passes. */
+            /* Restart once from exact input motion with zero impulses and
+             * secants disabled. Delayed Newton remains available after the
+             * active constraints settle, within the same total pass budget. */
             const dd2_group_iterate empty = {0};
             dd2_group_restore(workspace, &empty, initial);
             accelerated = false;
             ++result->coordinate_restarts;
             history.ready = false;
-            continue;
         }
-        history = (dd2_group_history){.image = image, .step = step, .ready = true};
     }
     return false;
 }

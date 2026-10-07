@@ -53,11 +53,19 @@ compact failing queries and the prepared source remain for diagnosis.
 
 ## Next
 
-Reproduce the private step52379 twelve-body failure and assess the restricted
-Newton approach against every constitutive oracle and production gate. The
-production step52337 failure remains open. Preserve material laws, tolerances
-and the pass budget, then run the complete production race suite. Expand
-ordinary physically completed circuit coverage beyond circuit 5.
+Closed 0020 now integrates delayed bounded coupled corrections in both phases.
+The private step52379 twelve-body query independently reproduces on Native with
+the old production solver. The new seven-body and twelve-body queries and the
+four-body fallback pass all independent material/motion checks on Native, WASM
+and fully instrumented ASan/UBSan. Required 32 Native/31 WASM CTests and strict
+LLVM19 for 145 owned files pass. Reports are under
+/tmp/wasm-dd2/rewrite-delayed-contact-verification/. No complete natural-race
+pass is established by these component checks.
+
+Run the current production arena B on all three targets and diagnose any new
+failure, preserving material laws, tolerances and the shared pass budget. Then
+run the complete production race suite and expand ordinary physically completed
+circuit coverage beyond circuit 5.
 
 ## Accept
 

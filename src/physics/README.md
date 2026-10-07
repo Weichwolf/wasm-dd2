@@ -316,9 +316,25 @@ remaining iterations; an unconditional halfway restart can interrupt a healthy
 slow mode. Both phases share the unchanged 4,096 total-pass bound. All contacts,
 material laws, initial-normal-speed metadata and position repair are retained;
 reported velocity passes include work before and after restart. The result
-reports the single restart explicitly. Three arena-B regressions cover a captured
-five-contact cycle, simultaneous sloped-ground/wall/flat-ground support and a
-ten-contact, eight-body chain which needs 3,467 accelerated iterations, with
+reports the single restart explicitly.
+
+After 512 ordinary sweeps, a bounded numerical Newton correction is available
+every 32 passes, including after restart. Ordinary sweeps first settle active
+normal/friction branches. A three-axis contact basis describes the projected
+normal complementarity and tangential friction equations; finite differences
+form their coupled Jacobian. Pivoted elimination skips singular directions.
+The proposed impulses are projected into their cones and backtracked up to
+sixteen times. Only finite motion with a strictly smaller physical residual is
+accepted; rejected probes restore exact velocities and accumulated impulses.
+An accepted correction clears ordinary-sweep secant history so the two kinds of
+displacement cannot form a false fixed-point prediction. The dense matrix has
+at most 192 axes in automatic storage, with no allocation or contact omission.
+Corrections and restarts share the existing 4,096-pass bound.
+
+Six arena-B regressions cover a five-contact cycle, simultaneous
+sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
+nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
+and a seven-contact/four-body fallback. All twelve frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
@@ -359,7 +375,8 @@ conservative time bound, increments `unresolved_sweeps`, and leaves velocity,
 health and accident attribution without a manufactured response. Validation or final-state failure preserves
 every proposed body and clears known-size event outputs. Typed stack copies keep
 the solve transactional without per-step allocations; WASM consumers reserve
-256 KiB stack space. `collision_math.h` shares the existing vector, rotation and
+1 MiB stack space for the bounded contact matrix and its callers.
+`collision_math.h` shares the existing vector, rotation and
 impulse calculations with single-body ground/barrier entry points.
 
 Synthetic Native/WASM/ASan tests check analytic fast frontal contact times and

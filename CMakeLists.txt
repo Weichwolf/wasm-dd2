@@ -66,9 +66,9 @@ add_library(dd2_physics STATIC src/physics/road_contact.c src/physics/road_surfa
 target_include_directories(dd2_physics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_physics PUBLIC dd2_assets m)
 if(EMSCRIPTEN)
-    # The transactional 20-body solver and its caller need more than the SDK's
-    # default 64 KiB stack. Reserve headroom for nested geometry queries.
-    target_link_options(dd2_physics INTERFACE -sSTACK_SIZE=262144)
+    # Delayed coupled corrections use a bounded automatic 192-axis matrix.
+    # Keep headroom for the transactional fleet and nested geometry queries.
+    target_link_options(dd2_physics INTERFACE -sSTACK_SIZE=1048576)
 endif()
 dd2_strict_target(dd2_physics)
 
