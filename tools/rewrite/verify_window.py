@@ -383,6 +383,10 @@ def native_championship_checks(ui, expected):
     evidence = []
     for key, leave in [('c', 'Escape'), ('n', 'F7')]:
         ui.command('key', key)
+        # Preparing the owned track/field can exceed the stable-frame interval.
+        # A changed presentation acknowledges entry before testing its pause;
+        # repeated captures of the previous inspection image cannot do that.
+        ui.wait(lambda: ui.image().tobytes() != expected.tobytes())
         ui.command('key', 'p')
         baseline = ui.stable()
         if baseline == expected.tobytes():
@@ -406,6 +410,7 @@ def native_championship_checks(ui, expected):
                          'paused_sha256': digest(baseline),
                          'restarted_sha256': digest(restarted)})
     return {'pass_': True, 'real_x11_keys': True, 'schedule_locked': True,
+            'entry_presentation_acknowledged': True,
             'pause_and_restart': True, 'unscored_exit': True, 'cases': evidence}
 
 

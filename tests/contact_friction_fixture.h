@@ -2466,6 +2466,44 @@ static const dd2_group_contact dd2_friction_arena_b_sticking_contacts[] = {
      .penetration = -0.00018338520663974123,
      .friction = 0.25},
 };
+/* Native Stockcar championship, second scheduled circuit, physical tick 59,399
+ * at e430c3a. Only fleet driver 8 participates in this certified three-support
+ * event. A sticking direction can improve the residual less than the projected
+ * direction; selecting the first improvement exhausts 4,096 velocity passes.
+ * This frozen rewrite query establishes no original trajectory parity.
+ * Query SHA256: 1a8311532d815058a8dff20b0eb9f4081694af7de13f5818239a3fa4ca564da9 */
+static const dd2_vehicle dd2_friction_championship_world_body[] = {
+    {.position = {.x = 27488.95843901113, .y = 8505.1925000783685, .z = 67575.314907889449},
+     .velocity = {.x = -0.022652663447789489, .y = -9.9341214657423453, .z = -0.38992669973171745},
+     .rotation = {.x = -0.71385785612102715,
+                  .y = -0.42030513985151835,
+                  .z = 0.21663248134018279,
+                  .w = 0.51654711178853951},
+     .angular_velocity = {.x = 0.013774529037139074,
+                          .y = -0.0063315809139177859,
+                          .z = -0.016037030594096939}},
+};
+static const dd2_group_contact dd2_friction_championship_world_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27002.639779253474, .y = 8616.5676048601017, .z = 67504.000482936623},
+     .normal = {.x = 0.23136005789828434, .y = 0.97242396191320646, .z = -0.029396630866905662},
+     .penetration = 2.8700959572294446e-10,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27775.143245921179, .y = 8435.3490952396769, .z = 67510.823144914437},
+     .normal = {.x = -0.48333117454769703, .y = 0, .z = 0.87543759098541318},
+     .penetration = -9.1724030447903725e-05,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27975.277098768875, .y = 8393.8173031372007, .z = 67646.629332842262},
+     .normal = {.x = 0.22128621917954439, .y = 0.97480711027741851, .z = -0.027991194219102462},
+     .penetration = -8.9837939345626891e-05,
+     .friction = 0.80000000000000004},
+};
+
 static const dd2_friction_case dd2_friction_cases[] = {
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
@@ -2548,6 +2586,11 @@ static const dd2_friction_case dd2_friction_cases[] = {
      .contact_count =
          sizeof(dd2_friction_native11_contacts) / sizeof(dd2_friction_native11_contacts[0]),
      .name = "native11"},
+    {.initial = dd2_friction_championship_world_body,
+     .contacts = dd2_friction_championship_world_contacts,
+     .body_count = 1,
+     .contact_count = 3,
+     .name = "championship circuit 2 world junction"},
 };
 
 #endif

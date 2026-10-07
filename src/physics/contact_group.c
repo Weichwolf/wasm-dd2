@@ -691,11 +691,19 @@ static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error
     return false;
 }
 
+static void dd2_group_copy_motion(const dd2_group_workspace *workspace, dd2_group_motion *motion) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        const dd2_vehicle *vehicle = &workspace->query->bodies[body];
+        motion[body] = (dd2_group_motion){vehicle->velocity, vehicle->angular_velocity};
+    }
+}
+
 /* A saturated world support can approach a sticking branch with a nearly
- * singular projected Jacobian. Try its zero-slip equations as a direction only;
- * cone projection and unchanged physical acceptance still enforce Coulomb law.
- * Rejected or singular sticking trials restore exact motion before the ordinary
- * projected-root trial. Unloaded/frictionless supports are never forced to stick. */
+ * singular projected Jacobian. Compare its zero-slip direction with the
+ * projected-root direction from the same exact input motion. Accept the lower
+ * physical residual: a small sticking improvement must not repeatedly prevent
+ * a stronger projected correction. Cone projection still enforces Coulomb law;
+ * unloaded/frictionless supports are never forced to stick. */
 static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     bool supported = false;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
@@ -703,10 +711,30 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
         supported = supported || (!dd2_group_pair(contact) && contact.friction > 0 &&
                                   workspace->constraints[index].normal_impulse > 0);
     }
-    if (supported && dd2_group_newton_trial(workspace, error, true)) {
+    if (!supported) {
+        return dd2_group_newton_trial(workspace, error, false);
+    }
+    const dd2_group_iterate base = dd2_group_values(workspace);
+    dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_group_copy_motion(workspace, motion);
+    double projected_error = *error;
+    const bool projected = dd2_group_newton_trial(workspace, &projected_error, false);
+    const dd2_group_iterate projected_values = dd2_group_values(workspace);
+    dd2_group_motion projected_motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_group_copy_motion(workspace, projected_motion);
+    dd2_group_restore(workspace, &base, motion);
+    double sticking_error = *error;
+    const bool sticking = dd2_group_newton_trial(workspace, &sticking_error, true);
+    if (sticking && (!projected || sticking_error < projected_error)) {
+        *error = sticking_error;
         return true;
     }
-    return dd2_group_newton_trial(workspace, error, false);
+    if (projected) {
+        dd2_group_restore(workspace, &projected_values, projected_motion);
+        *error = projected_error;
+        return true;
+    }
+    return false;
 }
 
 static bool dd2_group_newton_advance(dd2_group_workspace *workspace, unsigned pass,

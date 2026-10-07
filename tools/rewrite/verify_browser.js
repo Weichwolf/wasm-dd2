@@ -362,15 +362,35 @@ async function championshipChecks(page) {
     await page.keyboard.down('w');
     try {await pause(200);if(JSON.stringify(await snapshot())!==JSON.stringify(initial))throw new Error('Paused scheduled championship advanced');}
     finally {await page.keyboard.up('w');}
+    // Observe the real click after the production listener resets the owner.
+    // Playwright can spend longer than the countdown waiting for the subsequent
+    // Pause click; its eventual snapshot cannot certify the reset's initial tick.
+    await page.evaluate(()=>{
+      window.championshipRestartObservation=null;
+      document.querySelector('#reset').addEventListener('click',event=>{
+        window.championshipRestartObservation={trusted:event.isTrusted,
+          phase:Module._dd2_application_championship_phase(),
+          steps:Module._dd2_application_race_steps(),
+          round:Module._dd2_application_championship_round(),
+          points:Module._dd2_application_championship_points(0),
+          count:Module._dd2_application_vehicle_count(),
+          paused:Module._dd2_application_is_paused()};
+      },{once:true});
+    });
     await page.locator('#reset').click();
+    const resetObserved=await page.evaluate(()=>window.championshipRestartObservation);
+    if(!resetObserved||!resetObserved.trusted||resetObserved.phase!==1||resetObserved.steps!==0||
+      resetObserved.round!==1||resetObserved.points!==0||resetObserved.count!==20||resetObserved.paused!==0)
+      throw new Error('Trusted championship restart did not reset the actual field: '+JSON.stringify(resetObserved));
     await page.locator('#pause').click();
     await page.waitForFunction(()=>Module._dd2_application_is_paused()===1);
     const restarted=await snapshot();
-    if(restarted.round!==1||restarted.points!==0||restarted.steps>=400)throw new Error('Unfinished restart lost championship');
+    if(restarted.round!==1||restarted.points!==0)
+      throw new Error('Unfinished restart lost championship: '+JSON.stringify({key,initial,restarted}));
     if(key==='c')await page.locator('#finish').click();else await page.keyboard.press('Escape');
     await page.waitForFunction(()=>Module._dd2_application_championship_phase()===-1);
     await match(page,'1','scene');
-    cases.push({key,initial,restarted,unscored_exit:true});
+    cases.push({key,initial,resetObserved,restarted,unscored_exit:true});
   }
   for(const selected of ['7','8']) {
     await page.selectOption('#view',selected);
@@ -392,7 +412,7 @@ async function championshipChecks(page) {
   if(await page.evaluate(()=>Module._dd2_application_current_level())!==1)throw new Error('Free driving lost the visible scheduled circuit');
   await page.selectOption('#view','0');await match(page,'1','scene');
   report.championship={pass_:true,practice_mode_uses_visible_track:true,real_keys:true,browser_selector:true,schedule_locked:true,
-    pause_and_restart:true,unscored_exit:true,cases};
+    pause_and_restart:true,trusted_restart_zero_tick:true,unscored_exit:true,cases};
 }
 
 async function main() {

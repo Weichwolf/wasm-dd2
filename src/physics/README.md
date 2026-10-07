@@ -331,10 +331,12 @@ to zero; simply clipping it would invalidate every coupled equation. Releases
 are monotone within the prediction, bounding refits to the contact count plus
 one. They do not remove contacts from the physical solve.
 
-Loaded world supports first try a zero-slip branch for the Newton direction,
-because a saturated support approaching sticking can have a nearly singular
-projected Jacobian. A rejected/singular sticking trial restores exact motion
-before trying the ordinary projected equations. Frictionless or unloaded
+Loaded world supports compare a zero-slip Newton direction with the ordinary
+projected equations because a saturated support approaching sticking can have a
+nearly singular projected Jacobian. Both trials start from the same exact motion
+and impulses; the accepted direction with the smaller physical residual wins.
+A small improvement from an infeasible all-sticking branch cannot repeatedly
+prevent a stronger projected correction. Frictionless or unloaded
 supports keep their original equations. Both trials retain Coulomb cone
 projection and the same physical residual acceptance; the alternate equations
 cannot change the material law or force an infeasible sticking impulse.
@@ -354,8 +356,9 @@ sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
 and a seven-contact/four-body fallback, plus an eighteen-contact/thirteen-body
 pressure-sensitive support query, plus a ten-contact/seven-body normal-release
-query and a seven-contact/six-body transition to sticking. All fifteen frozen
-queries retain
+query and a seven-contact/six-body transition to sticking. A three-support
+Circuit-2 championship query additionally checks a stronger projected correction
+against a weaker accepted sticking direction. All sixteen frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
