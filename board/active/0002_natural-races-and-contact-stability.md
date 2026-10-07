@@ -19,6 +19,21 @@ Native B AI capture at6fc2fe2 confirms slots12/13 target one another after step~
 
 A production-equivalent private WASM replay of4f0aeac passes the frozen query but aborts at race step52337, seventeen steps later. Report: /tmp/wasm-dd2/rewrite-arenaB-restart-failure/candidate-race-report.json. The fresh bounded capture under /tmp/wasm-dd2/rewrite-arenaB-stagnation-failure/ is terminal. Its nine contacts connect seven bodies; Native independently reproduces the4096-pass failure with0.0004257565 units/s residual and no coordinate restart. A private best-state fallback also fails, because this query never enters fallback. Reports: report.json and replay-report.json. Improve accelerated convergence for the coupled slow modes without changing material laws or relaxing the pass/tolerance budget. No full natural-race pass is claimed.
 
+Private follow-up diagnostics are recorded in
+/tmp/wasm-dd2/rewrite-coupled-secants/report.json. Two-direction and deeper
+secant histories, exact tangential coordinates and local normal/friction blocks
+still fail the seven-body query. Sparse residuals locate the dominant slow mode
+at its two world contacts. A private finite-difference Newton step solves the
+query on Native, WASM and ASan/UBSan within the unchanged 4096-pass budget. Native
+and sanitized independent ten-query material checks pass; WASM fails the
+native15 final constitutive oracle. Its actual WASM arena also aborts at step
+18062. That new four-body/seven-contact state reproduces the private failure on
+Native while the unchanged production solver succeeds. The private candidate
+is rejected and is not integrated; its temporary matrix allocation also does
+not meet the production no-allocation contract. Terminal experiment binaries
+and successful raw diagnostics were removed after recording identities and
+reports. Compact queries and private sources remain for the next diagnosis.
+
 ## Next
 
 Diagnose the captured step52337 failure, retain independent material checks, then run the complete production suite and fix the solver without changing constitutive acceptance checks. Re-run the complete production race suite and all required gates. Expand ordinary physically completed circuit coverage beyond circuit 5.
