@@ -8,11 +8,16 @@ Implement actual championship races, standings, original schedules/divisions, se
 
 ## Evidence
 
-Practice results already use actual simulated twenty-driver scores. A private single-player league prototype matches 6241 targeted original-x86 cases on three targets (0015); there is no published championship owner, grid integration, season UI or persistence yet.
+Practice results already use actual simulated twenty-driver scores. Published
+single-player league rules match 6241 targeted original-x86 cases on Native,
+WASM and ASan/UBSan (closed 0015). There is no championship owner, consuming
+physical-grid integration, season UI or persistence yet.
 
 ## Next
 
-Publish 0015, then implement the championship owner, stable-ID physical grids and exactly-once result consumption. Add original schedules, history/unlocks and consuming front-end/save flows.
+Implement the championship owner, stable-ID physical grids and exactly-once
+result consumption using game/league.h. Add original schedules, history/unlocks
+and consuming front-end/save flows.
 
 ## Accept
 

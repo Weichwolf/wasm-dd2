@@ -12,7 +12,7 @@ its game requirements or acceptance rules.
 | [0001](closed/0001_rewrite-reference-boundary.md) | master rewrite and ghidra reference | closed |
 | [0002](active/0002_natural-races-and-contact-stability.md) | Natural races and contact stability | active |
 | [0014](closed/0014_repository-layout-and-backlog.md) | Repository layout and backlog | closed |
-| [0015](open/0015_typed-league-foundation.md) → [0004](open/0004_championships.md) | League foundation and complete championships | open |
+| [0015](closed/0015_typed-league-foundation.md) → [0004](open/0004_championships.md) | League foundation and complete championships | closed / open |
 | [0003](open/0003_frontend-and-menus.md) | Complete front end and menu actions | open |
 | [0005](open/0005_vehicles-and-damage.md) | Every vehicle/class/livery and damage behavior | open |
 | [0016](open/0016_ai-tactics-and-offroad-recovery.md) | AI tactics and off-road recovery | open |
@@ -28,8 +28,8 @@ its game requirements or acceptance rules.
 | [0018](closed/0018_preserve-converging-contact-iterations.md) | Preserve iterations for converging contact chains | closed |
 | [0019](closed/0019_english-repository-and-browser-layout.md) | English repository text and browser layout | closed |
 
-Stabilize ordinary races first, then publish the proven league foundation and
-connect full championship/front-end/save flows. Audio, input and visual work
+Continue stabilizing ordinary races, then connect the proven league foundation
+to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
 ## Workflow and acceptance
