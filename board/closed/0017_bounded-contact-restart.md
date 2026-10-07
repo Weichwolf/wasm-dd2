@@ -30,9 +30,11 @@ LLVM19 gates plus31 Native/30 WASM CTests pass. Receipts:
 
 ## Next
 
-Continue natural arena/circuit and full-game acceptance in0002. The focused
-ordinary arena-B race is running on all three targets; frozen-query success does
-not close its natural race behavior. AI sustained motion remains open in0016.
+Follow-up0018 supersedes the unconditional halfway restart and half-budget
+reservation: a healthy ten-contact chain requires3467 accelerated iterations.
+Measured-stagnation restart and the shared4096 total bound remain. Continue
+natural race/full-game acceptance in0002; the6fc2fe2 run passes Native but
+fails WASM and sanitized advancement. AI sustained motion remains open in0016.
 
 ## Accept
 

@@ -311,12 +311,14 @@ strictly smaller finite physical residual. Rejection restores exact saved motion
 and impulses. If the best physical residual does not improve by 0.1% over
 64 accelerated passes, the solver restarts once from exact original velocities
 and angular velocities, clearing all accumulated impulses. It then uses ordinary
-coordinate response without secants. Acceleration also stops at pass 2,048 to
-reserve half the unchanged 4,096 total-pass bound for that response. All contacts,
+coordinate response without secants. A converging accelerated solve retains its
+remaining iterations; an unconditional halfway restart can interrupt a healthy
+slow mode. Both phases share the unchanged 4,096 total-pass bound. All contacts,
 material laws, initial-normal-speed metadata and position repair are retained;
 reported velocity passes include work before and after restart. The result
-reports the single restart explicitly. Two arena-B regressions cover a captured
-five-contact cycle and simultaneous sloped-ground/wall/flat-ground support, with
+reports the single restart explicitly. Three arena-B regressions cover a captured
+five-contact cycle, simultaneous sloped-ground/wall/flat-ground support and a
+ten-contact, nine-body chain which needs 3,467 accelerated iterations, with
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

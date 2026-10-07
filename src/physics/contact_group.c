@@ -9,11 +9,7 @@
 #include <math.h>
 #include <stddef.h>
 
-enum {
-    DD2_GROUP_PASSES = 4096,
-    DD2_GROUP_ACCELERATION_PASSES = DD2_GROUP_PASSES / 2,
-    DD2_GROUP_STALLED_PASSES = 64
-};
+enum { DD2_GROUP_PASSES = 4096, DD2_GROUP_STALLED_PASSES = 64 };
 static const double dd2_group_clearance = 1e-4;
 static const double dd2_group_progress_fraction = 0.999;
 static const double dd2_group_velocity_tolerance = 1e-7;
@@ -452,11 +448,12 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
         } else {
             ++stalled;
         }
-        if (stalled >= DD2_GROUP_STALLED_PASSES || pass + 1 == DD2_GROUP_ACCELERATION_PASSES) {
+        if (stalled >= DD2_GROUP_STALLED_PASSES) {
             /* Locally improving secants can keep revisiting a worse cycle.
              * Restart once from the exact input motion, with zero accumulated
              * impulses and ordinary coordinate steps. Retain every contact and
-             * reserve half the existing total budget for unaccelerated response. */
+             * keep both phases within the existing total pass budget. A slowly
+             * converging accelerated solve retains its remaining passes. */
             const dd2_group_iterate empty = {0};
             dd2_group_restore(workspace, &empty, initial);
             accelerated = false;

@@ -13,11 +13,13 @@ A private best-residual secant safeguard solves that frozen query and six prior 
 
 The full post-pruning AI run passes the first ten levels on all targets; arena B Native and sanitized slot12 miss sustained travel (9010.022/9769.014<10000), although all2400 samples are supported. Keep the original threshold and diagnose this behavior. Report: /tmp/wasm-dd2/rewrite-connected-ai-verification/terminal-report.json.
 
-Closed0017 now supplies a bounded ordinary-coordinate restart while retaining all contacts/material checks and4096 total passes. The5contact failure completes in477 passes and the3world junction in40 on all targets. Required31Native/30WASM gates and independent material checks pass. A fresh production B-total-survive run is active under /tmp/wasm-dd2/rewrite-restart-arenaB-verification; natural behavior is not yet accepted.
+Closed0017 now supplies a bounded ordinary-coordinate restart while retaining all contacts/material checks and4096 total passes. The5contact failure completes in477 passes and the3world junction in40 on all targets. Required31Native/30WASM gates and independent material checks pass. The fresh production B-total-survive run under /tmp/wasm-dd2/rewrite-restart-arenaB-verification reaches natural Native retirement after93.975 seconds; WASM fails at race step52320; sanitized also aborts advancement at race step48037. This selected run is terminal and fails overall. Report: /tmp/wasm-dd2/rewrite-restart-arenaB-verification/terminal-report.json. A bounded ten-contact/nine-body capture shows that forced restart at2048 interrupts a healthy accelerated solve needing3467 iterations. Follow-up0018 removes that unconditional trigger while preserving stagnation detection and the total budget; production31Native/30WASM and strictLLVM19 gates pass, as do independent nine-query/material checks on all three targets.
+
+Native B AI capture at6fc2fe2 confirms slots12/13 target one another after step~2000 and spend much of the remaining drive reversing with all wheels supported. A private alternate-target escape prototype lowers travel to8072.943/8644.802 and is rejected. Report: /tmp/wasm-dd2/rewrite-arenaB-ai-diagnosis/report.json. These are control/movement diagnostics, not complete AI acceptance.
 
 ## Next
 
-Inspect the next failed query, prove the cause and fix the solver without changing constitutive acceptance checks. Re-run the complete production race suite and all required gates. Expand ordinary physically completed circuit coverage beyond circuit 5.
+Inspect the private0018 WASM natural replay, run the complete production suite, then inspect any next failed query and fix the solver without changing constitutive acceptance checks. Re-run the complete production race suite and all required gates. Expand ordinary physically completed circuit coverage beyond circuit 5.
 
 ## Accept
 
