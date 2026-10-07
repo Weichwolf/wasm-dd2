@@ -68,7 +68,7 @@ the unchanged-bound Native season probe proceeds to second-round tick 66,449.
 Its first ten-lap round still completes naturally at tick 287,081. A separate
 four-world-contact velocity failure now stops driver 8; player engine health is
 0.5166984465536384. The failed step is reproduced from one 31,216-byte checkpoint
-and remains open under 0027. Evidence:
+and supplied the now-proved contact contract under 0027. Evidence:
 /tmp/wasm-dd2/rewrite-world-branch-selection/selection-report.json and
 /tmp/wasm-dd2/rewrite-stock-season-next-failure/report.json. Neither this progress
 nor the separately passing eight-lap Circuit-5 race proves complete seasons.
@@ -83,9 +83,19 @@ retain real input, score ownership and existing timeout bounds. These current
 window regressions are separate from the earlier nine natural first-round
 application cases and the still-open complete-season contract.
 
+The shared low-speed contact law in 0027 passes its saved input and all current
+Native/browser/sanitized window flows. The fresh Native season completes its first
+round at tick 287,087, then reaches the coupled drivers-11/13 support failure at
+second-round tick 86,643. The regular race bound is unchanged. Current scoped
+quality/physical/presentation receipt:
+/tmp/wasm-dd2/rewrite-world-friction-transition/report.json. The next retained
+checkpoint and diagnosis are /tmp/wasm-dd2/rewrite-season-86643/report.json.
+Complete seasons and the nine earlier application first-round cases keep their
+separate scopes.
+
 ## Next
 
-Resolve the mixed world supports at round-2 tick 66,449 under 0027 using the
+Resolve the coupled supports at round-2 tick 86,643 under 0028 using the
 retained bounded probe and needed checkpoint. Preserve the regular race rules,
 AI controls, damage and score ownership. Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field

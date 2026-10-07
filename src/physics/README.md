@@ -289,14 +289,16 @@ support. The retained contact preserves primary impact metadata and the deepest
 queried gap for position repair. A rotating roof-down regression checks distinct
 support records, subsequent event chronology, energy loss and road clearance. Primary restitution/friction is
 applied once; `contact_group.c` then solves inelastic normal and friction
-constraints together. Static world supports use Coulomb sliding/sticking. Car
-pairs use a continuous low-speed friction law: with cone radius `L = mu * N`,
+constraints together. World supports and car pairs share a continuous low-speed
+friction law: with cone radius `L = mu * N`,
 the tangential impulse is `-L * slip / max(0.1, length(slip))`. Below 0.1 world
 units/s the opposing impulse grows linearly with final slip; above that threshold
 it saturates at the same Coulomb limit. This permits bounded microscopic creep
-(1/9,000 of the 900-unit body length per second) between cars. It is documented
-rewrite material tuning, rather than original physics parity or ideal sticking
-between cars. The implicit friction softness is capped at 1e12 to keep vanishing
+(1/9,000 of the 900-unit body length per second) at nearly stationary contacts.
+This is deliberate rewrite material tuning. It avoids ambiguous ideal sticking
+at almost parallel ground/wall supports while preserving normal complementarity,
+the friction cone, dissipative response and Coulomb saturation above 0.1 units/s.
+The implicit friction softness is capped at 1e12 to keep vanishing
 pressure finite; the cap affects only cone radii at or below 1e-13 impulse units.
 Friction uses a fixed step bounded by the trace of the tangential mobility
 matrix; a slip-direction mass can oscillate when that
@@ -331,15 +333,17 @@ to zero; simply clipping it would invalidate every coupled equation. Releases
 are monotone within the prediction, bounding refits to the contact count plus
 one. They do not remove contacts from the physical solve.
 
-Loaded world supports compare a zero-slip Newton direction with the ordinary
-projected equations because a saturated support approaching sticking can have a
-nearly singular projected Jacobian. Both trials start from the same exact motion
+Loaded world supports compare a zero-friction-gradient Newton direction with the
+ordinary projected equations because a saturated support approaching the linear
+low-speed branch can have a nearly singular projected Jacobian. The alternate
+gradient includes the same pressure-dependent softness as the material law.
+Both trials start from the same exact motion
 and impulses; the accepted direction with the smaller physical residual wins.
-A small improvement from an infeasible all-sticking branch cannot repeatedly
+A small improvement from an infeasible all-linear branch cannot repeatedly
 prevent a stronger projected correction. Frictionless or unloaded
 supports keep their original equations. Both trials retain Coulomb cone
 projection and the same physical residual acceptance; the alternate equations
-cannot change the material law or force an infeasible sticking impulse.
+cannot change the material law or force an infeasible friction impulse.
 The proposed impulses are projected into their cones and backtracked up to
 sixteen times. Only finite motion with a strictly smaller physical residual is
 accepted; rejected probes restore exact velocities and accumulated impulses.
@@ -358,7 +362,9 @@ and a seven-contact/four-body fallback, plus an eighteen-contact/thirteen-body
 pressure-sensitive support query, plus a ten-contact/seven-body normal-release
 query and a seven-contact/six-body transition to sticking. A three-support
 Circuit-2 championship query additionally checks a stronger projected correction
-against a weaker accepted sticking direction. All sixteen frozen queries retain
+against a weaker accepted alternate direction. A four-world-support Circuit-2
+query checks the shared low-speed law at the later tick-66,449 failure. All
+seventeen frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
@@ -374,11 +380,15 @@ the car-pair friction law, conserved linear/angular momentum, energy loss,
 position clearance, centered repair and unchanged orientation/physical clocks,
 including accepted and rejected predictions. These checks cover response at a
 certified pose; natural arena completion is verified separately.
-`rewrite_contact_friction` adds ten analytic two-body cases across the linear/saturated transition and six
+`rewrite_contact_friction` adds ten analytic world and ten analytic two-body cases
+across the linear/saturated transition and six
 frozen original-data arena-9 rewrite queries with 15/7/22/10/19/11 contacts. Its
 independent checks reconstruct linear/angular impulses from the published
 responses, check the constitutive law in final velocity units, and retain normal
 complementarity, friction cones, energy loss, clearance, orientation and clocks.
+The released-normal fixture requires the bounded coordinate restart on all three
+targets. The former world/car cycle converges without a restart under the shared
+material law; its physical conditions remain checked.
 The stored poses retain their captured values; they are rewrite simulation
 states, not original executable trajectories. Passing these cases does not
 establish complete natural arena behavior. A separate equal-mass, least-norm

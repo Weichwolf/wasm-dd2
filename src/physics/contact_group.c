@@ -183,6 +183,12 @@ typedef struct {
     double mass;
 } dd2_group_friction;
 
+static double dd2_group_friction_softness(double limit) {
+    return limit == 0 ? 0
+                      : dd2_group_micro_slip /
+                            fmax(limit, dd2_group_micro_slip / dd2_group_max_friction_softness);
+}
+
 static dd2_group_friction dd2_group_friction_candidate(const dd2_group_workspace *workspace,
                                                        unsigned index) {
     const dd2_group_contact contact = workspace->query->contacts[index];
@@ -192,17 +198,13 @@ static dd2_group_friction dd2_group_friction_candidate(const dd2_group_workspace
     if (limit == 0) {
         return candidate;
     }
-    /* Implicit regularized car-body friction: below 0.1 world units/s, the
+    /* Implicit regularized body/world friction: below 0.1 world units/s, the
      * opposing impulse grows linearly with slip; above it, Coulomb saturation
      * is unchanged. The tiny creep avoids ambiguous stick/slip branches in
-     * tightly coupled bodies. Static world supports retain exact sticking.
+     * both coupled bodies and nearly parallel road/wall supports.
      * The softness cap keeps vanishing pressure finite; its maximum affected
      * cone radius is only 1e-13 impulse units. */
-    const double softness =
-        dd2_group_pair(contact)
-            ? dd2_group_micro_slip /
-                  fmax(limit, dd2_group_micro_slip / dd2_group_max_friction_softness)
-            : 0;
+    const double softness = dd2_group_friction_softness(limit);
     candidate.mass += softness;
     const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
     const dd2_vehicle_vector slip = dd2_collision_add(
@@ -410,7 +412,7 @@ typedef struct {
     dd2_group_basis basis[DD2_VEHICLE_CONTACT_LIMIT];
     double residual[DD2_GROUP_NEWTON_DIMENSIONS];
     size_t dimensions;
-    bool world_sticking;
+    bool world_linear;
 } dd2_group_newton_state;
 
 typedef struct {
@@ -442,13 +444,17 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
         const dd2_vehicle_vector difference =
             dd2_collision_add(constraint->friction, dd2_collision_scale(friction.impulse, -1));
         const dd2_group_contact contact = workspace->query->contacts[index];
-        /* This trial selects a possible sticking branch for loaded world
+        /* This trial selects a possible linear branch for loaded world
          * supports; ordinary physical acceptance checks its actual cone. */
-        if (state->world_sticking && !dd2_group_pair(contact) && contact.friction > 0 &&
+        if (state->world_linear && !dd2_group_pair(contact) && contact.friction > 0 &&
             state->base.normal[index] > 0) {
-            const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
-            residual[offset + 1] = dd2_collision_dot(velocity, state->basis[index].axes[1]);
-            residual[offset + 2] = dd2_collision_dot(velocity, state->basis[index].axes[2]);
+            const dd2_vehicle_vector gradient = dd2_collision_add(
+                dd2_group_velocity(workspace, index),
+                dd2_collision_scale(
+                    constraint->friction,
+                    dd2_group_friction_softness(contact.friction * constraint->normal_impulse)));
+            residual[offset + 1] = dd2_collision_dot(gradient, state->basis[index].axes[1]);
+            residual[offset + 2] = dd2_collision_dot(gradient, state->basis[index].axes[2]);
         } else {
             residual[offset + 1] =
                 friction.mass * dd2_collision_dot(difference, state->basis[index].axes[1]);
@@ -459,9 +465,9 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
 }
 
 static dd2_group_newton_state dd2_group_newton_prepare(const dd2_group_workspace *workspace,
-                                                       bool world_sticking) {
+                                                       bool world_linear) {
     dd2_group_newton_state state = {.base = dd2_group_values(workspace),
-                                    .world_sticking = world_sticking,
+                                    .world_linear = world_linear,
                                     .dimensions = DD2_GROUP_NEWTON_AXES *
                                                   (size_t)workspace->query->contact_count};
     for (unsigned body = 0; body < workspace->query->body_count; ++body) {
@@ -669,8 +675,8 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
  * Singular directions are skipped. Every rejected/backtracked trial restores
  * exact motion, and only a smaller physical residual is accepted. */
 static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error,
-                                   bool world_sticking) {
-    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, world_sticking);
+                                   bool world_linear) {
+    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, world_linear);
     dd2_group_linear_system system = {.dimensions = state.dimensions};
     if (!dd2_group_newton_direction(workspace, &state, &system)) {
         return false;
@@ -698,12 +704,12 @@ static void dd2_group_copy_motion(const dd2_group_workspace *workspace, dd2_grou
     }
 }
 
-/* A saturated world support can approach a sticking branch with a nearly
- * singular projected Jacobian. Compare its zero-slip direction with the
+/* A saturated world support can approach the low-speed branch with a nearly
+ * singular projected Jacobian. Compare its zero-gradient direction with the
  * projected-root direction from the same exact input motion. Accept the lower
- * physical residual: a small sticking improvement must not repeatedly prevent
+ * physical residual: a small linear-branch improvement must not repeatedly prevent
  * a stronger projected correction. Cone projection still enforces Coulomb law;
- * unloaded/frictionless supports are never forced to stick. */
+ * unloaded/frictionless supports retain their original equations. */
 static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     bool supported = false;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {

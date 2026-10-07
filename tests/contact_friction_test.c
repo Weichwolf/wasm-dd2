@@ -84,13 +84,6 @@ static bool dd2_friction_law(dd2_vehicle_vector slip, dd2_group_response respons
         return magnitude == 0;
     }
     const double speed = dd2_friction_length(slip);
-    if (contact.second == DD2_VEHICLE_NO_PARTNER) {
-        return speed < dd2_friction_tolerance ||
-               (fabs(magnitude - limit) < dd2_friction_tolerance &&
-                dd2_friction_length(dd2_collision_add(
-                    slip, dd2_collision_scale(response.friction_impulse, speed / limit))) <
-                    dd2_friction_tolerance);
-    }
     /* The constitutive oracle checks final velocity directly, rather than
      * the solver's projected-gradient residual or its iteration history. */
     const dd2_vehicle_vector residual =
@@ -200,7 +193,7 @@ static bool dd2_friction_run(const dd2_friction_case *scenario) {
     return true;
 }
 
-static bool dd2_friction_analytic(double speed) {
+static bool dd2_friction_analytic(double speed, bool pair) {
     dd2_vehicle bodies[DD2_FRICTION_PAIR] = {0};
     for (unsigned slot = 0; slot < DD2_FRICTION_PAIR; ++slot) {
         if (!dd2_vehicle_reset(&bodies[slot], (dd2_vehicle_spawn){0})) {
@@ -208,28 +201,29 @@ static bool dd2_friction_analytic(double speed) {
         }
     }
     bodies[0].velocity = (dd2_vehicle_vector){.x = speed, .y = -dd2_friction_load};
-    const dd2_group_contact contact = {
-        .first = 0, .second = 1, .normal = {.y = 1}, .friction = dd2_friction_coefficient};
+    const dd2_group_contact contact = {.first = 0,
+                                       .second = pair ? 1 : DD2_VEHICLE_NO_PARTNER,
+                                       .normal = {.y = 1},
+                                       .friction = dd2_friction_coefficient};
     dd2_group_solution result = {0};
     const dd2_group_query query = {.bodies = bodies,
-                                   .body_count = DD2_FRICTION_PAIR,
+                                   .body_count = pair ? DD2_FRICTION_PAIR : 1,
                                    .contacts = &contact,
                                    .contact_count = 1};
     if (!dd2_contact_group_solve(&query, &result)) {
         return false;
     }
-    const double pressure = dd2_friction_load / (double)DD2_FRICTION_PAIR;
+    const double count = pair ? (double)DD2_FRICTION_PAIR : 1;
+    const double pressure = dd2_friction_load / count;
     const double limit = dd2_friction_coefficient * pressure;
-    const double impulse =
-        copysign(fmin(limit, fabs(speed) * limit /
-                                 (((double)DD2_FRICTION_PAIR * limit) + dd2_friction_micro_slip)),
-                 -speed);
+    const double impulse = copysign(
+        fmin(limit, fabs(speed) * limit / ((count * limit) + dd2_friction_micro_slip)), -speed);
     return fabs(result.contacts[0].normal_impulse - pressure) < dd2_friction_tolerance &&
            fabs(result.contacts[0].friction_impulse.x - impulse) < dd2_friction_tolerance &&
            fabs(bodies[0].velocity.x - speed - impulse) < dd2_friction_tolerance &&
-           fabs(bodies[1].velocity.x + impulse) < dd2_friction_tolerance &&
-           fabs(bodies[0].velocity.y + pressure) < dd2_friction_tolerance &&
-           fabs(bodies[1].velocity.y + pressure) < dd2_friction_tolerance;
+           fabs(bodies[1].velocity.x + (pair ? impulse : 0)) < dd2_friction_tolerance &&
+           fabs(bodies[0].velocity.y + dd2_friction_load - pressure) < dd2_friction_tolerance &&
+           fabs(bodies[1].velocity.y + (pair ? pressure : 0)) < dd2_friction_tolerance;
 }
 
 int main(void) {
@@ -246,7 +240,8 @@ int main(void) {
                              -transition - dd2_friction_micro_slip,
                              dd2_friction_load};
     for (unsigned index = 0; index < sizeof(speeds) / sizeof(speeds[0]); ++index) {
-        if (!dd2_friction_analytic(speeds[index])) {
+        if (!dd2_friction_analytic(speeds[index], false) ||
+            !dd2_friction_analytic(speeds[index], true)) {
             puts("Analytic regularized friction: FAIL");
             return EXIT_FAILURE;
         }

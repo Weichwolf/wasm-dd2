@@ -250,9 +250,10 @@ travel. The fleet solver now collects connected support neighborhoods at the act
 swept event time, applies primary restitution once, and jointly solves inelastic
 normal/friction support and position repair. Pair proximity now determines the primary contact’s connected component before
 querying world supports, avoiding road/barrier queries for unrelated cars while
-retaining contact order and solver budgets. World supports retain Coulomb sticking;
-car-pair friction permits at most 0.1 world units/s of low-speed creep, with
-unchanged Coulomb saturation above that threshold. Sixteen captured dense-contact
+retaining contact order and solver budgets. World and car-pair supports share a
+0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
+saturation above that threshold. This bounds microscopic creep while stabilizing
+almost parallel ground/wall supports. Seventeen captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -262,7 +263,7 @@ modes in either phase, using bounded automatic storage and no allocations. Every
 accepted correction reduces the finite physical residual and clears ordinary
 secant history; rejection restores exact motion.
 The direction search refits released normal constraints and compares projected
-and sticking branches for loaded world supports from the same exact input. It
+and zero-friction-gradient branches for loaded world supports from the same exact input. It
 retains the stronger physical correction with unchanged Coulomb acceptance.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or

@@ -31,7 +31,8 @@ its game requirements or acceptance rules.
 | [0021](closed/0021_contact-jacobian-accuracy.md) | Late contact Jacobian accuracy | closed |
 | [0022](closed/0022_contact-active-branch-predictions.md) | Contact active-branch predictions | closed |
 | [0026](closed/0026_contact-correction-selection.md) | Choose stronger physical contact corrections | closed |
-| [0027](active/0027_championship-mixed-world-support.md) | Mixed world supports in scheduled racing | active |
+| [0027](closed/0027_championship-mixed-world-support.md) | Mixed world supports in scheduled racing | closed |
+| [0028](active/0028_championship-coupled-supports.md) | Coupled supports in scheduled racing | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -48,8 +49,9 @@ driver IDs on all eleven original levels; complete championships remain open
 under 0004. Shared championship entry, prepared round transitions, named
 standings and first-round Native/browser/sanitized application checks now pass
 under 0025. Correction selection now advances the saved round-2 tick-59,399 input;
-the unchanged-bound natural season probe reaches a new four-world-support failure
-at tick 66,449. Its retained sparse diagnosis is tracked under 0027. A separately
+the shared low-speed material law advances the saved tick-66,449 input under
+0027. The unchanged-bound natural season reaches a new two-body/seven-contact
+failure at tick 86,643, with its sparse diagnosis retained under 0028. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 

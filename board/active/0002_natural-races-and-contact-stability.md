@@ -147,6 +147,13 @@ Completed raw output and the temporary capture binary were hashed and removed.
 This identifies a movement/tactics investigation, not a complete physics or
 natural-race pass.
 
+The shared world/body low-speed material law is separately proved under 0027:
+all seventeen captured queries, analytic material cases, original-data ground/
+recovery checks and selected natural Circuit-5 racing pass on all three targets.
+The current Native championship probe progresses through the saved tick-66,449
+step, but a two-body support failure at tick 86,643 remains under 0028. This new
+scoped evidence does not rerun or replace the historical full race/arena suite.
+
 ## Next
 
 Diagnose the reproduced nonterminal Native B movement/tactics behavior while

@@ -74,8 +74,9 @@ static bool dd2_group_test_friction(bool sliding) {
     if (!dd2_contact_group_solve(&query, &result)) {
         return false;
     }
+    const double limit = dd2_group_test_coefficient * dd2_group_test_speed;
     const double expected =
-        sliding ? dd2_group_test_coefficient * dd2_group_test_speed : dd2_group_test_sticking;
+        sliding ? limit : dd2_group_test_sticking * limit / (limit + dd2_group_test_micro_slip);
     const dd2_group_response response = result.contacts[0];
     return fabs(response.friction_impulse.x - expected) < dd2_group_test_tolerance &&
            fabs(body.velocity.x + (sliding ? dd2_group_test_sliding : dd2_group_test_sticking) -
