@@ -373,7 +373,7 @@ projected Jacobian when the analytic seed is singular or refinement cannot
 improve.
 Groups without that patch retain the analytic path. One bounded matrix is reused
 for every refinement; there are no additional ordinary sweeps or allocations.
-The first accelerated phase, world-only behavior, material laws, final tolerances
+The first accelerated phase, material laws, final tolerances
 and total ordinary-pass bound remain unchanged.
 
 A regularized direction can remain on a small-slip linear branch even when
@@ -394,6 +394,17 @@ the selected contact; there is no persistent solver selection state. Every model
 starts from the exact same outer motion and impulses and uses the existing
 refinement, pressure-fit and backtracking bounds. Only a smaller finite residual
 under the unchanged physical law can replace the best candidate.
+
+A world-only group can instead approach an inadmissible negative-pressure root
+while a valid positive root exists on the same linear friction branches. After
+restart, local models also try doubling each loaded small-slip world support.
+The seed solves linear friction equilibrium with every normal load held fixed,
+then projects friction into the cones and applies the analytic constitutive
+refinement. One matrix is reused for the fixed-load solve and at most sixteen
+refinements. All intermediate motion/impulses remain private; only a smaller
+finite physical residual replaces the outer state. Rejection restores the exact
+input or the previously better correction. At most contact_count load models
+are tried; ordinary sweeps, material laws and final tolerances are unchanged.
 
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
@@ -416,10 +427,12 @@ retain all impulse, material, energy, clearance and clock checks. A five-contact
 query captures tick 105,335, where the car-pair contact must leave the linear
 branch; all 120 row permutations retain the same independent checks. Twenty
 rotations/reversals of a four-body/ten-contact query captured at tick 105,932
-exercise selective friction branches. Fourteen
+exercise selective friction branches. A three-world-contact query captured at
+tick 101,640 checks the positive pressure branch through all six row permutations.
+Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-three frozen queries retain
+twenty-four frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

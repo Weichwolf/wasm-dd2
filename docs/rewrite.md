@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Twenty-three captured dense-contact
+almost parallel ground/wall supports. Twenty-four captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -294,6 +294,13 @@ The selection belongs to a local typed model; every trial starts from the same
 outer state and remains subject to the existing bounds and physical residual.
 Twenty rotations/reversals of a four-body, ten-contact championship query check
 these independent transitions.
+After restart, world-only fields also compare private positive-load seeds for
+each loaded small-slip support. A seed doubles that support's load, equilibrates
+linear friction with all normal loads held fixed, then applies the bounded
+analytic constitutive refinement. The fixed-load solve and refinement reuse one
+matrix; every candidate remains subject to the unchanged final physical law,
+finite residual reduction and exact rollback. All six orderings of a
+three-world-contact championship query check the positive pressure branch.
 The solver retains the stronger physical correction with unchanged material law,
 bounds and Coulomb acceptance.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy

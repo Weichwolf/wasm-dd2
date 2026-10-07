@@ -266,11 +266,71 @@ reported and removed. The original diagnostic receipt remains unchanged;
 its separate diagnosis.json records the correction and resolved capture hashes.
 The unresolved 101,640 input/query remain available.
 
+Sparse records at velocity passes 512/4,096 reproduce the 101,640 standalone
+failure exactly. The wall load decreases toward zero while every fitted
+Newton direction releases that contact; the resulting wall velocity remains
+negative. The constitutive Jacobian is nonsingular (condition about 4.27e5).
+An independent fixed-branch numerical solve finds an admissible all-linear root
+with wall load 0.2472825724622389 and residual below 1.7e-13. Starting near the
+stalled pressure instead reaches an inadmissible negative wall-load root.
+Additional saturated branches or an increased load alone do not fix the query.
+Those trials remain diagnostics, not production acceptance.
+
+Production now compares positive world-load seeds after the existing restart.
+Each local model doubles one loaded small-slip support, holds all normal loads
+fixed while solving linear friction equilibrium, projects friction into its
+cones, then applies the existing bounded analytic constitutive refinement.
+The fixed-load solve and at most sixteen refinements reuse one matrix. Every
+trial starts from the same exact outer state; only finite lower final physical
+error replaces the best candidate. Singular/non-improving trials restore exact
+state. First-phase behavior, ordinary-pass limits, material laws, tolerances,
+controls, AI, damage and race rules remain unchanged.
+
+The saved actual Native input advances from 101,640 to 101,641 under production
+and ASan/UBSan. The remapped query takes 513 velocity passes at
+1.7622010286531244e-11 and 46 position passes at 9.015950237095411e-10, with one
+restart. All six row permutations retain independent material, complementarity,
+cone, energy, impulse, clearance, orientation and clock checks. Strict LLVM19,
+all 34 Native/32 WASM CTests, twenty-four frozen queries, 214 captured-query
+orderings, twenty analytic friction and seventy-two analytic position cases
+pass on Native/WASM/instrumented C. Native static solver stack is 350,392 bytes;
+actual WASM cases exercise the seed/refinement within the existing 1 MiB stack.
+Verification directory: /tmp/wasm-dd2/rewrite-load-101640/.
+Actual Native SDL, instrumented SDL and Chromium/WASM checks pass all eleven
+levels. Original-data ground checks pass all eleven levels with 79,100 queries
+and 26,400 vehicle steps per target. Scoped Circuit-2/live and complete
+Circuit-5/eight-lap checks pass all six target scopes (full_suite=false).
+Each Circuit-5 run takes 167,472 ticks and 3,341,440 vehicle steps, with 167,072
+independent player geometry queries, player place 2/75 points and two finishers.
+These scopes do not prove full campaigns or complete all-track racing.
+Source/binary/command receipt: /tmp/wasm-dd2/rewrite-load-101640/report.json.
+
+The unchanged-bound natural season completes round 1 at 287,087 ticks with
+unchanged scores and correct consumption for all twenty drivers. Its changed
+collision trajectory fails round 2 at 93,231, before the previous 101,640
+failure. AI/frame/championship validity remain true; race/championship remain
+RACING. Health is 0.26430849622175878, credited laps zero, throttle -0.6,
+brake zero and steering -1. Saved-input correction is proved separately;
+natural advancement past the previous failure and full-season acceptance remain
+false, so this work item stays active.
+
+A sparse failure-only diagnostic matches all seventy-eight production JSON
+records exactly. Production and diagnostic replayers reproduce the same
+31,216-byte failed input without advancement at 93,231. Drivers 1/16/17 form
+five contacts: three world supports and two car pairs. Velocity exhausts
+4,096 passes at 0.004628929193779555; position is not reached. The next failure
+stage is identified; its cause and correction remain unproved.
+Receipt: /tmp/wasm-dd2/rewrite-season-after-101640/report.json.
+Successful verification raw output and resolved 101,640 captures have been
+hashed, reported and removed. The original diagnostic receipt remains unchanged;
+its separate diagnosis.json records the independent root, correction and raw
+capture identities. The unresolved 93,231 input/query remain available.
+
 ## Next
-Diagnose the single-body, three-world-contact velocity failure at 101,640
-from its production-equivalent saved input. Preserve ordinary inputs, material
-laws, tolerances and bounds. Use sparse source/binary-identified diagnostics;
-full campaigns and remaining gameplay retain their existing owners.
+Diagnose the three-body, five-contact velocity failure at 93,231 from the
+production-equivalent input. Preserve ordinary race inputs, material laws,
+tolerances and bounds, and use sparse source/binary-identified diagnostics.
+Full campaigns and remaining gameplay retain their existing owners.
 
 ## Accept
 

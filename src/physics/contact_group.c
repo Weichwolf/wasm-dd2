@@ -413,12 +413,13 @@ typedef enum {
     DD2_GROUP_NEWTON_PROJECTED,
     DD2_GROUP_NEWTON_WORLD_LINEAR,
     DD2_GROUP_NEWTON_CONSTITUTIVE,
-    DD2_GROUP_NEWTON_SATURATED
+    DD2_GROUP_NEWTON_SATURATED,
+    DD2_GROUP_NEWTON_LOAD
 } dd2_group_newton_method;
 
 typedef struct {
     dd2_group_newton_method method;
-    unsigned saturated_contact; /* Contact limit selects the complete saturated branch. */
+    unsigned selected_contact; /* Contact limit selects the complete saturated branch. */
 } dd2_group_newton_model;
 
 typedef struct {
@@ -492,8 +493,13 @@ static bool dd2_group_regularized_load(const dd2_group_workspace *workspace) {
 
 static bool dd2_group_newton_saturated(const dd2_group_newton_state *state, unsigned index) {
     return state->model.method == DD2_GROUP_NEWTON_SATURATED &&
-           (state->model.saturated_contact == DD2_VEHICLE_CONTACT_LIMIT ||
-            state->model.saturated_contact == index);
+           (state->model.selected_contact == DD2_VEHICLE_CONTACT_LIMIT ||
+            state->model.selected_contact == index);
+}
+
+static bool dd2_group_newton_material(dd2_group_newton_method method) {
+    return method == DD2_GROUP_NEWTON_CONSTITUTIVE || method == DD2_GROUP_NEWTON_SATURATED ||
+           method == DD2_GROUP_NEWTON_LOAD;
 }
 
 static void dd2_group_residuals(const dd2_group_workspace *workspace,
@@ -520,8 +526,7 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
                     dd2_group_friction_softness(contact.friction * constraint->normal_impulse)));
             residual[offset + 1] = dd2_collision_dot(gradient, state->basis[index].axes[1]);
             residual[offset + 2] = dd2_collision_dot(gradient, state->basis[index].axes[2]);
-        } else if (state->model.method == DD2_GROUP_NEWTON_CONSTITUTIVE ||
-                   state->model.method == DD2_GROUP_NEWTON_SATURATED) {
+        } else if (dd2_group_newton_material(state->model.method)) {
             const dd2_group_material material =
                 dd2_group_material_at(workspace, index, dd2_group_newton_saturated(state, index));
             const dd2_vehicle_vector root = dd2_collision_add(
@@ -683,8 +688,7 @@ static void dd2_group_material_row(const dd2_group_workspace *workspace,
 static void dd2_group_newton_matrix(dd2_group_workspace *workspace,
                                     const dd2_group_newton_state *state,
                                     dd2_group_linear_system *system) {
-    if (state->model.method == DD2_GROUP_NEWTON_CONSTITUTIVE ||
-        state->model.method == DD2_GROUP_NEWTON_SATURATED) {
+    if (dd2_group_newton_material(state->model.method)) {
         /* Each impulse column reaches at most two bodies. Cache its unit
          * motion once instead of recomputing inertia for every receiver row. */
         dd2_group_impulse_response responses[DD2_GROUP_NEWTON_DIMENSIONS] = {0};
@@ -882,7 +886,7 @@ static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error
     dd2_group_linear_system system = {0};
     return dd2_group_newton_step(
         workspace, error,
-        (dd2_group_newton_model){.method = method, .saturated_contact = DD2_VEHICLE_CONTACT_LIMIT},
+        (dd2_group_newton_model){.method = method, .selected_contact = DD2_VEHICLE_CONTACT_LIMIT},
         &system);
 }
 
@@ -974,6 +978,38 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
     return dd2_group_newton_direction(workspace, state, system);
 }
 
+/* A weak world load can attract Newton toward an inadmissible negative-pressure
+ * root. Explore a positive branch by doubling one loaded support and solving
+ * its field's linear friction equilibrium with every normal load held fixed.
+ * Cone projection and the subsequent physical refinement still apply. */
+static bool dd2_group_load_seed(dd2_group_workspace *workspace, unsigned index,
+                                dd2_group_linear_system *system) {
+    const double increment = workspace->constraints[index].normal_impulse;
+    workspace->constraints[index].normal_impulse += increment;
+    dd2_group_apply(workspace, index,
+                    dd2_collision_scale(workspace->query->contacts[index].normal, increment));
+    if (!dd2_group_motion_finite(workspace)) {
+        return false;
+    }
+    const dd2_group_newton_state state = dd2_group_newton_prepare(
+        workspace, (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_WORLD_LINEAR});
+    dd2_group_newton_matrix(workspace, &state, system);
+    for (unsigned contact = 0; contact < workspace->query->contact_count; ++contact) {
+        const size_t row = DD2_GROUP_NEWTON_AXES * (size_t)contact;
+        for (size_t column = 0; column < state.dimensions; ++column) {
+            system->entries[row][column] = column == row ? 1 : 0;
+        }
+        system->entries[row][state.dimensions] = 0;
+    }
+    if (!dd2_group_linear_solve(system, state.dimensions)) {
+        return false;
+    }
+    const dd2_group_iterate candidate = dd2_group_newton_candidate(
+        workspace, (dd2_group_newton_prediction){&state, system->direction, 1});
+    dd2_group_newton_apply(workspace, &state, &candidate);
+    return dd2_group_motion_finite(workspace);
+}
+
 /* Refine a speculative branch after its full fitted step. Intermediate states
  * stay private: the outer iterate changes only for a finite smaller residual.
  * Re-evaluating loaded normals allows previously separating supports to load
@@ -982,14 +1018,23 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
  * bounded matrix for all steps. */
 static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *error,
                                     dd2_group_newton_model model) {
-    dd2_group_newton_state original = dd2_group_newton_prepare(workspace, model);
+    const dd2_group_newton_state original = dd2_group_newton_prepare(workspace, model);
     dd2_group_linear_system system = {.dimensions = original.dimensions};
-    if (!dd2_group_refinement_seed(workspace, &original, &system)) {
+    if (model.method == DD2_GROUP_NEWTON_LOAD &&
+        !dd2_group_load_seed(workspace, model.selected_contact, &system)) {
+        dd2_group_restore(workspace, &original.base, original.motion);
+        return false;
+    }
+    dd2_group_newton_state prepared = model.method == DD2_GROUP_NEWTON_LOAD
+                                          ? dd2_group_newton_prepare(workspace, model)
+                                          : original;
+    if (!dd2_group_refinement_seed(workspace, &prepared, &system)) {
+        dd2_group_restore(workspace, &original.base, original.motion);
         return false;
     }
     const dd2_group_iterate seed = dd2_group_newton_candidate(
-        workspace, (dd2_group_newton_prediction){&original, system.direction, 1});
-    dd2_group_newton_apply(workspace, &original, &seed);
+        workspace, (dd2_group_newton_prediction){&prepared, system.direction, 1});
+    dd2_group_newton_apply(workspace, &prepared, &seed);
     double current = dd2_group_velocity_error(workspace);
     if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current)) {
         for (unsigned refinement = 0; refinement < DD2_GROUP_NEWTON_REFINEMENTS; ++refinement) {
@@ -1015,22 +1060,26 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
     return false;
 }
 
-/* Mixed fields can require only one car-pair support to leave its linear
- * branch. Enumerate those loaded small-slip pairs without changing other
- * material directions. These bounded models stay local to one solve. */
+/* Mixed fields compare selective car-pair saturation. World-only fields compare
+ * positive load seeds for each loaded small-slip support. These bounded models
+ * stay local to one solve and preserve the final material law. */
 static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
-                                        dd2_group_newton_model *models) {
-    models[0] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_CONSTITUTIVE,
-                                         .saturated_contact = DD2_VEHICLE_CONTACT_LIMIT};
-    models[1] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_SATURATED,
-                                         .saturated_contact = DD2_VEHICLE_CONTACT_LIMIT};
-    unsigned count = DD2_GROUP_NEWTON_BASE_MODELS;
+                                        dd2_group_newton_model *models, bool paired) {
+    unsigned count = 0;
+    if (paired) {
+        models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_CONSTITUTIVE,
+                                                   .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
+        models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_SATURATED,
+                                                   .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
+    }
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
-        if (dd2_group_pair(workspace->query->contacts[index]) &&
+        const dd2_group_contact contact = workspace->query->contacts[index];
+        if (dd2_group_pair(contact) == paired && contact.friction > 0 &&
             workspace->constraints[index].normal_impulse > 0 &&
             !dd2_group_material_at(workspace, index, false).sliding) {
-            models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_SATURATED,
-                                                       .saturated_contact = index};
+            models[count++] = (dd2_group_newton_model){.method = paired ? DD2_GROUP_NEWTON_SATURATED
+                                                                        : DD2_GROUP_NEWTON_LOAD,
+                                                       .selected_contact = index};
         }
     }
     return count;
@@ -1046,7 +1095,7 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         paired = paired || dd2_group_pair(workspace->query->contacts[index]);
     }
-    if (!coordinate || !paired) {
+    if (!coordinate) {
         return corrected;
     }
     dd2_group_iterate best = dd2_group_values(workspace);
@@ -1055,11 +1104,11 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     double best_error = *error;
     dd2_group_restore(workspace, &base, motion);
     dd2_group_newton_model models[DD2_GROUP_NEWTON_MODEL_LIMIT] = {0};
-    const unsigned count = dd2_group_newton_models(workspace, models);
+    const unsigned count = dd2_group_newton_models(workspace, models, paired);
     for (unsigned index = 0; index < count; ++index) {
         dd2_group_restore(workspace, &base, motion);
         if (models[index].method == DD2_GROUP_NEWTON_SATURATED &&
-            models[index].saturated_contact == DD2_VEHICLE_CONTACT_LIMIT &&
+            models[index].selected_contact == DD2_VEHICLE_CONTACT_LIMIT &&
             !dd2_group_regularized_load(workspace)) {
             continue;
         }

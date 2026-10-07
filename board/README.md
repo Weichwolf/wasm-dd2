@@ -88,8 +88,14 @@ targets and strict gates. The changed natural collision trajectory completes
 round 1 with unchanged scores, then fails round 2 at 101,640, before the previous
 failure tick. Sparse production-equivalent replay isolates three world supports
 on one car; velocity remains above tolerance at the existing pass bound.
-Natural advancement past the old failure and full-campaign acceptance remain
-open under 0029. A separately
+A positive world-load seed with fixed-load friction equilibrium now advances
+the saved 101,640 input to 101,641, with unchanged material rules and ordinary
+solver bounds. Twenty-four captured queries and 214 orderings pass all three
+targets and strict gates. The changed natural season again completes round 1
+with unchanged scores, then fails round 2 at 93,231, before the previous failure.
+Sparse production-equivalent replay identifies a three-body/five-contact velocity
+failure. Natural advancement past the old failure and full-campaign acceptance
+remain open under 0029. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 

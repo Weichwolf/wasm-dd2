@@ -2934,6 +2934,38 @@ static const dd2_group_contact dd2_friction_championship_selective_contacts[] = 
      .penetration = -8.184911081343671e-05,
      .friction = 0.25}};
 
+/* Native production 921790b natural second-round tick 101,640 query.
+ * Driver 7 is remapped to zero; all input values are unchanged. Query SHA256:
+ * e4fd81c343691ac612f27de99ade8b04bef7f2d0a7e44fbc8d86dc828b220a65 */
+static const dd2_vehicle dd2_friction_championship_load_body[] = {
+    {.position = {.x = 26509.083434477452, .y = 8721.5566928011722, .z = 66723.330043520094},
+     .velocity = {.x = -0.49934499056519577, .y = -10.246339493647188, .z = 0.27117867379022775},
+     .rotation = {.x = -0.87463442130914815,
+                  .y = 0.17442457441373208,
+                  .z = 0.4187587222868952,
+                  .w = 0.17097318330792985},
+     .angular_velocity = {
+         .x = 0.019742705151490673, .y = -0.00092772339871763365, .z = -0.0019812964693163089}}};
+static const dd2_group_contact dd2_friction_championship_load_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 26257.457147198678, .y = 8777.2723739831345, .z = 66290.2296228083},
+     .normal = {.x = 0.23847320662905652, .y = 0.97110977950740995, .z = -0.0087364675427198443},
+     .penetration = 1.4614237554486098e-13,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 26809.446258700369, .y = 8649.0776187268475, .z = 66739.538178371062},
+     .normal = {.x = -0.65980117321511644, .y = 0, .z = 0.75144022505050645},
+     .penetration = -0.00012685704143013937,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 26760.709721756222, .y = 8665.8409969152726, .z = 67156.430464231889},
+     .normal = {.x = 0.22940131075702708, .y = 0.97325399246863586, .z = -0.012316848899706152},
+     .penetration = -1.4310664628806977e-05,
+     .friction = 0.80000000000000004}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
@@ -3058,6 +3090,12 @@ static const dd2_friction_case dd2_friction_cases[] = {
      .body_count = 4,
      .contact_count = 10,
      .name = "championship circuit 2 selective friction branches"},
+
+    {.initial = dd2_friction_championship_load_body,
+     .contacts = dd2_friction_championship_load_contacts,
+     .body_count = 1,
+     .contact_count = 3,
+     .name = "championship circuit 2 positive wall load"},
 
 };
 
