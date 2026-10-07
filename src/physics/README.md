@@ -325,7 +325,19 @@ normal complementarity and tangential friction equations; finite differences
 form their coupled Jacobian. The relative forward-difference step is 1e-6,
 scaled by the impulse coordinate or one. Larger probes distort late stick/slip
 directions; smaller probes can lose accuracy in accumulated body motion.
-Pivoted elimination skips singular directions.
+Pivoted elimination skips singular directions. A direction predicting negative
+normal pressure is refitted with that contact's three impulse coordinates set
+to zero; simply clipping it would invalidate every coupled equation. Releases
+are monotone within the prediction, bounding refits to the contact count plus
+one. They do not remove contacts from the physical solve.
+
+Loaded world supports first try a zero-slip branch for the Newton direction,
+because a saturated support approaching sticking can have a nearly singular
+projected Jacobian. A rejected/singular sticking trial restores exact motion
+before trying the ordinary projected equations. Frictionless or unloaded
+supports keep their original equations. Both trials retain Coulomb cone
+projection and the same physical residual acceptance; the alternate equations
+cannot change the material law or force an infeasible sticking impulse.
 The proposed impulses are projected into their cones and backtracked up to
 sixteen times. Only finite motion with a strictly smaller physical residual is
 accepted; rejected probes restore exact velocities and accumulated impulses.
@@ -337,11 +349,13 @@ displacement cannot form a false fixed-point prediction. The dense matrix has
 at most 192 axes in automatic storage, with no allocation or contact omission.
 Corrections and restarts share the existing 4,096-pass bound.
 
-Seven arena-B regressions cover a five-contact cycle, simultaneous
+Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
 and a seven-contact/four-body fallback, plus an eighteen-contact/thirteen-body
-pressure-sensitive support query. All thirteen frozen queries retain
+pressure-sensitive support query, plus a ten-contact/seven-body normal-release
+query and a seven-contact/six-body transition to sticking. All fifteen frozen
+queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

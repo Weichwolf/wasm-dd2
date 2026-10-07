@@ -29,6 +29,7 @@ its game requirements or acceptance rules.
 | [0019](closed/0019_english-repository-and-browser-layout.md) | English repository text and browser layout | closed |
 | [0020](closed/0020_delayed-coupled-contact-corrections.md) | Delayed coupled-contact corrections | closed |
 | [0021](closed/0021_contact-jacobian-accuracy.md) | Late contact Jacobian accuracy | closed |
+| [0022](closed/0022_contact-active-branch-predictions.md) | Contact active-branch predictions | closed |
 
 Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work

@@ -78,8 +78,6 @@ Newton directions; 0021 owns the bounded numerical correction. The sanitized
 natural failure still needs its own production-equivalent capture if it remains
 after that correction. No full natural-race pass is claimed.
 
-## Next
-
 Closed 0021 now reduces the forward-difference probe to 1e-6 and certifies
 convergence after an ordinary sweep, preventing predicted residuals from
 publishing tiny separating impulses. The new thirteen-body contact query and
@@ -88,10 +86,40 @@ ASan/UBSan. Required 32 Native/31 WASM CTests and strict LLVM19 for 145 files
 pass. Report: /tmp/wasm-dd2/rewrite-contact-accuracy-verification/quality-report.json.
 These component checks do not establish natural completion.
 
-Run the current production arena B on all three targets and diagnose any new
+The selected production run at 7dd248b is terminal and fails on all targets.
+WASM aborts after race step 11664 (elapsed 11264); sanitized aborts after 10106
+(elapsed 9706). Native completes the 120000-step fixture bound without a solver
+abort, but remains active with seventeen engines alive and player front damage
+0.594363/0.952254, so it has no natural result. Do not extend the bound or inject
+damage/results to make this pass. Target receipts, hashes and compact snapshots:
+/tmp/wasm-dd2/rewrite-contact-accuracy-arenaB-7dd248b/terminal-report.json.
+Completed raw traces, including the 555 MB Native trace, were removed after
+reporting.
+
+First-failure wrappers match both production trajectories at the 5000-step
+checkpoints and failed poses. The compact WASM query has seven bodies/ten
+contacts; the sanitized query six bodies/seven contacts. Both independently
+fail on Native within 4096 passes. Refit/branch direction work belongs to 0022;
+the independent fifteen-query private checks pass, but complete natural
+behavior remains unproved. Reports are under
+/tmp/wasm-dd2/rewrite-ordinary-sweep-wasm-failure/ and
+/tmp/wasm-dd2/rewrite-ordinary-sweep-sanitized-failure/.
+
+Closed 0022 now refits predicted negative pressures and tries guarded sticking
+directions for loaded world contacts. Both new queries and all thirteen prior
+queries pass independent material/motion/energy/clock checks on production
+Native/WASM/fully instrumented LLVM19 ASan/UBSan. Required 32 Native/31 WASM
+CTests and strict LLVM19 for 145 files pass. Reports:
+/tmp/wasm-dd2/rewrite-contact-branches-verification/. These component checks
+do not establish complete natural races or fix the nonterminal Native behavior.
+
+## Next
+
+Run the complete current production race suite on all three targets and diagnose any new
 failure, preserving material laws, tolerances and the shared pass budget. Then
-run the complete production race suite and expand ordinary physically completed
-circuit coverage beyond circuit 5.
+diagnose the remaining nonterminal arena/AI behavior and expand ordinary
+physically completed circuit coverage beyond circuit 5. Do not replace a missing
+natural result with a longer bound, forced retirement, health changes or scores.
 
 ## Accept
 

@@ -410,6 +410,7 @@ typedef struct {
     dd2_group_basis basis[DD2_VEHICLE_CONTACT_LIMIT];
     double residual[DD2_GROUP_NEWTON_DIMENSIONS];
     size_t dimensions;
+    bool world_sticking;
 } dd2_group_newton_state;
 
 typedef struct {
@@ -440,15 +441,27 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
              fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass)));
         const dd2_vehicle_vector difference =
             dd2_collision_add(constraint->friction, dd2_collision_scale(friction.impulse, -1));
-        residual[offset + 1] =
-            friction.mass * dd2_collision_dot(difference, state->basis[index].axes[1]);
-        residual[offset + 2] =
-            friction.mass * dd2_collision_dot(difference, state->basis[index].axes[2]);
+        const dd2_group_contact contact = workspace->query->contacts[index];
+        /* This trial selects a possible sticking branch for loaded world
+         * supports; ordinary physical acceptance checks its actual cone. */
+        if (state->world_sticking && !dd2_group_pair(contact) && contact.friction > 0 &&
+            state->base.normal[index] > 0) {
+            const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
+            residual[offset + 1] = dd2_collision_dot(velocity, state->basis[index].axes[1]);
+            residual[offset + 2] = dd2_collision_dot(velocity, state->basis[index].axes[2]);
+        } else {
+            residual[offset + 1] =
+                friction.mass * dd2_collision_dot(difference, state->basis[index].axes[1]);
+            residual[offset + 2] =
+                friction.mass * dd2_collision_dot(difference, state->basis[index].axes[2]);
+        }
     }
 }
 
-static dd2_group_newton_state dd2_group_newton_prepare(const dd2_group_workspace *workspace) {
+static dd2_group_newton_state dd2_group_newton_prepare(const dd2_group_workspace *workspace,
+                                                       bool world_sticking) {
     dd2_group_newton_state state = {.base = dd2_group_values(workspace),
+                                    .world_sticking = world_sticking,
                                     .dimensions = DD2_GROUP_NEWTON_AXES *
                                                   (size_t)workspace->query->contact_count};
     for (unsigned body = 0; body < workspace->query->body_count; ++body) {
@@ -567,6 +580,59 @@ static bool dd2_group_linear_solve(dd2_group_linear_system *system, size_t dimen
     return true;
 }
 
+/* An unconstrained Newton direction can require negative normal pressure.
+ * Refit its released contact with zero normal/tangent impulse instead of
+ * clipping that direction while leaving every coupled equation unchanged. */
+static void dd2_group_linear_release(dd2_group_linear_system *system,
+                                     const dd2_group_newton_state *state, unsigned index) {
+    const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
+    for (size_t axis = 0; axis < DD2_GROUP_NEWTON_AXES; ++axis) {
+        const size_t row = offset + axis;
+        for (size_t column = 0; column < state->dimensions; ++column) {
+            system->entries[row][column] = column == row ? 1 : 0;
+        }
+        const double impulse = axis == 0 ? state->base.normal[index]
+                                         : dd2_collision_dot(state->base.friction[index],
+                                                             state->basis[index].axes[axis]);
+        system->entries[row][state->dimensions] = -impulse;
+    }
+}
+
+/* Releases are monotone within one direction search: each refit adds at
+ * least one contact, so there are at most contact_count + 1 linear solves.
+ * All original contacts remain in the physical residual and final checks. */
+static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
+                                       const dd2_group_newton_state *state,
+                                       dd2_group_linear_system *system) {
+    bool released[DD2_VEHICLE_CONTACT_LIMIT] = {false};
+    const unsigned count = workspace->query->contact_count;
+    for (unsigned attempt = 0; attempt <= count; ++attempt) {
+        dd2_group_newton_matrix(workspace, state, system);
+        for (unsigned index = 0; index < count; ++index) {
+            if (released[index]) {
+                dd2_group_linear_release(system, state, index);
+            }
+        }
+        if (!dd2_group_linear_solve(system, state->dimensions)) {
+            return false;
+        }
+        bool changed = false;
+        for (unsigned index = 0; index < count; ++index) {
+            if (!released[index] &&
+                state->base.normal[index] +
+                        system->direction[DD2_GROUP_NEWTON_AXES * (size_t)index] <
+                    0) {
+                released[index] = true;
+                changed = true;
+            }
+        }
+        if (!changed) {
+            return true;
+        }
+    }
+    return false;
+}
+
 typedef struct {
     const dd2_group_newton_state *state;
     const double *direction;
@@ -602,11 +668,11 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
  * equations. The bounded dense matrix uses automatic storage, never allocation.
  * Singular directions are skipped. Every rejected/backtracked trial restores
  * exact motion, and only a smaller physical residual is accepted. */
-static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
-    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace);
+static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error,
+                                   bool world_sticking) {
+    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, world_sticking);
     dd2_group_linear_system system = {.dimensions = state.dimensions};
-    dd2_group_newton_matrix(workspace, &state, &system);
-    if (!dd2_group_linear_solve(&system, state.dimensions)) {
+    if (!dd2_group_newton_direction(workspace, &state, &system)) {
         return false;
     }
     dd2_group_newton_prediction prediction = {&state, system.direction, 1};
@@ -623,6 +689,24 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     }
     dd2_group_restore(workspace, &state.base, state.motion);
     return false;
+}
+
+/* A saturated world support can approach a sticking branch with a nearly
+ * singular projected Jacobian. Try its zero-slip equations as a direction only;
+ * cone projection and unchanged physical acceptance still enforce Coulomb law.
+ * Rejected or singular sticking trials restore exact motion before the ordinary
+ * projected-root trial. Unloaded/frictionless supports are never forced to stick. */
+static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
+    bool supported = false;
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_group_contact contact = workspace->query->contacts[index];
+        supported = supported || (!dd2_group_pair(contact) && contact.friction > 0 &&
+                                  workspace->constraints[index].normal_impulse > 0);
+    }
+    if (supported && dd2_group_newton_trial(workspace, error, true)) {
+        return true;
+    }
+    return dd2_group_newton_trial(workspace, error, false);
 }
 
 static bool dd2_group_newton_advance(dd2_group_workspace *workspace, unsigned pass,
