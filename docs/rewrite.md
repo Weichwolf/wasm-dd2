@@ -184,12 +184,14 @@ replace placement/accident scores. Selection stays in Total Destruction across
 arenas and switches to Wrecking on a circuit. R resets time, damage and all
 pursuit targets. Dense pursuit fields can exhaust the shared 64-contact solver
 budget; the solver then retains checked poses instead of accepting residual
-travel. A bounded synthetic convoy diagnosis also reproduces time-zero
-overlap-repair exhaustion: eight equally moving boxes with only 0.001 units
-of initial overlap lose their common lateral travel without any impact impulse.
-Dense-field contact convergence remains pending. Supported resting overturns now participate in arena availability and recover
-after two seconds; distant opponents retry placement after the deadline. This
-does not fix dense-field contact convergence.
+travel. The fleet solver now collects connected support neighborhoods at the actual
+swept event time, applies primary restitution once, and jointly solves inelastic
+normal/friction support and position repair. A 456-case synthetic convoy
+regression checks full common motion and centered separation without impulses or
+clock changes. Groups beyond the report budget retain conservative serial
+response. Full natural arena completion and dense-field behavior remain subject
+to original-data race verification. Supported resting overturns now participate in arena availability and recover
+after two seconds; distant opponents retry placement after the deadline. Complete arena behavior still requires natural race verification.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.

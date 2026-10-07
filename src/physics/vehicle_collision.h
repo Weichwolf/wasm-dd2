@@ -34,8 +34,8 @@ typedef struct {
     dd2_vehicle_vector normal;          /* World impulse direction on first body. */
     dd2_vehicle_vector local_points[2]; /* First/second body contact-space arms. */
     double time;                        /* Fraction of the complete fixed step, in solver order. */
-    double normal_speed;                /* Pre-response closing speed, zero when separating. */
-    double impulse;                     /* Normal impulse / body mass; excludes tangent friction. */
+    double normal_speed; /* Incident speed, zero without a normal impulse. See below. */
+    double impulse;      /* Normal impulse / body mass; excludes tangent friction. */
     unsigned first;
     unsigned second;   /* NO_PARTNER for world contacts. */
     uint32_t obstacle; /* Road cell/barrier index, UINT32_MAX for pairs. */
@@ -88,6 +88,15 @@ bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previou
  * rebound travel. Local point zero belongs to first; point one belongs to
  * second for a pair and is zero for a world contact. At most 64 contacts are
  * selected, matching the solver budget: no successful response is dropped.
+ * Connected ground/barrier/pair neighborhoods receive primary restitution once,
+ * followed by an inelastic joint support solve and collective position repair.
+ * normal_speed retains initial closing/primary incident speed, or the effective
+ * normal mass times a coupled support impulse when pressure arrives through
+ * another body. Isolated impacts keep their original incident speed. Nearby
+ * separating supports can carry zero-impulse records at the primary event time.
+ * Oversized groups retain the conservative serial response for the rest of the
+ * step, stopping unchecked travel at the same report budget. A failed joint
+ * solve rolls the whole fleet back and clears output.
  * Damage/scoring consumers must ignore zero-impulse repair/support contacts as
  * appropriate. An unresolved pair sweep stops at its conservative time bound,
  * increments unresolved_sweeps and produces no contact record or impulse.

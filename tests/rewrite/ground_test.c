@@ -1,5 +1,6 @@
 #include "asset_fixture.h"
 #include "assets/road.h"
+#include "physics/collision_math.h"
 #include "physics/road_surface.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -12,8 +13,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { DD2_GROUND_TEST_STEPS = 2000, DD2_GROUND_TEST_LAYERS = 3, DD2_GROUND_TEST_CORNERS = 8 };
+enum {
+    DD2_GROUND_TEST_STEPS = 2000,
+    DD2_GROUND_TEST_LAYERS = 3,
+    DD2_GROUND_TEST_CORNERS = 8,
+    DD2_GROUND_TEST_ROOF = 4
+};
 static const double dd2_ground_test_tolerance = 1e-5;
+static const double dd2_ground_test_clearance = 1e-4;
+static const double dd2_ground_test_rotating_height = 335;
+static const double dd2_ground_test_rotating_speed = -2000;
+static const double dd2_ground_test_rotating_spin = 1;
+static const double dd2_ground_test_body_length = 900;
 static const double dd2_ground_test_rest_tolerance = 0.1;
 static const double dd2_ground_test_fast_residual = 1;
 static const double dd2_ground_test_body_height = 130;
@@ -267,8 +278,59 @@ static bool dd2_ground_test_report(void) {
     next = previous;
     valid = valid &&
             dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
-            report.count == 1 && report.contacts[0].time == 0 &&
-            report.contacts[0].normal_speed == 0 && report.contacts[0].impulse == 0;
+            report.count == DD2_GROUND_TEST_ROOF && report.pair_contacts == 0 &&
+            report.impacts[0].contacts == DD2_GROUND_TEST_ROOF &&
+            fabs(next.position.y - height - dd2_ground_test_body_height -
+                 dd2_ground_test_clearance) < dd2_ground_test_tolerance &&
+            next.position.x == previous.position.x && next.position.z == previous.position.z &&
+            next.steps == previous.steps && dd2_ground_test_energy(&next) == 0 &&
+            next.rotation.z == previous.rotation.z && next.rotation.w == previous.rotation.w;
+    for (unsigned index = 0; valid && index < report.count; ++index) {
+        const dd2_vehicle_contact support = report.contacts[index];
+        valid = support.kind == DD2_VEHICLE_CONTACT_GROUND && support.first == 0 &&
+                support.second == DD2_VEHICLE_NO_PARTNER &&
+                support.obstacle < dd2_road_cell_count(track.road) && support.time == 0 &&
+                support.normal_speed == 0 && support.impulse == 0 && support.normal.y == 1 &&
+                fabs(support.point.y - height) < dd2_ground_test_tolerance &&
+                fabs(support.local_points[0].y - dd2_ground_test_body_height +
+                     dd2_ground_test_overlap) < dd2_ground_test_tolerance;
+        for (unsigned earlier = 0; valid && earlier < index; ++earlier) {
+            const dd2_vehicle_vector other = report.contacts[earlier].point;
+            valid = support.point.x != other.x || support.point.z != other.z;
+        }
+    }
+    dd2_ground_test_destroy(&track);
+    return valid;
+}
+
+/* The swept corner chord and the instantaneous rotated corner differ here
+ * by more than the clearance. They must remain one physical support. */
+static bool dd2_ground_test_fleet_rotation(void) {
+    dd2_ground_test_track track = {0};
+    bool valid = dd2_ground_test_init(&track, false, true);
+    dd2_vehicle previous = {0};
+    valid = valid &&
+            dd2_vehicle_reset(
+                &previous, (dd2_vehicle_spawn){.position = {.y = dd2_ground_test_rotating_height}});
+    previous.rotation = (dd2_vehicle_rotation){.z = 1};
+    previous.velocity.y = dd2_ground_test_rotating_speed;
+    previous.angular_velocity.z = dd2_ground_test_rotating_spin;
+    dd2_vehicle next = previous;
+    next.position.y += next.velocity.y * DD2_VEHICLE_STEP_SECONDS;
+    next.rotation = dd2_collision_turn(&next, DD2_VEHICLE_STEP_SECONDS);
+    dd2_vehicle_collision_report report = {0};
+    valid = valid &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            report.unresolved_sweeps == 0 && report.count > 2 &&
+            report.count < DD2_VEHICLE_CONTACT_LIMIT && report.contacts[0].time > 0 &&
+            report.contacts[0].time < 1 && report.contacts[1].time == report.contacts[0].time &&
+            report.contacts[2].time > report.contacts[0].time &&
+            fabs(fabs(report.contacts[0].point.z - report.contacts[1].point.z) -
+                 dd2_ground_test_body_length) < dd2_ground_test_tolerance &&
+            dd2_ground_test_lowest(&next, 0) >=
+                (2 * DD2_SURFACE_TEST_HEIGHT) - dd2_ground_test_tolerance &&
+            dd2_ground_test_energy(&next) <= dd2_ground_test_energy(&previous) &&
+            next.steps == previous.steps;
     dd2_ground_test_destroy(&track);
     return valid;
 }
@@ -295,7 +357,8 @@ int main(void) {
     if (!dd2_ground_test_sweep() || !dd2_ground_test_run(false, false, false) ||
         !dd2_ground_test_run(false, false, true) || !dd2_ground_test_run(true, false, false) ||
         !dd2_ground_test_run(false, true, true) || !dd2_ground_test_fast() ||
-        !dd2_ground_test_rotation() || !dd2_ground_test_upright() || !dd2_ground_test_report()) {
+        !dd2_ground_test_rotation() || !dd2_ground_test_upright() || !dd2_ground_test_report() ||
+        !dd2_ground_test_fleet_rotation()) {
         puts("body ground contacts: FAIL");
         return EXIT_FAILURE;
     }

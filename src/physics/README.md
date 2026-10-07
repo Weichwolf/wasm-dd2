@@ -256,11 +256,10 @@ check that crossing the former vertex threshold cannot create a large spin. A
 frozen pair trajectory from original arena 8 additionally checks that a thin
 first-contact patch stays inside both oriented boxes and produces the required
 closing impulse, instead of repeatedly reporting separating fallback contacts.
-Collective overlap correction and coupled wall/pair response convergence remain
-separate, unresolved solver work; continuous face points do not establish
-complete arena gameplay.
+Collective overlap correction and coupled support response are integrated below;
+continuous face points alone do not establish complete arena gameplay.
 
-`dd2_car_contact_proximity` queries a static contact neighborhood for the planned
+`dd2_car_contact_proximity` queries a static contact neighborhood for the
 collective solver. Every normalized separating axis must have a gap at most the
 requested margin (finite, 0 through the 504-unit body radius). This defines SAT
 proximity; a diagonally separated pair's Euclidean distance can exceed that
@@ -274,16 +273,41 @@ tolerance and earliest-event clock. `rewrite_car_proximity` checks 108 analytic
 face contacts (all local axes, both directions, full orientations and distant
 translations), 2,304 independent eight-corner projection queries over all
 fifteen axes, exact margin boundaries, reversed pairs and fast-math nonfinite
-rejection. This query is a prerequisite for joint response; the published fleet
-solver still uses individual contact responses.
+rejection. The fleet solver uses this query to collect support constraints after
+an actual earliest swept event.
 
 `dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
 one earliest-event clock for ground, barriers and pairs. It anchors time ties to
 the global earliest event, then uses body/pair order. Equal-mass pair response
 uses restitution 0.2, friction 0.25, world inertia and opposite impulses at a
-shared contact point. Each response rechecks every body's remaining motion;
-initial overlaps receive symmetric separation. The 64-response budget keeps
-the last checked poses on exhaustion. An unresolved sweep also stops at its
+shared contact point. At a physical event, the solver collects nearby rounded
+barrier probes, road corners and box pairs within twice its 1e-4 clearance, keeps
+the primary body's connected component and deduplicates coincident supports.
+Pair identity ignores unused barrier metadata. World contacts retain body
+corner/probe identity, so swept chord error cannot duplicate an instantaneous
+support. The retained contact preserves primary impact metadata and the deepest
+queried gap for position repair. A rotating roof-down regression checks distinct
+support records, subsequent event chronology, energy loss and road clearance. Primary restitution/friction is
+applied once; `contact_group.c` then solves inelastic normal and Coulomb-friction
+constraints together. Friction uses a fixed step bounded by the trace of the
+tangential mobility matrix; a slip-direction mass can oscillate when that
+matrix has unequal eigenvalues. A frozen three-car chain from the native
+frame-partition test checks convergence, normal complementarity, Coulomb
+friction and conserved linear momentum. Normal complementarity and projected friction must converge within 1e-7
+units/s, with a 4,096-pass bound. A separate equal-mass, least-norm position solve
+requires complementarity within 1e-9 world units, uses signed support gaps and
+preserves shared motion without changing velocity, spin or physical clocks.
+Every body's remaining motion is swept again after correction.
+
+Report incident speed retains actual initial closing/primary impact speed, and
+also represents pressure transferred through another contact as effective normal
+mass times the inelastic support impulse. Positive impulses remain represented
+by positive incident speed; zero-impulse overlap repairs do not cause damage.
+Each support is reported at the primary event time and uncorrected contact pose.
+Groups which cannot fit the remaining 64 entries retain the previous conservative
+serial response for the rest of that step; no successful response is dropped.
+A failed joint solve preserves all proposed bodies and clears the public output.
+The 64-response budget keeps the last checked poses on exhaustion. An unresolved sweep also stops at its
 conservative time bound, increments `unresolved_sweeps`, and leaves velocity,
 health and accident attribution without a manufactured response. Validation or final-state failure preserves
 every proposed body and clears known-size event outputs. Typed stack copies keep
@@ -361,3 +385,12 @@ After discontinuous game recovery, `dd2_vehicle_refresh_wheels` rebuilds real
 wheel mounts, centers, compression, loads and source contacts without advancing
 body motion, steering or the vehicle clock. The game owns the rest deadline and
 landing decision; see `src/game/recovery.md`.
+
+`rewrite_convoy` checks 456 complete fixed steps for 2..20 equal-mass boxes,
+four overlap depths, three headings and both row axes. An independent closed-form
+position solution requires centered repair and full common tangential travel,
+with exactly zero impulse and no clock/spin changes. `rewrite_contact_group`
+checks an analytic wall/pair pressure cascade, sliding/sticking Coulomb friction,
+two-point rotational support with active/released contacts, invalid queries and
+bounded failure for contradictory position constraints. These establish targeted
+joint-solver behavior; complete original-data arena coverage remains required.
