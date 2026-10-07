@@ -18,7 +18,10 @@ enum {
     DD2_GROUP_NEWTON_DELAY = 512,
     DD2_GROUP_NEWTON_SEARCHES = 16
 };
-static const double dd2_group_newton_difference = 1e-5;
+/* Late stick/slip roots need a smaller forward difference than coarse sweep
+ * errors. Keep enough separation from cancellation in accumulated body motion;
+ * the captured pressure-sensitive supports verify this scale independently. */
+static const double dd2_group_newton_difference = 1e-6;
 static const double dd2_group_newton_pivot_floor = 1e-12;
 static const double dd2_group_clearance = 1e-4;
 static const double dd2_group_progress_fraction = 0.999;
@@ -694,9 +697,9 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
         } else if (accelerated) {
             dd2_group_accelerate(workspace, &before, &history, result);
         }
-        if (result->velocity_error < dd2_group_velocity_tolerance) {
-            return true;
-        }
+        /* Predictions can leave a tiny positive impulse at a separating
+         * contact. Require the next ordinary sweep to resolve the unilateral
+         * active set before reporting convergence, within the same budget. */
         if (!accelerated) {
             continue;
         }

@@ -229,7 +229,7 @@ normal/friction support and position repair. Pair proximity now determines the p
 querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World supports retain Coulomb sticking;
 car-pair friction permits at most 0.1 world units/s of low-speed creep, with
-unchanged Coulomb saturation above that threshold. Twelve captured dense-contact
+unchanged Coulomb saturation above that threshold. Thirteen captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging

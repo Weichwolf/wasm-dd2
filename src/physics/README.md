@@ -322,19 +322,26 @@ After 512 ordinary sweeps, a bounded numerical Newton correction is available
 every 32 passes, including after restart. Ordinary sweeps first settle active
 normal/friction branches. A three-axis contact basis describes the projected
 normal complementarity and tangential friction equations; finite differences
-form their coupled Jacobian. Pivoted elimination skips singular directions.
+form their coupled Jacobian. The relative forward-difference step is 1e-6,
+scaled by the impulse coordinate or one. Larger probes distort late stick/slip
+directions; smaller probes can lose accuracy in accumulated body motion.
+Pivoted elimination skips singular directions.
 The proposed impulses are projected into their cones and backtracked up to
 sixteen times. Only finite motion with a strictly smaller physical residual is
 accepted; rejected probes restore exact velocities and accumulated impulses.
+Convergence is certified after an ordinary sweep, so tiny predicted impulses
+at separating contacts are cleared by their unilateral response. That final
+sweep counts toward the existing pass bound.
 An accepted correction clears ordinary-sweep secant history so the two kinds of
 displacement cannot form a false fixed-point prediction. The dense matrix has
 at most 192 axes in automatic storage, with no allocation or contact omission.
 Corrections and restarts share the existing 4,096-pass bound.
 
-Six arena-B regressions cover a five-contact cycle, simultaneous
+Seven arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
-and a seven-contact/four-body fallback. All twelve frozen queries retain
+and a seven-contact/four-body fallback, plus an eighteen-contact/thirteen-body
+pressure-sensitive support query. All thirteen frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

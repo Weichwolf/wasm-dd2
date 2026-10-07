@@ -51,8 +51,6 @@ results do not establish production gates or natural completion. No solver
 change is integrated. Terminal binaries and completed raw captures are removed;
 compact failing queries and the prepared source remain for diagnosis.
 
-## Next
-
 Closed 0020 now integrates delayed bounded coupled corrections in both phases.
 The private step52379 twelve-body query independently reproduces on Native with
 the old production solver. The new seven-body and twelve-body queries and the
@@ -61,6 +59,34 @@ and fully instrumented ASan/UBSan. Required 32 Native/31 WASM CTests and strict
 LLVM19 for 145 owned files pass. Reports are under
 /tmp/wasm-dd2/rewrite-delayed-contact-verification/. No complete natural-race
 pass is established by these component checks.
+
+The selected production run at ea6a440 is terminal and fails overall. Native
+reaches natural engine retirement after 93.975 simulated seconds. WASM aborts
+after race step 52778 (elapsed 52378); ASan/UBSan aborts after race step 51297
+(elapsed 50897). Scoped receipts and compact failure summaries are under
+/tmp/wasm-dd2/rewrite-delayed-arenaB-ea6a440/terminal-report.json. Terminal raw
+logs were hashed and removed; successful Native evidence is retained.
+
+Linker wrappers of the unchanged production WASM library objects reproduce all
+five 10000-step player checkpoints and the exact failed pose. The compact
+thirteen-body/eighteen-contact query independently fails on Native and WASM
+within 4096 passes, with residuals 2.1006819e-5 and 1.8766935e-5. Capture identity
+and replay evidence are under
+/tmp/wasm-dd2/rewrite-delayed-wasm-failure/replay-report.json. Controlled probes
+at identical saved iterates locate forward-difference truncation in late
+Newton directions; 0021 owns the bounded numerical correction. The sanitized
+natural failure still needs its own production-equivalent capture if it remains
+after that correction. No full natural-race pass is claimed.
+
+## Next
+
+Closed 0021 now reduces the forward-difference probe to 1e-6 and certifies
+convergence after an ordinary sweep, preventing predicted residuals from
+publishing tiny separating impulses. The new thirteen-body contact query and
+all twelve prior independent cases pass on production Native/WASM/LLVM19
+ASan/UBSan. Required 32 Native/31 WASM CTests and strict LLVM19 for 145 files
+pass. Report: /tmp/wasm-dd2/rewrite-contact-accuracy-verification/quality-report.json.
+These component checks do not establish natural completion.
 
 Run the current production arena B on all three targets and diagnose any new
 failure, preserving material laws, tolerances and the shared pass budget. Then
