@@ -113,9 +113,20 @@ driver 15 under 0030. Complete physical seasons remain unproved.
 Current evidence: /tmp/wasm-dd2/rewrite-release-93231/report.json and
 /tmp/wasm-dd2/rewrite-season-after-93231/report.json.
 
+Closed 0030 now proves the saved tick-118,647 step and natural advancement past
+it through bounded private linear world-friction refinement. Twenty-six captured
+queries, 340 orderings, mandatory LLVM19/Native/WASM gates, eleven-level actual
+window/input and original-data ground checks, and six scoped race targets pass
+on all three variants. The unchanged-bound Native season next fails round 2 at
+128,036. Sparse production-equivalent capture and actual replays identify six
+cars with eleven contacts (six world/five pair), failing the velocity stage.
+The new advancement owner is 0031; complete physical seasons remain unproved.
+Current receipts: /tmp/wasm-dd2/rewrite-linear-118647/report.json and
+/tmp/wasm-dd2/rewrite-season-after-118647/report.json.
+
 ## Next
 
-Resolve the next advancement failure at round-2 tick 118,647 under 0030 using
+Resolve the next advancement failure at round-2 tick 128,036 under 0031 using
 the bounded production probe and sparse diagnosis. Preserve the regular race rules,
 AI controls, damage and score ownership. Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field

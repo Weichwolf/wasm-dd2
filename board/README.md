@@ -34,7 +34,8 @@ its game requirements or acceptance rules.
 | [0027](closed/0027_championship-mixed-world-support.md) | Mixed world supports in scheduled racing | closed |
 | [0028](closed/0028_championship-coupled-supports.md) | Coupled supports in scheduled racing | closed |
 | [0029](closed/0029_championship-next-advancement.md) | Scheduled racing advancement through the captured failures | closed |
-| [0030](active/0030_championship-world-support-advancement.md) | Next championship world-support advancement failure | active |
+| [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
+| [0031](active/0031_championship-mixed-support-advancement.md) | Next championship mixed-support advancement failure | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -103,9 +104,18 @@ The unchanged-bound natural season passes every previously recorded failure tick
 including 107,550, then fails round 2 at 118,647. This completes the reproduced
 advancement contract under 0029; a new failure-only capture and two actual replays
 identify three world supports on driver 15 with a velocity failure under 0030.
-Full physical seasons, remaining arena completion and all-game acceptance remain
-open. Current receipts: /tmp/wasm-dd2/rewrite-release-93231/report.json and
-/tmp/wasm-dd2/rewrite-season-after-93231/report.json.
+A bounded private refinement of the existing linear world-friction direction now
+advances the saved 118,647 input to 118,648. Twenty-six queries and 340 orderings,
+strict LLVM19/Native/WASM gates, eleven-level actual input and original-data
+ground checks, and six scoped race targets pass on all three variants.
+The unchanged-bound natural season crosses 118,647 and next fails round 2 at
+128,036. Production-equivalent sparse capture and two actual replays identify
+six cars with eleven contacts (six world/five pair); velocity remains above
+tolerance at 4,096 passes. The advancement contract closes under 0030; the next
+failure remains active under 0031. Full physical seasons, remaining arena
+completion and all-game acceptance remain open. Current receipts:
+/tmp/wasm-dd2/rewrite-linear-118647/report.json and
+/tmp/wasm-dd2/rewrite-season-after-118647/report.json.
 
 ## Workflow and acceptance
 

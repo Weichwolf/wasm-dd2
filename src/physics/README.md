@@ -410,6 +410,15 @@ previously better correction. The model array holds at most two models per
 contact plus two base models (130 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
 
+A sliding world support can also need to return to the linear friction branch.
+After restart, a world-only field compares a private refinement of the existing
+linear world-friction direction. Its full fitted seed and up to sixteen steps
+can pass through a larger intermediate residual before the active pressures
+settle. Every candidate keeps normal refits, friction-cone projection, bounded
+backtracking and exact rollback. The original physical law accepts only a finite
+lower final residual. The extra world-only base model fits the existing 130-model
+array; mixed-field models and first-phase behavior are unchanged.
+
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
@@ -435,10 +444,12 @@ exercise selective friction branches. A three-world-contact query captured at
 tick 101,640 checks the positive pressure branch through all six row permutations.
 A three-body/five-contact query captured at tick 93,231 checks a released world
 support with two loaded car pairs through all 120 contact permutations.
+A three-world-support query captured at tick 118,647 checks the sliding-to-linear
+transition through all six row permutations.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-five frozen queries retain
+twenty-six frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

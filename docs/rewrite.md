@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Twenty-five captured dense-contact
+almost parallel ground/wall supports. Twenty-six captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -305,6 +305,13 @@ plus two base models use bounded automatic storage; ordinary pass limits and
 material acceptance remain unchanged. All six orderings of a three-world-contact
 query check higher pressure, and all 120 permutations of a three-body/five-contact
 query check released world support with loaded car pairs.
+World-only fields also privately refine the existing linear friction direction
+after restart, allowing a sliding support to return to the linear branch while
+pressures settle. The full seed and up to sixteen steps retain all contact,
+cone, finite-residual and rollback checks. This base model fits existing bounded
+storage and leaves mixed-field models, ordinary pass limits and final material
+acceptance unchanged. All six orderings of the tick-118,647 world query check
+the transition.
 The solver retains the stronger finite physical correction.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or

@@ -1069,8 +1069,9 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
 }
 
 /* Compare selective car-pair saturation and world-pressure branches in the
- * same connected field. At most two models per contact stay local to one solve;
- * all branches preserve the final material law. */
+ * same connected field. World-only fields also refine their linear friction
+ * direction through a sliding-to-linear transition. All models stay local to
+ * one solve and preserve the final material law. */
 static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
                                         dd2_group_newton_model *models, bool paired) {
     unsigned count = 0;
@@ -1078,6 +1079,9 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
         models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_CONSTITUTIVE,
                                                    .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
         models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_SATURATED,
+                                                   .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
+    } else {
+        models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_WORLD_LINEAR,
                                                    .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
     }
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
