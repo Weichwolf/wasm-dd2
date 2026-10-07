@@ -28,9 +28,8 @@ to these standings and assigned fields. Closed-round copies, original schedules,
 explicit result/season continuation, unlocks, terminal outcomes and the five-record
 history window are implemented. Strict LLVM19 for 152 files, all 33 Native/32 WASM
 CTests, synthetic progression rules on all three targets and natural first ten-lap
-circuit results in both modes on Native/WASM/ASan/UBSan pass. Native/WASM next-track
-failure rollback passes; its sanitized run and final identity checks remain pending
-in active 0024. Reports are under
+circuit results in both modes on Native/WASM/ASan/UBSan pass. Next-track failure rollback also passes on all three targets. All twelve
+scoped cases and final source/binary identity checks pass under closed 0024. Reports are under
 `/tmp/wasm-dd2/rewrite-championship-integration/`. These scoped first-round and
 synthetic-season checks do not establish full physically driven championships.
 Complete campaigns, menus, names, multiplayer and persistence still need their
@@ -38,7 +37,7 @@ consuming implementation.
 
 ## Next
 
-Finish the remaining 0024 verification, then connect the owning session to real
+Connect the verified owning session to real
 Native/browser championship entry, scores, results and continuation. Prepare
 renderer resources transactionally before replacing borrowed track data. Add
 names, profile-wide unlock retention, complete physical campaigns, multiplayer
