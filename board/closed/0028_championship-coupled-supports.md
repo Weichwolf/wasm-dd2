@@ -50,9 +50,14 @@ physics parity. Source/binary/input identities and scopes:
 
 ## Next
 
-Diagnose the next natural advancement failure under 0029; its sparse capture is
-running. Supplemental original-data ground and selected race regressions are
-running against this unchanged source. Complete campaigns and front-end/save
+Diagnose the next position-repair failure under 0029; its sparse capture and
+actual-step reproduction match production. Supplemental checks now pass on the
+unchanged production source: original-data ground geometry/drop comparisons for
+all eleven levels (79,100 queries and 26,400 physical steps per target) and six
+scoped race target receipts. Those include a natural eight-lap twenty-car Stockcar
+race on circuit 5, finishing at 167,472 ticks with player place 2 and 75 points on
+Native, WASM and ASan/UBSan. Independent geometry checks every player tick.
+This is selected coverage, not a passing complete race suite. Complete campaigns and front-end/save
 flows remain under 0025/0004/0002/0003/0008.
 
 ## Accept

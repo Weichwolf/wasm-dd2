@@ -99,7 +99,8 @@ Native/WASM/LLVM19 gates and all eleven actual window/browser flows pass. The
 saved tick-86,643 input advances; the fresh Native season proceeds to tick
 107,550 before another advancement failure. Its exact current-source receipt is
 /tmp/wasm-dd2/rewrite-coupled-86643-final/report.json. The next sparse diagnosis
-is running under 0029. Complete physical seasons remain unproved.
+matches production under 0029: velocity converges, then position repair exceeds
+its 4,096-pass bound. Complete physical seasons remain unproved.
 
 ## Next
 

@@ -54,7 +54,9 @@ the shared low-speed material law advances the saved tick-66,449 input under
 0027. Analytic mixed-contact corrections now advance the saved tick-86,643 input
 under 0028; all eighteen frozen queries and fourteen reorderings pass on three
 targets. The unchanged-bound natural season proceeds to tick 107,550, whose
-advancement failure is being captured under 0029. A separately
+position-repair failure is reproduced under 0029. A private Native-only
+prediction advances that saved step; production implementation and three-target
+acceptance remain pending. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 
