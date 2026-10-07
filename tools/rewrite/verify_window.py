@@ -60,7 +60,7 @@ class NativeWindow:
                                         env=self.env, stdout=self.log, stderr=self.log)
         def ready():
             try:
-                self.window = self.command('search', '--name', '^Destruction Derby 2 - Streckenansicht$').splitlines()[-1]
+                self.window = self.command('search', '--name', '^Destruction Derby 2 - Track viewer$').splitlines()[-1]
                 return True
             except (subprocess.CalledProcessError, IndexError):
                 return False

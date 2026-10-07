@@ -1,3 +1,5 @@
+Use English for repository documentation, comments, commit messages and UI text.
+
 Use `/tmp/wasm-dd2/` for verification captures, generated diagnostics and logs.
 Never place these outputs in the repository or `deps/verification-artifacts`.
 Original provisioned game data and reusable build dependencies may remain ignored
@@ -15,7 +17,9 @@ On the `master` branch, read `docs/rewrite.md` before implementation. New game
 modules are handwritten C11 under `src/`, using typed state and explicit ownership
 instead of original absolute addresses or emulated registers. Keep the reference
 reconstruction and original game data available for functional comparisons.
-`re_out/` and `patches/` exist only on `ghidra`; use `make reference-prepare`
+`re_out/`, `patches/` and the legacy root `web/` belong only to `ghidra`.
+The rewrite browser UI lives in `src/platform/web/`; generated builds stay in
+`/tmp/wasm-dd2/`. Use `make reference-prepare`
 and frozen reference commands under `/tmp/wasm-dd2/`, never recreate them on `master`.
 The rewrite may improve graphics and audio; bitidentical original output is not
 an acceptance requirement. Functional correctness and native/WASM stability are.

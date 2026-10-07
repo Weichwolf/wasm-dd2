@@ -90,7 +90,7 @@ def prepare_game(directory):
     destination = directory / 'DestructionDerby2'
     destination.mkdir(exist_ok=True)
     # Shared immutable originals; the reference has its own mutable save card.
-    for name in ('dd2h.exe', 'dd2.exe', 'Dirinfo', 'dd2_image.bin', 'Redbook'):
+    for name in ('dd2h.exe', 'dd2.exe', 'Dirinfo', 'dd2_image.bin', 'Redbook', 'Intro.avi', 'Outro.avi'):
         original = source / name
         link = destination / name
         if original.exists() and not link.exists() and not link.is_symlink():

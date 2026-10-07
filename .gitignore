@@ -9,7 +9,6 @@ tools/browser/node_modules/
 tools/browser/package-lock.json
 # large binary memory snapshot (regenerated from dd2h.exe by the decompile step)
 dd2_image.bin
-web/dd2/
 /deps/*
 !/deps/softgl/
 .wine-dd2/

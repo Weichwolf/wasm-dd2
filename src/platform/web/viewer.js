@@ -22,14 +22,14 @@ var Module = {
   noInitialRun: true,
   print: message => { status.textContent = message; },
   printErr: message => { console.error(message); },
-  onAbort: () => { status.textContent = 'Renderer konnte nicht gestartet werden. Bitte Seite neu laden.'; },
+  onAbort: () => { status.textContent = 'The renderer could not start. Reload the page.'; },
   onRuntimeInitialized: () => {
     if (!crossOriginIsolated) {
-      status.textContent = 'Die Seite muss über den mitgelieferten lokalen Server geöffnet werden.';
+      status.textContent = 'Open this page through the provided local server.';
       return;
     }
     archive.disabled = false;
-    status.textContent = 'Wähle die Originaldatei Dirinfo.';
+    status.textContent = 'Select the original Dirinfo file.';
   }
 };
 
@@ -37,13 +37,13 @@ archive.addEventListener('change', async () => {
   const file = archive.files[0];
   if (!file) return;
   if (file.size === 0 || file.size > 64 * 1024 * 1024) {
-    status.textContent = 'Die ausgewählte Datei ist leer oder zu groß.';
+    status.textContent = 'The selected file is empty or too large.';
     return;
   }
   archive.disabled = true;
   try {
     if (loaded && Module._dd2_application_current_level()) {
-      status.textContent = 'Bitte Seite neu laden, um eine andere Originaldatei zu öffnen.';
+      status.textContent = 'Reload the page to open another original file.';
       return;
     }
     Module.FS.writeFile('/Dirinfo', new Uint8Array(await file.arrayBuffer()));
@@ -57,12 +57,12 @@ archive.addEventListener('change', async () => {
       effectsGain.value = '256';
       level.value = String(Module._dd2_application_current_level());
       view.value = '0';
-      status.textContent = 'Streckenansicht bereit. Klicke ins Bild, um die Kamera zu steuern.';
+      status.textContent = 'Track view ready. Click the image to control the camera.';
       canvas.focus();
     }
   } catch (error) {
     console.error(error);
-    status.textContent = 'Originaldatei konnte nicht geöffnet werden.';
+    status.textContent = 'The original file could not be opened.';
   } finally { archive.disabled = false; }
 });
 
@@ -73,7 +73,7 @@ musicFile.addEventListener('change', async () => {
   const match = /^track(\d{2})\.cdda$/i.exec(file.name);
   const track = match ? Number(match[1]) : 0;
   if (track < 2 || track > 19 || file.size === 0 || file.size > 64 * 1024 * 1024 || file.size % 4) {
-    musicStatus.textContent = 'Wähle eine vollständige Datei track02.cdda bis track19.cdda.';
+    musicStatus.textContent = 'Select a complete file from track02.cdda to track19.cdda.';
     musicFile.value = '';
     return;
   }
@@ -85,9 +85,9 @@ musicFile.addEventListener('change', async () => {
     if (!loaded || generation !== applicationGeneration || !Module._dd2_application_current_level()) return;
     Module.FS.writeFile('/Music.cdda', bytes);
     try {
-      if (!Module._dd2_application_load_music(track)) throw new Error('Redbook-Titel konnte nicht geladen werden.');
+      if (!Module._dd2_application_load_music(track)) throw new Error('The Redbook track could not be loaded.');
     } finally { Module.FS.unlink('/Music.cdda'); }
-    musicStatus.textContent = `Redbook-Titel ${track} · wird wiederholt`;
+    musicStatus.textContent = `Redbook track ${track} · repeating`;
     canvas.focus();
   } catch (error) {
     musicStatus.textContent = error.message;
@@ -107,7 +107,7 @@ effectsGain.addEventListener('change', () => canvas.focus());
 
 level.addEventListener('change', () => {
   if (!Module._dd2_application_select_level(Number(level.value))) {
-    status.textContent = 'Strecke konnte nicht geladen werden.';
+    status.textContent = 'The track could not be loaded.';
     level.value = String(Module._dd2_application_current_level());
   }
   canvas.focus();
@@ -118,7 +118,7 @@ view.addEventListener('change', () => {
   if (selected >= 3) changed = Module._dd2_application_start_race(selected - 3);
   else if (selected === 2) changed = Module._dd2_application_set_driving(1);
   else changed = Module._dd2_application_show_car(selected);
-  if (!changed) status.textContent = 'Ansicht konnte nicht geladen werden.';
+  if (!changed) status.textContent = 'The view could not be loaded.';
   canvas.focus();
 });
 finishButton.addEventListener('click', () => { Module._dd2_application_withdraw_race(); canvas.focus(); });
@@ -155,15 +155,15 @@ function reflectSelection() {
       musicPlay.disabled = musicPhase <= 0;
       musicGain.disabled = musicPhase < 0;
       effectsGain.disabled = musicPhase < 0;
-      musicPlay.textContent = musicPhase === 2 ? 'Musik pausieren' : 'Musik abspielen';
-      if (musicPhase < 0) musicStatus.textContent = 'Audioausgabe ist nicht verfügbar.';
+      musicPlay.textContent = musicPhase === 2 ? 'Pause music' : 'Play music';
+      if (musicPhase < 0) musicStatus.textContent = 'Audio output is unavailable.';
       finishButton.disabled = Number(view.value) < 3 || phase === 3;
-      pauseButton.textContent = Module._dd2_application_is_paused() ? 'Weiterfahren' : 'Pause';
-      reset.textContent = Number(view.value) >= 2 ? 'An den Start' : 'Kamera zurücksetzen';
+      pauseButton.textContent = Module._dd2_application_is_paused() ? 'Resume' : 'Pause';
+      reset.textContent = Number(view.value) >= 2 ? 'Return to start' : 'Reset camera';
       const selected = Number(view.value);
       if (selected !== reflectedView || phase !== reflectedPhase) {
-        status.textContent = selected >= 3 ? ['Startampel. Gas wird bei GO freigegeben.', 'Rennen läuft. W gibt Gas, P pausiert.', 'Rennen beendet. Ergebnis folgt …', 'Ergebnis. Gelb bist du; R startet erneut.'][phase] : selected === 2 ? 'Freifahrt bereit. Klicke ins Bild; W gibt Gas, P pausiert.' : 'Ansicht bereit. Klicke ins Bild, um die Kamera zu steuern.';
-        canvas.setAttribute('aria-label', selected >= 2 ? 'Fahren. W gibt Gas, A und D lenken, Leertaste bremst.' : 'Streckenansicht. Mit den Pfeiltasten drehen.');
+        status.textContent = selected >= 3 ? ['Countdown. Throttle unlocks at GO.', 'Race running. W accelerates, P pauses.', 'Race ended. Results follow …', 'Results. You are highlighted in yellow; R restarts.'][phase] : selected === 2 ? 'Free driving ready. Click the image; W accelerates, P pauses.' : 'View ready. Click the image to control the camera.';
+        canvas.setAttribute('aria-label', selected >= 2 ? 'Driving. W accelerates, A and D steer, Space brakes.' : 'Track view. Rotate with the arrow keys.');
         reflectedView = selected;
         reflectedPhase = phase;
       }
@@ -171,8 +171,8 @@ function reflectSelection() {
       loaded = false;
       for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = true;
       for (const control of [musicFile, musicPlay, musicGain, effectsGain]) control.disabled = true;
-      musicStatus.textContent = 'Wähle track02.cdda bis track19.cdda aus dem Redbook-Ordner.';
-      if (status.textContent.includes('bereit')) status.textContent = 'Ansicht geschlossen. Dirinfo kann erneut geöffnet werden.';
+      musicStatus.textContent = 'Select track02.cdda to track19.cdda from the Redbook folder.';
+      if (status.textContent.includes('ready')) status.textContent = 'View closed. Dirinfo can be opened again.';
     }
   }
   requestAnimationFrame(reflectSelection);

@@ -189,7 +189,7 @@ or fewer than two available cars with functioning engines; a supported resting
 overturn makes a car temporarily unavailable without engine retirement. A tuned three-second coasting
 phase allows later finishers to cross before results freeze. F7 or the browser's
 race-exit button publishes provisional DNF results immediately. R restarts the
-same field/countdown; Enter returns to inspection, and selecting Freifahrt clears
+same field/countdown; Enter returns to inspection, and selecting Free driving clears
 the race rules. Stockcar awards original position bonuses (100/75/50/.../0);
 Wrecking adds actual simulated accident points to the original 50/25/10 circuit
 bonuses, capped at 999. Wrecking arena results use accident points without circuit bonuses.
@@ -201,7 +201,7 @@ CURRENT, LAST and BEST in MM:SS.mmm (5 ms resolution, display capped at
 without ending the session. Retirement freezes the current timer before the
 coasting phase; F7 retains the session times immediately. Time Trial awards no
 placement/accident points. R clears the session record and restarts the countdown.
-Returning to Freifahrt or a circuit race restores twenty cars and the original
+Returning to Free driving or a circuit race restores twenty cars and the original
 finite lap count; selecting an arena changes to Wrecking. Persistent track
 records, their original file compatibility and the full front end remain pending.
 
@@ -490,25 +490,22 @@ and remove completed raw captures without deleting files in use.
 
 ## Goal
 
-Implementiere im Branch `master` von `/home/cosmo/Git/wasm-dd2` eine vollständig
-spielbare, gut lesbare und modular aufgebaute C11-Neuimplementierung von
-Destruction Derby 2 für Native und WebAssembly mit der gepinnten SoftGL-Bibliothek
-als Renderer; nutze `ghidra`, den Tag `reconstruction-baseline` und das laufende
-Original als Referenzen für Spielverhalten und Datenformate, ersetze schrittweise
-absolute Speicheradressen und Registeremulation durch dokumentierte Typen und
-klare Schnittstellen, implementiere und prüfe alle Strecken, Fahrzeuge, Physik,
-Schadensmodelle, KI, Spielmodi, Menüs, Rennen, Meisterschaften, Wiederholungen,
-Einstellungen, Tastatur- und Gamepad-Steuerung sowie Speichern und Laden
-einschließlich relevanter Randfälle, stelle funktionierende Effekte und
-Redbook-Musik sicher und verbessere die Darstellung kontinuierlich durch höhere
-Auflösung, bessere Texturen, Beleuchtung, Schatten und Effekte; Bitidentität von
-Bild und Ton zum Original ist keine Anforderung, funktionale Korrektheit,
-Stabilität, Datenkompatibilität und gutes Spielverhalten auf beiden Plattformen
-sind verbindlich, ebenso strenges clang-tidy und clang-format mit LLVM 19, die
-vereinbarten Compilerflags, reproduzierbare automatisierte Prüfungen, begrenzte
-Diagnostik unter `/tmp/wasm-dd2/` und Commit plus Push nach jedem verifizierten
-Fortschritt, bis sämtliche Spielfunktionen umgesetzt und keine bekannten
-Funktions- oder Kompatibilitätsfehler mehr offen sind.
+Implement a fully playable, readable and modular C11 reimplementation of
+Destruction Derby 2 on `master` in `/home/cosmo/Git/wasm-dd2`, targeting Native and
+WebAssembly with the pinned SoftGL renderer. Use `ghidra`, the
+`reconstruction-baseline` tag and the running original as references for gameplay
+and data formats. Replace absolute memory addresses and register emulation with
+documented types and clear interfaces. Implement and verify every track, vehicle,
+physics and damage model, AI behavior, game mode, menu, race, championship, replay,
+setting, keyboard/gamepad control and save/load operation, including relevant
+edge cases. Provide working sound effects and Redbook music, and continuously
+improve resolution, textures, lighting, shadows and effects. Bitidentical original
+video and audio are not required; functional correctness, stability, data
+compatibility and good gameplay on both platforms are mandatory. Enforce strict
+clang-tidy and clang-format with LLVM 19, the agreed compiler flags, reproducible
+automated checks, bounded diagnostics under `/tmp/wasm-dd2/`, and commit/push after
+each verified improvement until every game feature is implemented and no known
+functional or compatibility errors remain.
 
 `make rewrite-recovery-verify` exercises supported rest/righting boundaries and
 220 controlled physical roof-down drops per target at every original grid slot,

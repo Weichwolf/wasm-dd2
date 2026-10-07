@@ -14,7 +14,7 @@ fresh key presses, wheel direction and monotonic elapsed time; focus loss clears
 held keys and queued keyboard events. Frame time is capped at 50 ms for camera
 interaction, independently of future simulation timing.
 
-`web/` contains the local-file browser UI and C application bridge. Its canvas
+`src/platform/web/` contains the local-file browser UI and C application bridge. Its canvas
 has keyboard focus; canvas/window blur and hidden visibility release input.
 Selectors reflect C state, and closing permits reopening the archive. The local
 server supplies COOP/COEP for the eight SoftGL workers and serves only the viewer

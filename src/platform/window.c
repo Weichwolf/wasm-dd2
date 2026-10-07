@@ -64,7 +64,7 @@ dd2_window *dd2_window_create(dd2_render_options size) {
         return NULL;
     }
     window->native =
-        SDL_CreateWindow("Destruction Derby 2 - Streckenansicht", SDL_WINDOWPOS_CENTERED,
+        SDL_CreateWindow("Destruction Derby 2 - Track viewer", SDL_WINDOWPOS_CENTERED,
                          SDL_WINDOWPOS_CENTERED, size.width, size.height, SDL_WINDOW_RESIZABLE);
     window->top_rows = malloc((size_t)size.width * (size_t)size.height * DD2_WINDOW_CHANNELS);
     if (window->native != NULL && window->top_rows != NULL) {

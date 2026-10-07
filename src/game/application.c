@@ -498,7 +498,7 @@ static void dd2_application_race_input(const dd2_input *input) {
             mode = DD2_RACE_TOTAL_DESTRUCTION;
         }
         if (dd2_application_start_race(mode) == 0) {
-            puts("Dieser Modus ist auf dieser Strecke nicht verfügbar.");
+            puts("This mode is unavailable on this track.");
         }
     }
     if (input->pressed[DD2_KEY_WITHDRAW]) {
@@ -631,7 +631,7 @@ static void dd2_application_drive_frame(dd2_application *application, const dd2_
                  (double)(input->held[DD2_KEY_RIGHT] || input->held[DD2_KEY_PAN_RIGHT])};
     if (!dd2_driving_advance(application->driving,
                              (dd2_driving_frame){.seconds = seconds, .control = control})) {
-        puts("Fahrzeug konnte nicht aktualisiert werden. Mit R zurücksetzen.");
+        puts("The vehicle could not be updated. Press R to reset.");
         dd2_application_set_paused(1);
     } else {
         dd2_application_audio_update(application, control);
@@ -696,7 +696,7 @@ static dd2_application *dd2_application_create(const char *path) {
     application->running = true;
     application->audio = dd2_game_audio_create(path, application->archive);
     if (application->audio == NULL) {
-        puts("Audioausgabe ist nicht verfügbar.");
+        puts("Audio output is unavailable.");
     }
     dd2_current_application = application;
 #ifndef __EMSCRIPTEN__
