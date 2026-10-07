@@ -111,8 +111,12 @@ now preserve all 45 original effects, including their independent playback
 frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
 Redbook tracks; source/binary-identified three-target verification compares every
 decoded sample byte. See `make rewrite-audio-assets-verify` and
-`src/assets/README.md`. The mixer, audible effects/music, transport controls and
-their application integration remain to be implemented. Browser pthread builds
+`src/assets/README.md`. A typed audio runtime now mixes four effect channels
+and a separate Redbook track with rational linear resampling, gain/pan,
+saturating summation and explicit start/pause/resume/repeat/stop state. Analytic
+tests cover playback cursors, endpoints and channel locks on both targets.
+See `src/audio/README.md`. Device/browser output, audible game cues, music
+loading/selection and their application integration remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
 Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
 solver and nested geometry queries; the SDK's default 64 KiB is insufficient.

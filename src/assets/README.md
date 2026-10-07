@@ -232,7 +232,9 @@ reports retain source/binary/input hashes under `/tmp/wasm-dd2/`. Synthetic CI
 also covers signed extremes, both sample widths/channel counts, all WAVE
 truncations, duplicate/reordered chunks, padding, malformed formats/banks,
 shared samples and immutable input. These establish audio asset compatibility;
-mixing, audible playback, game sound cues and CD transport remain pending.
+the separate typed audio runtime provides mixing and transport state (see
+`src/audio/README.md`). Device output, audible playback, game sound cues and
+application CD controls remain pending.
 
 ## Road contact geometry
 
