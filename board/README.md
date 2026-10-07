@@ -35,6 +35,12 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
+The current production race run has 139 scoped passing target receipts,
+including natural WASM arena B results. Native B movement remains under
+diagnosis. Stable-ID physical grids are verified in a separate temporary
+checkout and await integration after the production run is terminal; complete
+championships remain open under 0004.
+
 ## Workflow and acceptance
 
 Use RFC 822 headers `Type`, `Title`, optional `Depends`, then **Contract**,

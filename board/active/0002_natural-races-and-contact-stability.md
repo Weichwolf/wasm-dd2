@@ -113,9 +113,30 @@ CTests and strict LLVM19 for 145 files pass. Reports:
 /tmp/wasm-dd2/rewrite-contact-branches-verification/. These component checks
 do not establish complete natural races or fix the nonterminal Native behavior.
 
+The source-identified production run at a326993 has 139 passing target receipts
+so far. All 43 short physical/rule scenarios pass on all three targets; injected
+route checks do not prove physically completed circuits. Arenas 8, 9 and A reach
+natural results on all three targets. Arena B WASM reaches engine retirement
+after 134.045 simulated seconds; its Native and sanitized targets are still
+running. The complete suite has no terminal report yet:
+/tmp/wasm-dd2/rewrite-contact-branches-full-a326993/.
+
+A separate sparse Native B diagnosis using unchanged production library objects
+reaches all 120000 fixture ticks without an advancement or solver failure, but
+has no natural result. Fourteen cars remain available. The player has four
+supported wheels and front damage 0.588834/0.947100; no sampled interval contains
+an unresolved collision step. Its last 125 simulated seconds have a 131.138-unit
+sum of checkpoint chords, a lower bound on travel rather than a full motion
+trace. Retained player checkpoints and the last two fleet snapshots are under
+/tmp/wasm-dd2/rewrite-branch-arenaB-native-diagnosis/diagnosis-report.json.
+The wrapper still needs to match the upcoming production B Native receipt.
+Completed raw output and the temporary capture binary were hashed and removed.
+This identifies a movement/tactics investigation, not a complete physics or
+natural-race pass.
+
 ## Next
 
-Run the complete current production race suite on all three targets and diagnose any new
+Finish the current production race suite on all three targets and diagnose any new
 failure, preserving material laws, tolerances and the shared pass budget. Then
 diagnose the remaining nonterminal arena/AI behavior and expand ordinary
 physically completed circuit coverage beyond circuit 5. Do not replace a missing
