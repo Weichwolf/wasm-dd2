@@ -93,7 +93,7 @@ def main():
         return [json.loads(line) for line in content.splitlines() if line.startswith('{')]
 
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
-             '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),
+             '-I', str(ROOT / 'deps/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
@@ -106,10 +106,10 @@ def main():
     game_units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     preview, test = output / 'preview-sanitized', output / 'timing-sanitized'
     run([tool('clang'), *flags, *map(str, assets_units + physics_units + render_units + game_units),
-         str(ROOT / 'tests/rewrite/driving_preview.c'), str(WORK / 'rewrite-native/softgl/libsoftgl.a'),
+         str(ROOT / 'tests/driving_preview.c'), str(WORK / 'rewrite-native/softgl/libsoftgl.a'),
          '-lm', '-o', str(preview)], 'preview-build')
     run([tool('clang'), *flags, *map(str, assets_units + physics_units + game_units),
-         str(ROOT / 'tests/rewrite/driving_test.c'), '-lm', '-o', str(test)], 'timing-build')
+         str(ROOT / 'tests/driving_test.c'), '-lm', '-o', str(test)], 'timing-build')
     run([str(test)], 'timing-sanitized')
     commands = {'native': [str(WORK / 'rewrite-native/dd2_driving_preview')],
                 'wasm': ['node', str(WORK / 'rewrite-wasm/dd2_driving_preview.js')],
@@ -144,7 +144,7 @@ def main():
             comparisons.append(dict(level=code, mode=mode, state=baseline, comparisons=results))
             print(json.dumps(dict(level=code, mode=mode, pass_=True)), flush=True)
     sources = [path for path in (ROOT / 'src').rglob('*') if path.suffix in ('.c', '.h')]
-    sources += [ROOT / 'tests/rewrite/driving_preview.c', ROOT / 'tests/rewrite/driving_test.c', Path(__file__).resolve()]
+    sources += [ROOT / 'tests/driving_preview.c', ROOT / 'tests/driving_test.c', Path(__file__).resolve()]
     binaries = [WORK / 'rewrite-native/dd2_driving_preview', WORK / 'rewrite-wasm/dd2_driving_preview.wasm', preview, test]
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=ORIGINAL_SHA256, starts=expected, comparisons=comparisons, calls=calls,

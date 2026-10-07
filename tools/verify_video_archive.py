@@ -20,7 +20,7 @@ from reference.video_archive import Collector, Records, RECORD_BYTES
 from reference.video_frames import terminal_flip
 
 ROOT = Path(__file__).resolve().parents[1]
-COMPILER = ROOT / 'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'
+COMPILER = ROOT / 'deps/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'
 NODE_READER = ROOT / 'tools/browser/video_record_reader.js'
 
 

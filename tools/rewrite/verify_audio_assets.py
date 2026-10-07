@@ -105,7 +105,7 @@ def main():
     sanitized = output / 'export-sanitized'
     sanitized_test = output / 'test-sanitized'
     for fixture, binary in (('audio_export', sanitized), ('audio_test', sanitized_test)):
-        units = [ROOT / 'src/assets/audio.c', ROOT / ('tests/rewrite/' + fixture + '.c')]
+        units = [ROOT / 'src/assets/audio.c', ROOT / ('tests/' + fixture + '.c')]
         if fixture == 'audio_export':
             units.append(ROOT / 'src/platform/file.c')
         run([tool('clang'), *flags, *map(str, units), '-o', str(binary)], fixture + '-build')
@@ -145,7 +145,7 @@ def main():
         results.append(dict(number=track['number'], metadata=expected, targets=targets))
         print(json.dumps(dict(track=track['number'], pass_=True)), flush=True)
     sources = [ROOT / name for name in ('src/assets/audio.c', 'src/assets/audio.h', 'src/assets/bytes.h',
-               'src/platform/file.c', 'tests/rewrite/audio_test.c', 'tests/rewrite/audio_export.c', 'CMakeLists.txt')]
+               'src/platform/file.c', 'tests/audio_test.c', 'tests/audio_export.c', 'CMakeLists.txt')]
     sources.append(Path(__file__).resolve())
     binaries = [args.native_build / 'dd2_audio_export', args.wasm_build / 'dd2_audio_export.wasm', sanitized, sanitized_test]
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),

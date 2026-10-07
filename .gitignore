@@ -7,13 +7,11 @@ build/
 node_modules/
 tools/browser/node_modules/
 tools/browser/package-lock.json
-re_out/dd2_decomp.c
-re_out/dd2h_staging/
-re_out/*.log
 # large binary memory snapshot (regenerated from dd2h.exe by the decompile step)
 dd2_image.bin
 web/dd2/
-third_party/
+/deps/*
+!/deps/softgl/
 .wine-dd2/
 
 # Original game files, CD images and lossless music (provisioned locally).

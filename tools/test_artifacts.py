@@ -35,7 +35,7 @@ class ArtifactTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='dd2-path-test-', dir=artifacts.WORK) as work:
             root = Path(work)
             (root / 'escape').symlink_to(artifacts.ROOT, target_is_directory=True)
-            for path in (artifacts.ROOT / 'third_party/verification-artifacts', root / 'escape/run', Path('/tmp')):
+            for path in (artifacts.ROOT / 'deps/verification-artifacts', root / 'escape/run', Path('/tmp')):
                 with self.assertRaises(ValueError):
                     artifacts.temporary_output(path)
             self.assertEqual(artifacts.temporary_output(root / 'run'), root / 'run')

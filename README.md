@@ -6,3 +6,4 @@ dekompilierte und gepatchte Referenz liegt auf `ghidra`. Das Projekt ist noch in
 Entwicklung; Originalspieldaten werden separat bereitgestellt.
 
 Architektur, Einrichtung und aktueller Funktionsumfang: [docs/rewrite.md](docs/rewrite.md).
+Backlog: [board/README.md](board/README.md).

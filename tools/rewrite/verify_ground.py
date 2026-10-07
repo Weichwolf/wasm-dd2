@@ -144,7 +144,7 @@ def main():
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]
     sanitized, synthetic = output/'export-sanitized', output/'test-sanitized'
     for source, binary in (('ground_export', sanitized), ('ground_test', synthetic)):
-        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/rewrite/{source}.c'),
+        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/{source}.c'),
              '-lm','-o',str(binary)], source+'-build')
     run([str(synthetic)], 'synthetic-sanitized')
     commands = {'native': [str(WORK/'rewrite-native/dd2_ground_export')],
@@ -212,8 +212,8 @@ def main():
         print(json.dumps(dict(code=code, pass_=True, comparisons={p: {k:v for k,v in c.items() if k != 'final_states'}
                                                                  for p,c in comparisons.items()})), flush=True)
     sources = [p for p in (ROOT/'src').rglob('*') if p.suffix in ('.c','.h')]
-    sources += [ROOT/'tests/rewrite/ground_test.c',ROOT/'tests/rewrite/ground_export.c',
-                ROOT/'tests/rewrite/surface_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
+    sources += [ROOT/'tests/ground_test.c',ROOT/'tests/ground_export.c',
+                ROOT/'tests/surface_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
     binaries = [WORK/'rewrite-native/dd2_ground_export',WORK/'rewrite-wasm/dd2_ground_export.wasm',sanitized,synthetic]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(),scope=__doc__.strip(),
                   original_sha256=ORIGINAL_SHA256,corners=corners,levels=levels,calls=calls,

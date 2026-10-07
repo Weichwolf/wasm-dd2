@@ -107,14 +107,14 @@ def main():
     # Match production optimization while retaining ASan/UBSan on every rewrite
     # unit. Dense support iterations otherwise spend the bounded run in O1
     # instrumentation overhead; simulation length and deadlines stay unchanged.
-    flags=['-std=c11','-O3','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests/rewrite'),
+    flags=['-std=c11','-O3','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests'),
            '-Wall','-Wextra','-Wpedantic','-Wno-unused-parameter','-Wno-unused-function',
            '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
            '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
            '-fsanitize=address,undefined','-fno-omit-frame-pointer']
     sanitized,synthetic=output/'export-sanitized',output/'test-sanitized'
     for name,binary in (('ai_export',sanitized),('ai_test',synthetic)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),'-lm','-o',str(binary)],name+'-build')
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),'-lm','-o',str(binary)],name+'-build')
     run([str(synthetic)],'synthetic-sanitized')
     commands={'native':[str(WORK/'rewrite-native/dd2_ai_export')],
               'wasm':['node',str(WORK/'rewrite-wasm/dd2_ai_export.js')],'sanitized':[str(sanitized)]}
@@ -168,7 +168,7 @@ def main():
         levels.append(dict(code=code,targets=targets))
         print(json.dumps(dict(code=code,pass_=True,min_travel={p:min(s['travel'] for s in t['summaries'][1:]) for p,t in targets.items()})),flush=True)
     sources=[p for p in (ROOT/'src').rglob('*') if p.suffix in ('.c','.h')]
-    sources += [ROOT/'tests/rewrite/ai_export.c',ROOT/'tests/rewrite/ai_test.c',ROOT/'tests/rewrite/surface_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
+    sources += [ROOT/'tests/ai_export.c',ROOT/'tests/ai_test.c',ROOT/'tests/surface_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
     binaries=[WORK/'rewrite-native/dd2_ai_export',WORK/'rewrite-wasm/dd2_ai_export.wasm',sanitized,synthetic]
     report=dict(pass_=True,scope=__doc__.strip(),verified_at=datetime.now(timezone.utc).isoformat(),
                 original_sha256=ORIGINAL_SHA256,calls=calls,sanitizer_flags=flags,

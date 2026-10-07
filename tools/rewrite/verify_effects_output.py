@@ -83,7 +83,7 @@ def native_check(output, archive, binary, label):
 
 
 def units(output):
-    flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'), '-I', str(ROOT / 'tests/rewrite'),
+    flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'), '-I', str(ROOT / 'tests'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
              '-fno-strict-aliasing', '-ffast-math', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     libraries = [WORK / ('rewrite-native/libdd2_' + name + '.a') for name in ('game', 'ai', 'physics', 'assets')]
@@ -92,7 +92,7 @@ def units(output):
                            'game_sound': ['src/game/sound_events.c']}.items():
         binary = output / (name + '-sanitized')
         with (output / (name + '-sanitizer.log')).open('wb') as log:
-            run_bounded([tool('clang'), *flags, str(ROOT / ('tests/rewrite/' + name + '_test.c')),
+            run_bounded([tool('clang'), *flags, str(ROOT / ('tests/' + name + '_test.c')),
                          *[str(ROOT / source) for source in sources], *map(str, libraries), '-lm', '-o', str(binary)],
                         directory=output, timeout=60, stdout=log, stderr=subprocess.STDOUT, check=True)
             run_bounded([str(binary)], directory=output, timeout=30, stdout=log, stderr=subprocess.STDOUT, check=True)

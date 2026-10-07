@@ -9,7 +9,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output',type=Path,required=True)
-parser.add_argument('--mingw',default=shutil.which('i686-w64-mingw32-gcc') or str(root/'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
+parser.add_argument('--mingw',default=shutil.which('i686-w64-mingw32-gcc') or str(root/'deps/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
 args=parser.parse_args();out=args.output.resolve()
 if Path('/tmp/wasm-dd2') not in out.parents or out.exists():parser.error('Use a fresh directory under /tmp/wasm-dd2/')
 out.mkdir(parents=True)

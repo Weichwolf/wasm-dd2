@@ -176,12 +176,12 @@ def main():
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     units += [ROOT / 'src/platform/file.c']
     sanitized, synthetic, impact = (output / name for name in ('export-sanitized', 'rules-sanitized', 'impact-sanitized'))
-    run([tool('clang'), *flags, *map(str, units), str(ROOT / 'tests/rewrite/fleet_export.c'),
+    run([tool('clang'), *flags, *map(str, units), str(ROOT / 'tests/fleet_export.c'),
          '-lm', '-o', str(sanitized)], 'export-build')
     run([tool('clang'), *flags, str(ROOT / 'src/game/accidents.c'),
-         str(ROOT / 'tests/rewrite/accidents_test.c'), '-lm', '-o', str(synthetic)], 'rules-build')
+         str(ROOT / 'tests/accidents_test.c'), '-lm', '-o', str(synthetic)], 'rules-build')
     run([str(synthetic)], 'rules-sanitized')
-    run([tool('clang'), *flags, *map(str, units), str(ROOT / 'tests/rewrite/accidents_impact.c'),
+    run([tool('clang'), *flags, *map(str, units), str(ROOT / 'tests/accidents_impact.c'),
          '-lm', '-o', str(impact)], 'impact-build')
     commands = {'native': [str(WORK / 'rewrite-native/dd2_fleet_export')],
                 'wasm': ['node', str(WORK / 'rewrite-wasm/dd2_fleet_export.js')],
@@ -210,8 +210,8 @@ def main():
                 raise ValueError('Controlled collision does not exercise physical destruction credit')
             controlled[profile][target] = metrics
     sources = [path for path in (ROOT / 'src').rglob('*') if path.suffix in ('.c', '.h')]
-    sources += [ROOT / 'tests/rewrite/fleet_export.c', ROOT / 'tests/rewrite/accidents_test.c',
-                ROOT / 'tests/rewrite/accidents_impact.c', ROOT / 'tests/rewrite/accident_trace.h',
+    sources += [ROOT / 'tests/fleet_export.c', ROOT / 'tests/accidents_test.c',
+                ROOT / 'tests/accidents_impact.c', ROOT / 'tests/accident_trace.h',
                 ROOT / 'CMakeLists.txt', Path(__file__).resolve()]
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=digest(archive), levels=levels, controlled_impact=controlled, calls=calls,

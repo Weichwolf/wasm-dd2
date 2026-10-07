@@ -479,11 +479,11 @@ def main():
     units += [ROOT/'src/platform/file.c']
     sanitized, synthetic = output/'export-sanitized', output/'rules-sanitized'
     for name, binary in (('race_export', sanitized), ('race_test', synthetic)):
-        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/rewrite/{name}.c'), '-lm', '-o', str(binary)], name+'-build').unlink()
+        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/{name}.c'), '-lm', '-o', str(binary)], name+'-build').unlink()
     run([str(synthetic)], 'sanitized-rules').unlink()
     commands = {'native':[str(WORK/'rewrite-native/dd2_race_export')],
                 'wasm':['node',str(WORK/'rewrite-wasm/dd2_race_export.js')], 'sanitized':[str(sanitized)]}
-    sources = [path for folder in ('src','tests/rewrite') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
+    sources = [path for folder in ('src','tests') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
     sources += [Path(__file__).resolve(), ROOT/'CMakeLists.txt', ROOT/'tools/rewrite/verify_laps.py']
     identity = dict(source_sha256={str(p.relative_to(ROOT)):digest(p) for p in sources},
                     binary_sha256={str(p):digest(p) for p in (WORK/'rewrite-native/dd2_race_export',WORK/'rewrite-wasm/dd2_race_export.wasm',sanitized,synthetic)},
@@ -527,7 +527,7 @@ def main():
             targets = target_checks(executor, code, mode_name, kind, checker, timeout=timeout)
             results.append(dict(level=code, mode=mode_name, scenario=kind, targets=targets))
             print(json.dumps(results[-1]), flush=True)
-    sources = [path for folder in ('src','tests/rewrite') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
+    sources = [path for folder in ('src','tests') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
     sources += [Path(__file__).resolve(), ROOT/'CMakeLists.txt', ROOT/'tools/rewrite/verify_laps.py']
     if identity['source_sha256'] != {str(p.relative_to(ROOT)):digest(p) for p in sources}:
         raise ValueError('Race verification sources changed during the run')

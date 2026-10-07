@@ -93,7 +93,7 @@ def main():
     sanitized_export = output/'dd2_vehicle_export_sanitized'
     sanitized_test = output/'dd2_vehicle_test_sanitized'
     for name,binary in (('vehicle_export',sanitized_export),('vehicle_test',sanitized_test)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),
              '-lm','-o',str(binary)],name+'-sanitizer-build')
     run([str(sanitized_test)],'sanitized-synthetic')
     commands = {'native':[str(WORK/'rewrite-native/dd2_vehicle_export')],
@@ -119,15 +119,15 @@ def main():
     sources = ['src/physics/vehicle.c','src/physics/vehicle.h','src/physics/numeric.h',
                'src/physics/road_contact.c','src/physics/road_contact.h',
                'src/physics/road_surface.c','src/physics/road_surface.h',
-               'src/assets/road.c','src/assets/road.h','tests/rewrite/vehicle_test.c',
-               'tests/rewrite/vehicle_export.c','tests/rewrite/surface_fixture.h',
+               'src/assets/road.c','src/assets/road.h','tests/vehicle_test.c',
+               'tests/vehicle_export.c','tests/surface_fixture.h',
                'tools/rewrite/verify_vehicles.py','CMakeLists.txt']
     binaries = [WORK/'rewrite-native/dd2_vehicle_export',WORK/'rewrite-wasm/dd2_vehicle_export.js',
                 WORK/'rewrite-wasm/dd2_vehicle_export.wasm',sanitized_export,sanitized_test]
     report = dict(pass_=True,verified_at=datetime.now(timezone.utc).isoformat(),scope=__doc__.strip(),
                   original_sha256=ORIGINAL_SHA256,levels=levels,calls=calls,
                   tolerance=dict(absolute=ABSOLUTE_TOLERANCE,relative=RELATIVE_TOLERANCE),
-                  sanitizer_scope='All vehicle/contact/decoder/probe C units instrumented; no vendor library linked',
+                  sanitizer_scope='All vehicle/contact/decoder/probe C units instrumented; no SoftGL library linked',
                   source_sha256={p:digest(ROOT/p) for p in sources},
                   binary_sha256={str(p):digest(p) for p in binaries})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')

@@ -118,7 +118,7 @@ def extract_installer(raw, dest):
 
 
 def extractor():
-    source = ROOT / "third_party" / "unshieldv3"
+    source = ROOT / "deps" / "unshieldv3"
     if source.exists():
         rev = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
         if rev != EXTRACTOR_REV:
@@ -192,7 +192,7 @@ def main():
     parser.add_argument("--archive", type=Path, help="use an existing ZIP (offline after extractor setup)")
     parser.add_argument("--game-dir", type=Path, default=ROOT / "DestructionDerby2")
     args = parser.parse_args()
-    cache = ROOT / "third_party" / "downloads"
+    cache = ROOT / "deps" / "downloads"
     cache.mkdir(parents=True, exist_ok=True)
     archive = args.archive or cache / "Destruction-Derby-2_Win_EN_ISO-Version.zip"
     if not archive.exists():
@@ -224,10 +224,9 @@ def main():
             subprocess.run([str(tool), "extract", str(installer), str(unpacked)], check=True)
             install_files(unpacked, args.game_dir)
             extract_redbook(raw, tracks, args.game_dir / "Redbook")
-    subprocess.run([sys.executable, str(ROOT / "re_out" / "extract_image.py"),
+    from rewrite.reference import reference_file
+    subprocess.run([sys.executable, str(reference_file("re_out/extract_image.py")),
                     str(args.game_dir / "dd2h.exe"), str(args.game_dir / "dd2_image.bin")], check=True)
-    if args.game_dir.resolve() == (ROOT / "DestructionDerby2").resolve():
-        shutil.copyfile(args.game_dir / "dd2_image.bin", ROOT / "re_out" / "dd2_image.bin")
     print(f"Provisioned {args.game_dir}: game, memory image and 18 lossless CDDA tracks", flush=True)
 
 

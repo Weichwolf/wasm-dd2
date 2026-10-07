@@ -63,7 +63,7 @@ def main():
                           log_sha256=hashlib.sha256(log.read_bytes()).hexdigest()))
         if result.returncode != 0 or 'Sanitizer:' in content or 'runtime error:' in content:
             raise RuntimeError(label + ' failed: ' + content)
-    flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'), '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),
+    flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'), '-I', str(ROOT / 'deps/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
@@ -75,7 +75,7 @@ def main():
     sanitized_preview = output / 'dd2_scene_preview_sanitized'
     softgl = WORK / 'rewrite-native/softgl/libsoftgl.a'
     for name, binary in (('mesh_render_test', sanitized_probe), ('scene_preview', sanitized_preview)):
-        run([tool('clang'), *flags, *units, str(ROOT / f'tests/rewrite/{name}.c'), str(softgl), '-lm', '-o', str(binary)], name + '-sanitizer-build')
+        run([tool('clang'), *flags, *units, str(ROOT / f'tests/{name}.c'), str(softgl), '-lm', '-o', str(binary)], name + '-sanitizer-build')
     run([str(sanitized_probe)], 'sanitized-pixels')
     commands = {
         'native': [str(WORK / 'rewrite-native/dd2_scene_preview')],
@@ -97,8 +97,8 @@ def main():
             native.unlink()
             print(json.dumps(dict(level=code, mode=mode, pass_=True)), flush=True)
     sources = ['src/render/mesh_draw.c', 'src/render/mesh_draw.h', 'src/render/camera.c',
-               'src/render/camera.h', 'tests/rewrite/mesh_render_test.c',
-               'tests/rewrite/scene_preview.c', 'tools/rewrite/verify_scene_render.py', 'CMakeLists.txt']
+               'src/render/camera.h', 'tests/mesh_render_test.c',
+               'tests/scene_preview.c', 'tools/rewrite/verify_scene_render.py', 'CMakeLists.txt']
     binaries = [WORK / 'rewrite-native/dd2_scene_preview', WORK / 'rewrite-wasm/dd2_scene_preview.js',
                 WORK / 'rewrite-wasm/dd2_scene_preview.wasm', sanitized_probe, sanitized_preview, softgl]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(), original_sha256=ORIGINAL_SHA256,

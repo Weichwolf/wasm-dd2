@@ -61,7 +61,7 @@ def main():
     sanitized_export = output/'dd2_surface_export_sanitized'
     sanitized_test = output/'dd2_surface_test_sanitized'
     for name, binary in (('surface_export',sanitized_export),('surface_test',sanitized_test)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),
              '-lm','-o',str(binary)],name+'-sanitizer-build')
     run([str(sanitized_test)],'sanitized-synthetic')
     commands = {'native':[str(WORK/'rewrite-native/dd2_surface_export')],
@@ -87,14 +87,14 @@ def main():
                               mean_cell_tests=baseline['mean_cell_tests'])),flush=True)
     sources = ['src/physics/road_contact.c','src/physics/road_contact.h',
                'src/physics/road_surface.c','src/physics/road_surface.h','src/physics/numeric.h',
-               'src/assets/road.c','src/assets/road.h','tests/rewrite/surface_export.c',
-               'tests/rewrite/surface_test.c','tests/rewrite/surface_fixture.h',
+               'src/assets/road.c','src/assets/road.h','tests/surface_export.c',
+               'tests/surface_test.c','tests/surface_fixture.h',
                'tools/rewrite/verify_surfaces.py','CMakeLists.txt']
     binaries = [WORK/'rewrite-native/dd2_surface_export',WORK/'rewrite-wasm/dd2_surface_export.js',
                 WORK/'rewrite-wasm/dd2_surface_export.wasm',sanitized_export,sanitized_test]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(),
                   scope=__doc__.strip(), original_sha256=ORIGINAL_SHA256, levels=levels,
-                  calls=calls, sanitizer_scope='All surface/contact/decoder/probe C units instrumented; no vendor library linked',
+                  calls=calls, sanitizer_scope='All surface/contact/decoder/probe C units instrumented; no SoftGL library linked',
                   source_sha256={p:digest(ROOT/p) for p in sources},
                   binary_sha256={str(p):digest(p) for p in binaries})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')

@@ -172,7 +172,7 @@ def main():
     units += [ROOT/'src/platform/file.c']
     sanitized, synthetic, ground, barrier = (output/name for name in ('export-sanitized','test-sanitized','ground-sanitized','barrier-sanitized'))
     for name,binary in (('fleet_export',sanitized),('car_pair_test',synthetic),('ground_test',ground),('barrier_test',barrier)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),'-lm','-o',str(binary)],name+'-build')
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),'-lm','-o',str(binary)],name+'-build')
     run([str(synthetic)],'synthetic-sanitized')
     run([str(ground)],'ground-sanitized')
     run([str(barrier)],'barrier-sanitized')
@@ -239,7 +239,7 @@ def main():
                            world_reports=world_metrics))
         print(json.dumps(dict(code=code,pass_=True,summary=summary,maximum_error=max(max(e) for e in errors.values()))),flush=True)
     sources = [p for p in (ROOT/'src').rglob('*') if p.suffix in ('.c','.h')]
-    sources += [ROOT/'tests/rewrite/fleet_export.c',ROOT/'tests/rewrite/car_pair_test.c',ROOT/'tests/rewrite/ground_test.c',ROOT/'tests/rewrite/barrier_test.c',ROOT/'tests/rewrite/surface_fixture.h',ROOT/'tests/rewrite/asset_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
+    sources += [ROOT/'tests/fleet_export.c',ROOT/'tests/car_pair_test.c',ROOT/'tests/ground_test.c',ROOT/'tests/barrier_test.c',ROOT/'tests/surface_fixture.h',ROOT/'tests/asset_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
     binaries = [WORK/'rewrite-native/dd2_fleet_export',WORK/'rewrite-wasm/dd2_fleet_export.wasm',sanitized,synthetic,ground,barrier]
     report = dict(pass_=True,scope=__doc__.strip(),verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=ORIGINAL_SHA256,levels=levels,calls=calls,

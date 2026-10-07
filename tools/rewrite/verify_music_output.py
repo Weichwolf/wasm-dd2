@@ -115,7 +115,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     check_space(output)
     source_names = [str(path.relative_to(ROOT)) for path in (ROOT / 'src').rglob('*') if path.is_file()]
-    source_names += ['CMakeLists.txt', 'tests/rewrite/audio_device_test.c',
+    source_names += ['CMakeLists.txt', 'tests/audio_device_test.c',
                      'tools/rewrite/verify_music_output.py', 'tools/rewrite/verify_music_browser.js',
                      'tools/rewrite/verify_window.py']
     source_hashes = {name: digest(ROOT / name) for name in source_names}

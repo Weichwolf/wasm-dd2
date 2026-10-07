@@ -27,7 +27,7 @@ original comparison tools as reference material during migration.
 | `src/audio/` | Effects, CD music, mixing and playback state |
 | `src/assets/` | Typed loaders for original tracks, cars, textures and data |
 | `src/platform/` | Native/browser windows, input, timing and persistence |
-| `tests/rewrite/` | Functional, rendering and platform regression tests |
+| `tests/` | Functional, rendering and platform regression tests |
 
 The renderer adapter has an actual triangle/pixel/lifetime bootstrap. The first
 asset module validates the original `Dirinfo` archive and exposes borrowed file
@@ -90,7 +90,10 @@ See `src/game/recovery.md`. This is not yet a complete racing game.
 
 ## SoftGL
 
-`vendor/softgl` is a submodule pinned to
+SoftGL is our rendering library and lives in `deps/softgl`. Other reusable build
+dependencies remain ignored under `deps/`.
+
+`deps/softgl` is a submodule pinned to
 `7963be1d5b5e1bebbe97ece2c655228c8bc0a838`, the latest published upstream
 version checked during preparation. Subsequent upgrades remain explicit and
 reproducible. To initialize it:
@@ -234,11 +237,17 @@ Existing system headers/libraries are reused through file links; SDL is built
 privately. An explicit `EM_CACHE` overrides this default. The SDK package files
 are not modified. Builds and reusable dependencies remain outside the source tree.
 
-`make` builds the native rewrite. Existing explicit reference targets, such as
-`make native`, `make wasm` and the original verification targets, remain
-available. They build the reconstructed engine, not the new implementation.
+`make` builds the native rewrite. `make reference-prepare` exports the immutable `reconstruction-baseline` commit
+with Git-blob and SHA-256 checks to `/tmp/wasm-dd2/reference/<commit>/`. The
+reference owns its mutable save card and borrows immutable game data. Use
+`make reference REFERENCE_TARGET=verify-season-transition` for legacy tests, or
+`make native`, `make wasm`, `make patch` and `make check` for frozen reconstruction
+targets. They run entirely under `/tmp`, independently of the rewrite.
+`re_out/` and `patches/` are retained only on `ghidra`, not on `master`.
+Provisioning uses the verified frozen image extractor and never recreates these
+directories in the rewrite.
 
-All rewrite C and header files under `src/` and `tests/rewrite/` are covered by
+All rewrite C and header files under `src/` and `tests/` are covered by
 `make rewrite-format-check`; `make rewrite-format` applies formatting. Both
 default CMake builds require the format gate before compiling the rewrite. Native
 targets run clang-tidy by default, and `make rewrite-tidy` independently checks
@@ -256,12 +265,13 @@ The requested compile flags apply to the rewrite and SoftGL:
 ```
 
 Rewrite targets additionally use `-Werror -Wshadow -Wconversion
--Wstrict-prototypes -Wmissing-prototypes -Wformat=2`. Vendor and reference code
+-Wstrict-prototypes -Wmissing-prototypes -Wformat=2`. SoftGL and reference code
 retain their own quality rules. Fast-math permits arithmetic changes; new physics
 must be verified for stable behavior on native and WASM, including edge cases.
 
-CI on `master` checks formatting, strict native build/analysis and both renderer
-bootstraps, plus archive/level/texture bounds and texture rendering checks without proprietary data.
+The mandatory local gates check formatting, strict native build/analysis and both
+renderer bootstraps, plus archive/level/texture bounds and texture rendering
+without proprietary data. There are no GitHub workflow files on `master`.
 With the original data provisioned, `make rewrite-archive-verify` also compares
 all archive entries on both targets and an ASan/UBSan build.
 `make rewrite-level-verify` independently compares every level section extent,

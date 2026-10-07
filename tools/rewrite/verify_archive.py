@@ -78,7 +78,7 @@ def main():
          '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
          '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
          '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
-         str(ROOT / 'src/assets/archive.c'), str(ROOT / 'tests/rewrite/archive_test.c'),
+         str(ROOT / 'src/assets/archive.c'), str(ROOT / 'tests/archive_test.c'),
          '-o', str(sanitized)], 'sanitizer-build')
     commands = {
         'native': [str(WORK / 'rewrite-native/dd2_archive_test')],
@@ -121,7 +121,7 @@ def main():
             raise ValueError(platform + ' depends on unnecessary trailing sector padding')
 
     sources = ['src/assets/archive.c', 'src/assets/archive.h',
-               'tests/rewrite/archive_test.c', 'tools/rewrite/verify_archive.py', 'CMakeLists.txt',
+               'tests/archive_test.c', 'tools/rewrite/verify_archive.py', 'CMakeLists.txt',
                'Makefile', '.clang-tidy', '.clang-format']
     binaries = [WORK / 'rewrite-native/dd2_archive_test',
                 WORK / 'rewrite-wasm/dd2_archive_test.js',

@@ -216,7 +216,7 @@ def main():
     sanitized_test = output / 'dd2_mesh_sanitized'
     sanitized_export = output / 'dd2_mesh_export_sanitized'
     for name, binary in (('mesh_test', sanitized_test), ('mesh_export', sanitized_export)):
-        run([tool('clang'), *flags, *units, str(ROOT / f'tests/rewrite/{name}.c'), '-o', str(binary)], name + '-sanitizer-build')
+        run([tool('clang'), *flags, *units, str(ROOT / f'tests/{name}.c'), '-o', str(binary)], name + '-sanitizer-build')
     run([str(sanitized_test)], 'sanitized-bounds')
     commands = {
         'native': [str(WORK / 'rewrite-native/dd2_mesh_export')],
@@ -245,8 +245,8 @@ def main():
             run([*command, str(mutated), str(raw)], platform + '-' + label, success=False)
             raw.unlink(missing_ok=True)
     sources = ['src/assets/bytes.h', 'src/assets/lz.c', 'src/assets/lz.h', 'src/assets/mesh.c',
-               'src/assets/mesh.h', 'src/assets/scene.c', 'src/assets/scene.h', 'tests/rewrite/mesh_test.c',
-               'tests/rewrite/mesh_export.c', 'tests/rewrite/archive_fixture.h', 'tools/rewrite/verify_meshes.py',
+               'src/assets/mesh.h', 'src/assets/scene.c', 'src/assets/scene.h', 'tests/mesh_test.c',
+               'tests/mesh_export.c', 'tests/archive_fixture.h', 'tools/rewrite/verify_meshes.py',
                'CMakeLists.txt', 'Makefile']
     report = dict(pass_=True, scope='decoded scene placements, mesh vectors/normals and polygon fields; rendering/gameplay pending',
                   verified_at=datetime.now(timezone.utc).isoformat(), original_sha256=ORIGINAL_SHA256,

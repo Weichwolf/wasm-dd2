@@ -8,8 +8,8 @@ Checks: >
   portability-*,
   readability-*
 WarningsAsErrors: '*'
-HeaderFilterRegex: '(^|/)(src|tests/rewrite)/'
-ExcludeHeaderFilterRegex: '(^|/)(vendor|re_out|build|third_party)/'
+HeaderFilterRegex: '(^|/)(src|tests)/'
+ExcludeHeaderFilterRegex: '(^|/)(deps|build)/'
 FormatStyle: file
 CheckOptions:
   readability-identifier-naming.FunctionCase: lower_case

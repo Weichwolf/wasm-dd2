@@ -172,7 +172,7 @@ def main():
               ('road_contact','road_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','recovery')]
     units += [ROOT/'src/platform/file.c']
-    sources = [*units,ROOT/'tests/rewrite/recovery_export.c',ROOT/'tests/rewrite/recovery_test.c',
+    sources = [*units,ROOT/'tests/recovery_export.c',ROOT/'tests/recovery_test.c',
                ROOT/'src/game/recovery.h',ROOT/'src/physics/vehicle.h',Path(__file__)]
     hashes = {str(path.relative_to(ROOT)):digest(path) for path in sources}
     calls = []
@@ -186,14 +186,14 @@ def main():
         if result.returncode or 'Sanitizer:' in content or 'runtime error:' in content:
             raise RuntimeError(label+' failed: '+content[-3000:])
         return [json.loads(line) for line in content.splitlines() if line.startswith('{')]
-    flags = ['-std=c11','-O1','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests/rewrite'),
+    flags = ['-std=c11','-O1','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests'),
              '-Wall','-Wextra','-Wpedantic','-Wno-unused-parameter','-Wno-unused-function',
              '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
              '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
              '-fsanitize=address,undefined','-fno-omit-frame-pointer']
     sanitized,synthetic = output/'export-sanitized',output/'test-sanitized'
     for fixture,binary in (('recovery_export',sanitized),('recovery_test',synthetic)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{fixture}.c'),'-lm','-o',str(binary)],fixture+'-build')
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{fixture}.c'),'-lm','-o',str(binary)],fixture+'-build')
     commands = {'native':[str(args.build_root/'rewrite-native/dd2_recovery_export')],
                 'wasm':['node',str(args.build_root/'rewrite-wasm/dd2_recovery_export.js')],
                 'sanitized':[str(sanitized)]}

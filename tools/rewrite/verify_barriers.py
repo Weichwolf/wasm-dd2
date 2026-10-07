@@ -211,7 +211,7 @@ def main():
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision','damage')]
     sanitized=output/'export-sanitized';test=output/'test-sanitized'
     for name,binary in (('barrier_export',sanitized),('barrier_test',test)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),'-lm','-o',str(binary)],name+'-build')
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),'-lm','-o',str(binary)],name+'-build')
     run([str(test)],'sanitized-response')
     commands={'native':[str(WORK/'rewrite-native/dd2_barrier_export')],
               'wasm':['node',str(WORK/'rewrite-wasm/dd2_barrier_export.js')],'sanitized':[str(sanitized)]}
@@ -225,7 +225,7 @@ def main():
             for first,second in zip(native['queries'],candidate['queries']):
                 if (first['found'],first['id'],first['work'])!=(second['found'],second['id'],second['work']):
                     raise ValueError('Cross-target discrete sweep state differs')
-    sources=units+[ROOT/'src/game/driving.c',ROOT/'tests/rewrite/barrier_export.c',ROOT/'tests/rewrite/barrier_test.c',Path(__file__).resolve()]
+    sources=units+[ROOT/'src/game/driving.c',ROOT/'tests/barrier_export.c',ROOT/'tests/barrier_test.c',Path(__file__).resolve()]
     report=dict(pass_=True,scope=__doc__.strip(),verified_at=datetime.now(timezone.utc).isoformat(),
                 original_sha256=ORIGINAL_SHA256,reference_image_sha256=digest(image),comparisons=reports,calls=calls,
                 source_sha256={str(p.relative_to(ROOT)):digest(p.read_bytes()) for p in sources},

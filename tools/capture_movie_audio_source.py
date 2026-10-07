@@ -29,7 +29,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--mingw', default=shutil.which('i686-w64-mingw32-gcc') or
-                        str(ROOT / 'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
+                        str(ROOT / 'deps/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
     args = parser.parse_args();output = prepare_output(args.output)
     require(WORK in output.parents, 'Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=False)

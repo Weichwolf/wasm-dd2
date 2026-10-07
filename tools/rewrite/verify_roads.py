@@ -181,7 +181,7 @@ def main():
     sanitized_export = output/'dd2_road_export_sanitized'
     sanitized_test = output/'dd2_road_test_sanitized'
     for name, binary in (('road_export',sanitized_export),('road_test',sanitized_test)):
-        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/rewrite/{name}.c'),
+        run([tool('clang'),*flags,*map(str,units),str(ROOT/f'tests/{name}.c'),
              '-lm','-o',str(binary)],name+'-sanitizer-build')
     run([str(sanitized_test)],'sanitized-synthetic')
     commands = {'native':[str(WORK/'rewrite-native/dd2_road_export')],
@@ -222,14 +222,14 @@ def main():
             run([*command,str(mutated),'1'],platform+'-'+label,expected=1)
     sources = ['src/assets/road.c','src/assets/road.h','src/assets/track.c','src/assets/track.h',
                'src/physics/road_contact.c','src/physics/road_contact.h',
-               'tests/rewrite/road_test.c','tests/rewrite/road_export.c','tools/rewrite/verify_roads.py',
+               'tests/road_test.c','tests/road_export.c','tools/rewrite/verify_roads.py',
                'CMakeLists.txt']
     binaries = [WORK/'rewrite-native/dd2_road_export',WORK/'rewrite-wasm/dd2_road_export.js',
                 WORK/'rewrite-wasm/dd2_road_export.wasm',sanitized_export,sanitized_test]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(), scope=__doc__.strip(),
                   original_sha256=ORIGINAL_SHA256, original_image_sha256=digest(image),
                   row_table=row_table, levels=levels, rejections=len(variants), calls=calls,
-                  sanitizer_scope='All road/contact/export C units instrumented; no vendor library linked',
+                  sanitizer_scope='All road/contact/export C units instrumented; no SoftGL library linked',
                   source_sha256={p:digest((ROOT/p).read_bytes()) for p in sources},
                   binary_sha256={str(p):digest(p.read_bytes()) for p in binaries})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')

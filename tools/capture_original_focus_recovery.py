@@ -36,7 +36,7 @@ def main():
     observers.add_argument('--observe-wine-restore', action='store_true',
                            help='read guarded Debian Wine 10.0 Restore format/error sites and original returns')
     parser.add_argument('--mingw', default=shutil.which('i686-w64-mingw32-gcc') or
-                        str(ROOT / 'third_party/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
+                        str(ROOT / 'deps/mingw-sdk/usr/bin/i686-w64-mingw32-gcc-win32'))
     args = parser.parse_args()
     out = args.output.resolve()
     if Path('/tmp/wasm-dd2') not in out.parents or out.exists():

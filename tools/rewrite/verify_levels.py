@@ -165,7 +165,7 @@ def main():
     sanitized_test = output / 'dd2_level_sanitized'
     sanitized_export = output / 'dd2_level_export_sanitized'
     for name, binary in (('level_test', sanitized_test), ('level_export', sanitized_export)):
-        run([tool('clang'), *flags, *units, str(ROOT / f'tests/rewrite/{name}.c'), '-o', str(binary)],
+        run([tool('clang'), *flags, *units, str(ROOT / f'tests/{name}.c'), '-o', str(binary)],
             name + '-sanitizer-build')
     run([str(sanitized_test)], 'sanitized-bounds')
     commands = {
@@ -214,9 +214,9 @@ def main():
             raw.unlink(missing_ok=True)
 
     sources = ['src/assets/bytes.h', 'src/assets/level.c', 'src/assets/level.h',
-               'src/assets/textures.c', 'src/assets/textures.h', 'tests/rewrite/asset_fixture.h',
-               'tests/rewrite/level_test.c', 'tests/rewrite/level_export.c',
-               'tests/rewrite/texture_render_test.c', 'tools/rewrite/verify_levels.py', 'CMakeLists.txt',
+               'src/assets/textures.c', 'src/assets/textures.h', 'tests/asset_fixture.h',
+               'tests/level_test.c', 'tests/level_export.c',
+               'tests/texture_render_test.c', 'tools/rewrite/verify_levels.py', 'CMakeLists.txt',
                'Makefile', '.clang-format', '.clang-tidy']
     binaries = [WORK / 'rewrite-native/dd2_level_export', WORK / 'rewrite-wasm/dd2_level_export.js',
                 WORK / 'rewrite-wasm/dd2_level_export.wasm', sanitized_test, sanitized_export]

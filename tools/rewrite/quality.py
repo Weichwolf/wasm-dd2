@@ -24,7 +24,7 @@ def sources():
     names = subprocess.check_output(
         ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=ROOT)
     paths = {ROOT / name.decode() for name in names.split(b'\0') if name and
-             name.startswith((b'src/', b'tests/rewrite/')) and (ROOT / name.decode()).is_file()}
+             name.startswith((b'src/', b'tests/')) and (ROOT / name.decode()).is_file()}
     if any(p.suffix in ('.cc', '.cpp', '.cxx', '.hpp') for p in paths):
         raise RuntimeError('Rewrite modules must be C11; C++ belongs only to separate offline tools')
     return sorted(p for p in paths if p.suffix in ('.c', '.h'))

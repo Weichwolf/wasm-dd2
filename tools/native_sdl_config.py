@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Locate the 32-bit SDL headers/runtime or provision Debian headers locally.
 
-Provisioning extracts a development package under ignored third_party; it does
+Provisioning extracts a development package under ignored deps; it does
 not install system packages. Native runtime libraries must support i386.
 """
 import argparse
@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parent.parent
-SDK=ROOT/"third_party/sdl2-sdk"
+SDK=ROOT/"deps/sdl2-sdk"
 
 
 def main():

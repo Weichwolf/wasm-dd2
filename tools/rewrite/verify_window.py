@@ -376,7 +376,7 @@ def build_sanitized(output):
     units += [ROOT / f'src/game/{name}.c' for name in ('application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
-             '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),
+             '-I', str(ROOT / 'deps/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',

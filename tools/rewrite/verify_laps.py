@@ -310,7 +310,7 @@ def main():
     units += [ROOT/'src/platform/file.c']
     sanitized, synthetic = output/'export-sanitized', output/'rules-sanitized'
     for source, binary in (('laps_export', sanitized), ('laps_test', synthetic)):
-        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/rewrite/{source}.c'),
+        run([tool('clang'), *flags, *map(str, units), str(ROOT/f'tests/{source}.c'),
              '-lm', '-o', str(binary)], source+'-build')
     run([str(synthetic)], 'rules-sanitized')
     commands = {'native': [str(WORK/'rewrite-native/dd2_laps_export')],
@@ -324,8 +324,8 @@ def main():
         levels.append(dict(level=code, targets=targets))
         print(json.dumps(dict(level=code, targets=targets, pass_=True)), flush=True)
     sources = [path for path in (ROOT/'src').rglob('*') if path.suffix in ('.c', '.h')]
-    sources += [ROOT/'tests/rewrite/laps_export.c', ROOT/'tests/rewrite/laps_test.c',
-                ROOT/'tests/rewrite/mesh_render_test.c', ROOT/'CMakeLists.txt', Path(__file__).resolve()]
+    sources += [ROOT/'tests/laps_export.c', ROOT/'tests/laps_test.c',
+                ROOT/'tests/mesh_render_test.c', ROOT/'CMakeLists.txt', Path(__file__).resolve()]
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=digest(archive), image_sha256=hashlib.sha256(image).hexdigest(), levels=levels, calls=calls,
                   source_sha256={str(path.relative_to(ROOT)):digest(path) for path in sources},
