@@ -386,6 +386,15 @@ bounded backtracking and exact rollback. The original regularized physical
 residual chooses the better final candidate. This changes search directions,
 not the 0.1-unit transition or any material law, tolerance or ordinary-pass bound.
 
+Some mixed groups need one car-pair support to leave the linear branch while
+other loaded contacts remain regularized. The search additionally enumerates
+each loaded small-slip car pair as a selective saturated direction, with every
+other contact retaining its constitutive direction. A local typed model records
+the selected contact; there is no persistent solver selection state. Every model
+starts from the exact same outer motion and impulses and uses the existing
+refinement, pressure-fit and backtracking bounds. Only a smaller finite residual
+under the unchanged physical law can replace the best candidate.
+
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
@@ -405,10 +414,12 @@ retain the same independent physical checks. An eight-contact query freezes
 the tick-81,622 mixed-support velocity failure; sixteen rotations/reversals
 retain all impulse, material, energy, clearance and clock checks. A five-contact
 query captures tick 105,335, where the car-pair contact must leave the linear
-branch; all 120 row permutations retain the same independent checks. Fourteen
+branch; all 120 row permutations retain the same independent checks. Twenty
+rotations/reversals of a four-body/ten-contact query captured at tick 105,932
+exercise selective friction branches. Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-two frozen queries retain
+twenty-three frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

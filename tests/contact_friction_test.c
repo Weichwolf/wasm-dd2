@@ -15,7 +15,9 @@ enum {
     DD2_FRICTION_COUPLED_CONTACTS = 7,
     DD2_FRICTION_GROUND_CONTACTS = 4,
     DD2_FRICTION_REFINEMENT_CONTACTS = 8,
-    DD2_FRICTION_SLIDING_CONTACTS = 5
+    DD2_FRICTION_SLIDING_CONTACTS = 5,
+    DD2_FRICTION_SELECTIVE_BODIES = 4,
+    DD2_FRICTION_SELECTIVE_CONTACTS = 10
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -362,6 +364,31 @@ static bool dd2_friction_sliding_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_selective_orderings(void) {
+    for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
+        for (unsigned start = 0; start < DD2_FRICTION_SELECTIVE_CONTACTS; ++start) {
+            dd2_group_contact contacts[DD2_FRICTION_SELECTIVE_CONTACTS] = {0};
+            for (unsigned index = 0; index < DD2_FRICTION_SELECTIVE_CONTACTS; ++index) {
+                const unsigned offset =
+                    reversed != 0 ? DD2_FRICTION_SELECTIVE_CONTACTS - index : index;
+                contacts[index] =
+                    dd2_friction_championship_selective_contacts[(start + offset) %
+                                                                 DD2_FRICTION_SELECTIVE_CONTACTS];
+            }
+            const dd2_friction_case scenario = {
+                .initial = dd2_friction_championship_selective_bodies,
+                .contacts = contacts,
+                .body_count = DD2_FRICTION_SELECTIVE_BODIES,
+                .contact_count = DD2_FRICTION_SELECTIVE_CONTACTS,
+                .name = "championship selective branch support ordering"};
+            if (!dd2_friction_run(&scenario)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
@@ -391,7 +418,7 @@ int main(void) {
     }
     if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true) ||
         !dd2_friction_ground_orderings() || !dd2_friction_refinement_orderings() ||
-        !dd2_friction_sliding_orderings()) {
+        !dd2_friction_sliding_orderings() || !dd2_friction_selective_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

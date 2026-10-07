@@ -215,12 +215,62 @@ Receipt: /tmp/wasm-dd2/rewrite-season-after-105335/report.json.
 Completed successful raw output and resolved 105,335 captures have been hashed,
 reported and removed; the unresolved next input/query remain available.
 
-## Next
+Two sparse velocity records at passes 512/4,096 show that regularized and
+fully saturated directions stall on the 105,932 query. Three loaded ground
+supports and two car pairs remain on linear branches; treating every contact as
+saturated does not find a lower outer physical residual. A diagnostic selective
+pair-direction prototype passes the independently checked query and twenty
+rotated/reversed orders. This identifies a useful search direction, not original
+trajectory parity.
 
-Diagnose the four-body, ten-contact velocity failure at 105,932 from the saved
-production-equivalent input. Preserve unchanged race inputs, material laws,
-tolerances and bounds, and use bounded source/binary-identified diagnostics. Keep full campaigns and remaining gameplay under
-their existing owners.
+Production now compares local typed models that saturate each loaded small-slip
+car pair individually while retaining the other contacts' constitutive directions.
+Every trial starts from the same exact motion and impulses and uses the existing
+refinement, pressure-fit and backtracking bounds. The unchanged regularized
+physical residual selects only a smaller finite candidate; rejected trials and
+the final best candidate restore exact state. No global selection state, material
+change, extra ordinary sweeps or altered tolerances are introduced.
+
+The saved production input advances from 105,932 to 105,933 under both Native
+and ASan/UBSan. The Native remapped query converges in 513 velocity passes at
+6.3802401372722457e-10 and 52 position passes at 8.3132451499155855e-10, with
+one coordinate restart. Strict LLVM19, all 34 Native/32 WASM CTests, twenty-three
+captured queries, 208 captured-query orderings, twenty analytic friction cases
+and seventy-two analytic position cases pass on Native/WASM/instrumented C.
+Actual Native SDL, instrumented SDL and Chromium/WASM input checks pass all
+eleven levels. Original-data ground checks pass all eleven levels with 79,100
+queries and 26,400 vehicle steps per target. Scoped Circuit-2/live and complete
+Circuit-5/eight-lap checks pass all six target scopes (full_suite=false).
+Each Circuit-5 run takes 167,472 ticks and 3,341,440 vehicle steps, with 167,072
+independent player geometry queries, player place 2/75 points and two finishers.
+These scopes do not prove complete all-track racing or natural seasons.
+Source/binary/command receipts: /tmp/wasm-dd2/rewrite-selective-105932/report.json.
+
+The unchanged-bound natural season still completes round 1 at 287,087 ticks,
+with unchanged scores and correct consumption for all twenty drivers. Its
+changed collision trajectory fails round 2 at tick 101,640, before the previous
+105,932 failure. AI/frame/championship validity remain true; race/championship
+remain RACING, health is 0.36360009215113553, credited laps zero, throttle 1,
+brake zero and steering -0.37918715958729865. The saved-input correction is
+verified separately; natural advancement past the previous failure and full-season
+acceptance remain false. This work item stays active.
+
+A failure-only sparse capture matches all eighty production JSON records.
+Production and diagnostic replayers reproduce the same 31,216-byte input without
+advancement at 101,640. Driver 7 has three world contacts and no car pair.
+Velocity exhausts 4,096 passes at 0.00047813492909413535; position is not reached.
+This identifies the next stage, without claiming its cause or correction.
+Receipt: /tmp/wasm-dd2/rewrite-season-after-105932/report.json.
+Completed successful raw output and resolved 105,932 captures have been hashed,
+reported and removed. The original diagnostic receipt remains unchanged;
+its separate diagnosis.json records the correction and resolved capture hashes.
+The unresolved 101,640 input/query remain available.
+
+## Next
+Diagnose the single-body, three-world-contact velocity failure at 101,640
+from its production-equivalent saved input. Preserve ordinary inputs, material
+laws, tolerances and bounds. Use sparse source/binary-identified diagnostics;
+full campaigns and remaining gameplay retain their existing owners.
 
 ## Accept
 

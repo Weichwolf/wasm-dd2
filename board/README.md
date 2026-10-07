@@ -81,7 +81,15 @@ targets and strict gates. Actual application, original-data ground and the
 scoped Circuit-2/live plus complete eight-lap Circuit-5 checks pass on all three
 variants. Natural racing passes 105,335 and next fails at 105,932; sparse
 production-equivalent replay identifies a four-body, ten-contact velocity
-failure. Full-campaign acceptance remains open. A separately
+failure. Local selective car-pair friction directions now advance that saved
+input to 105,933 on Native and instrumented C, retaining all material rules and
+solver bounds. Twenty-three captured queries and 208 orderings pass all three
+targets and strict gates. The changed natural collision trajectory completes
+round 1 with unchanged scores, then fails round 2 at 101,640, before the previous
+failure tick. Sparse production-equivalent replay isolates three world supports
+on one car; velocity remains above tolerance at the existing pass bound.
+Natural advancement past the old failure and full-campaign acceptance remain
+open under 0029. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 
