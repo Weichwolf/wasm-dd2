@@ -2966,6 +2966,68 @@ static const dd2_group_contact dd2_friction_championship_load_contacts[] = {
      .penetration = -1.4310664628806977e-05,
      .friction = 0.80000000000000004}};
 
+/* Native production a8a054e natural second-round tick 93,231 query.
+ * Drivers 1/16/17 are remapped to 0/1/2; all input values are unchanged.
+ * Query SHA256: 785e12a4b4c4b1874cef2e5902d7913e2da860b9f79cfb20e937ae48fefc2877 */
+static const dd2_vehicle dd2_friction_championship_release_bodies[] = {
+    {.position = {.x = 28165.775468450909, .y = 8635.4884202341964, .z = 68566.066549257332},
+     .velocity = {.x = -128.26620037481302, .y = 27.942575399046216, .z = 16.07295304705471},
+     .rotation = {.x = -0.12341200560024891,
+                  .y = -0.58765072877299751,
+                  .z = -0.037280729326305571,
+                  .w = 0.79877796981838933},
+     .angular_velocity = {.x = -0.020348150889757593,
+                          .y = -0.037417247436730625,
+                          .z = 0.012198777761473907}},
+    {.position = {.x = 28352.277142635714, .y = 8330.4490166621417, .z = 68041.925672786732},
+     .velocity = {.x = -1.0347270341168948, .y = -10.226012406660216, .z = -0.8295079474333128},
+     .rotation = {.x = -0.83074033078829845,
+                  .y = 0.16705135546369212,
+                  .z = 0.50707399087210192,
+                  .w = 0.15760810645563603},
+     .angular_velocity = {.x = 0.008948586168704982,
+                          .y = 0.00061054558568479547,
+                          .z = 0.018637135293003131}},
+    {.position = {.x = 27592.822376821812, .y = 8721.2573641044419, .z = 68283.71961324531},
+     .velocity = {.x = 76.423053604270464, .y = -7.2491426085459238, .z = 78.198411010734901},
+     .rotation = {.x = -0.097406205777792257,
+                  .y = -0.39094903362322214,
+                  .z = -0.085751371827983119,
+                  .w = 0.91121763943344647},
+     .angular_velocity = {
+         .x = 0.043860756922018941, .y = 0.22295720512736858, .z = -0.027865996491768408}}};
+static const dd2_group_contact dd2_friction_championship_release_contacts[] = {
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28844.533033397685, .y = 8230.7650815663474, .z = 68083.677931335886},
+     .normal = {.x = 0.17483556101468664, .y = 0.97406017396818689, .z = -0.14366385799408737},
+     .penetration = 0,
+     .friction = 0.80000000000000004},
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28233.660012337885, .y = 8444.3063072795103, .z = 67763.971341363882},
+     .normal = {.x = -0.48333117454771013, .y = 0, .z = 0.87543759098540586},
+     .penetration = -0.00013130304315513969,
+     .friction = 0.25},
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27860.021251873743, .y = 8430.1328483069901, .z = 68000.173414237579},
+     .normal = {.x = 0.22128621917954439, .y = 0.97480711027741851, .z = -0.027991194219102462},
+     .penetration = -0.0001008447161263023,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = 1,
+     .point = {.x = 28464.281732562384, .y = 8394.8538749131676, .z = 68295.038117098826},
+     .normal = {.x = 0.323071543161423, .y = 0.89692774631469685, .z = 0.30190295773664733},
+     .penetration = -0.00019390545367059531,
+     .friction = 0.25},
+    {.first = 1,
+     .second = 2,
+     .point = {.x = 27886.511225424176, .y = 8484.3076562265305, .z = 68005.772444278453},
+     .normal = {.x = 0.68994834857720466, .y = -0.26786612822638994, .z = -0.67247231440750865},
+     .penetration = -9.5037723895075032e-05,
+     .friction = 0.25}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
@@ -3096,6 +3158,12 @@ static const dd2_friction_case dd2_friction_cases[] = {
      .body_count = 1,
      .contact_count = 3,
      .name = "championship circuit 2 positive wall load"},
+
+    {.initial = dd2_friction_championship_release_bodies,
+     .contacts = dd2_friction_championship_release_contacts,
+     .body_count = 3,
+     .contact_count = 5,
+     .name = "championship circuit 2 released world branch"},
 
 };
 

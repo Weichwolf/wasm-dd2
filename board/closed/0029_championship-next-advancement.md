@@ -326,11 +326,81 @@ hashed, reported and removed. The original diagnostic receipt remains unchanged;
 its separate diagnosis.json records the independent root, correction and raw
 capture identities. The unresolved 93,231 input/query remain available.
 
+
+Sparse velocity records at passes 512/4,096 isolate the 93,231 failure.
+The constitutive Jacobian is nonsingular (condition about 9.74e5), but ordinary
+and fully saturated directions do not find the admissible active branch.
+An independent finite-difference solve on captured unit mobility proves a root
+with zero wall load and separating wall velocity 0.03741068281093929. Both
+ground supports remain linear and both car pairs saturated; final physical
+residual is below 6.5e-12. Doubling world pressure alone fixes the captured order
+but fails a permutation, and applying it to sliding supports regresses an older
+arena query. These rejected trials are diagnostics, not acceptance.
+
+Production now compares higher and released world-pressure seeds in both mixed
+and world-only fields after the existing restart. A local typed model records
+the direction and selected support. Each seed applies its normal impulse change,
+holds all normal loads fixed during friction equilibrium, projects the cones and
+uses the existing bounded constitutive refinement. Released contacts remain in
+the system and can load again. Every original constraint is checked under the
+unchanged final material law. Rejected/nonfinite candidates restore exact motion
+and impulses; only a smaller full physical residual replaces the best candidate.
+The bounded model array permits at most two models per contact plus two base
+models; the ordinary 4,096-pass bound, sixteen-refinement bound and final
+tolerances are unchanged.
+
+The actual 31,216-byte input advances from 93,231 to 93,232 under Native and
+ASan/UBSan. The remapped three-body query takes 513 velocity passes at
+1.045344366623624e-14 (Native) and 1.2434497875801753e-14 (sanitized), with one
+restart. Position takes 53 passes at 9.6082740036278723e-10. All 120 contact
+permutations pass independent material, complementarity, cone, energy, impulse,
+clearance, orientation and physical-clock checks on Native and sanitized C.
+Native compiler static solver frame is 350,904 bytes; the matrix remains
+21,944 bytes. Verification directory: /tmp/wasm-dd2/rewrite-release-93231/.
+Strict LLVM19 format/tidy, all 34 Native/32 WASM CTests, twenty-five captured
+queries, 334 captured-query orderings, twenty analytic friction cases and
+seventy-two analytic position cases pass on Native/WASM/instrumented C.
+The new case and all 120 permutations exercise the existing 1 MiB WASM stack.
+
+
+The unchanged-bound Native natural season completes round 1 at 287,087 ticks
+with identical twenty-driver scores and correct championship consumption.
+Its changed trajectory passes every previously recorded failure tick, including
+107,550, and next fails advancement at round-2 tick 118,647. AI/frame/championship
+validity remain true; race/championship stay RACING, health is
+0.24004616190228145, credited laps zero, throttle -0.6, brake zero and steering 1.
+This proves advancement beyond this work item's reproduced failures, not a
+complete season. The new failure has its own owner under 0030.
+
+A failure-only diagnostic matches all eighty-three production JSON records
+exactly. Production and diagnostic replayers reproduce the same 31,216-byte
+input without advancement at 118,647. Driver 15 has three world supports and no
+car pair. Velocity exhausts 4,096 passes at 0.000838176120091046; position is not
+reached. The failed stage is identified, without a claim about its cause or
+correction. Receipt: /tmp/wasm-dd2/rewrite-season-after-93231/report.json.
+
+Actual Native SDL, instrumented SDL and Chromium/WASM window/input checks pass
+all eleven levels. Original-data ground comparisons pass all eleven levels:
+79,100 queries and 26,400 physical steps per target. Scoped Circuit-2/live and
+complete Circuit-5/eight-lap checks pass all six target scopes (full_suite=false).
+Each Circuit-5 run takes 167,472 ticks and 3,341,440 physical vehicle steps, with
+167,072 independent player geometry queries, player place 2/75 points and two
+finishers. These scopes do not prove complete all-track racing or full campaigns.
+Source/binary/command receipt: /tmp/wasm-dd2/rewrite-release-93231/report.json.
+Successful verification raw output and resolved 93,231 captures have been
+hashed, reported and removed. The original sparse receipt remains unchanged;
+its separate diagnosis.json retains the independent root and correction evidence.
+The new unresolved input/query remain available under 0030.
+
+The reproduced advancement contract is complete: all saved physical cases pass,
+the actual latest failed input advances on Native/instrumented C, and ordinary
+racing proceeds beyond every recorded failure tick from this item. The separate
+118,647 failure remains active under 0030; full-season acceptance stays false.
+
 ## Next
-Diagnose the three-body, five-contact velocity failure at 93,231 from the
-production-equivalent input. Preserve ordinary race inputs, material laws,
-tolerances and bounds, and use sparse source/binary-identified diagnostics.
-Full campaigns and remaining gameplay retain their existing owners.
+
+Resolve the separately reproduced tick-118,647 world-support failure under 0030.
+Complete natural seasons and remaining gameplay retain their existing owners.
 
 ## Accept
 

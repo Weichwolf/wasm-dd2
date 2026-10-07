@@ -102,9 +102,20 @@ saved tick-86,643 input advances; the fresh Native season proceeds to tick
 matches production under 0029: velocity converges, then position repair exceeds
 its 4,096-pass bound. Complete physical seasons remain unproved.
 
+Closed 0029 now proves the saved advancement cases through tick 93,231, with
+25 captured queries, 334 orderings and strict Native/WASM/sanitizer gates.
+Actual window/input and original-data ground checks pass all eleven levels;
+six selected race target scopes include the complete eight-lap Circuit-5 race.
+The unchanged-bound Native season passes every previously recorded failure tick,
+including 107,550, then fails round 2 at 118,647. Sparse production-equivalent
+capture and actual replays identify a three-world-contact velocity failure on
+driver 15 under 0030. Complete physical seasons remain unproved.
+Current evidence: /tmp/wasm-dd2/rewrite-release-93231/report.json and
+/tmp/wasm-dd2/rewrite-season-after-93231/report.json.
+
 ## Next
 
-Resolve the next advancement failure at round-2 tick 107,550 under 0029 using
+Resolve the next advancement failure at round-2 tick 118,647 under 0030 using
 the bounded production probe and sparse diagnosis. Preserve the regular race rules,
 AI controls, damage and score ownership. Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field

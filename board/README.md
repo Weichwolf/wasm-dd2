@@ -33,7 +33,8 @@ its game requirements or acceptance rules.
 | [0026](closed/0026_contact-correction-selection.md) | Choose stronger physical contact corrections | closed |
 | [0027](closed/0027_championship-mixed-world-support.md) | Mixed world supports in scheduled racing | closed |
 | [0028](closed/0028_championship-coupled-supports.md) | Coupled supports in scheduled racing | closed |
-| [0029](active/0029_championship-next-advancement.md) | Next scheduled racing advancement failure | active |
+| [0029](closed/0029_championship-next-advancement.md) | Scheduled racing advancement through the captured failures | closed |
+| [0030](active/0030_championship-world-support-advancement.md) | Next championship world-support advancement failure | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -94,10 +95,17 @@ solver bounds. Twenty-four captured queries and 214 orderings pass all three
 targets and strict gates. The changed natural season again completes round 1
 with unchanged scores, then fails round 2 at 93,231, before the previous failure.
 Sparse production-equivalent replay identifies a three-body/five-contact velocity
-failure. Natural advancement past the old failure and full-campaign acceptance
-remain open under 0029. A separately
-verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
-full physical seasons and remaining arena completion stay open.
+failure. Typed higher/released world-pressure seeds now advance the saved input
+to 93,232. Twenty-five captured queries and 334 orderings pass all three variants,
+with strict gates, eleven-level real window/input and original-data ground checks,
+and six scoped race targets including the complete eight-lap Circuit-5 race.
+The unchanged-bound natural season passes every previously recorded failure tick,
+including 107,550, then fails round 2 at 118,647. This completes the reproduced
+advancement contract under 0029; a new failure-only capture and two actual replays
+identify three world supports on driver 15 with a velocity failure under 0030.
+Full physical seasons, remaining arena completion and all-game acceptance remain
+open. Current receipts: /tmp/wasm-dd2/rewrite-release-93231/report.json and
+/tmp/wasm-dd2/rewrite-season-after-93231/report.json.
 
 ## Workflow and acceptance
 

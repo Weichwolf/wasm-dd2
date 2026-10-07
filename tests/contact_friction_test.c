@@ -18,7 +18,9 @@ enum {
     DD2_FRICTION_SLIDING_CONTACTS = 5,
     DD2_FRICTION_SELECTIVE_BODIES = 4,
     DD2_FRICTION_SELECTIVE_CONTACTS = 10,
-    DD2_FRICTION_LOAD_CONTACTS = 3
+    DD2_FRICTION_LOAD_CONTACTS = 3,
+    DD2_FRICTION_RELEASE_BODIES = 3,
+    DD2_FRICTION_RELEASE_CONTACTS = 5
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -365,6 +367,28 @@ static bool dd2_friction_sliding_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_release_orderings(void) {
+    unsigned order[DD2_FRICTION_RELEASE_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_RELEASE_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_RELEASE_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_RELEASE_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_championship_release_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {.initial = dd2_friction_championship_release_bodies,
+                                            .contacts = contacts,
+                                            .body_count = DD2_FRICTION_RELEASE_BODIES,
+                                            .contact_count = DD2_FRICTION_RELEASE_CONTACTS,
+                                            .name = "championship released world support ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order, DD2_FRICTION_RELEASE_CONTACTS));
+    return true;
+}
+
 static bool dd2_friction_selective_orderings(void) {
     for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
         for (unsigned start = 0; start < DD2_FRICTION_SELECTIVE_CONTACTS; ++start) {
@@ -444,7 +468,7 @@ int main(void) {
     if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true) ||
         !dd2_friction_ground_orderings() || !dd2_friction_refinement_orderings() ||
         !dd2_friction_sliding_orderings() || !dd2_friction_selective_orderings() ||
-        !dd2_friction_load_orderings()) {
+        !dd2_friction_load_orderings() || !dd2_friction_release_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

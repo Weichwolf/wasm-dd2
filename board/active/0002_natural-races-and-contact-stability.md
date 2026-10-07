@@ -163,6 +163,17 @@ ground checks and six selected race target scopes also pass, including the
 natural eight-lap Circuit-5 Stockcar race on all three targets. Current scope: /tmp/wasm-dd2/rewrite-coupled-86643-final/report.json.
 This is not a passing full race/arena suite or completed physical season.
 
+Closed 0029 now proves the saved advancement cases through tick 93,231, with
+25 captured queries, 334 orderings and strict Native/WASM/sanitizer gates.
+Actual window/input and original-data ground checks pass all eleven levels;
+six selected race target scopes include the complete eight-lap Circuit-5 race.
+The unchanged-bound Native season passes every previously recorded failure tick,
+including 107,550, then fails round 2 at 118,647. Sparse production-equivalent
+capture and actual replays identify a three-world-contact velocity failure on
+driver 15 under 0030. Complete physical seasons remain unproved.
+Current evidence: /tmp/wasm-dd2/rewrite-release-93231/report.json and
+/tmp/wasm-dd2/rewrite-season-after-93231/report.json.
+
 ## Next
 
 Diagnose the reproduced nonterminal Native B movement/tactics behavior while

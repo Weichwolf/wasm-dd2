@@ -19,7 +19,9 @@ enum {
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
     DD2_GROUP_NEWTON_BASE_MODELS = 2,
-    DD2_GROUP_NEWTON_MODEL_LIMIT = DD2_GROUP_NEWTON_BASE_MODELS + DD2_VEHICLE_CONTACT_LIMIT
+    DD2_GROUP_NEWTON_CONTACT_MODELS = 2,
+    DD2_GROUP_NEWTON_MODEL_LIMIT =
+        DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
 };
 /* Late stick/slip roots need a smaller forward difference than coarse sweep
  * errors. Keep enough separation from cancellation in accumulated body motion;
@@ -414,7 +416,8 @@ typedef enum {
     DD2_GROUP_NEWTON_WORLD_LINEAR,
     DD2_GROUP_NEWTON_CONSTITUTIVE,
     DD2_GROUP_NEWTON_SATURATED,
-    DD2_GROUP_NEWTON_LOAD
+    DD2_GROUP_NEWTON_LOAD,
+    DD2_GROUP_NEWTON_RELEASE
 } dd2_group_newton_method;
 
 typedef struct {
@@ -497,9 +500,13 @@ static bool dd2_group_newton_saturated(const dd2_group_newton_state *state, unsi
             state->model.selected_contact == index);
 }
 
+static bool dd2_group_newton_pressure(dd2_group_newton_method method) {
+    return method == DD2_GROUP_NEWTON_LOAD || method == DD2_GROUP_NEWTON_RELEASE;
+}
+
 static bool dd2_group_newton_material(dd2_group_newton_method method) {
     return method == DD2_GROUP_NEWTON_CONSTITUTIVE || method == DD2_GROUP_NEWTON_SATURATED ||
-           method == DD2_GROUP_NEWTON_LOAD;
+           dd2_group_newton_pressure(method);
 }
 
 static void dd2_group_residuals(const dd2_group_workspace *workspace,
@@ -978,13 +985,14 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
     return dd2_group_newton_direction(workspace, state, system);
 }
 
-/* A weak world load can attract Newton toward an inadmissible negative-pressure
- * root. Explore a positive branch by doubling one loaded support and solving
- * its field's linear friction equilibrium with every normal load held fixed.
- * Cone projection and the subsequent physical refinement still apply. */
-static bool dd2_group_load_seed(dd2_group_workspace *workspace, unsigned index,
-                                dd2_group_linear_system *system) {
-    const double increment = workspace->constraints[index].normal_impulse;
+/* Explore higher or released world pressure while retaining every constraint.
+ * Equilibrate friction with all normal loads held fixed before the constitutive
+ * refinement. Cone projection and the final physical law still apply. */
+static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, dd2_group_newton_model model,
+                                    dd2_group_linear_system *system) {
+    const unsigned index = model.selected_contact;
+    const double pressure = workspace->constraints[index].normal_impulse;
+    const double increment = model.method == DD2_GROUP_NEWTON_RELEASE ? -pressure : pressure;
     workspace->constraints[index].normal_impulse += increment;
     dd2_group_apply(workspace, index,
                     dd2_collision_scale(workspace->query->contacts[index].normal, increment));
@@ -1020,12 +1028,12 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
                                     dd2_group_newton_model model) {
     const dd2_group_newton_state original = dd2_group_newton_prepare(workspace, model);
     dd2_group_linear_system system = {.dimensions = original.dimensions};
-    if (model.method == DD2_GROUP_NEWTON_LOAD &&
-        !dd2_group_load_seed(workspace, model.selected_contact, &system)) {
+    if (dd2_group_newton_pressure(model.method) &&
+        !dd2_group_pressure_seed(workspace, model, &system)) {
         dd2_group_restore(workspace, &original.base, original.motion);
         return false;
     }
-    dd2_group_newton_state prepared = model.method == DD2_GROUP_NEWTON_LOAD
+    dd2_group_newton_state prepared = dd2_group_newton_pressure(model.method)
                                           ? dd2_group_newton_prepare(workspace, model)
                                           : original;
     if (!dd2_group_refinement_seed(workspace, &prepared, &system)) {
@@ -1060,9 +1068,9 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
     return false;
 }
 
-/* Mixed fields compare selective car-pair saturation. World-only fields compare
- * positive load seeds for each loaded small-slip support. These bounded models
- * stay local to one solve and preserve the final material law. */
+/* Compare selective car-pair saturation and world-pressure branches in the
+ * same connected field. At most two models per contact stay local to one solve;
+ * all branches preserve the final material law. */
 static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
                                         dd2_group_newton_model *models, bool paired) {
     unsigned count = 0;
@@ -1074,11 +1082,17 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
     }
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const dd2_group_contact contact = workspace->query->contacts[index];
-        if (dd2_group_pair(contact) == paired && contact.friction > 0 &&
-            workspace->constraints[index].normal_impulse > 0 &&
-            !dd2_group_material_at(workspace, index, false).sliding) {
-            models[count++] = (dd2_group_newton_model){.method = paired ? DD2_GROUP_NEWTON_SATURATED
-                                                                        : DD2_GROUP_NEWTON_LOAD,
+        if (contact.friction <= 0 || workspace->constraints[index].normal_impulse <= 0) {
+            continue;
+        }
+        if (!dd2_group_material_at(workspace, index, false).sliding) {
+            models[count++] = (dd2_group_newton_model){.method = dd2_group_pair(contact)
+                                                                     ? DD2_GROUP_NEWTON_SATURATED
+                                                                     : DD2_GROUP_NEWTON_LOAD,
+                                                       .selected_contact = index};
+        }
+        if (!dd2_group_pair(contact)) {
+            models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_RELEASE,
                                                        .selected_contact = index};
         }
     }
