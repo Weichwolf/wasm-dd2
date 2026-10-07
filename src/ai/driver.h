@@ -18,10 +18,13 @@ typedef struct {
     double lane;
     double base_lane;
     uint64_t steps;
+    /* Accepted horizontal displacement since the current forward attempt. */
+    dd2_vehicle_vector progress_origin;
     uint32_t cell;
     unsigned target;
     unsigned stuck_steps;
     unsigned reverse_steps;
+    unsigned progress_steps;
 } dd2_ai_driver;
 typedef struct {
     const dd2_road *road;

@@ -23,8 +23,15 @@ opposite starter slot, then periodically choose nearby cars with a forward
 preference and velocity lead. Total Destruction instead explicitly keeps player
 slot zero as the target; its periodic nearest-car selection is bypassed and
 inverted braking retains that same target. Prolonged stalls and low-speed backward targets
-trigger timed reverse/steering maneuvers. An inverted car brakes; tire traction,
-body support and collision impulses remain owned by physics.
+trigger timed reverse/steering maneuvers. The driver also checks accepted horizontal
+positions: it must move at least 120 world units from a retained anchor within
+300 decisions (1.5 seconds). This detects contact-limited travel even when the
+velocity still exceeds the 80-unit/s low-speed threshold. Small oscillations do
+not reset the position timer. Reverse, inverted braking and missing guidance
+restart this observation window; an expired reverse gets a fresh forward attempt.
+Position history belongs to the driver and resets with the rest of its state.
+An inverted car brakes; tire traction, body support and collision impulses remain
+owned by physics.
 
 Source behavior references are `AI_Com_Server`, `Determine_AI`,
 `Recommended_Acceleration`, `InitialiseAI` and `Obstacle_Ahead` in the reference
@@ -42,8 +49,10 @@ independent archive/image reader, on Native, Node/WASM and ASan/UBSan. Sixty-sec
 twenty-car scenarios on all eleven levels require sustained movement, at least
 95% tire-supported samples, finite state, exact decision cadence and full reset.
 Synthetic tests exercise an analytic right-angle path, whole-loop wrap, straight
-control, stalled reverse and transactional nonfinite rejection. Frame-partition,
-pause/reset and real window/browser presentation checks include the driving AI.
+control, zero-speed and position-limited stalls, slow creep, oscillation,
+sustained travel, reverse expiry and transactional nonfinite rejection.
+Frame-partition, pause/reset and real window/browser presentation checks include
+the driving AI.
 Field encounters can diverge across targets due to floating-point-sensitive
 traffic choices; the original-data test checks each target's behavior, not exact
 cross-target race trajectories or replay determinism.

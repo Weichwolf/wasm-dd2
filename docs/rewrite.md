@@ -79,6 +79,8 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
+Stalling is detected from both low forward speed and insufficient accepted
+horizontal movement, so retained solver velocities cannot mask a blocked car.
 Damage-aware tactics, off-road recovery,
 championships and the complete original front end remain pending.
 Supported overturned cars now have a separate temporary availability state and

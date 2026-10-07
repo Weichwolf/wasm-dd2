@@ -24,6 +24,9 @@ static const double dd2_ai_corner_load = 650;
 static const double dd2_ai_control_speed = 600;
 static const double dd2_ai_stuck_speed = 80;
 static const double dd2_ai_reverse_speed = 500;
+/* A car must leave this radius within 1.5 seconds to count as making progress.
+ * Solver velocities alone can remain nonzero when the contact budget limits travel. */
+static const double dd2_ai_progress_distance = 120;
 static const double dd2_ai_body_height = 400;
 static const double dd2_ai_side_clearance = 450;
 static const double dd2_ai_follow_distance = 1100;
@@ -77,8 +80,12 @@ static bool dd2_ai_valid(const dd2_ai_driver *driver, const dd2_ai_observation *
         driver->cell >= dd2_road_cell_count(observation->road) ||
         driver->target >= observation->count || driver->steps == UINT64_MAX ||
         driver->stuck_steps > DD2_AI_STUCK_STEPS || driver->reverse_steps > DD2_AI_REVERSE_STEPS ||
-        !dd2_numeric_finite(&driver->lane) || driver->lane < 0 || driver->lane > 1 ||
-        !dd2_numeric_finite(&driver->base_lane) || driver->base_lane < 0 || driver->base_lane > 1) {
+        driver->progress_steps > DD2_AI_STUCK_STEPS ||
+        !dd2_numeric_finite(&driver->progress_origin.x) ||
+        !dd2_numeric_finite(&driver->progress_origin.y) ||
+        !dd2_numeric_finite(&driver->progress_origin.z) || !dd2_numeric_finite(&driver->lane) ||
+        driver->lane < 0 || driver->lane > 1 || !dd2_numeric_finite(&driver->base_lane) ||
+        driver->base_lane < 0 || driver->base_lane > 1) {
         return false;
     }
     for (unsigned slot = 0; slot < observation->count; ++slot) {
@@ -239,11 +246,29 @@ static dd2_ai_goal dd2_ai_arena(dd2_ai_driver *driver, const dd2_ai_observation 
         .found = true};
 }
 
+static bool dd2_ai_progress_stalled(dd2_ai_driver *driver, dd2_vehicle_vector position) {
+    const double distance =
+        hypot(position.x - driver->progress_origin.x, position.z - driver->progress_origin.z);
+    if (driver->progress_steps == 0 || driver->reverse_steps != 0 ||
+        distance >= dd2_ai_progress_distance) {
+        driver->progress_origin = position;
+        driver->progress_steps = 0;
+    }
+    if (driver->reverse_steps != 0) {
+        return false;
+    }
+    if (driver->progress_steps < DD2_AI_STUCK_STEPS) {
+        ++driver->progress_steps;
+    }
+    return driver->progress_steps == DD2_AI_STUCK_STEPS;
+}
+
 static dd2_vehicle_control dd2_ai_control(dd2_ai_driver *driver, const dd2_vehicle *vehicle,
                                           dd2_vehicle_vector forward, dd2_ai_goal goal) {
     const dd2_vehicle_vector relative = dd2_ai_relative(goal.point, vehicle->position);
     const double distance = hypot(relative.x, relative.z);
     if (!goal.found || distance < dd2_ai_min_axis) {
+        driver->progress_steps = 0;
         return (dd2_vehicle_control){.brake = 1};
     }
     const dd2_vehicle_vector right = {.x = forward.z, .z = -forward.x};
@@ -266,11 +291,13 @@ static dd2_vehicle_control dd2_ai_control(dd2_ai_driver *driver, const dd2_vehic
     } else {
         driver->stuck_steps = 0;
     }
+    const bool progress_stalled = dd2_ai_progress_stalled(driver, vehicle->position);
     if (driver->reverse_steps == 0 &&
-        (driver->stuck_steps == DD2_AI_STUCK_STEPS ||
+        (driver->stuck_steps == DD2_AI_STUCK_STEPS || progress_stalled ||
          (facing < -dd2_ai_lead_seconds && fabs(speed) < dd2_ai_reverse_speed))) {
         driver->reverse_steps = DD2_AI_REVERSE_STEPS;
         driver->stuck_steps = 0;
+        driver->progress_steps = 0;
     }
     if (driver->reverse_steps != 0) {
         --driver->reverse_steps;
@@ -306,6 +333,8 @@ bool dd2_ai_driver_step(dd2_ai_driver *driver, const dd2_ai_observation *observa
                                      ? dd2_ai_racing(&next, observation, forward)
                                      : dd2_ai_arena(&next, observation, forward);
         decision = dd2_ai_control(&next, vehicle, forward, goal);
+    } else {
+        next.progress_steps = 0;
     }
     ++next.steps;
     *driver = next;

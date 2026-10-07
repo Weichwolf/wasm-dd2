@@ -147,7 +147,11 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
             driver.cell != other.cell || driver.lane != other.lane ||
             driver.base_lane != other.base_lane || driver.target != other.target ||
             driver.stuck_steps != other.stuck_steps ||
-            driver.reverse_steps != other.reverse_steps || driver.steps != other.steps) {
+            driver.reverse_steps != other.reverse_steps || driver.steps != other.steps ||
+            driver.progress_steps != other.progress_steps ||
+            driver.progress_origin.x != other.progress_origin.x ||
+            driver.progress_origin.y != other.progress_origin.y ||
+            driver.progress_origin.z != other.progress_origin.z) {
             return false;
         }
     }
