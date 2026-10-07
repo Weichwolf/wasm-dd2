@@ -320,7 +320,7 @@ material laws, initial-normal-speed metadata and position repair are retained;
 reported velocity passes include work before and after restart. The result
 reports the single restart explicitly.
 
-After 512 ordinary sweeps, a bounded numerical Newton correction is available
+After 512 ordinary sweeps, a bounded Newton correction is available
 every 32 passes, including after restart. Ordinary sweeps first settle active
 normal/friction branches. A three-axis contact basis describes the projected
 normal complementarity and tangential friction equations; finite differences
@@ -333,17 +333,22 @@ to zero; simply clipping it would invalidate every coupled equation. Releases
 are monotone within the prediction, bounding refits to the contact count plus
 one. They do not remove contacts from the physical solve.
 
-Loaded world supports compare a zero-friction-gradient Newton direction with the
-ordinary projected equations because a saturated support approaching the linear
-low-speed branch can have a nearly singular projected Jacobian. The alternate
-gradient includes the same pressure-dependent softness as the material law.
-Both trials start from the same exact motion
-and impulses; the accepted direction with the smaller physical residual wins.
-A small improvement from an infeasible all-linear branch cannot repeatedly
-prevent a stronger projected correction. Frictionless or unloaded
-supports keep their original equations. Both trials retain Coulomb cone
-projection and the same physical residual acceptance; the alternate equations
-cannot change the material law or force an infeasible friction impulse.
+Loaded world supports compare an alternate direction with the ordinary projected
+root from the same exact motion and impulses. World-only groups retain their
+zero-friction-gradient trial. Groups with car partners instead use the full
+constitutive friction root, including the linear/saturated transition and
+pressure coupling for every contact. If `L = mu * N` is the cone radius,
+`u` is final tangential velocity, and `e = min(0.1, 1e12 * L)`, its root is
+`F + L * u / max(e, |u|)`. Zero load and zero slip give zero material response.
+This is the existing capped material law, not a new friction coefficient or
+creep threshold. An analytic Jacobian differentiates this root and normal
+complementarity, using unit-impulse body motion for exact contact mobility.
+Each column's response is cached for its one or two receiving bodies; accumulated
+velocities are not perturbed to obtain these derivatives. Singular directions
+remain skipped by the existing pivoted solve; contacts are never dropped.
+The accepted direction with the smaller full physical residual wins. Both
+trials retain cone projection, active-set refits, exact rollback and the
+unchanged final complementarity/friction tolerances.
 The proposed impulses are projected into their cones and backtracked up to
 sixteen times. Only finite motion with a strictly smaller physical residual is
 accepted; rejected probes restore exact velocities and accumulated impulses.
@@ -363,8 +368,11 @@ pressure-sensitive support query, plus a ten-contact/seven-body normal-release
 query and a seven-contact/six-body transition to sticking. A three-support
 Circuit-2 championship query additionally checks a stronger projected correction
 against a weaker accepted alternate direction. A four-world-support Circuit-2
-query checks the shared low-speed law at the later tick-66,449 failure. All
-seventeen frozen queries retain
+query checks the shared low-speed law at the later tick-66,449 failure. A
+two-body/seven-contact Circuit-2 query captures the tick-86,643 failure, with six
+world supports and one car pair. Fourteen rotations/reversals of those same
+equations additionally check convergence without depending on captured row order. All
+eighteen frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

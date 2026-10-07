@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { DD2_FRICTION_PASS_LIMIT = 4096, DD2_FRICTION_PAIR = 2 };
+enum { DD2_FRICTION_PASS_LIMIT = 4096, DD2_FRICTION_PAIR = 2, DD2_FRICTION_COUPLED_CONTACTS = 7 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
 static const double dd2_friction_clearance = 1e-4;
@@ -226,6 +226,33 @@ static bool dd2_friction_analytic(double speed, bool pair) {
            fabs(bodies[1].velocity.y + (pair ? pressure : 0)) < dd2_friction_tolerance;
 }
 
+/* Redundant supports must not require the captured row ordering to converge.
+ * Reorder the same equations without changing geometry or physical acceptance. */
+static bool dd2_friction_permutations(void) {
+    for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
+        for (unsigned start = 0; start < DD2_FRICTION_COUPLED_CONTACTS; ++start) {
+            dd2_group_contact contacts[DD2_FRICTION_COUPLED_CONTACTS] = {0};
+            for (unsigned index = 0; index < DD2_FRICTION_COUPLED_CONTACTS; ++index) {
+                const unsigned offset =
+                    reversed != 0 ? DD2_FRICTION_COUPLED_CONTACTS - index : index;
+                contacts[index] =
+                    dd2_friction_championship_coupled_contacts[(start + offset) %
+                                                               DD2_FRICTION_COUPLED_CONTACTS];
+            }
+            const dd2_friction_case scenario = {.initial = dd2_friction_championship_coupled_bodies,
+                                                .contacts = contacts,
+                                                .body_count = DD2_FRICTION_PAIR,
+                                                .contact_count = DD2_FRICTION_COUPLED_CONTACTS,
+                                                .name = "championship coupled support ordering"};
+            printf("Coupled support ordering: start=%u reversed=%u\n", start, reversed);
+            if (!dd2_friction_run(&scenario)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
@@ -252,6 +279,10 @@ int main(void) {
             puts("Captured car-body friction: FAIL");
             return EXIT_FAILURE;
         }
+    }
+    if (!dd2_friction_permutations()) {
+        puts("Coupled support ordering: FAIL");
+        return EXIT_FAILURE;
     }
     puts("Regularized car-body friction: PASS");
     return EXIT_SUCCESS;

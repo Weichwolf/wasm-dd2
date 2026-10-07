@@ -154,6 +154,14 @@ The current Native championship probe progresses through the saved tick-66,449
 step, but a two-body support failure at tick 86,643 remains under 0028. This new
 scoped evidence does not rerun or replace the historical full race/arena suite.
 
+Closed 0028 separately proves the analytic mixed-contact correction with all
+eighteen captured queries and fourteen row orderings on three targets, mandatory
+quality gates, the actual saved step and eleven-level real window/browser checks.
+The fresh Native Stockcar season passes the old tick-86,643 failure and reaches
+107,550 before another advancement failure. Sparse diagnosis is running under
+0029. Current scope: /tmp/wasm-dd2/rewrite-coupled-86643-final/report.json.
+This is not a passing full race/arena suite or completed physical season.
+
 ## Next
 
 Diagnose the reproduced nonterminal Native B movement/tactics behavior while

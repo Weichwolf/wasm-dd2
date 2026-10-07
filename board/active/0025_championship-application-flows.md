@@ -93,10 +93,18 @@ checkpoint and diagnosis are /tmp/wasm-dd2/rewrite-season-86643/report.json.
 Complete seasons and the nine earlier application first-round cases keep their
 separate scopes.
 
+Closed 0028 adds analytic mixed-contact corrections without changing the material
+law or race rules. Eighteen captured queries, fourteen reorderings, mandatory
+Native/WASM/LLVM19 gates and all eleven actual window/browser flows pass. The
+saved tick-86,643 input advances; the fresh Native season proceeds to tick
+107,550 before another advancement failure. Its exact current-source receipt is
+/tmp/wasm-dd2/rewrite-coupled-86643-final/report.json. The next sparse diagnosis
+is running under 0029. Complete physical seasons remain unproved.
+
 ## Next
 
-Resolve the coupled supports at round-2 tick 86,643 under 0028 using the
-retained bounded probe and needed checkpoint. Preserve the regular race rules,
+Resolve the next advancement failure at round-2 tick 107,550 under 0029 using
+the bounded production probe and sparse diagnosis. Preserve the regular race rules,
 AI controls, damage and score ownership. Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field
 after promotion. Full original front end and persistence stay in 0003/0008.

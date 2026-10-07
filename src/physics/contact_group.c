@@ -406,13 +406,19 @@ typedef struct {
     dd2_vehicle_vector axes[DD2_GROUP_NEWTON_AXES];
 } dd2_group_basis;
 
+typedef enum {
+    DD2_GROUP_NEWTON_PROJECTED,
+    DD2_GROUP_NEWTON_WORLD_LINEAR,
+    DD2_GROUP_NEWTON_CONSTITUTIVE
+} dd2_group_newton_method;
+
 typedef struct {
     dd2_group_iterate base;
     dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT];
     dd2_group_basis basis[DD2_VEHICLE_CONTACT_LIMIT];
     double residual[DD2_GROUP_NEWTON_DIMENSIONS];
     size_t dimensions;
-    bool world_linear;
+    dd2_group_newton_method method;
 } dd2_group_newton_state;
 
 typedef struct {
@@ -427,6 +433,38 @@ static dd2_group_basis dd2_group_contact_basis(dd2_vehicle_vector normal) {
     dd2_vehicle_vector tangent = dd2_collision_cross(normal, reference);
     tangent = dd2_collision_scale(tangent, 1 / sqrt(dd2_collision_dot(tangent, tangent)));
     return (dd2_group_basis){.axes = {normal, tangent, dd2_collision_cross(normal, tangent)}};
+}
+
+/* A constitutive root avoids differentiating the projection radius through
+ * the pressure-dependent 0.1-unit friction softness. Unit-impulse mobility
+ * also avoids cancellation against the already accumulated body velocity. */
+typedef struct {
+    dd2_vehicle_vector direction;
+    double velocity_scale;
+    double pressure_scale;
+    bool sliding;
+} dd2_group_material;
+
+static dd2_group_material dd2_group_material_at(const dd2_group_workspace *workspace,
+                                                unsigned index) {
+    const dd2_group_contact contact = workspace->query->contacts[index];
+    const double limit = contact.friction * workspace->constraints[index].normal_impulse;
+    const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
+    const dd2_vehicle_vector slip = dd2_collision_add(
+        velocity,
+        dd2_collision_scale(contact.normal, -dd2_collision_dot(velocity, contact.normal)));
+    const double speed = sqrt(dd2_collision_dot(slip, slip));
+    const double transition = fmin(dd2_group_micro_slip, dd2_group_max_friction_softness * limit);
+    const double denominator = fmax(transition, speed);
+    if (denominator == 0) {
+        return (dd2_group_material){0};
+    }
+    return (dd2_group_material){
+        .direction = dd2_collision_scale(slip, 1 / denominator),
+        .velocity_scale = limit / denominator,
+        .pressure_scale =
+            speed > transition || transition == dd2_group_micro_slip ? contact.friction : 0,
+        .sliding = speed > transition};
 }
 
 static void dd2_group_residuals(const dd2_group_workspace *workspace,
@@ -444,10 +482,8 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
         const dd2_vehicle_vector difference =
             dd2_collision_add(constraint->friction, dd2_collision_scale(friction.impulse, -1));
         const dd2_group_contact contact = workspace->query->contacts[index];
-        /* This trial selects a possible linear branch for loaded world
-         * supports; ordinary physical acceptance checks its actual cone. */
-        if (state->world_linear && !dd2_group_pair(contact) && contact.friction > 0 &&
-            state->base.normal[index] > 0) {
+        if (state->method == DD2_GROUP_NEWTON_WORLD_LINEAR && !dd2_group_pair(contact) &&
+            contact.friction > 0 && state->base.normal[index] > 0) {
             const dd2_vehicle_vector gradient = dd2_collision_add(
                 dd2_group_velocity(workspace, index),
                 dd2_collision_scale(
@@ -455,6 +491,16 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
                     dd2_group_friction_softness(contact.friction * constraint->normal_impulse)));
             residual[offset + 1] = dd2_collision_dot(gradient, state->basis[index].axes[1]);
             residual[offset + 2] = dd2_collision_dot(gradient, state->basis[index].axes[2]);
+        } else if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE) {
+            const dd2_group_material material = dd2_group_material_at(workspace, index);
+            const dd2_vehicle_vector root = dd2_collision_add(
+                constraint->friction,
+                dd2_collision_scale(material.direction,
+                                    contact.friction * constraint->normal_impulse));
+            residual[offset + 1] =
+                constraint->tangent_mass * dd2_collision_dot(root, state->basis[index].axes[1]);
+            residual[offset + 2] =
+                constraint->tangent_mass * dd2_collision_dot(root, state->basis[index].axes[2]);
         } else {
             residual[offset + 1] =
                 friction.mass * dd2_collision_dot(difference, state->basis[index].axes[1]);
@@ -465,9 +511,9 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
 }
 
 static dd2_group_newton_state dd2_group_newton_prepare(const dd2_group_workspace *workspace,
-                                                       bool world_linear) {
+                                                       dd2_group_newton_method method) {
     dd2_group_newton_state state = {.base = dd2_group_values(workspace),
-                                    .world_linear = world_linear,
+                                    .method = method,
                                     .dimensions = DD2_GROUP_NEWTON_AXES *
                                                   (size_t)workspace->query->contact_count};
     for (unsigned body = 0; body < workspace->query->body_count; ++body) {
@@ -516,9 +562,110 @@ static double dd2_group_newton_perturb(dd2_group_iterate *candidate,
     return change;
 }
 
+typedef struct {
+    unsigned slots[2];
+    dd2_group_motion motion[2];
+} dd2_group_impulse_response;
+
+static dd2_group_impulse_response dd2_group_unit_response(const dd2_group_workspace *workspace,
+                                                          unsigned index, dd2_vehicle_vector axis) {
+    const dd2_group_contact contact = workspace->query->contacts[index];
+    dd2_group_impulse_response result = {.slots = {contact.first, contact.second}};
+    for (unsigned side = 0; side < 2; ++side) {
+        const unsigned slot = result.slots[side];
+        if (slot == DD2_VEHICLE_NO_PARTNER) {
+            continue;
+        }
+        dd2_vehicle response = {.rotation = workspace->query->bodies[slot].rotation};
+        dd2_collision_impulse(&response, workspace->constraints[index].arms[side],
+                              dd2_collision_scale(axis, side == 0 ? 1 : -1));
+        result.motion[side] = (dd2_group_motion){response.velocity, response.angular_velocity};
+    }
+    return result;
+}
+
+static dd2_vehicle_vector dd2_group_mobility(const dd2_group_workspace *workspace, unsigned index,
+                                             const dd2_group_impulse_response *response) {
+    const dd2_group_contact contact = workspace->query->contacts[index];
+    const unsigned slots[] = {contact.first, contact.second};
+    dd2_vehicle_vector result = {0};
+    for (unsigned source = 0; source < 2; ++source) {
+        if (response->slots[source] == DD2_VEHICLE_NO_PARTNER) {
+            continue;
+        }
+        for (unsigned target = 0; target < 2; ++target) {
+            if (slots[target] == response->slots[source]) {
+                const dd2_vehicle_vector velocity = dd2_collision_add(
+                    response->motion[source].velocity,
+                    dd2_collision_cross(response->motion[source].spin,
+                                        workspace->constraints[index].arms[target]));
+                result =
+                    dd2_collision_add(result, dd2_collision_scale(velocity, target == 0 ? 1 : -1));
+            }
+        }
+    }
+    return result;
+}
+
+static void dd2_group_material_row(const dd2_group_workspace *workspace,
+                                   const dd2_group_newton_state *state,
+                                   dd2_group_linear_system *system, unsigned index,
+                                   const dd2_group_impulse_response *responses) {
+    const dd2_group_contact contact = workspace->query->contacts[index];
+    const dd2_group_constraint *constraint = &workspace->constraints[index];
+    const dd2_group_material material = dd2_group_material_at(workspace, index);
+    const double speed = dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
+    const bool loaded = constraint->normal_impulse - speed / constraint->normal_mass > 0;
+    const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
+    for (size_t column = 0; column < state->dimensions; ++column) {
+        const unsigned source = (unsigned)(column / DD2_GROUP_NEWTON_AXES);
+        const size_t axis = column % DD2_GROUP_NEWTON_AXES;
+        const dd2_vehicle_vector velocity =
+            dd2_group_mobility(workspace, index, &responses[column]);
+        const double normal = dd2_collision_dot(velocity, contact.normal);
+        dd2_vehicle_vector tangent =
+            dd2_collision_add(velocity, dd2_collision_scale(contact.normal, -normal));
+        if (material.sliding) {
+            tangent = dd2_collision_add(
+                tangent, dd2_collision_scale(material.direction,
+                                             -dd2_collision_dot(material.direction, tangent)));
+        }
+        const double pressure = source == index && axis == 0 ? 1 : 0;
+        const dd2_vehicle_vector friction =
+            source == index && axis > 0 ? state->basis[source].axes[axis] : (dd2_vehicle_vector){0};
+        const dd2_vehicle_vector derivative = dd2_collision_add(
+            friction, dd2_collision_add(dd2_collision_scale(material.direction,
+                                                            material.pressure_scale * pressure),
+                                        dd2_collision_scale(tangent, material.velocity_scale)));
+        system->entries[offset][column] = loaded ? normal : constraint->normal_mass * pressure;
+        system->entries[offset + 1][column] =
+            constraint->tangent_mass * dd2_collision_dot(derivative, state->basis[index].axes[1]);
+        system->entries[offset + 2][column] =
+            constraint->tangent_mass * dd2_collision_dot(derivative, state->basis[index].axes[2]);
+    }
+    for (size_t axis = 0; axis < DD2_GROUP_NEWTON_AXES; ++axis) {
+        system->entries[offset + axis][state->dimensions] = -state->residual[offset + axis];
+    }
+}
+
 static void dd2_group_newton_matrix(dd2_group_workspace *workspace,
                                     const dd2_group_newton_state *state,
                                     dd2_group_linear_system *system) {
+    if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE) {
+        /* Each impulse column reaches at most two bodies. Cache its unit
+         * motion once instead of recomputing inertia for every receiver row. */
+        dd2_group_impulse_response responses[DD2_GROUP_NEWTON_DIMENSIONS] = {0};
+        for (size_t column = 0; column < state->dimensions; ++column) {
+            const unsigned source = (unsigned)(column / DD2_GROUP_NEWTON_AXES);
+            const size_t axis = column % DD2_GROUP_NEWTON_AXES;
+            responses[column] =
+                dd2_group_unit_response(workspace, source, state->basis[source].axes[axis]);
+        }
+        for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+            dd2_group_material_row(workspace, state, system, index, responses);
+        }
+        return;
+    }
     for (size_t column = 0; column < state->dimensions; ++column) {
         dd2_group_iterate candidate = {0};
         const double change = dd2_group_newton_perturb(&candidate, state, column);
@@ -670,13 +817,13 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
     return candidate;
 }
 
-/* Cold numerical Newton corrections preserve the same projected contact
- * equations. The bounded dense matrix uses automatic storage, never allocation.
- * Singular directions are skipped. Every rejected/backtracked trial restores
- * exact motion, and only a smaller physical residual is accepted. */
+/* Cold Newton corrections preserve the same physical contact equations. The bounded dense matrix
+ * uses automatic storage, never allocation. Singular directions are skipped. Every
+ * rejected/backtracked trial restores exact motion, and only a smaller physical residual is
+ * accepted. */
 static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error,
-                                   bool world_linear) {
-    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, world_linear);
+                                   dd2_group_newton_method method) {
+    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, method);
     dd2_group_linear_system system = {.dimensions = state.dimensions};
     if (!dd2_group_newton_direction(workspace, &state, &system)) {
         return false;
@@ -704,35 +851,41 @@ static void dd2_group_copy_motion(const dd2_group_workspace *workspace, dd2_grou
     }
 }
 
-/* A saturated world support can approach the low-speed branch with a nearly
- * singular projected Jacobian. Compare its zero-gradient direction with the
- * projected-root direction from the same exact input motion. Accept the lower
- * physical residual: a small linear-branch improvement must not repeatedly prevent
- * a stronger projected correction. Cone projection still enforces Coulomb law;
- * unloaded/frictionless supports retain their original equations. */
+/* Compare the projected-root and analytic constitutive directions from the
+ * same exact input motion. The latter includes pressure-dependent friction
+ * and the saturated/linear transition for every coupled body/world contact.
+ * Only the lower physical residual is retained; cone projection, active-set
+ * refits, finite checks and exact rollback apply to both trials. World-only
+ * groups retain their zero-friction-gradient alternate; the analytic material
+ * direction handles pressure coupling with dynamic contact partners. */
 static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     bool supported = false;
+    bool paired = false;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const dd2_group_contact contact = workspace->query->contacts[index];
+        paired = paired || dd2_group_pair(contact);
         supported = supported || (!dd2_group_pair(contact) && contact.friction > 0 &&
                                   workspace->constraints[index].normal_impulse > 0);
     }
     if (!supported) {
-        return dd2_group_newton_trial(workspace, error, false);
+        return dd2_group_newton_trial(workspace, error, DD2_GROUP_NEWTON_PROJECTED);
     }
     const dd2_group_iterate base = dd2_group_values(workspace);
     dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_group_copy_motion(workspace, motion);
     double projected_error = *error;
-    const bool projected = dd2_group_newton_trial(workspace, &projected_error, false);
+    const bool projected =
+        dd2_group_newton_trial(workspace, &projected_error, DD2_GROUP_NEWTON_PROJECTED);
     const dd2_group_iterate projected_values = dd2_group_values(workspace);
     dd2_group_motion projected_motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_group_copy_motion(workspace, projected_motion);
     dd2_group_restore(workspace, &base, motion);
-    double sticking_error = *error;
-    const bool sticking = dd2_group_newton_trial(workspace, &sticking_error, true);
-    if (sticking && (!projected || sticking_error < projected_error)) {
-        *error = sticking_error;
+    double alternate_error = *error;
+    const dd2_group_newton_method alternate =
+        paired ? DD2_GROUP_NEWTON_CONSTITUTIVE : DD2_GROUP_NEWTON_WORLD_LINEAR;
+    const bool alternate_accepted = dd2_group_newton_trial(workspace, &alternate_error, alternate);
+    if (alternate_accepted && (!projected || alternate_error < projected_error)) {
+        *error = alternate_error;
         return true;
     }
     if (projected) {
