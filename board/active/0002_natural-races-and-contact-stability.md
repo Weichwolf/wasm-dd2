@@ -17,7 +17,7 @@ Closed0017 now supplies a bounded ordinary-coordinate restart while retaining al
 
 Native B AI capture at6fc2fe2 confirms slots12/13 target one another after step~2000 and spend much of the remaining drive reversing with all wheels supported. A private alternate-target escape prototype lowers travel to8072.943/8644.802 and is rejected. Report: /tmp/wasm-dd2/rewrite-arenaB-ai-diagnosis/report.json. These are control/movement diagnostics, not complete AI acceptance.
 
-A production-equivalent private WASM replay of4f0aeac passes the frozen query but aborts at race step52337, seventeen steps later. Report: /tmp/wasm-dd2/rewrite-arenaB-restart-failure/candidate-race-report.json. A fresh bounded capture runs under /tmp/wasm-dd2/rewrite-arenaB-stagnation-failure/. No full natural-race pass is claimed.
+A production-equivalent private WASM replay of4f0aeac passes the frozen query but aborts at race step52337, seventeen steps later. Report: /tmp/wasm-dd2/rewrite-arenaB-restart-failure/candidate-race-report.json. The fresh bounded capture under /tmp/wasm-dd2/rewrite-arenaB-stagnation-failure/ is terminal. Its nine contacts connect seven bodies; Native independently reproduces the4096-pass failure with0.0004257565 units/s residual and no coordinate restart. A private best-state fallback also fails, because this query never enters fallback. Reports: report.json and replay-report.json. Improve accelerated convergence for the coupled slow modes without changing material laws or relaxing the pass/tolerance budget. No full natural-race pass is claimed.
 
 ## Next
 
