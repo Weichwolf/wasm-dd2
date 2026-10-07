@@ -376,6 +376,16 @@ for every refinement; there are no additional ordinary sweeps or allocations.
 The first accelerated phase, world-only behavior, material laws, final tolerances
 and total ordinary-pass bound remain unchanged.
 
+A regularized direction can remain on a small-slip linear branch even when
+its valid solution requires saturated friction. After restart, mixed groups
+with a positive regularized load also compare a saturated constitutive branch
+from the same exact outer state. Its private direction uses the normalized
+nonzero slip; zero slip keeps the regularized denominator. Both branches retain
+at most sixteen refinements, fitted nonnegative pressures, cone projection,
+bounded backtracking and exact rollback. The original regularized physical
+residual chooses the better final candidate. This changes search directions,
+not the 0.1-unit transition or any material law, tolerance or ordinary-pass bound.
+
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
@@ -393,9 +403,12 @@ trajectory's tick-66,070 position failure with two differently tilted ground
 planes, a wall and one car pair. All twenty-four orderings of those four equations
 retain the same independent physical checks. An eight-contact query freezes
 the tick-81,622 mixed-support velocity failure; sixteen rotations/reversals
-retain all impulse, material, energy, clearance and clock checks. Fourteen rotations/reversals of each query
+retain all impulse, material, energy, clearance and clock checks. A five-contact
+query captures tick 105,335, where the car-pair contact must leave the linear
+branch; all 120 row permutations retain the same independent checks. Fourteen
+rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-one frozen queries retain
+twenty-two frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

@@ -410,7 +410,8 @@ typedef struct {
 typedef enum {
     DD2_GROUP_NEWTON_PROJECTED,
     DD2_GROUP_NEWTON_WORLD_LINEAR,
-    DD2_GROUP_NEWTON_CONSTITUTIVE
+    DD2_GROUP_NEWTON_CONSTITUTIVE,
+    DD2_GROUP_NEWTON_SATURATED
 } dd2_group_newton_method;
 
 typedef struct {
@@ -447,7 +448,7 @@ typedef struct {
 } dd2_group_material;
 
 static dd2_group_material dd2_group_material_at(const dd2_group_workspace *workspace,
-                                                unsigned index) {
+                                                unsigned index, bool saturated) {
     const dd2_group_contact contact = workspace->query->contacts[index];
     const double limit = contact.friction * workspace->constraints[index].normal_impulse;
     const dd2_vehicle_vector velocity = dd2_group_velocity(workspace, index);
@@ -456,16 +457,30 @@ static dd2_group_material dd2_group_material_at(const dd2_group_workspace *works
         dd2_collision_scale(contact.normal, -dd2_collision_dot(velocity, contact.normal)));
     const double speed = sqrt(dd2_collision_dot(slip, slip));
     const double transition = fmin(dd2_group_micro_slip, dd2_group_max_friction_softness * limit);
-    const double denominator = fmax(transition, speed);
+    const double denominator = saturated && speed > 0 ? speed : fmax(transition, speed);
     if (denominator == 0) {
         return (dd2_group_material){0};
     }
-    return (dd2_group_material){
-        .direction = dd2_collision_scale(slip, 1 / denominator),
-        .velocity_scale = limit / denominator,
-        .pressure_scale =
-            speed > transition || transition == dd2_group_micro_slip ? contact.friction : 0,
-        .sliding = speed > transition};
+    return (dd2_group_material){.direction = dd2_collision_scale(slip, 1 / denominator),
+                                .velocity_scale = limit / denominator,
+                                .pressure_scale = saturated || speed > transition ||
+                                                          transition == dd2_group_micro_slip
+                                                      ? contact.friction
+                                                      : 0,
+                                .sliding = (saturated && speed > 0) || speed > transition};
+}
+
+/* Saturation is an alternate private direction, not a material change. A
+ * positive load below the transition can trap the regularized root on its
+ * linear branch; final acceptance still uses the original projected law. */
+static bool dd2_group_regularized_load(const dd2_group_workspace *workspace) {
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        if (workspace->constraints[index].normal_impulse > 0 &&
+            !dd2_group_material_at(workspace, index, false).sliding) {
+            return true;
+        }
+    }
+    return false;
 }
 
 static void dd2_group_residuals(const dd2_group_workspace *workspace,
@@ -492,8 +507,10 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
                     dd2_group_friction_softness(contact.friction * constraint->normal_impulse)));
             residual[offset + 1] = dd2_collision_dot(gradient, state->basis[index].axes[1]);
             residual[offset + 2] = dd2_collision_dot(gradient, state->basis[index].axes[2]);
-        } else if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE) {
-            const dd2_group_material material = dd2_group_material_at(workspace, index);
+        } else if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE ||
+                   state->method == DD2_GROUP_NEWTON_SATURATED) {
+            const dd2_group_material material = dd2_group_material_at(
+                workspace, index, state->method == DD2_GROUP_NEWTON_SATURATED);
             const dd2_vehicle_vector root = dd2_collision_add(
                 constraint->friction,
                 dd2_collision_scale(material.direction,
@@ -614,7 +631,8 @@ static void dd2_group_material_row(const dd2_group_workspace *workspace,
                                    const dd2_group_impulse_response *responses) {
     const dd2_group_contact contact = workspace->query->contacts[index];
     const dd2_group_constraint *constraint = &workspace->constraints[index];
-    const dd2_group_material material = dd2_group_material_at(workspace, index);
+    const dd2_group_material material =
+        dd2_group_material_at(workspace, index, state->method == DD2_GROUP_NEWTON_SATURATED);
     const double speed = dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
     const bool loaded = constraint->normal_impulse - speed / constraint->normal_mass > 0;
     const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
@@ -652,7 +670,8 @@ static void dd2_group_material_row(const dd2_group_workspace *workspace,
 static void dd2_group_newton_matrix(dd2_group_workspace *workspace,
                                     const dd2_group_newton_state *state,
                                     dd2_group_linear_system *system) {
-    if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE) {
+    if (state->method == DD2_GROUP_NEWTON_CONSTITUTIVE ||
+        state->method == DD2_GROUP_NEWTON_SATURATED) {
         /* Each impulse column reaches at most two bodies. Cache its unit
          * motion once instead of recomputing inertia for every receiver row. */
         dd2_group_impulse_response responses[DD2_GROUP_NEWTON_DIMENSIONS] = {0};
@@ -941,10 +960,12 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
 /* Refine a speculative branch after its full fitted step. Intermediate states
  * stay private: the outer iterate changes only for a finite smaller residual.
  * Re-evaluating loaded normals allows previously separating supports to load
- * while friction directions settle. Reuse one bounded matrix for all steps. */
-static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *error) {
-    dd2_group_newton_state original =
-        dd2_group_newton_prepare(workspace, DD2_GROUP_NEWTON_CONSTITUTIVE);
+ * while friction directions settle. The original regularized physical residual
+ * still controls acceptance of the alternate saturated branch. Reuse one
+ * bounded matrix for all steps. */
+static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *error,
+                                    dd2_group_newton_method method) {
+    dd2_group_newton_state original = dd2_group_newton_prepare(workspace, method);
     dd2_group_linear_system system = {.dimensions = original.dimensions};
     if (!dd2_group_refinement_seed(workspace, &original, &system)) {
         return false;
@@ -958,8 +979,7 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
             if (current < dd2_group_velocity_tolerance) {
                 break;
             }
-            if (dd2_group_newton_step(workspace, &current, DD2_GROUP_NEWTON_CONSTITUTIVE,
-                                      &system)) {
+            if (dd2_group_newton_step(workspace, &current, method, &system)) {
                 continue;
             }
             if (!dd2_group_normal_patch(workspace) ||
@@ -981,7 +1001,7 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_group_copy_motion(workspace, motion);
     const double original_error = *error;
-    const bool corrected = dd2_group_newton_refitted(workspace, error);
+    bool corrected = dd2_group_newton_refitted(workspace, error);
     bool paired = false;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         paired = paired || dd2_group_pair(workspace->query->contacts[index]);
@@ -989,16 +1009,25 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     if (!coordinate || !paired) {
         return corrected;
     }
-    const dd2_group_iterate best = dd2_group_values(workspace);
+    dd2_group_iterate best = dd2_group_values(workspace);
     dd2_group_motion best_motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_group_copy_motion(workspace, best_motion);
-    const double best_error = *error;
-    dd2_group_restore(workspace, &base, motion);
-    double refined_error = original_error;
-    const bool refined = dd2_group_newton_refine(workspace, &refined_error);
-    if (refined && (!corrected || refined_error < best_error)) {
-        *error = refined_error;
-        return true;
+    double best_error = *error;
+    const dd2_group_newton_method methods[] = {DD2_GROUP_NEWTON_CONSTITUTIVE,
+                                               DD2_GROUP_NEWTON_SATURATED};
+    for (size_t i = 0; i < sizeof(methods) / sizeof(methods[0]); i++) {
+        dd2_group_restore(workspace, &base, motion);
+        if (methods[i] == DD2_GROUP_NEWTON_SATURATED && !dd2_group_regularized_load(workspace)) {
+            continue;
+        }
+        double refined_error = original_error;
+        const bool refined = dd2_group_newton_refine(workspace, &refined_error, methods[i]);
+        if (refined && (!corrected || refined_error < best_error)) {
+            best = dd2_group_values(workspace);
+            dd2_group_copy_motion(workspace, best_motion);
+            best_error = refined_error;
+            corrected = true;
+        }
     }
     dd2_group_restore(workspace, &best, best_motion);
     *error = best_error;

@@ -158,11 +158,68 @@ Input/query/source/binary receipt: /tmp/wasm-dd2/rewrite-season-105335/report.js
 Successful raw verification output is hashed, reported and removed; unresolved
 105,335 input/query evidence remains available.
 
+
+Two sparse iteration records and numerical differentiation confirm that the
+105,335 Jacobian is nonsingular (condition about 6.07e4), with maximum analytic/
+numerical derivative difference about 1.01e-7. Changing private error merit or
+allowing unconstrained private friction does not fix the captured failure; the
+latter also regresses an existing query. These are rejected diagnostic trials.
+An independent fixed-material-branch search finds a valid all-sliding root with
+nonnegative loads, normal complementarity and friction cones. Its car-pair slip
+is above 0.1, while the stalled production direction remains on the linear
+small-slip branch. This is diagnostic root evidence, not original parity.
+
+Production now compares an additional saturated constitutive branch after the
+existing restart, only for mixed groups with a positive regularized load.
+Both private branches start from the same exact outer state and retain sixteen
+bounded refinements, fitted nonnegative pressure, cone projection, finite checks,
+bounded backtracking and exact restoration. The unchanged regularized physical
+residual retains only the better final candidate. Material laws, final tolerances,
+total ordinary-pass bound, first phase, world-only behavior and race inputs
+remain unchanged. No allocations or extra ordinary sweeps are introduced.
+
+Strict LLVM19 format/tidy and all 34 Native/32 WASM CTests pass. Native, WASM
+and instrumented rewrite C pass twenty-two captured queries, 188 captured-query
+orderings, twenty analytic friction cases and seventy-two analytic position
+cases. All 120 permutations of the new five-contact query independently check
+normal complementarity, friction cones/constitutive law, dissipation, impulse
+accounting, clearance, orientation and physical clock. The captured order takes
+513 velocity passes on all three targets; Native residual is
+2.0088650465321933e-9 and sanitizer residual 2.0088706739751494e-9.
+Position takes 53 passes at 7.2634431975970859e-10. The actual 31,216-byte
+production input advances from 105,335 to 105,336 on Native and with sanitizers.
+Receipt directory: /tmp/wasm-dd2/rewrite-saturation-105335/.
+All eleven actual Native SDL, instrumented SDL and Chromium/WASM window/input
+checks pass. All eleven original-data ground checks pass on Native, WASM and
+instrumented C: 79,100 queries and 26,400 vehicle steps per target. Scoped
+Circuit-2/live and the complete eight-lap Circuit-5 race pass on all three
+targets; Circuit 5 retains 167,472 ticks, 3,341,440 vehicle steps, player place 2,
+75 points and 167,072 independent player geometry queries. Reports retain
+source/binary identity; this is scoped regression, not full-suite acceptance.
+
+The unchanged-bound natural season again completes round 1 at 287,087 ticks
+with unchanged scores and correct championship consumption for all twenty
+drivers. Ordinary racing passes 105,335, then fails advancement at 105,932.
+AI/frame/championship validity remain true, race/championship stay RACING,
+player health remains 0.36360009215113553 and credited laps are zero. Inputs
+are throttle -0.6, brake zero and steering -0.83222504759486837. Full-season
+acceptance is false; this owner remains active.
+
+A sparse failure-only capture matches all eighty-one production JSON records
+exactly. Both production and diagnostic replayers reproduce its single
+31,216-byte failed input without advancement at 105,932. Drivers 3/4/7/19 form
+ten contacts: seven world supports and three car pairs. Velocity exhausts
+4,096 passes at 0.0032146159982845519; position is not reached. This identifies
+the next failure stage, not its cause or correction.
+Receipt: /tmp/wasm-dd2/rewrite-season-after-105335/report.json.
+Completed successful raw output and resolved 105,335 captures have been hashed,
+reported and removed; the unresolved next input/query remain available.
+
 ## Next
 
-Diagnose the five-contact velocity failure at 105,335 with unchanged production
-inputs and bounds before choosing its correction. Retain source/binary-identified
-sparse input and query evidence. Keep full campaigns and remaining gameplay under
+Diagnose the four-body, ten-contact velocity failure at 105,932 from the saved
+production-equivalent input. Preserve unchanged race inputs, material laws,
+tolerances and bounds, and use bounded source/binary-identified diagnostics. Keep full campaigns and remaining gameplay under
 their existing owners.
 
 ## Accept

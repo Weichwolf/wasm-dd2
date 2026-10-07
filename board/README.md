@@ -74,8 +74,14 @@ checks and original-data ground checks pass; Circuit-2/live and the complete
 eight-lap Circuit-5 race pass on all three targets. The natural season completes
 round 1 with unchanged scores, crosses 81,622 and next fails at second-round
 tick 105,335. Sparse production-equivalent replay identifies a five-contact
-velocity failure, retaining its input/query for diagnosis. Full-campaign
-acceptance remains open. A separately
+velocity failure. A saturated constitutive search direction now advances the
+saved input to 105,336 on Native and sanitized C, with unchanged regularized
+material acceptance. Twenty-two captured cases and 188 orderings pass all three
+targets and strict gates. Actual application, original-data ground and the
+scoped Circuit-2/live plus complete eight-lap Circuit-5 checks pass on all three
+variants. Natural racing passes 105,335 and next fails at 105,932; sparse
+production-equivalent replay identifies a four-body, ten-contact velocity
+failure. Full-campaign acceptance remains open. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 

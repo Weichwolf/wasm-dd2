@@ -14,7 +14,8 @@ enum {
     DD2_FRICTION_PAIR = 2,
     DD2_FRICTION_COUPLED_CONTACTS = 7,
     DD2_FRICTION_GROUND_CONTACTS = 4,
-    DD2_FRICTION_REFINEMENT_CONTACTS = 8
+    DD2_FRICTION_REFINEMENT_CONTACTS = 8,
+    DD2_FRICTION_SLIDING_CONTACTS = 5
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -268,23 +269,22 @@ static bool dd2_friction_permutations(bool position) {
     return true;
 }
 
-static bool dd2_friction_order_next(unsigned order[DD2_FRICTION_GROUND_CONTACTS]) {
-    unsigned pivot = DD2_FRICTION_GROUND_CONTACTS - 1;
+static bool dd2_friction_order_next(unsigned *order, unsigned count) {
+    unsigned pivot = count - 1;
     while (pivot > 0 && order[pivot - 1] >= order[pivot]) {
         --pivot;
     }
     if (pivot == 0) {
         return false;
     }
-    unsigned successor = DD2_FRICTION_GROUND_CONTACTS - 1;
+    unsigned successor = count - 1;
     while (order[successor] <= order[pivot - 1]) {
         --successor;
     }
     const unsigned saved = order[pivot - 1];
     order[pivot - 1] = order[successor];
     order[successor] = saved;
-    for (unsigned left = pivot, right = DD2_FRICTION_GROUND_CONTACTS - 1; left < right;
-         ++left, --right) {
+    for (unsigned left = pivot, right = count - 1; left < right; ++left, --right) {
         const unsigned value = order[left];
         order[left] = order[right];
         order[right] = value;
@@ -310,7 +310,7 @@ static bool dd2_friction_ground_orderings(void) {
         if (!dd2_friction_run(&scenario)) {
             return false;
         }
-    } while (dd2_friction_order_next(order));
+    } while (dd2_friction_order_next(order, DD2_FRICTION_GROUND_CONTACTS));
     return true;
 }
 
@@ -337,6 +337,28 @@ static bool dd2_friction_refinement_orderings(void) {
             }
         }
     }
+    return true;
+}
+
+static bool dd2_friction_sliding_orderings(void) {
+    unsigned order[DD2_FRICTION_SLIDING_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_SLIDING_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_SLIDING_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_SLIDING_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_championship_sliding_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {.initial = dd2_friction_championship_sliding_bodies,
+                                            .contacts = contacts,
+                                            .body_count = DD2_FRICTION_PAIR,
+                                            .contact_count = DD2_FRICTION_SLIDING_CONTACTS,
+                                            .name = "championship sliding branch support ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order, DD2_FRICTION_SLIDING_CONTACTS));
     return true;
 }
 
@@ -368,7 +390,8 @@ int main(void) {
         }
     }
     if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true) ||
-        !dd2_friction_ground_orderings() || !dd2_friction_refinement_orderings()) {
+        !dd2_friction_ground_orderings() || !dd2_friction_refinement_orderings() ||
+        !dd2_friction_sliding_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }
