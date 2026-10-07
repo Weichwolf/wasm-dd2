@@ -3,12 +3,14 @@
 #include "assets/archive.h"
 #include "assets/level.h"
 #include "assets/track.h"
+#include "audio/effects.h"
 #include "audio/mixer.h"
+#include "game/audio.h"
 #include "game/course.h"
 #include "game/driving.h"
 #include "game/laps.h"
-#include "game/music.h"
 #include "game/race.h"
+#include "game/sound_events.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
@@ -42,7 +44,7 @@ typedef struct {
     dd2_window *window;
     dd2_camera camera;
     dd2_driving *driving;
-    dd2_music_player *music;
+    dd2_game_audio *audio;
     bool drive;
     bool paused;
     int level;
@@ -69,7 +71,7 @@ static void dd2_application_destroy(dd2_application *application) {
         dd2_current_application = NULL;
     }
     dd2_mesh_materials_destroy(application->materials);
-    dd2_music_player_destroy(application->music);
+    dd2_game_audio_destroy(application->audio);
     dd2_renderer_destroy(application->renderer);
     dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
@@ -117,6 +119,7 @@ int dd2_application_select_level(int number) {
     application->camera = camera;
     application->level = number;
     application->dirty = true;
+    dd2_game_audio_reset_effects(application->audio);
     return 1;
 }
 
@@ -127,6 +130,7 @@ int dd2_application_show_car(int car) {
         return 0;
     }
     application->drive = false;
+    dd2_game_audio_reset_effects(application->audio);
     dd2_driving_suspend(application->driving);
     application->car = car != 0;
     application->dirty = true;
@@ -158,52 +162,96 @@ int dd2_application_load_music(unsigned track) {
         return 0;
     }
 #ifdef __EMSCRIPTEN__
-    return (int)dd2_music_player_load(application->music, track, "/Music.cdda");
+    return (int)dd2_game_audio_music_load(application->audio, track, "/Music.cdda");
 #else
-    return (int)dd2_music_player_load(application->music, track, NULL);
+    return (int)dd2_game_audio_music_load(application->audio, track, NULL);
 #endif
 }
 
 int dd2_application_music_phase(void) {
     dd2_application *application = dd2_current_application;
-    return application == NULL || application->music == NULL
+    return application == NULL || application->audio == NULL
                ? -1
-               : (int)dd2_music_player_state(application->music).phase;
+               : (int)dd2_game_audio_music_state(application->audio).phase;
 }
 
 unsigned dd2_application_music_track(void) {
-    return dd2_music_player_state(dd2_current_application == NULL ? NULL
-                                                                  : dd2_current_application->music)
+    return dd2_game_audio_music_state(
+               dd2_current_application == NULL ? NULL : dd2_current_application->audio)
         .track;
 }
 
 unsigned dd2_application_music_frame(void) {
-    return (unsigned)dd2_music_player_state(
-               dd2_current_application == NULL ? NULL : dd2_current_application->music)
+    return (unsigned)dd2_game_audio_music_state(
+               dd2_current_application == NULL ? NULL : dd2_current_application->audio)
         .frame;
 }
 
 unsigned dd2_application_music_fraction(void) {
-    return dd2_music_player_state(dd2_current_application == NULL ? NULL
-                                                                  : dd2_current_application->music)
+    return dd2_game_audio_music_state(
+               dd2_current_application == NULL ? NULL : dd2_current_application->audio)
         .fraction;
 }
 
 unsigned dd2_application_music_rate(void) {
-    return dd2_music_player_rate(dd2_current_application == NULL ? NULL
-                                                                 : dd2_current_application->music);
+    return dd2_game_audio_rate(dd2_current_application == NULL ? NULL
+                                                               : dd2_current_application->audio);
 }
 
 int dd2_application_set_music_playing(int playing) {
     return dd2_current_application != NULL && (playing == 0 || playing == 1)
-               ? (int)dd2_music_player_play(dd2_current_application->music, playing != 0)
+               ? (int)dd2_game_audio_music_play(dd2_current_application->audio, playing != 0)
                : 0;
 }
 
 int dd2_application_set_music_gain(unsigned gain) {
     return dd2_current_application != NULL
-               ? (int)dd2_music_player_gain(dd2_current_application->music, gain)
+               ? (int)dd2_game_audio_music_gain(dd2_current_application->audio, gain)
                : 0;
+}
+
+int dd2_application_set_effects_gain(unsigned gain) {
+    return dd2_current_application != NULL
+               ? (int)dd2_game_audio_effects_gain(dd2_current_application->audio, gain)
+               : 0;
+}
+
+int dd2_application_effect_voice(unsigned query) {
+    const unsigned channel = query / DD2_EFFECT_QUERY_COUNT;
+    const dd2_effect_query field = (dd2_effect_query)(query % DD2_EFFECT_QUERY_COUNT);
+    if (dd2_current_application == NULL || channel >= DD2_MIXER_CHANNELS) {
+        return -1;
+    }
+    const dd2_effect_voice state =
+        dd2_game_audio_effect_voice(dd2_current_application->audio, channel);
+    switch (field) {
+    case DD2_EFFECT_QUERY_SAMPLE:
+        return (int)state.sample;
+    case DD2_EFFECT_QUERY_PLAYING:
+        return (int)state.voice.playing;
+    case DD2_EFFECT_QUERY_FRAME:
+        return (int)state.voice.frame;
+    case DD2_EFFECT_QUERY_FRACTION:
+        return (int)state.voice.fraction;
+    case DD2_EFFECT_QUERY_FREQUENCY:
+        return (int)state.voice.config.frequency;
+    case DD2_EFFECT_QUERY_GAIN:
+        return (int)state.voice.config.gain;
+    case DD2_EFFECT_QUERY_PAN:
+        return state.voice.config.pan;
+    case DD2_EFFECT_QUERY_LOOP:
+        return (int)state.voice.config.loop;
+    default:
+        return -1;
+    }
+}
+
+unsigned dd2_application_sound_cues(unsigned cue) {
+    const uint64_t count =
+        dd2_current_application == NULL
+            ? 0
+            : dd2_game_audio_cue_count(dd2_current_application->audio, (dd2_sound_cue)cue);
+    return count < UINT_MAX ? (unsigned)count : UINT_MAX;
 }
 
 unsigned dd2_application_collision_count(void) {
@@ -314,6 +362,9 @@ void dd2_application_reset_camera(void) {
             application->drive
                 ? dd2_driving_reset(application->driving)
                 : dd2_application_fit(&application->camera, application->track, application->car);
+        if (application->dirty && application->drive) {
+            dd2_game_audio_reset_effects(application->audio);
+        }
     }
 }
 
@@ -321,7 +372,7 @@ void dd2_application_release_input(void) {
     if (dd2_current_application != NULL) {
         dd2_window_set_focus(dd2_current_application->window, false);
         dd2_driving_suspend(dd2_current_application->driving);
-        dd2_music_player_suspend(dd2_current_application->music, true);
+        dd2_game_audio_suspend(dd2_current_application->audio, true);
     }
 }
 
@@ -341,6 +392,7 @@ int dd2_application_set_driving(int enabled) {
         return 0;
     }
     application->drive = enabled != 0;
+    dd2_game_audio_reset_effects(application->audio);
     dd2_driving_suspend(application->driving);
     dd2_window_release_input(application->window);
     application->dirty = true;
@@ -354,6 +406,7 @@ int dd2_application_start_race(int mode) {
         return 0;
     }
     application->drive = true;
+    dd2_game_audio_reset_effects(application->audio);
     application->paused = false;
     application->dirty = true;
     dd2_window_release_input(application->window);
@@ -414,8 +467,8 @@ int dd2_application_set_paused(int paused) {
         return 0;
     }
     application->paused = paused != 0;
-    if (application->paused) {
-        dd2_music_player_suspend(application->music, true);
+    if (application->paused && application->drive) {
+        dd2_game_audio_suspend(application->audio, true);
     }
     dd2_driving_suspend(application->driving);
     dd2_window_release_input(application->window);
@@ -544,7 +597,45 @@ static bool dd2_application_draw(dd2_application *application) {
 }
 
 static void dd2_application_audio_focus(dd2_application *application, bool focused) {
-    dd2_music_player_suspend(application->music, application->paused || !focused);
+    dd2_game_audio_suspend(application->audio,
+                           (application->drive && application->paused) || !focused);
+}
+
+static void dd2_application_audio_update(dd2_application *application,
+                                         dd2_vehicle_control control) {
+    const dd2_vehicle *vehicle = dd2_driving_vehicle(application->driving);
+    const dd2_race *race = dd2_driving_race(application->driving);
+    const dd2_vehicle_vector forward =
+        dd2_vehicle_rotate(vehicle->rotation, (dd2_vehicle_vector){.z = 1});
+    const dd2_engine_sound engine = {
+        .running = !dd2_driving_damage(application->driving)[0].retired &&
+                   (race == NULL || race->phase != DD2_RACE_RESULTS),
+        .speed = (vehicle->velocity.x * forward.x) + (vehicle->velocity.y * forward.y) +
+                 (vehicle->velocity.z * forward.z),
+        .throttle =
+            race != NULL && (race->phase == DD2_RACE_COASTING || race->drivers[0].finish_place != 0)
+                ? 0
+                : control.throttle};
+    dd2_game_audio_update(application->audio, engine,
+                          dd2_driving_sound_events(application->driving));
+}
+
+static void dd2_application_drive_frame(dd2_application *application, const dd2_input *input,
+                                        float seconds) {
+    const dd2_vehicle_control control = {
+        .throttle = (double)(input->held[DD2_KEY_UP] || input->held[DD2_KEY_PAN_UP]) -
+                    (double)(input->held[DD2_KEY_DOWN] || input->held[DD2_KEY_PAN_DOWN]),
+        .brake = (double)input->held[DD2_KEY_BRAKE],
+        /* World-up camera faces +Z: screen right is local -X. */
+        .steer = (double)(input->held[DD2_KEY_LEFT] || input->held[DD2_KEY_PAN_LEFT]) -
+                 (double)(input->held[DD2_KEY_RIGHT] || input->held[DD2_KEY_PAN_RIGHT])};
+    if (!dd2_driving_advance(application->driving,
+                             (dd2_driving_frame){.seconds = seconds, .control = control})) {
+        puts("Fahrzeug konnte nicht aktualisiert werden. Mit R zurücksetzen.");
+        dd2_application_set_paused(1);
+    } else {
+        dd2_application_audio_update(application, control);
+    }
 }
 
 static void dd2_application_frame(void *context) {
@@ -561,19 +652,7 @@ static void dd2_application_frame(void *context) {
             if (application->paused || !input.focused) {
                 dd2_driving_suspend(application->driving);
             } else {
-                const dd2_vehicle_control control = {
-                    .throttle = (double)(input.held[DD2_KEY_UP] || input.held[DD2_KEY_PAN_UP]) -
-                                (double)(input.held[DD2_KEY_DOWN] || input.held[DD2_KEY_PAN_DOWN]),
-                    .brake = (double)input.held[DD2_KEY_BRAKE],
-                    /* World-up camera faces +Z: screen right is local -X. */
-                    .steer = (double)(input.held[DD2_KEY_LEFT] || input.held[DD2_KEY_PAN_LEFT]) -
-                             (double)(input.held[DD2_KEY_RIGHT] || input.held[DD2_KEY_PAN_RIGHT])};
-                if (!dd2_driving_advance(
-                        application->driving,
-                        (dd2_driving_frame){.seconds = seconds, .control = control})) {
-                    puts("Fahrzeug konnte nicht aktualisiert werden. Mit R zurücksetzen.");
-                    dd2_application_set_paused(1);
-                }
+                dd2_application_drive_frame(application, &input, seconds);
                 moved = true;
             }
         } else {
@@ -615,8 +694,8 @@ static dd2_application *dd2_application_create(const char *path) {
         return NULL;
     }
     application->running = true;
-    application->music = dd2_music_player_create(path);
-    if (application->music == NULL) {
+    application->audio = dd2_game_audio_create(path, application->archive);
+    if (application->audio == NULL) {
         puts("Audioausgabe ist nicht verfügbar.");
     }
     dd2_current_application = application;

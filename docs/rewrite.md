@@ -125,8 +125,15 @@ replacement or device close; failed loads preserve playing music.
 `make rewrite-music-output-verify` checks independent original-CDDA resampling
 against Native SDL disk output and real browser WebAudio node buffers, plus
 repeat, pause/focus, gain/mute, invalid-load rollback and close/reopen. The Native
-application is also checked under ASan/UBSan. Sound effects, automatic game-state
-music selection and saved audio settings remain pending. Browser pthread builds
+application is also checked under ASan/UBSan. The original sound bank now supplies
+the player motor, spatial impacts and THREE/TWO/ONE/GO cues. Fixed-step events
+survive render frame batching; channel reservations protect motor/countdown
+from automatic impact replacement. Browser controls offer independent music and
+effects volume. `make rewrite-effects-output-verify` checks actual Native output
+and browser four-channel PCM at 44,100/48,000 Hz with an independent WAVE oracle,
+plus pause, mute, reset, close and sanitized lifetime. Pitch, levels and impact
+attenuation are rewrite tuning. Skid/crowd/commentary/menu effects, automatic
+game-state music selection and saved audio settings remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
 Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
 solver and nested geometry queries; the SDK's default 64 KiB is insufficient.
@@ -437,8 +444,8 @@ overturn availability/righting has its own controlled verification. To diagnose 
 Repeat `--case` for multiple scenarios; omitting it keeps the full suite. Scoped
 reports explicitly mark partial coverage, and each target writes its own result
 receipt against recorded source/binary hashes before another target can fail.
-Source changes during a run invalidate its final report. Source-timed lights
-are currently visual; sound cues and automatic game-state music selection remain pending.
+Source changes during a run invalidate its final report. Source-timed lights now
+have matching sound cues; automatic game-state music selection remains pending.
 
 ## Migration and acceptance
 

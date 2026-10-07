@@ -7,6 +7,7 @@
 #include "game/driving.h"
 #include "game/race.h"
 #include "game/recovery.h"
+#include "game/sound_events.h"
 #include "physics/damage.h"
 #include "physics/road_surface.h"
 #include "physics/vehicle.h"
@@ -299,6 +300,70 @@ static bool dd2_drive_test_pursuit(const dd2_road *road) {
     return valid;
 }
 
+static bool dd2_drive_test_sound_advance(dd2_driving *driving, double seconds,
+                                         dd2_sound_event events[4], unsigned *count) {
+    if (!dd2_driving_advance(driving, (dd2_driving_frame){.seconds = seconds})) {
+        return false;
+    }
+    const dd2_sound_batch *batch = dd2_driving_sound_events(driving);
+    if (*count + batch->count > 4) {
+        return false;
+    }
+    for (unsigned index = 0; index < batch->count; ++index) {
+        events[(*count)++] = batch->events[index];
+    }
+    return true;
+}
+
+static bool dd2_drive_test_sound_frames(dd2_driving *first, dd2_driving *second) {
+    enum {
+        DD2_SOUND_FRAME_PARTS = 50,
+        DD2_SOUND_FRAME_COUNT = 8,
+        DD2_SOUND_EXPECTED_CUES = 4,
+        DD2_SOUND_FIRST_TICK = 36,
+        DD2_SOUND_SECOND_TICK = 156,
+        DD2_SOUND_THIRD_TICK = 276
+    };
+    const unsigned expected_ticks[DD2_SOUND_EXPECTED_CUES] = {
+        DD2_SOUND_FIRST_TICK, DD2_SOUND_SECOND_TICK, DD2_SOUND_THIRD_TICK, DD2_RACE_START_STEPS};
+    const dd2_sound_cue expected_cues[DD2_SOUND_EXPECTED_CUES] = {DD2_SOUND_THREE, DD2_SOUND_TWO,
+                                                                  DD2_SOUND_ONE, DD2_SOUND_GO};
+    dd2_sound_event coarse[DD2_SOUND_EXPECTED_CUES] = {0};
+    dd2_sound_event fine[DD2_SOUND_EXPECTED_CUES] = {0};
+    unsigned coarse_count = 0;
+    unsigned fine_count = 0;
+    if (!dd2_driving_set_race(first, true, DD2_RACE_WRECKING) ||
+        !dd2_driving_set_race(second, true, DD2_RACE_WRECKING)) {
+        return false;
+    }
+    for (unsigned frame = 0; frame < DD2_SOUND_FRAME_COUNT; ++frame) {
+        if (!dd2_drive_test_sound_advance(first,
+                                          DD2_VEHICLE_STEP_SECONDS * (double)DD2_SOUND_FRAME_PARTS,
+                                          coarse, &coarse_count)) {
+            return false;
+        }
+        for (unsigned part = 0; part < DD2_SOUND_FRAME_PARTS; ++part) {
+            if (!dd2_drive_test_sound_advance(second, DD2_VEHICLE_STEP_SECONDS, fine,
+                                              &fine_count)) {
+                return false;
+            }
+        }
+    }
+    if (coarse_count != DD2_SOUND_EXPECTED_CUES || fine_count != coarse_count) {
+        return false;
+    }
+    for (unsigned index = 0; index < coarse_count; ++index) {
+        if (coarse[index].tick != expected_ticks[index] ||
+            fine[index].tick != expected_ticks[index] ||
+            coarse[index].cue != expected_cues[index] || fine[index].cue != expected_cues[index]) {
+            return false;
+        }
+    }
+    return !dd2_driving_advance(first, (dd2_driving_frame){.seconds = 1}) &&
+           dd2_driving_sound_events(first)->count == 1 && dd2_driving_reset(first) &&
+           dd2_driving_sound_events(first)->count == 0;
+}
+
 int main(void) {
     dd2_road *road = dd2_drive_test_road();
     dd2_driving *first = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
@@ -313,7 +378,8 @@ int main(void) {
                  spawn->yaw == 0 && other->position.x == dd2_drive_test_start &&
                  other->position.z == 0 && other->yaw == dd2_drive_test_quarter_turn &&
                  dd2_drive_test_frames(first, second) && dd2_drive_test_rejection(first) &&
-                 dd2_drive_test_pursuit(road) && dd2_drive_test_total(first);
+                 dd2_drive_test_pursuit(road) && dd2_drive_test_total(first) &&
+                 dd2_drive_test_sound_frames(first, second);
     }
     dd2_driving *bad = dd2_driving_create(road, 1);
     passed = passed && bad == NULL && !dd2_driving_advance(NULL, (dd2_driving_frame){0}) &&

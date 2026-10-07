@@ -19,6 +19,22 @@ unsigned dd2_application_music_fraction(void);
 unsigned dd2_application_music_rate(void);
 int dd2_application_set_music_playing(int playing);
 int dd2_application_set_music_gain(unsigned gain);
+int dd2_application_set_effects_gain(unsigned gain);
+typedef enum {
+    DD2_EFFECT_QUERY_SAMPLE,
+    DD2_EFFECT_QUERY_PLAYING,
+    DD2_EFFECT_QUERY_FRAME,
+    DD2_EFFECT_QUERY_FRACTION,
+    DD2_EFFECT_QUERY_FREQUENCY,
+    DD2_EFFECT_QUERY_GAIN,
+    DD2_EFFECT_QUERY_PAN,
+    DD2_EFFECT_QUERY_LOOP,
+    DD2_EFFECT_QUERY_COUNT
+} dd2_effect_query;
+/* Read-only voice state for the UI/verification; invalid channel/field is -1. */
+/* Flattened UI query: channel * DD2_EFFECT_QUERY_COUNT + field. */
+int dd2_application_effect_voice(unsigned query);
+unsigned dd2_application_sound_cues(unsigned cue);
 unsigned dd2_application_collision_count(void);
 unsigned dd2_application_pair_collision_count(void);
 unsigned dd2_application_vehicle_count(void);

@@ -8,6 +8,7 @@
 #include "game/laps.h"
 #include "game/race.h"
 #include "game/recovery.h"
+#include "game/sound_events.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -39,6 +40,9 @@ const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving);
  * Reset and a frame without fixed steps publish an empty report. This snapshot
  * is diagnostic; gameplay consumers process each report inside the fixed step. */
 const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving *driving);
+/* Frame-wide fixed-step sound events, published with the successful simulation
+ * transaction. Reset/withdraw/no-step frames clear the batch; consume it once. */
+const dd2_sound_batch *dd2_driving_sound_events(const dd2_driving *driving);
 /* Damage is enabled by default. Disable only for isolated kinematic probes;
  * disabled damage state freezes. Reset restores every car's intact state. */
 void dd2_driving_set_damage(dd2_driving *driving, bool enabled);

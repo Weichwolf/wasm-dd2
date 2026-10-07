@@ -8,6 +8,7 @@
 #include "game/laps.h"
 #include "game/race.h"
 #include "game/recovery.h"
+#include "game/sound_events.h"
 #include "game/starting_grid.h"
 #include "physics/barrier_world.h"
 #include "physics/damage.h"
@@ -50,6 +51,8 @@ struct dd2_driving {
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT];
     dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_collision_report contacts;
+    dd2_sound_state sounds;
+    dd2_sound_batch sound_events;
     bool opponents;
     bool damage_enabled;
     uint64_t pair_collisions;
@@ -177,6 +180,8 @@ bool dd2_driving_reset(dd2_driving *driving) {
     }
     driving->accumulator = 0;
     driving->contacts = (dd2_vehicle_collision_report){0};
+    driving->sounds = (dd2_sound_state){.waiting_for_go = driving->racing};
+    driving->sound_events = (dd2_sound_batch){0};
     driving->collisions = 0;
     driving->pair_collisions = 0;
     return true;
@@ -338,6 +343,14 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
                                                   .count = driving->count});
 }
 
+static bool dd2_driving_hold_step(dd2_race *race, dd2_race_observation observation,
+                                  dd2_sound_state *sounds, dd2_sound_batch *events,
+                                  dd2_sound_observation sound) {
+    const bool countdown = race->phase == DD2_RACE_COUNTDOWN;
+    return dd2_race_step(race, observation) &&
+           (!countdown || dd2_sound_events_step(sounds, events, sound));
+}
+
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     if (driving == NULL || !dd2_numeric_finite(&frame.seconds) || frame.seconds < 0 ||
         frame.seconds > dd2_driving_max_frame || !dd2_numeric_finite(&frame.control.throttle) ||
@@ -362,6 +375,8 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         laps[slot] = driving->laps[slot];
         rolls[slot] = driving->wheel_rolls[slot];
     }
+    dd2_sound_state sounds = driving->sounds;
+    dd2_sound_batch sound_events = {0};
     dd2_race race = driving->race;
     double accumulator = driving->accumulator + frame.seconds;
     uint64_t pairs = driving->pair_collisions;
@@ -377,10 +392,14 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
                                                   .count = driving->count};
         if (driving->racing &&
             (race.phase == DD2_RACE_COUNTDOWN || race.phase == DD2_RACE_RESULTS)) {
-            if (!dd2_race_step(&race, observation)) {
+            report = (dd2_vehicle_collision_report){0};
+            if (!dd2_driving_hold_step(&race, observation, &sounds, &sound_events,
+                                       (dd2_sound_observation){.listener = &vehicles[0],
+                                                               .contacts = &report,
+                                                               .race = &race,
+                                                               .count = driving->count})) {
                 return false;
             }
-            report = (dd2_vehicle_collision_report){0};
             continue;
         }
         if (!dd2_driving_step(driving, vehicles, drivers, damages, accidents, laps, recovery,
@@ -388,6 +407,13 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
             (driving->racing && !dd2_race_step(&race, observation)) ||
             UINT64_MAX - collisions < report.impacts[0].contacts ||
             UINT64_MAX - pairs < report.impacts[0].pair_contacts) {
+            return false;
+        }
+        if (!dd2_sound_events_step(&sounds, &sound_events,
+                                   (dd2_sound_observation){.listener = &vehicles[0],
+                                                           .contacts = &report,
+                                                           .race = driving->racing ? &race : NULL,
+                                                           .count = driving->count})) {
             return false;
         }
         collisions += report.impacts[0].contacts;
@@ -415,6 +441,8 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
         driving->wheel_rolls[slot] = rolls[slot];
     }
     driving->race = race;
+    driving->sounds = sounds;
+    driving->sound_events = sound_events;
     driving->pair_collisions = pairs;
     driving->contacts = report;
     driving->accumulator = accumulator;
@@ -443,6 +471,10 @@ const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving) {
 const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving *driving) {
     return driving != NULL ? &driving->contacts : NULL;
 }
+const dd2_sound_batch *dd2_driving_sound_events(const dd2_driving *driving) {
+    return driving != NULL ? &driving->sound_events : NULL;
+}
+
 void dd2_driving_set_damage(dd2_driving *driving, bool enabled) {
     if (driving != NULL) {
         driving->damage_enabled = enabled;
@@ -553,5 +585,6 @@ bool dd2_driving_withdraw(dd2_driving *driving) {
     }
     driving->accumulator = 0;
     driving->contacts = (dd2_vehicle_collision_report){0};
+    driving->sound_events = (dd2_sound_batch){0};
     return true;
 }

@@ -41,7 +41,7 @@ loops, music endpoints/repeat and pause/resume. The same tests run on Native and
 Node/WASM; standalone ASan/UBSan runs check ownership/bounds/arithmetic.
 
 The application now owns actual SDL2 output through `platform/audio_device.c`.
-`game/music.c` owns one CDDA file and resolves Native tracks relative to the
+`game/audio.c` owns one CDDA file and sound-bank metadata, and resolves Native tracks relative to the
 archive; the browser stages one user-selected file. Selection replaces the
 borrowed view under the device lock before releasing old bytes. Failure leaves
 the old title and cursor intact. Close joins callbacks before freeing PCM.
@@ -55,5 +55,28 @@ use the same C transport. Audio-device failure permits visual gameplay.
 and browser WebAudio node samples with an independent integer CDDA oracle. It
 also checks Native ASan/UBSan lifetime and browser repeat/control/rollback/reopen.
 This establishes this rewrite's output, without claiming original audio engine
-or speaker hardware parity. Sound-bank effects and automatic race/menu music
-selection still need application integration; saved audio settings remain open.
+or speaker hardware parity.
+
+`game/sound_events.c` collects countdown and nearby collision events at the 5 ms
+simulation clock. A frame batch retains events from every fixed step and publishes
+with the driving transaction. Countdown cues occur at ticks 36/156/276/400,
+independent of render frame partitioning. Spatial impacts use contact closing
+speed, distance and the player's orientation, with a 150 ms pair/world cooldown.
+Impulse-free repairs and soft ground support remain silent.
+
+`effects.c` borrows the original bank, reserves channel 0 for the looping motor
+and channel 1 for countdown, and rotates impacts over channels 2/3. Call reset
+after creation to establish these channel reservations. Bank samples 0, 3 and
+11/10/9/8 supply motor, impact and THREE/TWO/ONE/GO. One-shot playback uses the
+WAVE sample rate, matching the source's default-frequency request. Motor pitch,
+levels and spatial attenuation are rewrite tuning. Music and effects have
+independent volume controls; reset stops effects and clears cue counters while
+preserving music and master gain. The audio owner joins device callbacks before
+freeing bank metadata or archive-backed PCM.
+
+`make rewrite-effects-output-verify` checks actual Native idle-motor output and
+browser four-voice mixtures at 44,100/48,000 Hz against independent original-WAVE
+resampling. Real controls exercise countdown, engine pitch, impacts, pause,
+mute, reset and close; ASan/UBSan checks event/effect units and application
+lifetime. These are scoped rewrite checks. Skid, crowd, commentary and menu
+sounds, automatic race/menu music selection and saved audio settings remain open.

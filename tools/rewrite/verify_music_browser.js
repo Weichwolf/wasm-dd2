@@ -97,6 +97,7 @@ async function verifyOutput(page, source, gain = 256) {
     await page.waitForFunction(() => !document.querySelector('#archive').disabled);
     await page.setInputFiles('#archive', archive);
     await page.waitForFunction(() => Module._dd2_application_current_level() === 1 && !document.querySelector('#music-file').disabled);
+    await page.evaluate(() => Module._dd2_application_set_effects_gain(0));
     await attach(page);
     for (const track of [2, 3]) {
       const file = path.join(redbook, `track${String(track).padStart(2, '0')}.cdda`);

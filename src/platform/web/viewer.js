@@ -10,6 +10,7 @@ const finishButton = document.getElementById('finish');
 const musicFile = document.getElementById('music-file');
 const musicPlay = document.getElementById('music-play');
 const musicGain = document.getElementById('music-gain');
+const effectsGain = document.getElementById('effects-gain');
 const musicStatus = document.getElementById('music-status');
 let musicLoading = false;
 let applicationGeneration = 0;
@@ -53,6 +54,7 @@ archive.addEventListener('change', async () => {
     if (loaded) {
       ++applicationGeneration;
       musicGain.value = '256';
+      effectsGain.value = '256';
       level.value = String(Module._dd2_application_current_level());
       view.value = '0';
       status.textContent = 'Streckenansicht bereit. Klicke ins Bild, um die Kamera zu steuern.';
@@ -100,6 +102,8 @@ musicPlay.addEventListener('click', () => {
 });
 musicGain.addEventListener('input', () => Module._dd2_application_set_music_gain(Number(musicGain.value)));
 musicGain.addEventListener('change', () => canvas.focus());
+effectsGain.addEventListener('input', () => Module._dd2_application_set_effects_gain(Number(effectsGain.value)));
+effectsGain.addEventListener('change', () => canvas.focus());
 
 level.addEventListener('change', () => {
   if (!Module._dd2_application_select_level(Number(level.value))) {
@@ -150,6 +154,7 @@ function reflectSelection() {
       musicFile.disabled = musicLoading || musicPhase < 0;
       musicPlay.disabled = musicPhase <= 0;
       musicGain.disabled = musicPhase < 0;
+      effectsGain.disabled = musicPhase < 0;
       musicPlay.textContent = musicPhase === 2 ? 'Musik pausieren' : 'Musik abspielen';
       if (musicPhase < 0) musicStatus.textContent = 'Audioausgabe ist nicht verfügbar.';
       finishButton.disabled = Number(view.value) < 3 || phase === 3;
@@ -165,7 +170,7 @@ function reflectSelection() {
     } else {
       loaded = false;
       for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = true;
-      for (const control of [musicFile, musicPlay, musicGain]) control.disabled = true;
+      for (const control of [musicFile, musicPlay, musicGain, effectsGain]) control.disabled = true;
       musicStatus.textContent = 'Wähle track02.cdda bis track19.cdda aus dem Redbook-Ordner.';
       if (status.textContent.includes('bereit')) status.textContent = 'Ansicht geschlossen. Dirinfo kann erneut geöffnet werden.';
     }
