@@ -7,6 +7,7 @@ const view = document.getElementById('view');
 const reset = document.getElementById('reset');
 const pauseButton = document.getElementById('pause');
 const finishButton = document.getElementById('finish');
+const continueButton = document.getElementById('continue');
 const musicFile = document.getElementById('music-file');
 const musicPlay = document.getElementById('music-play');
 const musicGain = document.getElementById('music-gain');
@@ -17,6 +18,7 @@ let applicationGeneration = 0;
 let loaded = false;
 let reflectedView = -1;
 let reflectedPhase = -1;
+let reflectedChampionshipPhase = -1;
 var Module = {
   canvas,
   noInitialRun: true,
@@ -115,13 +117,25 @@ level.addEventListener('change', () => {
 view.addEventListener('change', () => {
   const selected = Number(view.value);
   let changed;
-  if (selected >= 3) changed = Module._dd2_application_start_race(selected - 3);
+  if (selected >= 7) changed = Module._dd2_application_start_championship(selected === 8 ? 1 : 0);
+  else if (selected >= 3) changed = Module._dd2_application_start_race(selected - 3);
   else if (selected === 2) changed = Module._dd2_application_set_driving(1);
   else changed = Module._dd2_application_show_car(selected);
   if (!changed) status.textContent = 'The view could not be loaded.';
   canvas.focus();
 });
-finishButton.addEventListener('click', () => { Module._dd2_application_withdraw_race(); canvas.focus(); });
+finishButton.addEventListener('click', () => {
+  const phase = Module._dd2_application_championship_phase();
+  const changed = phase >= 0 ? Module._dd2_application_exit_championship() : Module._dd2_application_withdraw_race();
+  if (!changed) status.textContent = 'The current view has been retained. Leaving the race failed.';
+  canvas.focus();
+});
+continueButton.addEventListener('click', () => {
+  if (!Module._dd2_application_continue_championship()) {
+    status.textContent = 'The next race could not be loaded. Your results have been retained.';
+  }
+  canvas.focus();
+});
 reset.addEventListener('click', () => { Module._dd2_application_reset_camera(); canvas.focus(); });
 pauseButton.addEventListener('click', () => { Module._dd2_application_set_paused(Module._dd2_application_is_paused() ? 0 : 1); canvas.focus(); });
 canvas.addEventListener('focus', () => { if (loaded) Module._dd2_application_resume_input(); });
@@ -145,6 +159,9 @@ function reflectSelection() {
     const current = Module._dd2_application_current_level();
     if (current) {
       level.value = String(current);
+      const championshipPhase = Module._dd2_application_championship_phase();
+      const championship = championshipPhase >= 0;
+      level.disabled = championship;
       view.value = String(Module._dd2_application_current_view());
       pauseButton.disabled = Number(view.value) < 2;
       for (const mode of [4, 5]) view.querySelector(`option[value="${mode}"]`).disabled = current > 7;
@@ -157,22 +174,36 @@ function reflectSelection() {
       effectsGain.disabled = musicPhase < 0;
       musicPlay.textContent = musicPhase === 2 ? 'Pause music' : 'Play music';
       if (musicPhase < 0) musicStatus.textContent = 'Audio output is unavailable.';
-      finishButton.disabled = Number(view.value) < 3 || phase === 3;
+      finishButton.disabled = Number(view.value) < 3 || (!championship && phase === 3);
+      finishButton.textContent = championship ? 'Leave championship' : 'Leave race';
+      continueButton.disabled = !championship || ![2, 3].includes(championshipPhase);
+      continueButton.textContent = championshipPhase === 3 ? 'Continue season' : 'Next race';
+      reset.disabled = championship && championshipPhase !== 1;
       pauseButton.textContent = Module._dd2_application_is_paused() ? 'Resume' : 'Pause';
-      reset.textContent = Number(view.value) >= 2 ? 'Return to start' : 'Reset camera';
+      reset.textContent = championship ? 'Restart race' : (Number(view.value) >= 2 ? 'Return to start' : 'Reset camera');
       const selected = Number(view.value);
-      if (selected !== reflectedView || phase !== reflectedPhase) {
+      if (selected !== reflectedView || phase !== reflectedPhase || championshipPhase !== reflectedChampionshipPhase) {
         status.textContent = selected >= 3 ? ['Countdown. Throttle unlocks at GO.', 'Race running. W accelerates, P pauses.', 'Race ended. Results follow …', 'Results. You are highlighted in yellow; R restarts.'][phase] : selected === 2 ? 'Free driving ready. Click the image; W accelerates, P pauses.' : 'View ready. Click the image to control the camera.';
+        if (championship) {
+          const season = Module._dd2_application_championship_season();
+          const round = Module._dd2_application_championship_round();
+          const division = Module._dd2_application_championship_division();
+          const points = Module._dd2_application_championship_points(0);
+          const message = ['Preparing race.', (phase === 0 ? 'Countdown. Throttle unlocks at GO; R restarts.' : phase === 2 ? 'Race ended. Results follow …' : 'Race running. W accelerates; P pauses; R restarts.'), 'Round complete. Enter continues.', 'Season complete. Enter confirms the outcome.', 'Champion. Enter or Escape returns to the track view.', 'Eliminated. Enter or Escape returns to the track view.', 'Championship ended.'][championshipPhase];
+          status.textContent = `Season ${season} · Race ${round} · Division ${division} · ${points} points. ${message}`;
+        }
         canvas.setAttribute('aria-label', selected >= 2 ? 'Driving. W accelerates, A and D steer, Space brakes.' : 'Track view. Rotate with the arrow keys.');
         reflectedView = selected;
         reflectedPhase = phase;
+        reflectedChampionshipPhase = championshipPhase;
       }
     } else {
       loaded = false;
-      for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = true;
+      archive.value = '';
+      for (const control of [level, view, reset, pauseButton, finishButton, continueButton]) control.disabled = true;
       for (const control of [musicFile, musicPlay, musicGain, effectsGain]) control.disabled = true;
       musicStatus.textContent = 'Select track02.cdda to track19.cdda from the Redbook folder.';
-      if (status.textContent.includes('ready')) status.textContent = 'View closed. Dirinfo can be opened again.';
+      status.textContent = 'View closed. Dirinfo can be opened again.';
     }
   }
   requestAnimationFrame(reflectSelection);

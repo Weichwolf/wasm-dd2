@@ -1,6 +1,33 @@
 #ifndef DD2_GAME_APPLICATION_H
 #define DD2_GAME_APPLICATION_H
 
+#include "assets/track.h"
+#include "game/championship.h"
+#include "game/driving.h"
+#include "render/renderer.h"
+
+/* Sole main-thread application. Open owns the archive, window, audio and game
+ * resources; a second open is rejected. Run also owns the event loop. Close
+ * cancels that owned browser loop before releasing its callback context. */
+int dd2_application_open(const char *path, int level);
+void dd2_application_close(void);
+int dd2_application_run(const char *path, int level);
+/* Shared analog/keyboard control path. Bounded frame input advances actual game
+ * state and audio; pause holds it. The caller suspends on lost focus. Present
+ * renders the current state without advancing it. No score/state injection. */
+int dd2_application_advance(dd2_driving_frame frame);
+int dd2_application_present(void);
+/* Borrowed read-only views expire on selection, restart, continuation or close. */
+const dd2_driving *dd2_application_driving_view(void);
+const dd2_track *dd2_application_track_view(void);
+const dd2_championship *dd2_application_championship_view(void);
+/* Bottom-first RGBA owned by the renderer, valid until next present/close. */
+typedef struct {
+    const uint8_t *pixels;
+    dd2_render_options viewport;
+} dd2_application_image;
+dd2_application_image dd2_application_image_view(void);
+
 /* Main-thread UI bridge shared with the browser page. Selection is transactional:
  * failure preserves the previous track/materials/camera. No original addresses
  * or register state are used. A stopped/uninitialized application returns zero. */
@@ -56,6 +83,18 @@ void dd2_application_resume_input(void);
 int dd2_application_set_driving(int enabled);
 int dd2_application_set_paused(int paused);
 int dd2_application_is_paused(void);
+/* Actual single-player scheduled championships. Entry/continuation/restart
+ * prepare renderer resources before replacing owned fields. Exit restores the
+ * previous practice track without scoring an unfinished round. */
+int dd2_application_start_championship(int mode);
+int dd2_application_continue_championship(void);
+int dd2_application_restart_championship(void);
+int dd2_application_exit_championship(void);
+int dd2_application_championship_phase(void);
+unsigned dd2_application_championship_points(unsigned driver);
+unsigned dd2_application_championship_division(void);
+unsigned dd2_application_championship_round(void);
+unsigned dd2_application_championship_season(void);
 
 /* Start a fresh race: 0 Wrecking (including arenas), 1 Stockcar, 2 Time Trial (circuits),
  * 3 Total Destruction (arenas).

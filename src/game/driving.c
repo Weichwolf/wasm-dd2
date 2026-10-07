@@ -384,12 +384,17 @@ static bool dd2_driving_hold_step(dd2_race *race, dd2_race_observation observati
            (!countdown || dd2_sound_events_step(sounds, events, sound));
 }
 
+bool dd2_driving_frame_valid(dd2_driving_frame frame) {
+    return !(!dd2_numeric_finite(&frame.seconds) || frame.seconds < 0 ||
+             frame.seconds > dd2_driving_max_frame ||
+             !dd2_numeric_finite(&frame.control.throttle) || fabs(frame.control.throttle) > 1 ||
+             !dd2_numeric_finite(&frame.control.brake) || frame.control.brake < 0 ||
+             frame.control.brake > 1 || !dd2_numeric_finite(&frame.control.steer) ||
+             fabs(frame.control.steer) > 1);
+}
+
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
-    if (driving == NULL || !dd2_numeric_finite(&frame.seconds) || frame.seconds < 0 ||
-        frame.seconds > dd2_driving_max_frame || !dd2_numeric_finite(&frame.control.throttle) ||
-        fabs(frame.control.throttle) > 1 || !dd2_numeric_finite(&frame.control.brake) ||
-        frame.control.brake < 0 || frame.control.brake > 1 ||
-        !dd2_numeric_finite(&frame.control.steer) || fabs(frame.control.steer) > 1) {
+    if (driving == NULL || !dd2_driving_frame_valid(frame)) {
         return false;
     }
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT] = {0};

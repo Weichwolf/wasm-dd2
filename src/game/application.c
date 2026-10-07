@@ -6,9 +6,12 @@
 #include "audio/effects.h"
 #include "audio/mixer.h"
 #include "game/audio.h"
+#include "game/championship.h"
+#include "game/championship_session.h"
 #include "game/course.h"
 #include "game/driving.h"
 #include "game/laps.h"
+#include "game/league.h"
 #include "game/race.h"
 #include "game/sound_events.h"
 #include "physics/damage.h"
@@ -18,6 +21,7 @@
 #include "render/camera.h"
 #include "render/driving_draw.h"
 #include "render/mesh_draw.h"
+#include "render/race_draw.h"
 #include "render/renderer.h"
 
 #include <limits.h>
@@ -32,7 +36,13 @@
 #include <emscripten.h>
 #endif
 
-enum { DD2_APP_WIDTH = 640, DD2_APP_HEIGHT = 480, DD2_APP_RACING_LEVELS = 7 };
+enum {
+    DD2_APP_WIDTH = 640,
+    DD2_APP_HEIGHT = 480,
+    DD2_APP_RACING_LEVELS = 7,
+    DD2_APP_CHAMP_WRECK_VIEW = 7,
+    DD2_APP_CHAMP_STOCK_VIEW = 8
+};
 static const float dd2_app_wheel_seconds = 0.15F;
 
 typedef struct {
@@ -44,6 +54,8 @@ typedef struct {
     dd2_window *window;
     dd2_camera camera;
     dd2_driving *driving;
+    dd2_championship_session *championship;
+    int practice_level;
     dd2_game_audio *audio;
     bool drive;
     bool paused;
@@ -52,15 +64,232 @@ typedef struct {
     bool running;
     bool dirty;
     bool failed;
+    bool main_loop;
 } dd2_application;
 
 /* Sole active application. The callback retains its typed ownership context;
  * exports address it only on the main thread, and destruction clears the bridge. */
 static dd2_application *dd2_current_application;
 
+static const dd2_driving *dd2_application_driving(const dd2_application *application) {
+    if (application == NULL) {
+        return NULL;
+    }
+    return application->championship == NULL
+               ? application->driving
+               : dd2_championship_session_driving(application->championship);
+}
+
+static const dd2_track *dd2_application_track(const dd2_application *application) {
+    if (application == NULL) {
+        return NULL;
+    }
+    return application->championship == NULL
+               ? application->track
+               : dd2_championship_session_track(application->championship);
+}
+
+static void dd2_application_suspend(dd2_application *application) {
+    if (application->championship != NULL) {
+        dd2_championship_session_suspend(application->championship);
+    } else {
+        dd2_driving_suspend(application->driving);
+    }
+}
+
 static bool dd2_application_fit(dd2_camera *camera, const dd2_track *track, bool car) {
     return car ? dd2_camera_fit_mesh(camera, dd2_track_car(track))
                : dd2_camera_fit_scene(camera, dd2_track_scene(track));
+}
+
+static dd2_mesh_materials *dd2_application_materials(const dd2_track *track, dd2_camera *camera) {
+    dd2_mesh_materials *materials =
+        dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
+    if (materials == NULL || !dd2_application_fit(camera, track, false)) {
+        dd2_mesh_materials_destroy(materials);
+        return NULL;
+    }
+    return materials;
+}
+
+typedef struct {
+    bool drive;
+    bool car;
+    bool racing;
+    bool visible_track;
+    dd2_race_mode mode;
+} dd2_application_practice;
+
+static int dd2_application_restore_practice(dd2_application *application,
+                                            dd2_application_practice choice) {
+    dd2_renderer_make_current(application->renderer);
+    const unsigned level =
+        choice.visible_track ? (unsigned)application->level : (unsigned)application->practice_level;
+    dd2_track *track =
+        choice.visible_track ? dd2_track_create(application->archive, level) : application->track;
+    dd2_driving *driving = dd2_driving_create(dd2_track_road(track), level);
+    dd2_camera camera = {0};
+    dd2_mesh_materials *materials = dd2_application_materials(track, &camera);
+    if (driving == NULL || materials == NULL || !dd2_application_fit(&camera, track, choice.car) ||
+        (choice.racing && !dd2_driving_set_race(driving, true, choice.mode))) {
+        dd2_mesh_materials_destroy(materials);
+        dd2_driving_destroy(driving);
+        if (choice.visible_track) {
+            dd2_track_destroy(track);
+        }
+        return 0;
+    }
+    dd2_mesh_materials_destroy(application->materials);
+    dd2_championship_session_destroy(application->championship);
+    dd2_driving_destroy(application->driving);
+    if (choice.visible_track) {
+        dd2_track_destroy(application->track);
+        application->track = track;
+        application->practice_level = (int)level;
+    }
+    application->championship = NULL;
+    application->driving = driving;
+    application->materials = materials;
+    application->camera = camera;
+    application->level = application->practice_level;
+    application->drive = choice.drive;
+    application->car = choice.car;
+    application->paused = false;
+    application->dirty = true;
+    dd2_window_release_input(application->window);
+    dd2_game_audio_reset_effects(application->audio);
+    return 1;
+}
+
+int dd2_application_start_championship(int mode) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || (mode != DD2_RACE_WRECKING && mode != DD2_RACE_STOCKCAR)) {
+        return 0;
+    }
+    dd2_renderer_make_current(application->renderer);
+    dd2_championship_session *session =
+        dd2_championship_session_create(application->archive, (dd2_race_mode)mode);
+    if (session == NULL) {
+        return 0;
+    }
+    dd2_camera camera = {0};
+    dd2_mesh_materials *materials =
+        dd2_application_materials(dd2_championship_session_track(session), &camera);
+    if (materials == NULL) {
+        dd2_championship_session_destroy(session);
+        return 0;
+    }
+    dd2_mesh_materials_destroy(application->materials);
+    dd2_championship_session_destroy(application->championship);
+    application->championship = session;
+    application->materials = materials;
+    application->camera = camera;
+    application->level = (int)dd2_championship_session_level(session);
+    application->drive = true;
+    application->car = false;
+    application->paused = false;
+    application->dirty = true;
+    dd2_application_suspend(application);
+    dd2_window_release_input(application->window);
+    dd2_game_audio_reset_effects(application->audio);
+    return 1;
+}
+
+static int dd2_application_championship_transition(dd2_application *application, bool restart) {
+    if (application == NULL || application->championship == NULL) {
+        return 0;
+    }
+    dd2_championship_transition *transition =
+        restart ? dd2_championship_session_prepare_restart(application->championship)
+                : dd2_championship_session_prepare(application->championship);
+    if (transition == NULL) {
+        return 0;
+    }
+    dd2_renderer_make_current(application->renderer);
+    dd2_camera camera = application->camera;
+    const dd2_track *track = dd2_championship_transition_track(transition);
+    const bool replaces_track = track != dd2_application_track(application);
+    dd2_mesh_materials *materials = application->materials;
+    if (replaces_track) {
+        materials = dd2_application_materials(track, &camera);
+    }
+    if (materials == NULL ||
+        !dd2_championship_transition_current(application->championship, transition)) {
+        if (replaces_track) {
+            dd2_mesh_materials_destroy(materials);
+        }
+        dd2_championship_transition_destroy(transition);
+        return 0;
+    }
+    if (replaces_track) {
+        dd2_mesh_materials_destroy(application->materials);
+    }
+    /* Main-thread synchronous preparation: no owner mutation between the
+     * checked transition and commit, which cannot allocate or fail here. */
+    if (!dd2_championship_session_commit(application->championship, transition)) {
+        if (replaces_track) {
+            dd2_mesh_materials_destroy(materials);
+            application->materials = NULL;
+        }
+        dd2_championship_transition_destroy(transition);
+        application->failed = true;
+        return 0;
+    }
+    application->materials = materials;
+    application->camera = camera;
+    application->level = (int)dd2_championship_session_level(application->championship);
+    application->paused = false;
+    application->dirty = true;
+    dd2_window_release_input(application->window);
+    dd2_game_audio_reset_effects(application->audio);
+    return 1;
+}
+
+int dd2_application_continue_championship(void) {
+    return dd2_application_championship_transition(dd2_current_application, false);
+}
+int dd2_application_restart_championship(void) {
+    return dd2_application_championship_transition(dd2_current_application, true);
+}
+
+int dd2_application_exit_championship(void) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || application->championship == NULL) {
+        return 0;
+    }
+    return dd2_application_restore_practice(application, (dd2_application_practice){0});
+}
+
+const dd2_championship *dd2_application_championship_view(void) {
+    return dd2_current_application == NULL
+               ? NULL
+               : dd2_championship_session_state(dd2_current_application->championship);
+}
+int dd2_application_championship_phase(void) {
+    const dd2_championship *state = dd2_application_championship_view();
+    return state == NULL ? -1 : (int)state->phase;
+}
+unsigned dd2_application_championship_points(unsigned driver) {
+    const dd2_championship *state = dd2_application_championship_view();
+    return state == NULL || driver >= DD2_LEAGUE_DRIVERS ? 0 : state->league.drivers[driver].points;
+}
+unsigned dd2_application_championship_division(void) {
+    const dd2_championship *state = dd2_application_championship_view();
+    return state == NULL ? 0 : state->league.drivers[0].division + 1;
+}
+unsigned dd2_application_championship_round(void) {
+    const dd2_championship *state = dd2_application_championship_view();
+    const dd2_championship_season *season = dd2_championship_current(state);
+    return season == NULL ? 0
+                          : season->completed + (unsigned)(state->phase == DD2_CHAMPIONSHIP_RACING);
+}
+unsigned dd2_application_championship_season(void) {
+    const dd2_championship_season *season =
+        dd2_championship_current(dd2_application_championship_view());
+    if (season == NULL) {
+        return 0;
+    }
+    return (unsigned)(season->number < UINT_MAX ? season->number + 1 : UINT_MAX);
 }
 
 static void dd2_application_destroy(dd2_application *application) {
@@ -73,6 +302,7 @@ static void dd2_application_destroy(dd2_application *application) {
     dd2_mesh_materials_destroy(application->materials);
     dd2_game_audio_destroy(application->audio);
     dd2_renderer_destroy(application->renderer);
+    dd2_championship_session_destroy(application->championship);
     dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
     dd2_archive_close(application->archive);
@@ -91,7 +321,7 @@ int dd2_application_select_level(int number) {
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
     dd2_driving *driving = dd2_driving_create(dd2_track_road(track), (unsigned)number);
-    const dd2_race *previous_race = dd2_driving_race(application->driving);
+    const dd2_race *previous_race = dd2_driving_race(dd2_application_driving(application));
     if (driving != NULL && previous_race != NULL) {
         dd2_race_mode mode = previous_race->rules.mode;
         if ((number <= DD2_APP_RACING_LEVELS && mode == DD2_RACE_TOTAL_DESTRUCTION) ||
@@ -111,6 +341,8 @@ int dd2_application_select_level(int number) {
         return 0;
     }
     dd2_mesh_materials_destroy(application->materials);
+    dd2_championship_session_destroy(application->championship);
+    application->championship = NULL;
     dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
     application->track = track;
@@ -118,6 +350,7 @@ int dd2_application_select_level(int number) {
     application->materials = materials;
     application->camera = camera;
     application->level = number;
+    application->practice_level = number;
     application->dirty = true;
     dd2_game_audio_reset_effects(application->audio);
     return 1;
@@ -125,13 +358,19 @@ int dd2_application_select_level(int number) {
 
 int dd2_application_show_car(int car) {
     dd2_application *application = dd2_current_application;
-    if (application == NULL || (car != 0 && car != 1) ||
-        !dd2_application_fit(&application->camera, application->track, car != 0)) {
+    if (application == NULL || (car != 0 && car != 1)) {
+        return 0;
+    }
+    if (application->championship != NULL) {
+        return dd2_application_restore_practice(
+            application, (dd2_application_practice){.car = car != 0, .visible_track = true});
+    }
+    if (!dd2_application_fit(&application->camera, application->track, car != 0)) {
         return 0;
     }
     application->drive = false;
     dd2_game_audio_reset_effects(application->audio);
-    dd2_driving_suspend(application->driving);
+    dd2_application_suspend(application);
     application->car = car != 0;
     application->dirty = true;
     return 1;
@@ -146,7 +385,12 @@ int dd2_application_current_view(void) {
     if (application == NULL) {
         return -1;
     }
-    const dd2_race *race = dd2_driving_race(application->driving);
+    const dd2_race *race = dd2_driving_race(dd2_application_driving(application));
+    if (application->championship != NULL) {
+        return dd2_championship_session_state(application->championship)->mode == DD2_RACE_WRECKING
+                   ? DD2_APP_CHAMP_WRECK_VIEW
+                   : DD2_APP_CHAMP_STOCK_VIEW;
+    }
     if (!application->drive) {
         return (int)application->car;
     }
@@ -258,7 +502,7 @@ unsigned dd2_application_collision_count(void) {
     if (dd2_current_application == NULL) {
         return 0;
     }
-    const uint64_t count = dd2_driving_collisions(dd2_current_application->driving);
+    const uint64_t count = dd2_driving_collisions(dd2_application_driving(dd2_current_application));
     return count < UINT_MAX ? (unsigned)count : UINT_MAX;
 }
 
@@ -266,40 +510,45 @@ unsigned dd2_application_pair_collision_count(void) {
     if (dd2_current_application == NULL) {
         return 0;
     }
-    const uint64_t count = dd2_driving_pair_collisions(dd2_current_application->driving);
+    const uint64_t count =
+        dd2_driving_pair_collisions(dd2_application_driving(dd2_current_application));
     return count < UINT_MAX ? (unsigned)count : UINT_MAX;
 }
 unsigned dd2_application_vehicle_count(void) {
     return dd2_current_application != NULL
-               ? dd2_driving_vehicle_count(dd2_current_application->driving)
+               ? dd2_driving_vehicle_count(dd2_application_driving(dd2_current_application))
                : 0;
 }
 double dd2_application_engine_health(void) {
     return dd2_current_application != NULL
-               ? dd2_damage_health(&dd2_driving_damage(dd2_current_application->driving)[0])
+               ? dd2_damage_health(
+                     &dd2_driving_damage(dd2_application_driving(dd2_current_application))[0])
                : 1;
 }
 double dd2_application_region_damage(unsigned region) {
     return dd2_current_application != NULL && region < DD2_DAMAGE_REGIONS
-               ? dd2_driving_damage(dd2_current_application->driving)[0].regions[region]
+               ? dd2_driving_damage(dd2_application_driving(dd2_current_application))[0]
+                     .regions[region]
                : 0;
 }
 unsigned dd2_application_accident_points(void) {
     return dd2_current_application != NULL
-               ? dd2_driving_accidents(dd2_current_application->driving)[0].points
+               ? dd2_driving_accidents(dd2_application_driving(dd2_current_application))[0].points
                : 0;
 }
 unsigned dd2_application_destructions(void) {
     return dd2_current_application != NULL
-               ? dd2_driving_accidents(dd2_current_application->driving)[0].destructions
+               ? dd2_driving_accidents(dd2_application_driving(dd2_current_application))[0]
+                     .destructions
                : 0;
 }
 unsigned dd2_application_accident_windows(void) {
     unsigned active = 0;
     if (dd2_current_application != NULL) {
         const dd2_accident_driver *drivers =
-            dd2_driving_accidents(dd2_current_application->driving);
-        for (unsigned slot = 0; slot < dd2_driving_vehicle_count(dd2_current_application->driving);
+            dd2_driving_accidents(dd2_application_driving(dd2_current_application));
+        for (unsigned slot = 0;
+             slot < dd2_driving_vehicle_count(dd2_application_driving(dd2_current_application));
              ++slot) {
             active += (unsigned)(drivers[slot].remaining != 0);
         }
@@ -308,13 +557,14 @@ unsigned dd2_application_accident_windows(void) {
 }
 
 static const dd2_lap_driver *dd2_application_lap(void) {
-    return dd2_current_application == NULL ? NULL
-                                           : dd2_driving_laps(dd2_current_application->driving);
+    return dd2_current_application == NULL
+               ? NULL
+               : dd2_driving_laps(dd2_application_driving(dd2_current_application));
 }
 unsigned dd2_application_required_laps(void) {
-    return dd2_current_application == NULL
-               ? 0
-               : dd2_course_laps(dd2_driving_course(dd2_current_application->driving));
+    return dd2_current_application == NULL ? 0
+                                           : dd2_course_laps(dd2_driving_course(
+                                                 dd2_application_driving(dd2_current_application)));
 }
 unsigned dd2_application_current_lap(void) {
     const dd2_lap_driver *lap = dd2_application_lap();
@@ -333,7 +583,7 @@ unsigned dd2_application_lap_steps(void) {
     if (lap == NULL || lap->started_laps == 0) {
         return 0;
     }
-    const dd2_race *race = dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_driving_race(dd2_application_driving(dd2_current_application));
     uint64_t ticks = lap->finished ? lap->last_lap : lap->steps - lap->lap_start;
     if (race != NULL) {
         ticks = race->drivers[0].current_lap_time;
@@ -358,6 +608,10 @@ int dd2_application_laps_finished(void) {
 void dd2_application_reset_camera(void) {
     dd2_application *application = dd2_current_application;
     if (application != NULL) {
+        if (application->championship != NULL) {
+            dd2_application_restart_championship();
+            return;
+        }
         application->dirty =
             application->drive
                 ? dd2_driving_reset(application->driving)
@@ -371,7 +625,7 @@ void dd2_application_reset_camera(void) {
 void dd2_application_release_input(void) {
     if (dd2_current_application != NULL) {
         dd2_window_set_focus(dd2_current_application->window, false);
-        dd2_driving_suspend(dd2_current_application->driving);
+        dd2_application_suspend(dd2_current_application);
         dd2_game_audio_suspend(dd2_current_application->audio, true);
     }
 }
@@ -387,13 +641,17 @@ int dd2_application_set_driving(int enabled) {
     if (application == NULL || (enabled != 0 && enabled != 1)) {
         return 0;
     }
-    if (dd2_driving_race(application->driving) != NULL &&
+    if (application->championship != NULL) {
+        return dd2_application_restore_practice(
+            application, (dd2_application_practice){.drive = enabled != 0, .visible_track = true});
+    }
+    if (dd2_driving_race(dd2_application_driving(application)) != NULL &&
         !dd2_driving_set_race(application->driving, false, DD2_RACE_WRECKING)) {
         return 0;
     }
     application->drive = enabled != 0;
     dd2_game_audio_reset_effects(application->audio);
-    dd2_driving_suspend(application->driving);
+    dd2_application_suspend(application);
     dd2_window_release_input(application->window);
     application->dirty = true;
     return 1;
@@ -401,8 +659,16 @@ int dd2_application_set_driving(int enabled) {
 
 int dd2_application_start_race(int mode) {
     dd2_application *application = dd2_current_application;
-    if (application == NULL || (mode < DD2_RACE_WRECKING || mode > DD2_RACE_TOTAL_DESTRUCTION) ||
-        !dd2_driving_set_race(application->driving, true, (dd2_race_mode)mode)) {
+    if (application == NULL || mode < DD2_RACE_WRECKING || mode > DD2_RACE_TOTAL_DESTRUCTION) {
+        return 0;
+    }
+    if (application->championship != NULL) {
+        return dd2_application_restore_practice(
+            application,
+            (dd2_application_practice){
+                .drive = true, .racing = true, .visible_track = true, .mode = (dd2_race_mode)mode});
+    }
+    if (!dd2_driving_set_race(application->driving, true, (dd2_race_mode)mode)) {
         return 0;
     }
     application->drive = true;
@@ -415,6 +681,9 @@ int dd2_application_start_race(int mode) {
 
 int dd2_application_withdraw_race(void) {
     dd2_application *application = dd2_current_application;
+    if (application != NULL && application->championship != NULL) {
+        return dd2_application_exit_championship();
+    }
     if (application == NULL || !application->drive || !dd2_driving_withdraw(application->driving)) {
         return 0;
     }
@@ -424,14 +693,16 @@ int dd2_application_withdraw_race(void) {
 }
 
 int dd2_application_race_phase(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     return race == NULL ? -1 : (int)race->phase;
 }
 
 unsigned dd2_application_race_steps(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     if (race == NULL) {
         return 0;
     }
@@ -439,25 +710,29 @@ unsigned dd2_application_race_steps(void) {
 }
 
 unsigned dd2_application_race_place(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     return race == NULL ? 0 : race->drivers[0].place;
 }
 
 unsigned dd2_application_race_points(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     return race == NULL || race->phase != DD2_RACE_RESULTS ? 0 : race->drivers[0].total_points;
 }
 
 unsigned dd2_application_survival_steps(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     return race == NULL ? 0 : (unsigned)race->survival;
 }
 unsigned dd2_application_race_alive(void) {
-    const dd2_race *race =
-        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    const dd2_race *race = dd2_current_application == NULL
+                               ? NULL
+                               : dd2_driving_race(dd2_application_driving(dd2_current_application));
     return race == NULL ? 0 : race->alive;
 }
 
@@ -470,7 +745,7 @@ int dd2_application_set_paused(int paused) {
     if (application->paused && application->drive) {
         dd2_game_audio_suspend(application->audio, true);
     }
-    dd2_driving_suspend(application->driving);
+    dd2_application_suspend(application);
     dd2_window_release_input(application->window);
     return 1;
 }
@@ -524,25 +799,41 @@ static void dd2_application_music_input(const dd2_input *input) {
             next = current > DD2_MIXER_FIRST_TRACK ? current - 1 : DD2_MIXER_LAST_TRACK;
         }
         if (dd2_application_load_music(next) == 0) {
-            puts("Redbook-Titel konnte nicht geladen werden.");
+            puts("The Redbook track could not be loaded.");
         }
     }
 #endif
 }
 
-static void dd2_application_input(dd2_application *application, const dd2_input *input) {
-    dd2_application_music_input(input);
+static void dd2_application_championship_input(dd2_application *application,
+                                               const dd2_input *input) {
+    if (input->pressed[DD2_KEY_CHAMP_WRECKING] || input->pressed[DD2_KEY_CHAMP_STOCKCAR]) {
+        const int mode =
+            input->pressed[DD2_KEY_CHAMP_STOCKCAR] ? DD2_RACE_STOCKCAR : DD2_RACE_WRECKING;
+        if (!dd2_application_start_championship(mode)) {
+            puts("The championship could not be started.");
+        }
+    }
     if (input->pressed[DD2_KEY_DRIVE]) {
-        dd2_application_set_driving(!application->drive);
+        const int phase = dd2_application_championship_phase();
+        if (phase == DD2_CHAMPIONSHIP_ROUND_RESULTS || phase == DD2_CHAMPIONSHIP_SEASON_RESULTS) {
+            if (!dd2_application_continue_championship()) {
+                puts("The next championship race could not be loaded. Results have been retained.");
+            }
+        } else if (application->championship != NULL) {
+            if (!dd2_application_exit_championship()) {
+                puts("The track view could not be restored. The championship has been retained.");
+            }
+        } else {
+            dd2_application_set_driving(!application->drive);
+        }
     }
-    dd2_application_race_input(input);
-    if (input->pressed[DD2_KEY_PAUSE] && application->drive) {
-        dd2_application_set_paused(!application->paused);
-    }
-    if (input->pressed[DD2_KEY_VIEW]) {
-        dd2_application_show_car(application->drive || application->car ? 0 : 1);
-    }
-    if (input->pressed[DD2_KEY_NEXT] || input->pressed[DD2_KEY_PREVIOUS]) {
+}
+
+static void dd2_application_track_input(const dd2_application *application,
+                                        const dd2_input *input) {
+    if (application->championship == NULL &&
+        (input->pressed[DD2_KEY_NEXT] || input->pressed[DD2_KEY_PREVIOUS])) {
         int next = application->level + (input->pressed[DD2_KEY_NEXT] ? 1 : -1);
         if (next < 1) {
             next = DD2_TRACK_COUNT;
@@ -550,18 +841,50 @@ static void dd2_application_input(dd2_application *application, const dd2_input 
             next = 1;
         }
         if (dd2_application_select_level(next) == 0) {
-            puts("Strecke konnte nicht geladen werden.");
+            puts("The track could not be loaded.");
         }
     }
+}
+
+static void dd2_application_action(dd2_application *application, dd2_key key) {
+    dd2_input single = {0};
+    single.pressed[key] = true;
+    const dd2_input *input = &single;
+    if (key == DD2_KEY_QUIT) {
+        if (application->championship == NULL) {
+            application->running = false;
+        } else if (!dd2_application_exit_championship()) {
+            puts("The track view could not be restored. The championship has been retained.");
+        }
+        return;
+    }
+    dd2_application_music_input(input);
+    dd2_application_championship_input(application, input);
+    dd2_application_race_input(input);
+    if (input->pressed[DD2_KEY_PAUSE] && application->drive) {
+        dd2_application_set_paused(!application->paused);
+    }
+    if (input->pressed[DD2_KEY_VIEW]) {
+        dd2_application_show_car(application->drive || application->car ? 0 : 1);
+    }
+    dd2_application_track_input(application, input);
     if (input->pressed[DD2_KEY_RESET]) {
         dd2_application_reset_camera();
     }
-    if (input->wheel != 0 && !application->drive) {
-        application->dirty =
-            dd2_camera_step(&application->camera,
-                            (dd2_camera_motion){.zoom = input->wheel > 0 ? -1.0F : 1.0F},
-                            dd2_app_wheel_seconds) ||
-            application->dirty;
+}
+
+static void dd2_application_input(dd2_application *application, const dd2_input *input) {
+    for (unsigned index = 0; index < input->action_count && application->running; ++index) {
+        const dd2_input_action action = input->actions[index];
+        if (action.kind == DD2_INPUT_KEY_ACTION) {
+            dd2_application_action(application, action.key);
+        } else if (!application->drive) {
+            application->dirty =
+                dd2_camera_step(&application->camera,
+                                (dd2_camera_motion){.zoom = action.wheel > 0 ? -1.0F : 1.0F},
+                                dd2_app_wheel_seconds) ||
+                application->dirty;
+        }
     }
 }
 
@@ -569,29 +892,38 @@ static bool dd2_application_draw(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
     if (application->drive) {
         return dd2_driving_draw(
-                   application->materials, application->track,
+                   application->materials, dd2_application_track(application),
                    (dd2_driving_view){
-                       .vehicle = dd2_driving_vehicle(application->driving),
-                       .damage = dd2_driving_damage(application->driving),
-                       .score = dd2_driving_accidents(application->driving),
-                       .lap = dd2_driving_laps(application->driving),
-                       .race = dd2_driving_race(application->driving),
-                       .required_laps = dd2_course_laps(dd2_driving_course(application->driving)),
-                       .wheel_roll = dd2_driving_wheel_roll(application->driving),
-                       .opponents = dd2_driving_vehicles(application->driving) + 1,
-                       .opponent_damage = dd2_driving_damage(application->driving) + 1,
-                       .opponent_rolls = dd2_driving_wheel_rolls(application->driving) + 1,
-                       .opponent_count = dd2_driving_vehicle_count(application->driving) - 1,
+                       .vehicle = dd2_driving_vehicle(dd2_application_driving(application)),
+                       .damage = dd2_driving_damage(dd2_application_driving(application)),
+                       .score = dd2_driving_accidents(dd2_application_driving(application)),
+                       .lap = dd2_driving_laps(dd2_application_driving(application)),
+                       .race = dd2_driving_race(dd2_application_driving(application)),
+                       .required_laps = dd2_course_laps(
+                           dd2_driving_course(dd2_application_driving(application))),
+                       .wheel_roll = dd2_driving_wheel_roll(dd2_application_driving(application)),
+                       .opponents = dd2_driving_vehicles(dd2_application_driving(application)) + 1,
+                       .opponent_damage =
+                           dd2_driving_damage(dd2_application_driving(application)) + 1,
+                       .opponent_rolls =
+                           dd2_driving_wheel_rolls(dd2_application_driving(application)) + 1,
+                       .opponent_count =
+                           dd2_driving_vehicle_count(dd2_application_driving(application)) - 1,
                        .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
+               (application->championship == NULL ||
+                dd2_championship_draw(
+                    dd2_championship_session_state(application->championship),
+                    (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT})) &&
                dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
     }
     dd2_camera_apply(&application->camera,
                      (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
-    const bool drawn =
-        application->car
-            ? dd2_mesh_draw(application->materials, dd2_track_car(application->track),
-                            (dd2_track_vertex){0})
-            : dd2_scene_draw(application->materials, dd2_track_scene(application->track));
+    const bool drawn = application->car
+                           ? dd2_mesh_draw(application->materials,
+                                           dd2_track_car(dd2_application_track(application)),
+                                           (dd2_track_vertex){0})
+                           : dd2_scene_draw(application->materials,
+                                            dd2_track_scene(dd2_application_track(application)));
     return drawn &&
            dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
 }
@@ -603,12 +935,12 @@ static void dd2_application_audio_focus(dd2_application *application, bool focus
 
 static void dd2_application_audio_update(dd2_application *application,
                                          dd2_vehicle_control control) {
-    const dd2_vehicle *vehicle = dd2_driving_vehicle(application->driving);
-    const dd2_race *race = dd2_driving_race(application->driving);
+    const dd2_vehicle *vehicle = dd2_driving_vehicle(dd2_application_driving(application));
+    const dd2_race *race = dd2_driving_race(dd2_application_driving(application));
     const dd2_vehicle_vector forward =
         dd2_vehicle_rotate(vehicle->rotation, (dd2_vehicle_vector){.z = 1});
     const dd2_engine_sound engine = {
-        .running = !dd2_driving_damage(application->driving)[0].retired &&
+        .running = !dd2_driving_damage(dd2_application_driving(application))[0].retired &&
                    (race == NULL || race->phase != DD2_RACE_RESULTS),
         .speed = (vehicle->velocity.x * forward.x) + (vehicle->velocity.y * forward.y) +
                  (vehicle->velocity.z * forward.z),
@@ -617,11 +949,31 @@ static void dd2_application_audio_update(dd2_application *application,
                 ? 0
                 : control.throttle};
     dd2_game_audio_update(application->audio, engine,
-                          dd2_driving_sound_events(application->driving));
+                          dd2_driving_sound_events(dd2_application_driving(application)));
 }
 
-static void dd2_application_drive_frame(dd2_application *application, const dd2_input *input,
-                                        float seconds) {
+int dd2_application_advance(dd2_driving_frame frame) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || !application->running || !application->drive ||
+        !dd2_driving_frame_valid(frame)) {
+        return 0;
+    }
+    if (application->paused) {
+        dd2_application_suspend(application);
+        return 1;
+    }
+    dd2_game_audio_suspend(application->audio, false);
+    const bool advanced = application->championship == NULL
+                              ? dd2_driving_advance(application->driving, frame)
+                              : dd2_championship_session_advance(application->championship, frame);
+    if (advanced) {
+        dd2_application_audio_update(application, frame.control);
+        application->dirty = true;
+    }
+    return advanced;
+}
+
+static void dd2_application_drive_frame(const dd2_input *input, float seconds) {
     const dd2_vehicle_control control = {
         .throttle = (double)(input->held[DD2_KEY_UP] || input->held[DD2_KEY_PAN_UP]) -
                     (double)(input->held[DD2_KEY_DOWN] || input->held[DD2_KEY_PAN_DOWN]),
@@ -629,30 +981,34 @@ static void dd2_application_drive_frame(dd2_application *application, const dd2_
         /* World-up camera faces +Z: screen right is local -X. */
         .steer = (double)(input->held[DD2_KEY_LEFT] || input->held[DD2_KEY_PAN_LEFT]) -
                  (double)(input->held[DD2_KEY_RIGHT] || input->held[DD2_KEY_PAN_RIGHT])};
-    if (!dd2_driving_advance(application->driving,
-                             (dd2_driving_frame){.seconds = seconds, .control = control})) {
+    if (!dd2_application_advance((dd2_driving_frame){.seconds = seconds, .control = control})) {
         puts("The vehicle could not be updated. Press R to reset.");
         dd2_application_set_paused(1);
-    } else {
-        dd2_application_audio_update(application, control);
     }
 }
 
 static void dd2_application_frame(void *context) {
     dd2_application *application = context;
-    const dd2_input input = dd2_window_poll(application->window);
-    if (input.quit || input.pressed[DD2_KEY_QUIT]) {
+    dd2_input input = dd2_window_poll(application->window);
+    if (input.quit) {
         application->running = false;
     } else {
         dd2_application_input(application, &input);
+        dd2_window_refresh_controls(application->window, &input);
+        if (!application->running) {
+#ifdef __EMSCRIPTEN__
+            dd2_application_close();
+#endif
+            return;
+        }
         dd2_application_audio_focus(application, input.focused);
         const float seconds = dd2_window_elapsed(application->window);
         bool moved = false;
         if (application->drive) {
             if (application->paused || !input.focused) {
-                dd2_driving_suspend(application->driving);
+                dd2_application_suspend(application);
             } else {
-                dd2_application_drive_frame(application, &input, seconds);
+                dd2_application_drive_frame(&input, seconds);
                 moved = true;
             }
         } else {
@@ -661,7 +1017,7 @@ static void dd2_application_frame(void *context) {
         if (application->dirty || input.redraw || moved) {
             application->dirty = false;
             if (!dd2_application_draw(application)) {
-                puts("Darstellung konnte nicht aktualisiert werden.");
+                puts("The display could not be updated.");
                 application->failed = true;
                 application->running = false;
             }
@@ -669,8 +1025,7 @@ static void dd2_application_frame(void *context) {
     }
 #ifdef __EMSCRIPTEN__
     if (!application->running) {
-        emscripten_cancel_main_loop();
-        dd2_application_destroy(application);
+        dd2_application_close();
     }
 #endif
 }
@@ -705,22 +1060,57 @@ static dd2_application *dd2_application_create(const char *path) {
     return application;
 }
 
-int main(int argc, char **argv) {
-    const char codes[] = "123456789AB";
-    const char *selection = argc == 3 ? argv[2] : "1";
-    const char *found = strchr(codes, selection[0]);
-    if (argc > 3 || strlen(selection) != 1 || found == NULL) {
-        puts("Aufruf: dd2_app [Pfad/Dirinfo] [1..9,A,B]");
-        return EXIT_FAILURE;
+int dd2_application_open(const char *path, int level) {
+    if (path == NULL || dd2_current_application != NULL || level < 1 || level > DD2_TRACK_COUNT) {
+        return 0;
     }
-    dd2_application *application =
-        dd2_application_create(argc >= 2 ? argv[1] : "DestructionDerby2/Dirinfo");
-    if (application == NULL || dd2_application_select_level((int)(found - codes) + 1) == 0) {
-        puts("Originaldatei oder Strecke konnte nicht geladen werden.");
+    dd2_application *application = dd2_application_create(path);
+    if (application == NULL || !dd2_application_select_level(level)) {
         dd2_application_destroy(application);
+        return 0;
+    }
+    return 1;
+}
+
+void dd2_application_close(void) {
+#ifdef __EMSCRIPTEN__
+    if (dd2_current_application != NULL && dd2_current_application->main_loop) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+    dd2_application_destroy(dd2_current_application);
+}
+
+const dd2_driving *dd2_application_driving_view(void) {
+    return dd2_application_driving(dd2_current_application);
+}
+
+const dd2_track *dd2_application_track_view(void) {
+    return dd2_application_track(dd2_current_application);
+}
+
+dd2_application_image dd2_application_image_view(void) {
+    const dd2_application *application = dd2_current_application;
+    return application == NULL
+               ? (dd2_application_image){0}
+               : (dd2_application_image){
+                     .pixels = dd2_renderer_pixels(application->renderer),
+                     .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}};
+}
+
+int dd2_application_present(void) {
+    dd2_application *application = dd2_current_application;
+    return application != NULL && application->running && dd2_application_draw(application);
+}
+
+int dd2_application_run(const char *path, int level) {
+    if (!dd2_application_open(path, level)) {
+        puts("The original archive or track could not be loaded.");
         return EXIT_FAILURE;
     }
+    dd2_application *application = dd2_current_application;
 #ifdef __EMSCRIPTEN__
+    application->main_loop = true;
     emscripten_set_main_loop_arg(dd2_application_frame, application, 0, 0);
     return EXIT_SUCCESS;
 #else
@@ -729,7 +1119,7 @@ int main(int argc, char **argv) {
         dd2_window_wait();
     }
     const bool failed = application->failed;
-    dd2_application_destroy(application);
+    dd2_application_close();
     return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 #endif
 }

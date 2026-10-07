@@ -35,8 +35,10 @@ def digest(data):
 
 
 class NativeWindow:
-    def __init__(self, output, archive, binary, label='native'):
+    def __init__(self, output, archive, binary, label='native', arguments=None, input_pipe=False):
         self.output, self.archive, self.binary = output, archive, binary
+        self.arguments = arguments if arguments is not None else [str(archive), '1']
+        self.input_pipe = input_pipe
         self.env = os.environ.copy()
         # Private Xvfb has no authentication file; discard the caller's display
         # credentials and never interact with an existing desktop.
@@ -56,8 +58,9 @@ class NativeWindow:
         if not number:
             raise RuntimeError('Private Xvfb failed to start')
         self.env['DISPLAY'] = ':' + number
-        self.process = subprocess.Popen([str(self.binary), str(self.archive), '1'], cwd=ROOT,
-                                        env=self.env, stdout=self.log, stderr=self.log)
+        self.process = subprocess.Popen([str(self.binary), *self.arguments], cwd=ROOT,
+                                        env=self.env, stdout=self.log, stderr=self.log,
+                                        stdin=subprocess.PIPE if self.input_pipe else None)
         def ready():
             try:
                 self.window = self.command('search', '--name', '^Destruction Derby 2 - Track viewer$').splitlines()[-1]
@@ -335,10 +338,20 @@ def native_checks(output, archive, references, binary, label='native'):
         ui.wait(lambda: ui.image().tobytes() != baseline)
         ui.command('windowfocus', '0')
         ui.command('keyup', 'Right')
+        # Require actual presentation after the queued focus loss. A long
+        # render can leave the old screenshot unchanged for a second while
+        # input events still await polling. Letterbox margins acknowledge the
+        # resize/focus event batch without assuming a wall-clock render speed.
+        ui.command('windowsize', ui.window, 800, 480)
+        def acknowledged():
+            image = ui.image()
+            return image.size == (800, 480) and not any(image.crop((0, 0, 80, 480)).tobytes()) and not any(image.crop((720, 0, 800, 480)).tobytes())
+        ui.wait(acknowledged)
         unfocused = ui.stable()
         ui.command('windowfocus', ui.window)
         if ui.stable() != unfocused:
-            raise ValueError('Native camera keeps moving after focus loss/release')
+            raise ValueError('Native camera keeps moving after acknowledged focus loss/release')
+        ui.command('windowsize', ui.window, 640, 480)
         ui.command('key', 'r')
         ui.match(expected, 'focus-reset')
         driving = native_driving_checks(ui, references)
@@ -349,6 +362,7 @@ def native_checks(output, archive, references, binary, label='native'):
         ui.match(expected, 'inspection-after-trial')
         total = native_total_checks(ui, references)
         ui.match(expected, 'inspection-after-total')
+        championship = native_championship_checks(ui, expected)
         ui.command('windowmove', ui.window, 0, 0)
         for size, offset in (((800, 480), (80, 0)), ((640, 600), (0, 60))):
             ui.command('windowsize', ui.window, *size)
@@ -362,10 +376,40 @@ def native_checks(output, archive, references, binary, label='native'):
     finally: ui.close()
     return dict(pass_=True, comparisons=results, real_x11_keys=True,
                 camera_motion_release=True, focus_loss_release=True, track_wrap=True,
-                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race, time_trial=trial, total_destruction=total)
+                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race, time_trial=trial, total_destruction=total, championship=championship)
 
 
-def build_sanitized(output):
+def native_championship_checks(ui, expected):
+    evidence = []
+    for key, leave in [('c', 'Escape'), ('n', 'F7')]:
+        ui.command('key', key)
+        ui.command('key', 'p')
+        baseline = ui.stable()
+        if baseline == expected.tobytes():
+            raise ValueError('Championship entry did not change the actual window')
+        ui.command('key', 'Prior')
+        ui.command('keydown', 'w')
+        try:
+            if ui.stable() != baseline:
+                raise ValueError('Paused championship or scheduled field changed')
+        finally:
+            ui.command('keyup', 'w')
+        ui.command('key', 'r')
+        ui.wait(lambda: ui.image().tobytes() != baseline)
+        ui.command('key', 'p')
+        restarted = ui.stable()
+        if restarted == expected.tobytes():
+            raise ValueError('Championship restart exited the field')
+        ui.command('key', leave)
+        ui.match(expected, 'championship-leave-' + key)
+        evidence.append({'mode_key': key, 'leave_key': leave,
+                         'paused_sha256': digest(baseline),
+                         'restarted_sha256': digest(restarted)})
+    return {'pass_': True, 'real_x11_keys': True, 'schedule_locked': True,
+            'pause_and_restart': True, 'unscored_exit': True, 'cases': evidence}
+
+
+def build_sanitized(output, entry=None):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('archive', 'audio', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
@@ -373,8 +417,9 @@ def build_sanitized(output):
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
-    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'league', 'drivers', 'championship', 'championship_session')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
+    units += [entry if entry is not None else ROOT / 'src/game/main.c']
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'deps/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
@@ -383,9 +428,12 @@ def build_sanitized(output):
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     sdl = shlex.split(subprocess.check_output(['pkg-config', '--cflags', '--libs', 'sdl2'], text=True))
     with (output / 'sanitizer-build.log').open('wb') as log:
-        run_bounded([tool('clang'), *flags, *map(str, units),
-                     str(WORK / 'rewrite-native/softgl/libsoftgl.a'), *sdl,
-                     '-lm', '-o', str(binary)], directory=output, timeout=60,
+        command = [tool('clang'), *flags, *map(str, units),
+                   str(WORK / 'rewrite-native/softgl/libsoftgl.a'), *sdl,
+                   '-lm', '-o', str(binary)]
+        (output / 'sanitizer-build.json').write_text(json.dumps({'command': command,
+            'scope': 'All reached rewrite units instrumented; SDL2 and pinned release SoftGL uninstrumented'}, indent=2) + '\n')
+        run_bounded(command, directory=output, timeout=180,
                     stdout=log, stderr=subprocess.STDOUT, check=True)
     return binary
 

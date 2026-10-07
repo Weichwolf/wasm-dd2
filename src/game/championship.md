@@ -56,14 +56,43 @@ A copied archive missing the next track tests preparation rollback; provisioned
 original data is never edited. Receipts identify source/binary hashes and label
 these scopes explicitly. No per-frame original-physics parity is claimed.
 
-This is a consuming gameplay controller, still awaiting application/menu
-integration. Renderer material caches borrow the current track's level/textures
-and must be released before that track is destroyed. Application integration
-must prepare its new materials/camera together with the next field, using a
-prepared transition or a callback before replacement. Calling simple session
-continuation underneath the application's old material cache is unsafe. Complete physical campaigns on every schedule/division, original
-names and configurable human identity, multiplayer, championship displays,
-profile-wide unlock retention, replay/records and compatible save/load remain
-under work items 0004, 0003 and 0008. Initial unlock counts are session-owned until
-a persistent profile/front end supplies that ownership. This module does not
-establish complete championship or full-game acceptance.
+The shared application now owns this session alongside its retained practice
+track. Native C/N and the browser's mode selector enter Wrecking/Stockcar
+championships. Enter continues round/season results; R restarts only an unfinished
+round, and Escape/F7 leaves without awarding unfinished points. The browser also
+provides restart, next-race and leave buttons. Track selection is locked during a
+scheduled campaign. Const queries, audio events and driving presentation use the
+active owned field. Results show all four divisions, actual ranks/points, the
+nineteen original NPC names and the default human label PLAYER. Configurable human
+identity remains profile work.
+
+Prepared transitions expose candidate track/driving/state views while retaining
+the old field. The application prepares materials/camera against that candidate,
+releases the old borrowed material cache, then commits without allocating. Failure
+or explicit candidate destruction preserves the original field and results.
+Tickets reject stale competing transitions; restart retains completed rounds and
+season points, recreates the assigned grid/countdown and issues a new ticket.
+Loaded field metadata remains separate from the next scheduled track on results.
+Candidate transitions must be destroyed before their owner. All calls remain on
+the application's main thread.
+
+`make rewrite-championship-application-verify` checks actual shared application
+lifetime/presentation plus production Native/browser input. The application
+exporter supplies ordinary AI analog controls through the same bounded advance
+path as the keyboard. First scheduled natural ten-lap results, all twenty league
+scores, frozen results, next-field rendering, restart, missing-next-track rollback,
+unscored exit and close/reopen are checked on Native, Chromium/WASM and ASan/UBSan.
+X11/canvas presentation must match the actual application framebuffer; an
+independent glyph oracle checks all twenty visible names, ranks and points.
+These are real first-round sessions, not physical full-season or original-frame
+comparisons. The reusable application library separates its entry-point wrapper
+and offers bounded analog input, const views and presentation without advancing
+or injecting game state.
+
+Complete physical campaigns on every schedule/division, full original menus,
+configurable identity, multiplayer, profile-wide unlock retention, replay/records
+and compatible save/load remain under 0004, 0003 and 0008. Work item 0025 remains
+active for full season/outcome application flows and reusable lifecycle audits.
+Initial unlock counts remain session-owned until a persistent profile/front end
+supplies that ownership. This module does not establish complete championship or
+full-game acceptance.

@@ -35,6 +35,8 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level);
 dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
                                      const unsigned *slot_for_driver);
 void dd2_driving_destroy(dd2_driving *driving);
+/* Validates bounded elapsed time and finite normalized analog controls. */
+bool dd2_driving_frame_valid(dd2_driving_frame frame);
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame);
 bool dd2_driving_reset(dd2_driving *driving);
 void dd2_driving_suspend(dd2_driving *driving);

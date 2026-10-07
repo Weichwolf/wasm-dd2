@@ -159,6 +159,19 @@ static bool dd2_champ_export_continue(dd2_championship_session *session, bool mi
     const dd2_championship *state = dd2_championship_session_state(session);
     const uint64_t ticket = state->ticket;
     const unsigned points = state->league.drivers[0].points;
+    dd2_championship_transition *discarded = dd2_championship_session_prepare(session);
+    const bool prepared =
+        missing ? discarded == NULL
+                : discarded != NULL && dd2_championship_transition_level(discarded) == 2 &&
+                      dd2_championship_transition_state(discarded)->ticket == ticket + 1;
+    const bool retained = state->ticket == ticket && dd2_championship_session_level(session) == 1 &&
+                          dd2_championship_session_driving(session) == previous_driving &&
+                          dd2_championship_session_track(session) == previous_track &&
+                          dd2_champ_export_scores(session);
+    dd2_championship_transition_destroy(discarded);
+    if (!prepared || !retained || dd2_championship_session_prepare_restart(session) != NULL) {
+        return false;
+    }
     const bool continued = dd2_championship_session_continue(session);
     if (missing) {
         return !continued && dd2_championship_session_driving(session) == previous_driving &&
@@ -170,9 +183,47 @@ static bool dd2_champ_export_continue(dd2_championship_session *session, bool mi
            dd2_champ_export_grid(session, 2);
 }
 
+static bool dd2_champ_export_restart(dd2_championship_session *session,
+                                     const dd2_archive *archive) {
+    const dd2_driving *old_driving = dd2_championship_session_driving(session);
+    const dd2_track *old_track = dd2_championship_session_track(session);
+    const dd2_championship *state = dd2_championship_session_state(session);
+    const uint64_t ticket = state->ticket;
+    dd2_championship_session *other = dd2_championship_session_create(archive, state->mode);
+    dd2_championship_transition *first = dd2_championship_session_prepare_restart(session);
+    dd2_championship_transition *stale = dd2_championship_session_prepare_restart(session);
+    bool valid = other != NULL && first != NULL && stale != NULL &&
+                 !dd2_championship_session_prepare(session) &&
+                 dd2_championship_transition_current(session, first) &&
+                 !dd2_championship_transition_current(other, first) &&
+                 !dd2_championship_session_commit(other, first) &&
+                 dd2_championship_transition_driving(first) != old_driving &&
+                 dd2_championship_transition_track(first) != old_track &&
+                 dd2_championship_transition_level(first) == 1 &&
+                 dd2_championship_transition_state(first)->ticket == ticket + 1 &&
+                 dd2_championship_session_driving(session) == old_driving &&
+                 dd2_championship_session_track(session) == old_track && state->ticket == ticket;
+    if (valid) {
+        valid = dd2_championship_session_commit(session, first);
+        if (valid) {
+            first = NULL;
+        }
+    }
+    valid = valid && !dd2_championship_transition_current(session, stale) &&
+            !dd2_championship_session_commit(session, stale) && state->ticket == ticket + 1 &&
+            state->league.drivers[0].points == 0 &&
+            dd2_championship_current(state)->completed == 0 && dd2_champ_export_grid(session, 1) &&
+            dd2_championship_session_level(session) == 1;
+    dd2_championship_transition_destroy(first);
+    dd2_championship_transition_destroy(stale);
+    dd2_championship_session_destroy(other);
+    return valid;
+}
+
 static bool dd2_champ_export_session(const dd2_archive *archive, dd2_race_mode mode, bool missing) {
     dd2_championship_session *session = dd2_championship_session_create(archive, mode);
-    bool valid = session != NULL && dd2_champ_export_grid(session, 1);
+    bool valid = session != NULL && dd2_champ_export_grid(session, 1) &&
+                 dd2_champ_export_restart(session, archive);
     if (valid) {
         const dd2_race *race = dd2_driving_race(dd2_championship_session_driving(session));
         const dd2_driving_frame partial = {.seconds =

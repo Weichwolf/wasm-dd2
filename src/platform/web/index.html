@@ -34,10 +34,11 @@
     <option value="8">Arena 1</option><option value="9">Arena 2</option>
     <option value="10">Arena 3</option><option value="11">Arena 4</option>
   </select></label>
-  <label>View <select id="view" disabled><option value="0">Track</option><option value="1">Car model</option><option value="2">Free driving</option><option value="3">Wrecking Racing</option><option value="4">Stockcar Racing</option><option value="5">Time Trial</option><option value="6">Total Destruction</option></select></label>
+  <label>View <select id="view" disabled><option value="0">Track</option><option value="1">Car model</option><option value="2">Free driving</option><option value="3">Wrecking Racing</option><option value="4">Stockcar Racing</option><option value="5">Time Trial</option><option value="6">Total Destruction</option><option value="7">Wrecking Championship</option><option value="8">Stockcar Championship</option></select></label>
   <button id="reset" disabled>Reset</button>
   <button id="pause" disabled>Pause</button>
   <button id="finish" disabled>Leave race</button>
+  <button id="continue" disabled>Next race</button>
 </div>
 <div class="controls">
   <label class="file">Open a Redbook track<input id="music-file" type="file" accept=".cdda" disabled></label>
@@ -48,7 +49,7 @@
 </div>
 <p id="status" role="status">Preparing the renderer …</p>
 <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Track view. Rotate with the arrow keys."></canvas>
-<p class="help">Races: <kbd>F5</kbd> Wrecking Racing/Arena · <kbd>F6</kbd> Stockcar (circuits) ·
+<p class="help">Championships: <kbd>C</kbd> Wrecking · <kbd>N</kbd> Stockcar · <kbd>Enter</kbd> next race after results · <kbd>R</kbd> restart the unfinished race · <kbd>Esc</kbd> leave. Tracks follow the original schedule; completed points are retained through restarts.<br>Races: <kbd>F5</kbd> Wrecking Racing/Arena · <kbd>F6</kbd> Stockcar (circuits) ·
   <kbd>F8</kbd> Time Trial (one car, unlimited laps) · <kbd>F9</kbd> Total Destruction (arenas) · <kbd>F7</kbd> leave and show results. The countdown locks throttle until GO.
   You are highlighted in yellow in the results; <kbd>R</kbd> restarts.<br>Free driving: <kbd>Enter</kbd> start/leave · <kbd>W</kbd>/<kbd>↑</kbd> accelerate ·
   <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A</kbd>/<kbd>D</kbd> or arrow keys steer ·

@@ -38,8 +38,12 @@ def write_json(path, data):
     path.write_text(json.dumps(data, indent=2) + '\n')
 
 
-def check_rules(content, schedule):
+def check_rules(content, schedule, names):
     rows = [json.loads(line) for line in content.splitlines() if line.startswith('{')]
+    name_rows = [r for r in rows if r.get('kind') == 'name']
+    if [r.get('name') for r in name_rows] != names or [r.get('driver') for r in name_rows] != list(range(20)):
+        raise ValueError('Driver names differ from the original NPC roster/default human')
+    rows = [r for r in rows if 'tracks' in r]
     expected = {(mode, difficulty) for mode in (0, 1) for difficulty in range(4)}
     if {(r['mode'], r['difficulty']) for r in rows} != expected or len(rows) != len(expected):
         raise ValueError('Missing/duplicate rule schedule receipts')
@@ -47,7 +51,7 @@ def check_rules(content, schedule):
         count = 5 if row['mode'] == 0 else 4
         if row['tracks'] != schedule[row['difficulty']][:count]:
             raise ValueError('Schedule differs from independently decoded original image')
-    if 'stock=1 wreck=1 history=1 losses=1 rejection=1 overflow=1' not in content:
+    if 'Championship restart: PASS' not in content or 'stock=1 wreck=1 history=1 losses=1 rejection=1 overflow=1' not in content:
         raise ValueError('Synthetic rule fixture failed')
     return rows
 
@@ -93,6 +97,7 @@ def main():
         raise ValueError('Provision supported unmodified original Dirinfo/image')
     image = image_path.read_bytes()
     schedule = [list(struct.unpack_from('<5I', image, 0x6758c + difficulty * 20)) for difficulty in range(4)]
+    names = ['PLAYER'] + [image[0x67654 + i * 16:0x67654 + (i + 1) * 16].split(b'\0', 1)[0].decode('ascii') for i in range(1, 20)]
     tables = {0: list(struct.unpack_from('<20H', image, 0x6762c)),
               1: list(struct.unpack_from('<20H', image, 0x67604))}
     corrupted = bytearray(archive.read_bytes())
@@ -112,7 +117,7 @@ def main():
                'contact_group', 'vehicle_collision', 'damage')]
     units += [ROOT / f'src/game/{name}.c' for name in
               ('starting_grid', 'driving', 'accidents', 'course', 'laps', 'race', 'recovery',
-               'sound_events', 'league', 'championship', 'championship_session')]
+               'sound_events', 'league', 'drivers', 'championship', 'championship_session')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     units += [ROOT / 'src/platform/file.c']
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'), '-Wall', '-Wextra', '-Wpedantic',
@@ -148,7 +153,7 @@ def main():
     binaries += list(sanitized.values())
     identity = {'scope': __doc__.strip(), 'original_sha256': digest(archive),
                 'image_sha256': digest(image_path), 'original_schedule': schedule,
-                'original_placement_points': tables, 'missing_next_fixture_sha256': digest(missing_archive),
+                'original_placement_points': tables, 'original_npc_names': names[1:], 'missing_next_fixture_sha256': digest(missing_archive),
                 'source_sha256': {str(p.relative_to(ROOT)): digest(p) for p in sources},
                 'binary_sha256': {str(p): digest(p) for p in binaries}, 'sanitized_builds': builds}
     write_json(output / 'identity.json', identity)
@@ -175,7 +180,7 @@ def main():
                 content = log.read_text(errors='replace')
                 if returncode or 'Sanitizer:' in content or 'runtime error:' in content:
                     raise ValueError('Export/rule process failed')
-                rows = check_rules(content, schedule) if mode is None else check_session(content, mode, missing, tables)
+                rows = check_rules(content, schedule, names) if mode is None else check_session(content, mode, missing, tables)
             except (ValueError, subprocess.TimeoutExpired, RuntimeError) as exception:
                 error = str(exception)
             receipt = {'identity': 'identity.json', 'target': target, 'case': name, 'command': command,

@@ -32,16 +32,18 @@ circuit results in both modes on Native/WASM/ASan/UBSan pass. Next-track failure
 scoped cases and final source/binary identity checks pass under closed 0024. Reports are under
 `/tmp/wasm-dd2/rewrite-championship-integration/`. These scoped first-round and
 synthetic-season checks do not establish full physically driven championships.
-Complete campaigns, menus, names, multiplayer and persistence still need their
-consuming implementation.
+The shared Native/browser application now consumes the owning session and
+presents the nineteen original NPC names and PLAYER. Prepared transitions protect
+borrowed materials during continuation and restart. Scoped first-round application
+checks are recorded under active 0025; complete campaigns, original menus, custom
+human identity, multiplayer and persistence still require implementation/evidence.
 
 ## Next
 
-Connect the verified owning session to real
-Native/browser championship entry, scores, results and continuation. Prepare
-renderer resources transactionally before replacing borrowed track data. Add
-names, profile-wide unlock retention, complete physical campaigns, multiplayer
-and compatible save/load.
+Complete physical seasons and continuing/terminal application outcomes under
+0025. Add profile-wide unlock retention, configurable human identity, original
+menu flows, multiplayer and compatible save/load. Preserve real twenty-driver
+scores and transactional next-field preparation.
 
 ## Accept
 

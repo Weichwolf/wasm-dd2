@@ -337,6 +337,64 @@ async function totalChecks(page) {
     countdown_holds_clock:true,survival_clock_runs:true,pause:true,results:true,reset:true,circuit_rejected:true};
 }
 
+async function championshipChecks(page) {
+  const cases=[];
+  for (const [key,selected] of [['c','7'],['n','8']]) {
+    await page.keyboard.press(key);
+    await page.waitForFunction(()=>Module._dd2_application_championship_phase()===1);
+    await page.keyboard.press('p');
+    await page.waitForFunction(()=>Module._dd2_application_is_paused()===1);
+    const snapshot=()=>page.evaluate(()=>({level:Module._dd2_application_current_level(),
+      view:Module._dd2_application_current_view(),steps:Module._dd2_application_race_steps(),
+      points:Module._dd2_application_championship_points(0),
+      round:Module._dd2_application_championship_round(),
+      division:Module._dd2_application_championship_division(),
+      season:Module._dd2_application_championship_season(),
+      count:Module._dd2_application_vehicle_count(),
+      trackLocked:document.querySelector('#level').disabled,
+      continueDisabled:document.querySelector('#continue').disabled}));
+    await page.waitForFunction(()=>document.querySelector('#level').disabled);
+    const initial=await snapshot();
+    if(initial.level!==1||String(initial.view)!==selected||initial.points!==0||initial.round!==1||
+      initial.division!==4||initial.season!==1||initial.count!==20||!initial.trackLocked||!initial.continueDisabled)
+      throw new Error('Championship entry differs: '+JSON.stringify(initial));
+    await page.keyboard.press('PageUp');
+    await page.keyboard.down('w');
+    try {await pause(200);if(JSON.stringify(await snapshot())!==JSON.stringify(initial))throw new Error('Paused scheduled championship advanced');}
+    finally {await page.keyboard.up('w');}
+    await page.locator('#reset').click();
+    await page.locator('#pause').click();
+    await page.waitForFunction(()=>Module._dd2_application_is_paused()===1);
+    const restarted=await snapshot();
+    if(restarted.round!==1||restarted.points!==0||restarted.steps>=400)throw new Error('Unfinished restart lost championship');
+    if(key==='c')await page.locator('#finish').click();else await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>Module._dd2_application_championship_phase()===-1);
+    await match(page,'1','scene');
+    cases.push({key,initial,restarted,unscored_exit:true});
+  }
+  for(const selected of ['7','8']) {
+    await page.selectOption('#view',selected);
+    await page.waitForFunction(()=>Module._dd2_application_championship_phase()===1);
+    await page.locator('#finish').click();
+    await match(page,'1','scene');
+  }
+  await page.selectOption('#level','8');
+  await page.selectOption('#view','8');
+  await page.waitForFunction(()=>Module._dd2_application_championship_phase()===1);
+  await page.selectOption('#view','4');
+  await page.waitForFunction(()=>Module._dd2_application_championship_phase()===-1 && Module._dd2_application_current_view()===4);
+  if(await page.evaluate(()=>Module._dd2_application_current_level())!==1)throw new Error('Practice mode selected the old arena instead of the visible scheduled circuit');
+  await page.selectOption('#view','0');await match(page,'1','scene');
+  await page.selectOption('#level','8');await page.selectOption('#view','7');
+  await page.waitForFunction(()=>Module._dd2_application_championship_phase()===1);
+  await page.selectOption('#view','2');
+  await page.waitForFunction(()=>Module._dd2_application_championship_phase()===-1);
+  if(await page.evaluate(()=>Module._dd2_application_current_level())!==1)throw new Error('Free driving lost the visible scheduled circuit');
+  await page.selectOption('#view','0');await match(page,'1','scene');
+  report.championship={pass_:true,practice_mode_uses_visible_track:true,real_keys:true,browser_selector:true,schedule_locked:true,
+    pause_and_restart:true,unscored_exit:true,cases};
+}
+
 async function main() {
   const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:680,height:1000}});
@@ -348,7 +406,7 @@ async function main() {
     report.cross_origin_isolated=await page.evaluate(()=>crossOriginIsolated);
     if(!report.cross_origin_isolated)throw new Error('Browser workers are not isolated');
     await page.setInputFiles('#archive',{name:'Dirinfo',mimeType:'application/octet-stream',buffer:Buffer.alloc(1024)});
-    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('konnte nicht geladen'),null,{timeout:15000});
+    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('could not be loaded'),null,{timeout:15000});
     if(await page.evaluate(()=>Module._dd2_application_current_level())!==0)throw new Error('Invalid archive accepted');
     await page.setInputFiles('#archive',archive);
     await page.waitForFunction(()=>Module._dd2_application_current_level()===1,null,{timeout:60000});
@@ -391,12 +449,20 @@ async function main() {
     await raceChecks(page);
     await trialChecks(page);
     await totalChecks(page);
+    await championshipChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);
     await page.setInputFiles('#archive',archive);
     await page.waitForFunction(()=>Module._dd2_application_current_level()===1);await match(page,'1','scene');
     report.shutdown_restart=true;
+    await page.evaluate(()=>Module._dd2_application_close());
+    await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
+    await pause(200);
+    await page.setInputFiles('#archive',archive);
+    await page.waitForFunction(()=>Module._dd2_application_current_level()===1);
+    await match(page,'1','scene');
+    report.owned_loop_api_close_reopen=true;
     report.keyboard_events=await page.evaluate(()=>window.observedKeys);
     if(!report.keyboard_events.length||report.keyboard_events.some(event=>!event.trusted))throw new Error('Actual trusted browser keys required');
     if(errors.length)throw new Error('Browser errors: '+errors.join('\n'));

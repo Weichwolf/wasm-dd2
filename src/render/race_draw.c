@@ -1,6 +1,9 @@
 #include "render/race_draw.h"
 
 #include "game/accidents.h"
+#include "game/championship.h"
+#include "game/drivers.h"
+#include "game/league.h"
 #include "game/race.h"
 #include "physics/vehicle_collision.h"
 #include "render/renderer.h"
@@ -100,21 +103,31 @@ static void dd2_race_draw_box(float left, float bottom, float width, float heigh
     glVertex2f(left, bottom + height);
 }
 
+static unsigned dd2_race_draw_glyph(unsigned char character) {
+    if (character >= 'a' && character <= 'z') {
+        character = (unsigned char)(character - ('a' - 'A'));
+    }
+    if (character >= '0' && character <= '9') {
+        return (unsigned)(character - '0');
+    }
+    if (character >= 'A' && character <= 'Z') {
+        return DD2_RACE_DRAW_LETTER_BASE + (unsigned)(character - 'A');
+    }
+    switch (character) {
+    case '/':
+        return DD2_RACE_DRAW_SLASH;
+    case ':':
+        return DD2_RACE_DRAW_COLON;
+    case '.':
+        return DD2_RACE_DRAW_DOT;
+    default:
+        return DD2_RACE_DRAW_DOT + 1;
+    }
+}
+
 static void dd2_race_draw_text(const char *text, dd2_race_draw_pen pen) {
     for (size_t index = 0; text[index] != '\0'; ++index) {
-        const unsigned char character = (unsigned char)text[index];
-        unsigned glyph = DD2_RACE_DRAW_DOT + 1;
-        if (character >= '0' && character <= '9') {
-            glyph = (unsigned)(character - '0');
-        } else if (character >= 'A' && character <= 'Z') {
-            glyph = DD2_RACE_DRAW_LETTER_BASE + (unsigned)(character - 'A');
-        } else if (character == '/') {
-            glyph = DD2_RACE_DRAW_SLASH;
-        } else if (character == ':') {
-            glyph = DD2_RACE_DRAW_COLON;
-        } else if (character == '.') {
-            glyph = DD2_RACE_DRAW_DOT;
-        }
+        const unsigned glyph = dd2_race_draw_glyph((unsigned char)text[index]);
         if (glyph <= DD2_RACE_DRAW_DOT) {
             for (unsigned row = 0; row < DD2_RACE_DRAW_GLYPH_HEIGHT; ++row) {
                 for (unsigned column = 0; column < DD2_RACE_DRAW_GLYPH_WIDTH; ++column) {
@@ -426,6 +439,183 @@ bool dd2_race_draw(const dd2_race *race, dd2_render_options viewport) {
         dd2_race_draw_results(race, scale);
     } else {
         dd2_race_draw_active(race, scale);
+    }
+    glEnd();
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    return glGetError() == GL_NO_ERROR;
+}
+
+static const float dd2_champ_draw_left = 32;
+static const float dd2_champ_draw_label_bottom = 6;
+static const float dd2_champ_draw_label_height = 20;
+static const float dd2_champ_draw_season_left = 30;
+static const float dd2_champ_draw_round_left = 176;
+static const float dd2_champ_draw_division_left = 298;
+static const float dd2_champ_draw_points_left = 440;
+static const float dd2_champ_draw_number_offset = 60;
+static const float dd2_champ_draw_group_width = 296;
+static const float dd2_champ_draw_group_height = 142;
+static const float dd2_champ_draw_first_group_bottom = 362;
+static const float dd2_champ_draw_name_offset = 18;
+static const float dd2_champ_draw_points_offset = 228;
+static const float dd2_champ_draw_hint_bottom = 44;
+static const float dd2_champ_draw_outcome_bottom = 94;
+static const float dd2_champ_draw_white = 0.88F;
+static const float dd2_champ_draw_background_red = 0.04F;
+static const float dd2_champ_draw_background_green = 0.07F;
+static const float dd2_champ_draw_background_blue = 0.12F;
+
+static void dd2_champ_draw_metadata(const dd2_championship *state, float scale, float bottom) {
+    const dd2_championship_season *season = dd2_championship_current(state);
+    const unsigned number =
+        (unsigned)(season->number < UINT32_MAX ? season->number + 1 : UINT32_MAX);
+    const unsigned round = season->completed + (unsigned)(state->phase == DD2_CHAMPIONSHIP_RACING);
+    glColor3f(dd2_champ_draw_white, dd2_champ_draw_white, dd2_champ_draw_white);
+    dd2_race_draw_text(
+        "SEASON",
+        (dd2_race_draw_pen){.x = dd2_champ_draw_season_left * scale, .y = bottom, .scale = scale});
+    dd2_race_draw_number(
+        number, (dd2_race_draw_pen){
+                    .x = (dd2_champ_draw_season_left + dd2_champ_draw_number_offset) * scale,
+                    .y = bottom,
+                    .scale = scale});
+    dd2_race_draw_text(
+        "RACE",
+        (dd2_race_draw_pen){.x = dd2_champ_draw_round_left * scale, .y = bottom, .scale = scale});
+    dd2_race_draw_number(
+        round,
+        (dd2_race_draw_pen){.x = (dd2_champ_draw_round_left + dd2_champ_draw_number_offset) * scale,
+                            .y = bottom,
+                            .scale = scale});
+    dd2_race_draw_text("DIVISION", (dd2_race_draw_pen){.x = dd2_champ_draw_division_left * scale,
+                                                       .y = bottom,
+                                                       .scale = scale});
+    dd2_race_draw_number(
+        state->league.drivers[0].division + 1,
+        (dd2_race_draw_pen){.x = (dd2_champ_draw_division_left + dd2_champ_draw_number_offset) *
+                                 scale,
+                            .y = bottom,
+                            .scale = scale});
+    dd2_race_draw_text(
+        "POINTS",
+        (dd2_race_draw_pen){.x = dd2_champ_draw_points_left * scale, .y = bottom, .scale = scale});
+    dd2_race_draw_number(
+        state->league.drivers[0].points,
+        (dd2_race_draw_pen){.x =
+                                (dd2_champ_draw_points_left + dd2_champ_draw_number_offset) * scale,
+                            .y = bottom,
+                            .scale = scale});
+}
+
+static void dd2_champ_draw_standings(const dd2_championship *state, float scale) {
+    for (unsigned division = 0; division < DD2_LEAGUE_DIVISIONS; ++division) {
+        const unsigned group_row = division / 2;
+        const float left =
+            (dd2_champ_draw_left + ((float)(division % 2) * dd2_champ_draw_group_width)) * scale;
+        const float bottom =
+            (dd2_champ_draw_first_group_bottom - ((float)group_row * dd2_champ_draw_group_height)) *
+            scale;
+        glColor3f(dd2_champ_draw_white, dd2_champ_draw_white, dd2_champ_draw_white);
+        dd2_race_draw_text("DIVISION", (dd2_race_draw_pen){.x = left, .y = bottom, .scale = scale});
+        dd2_race_draw_number(division + 1,
+                             (dd2_race_draw_pen){.x = left + (dd2_champ_draw_number_offset * scale),
+                                                 .y = bottom,
+                                                 .scale = scale});
+    }
+    for (unsigned driver = 0; driver < DD2_LEAGUE_DRIVERS; ++driver) {
+        const dd2_league_driver standing = state->league.drivers[driver];
+        const unsigned group_row = standing.division / 2;
+        const float left =
+            (dd2_champ_draw_left + ((float)(standing.division % 2) * dd2_champ_draw_group_width)) *
+            scale;
+        const float bottom =
+            (dd2_champ_draw_first_group_bottom - ((float)group_row * dd2_champ_draw_group_height) -
+             ((float)(standing.rank + 1) * (float)DD2_RACE_DRAW_LINE)) *
+            scale;
+        if (driver == 0) {
+            glColor3f(1, 1, 0);
+        } else {
+            glColor3f(dd2_champ_draw_white, dd2_champ_draw_white, dd2_champ_draw_white);
+        }
+        dd2_race_draw_number(standing.rank + 1,
+                             (dd2_race_draw_pen){.x = left, .y = bottom, .scale = scale});
+        dd2_race_draw_text(dd2_driver_name(driver),
+                           (dd2_race_draw_pen){.x = left + (dd2_champ_draw_name_offset * scale),
+                                               .y = bottom,
+                                               .scale = scale});
+        dd2_race_draw_number(standing.points,
+                             (dd2_race_draw_pen){.x = left + (dd2_champ_draw_points_offset * scale),
+                                                 .y = bottom,
+                                                 .scale = scale});
+    }
+}
+
+static const char *dd2_champ_draw_outcome(dd2_league_outcome outcome) {
+    switch (outcome) {
+    case DD2_LEAGUE_PROMOTED:
+        return "PROMOTED";
+    case DD2_LEAGUE_STAYS:
+        return "DIVISION RETAINED";
+    case DD2_LEAGUE_RELEGATED:
+        return "RELEGATED";
+    case DD2_LEAGUE_CHAMPION:
+        return "CHAMPION";
+    case DD2_LEAGUE_ELIMINATED:
+        return "ELIMINATED";
+    default:
+        return "ROUND COMPLETE";
+    }
+}
+
+bool dd2_championship_draw(const dd2_championship *championship, dd2_render_options viewport) {
+    if (!dd2_championship_valid(championship) || viewport.width <= 0 || viewport.height <= 0) {
+        return false;
+    }
+    const float scale = fminf((float)viewport.width / (float)DD2_RACE_DRAW_WIDTH,
+                              (float)viewport.height / (float)DD2_RACE_DRAW_HEIGHT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, viewport.width, 0, viewport.height, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glBegin(GL_TRIANGLES);
+    glColor3f(dd2_champ_draw_background_red, dd2_champ_draw_background_green,
+              dd2_champ_draw_background_blue);
+    const bool racing = championship->phase == DD2_CHAMPIONSHIP_RACING;
+    if (racing) {
+        dd2_race_draw_box(0, 0, (float)viewport.width, dd2_champ_draw_label_height * scale);
+        dd2_champ_draw_metadata(championship, scale, dd2_champ_draw_label_bottom * scale);
+    } else {
+        dd2_race_draw_box(dd2_race_draw_panel_left * scale, dd2_race_draw_panel_bottom * scale,
+                          dd2_race_draw_panel_width * scale, dd2_race_draw_panel_height * scale);
+        glColor3f(dd2_champ_draw_white, dd2_champ_draw_white, dd2_champ_draw_white);
+        dd2_race_draw_text(championship->mode == DD2_RACE_STOCKCAR ? "STOCKCAR CHAMPIONSHIP"
+                                                                   : "WRECKING CHAMPIONSHIP",
+                           (dd2_race_draw_pen){.x = dd2_champ_draw_left * scale,
+                                               .y = dd2_race_draw_title_bottom * scale,
+                                               .scale = scale});
+        dd2_champ_draw_metadata(championship, scale, dd2_race_draw_header_bottom * scale);
+        dd2_champ_draw_standings(championship, scale);
+        glColor3f(1, 1, 0);
+        dd2_race_draw_text(dd2_champ_draw_outcome(dd2_championship_current(championship)->outcome),
+                           (dd2_race_draw_pen){.x = dd2_champ_draw_left * scale,
+                                               .y = dd2_champ_draw_outcome_bottom * scale,
+                                               .scale = scale});
+        const bool terminal = championship->phase == DD2_CHAMPIONSHIP_CHAMPION ||
+                              championship->phase == DD2_CHAMPIONSHIP_ELIMINATED;
+        dd2_race_draw_text(terminal ? "ENTER OR ESC TO LEAVE" : "ENTER TO CONTINUE   ESC TO LEAVE",
+                           (dd2_race_draw_pen){.x = dd2_champ_draw_left * scale,
+                                               .y = dd2_champ_draw_hint_bottom * scale,
+                                               .scale = scale});
     }
     glEnd();
     glPopMatrix();

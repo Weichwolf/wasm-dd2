@@ -272,3 +272,13 @@ bool dd2_championship_abort(dd2_championship *championship) {
     championship->phase = DD2_CHAMPIONSHIP_ABORTED;
     return true;
 }
+
+bool dd2_championship_restart(dd2_championship *championship) {
+    if (!dd2_championship_valid(championship) || championship->phase != DD2_CHAMPIONSHIP_RACING ||
+        championship->ticket == UINT64_MAX) {
+        return false;
+    }
+    championship->phase = DD2_CHAMPIONSHIP_READY;
+    championship->active_rules = (dd2_race_rules){0};
+    return true;
+}

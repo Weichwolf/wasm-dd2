@@ -1,6 +1,7 @@
 #include "game/accidents.h"
 #include "game/championship.h"
 #include "game/course.h"
+#include "game/drivers.h"
 #include "game/laps.h"
 #include "game/league.h"
 #include "game/race.h"
@@ -342,6 +343,31 @@ static bool dd2_champ_test_overflow(void) {
            !dd2_championship_finish(NULL, 0, NULL);
 }
 
+static bool dd2_champ_test_restart(void) {
+    dd2_championship championship = {0};
+    if (!dd2_championship_reset(&championship, DD2_RACE_WRECKING) ||
+        dd2_championship_restart(&championship)) {
+        return false;
+    }
+    const dd2_race_rules rules = dd2_champ_test_rules(&championship);
+    uint64_t ticket = 0;
+    dd2_race race = {0};
+    if (!dd2_championship_begin(&championship, rules, &ticket) ||
+        !dd2_champ_test_result(&race, rules, (dd2_champ_test_placing){.human_place = 1}) ||
+        !dd2_championship_restart(&championship) || championship.phase != DD2_CHAMPIONSHIP_READY ||
+        championship.league.drivers[0].points != 0 ||
+        dd2_championship_current(&championship)->completed != 0 ||
+        !dd2_championship_begin(&championship, rules, &ticket) || ticket != 2 ||
+        dd2_championship_finish(&championship, 1, &race) ||
+        !dd2_championship_finish(&championship, ticket, &race) ||
+        dd2_championship_restart(&championship)) {
+        return false;
+    }
+    return championship.league.drivers[0].points == DD2_LEAGUE_RACE_POINT_LIMIT &&
+           dd2_championship_current(&championship)->completed == 1 &&
+           !dd2_championship_restart(NULL);
+}
+
 static bool dd2_champ_test_schedule(void) {
     const dd2_race_mode modes[] = {DD2_RACE_WRECKING, DD2_RACE_STOCKCAR};
     for (unsigned mode = 0; mode < sizeof(modes) / sizeof(modes[0]); ++mode) {
@@ -364,6 +390,12 @@ static bool dd2_champ_test_schedule(void) {
 }
 
 int main(void) {
+    for (unsigned driver = 0; driver < DD2_LEAGUE_DRIVERS; ++driver) {
+        printf("{\"kind\":\"name\",\"driver\":%u,\"name\":\"%s\"}\n", driver,
+               dd2_driver_name(driver));
+    }
+    const bool names = dd2_driver_name(DD2_LEAGUE_DRIVERS) == NULL;
+    const bool restart = dd2_champ_test_restart();
     const bool schedule = dd2_champ_test_schedule();
     const bool stock = dd2_champ_test_progression(DD2_RACE_STOCKCAR);
     const bool wreck = dd2_champ_test_progression(DD2_RACE_WRECKING);
@@ -371,10 +403,13 @@ int main(void) {
     const bool losses = dd2_champ_test_losses();
     const bool rejection = dd2_champ_test_rejections();
     const bool overflow = dd2_champ_test_overflow();
+    printf("Championship restart: %s\n", restart ? "PASS" : "FAIL");
     printf("Synthetic championship rules: stock=%u wreck=%u history=%u losses=%u rejection=%u "
            "overflow=%u\n",
            (unsigned)stock, (unsigned)wreck, (unsigned)history, (unsigned)losses,
            (unsigned)rejection, (unsigned)overflow);
-    return schedule && stock && wreck && history && losses && rejection && overflow ? EXIT_SUCCESS
-                                                                                    : EXIT_FAILURE;
+    return names && restart && schedule && stock && wreck && history && losses && rejection &&
+                   overflow
+               ? EXIT_SUCCESS
+               : EXIT_FAILURE;
 }

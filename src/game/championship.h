@@ -65,6 +65,9 @@ bool dd2_championship_finish(dd2_championship *championship, uint64_t ticket, co
 /* Explicit result-screen continuation. Season transfer/reset/history advance
  * occurs here, after preserving final standings and all completed results. */
 bool dd2_championship_continue(dd2_championship *championship);
+/* Restart an unfinished round without consuming it. The next begin issues a
+ * new ticket; completed rounds and season standings remain intact. */
+bool dd2_championship_restart(dd2_championship *championship);
 /* Leave without scoring an unfinished race. Completed rounds remain recorded. */
 bool dd2_championship_abort(dd2_championship *championship);
 

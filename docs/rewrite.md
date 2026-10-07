@@ -82,7 +82,7 @@ avoid traffic and pursue other cars in arenas, including timed reverse maneuvers
 Stalling is detected from both low forward speed and insufficient accepted
 horizontal movement, so retained solver velocities cannot mask a blocked car.
 Damage-aware tactics, off-road recovery,
-complete championship application flows and the original front end remain pending.
+complete physical campaigns and the original front end remain pending.
 Handwritten single-player league rules now own score/rank/division permutations,
 stable-ID grid mapping, tie sorting and promotion/relegation. The production
 Native/WASM component and fully instrumented ASan/UBSan version match 6,241
@@ -99,8 +99,13 @@ session owns decoded tracks and assigned physical fields; failed next-track
 preparation preserves current results. `make rewrite-championship-verify` checks
 synthetic season rules separately from actual first scheduled ten-lap circuit
 sessions and missing-next-track rollback on Native, WASM and ASan/UBSan. See
-`src/game/championship.md`. Application/menu integration, complete physical
-campaigns, driver naming, multiplayer and compatible saved seasons remain open.
+`src/game/championship.md`. The shared application now connects Native C/N and browser entry to this owner,
+with scheduled track locking, unscored restart/exit, prepared renderer resources,
+real named division standings and explicit result continuation. Original NPC
+names and default human PLAYER are implemented; configurable identity remains
+open. `make rewrite-championship-application-verify` checks natural first-round
+application results/presentation on Native, Chromium/WASM and ASan/UBSan, separate
+from complete physical campaigns, original menus, multiplayer and saved seasons.
 Supported overturned cars now have a separate temporary availability state and
 source-timed two-second recovery, with distance-gated opponent righting. Landing
 preserves damage, progress and physical clocks and refreshes real road support.
@@ -184,7 +189,13 @@ serves the browser viewer at `http://127.0.0.1:8080/`; select the provisioned
 `DestructionDerby2/Dirinfo` file in the page. Assets remain local and are not
 included in the browser distribution. Arrow keys orbit/tilt, WASD pans, plus/minus
 or the wheel zooms, R resets, Tab switches track/car, Page Up/Down changes level,
-and Escape closes the view. Enter starts/exits free driving; W/Up gives gas,
+and Escape closes the view. C starts Wrecking Championship and N starts Stockcar
+Championship. During a championship, tracks follow the original schedule; R
+restarts an unfinished round, Enter continues results, and Escape/F7 restores the
+previous practice track without scoring an unfinished round. Named league totals
+appear after results. The browser offers the same modes and continuation/exit
+buttons. Complete physical campaigns and the original front end remain open.
+Enter starts/exits free driving; W/Up gives gas,
 S/Down reverses, A/D or Left/Right steers, Space brakes, P pauses and R returns
 to the settled grid start. The browser has equivalent selection/pause/reset
 controls and can reopen the archive after closing. The damage icon points forward
@@ -214,7 +225,7 @@ Wrecking adds actual simulated accident points to the original 50/25/10 circuit
 bonuses, capped at 999. Wrecking arena results use accident points without circuit bonuses.
 No randomized post-race NPC score or progress boost is manufactured. The result
 list sorts total points, breaking ties by road/survival position; the player is
-highlighted yellow. These are practice results; season totals are still pending. Time Trial displays
+highlighted yellow. These are practice results; championships separately retain actual season totals. Time Trial displays
 CURRENT, LAST and BEST in MM:SS.mmm (5 ms resolution, display capped at
 99:59.995), excluding the partial grid approach. A complete lap updates last/best
 without ending the session. Retirement freezes the current timer before the

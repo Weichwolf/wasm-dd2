@@ -160,6 +160,10 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_MUSIC_NEXT;
     case SDL_SCANCODE_F8:
         return DD2_KEY_TIME_TRIAL;
+    case SDL_SCANCODE_C:
+        return DD2_KEY_CHAMP_WRECKING;
+    case SDL_SCANCODE_N:
+        return DD2_KEY_CHAMP_STOCKCAR;
     case SDL_SCANCODE_F7:
         return DD2_KEY_WITHDRAW;
     case SDL_SCANCODE_ESCAPE:
@@ -171,7 +175,6 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
 
 void dd2_window_release_input(dd2_window *window) {
     if (window != NULL) {
-        SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
         for (size_t index = 0; index < DD2_KEY_COUNT; ++index) {
             window->held[index] = false;
         }
@@ -191,8 +194,15 @@ static void dd2_window_keyboard(dd2_window *window, dd2_input *input,
         return;
     }
     const bool down = event->type == SDL_KEYDOWN;
+    if (down && event->repeat != 0) {
+        return;
+    }
     if (down && event->repeat == 0 && !window->held[key]) {
         input->pressed[key] = true;
+        if (key >= DD2_KEY_RESET && key != DD2_KEY_BRAKE) {
+            input->actions[input->action_count++] =
+                (dd2_input_action){.kind = DD2_INPUT_KEY_ACTION, .key = key};
+        }
     }
     window->held[key] = down;
 }
@@ -216,7 +226,10 @@ dd2_input dd2_window_poll(dd2_window *window) {
         case SDL_MOUSEWHEEL:
             if (event.wheel.y != 0) {
                 const int direction = event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1 : 1;
-                input.wheel += (event.wheel.y > 0 ? 1 : -1) * direction;
+                const int motion = (event.wheel.y > 0 ? 1 : -1) * direction;
+                input.wheel += motion;
+                input.actions[input.action_count++] =
+                    (dd2_input_action){.kind = DD2_INPUT_WHEEL_ACTION, .wheel = motion};
             }
             break;
         case SDL_WINDOWEVENT:
@@ -231,12 +244,22 @@ dd2_input dd2_window_poll(dd2_window *window) {
         default:
             break;
         }
+        if (input.action_count == DD2_INPUT_ACTION_LIMIT) {
+            break;
+        }
+    }
+    dd2_window_refresh_controls(window, &input);
+    return input;
+}
+
+void dd2_window_refresh_controls(const dd2_window *window, dd2_input *input) {
+    if (window == NULL || input == NULL) {
+        return;
     }
     for (size_t index = 0; index < DD2_KEY_COUNT; ++index) {
-        input.held[index] = window->held[index];
+        input->held[index] = window->held[index];
     }
-    input.focused = window->focused;
-    return input;
+    input->focused = window->focused;
 }
 
 void dd2_window_set_focus(dd2_window *window, bool focused) {
@@ -246,6 +269,7 @@ void dd2_window_set_focus(dd2_window *window, bool focused) {
         }
         window->focused = focused;
         if (!focused) {
+            SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
             dd2_window_release_input(window);
         }
     }
