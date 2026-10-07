@@ -187,8 +187,43 @@ bool dd2_driving_reset(dd2_driving *driving) {
     return true;
 }
 
+static bool dd2_driving_grid_valid(const unsigned *slot_for_driver) {
+    if (slot_for_driver == NULL) {
+        return true;
+    }
+    bool used[DD2_VEHICLE_FLEET_LIMIT] = {false};
+    for (unsigned driver = 0; driver < DD2_VEHICLE_FLEET_LIMIT; ++driver) {
+        const unsigned slot = slot_for_driver[driver];
+        if (slot >= DD2_VEHICLE_FLEET_LIMIT || used[slot]) {
+            return false;
+        }
+        used[slot] = true;
+    }
+    return true;
+}
+
+static bool dd2_driving_make_grid(dd2_driving *driving, unsigned level,
+                                  const unsigned *slot_for_driver) {
+    dd2_grid_start physical[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    if (!dd2_starting_grid(driving->road, driving->surface, level, DD2_VEHICLE_FLEET_LIMIT,
+                           physical)) {
+        return false;
+    }
+    for (unsigned driver = 0; driver < DD2_VEHICLE_FLEET_LIMIT; ++driver) {
+        const unsigned slot = slot_for_driver != NULL ? slot_for_driver[driver] : driver;
+        driving->starts[driver] = physical[slot];
+    }
+    return true;
+}
+
 dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
-    if (road == NULL || level == 0 || level > DD2_DRIVING_LEVELS ||
+    return dd2_driving_create_grid(road, level, NULL);
+}
+
+dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
+                                     const unsigned *slot_for_driver) {
+    if (!dd2_driving_grid_valid(slot_for_driver) || road == NULL || level == 0 ||
+        level > DD2_DRIVING_LEVELS ||
         ((level <= DD2_DRIVING_RACING_LEVELS) != (dd2_road_strip_count(road) != 0))) {
         return NULL;
     }
@@ -217,9 +252,7 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
     driving->barriers = dd2_barriers_create(road, level);
     driving->barrier_world = dd2_barrier_world_create(driving->barriers);
     if (driving->surface == NULL || driving->barrier_world == NULL ||
-        !dd2_starting_grid(road, driving->surface, level, DD2_VEHICLE_FLEET_LIMIT,
-                           driving->starts) ||
-        !dd2_driving_reset(driving)) {
+        !dd2_driving_make_grid(driving, level, slot_for_driver) || !dd2_driving_reset(driving)) {
         dd2_driving_destroy(driving);
         return NULL;
     }

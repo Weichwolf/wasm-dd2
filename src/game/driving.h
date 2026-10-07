@@ -28,6 +28,12 @@ typedef struct {
  * elapsed time; reset restores the same settled field, independent of rendering.
  * Slot zero is the player; other bodies use driving AI by default. */
 dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level);
+/* Driver IDs remain stable with human zero; supplied physical slots form a
+ * permutation of twenty entries. NULL uses the original identity order.
+ * Starts are copied; caller storage is not retained. Invalid maps fail before
+ * allocation. Reset and mode changes preserve each driver's physical start. */
+dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
+                                     const unsigned *slot_for_driver);
 void dd2_driving_destroy(dd2_driving *driving);
 bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame);
 bool dd2_driving_reset(dd2_driving *driving);

@@ -10,7 +10,10 @@ standings leave state and output unchanged.
 A race adds up to 999 points per stable driver and reranks within each division;
 ties favor the lower stable driver ID. Grid selection maps those IDs to source
 physical slots: the overall leader occupies slot 19, the bottom driver slot zero.
-The game owner must preserve stable IDs when placing cars on this grid.
+`dd2_driving_create_grid` consumes this permutation and copies the assigned
+starts, preserving human driver zero through reset and mode changes. Caller
+storage is not retained; duplicate or out-of-range slots are rejected before
+allocation. The default driving constructor uses the identity grid.
 
 At season end, the top driver is promoted and the bottom driver relegated across
 each adjacent boundary. All three swaps use the same final standings snapshot.
@@ -26,3 +29,9 @@ ASan/UBSan. The compact original fixture calls unmodified machine code and emits
 only score/division/rank and classification, under one MiB. It checks component
 rules, not full original parity or complete championships. The reference runner
 requires GCC with 32-bit support (`gcc-multilib` on Debian) and provisioned dd2h.exe.
+
+`make rewrite-grid-verify` exercises physical-grid ownership on all eleven
+original levels and four fixture league divisions: 880 assigned starts per
+target, settled twenty-car fields, short real Stockcar/Total Destruction drives,
+withdrawal, reset and all seven circuits' one-car Time Trial transitions.
+Fixture promotions set up standings; they are not actual championship results.

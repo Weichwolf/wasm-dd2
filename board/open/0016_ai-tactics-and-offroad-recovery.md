@@ -18,13 +18,14 @@ opponents retain human target zero. The player's front damage remains
 actual post-damage controls, motion, wheel support, retirement, recovery and
 reverse/progress counters. Report:
 /tmp/wasm-dd2/rewrite-branch-arenaB-native-diagnosis/diagnosis-report.json.
-Production trajectory matching is pending the live full-suite B Native target.
+All 24 player checkpoints and the last two complete fleet position/step/damage,
+AI-target and recovery snapshots match the terminal production Native B trace
+exactly; see production-checkpoint-match.json in the same directory.
 These observations do not establish a specific tactical fix or full AI acceptance.
 
 ## Next
 
-Match the sparse B replay against the production trajectory, then diagnose
-contact-bound movement and reverse maneuvers while preserving the Total
+Diagnose the reproduced contact-bound B movement and reverse maneuvers while preserving the Total
 Destruction player target. Use ordinary complete races to identify off-road and
 tactical failures; recover original behavior and implement explicit recovery/tactics
 without manufactured score, damage or route progress.

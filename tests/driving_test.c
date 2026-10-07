@@ -5,6 +5,7 @@
 #include "assets/road.h"
 #include "game/accidents.h"
 #include "game/driving.h"
+#include "game/league.h"
 #include "game/race.h"
 #include "game/recovery.h"
 #include "game/sound_events.h"
@@ -368,13 +369,105 @@ static bool dd2_drive_test_sound_frames(dd2_driving *first, dd2_driving *second)
            dd2_driving_sound_events(first)->count == 0;
 }
 
+enum { DD2_GRID_TEST_FRAMES = 100, DD2_GRID_TEST_ELAPSED_STEPS = 100 };
+
+static bool dd2_drive_test_grid_positions(const dd2_driving *identity, const dd2_driving *field,
+                                          const unsigned *slots) {
+    for (unsigned driver = 0; driver < DD2_LEAGUE_DRIVERS; ++driver) {
+        const dd2_vehicle_spawn *expected = dd2_driving_grid_start(identity, slots[driver]);
+        const dd2_vehicle_spawn *actual = dd2_driving_grid_start(field, driver);
+        if (expected == NULL || actual == NULL ||
+            !dd2_drive_test_vector(expected->position, actual->position) ||
+            expected->yaw != actual->yaw ||
+            !dd2_vehicle_valid(&dd2_driving_vehicles(field)[driver]) ||
+            dd2_driving_vehicles(field)[driver].steps != DD2_DRIVE_TEST_RESET_STEPS) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool dd2_drive_test_grid_lifecycle(dd2_driving *field) {
+    if (!dd2_driving_set_race(field, true, DD2_RACE_TOTAL_DESTRUCTION) ||
+        dd2_driving_vehicle(field) != &dd2_driving_vehicles(field)[0]) {
+        return false;
+    }
+    for (unsigned driver = 1; driver < DD2_LEAGUE_DRIVERS; ++driver) {
+        if (dd2_driving_drivers(field)[driver].target != 0) {
+            return false;
+        }
+    }
+    for (unsigned frame = 0; frame < DD2_GRID_TEST_FRAMES; ++frame) {
+        if (!dd2_driving_advance(field, (dd2_driving_frame){.seconds = dd2_drive_test_frame_seconds,
+                                                            .control = {.throttle = 1}})) {
+            return false;
+        }
+    }
+    return dd2_driving_race(field)->phase == DD2_RACE_RUNNING &&
+           dd2_driving_race(field)->elapsed == DD2_GRID_TEST_ELAPSED_STEPS &&
+           dd2_driving_withdraw(field) && dd2_driving_race(field)->phase == DD2_RACE_RESULTS &&
+           dd2_driving_reset(field) && dd2_driving_race(field)->phase == DD2_RACE_COUNTDOWN;
+}
+
+static bool dd2_drive_test_grid_season(const dd2_road *road, const dd2_driving *identity,
+                                       const dd2_league *league) {
+    unsigned slots[DD2_LEAGUE_DRIVERS] = {0};
+    if (!dd2_league_grid(league, slots)) {
+        return false;
+    }
+    dd2_driving *field = dd2_driving_create_grid(road, DD2_DRIVE_TEST_ARENA, slots);
+    if (field == NULL) {
+        return false;
+    }
+    bool passed = dd2_drive_test_grid_positions(identity, field, slots);
+    const dd2_vehicle_spawn human = *dd2_driving_start(field);
+    for (unsigned driver = 0; driver < DD2_LEAGUE_DRIVERS; ++driver) {
+        slots[driver] = DD2_LEAGUE_DRIVERS;
+    }
+    passed = passed && dd2_driving_create_grid(road, DD2_DRIVE_TEST_ARENA, slots) == NULL &&
+             dd2_driving_reset(field) &&
+             dd2_drive_test_vector(dd2_driving_start(field)->position, human.position) &&
+             dd2_drive_test_grid_lifecycle(field) &&
+             dd2_drive_test_vector(dd2_driving_start(field)->position, human.position);
+    dd2_driving_destroy(field);
+    return passed;
+}
+
+static bool dd2_drive_test_league_grid(const dd2_road *road) {
+    dd2_driving *identity = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
+    if (identity == NULL) {
+        return false;
+    }
+    dd2_league league = {0};
+    bool passed = dd2_league_reset(&league);
+    for (unsigned season = 0; season < DD2_LEAGUE_DIVISIONS && passed; ++season) {
+        unsigned points[DD2_LEAGUE_DRIVERS] = {0};
+        points[0] = DD2_LEAGUE_RACE_POINT_LIMIT;
+        passed = dd2_drive_test_grid_season(road, identity, &league) &&
+                 dd2_league_add_points(&league, points) && dd2_league_sort(&league);
+        if (season + 1 < DD2_LEAGUE_DIVISIONS) {
+            passed = passed && dd2_league_standing(&league, 0) == DD2_LEAGUE_PROMOTED &&
+                     dd2_league_transfer(&league) && dd2_league_clear_points(&league);
+        } else {
+            passed = passed && dd2_league_standing(&league, 0) == DD2_LEAGUE_CHAMPION;
+        }
+    }
+    unsigned duplicates[DD2_LEAGUE_DRIVERS] = {0};
+    passed = passed && dd2_driving_create_grid(road, DD2_DRIVE_TEST_ARENA, duplicates) == NULL &&
+             dd2_driving_create_grid(NULL, DD2_DRIVE_TEST_ARENA, NULL) == NULL;
+    dd2_driving_destroy(identity);
+    puts(passed ? "Stable-ID league grids/reset/player/pursuit: PASS"
+                : "Stable-ID league grid: FAIL");
+    return passed;
+}
+
 int main(void) {
     dd2_road *road = dd2_drive_test_road();
     dd2_driving *first = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
     dd2_driving *second = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
     dd2_driving *last = dd2_driving_create(road, DD2_DRIVE_TEST_LAST_ARENA);
-    bool passed =
-        first != NULL && second != NULL && last != NULL && dd2_driving_damage_enabled(first);
+    bool passed = first != NULL && second != NULL && last != NULL &&
+                  dd2_driving_damage_enabled(first) && dd2_drive_test_league_grid(road);
     if (passed) {
         const dd2_vehicle_spawn *spawn = dd2_driving_start(first);
         const dd2_vehicle_spawn *other = dd2_driving_start(last);

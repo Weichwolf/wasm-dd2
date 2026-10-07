@@ -30,16 +30,18 @@ its game requirements or acceptance rules.
 | [0020](closed/0020_delayed-coupled-contact-corrections.md) | Delayed coupled-contact corrections | closed |
 | [0021](closed/0021_contact-jacobian-accuracy.md) | Late contact Jacobian accuracy | closed |
 | [0022](closed/0022_contact-active-branch-predictions.md) | Contact active-branch predictions | closed |
+| [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
 
 Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-The current production race run has 139 scoped passing target receipts,
-including natural WASM arena B results. Native B movement remains under
-diagnosis. Stable-ID physical grids are verified in a separate temporary
-checkout and await integration after the production run is terminal; complete
-championships remain open under 0004.
+The terminal a326993 race attempt and separate Circuit-5 follow-up account for
+all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural
+completion at the unchanged fixture bound. Its sparse movement diagnosis
+matches the production trace exactly. Assigned physical grids now preserve
+driver IDs on all eleven original levels; complete championships remain open
+under 0004.
 
 ## Workflow and acceptance
 

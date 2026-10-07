@@ -94,7 +94,10 @@ async function drivingChecks(page) {
   finally {await page.keyboard.up('w');}
   await page.locator('#pause').click();
   await page.keyboard.down('w');
-  try {await changed(page,baseline);await pause(1000);} finally {await page.keyboard.up('w');}
+  try {
+    await changed(page,baseline);
+    await page.waitForFunction(()=>Module._dd2_application_lap_steps()>0,null,{timeout:15000});
+  } finally {await page.keyboard.up('w');}
   await page.keyboard.press('p');
   const lapTicks=await page.evaluate(()=>Module._dd2_application_lap_steps());
   if(lapTicks<=0)throw new Error('Actual forward input never starts lap timing');

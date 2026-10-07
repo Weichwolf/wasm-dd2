@@ -25,6 +25,14 @@ rewrite-race-verify: ## verify race phases/results, source rules and a complete 
 	$(MAKE) clean-logs
 
 
+.PHONY: rewrite-grid-verify
+rewrite-grid-verify: ## verify stable-ID physical grids and mode/reset ownership on every original level
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_grid.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-league-verify
 rewrite-league-verify: ## compare typed single-player league rules with unmodified original x86
 	$(MAKE) clean-logs

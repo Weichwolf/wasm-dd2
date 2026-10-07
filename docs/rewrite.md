@@ -87,7 +87,12 @@ Handwritten single-player league rules now own score/rank/division permutations,
 stable-ID grid mapping, tie sorting and promotion/relegation. The production
 Native/WASM component and fully instrumented ASan/UBSan version match 6,241
 targeted original-x86 cases. Use `make rewrite-league-verify`; see
-`src/game/league.md`. Championship rounds, actual grid/result consumption,
+`src/game/league.md`. Driving now consumes a copied physical-slot permutation
+while keeping driver IDs stable and human zero independent of start position.
+`make rewrite-grid-verify` checks assigned starts, actual short physical drives
+and mode/reset ownership on all eleven original levels. Its promotion scores
+initialize fixtures; they do not establish completed championships.
+Championship rounds, actual result consumption,
 history/unlocks, menus and saved seasons still need their owning controller.
 Supported overturned cars now have a separate temporary availability state and
 source-timed two-second recovery, with distance-gated opponent righting. Landing
