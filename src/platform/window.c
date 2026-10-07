@@ -152,6 +152,12 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_STOCKCAR;
     case SDL_SCANCODE_F9:
         return DD2_KEY_TOTAL_DESTRUCTION;
+    case SDL_SCANCODE_F10:
+        return DD2_KEY_MUSIC;
+    case SDL_SCANCODE_F11:
+        return DD2_KEY_MUSIC_PREVIOUS;
+    case SDL_SCANCODE_F12:
+        return DD2_KEY_MUSIC_NEXT;
     case SDL_SCANCODE_F8:
         return DD2_KEY_TIME_TRIAL;
     case SDL_SCANCODE_F7:

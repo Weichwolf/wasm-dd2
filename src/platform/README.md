@@ -22,7 +22,18 @@ files. Original assets are neither served nor bundled.
 
 Run `make rewrite-play` or `make rewrite-web`; `make rewrite-window-verify`
 exercises actual X11 pixels and Chromium canvas/input. Gamepad, persistent
-storage and audio activation remain to be implemented.
+storage remain to be implemented.
+
+`audio_device.c` owns an SDL2 signed-16 stereo device and a mixer at its negotiated
+sample rate. It opens paused, serializes control changes with the device lock,
+and closes/join-waits before freeing the mixer or borrowed PCM. The callback
+allocates nothing. Emscripten's SDL2 port converts the resulting PCM to WebAudio
+and resumes its context after a real user gesture. Device pause preserves the
+exact source cursor; browser/canvas focus loss and game pause use it.
+`make rewrite-music-output-verify` checks actual native callback PCM through SDL's
+disk sink and real browser output-node buffers against independent CDDA sampling,
+plus transport controls and close/reopen. Native speaker hardware is outside the
+automated sink check. Missing devices leave visual gameplay available.
 
 Free driving shares native/browser keyboard mapping with the inspection modes:
 Enter toggles driving, P pauses and Space brakes. Input reports focus state;

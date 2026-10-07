@@ -3,9 +3,11 @@
 #include "assets/archive.h"
 #include "assets/level.h"
 #include "assets/track.h"
+#include "audio/mixer.h"
 #include "game/course.h"
 #include "game/driving.h"
 #include "game/laps.h"
+#include "game/music.h"
 #include "game/race.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
@@ -40,6 +42,7 @@ typedef struct {
     dd2_window *window;
     dd2_camera camera;
     dd2_driving *driving;
+    dd2_music_player *music;
     bool drive;
     bool paused;
     int level;
@@ -66,6 +69,7 @@ static void dd2_application_destroy(dd2_application *application) {
         dd2_current_application = NULL;
     }
     dd2_mesh_materials_destroy(application->materials);
+    dd2_music_player_destroy(application->music);
     dd2_renderer_destroy(application->renderer);
     dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
@@ -146,6 +150,60 @@ int dd2_application_current_view(void) {
         return 2;
     }
     return (int)race->rules.mode + 3;
+}
+
+int dd2_application_load_music(unsigned track) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL) {
+        return 0;
+    }
+#ifdef __EMSCRIPTEN__
+    return (int)dd2_music_player_load(application->music, track, "/Music.cdda");
+#else
+    return (int)dd2_music_player_load(application->music, track, NULL);
+#endif
+}
+
+int dd2_application_music_phase(void) {
+    dd2_application *application = dd2_current_application;
+    return application == NULL || application->music == NULL
+               ? -1
+               : (int)dd2_music_player_state(application->music).phase;
+}
+
+unsigned dd2_application_music_track(void) {
+    return dd2_music_player_state(dd2_current_application == NULL ? NULL
+                                                                  : dd2_current_application->music)
+        .track;
+}
+
+unsigned dd2_application_music_frame(void) {
+    return (unsigned)dd2_music_player_state(
+               dd2_current_application == NULL ? NULL : dd2_current_application->music)
+        .frame;
+}
+
+unsigned dd2_application_music_fraction(void) {
+    return dd2_music_player_state(dd2_current_application == NULL ? NULL
+                                                                  : dd2_current_application->music)
+        .fraction;
+}
+
+unsigned dd2_application_music_rate(void) {
+    return dd2_music_player_rate(dd2_current_application == NULL ? NULL
+                                                                 : dd2_current_application->music);
+}
+
+int dd2_application_set_music_playing(int playing) {
+    return dd2_current_application != NULL && (playing == 0 || playing == 1)
+               ? (int)dd2_music_player_play(dd2_current_application->music, playing != 0)
+               : 0;
+}
+
+int dd2_application_set_music_gain(unsigned gain) {
+    return dd2_current_application != NULL
+               ? (int)dd2_music_player_gain(dd2_current_application->music, gain)
+               : 0;
 }
 
 unsigned dd2_application_collision_count(void) {
@@ -263,6 +321,7 @@ void dd2_application_release_input(void) {
     if (dd2_current_application != NULL) {
         dd2_window_set_focus(dd2_current_application->window, false);
         dd2_driving_suspend(dd2_current_application->driving);
+        dd2_music_player_suspend(dd2_current_application->music, true);
     }
 }
 
@@ -355,6 +414,9 @@ int dd2_application_set_paused(int paused) {
         return 0;
     }
     application->paused = paused != 0;
+    if (application->paused) {
+        dd2_music_player_suspend(application->music, true);
+    }
     dd2_driving_suspend(application->driving);
     dd2_window_release_input(application->window);
     return 1;
@@ -391,7 +453,32 @@ static void dd2_application_race_input(const dd2_input *input) {
     }
 }
 
+static void dd2_application_music_input(const dd2_input *input) {
+    if (input->pressed[DD2_KEY_MUSIC]) {
+        if (dd2_application_music_phase() == DD2_MUSIC_EMPTY) {
+            dd2_application_load_music(DD2_MIXER_FIRST_TRACK);
+        } else {
+            dd2_application_set_music_playing(dd2_application_music_phase() != DD2_MUSIC_PLAYING);
+        }
+    }
+#ifndef __EMSCRIPTEN__
+    if (input->pressed[DD2_KEY_MUSIC_NEXT] || input->pressed[DD2_KEY_MUSIC_PREVIOUS]) {
+        const unsigned current = dd2_application_music_track();
+        unsigned next = DD2_MIXER_FIRST_TRACK;
+        if (input->pressed[DD2_KEY_MUSIC_NEXT]) {
+            next = current < DD2_MIXER_LAST_TRACK ? current + 1 : DD2_MIXER_FIRST_TRACK;
+        } else {
+            next = current > DD2_MIXER_FIRST_TRACK ? current - 1 : DD2_MIXER_LAST_TRACK;
+        }
+        if (dd2_application_load_music(next) == 0) {
+            puts("Redbook-Titel konnte nicht geladen werden.");
+        }
+    }
+#endif
+}
+
 static void dd2_application_input(dd2_application *application, const dd2_input *input) {
+    dd2_application_music_input(input);
     if (input->pressed[DD2_KEY_DRIVE]) {
         dd2_application_set_driving(!application->drive);
     }
@@ -456,6 +543,10 @@ static bool dd2_application_draw(dd2_application *application) {
            dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
 }
 
+static void dd2_application_audio_focus(dd2_application *application, bool focused) {
+    dd2_music_player_suspend(application->music, application->paused || !focused);
+}
+
 static void dd2_application_frame(void *context) {
     dd2_application *application = context;
     const dd2_input input = dd2_window_poll(application->window);
@@ -463,6 +554,7 @@ static void dd2_application_frame(void *context) {
         application->running = false;
     } else {
         dd2_application_input(application, &input);
+        dd2_application_audio_focus(application, input.focused);
         const float seconds = dd2_window_elapsed(application->window);
         bool moved = false;
         if (application->drive) {
@@ -523,7 +615,14 @@ static dd2_application *dd2_application_create(const char *path) {
         return NULL;
     }
     application->running = true;
+    application->music = dd2_music_player_create(path);
+    if (application->music == NULL) {
+        puts("Audioausgabe ist nicht verfügbar.");
+    }
     dd2_current_application = application;
+#ifndef __EMSCRIPTEN__
+    dd2_application_load_music(DD2_MIXER_FIRST_TRACK);
+#endif
     return application;
 }
 

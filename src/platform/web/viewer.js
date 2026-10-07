@@ -7,6 +7,12 @@ const view = document.getElementById('view');
 const reset = document.getElementById('reset');
 const pauseButton = document.getElementById('pause');
 const finishButton = document.getElementById('finish');
+const musicFile = document.getElementById('music-file');
+const musicPlay = document.getElementById('music-play');
+const musicGain = document.getElementById('music-gain');
+const musicStatus = document.getElementById('music-status');
+let musicLoading = false;
+let applicationGeneration = 0;
 let loaded = false;
 let reflectedView = -1;
 let reflectedPhase = -1;
@@ -45,6 +51,8 @@ archive.addEventListener('change', async () => {
     loaded = Module._dd2_application_current_level() !== 0;
     for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = !loaded;
     if (loaded) {
+      ++applicationGeneration;
+      musicGain.value = '256';
       level.value = String(Module._dd2_application_current_level());
       view.value = '0';
       status.textContent = 'Streckenansicht bereit. Klicke ins Bild, um die Kamera zu steuern.';
@@ -55,6 +63,43 @@ archive.addEventListener('change', async () => {
     status.textContent = 'Originaldatei konnte nicht geöffnet werden.';
   } finally { archive.disabled = false; }
 });
+
+musicFile.addEventListener('change', async () => {
+  const file = musicFile.files[0];
+  const generation = applicationGeneration;
+  if (!file || musicLoading || !loaded) return;
+  const match = /^track(\d{2})\.cdda$/i.exec(file.name);
+  const track = match ? Number(match[1]) : 0;
+  if (track < 2 || track > 19 || file.size === 0 || file.size > 64 * 1024 * 1024 || file.size % 4) {
+    musicStatus.textContent = 'Wähle eine vollständige Datei track02.cdda bis track19.cdda.';
+    musicFile.value = '';
+    return;
+  }
+  musicLoading = true;
+  musicFile.disabled = true;
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    // The view may have closed while the local file was being read.
+    if (!loaded || generation !== applicationGeneration || !Module._dd2_application_current_level()) return;
+    Module.FS.writeFile('/Music.cdda', bytes);
+    try {
+      if (!Module._dd2_application_load_music(track)) throw new Error('Redbook-Titel konnte nicht geladen werden.');
+    } finally { Module.FS.unlink('/Music.cdda'); }
+    musicStatus.textContent = `Redbook-Titel ${track} · wird wiederholt`;
+    canvas.focus();
+  } catch (error) {
+    musicStatus.textContent = error.message;
+  } finally {
+    musicLoading = false;
+    musicFile.value = '';
+  }
+});
+musicPlay.addEventListener('click', () => {
+  Module._dd2_application_set_music_playing(Module._dd2_application_music_phase() === 2 ? 0 : 1);
+  canvas.focus();
+});
+musicGain.addEventListener('input', () => Module._dd2_application_set_music_gain(Number(musicGain.value)));
+musicGain.addEventListener('change', () => canvas.focus());
 
 level.addEventListener('change', () => {
   if (!Module._dd2_application_select_level(Number(level.value))) {
@@ -101,6 +146,12 @@ function reflectSelection() {
       for (const mode of [4, 5]) view.querySelector(`option[value="${mode}"]`).disabled = current > 7;
       view.querySelector('option[value="6"]').disabled = current <= 7;
       const phase = Module._dd2_application_race_phase();
+      const musicPhase = Module._dd2_application_music_phase();
+      musicFile.disabled = musicLoading || musicPhase < 0;
+      musicPlay.disabled = musicPhase <= 0;
+      musicGain.disabled = musicPhase < 0;
+      musicPlay.textContent = musicPhase === 2 ? 'Musik pausieren' : 'Musik abspielen';
+      if (musicPhase < 0) musicStatus.textContent = 'Audioausgabe ist nicht verfügbar.';
       finishButton.disabled = Number(view.value) < 3 || phase === 3;
       pauseButton.textContent = Module._dd2_application_is_paused() ? 'Weiterfahren' : 'Pause';
       reset.textContent = Number(view.value) >= 2 ? 'An den Start' : 'Kamera zurücksetzen';
@@ -114,6 +165,8 @@ function reflectSelection() {
     } else {
       loaded = false;
       for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = true;
+      for (const control of [musicFile, musicPlay, musicGain]) control.disabled = true;
+      musicStatus.textContent = 'Wähle track02.cdda bis track19.cdda aus dem Redbook-Ordner.';
       if (status.textContent.includes('bereit')) status.textContent = 'Ansicht geschlossen. Dirinfo kann erneut geöffnet werden.';
     }
   }

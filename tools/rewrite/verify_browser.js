@@ -370,7 +370,10 @@ async function main() {
       if(await stable(page)===baseline)throw new Error('Camera did not move: '+key);
       await page.keyboard.press('r');await match(page,'1','scene');
     }
-    await page.mouse.move(330,500);await page.mouse.wheel(0,-120);await changed(page,baseline);
+    const canvasBounds = await page.locator('#canvas').boundingBox();
+    if (!canvasBounds) throw new Error('Canvas has no visible bounds');
+    await page.mouse.move(canvasBounds.x + canvasBounds.width / 2, canvasBounds.y + canvasBounds.height / 2);
+    await page.mouse.wheel(0,-120);await changed(page,baseline);
     await page.locator('#reset').click();await match(page,'1','scene');
     await page.keyboard.down('ArrowRight');await changed(page,baseline);
     await page.locator('#reset').focus();await page.keyboard.up('ArrowRight');

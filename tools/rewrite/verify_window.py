@@ -368,11 +368,12 @@ def native_checks(output, archive, references, binary, label='native'):
 def build_sanitized(output):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+             ('archive', 'audio', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+    units += [ROOT / 'src/audio/mixer.c']
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
-    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window')]
+    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
-    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'music', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),

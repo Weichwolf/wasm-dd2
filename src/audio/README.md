@@ -40,7 +40,20 @@ replacement/locks, invalid requests, unsigned-8 PCM, high-frequency one-frame
 loops, music endpoints/repeat and pause/resume. The same tests run on Native and
 Node/WASM; standalone ASan/UBSan runs check ownership/bounds/arithmetic.
 
-This is the platform-independent mixer and transport. Device/browser audio
-output, original sound-bank cue selection, engine/impact/menu sounds, Redbook
-loading/selection in the application and player-facing audio settings remain
-to be integrated and verified with actual output.
+The application now owns actual SDL2 output through `platform/audio_device.c`.
+`game/music.c` owns one CDDA file and resolves Native tracks relative to the
+archive; the browser stages one user-selected file. Selection replaces the
+borrowed view under the device lock before releasing old bytes. Failure leaves
+the old title and cursor intact. Close joins callbacks before freeing PCM.
+Track loading repeats automatically; explicit music pause and game/focus
+suspension preserve the cursor independently. Gain zero keeps playback moving.
+Native starts track 2 when provisioned, F10 pauses/resumes, and F11/F12 moves
+through physical tracks 2..19. Browser file selection, music and volume controls
+use the same C transport. Audio-device failure permits visual gameplay.
+
+`make rewrite-music-output-verify` compares real Native SDL disk callback output
+and browser WebAudio node samples with an independent integer CDDA oracle. It
+also checks Native ASan/UBSan lifetime and browser repeat/control/rollback/reopen.
+This establishes this rewrite's output, without claiming original audio engine
+or speaker hardware parity. Sound-bank effects and automatic race/menu music
+selection still need application integration; saved audio settings remain open.

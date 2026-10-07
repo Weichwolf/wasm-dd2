@@ -106,7 +106,7 @@ rewrite build does not enable a C++ compiler or build those tools.
 The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
 covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
 software surfaces, with shared keyboard input and monotonic timing. Gamepad,
-persistence and audio playback remain pending. Typed sound-bank/WAVE readers
+persistence remain pending. Typed sound-bank/WAVE readers
 now preserve all 45 original effects, including their independent playback
 frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
 Redbook tracks; source/binary-identified three-target verification compares every
@@ -115,8 +115,18 @@ decoded sample byte. See `make rewrite-audio-assets-verify` and
 and a separate Redbook track with rational linear resampling, gain/pan,
 saturating summation and explicit start/pause/resume/repeat/stop state. Analytic
 tests cover playback cursors, endpoints and channel locks on both targets.
-See `src/audio/README.md`. Device/browser output, audible game cues, music
-loading/selection and their application integration remain pending. Browser pthread builds
+See `src/audio/README.md`. SDL2 now sends mixed PCM to Native/browser output.
+The application loads a repeating Redbook title, supports pause/resume and
+volume, and freezes output on game pause/focus loss. Native resolves all physical
+tracks beside Dirinfo under `Redbook/`; F10 pauses/resumes and F11/F12 selects
+the previous/next title. The browser opens local `track02.cdda`..`track19.cdda`
+files and provides music/volume controls. Source PCM remains owned until a locked
+replacement or device close; failed loads preserve playing music.
+`make rewrite-music-output-verify` checks independent original-CDDA resampling
+against Native SDL disk output and real browser WebAudio node buffers, plus
+repeat, pause/focus, gain/mute, invalid-load rollback and close/reopen. The Native
+application is also checked under ASan/UBSan. Sound effects, automatic game-state
+music selection and saved audio settings remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
 Physics consumers reserve a 256 KiB WASM stack for the transactional twenty-body
 solver and nested geometry queries; the SDK's default 64 KiB is insufficient.
@@ -428,7 +438,7 @@ Repeat `--case` for multiple scenarios; omitting it keeps the full suite. Scoped
 reports explicitly mark partial coverage, and each target writes its own result
 receipt against recorded source/binary hashes before another target can fail.
 Source changes during a run invalidate its final report. Source-timed lights
-are currently visual; sound cues and music remain pending.
+are currently visual; sound cues and automatic game-state music selection remain pending.
 
 ## Migration and acceptance
 

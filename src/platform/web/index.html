@@ -39,6 +39,12 @@
   <button id="pause" disabled>Pause</button>
   <button id="finish" disabled>Rennen verlassen</button>
 </div>
+<div class="controls">
+  <label class="file">Redbook-Titel öffnen<input id="music-file" type="file" accept=".cdda" disabled></label>
+  <button id="music-play" disabled>Musik abspielen</button>
+  <label>Lautstärke <input id="music-gain" type="range" min="0" max="256" value="256" disabled></label>
+  <span id="music-status" role="status">Wähle track02.cdda bis track19.cdda aus dem Redbook-Ordner.</span>
+</div>
 <p id="status" role="status">Renderer wird vorbereitet …</p>
 <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Streckenansicht. Mit den Pfeiltasten drehen."></canvas>
 <p class="help">Rennen: <kbd>F5</kbd> Wrecking Racing/Arena · <kbd>F6</kbd> Stockcar (Rennstrecken) ·
@@ -48,6 +54,7 @@
   <kbd>Leertaste</kbd> bremsen · <kbd>P</kbd> Pause · <kbd>R</kbd> an den Start.<br>
   Schadensanzeige: vorne ist oben; Grün/Gelb/Rot zeigt zunehmenden Schaden, der Balken die Motorreserve.
   <strong>PTS</strong>: Unfallpunkte · <strong>KO</strong>: zerstörte Gegner. Reset setzt auch Schaden und Punkte zurück.<br>
+  Musik: Redbook-Titel lokal öffnen · <kbd>F10</kbd> Musik pausieren/fortsetzen. Spielpause und Fokusverlust halten auch Musik an.<br>
   Strecken-/Modellansicht: <kbd>←</kbd> <kbd>→</kbd> drehen · <kbd>↑</kbd> <kbd>↓</kbd> neigen ·
   <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> verschieben · Mausrad oder <kbd>+</kbd>/<kbd>−</kbd> zoomen ·
   <kbd>R</kbd> zurücksetzen · <kbd>Tab</kbd> Ansicht wechseln · <kbd>Bild ↑</kbd>/<kbd>Bild ↓</kbd> Strecke wechseln</p>
