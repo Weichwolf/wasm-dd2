@@ -233,8 +233,11 @@ band would abruptly discard a distant edge when a tiny tilt crosses its depth
 tolerance. Each face direction continuously subtracts a flat-edge allowance of
 half the 1e-6 depth tolerance before selecting the band. The front patch uses
 the same allowance to prevent numerical skew in a very thin first-contact
-slice. It changes projected height by at most half the contact tolerance, and
-the final contact midpoint halves that normal offset again; the SAT normal and
+slice, anchored at the true deepest incident corner. Replacing slopes around
+only the face center can otherwise remove the whole valid patch and return a
+fallback point outside both bodies. The corner anchor retains every original
+front-patch point and extends allowed projected height by at most one contact
+tolerance; the final contact midpoint halves that normal offset; the SAT normal and
 time still use the actual geometry. This keeps almost parallel
 supporting edges stable without moving the impulse outside the clipped contact
 patch. Edge contacts use closest supported edge points.
@@ -249,7 +252,10 @@ absence of invented impulse/contact records on Native and WASM.
 Another 120 analytic face cases cover pitch/roll in both directions, the band
 thresholds and translations to distant coordinates. They independently intersect
 a tilted rectangle's bounds and height band. Two physical closing collisions
-check that crossing the former vertex threshold cannot create a large spin.
+check that crossing the former vertex threshold cannot create a large spin. A
+frozen pair trajectory from original arena 8 additionally checks that a thin
+first-contact patch stays inside both oriented boxes and produces the required
+closing impulse, instead of repeatedly reporting separating fallback contacts.
 Collective overlap correction and coupled wall/pair response convergence remain
 separate, unresolved solver work; continuous face points do not establish
 complete arena gameplay.

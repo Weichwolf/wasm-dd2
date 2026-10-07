@@ -1,3 +1,4 @@
+#include "contact_patch_fixture.h"
 #include "physics/car_contact.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
@@ -625,15 +626,64 @@ static bool dd2_pair_test_face_band(void) {
     return dd2_pair_test_band_collision(factors[3]) && dd2_pair_test_band_collision(factors[4]);
 }
 
+static dd2_vehicle_vector dd2_pair_patch_local(const dd2_vehicle *start, const dd2_vehicle *end,
+                                               dd2_vehicle_vector point, double time) {
+    const dd2_vehicle_rotation first = start->rotation;
+    const dd2_vehicle_rotation last = end->rotation;
+    const double sign =
+        ((first.x * last.x) + (first.y * last.y) + (first.z * last.z) + (first.w * last.w)) < 0 ? -1
+                                                                                                : 1;
+    dd2_vehicle_rotation rotation = {.x = first.x + (((sign * last.x) - first.x) * time),
+                                     .y = first.y + (((sign * last.y) - first.y) * time),
+                                     .z = first.z + (((sign * last.z) - first.z) * time),
+                                     .w = first.w + (((sign * last.w) - first.w) * time)};
+    const double length = sqrt((rotation.x * rotation.x) + (rotation.y * rotation.y) +
+                               (rotation.z * rotation.z) + (rotation.w * rotation.w));
+    rotation.x /= -length;
+    rotation.y /= -length;
+    rotation.z /= -length;
+    rotation.w /= length;
+    const dd2_vehicle_vector arm = {
+        .x = point.x - start->position.x - ((end->position.x - start->position.x) * time),
+        .y = point.y - start->position.y - ((end->position.y - start->position.y) * time),
+        .z = point.z - start->position.z - ((end->position.z - start->position.z) * time)};
+    return dd2_vehicle_rotate(rotation, arm);
+}
+
+static bool dd2_pair_test_front_patch(void) {
+    dd2_car_contact hit = {0};
+    if (!dd2_car_contact_sweep(&dd2_patch_start[0], &dd2_patch_end[0], &dd2_patch_start[1],
+                               &dd2_patch_end[1], &hit) ||
+        hit.unresolved) {
+        return false;
+    }
+    for (unsigned body = 0; body < DD2_PAIR_TEST_BODIES; ++body) {
+        const dd2_vehicle_vector point =
+            dd2_pair_patch_local(&dd2_patch_start[body], &dd2_patch_end[body], hit.point, hit.time);
+        if (fabs(point.x) > dd2_pair_test_side_arm + dd2_pair_test_tolerance ||
+            fabs(point.y) > dd2_pair_test_vertical_arm + dd2_pair_test_tolerance ||
+            fabs(point.z) > dd2_pair_test_front_arm + dd2_pair_test_tolerance) {
+            printf("Front patch body=%u point=%.17g,%.17g,%.17g\n", body, point.x, point.y,
+                   point.z);
+            return false;
+        }
+    }
+    dd2_vehicle next[DD2_PAIR_TEST_BODIES] = {dd2_patch_end[0], dd2_patch_end[1]};
+    dd2_vehicle_collision_report report = {0};
+    return dd2_vehicle_collide_fleet_report(next, dd2_patch_start, DD2_PAIR_TEST_BODIES, NULL, NULL,
+                                            &report) &&
+           report.count > 0 && report.contacts[0].impulse > 0;
+}
+
 int main(void) {
-    if (!dd2_pair_test_face_band() || !dd2_pair_test_near_parallel_features() ||
-        !dd2_pair_test_rotation_precision() || !dd2_pair_test_touching_crossing() ||
-        !dd2_pair_test_common_motion() || !dd2_pair_test_small_closing() ||
-        !dd2_pair_test_head_on(false) || !dd2_pair_test_head_on(true) ||
-        !dd2_pair_test_glancing() || !dd2_pair_test_contact_continuity() ||
-        !dd2_pair_test_rotation() || !dd2_pair_test_chain() ||
-        !dd2_pair_test_bridge_and_invalid() || !dd2_pair_test_report_bound() ||
-        !dd2_pair_test_rotated_report()) {
+    if (!dd2_pair_test_front_patch() || !dd2_pair_test_face_band() ||
+        !dd2_pair_test_near_parallel_features() || !dd2_pair_test_rotation_precision() ||
+        !dd2_pair_test_touching_crossing() || !dd2_pair_test_common_motion() ||
+        !dd2_pair_test_small_closing() || !dd2_pair_test_head_on(false) ||
+        !dd2_pair_test_head_on(true) || !dd2_pair_test_glancing() ||
+        !dd2_pair_test_contact_continuity() || !dd2_pair_test_rotation() ||
+        !dd2_pair_test_chain() || !dd2_pair_test_bridge_and_invalid() ||
+        !dd2_pair_test_report_bound() || !dd2_pair_test_rotated_report()) {
         puts("car pair contacts: FAIL");
         return EXIT_FAILURE;
     }
