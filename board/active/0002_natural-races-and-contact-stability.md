@@ -34,9 +34,30 @@ not meet the production no-allocation contract. Terminal experiment binaries
 and successful raw diagnostics were removed after recording identities and
 reports. Compact queries and private sources remain for the next diagnosis.
 
+A restricted private follow-up delays Newton until 512 ordinary sweeps and
+keeps it out of the coordinate-only fallback. All ten frozen material queries
+and ten analytic laws pass on Native and WASM, and the previously rejected
+four-body query again completes through the preserved fallback. Its actual
+WASM arena passes the old step52337 failure but aborts at step52379. The next
+compact query connects twelve bodies through fifteen contacts. Capture, source
+identity and terminal report are under
+/tmp/wasm-dd2/rewrite-coupled-secants/natural-cold/.
+
+A readable private version uses a bounded automatic matrix instead of allocation
+and passes repository-configured clang-format/tidy 19 plus all ten material
+queries on Native/WASM/ASan/UBSan. It needs a larger WASM stack; its scoped report
+is /tmp/wasm-dd2/rewrite-coupled-secants/fixed-material-report.json. These private
+results do not establish production gates or natural completion. No solver
+change is integrated. Terminal binaries and completed raw captures are removed;
+compact failing queries and the prepared source remain for diagnosis.
+
 ## Next
 
-Diagnose the captured step52337 failure, retain independent material checks, then run the complete production suite and fix the solver without changing constitutive acceptance checks. Re-run the complete production race suite and all required gates. Expand ordinary physically completed circuit coverage beyond circuit 5.
+Reproduce the private step52379 twelve-body failure and assess the restricted
+Newton approach against every constitutive oracle and production gate. The
+production step52337 failure remains open. Preserve material laws, tolerances
+and the pass budget, then run the complete production race suite. Expand
+ordinary physically completed circuit coverage beyond circuit 5.
 
 ## Accept
 
