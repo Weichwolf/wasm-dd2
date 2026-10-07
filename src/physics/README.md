@@ -224,11 +224,20 @@ axis at both endpoints, including curvature. Opposite endpoint sides cannot
 certify escape through the other box. Relative quaternion difference/sum gives
 stable initial piece counts even for tiny rotations.
 
-Face contacts clip the incident polygon against reference side and front planes.
-The impulse uses the deepest contact edge/corner for tilted faces and the area
-centroid for parallel faces. It therefore does not act on a separating portion
-of an otherwise colliding face; duplicate/collinear clipping vertices retain
-centroid continuity. Edge contacts use closest supported edge points.
+Face contacts clip the incident polygon against reference side and front planes
+in coordinates relative to the incident face center. This preserves the small
+normal offsets of nearly parallel faces even at distant world positions. The
+impulse uses the area centroid of a clipped band near the deepest contact edge,
+retaining the whole face for parallel contacts. Selecting only vertices in that
+band would abruptly discard a distant edge when a tiny tilt crosses its depth
+tolerance. Each face direction continuously subtracts a flat-edge allowance of
+half the 1e-6 depth tolerance before selecting the band. The front patch uses
+the same allowance to prevent numerical skew in a very thin first-contact
+slice. It changes projected height by at most half the contact tolerance, and
+the final contact midpoint halves that normal offset again; the SAT normal and
+time still use the actual geometry. This keeps almost parallel
+supporting edges stable without moving the impulse outside the clipped contact
+patch. Edge contacts use closest supported edge points.
 Bridge-separated boxes do not collide merely because their XZ footprints
 intersect. Queries allocate nothing. A twenty-body regression covers five
 headings with common lateral motion; a low-speed collision preserves real
@@ -237,6 +246,13 @@ around all three axes from 0.0005 to 1 radian, with both true corner contacts an
 nearby misses. They independently solve corner reach and nlerp contact time.
 A separate forced-budget test verifies the conservative time bound and the
 absence of invented impulse/contact records on Native and WASM.
+Another 120 analytic face cases cover pitch/roll in both directions, the band
+thresholds and translations to distant coordinates. They independently intersect
+a tilted rectangle's bounds and height band. Two physical closing collisions
+check that crossing the former vertex threshold cannot create a large spin.
+Collective overlap correction and coupled wall/pair response convergence remain
+separate, unresolved solver work; continuous face points do not establish
+complete arena gameplay.
 
 `dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
 one earliest-event clock for ground, barriers and pairs. It anchors time ties to

@@ -34,6 +34,12 @@ static const double dd2_pair_test_tiny_tilt = 1e-12;
 static const double dd2_pair_test_impulse = 240000;
 static const double dd2_pair_test_quarter_axis = 0.7071067811865475244;
 static const double dd2_pair_test_front_arm = 450;
+static const double dd2_pair_test_side_arm = 186;
+static const double dd2_pair_test_vertical_arm = 130;
+static const double dd2_pair_test_band_width = 1e-6;
+static const double dd2_pair_test_band_overlap = 0.1;
+static const double dd2_pair_test_band_speed = 1000;
+static const double dd2_pair_test_band_spin = 0.01;
 
 static double dd2_pair_test_energy(const dd2_vehicle *vehicle) {
     const dd2_vehicle_rotation inverse = {.x = -vehicle->rotation.x,
@@ -511,14 +517,123 @@ static bool dd2_pair_test_near_parallel_features(void) {
     return difference < dd2_pair_test_tolerance;
 }
 
+static double dd2_pair_test_band_center(double half, double angle, bool roll) {
+    const double shift = (roll ? 1 : -1) * dd2_pair_test_vertical_arm * sin(angle);
+    double low = fmax(-half, (-half * cos(angle)) + shift);
+    double high = fmin(half, (half * cos(angle)) + shift);
+    /* Each face direction reserves half the contact tolerance for flat-edge
+     * ties. The remaining height spread cuts a rectangle analytically. */
+    const double spread = (2 * half * fabs(sin(angle))) - (dd2_pair_test_band_width / 2);
+    if (spread > 0) {
+        const double width = 2 * half * cos(angle) * dd2_pair_test_band_width / spread;
+        if ((angle > 0) == roll) {
+            high = fmin(high, low + width);
+        } else {
+            low = fmax(low, high - width);
+        }
+    }
+    return (low + high) / 2;
+}
+
+typedef struct {
+    dd2_vehicle_vector origin;
+    double angle;
+    bool roll;
+} dd2_pair_band_case;
+
+static bool dd2_pair_test_face_case(dd2_pair_band_case input) {
+    dd2_vehicle cars[DD2_PAIR_TEST_BODIES] = {0};
+    dd2_vehicle_spawn spawn = {.position = input.origin};
+    if (!dd2_vehicle_reset(&cars[0], spawn)) {
+        return false;
+    }
+    spawn.position.y += (2 * dd2_pair_test_vertical_arm) - dd2_pair_test_band_overlap;
+    if (!dd2_vehicle_reset(&cars[1], spawn)) {
+        return false;
+    }
+    cars[1].rotation = (dd2_vehicle_rotation){.x = input.roll ? 0 : sin(input.angle / 2),
+                                              .z = input.roll ? sin(input.angle / 2) : 0,
+                                              .w = cos(input.angle / 2)};
+    dd2_car_contact hit = {0};
+    if (!dd2_car_contact_sweep(&cars[0], &cars[0], &cars[1], &cars[1], &hit) || hit.unresolved ||
+        hit.penetration <= 0) {
+        return false;
+    }
+    const double actual =
+        input.roll ? hit.point.x - spawn.position.x : hit.point.z - spawn.position.z;
+    const double half = input.roll ? dd2_pair_test_side_arm : dd2_pair_test_front_arm;
+    const double expected = dd2_pair_test_band_center(half, input.angle, input.roll);
+    if (fabs(actual - expected) > dd2_pair_test_tolerance ||
+        fabs(hit.normal.y + 1) > dd2_pair_test_tolerance) {
+        printf("Face band roll=%d angle=%.17g point=%.17g expected=%.17g\n", (int)input.roll,
+               input.angle, actual, expected);
+        return false;
+    }
+    return true;
+}
+
+static bool dd2_pair_test_band_collision(double factor) {
+    const double angle = factor * dd2_pair_test_band_width / (2 * dd2_pair_test_front_arm);
+    dd2_vehicle previous[DD2_PAIR_TEST_BODIES] = {0};
+    if (!dd2_pair_test_reset(&previous[0], 0) || !dd2_pair_test_reset(&previous[1], 0)) {
+        return false;
+    }
+    previous[1].position.y += (2 * dd2_pair_test_vertical_arm) - dd2_pair_test_band_overlap;
+    previous[1].rotation = (dd2_vehicle_rotation){.x = sin(angle / 2), .w = cos(angle / 2)};
+    previous[0].velocity.y = dd2_pair_test_band_speed;
+    dd2_vehicle next[DD2_PAIR_TEST_BODIES] = {0};
+    dd2_pair_test_motion(previous, next, DD2_PAIR_TEST_BODIES);
+    dd2_vehicle_collision_report report = {0};
+    if (!dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
+                                          &report) ||
+        report.count != 1 || report.contacts[0].impulse <= 0 ||
+        fabs(next[0].angular_velocity.x) >= dd2_pair_test_band_spin ||
+        fabs(next[1].angular_velocity.x) >= dd2_pair_test_band_spin ||
+        dd2_pair_test_energy(&next[0]) + dd2_pair_test_energy(&next[1]) >
+            dd2_pair_test_energy(&previous[0]) + dd2_pair_test_energy(&previous[1])) {
+        printf("Face band collision factor=%.17g contacts=%u impulse=%.17g spin=%.17g,%.17g\n",
+               factor, report.count, report.contacts[0].impulse, next[0].angular_velocity.x,
+               next[1].angular_velocity.x);
+        return false;
+    }
+    return true;
+}
+
+static bool dd2_pair_test_face_band(void) {
+    static const double factors[] = {0, 0.25, 0.5, 0.99999, 1.00001, 1.1, 1.49999, 1.50001, 2, 4};
+    static const dd2_vehicle_vector origins[] = {{.y = 5000},
+                                                 {.x = -1000000, .y = 1000000, .z = 20000000},
+                                                 {.x = 1000000, .y = -1000000, .z = -20000000}};
+    for (unsigned axis = 0; axis < DD2_PAIR_TEST_BODIES; ++axis) {
+        const bool roll = axis != 0;
+        const double half = roll ? dd2_pair_test_side_arm : dd2_pair_test_front_arm;
+        for (unsigned sign = 0; sign < DD2_PAIR_TEST_BODIES; ++sign) {
+            for (size_t sample = 0; sample < sizeof(factors) / sizeof(factors[0]); ++sample) {
+                const double angle =
+                    (sign == 0 ? 1 : -1) * factors[sample] * dd2_pair_test_band_width / (2 * half);
+                for (size_t origin = 0; origin < sizeof(origins) / sizeof(origins[0]); ++origin) {
+                    if (!dd2_pair_test_face_case((dd2_pair_band_case){
+                            .origin = origins[origin], .angle = angle, .roll = roll})) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    /* Crossing the old vertex-selection threshold must not create a distant
+     * lever arm. These closing collisions check the resulting physical spin. */
+    return dd2_pair_test_band_collision(factors[3]) && dd2_pair_test_band_collision(factors[4]);
+}
+
 int main(void) {
-    if (!dd2_pair_test_near_parallel_features() || !dd2_pair_test_rotation_precision() ||
-        !dd2_pair_test_touching_crossing() || !dd2_pair_test_common_motion() ||
-        !dd2_pair_test_small_closing() || !dd2_pair_test_head_on(false) ||
-        !dd2_pair_test_head_on(true) || !dd2_pair_test_glancing() ||
-        !dd2_pair_test_contact_continuity() || !dd2_pair_test_rotation() ||
-        !dd2_pair_test_chain() || !dd2_pair_test_bridge_and_invalid() ||
-        !dd2_pair_test_report_bound() || !dd2_pair_test_rotated_report()) {
+    if (!dd2_pair_test_face_band() || !dd2_pair_test_near_parallel_features() ||
+        !dd2_pair_test_rotation_precision() || !dd2_pair_test_touching_crossing() ||
+        !dd2_pair_test_common_motion() || !dd2_pair_test_small_closing() ||
+        !dd2_pair_test_head_on(false) || !dd2_pair_test_head_on(true) ||
+        !dd2_pair_test_glancing() || !dd2_pair_test_contact_continuity() ||
+        !dd2_pair_test_rotation() || !dd2_pair_test_chain() ||
+        !dd2_pair_test_bridge_and_invalid() || !dd2_pair_test_report_bound() ||
+        !dd2_pair_test_rotated_report()) {
         puts("car pair contacts: FAIL");
         return EXIT_FAILURE;
     }

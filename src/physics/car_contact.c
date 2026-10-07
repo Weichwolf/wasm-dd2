@@ -315,6 +315,25 @@ static dd2_vehicle_vector dd2_car_centroid(const dd2_car_polygon *polygon,
     return dd2_collision_scale(sum, 1 / (double)polygon->count);
 }
 
+static dd2_vehicle_vector dd2_car_band_direction(const dd2_car_box *incident, unsigned along,
+                                                 unsigned across, dd2_vehicle_vector outward) {
+    const unsigned axes[] = {along, across};
+    dd2_vehicle_vector direction = {0};
+    for (unsigned index = 0; index < sizeof(axes) / sizeof(axes[0]); ++index) {
+        const unsigned axis = axes[index];
+        const double slope = dd2_collision_dot(outward, incident->axes[axis]);
+        /* Reserve half the depth tolerance for each face direction. Height
+         * variation within that allowance describes the same supporting edge;
+         * subtract it continuously rather than amplifying a tiny tilt into a
+         * large change of a very thin polygon's area centroid. */
+        const double allowance = dd2_car_contact_tolerance / (4 * dd2_car_half[axis]);
+        const double selected = copysign(fmax(0, fabs(slope) - allowance), slope);
+        direction =
+            dd2_collision_add(direction, dd2_collision_scale(incident->axes[axis], selected));
+    }
+    return direction;
+}
+
 static dd2_vehicle_vector dd2_car_face_contact(const dd2_car_box *reference,
                                                const dd2_car_box *incident, unsigned face,
                                                dd2_vehicle_vector outward) {
@@ -333,27 +352,36 @@ static dd2_vehicle_vector dd2_car_face_contact(const dd2_car_box *reference,
     const dd2_vehicle_vector incident_center = dd2_collision_add(
         incident->center,
         dd2_collision_scale(incident->axes[incident_axis], sign * dd2_car_half[incident_axis]));
+    /* Construct the face around its own center. Its very small normal offsets
+     * must not lose precision when added to a distant world position. */
+    const dd2_vehicle_vector reference_center =
+        dd2_collision_add(center, dd2_collision_scale(incident_center, -1));
     const unsigned along = (incident_axis + 1) % DD2_CAR_AXES;
     const unsigned across = (incident_axis + 2) % DD2_CAR_AXES;
+    const dd2_vehicle_vector direction = dd2_car_band_direction(incident, along, across, outward);
     const double signs[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
     dd2_car_polygon polygon = {.count = 4};
     for (unsigned corner = 0; corner < 4; ++corner) {
         polygon.points[corner] = dd2_collision_add(
-            incident_center,
-            dd2_collision_add(
-                dd2_collision_scale(incident->axes[along], signs[corner][0] * dd2_car_half[along]),
-                dd2_collision_scale(incident->axes[across],
-                                    signs[corner][1] * dd2_car_half[across])));
+            dd2_collision_scale(incident->axes[along], signs[corner][0] * dd2_car_half[along]),
+            dd2_collision_scale(incident->axes[across], signs[corner][1] * dd2_car_half[across]));
     }
     for (unsigned axis = 0; axis < DD2_CAR_AXES; ++axis) {
         if (axis == face) {
             continue;
         }
-        polygon = dd2_car_clip(polygon, center, reference->axes[axis], dd2_car_half[axis]);
-        polygon = dd2_car_clip(polygon, center, dd2_collision_scale(reference->axes[axis], -1),
-                               dd2_car_half[axis]);
+        polygon =
+            dd2_car_clip(polygon, reference_center, reference->axes[axis], dd2_car_half[axis]);
+        polygon = dd2_car_clip(polygon, reference_center,
+                               dd2_collision_scale(reference->axes[axis], -1), dd2_car_half[axis]);
     }
-    polygon = dd2_car_clip(polygon, center, outward, dd2_car_contact_tolerance);
+    /* Use the same flat-edge allowance for the front patch. Otherwise a nearly
+     * parallel edge acquires a numerically skewed, extremely thin front slice
+     * before band selection can stabilize it. The allowance changes projected
+     * height by at most half the contact tolerance; the midpoint below halves
+     * the resulting normal offset again. The SAT normal/time remain exact. */
+    const double front = dd2_car_contact_tolerance + dd2_collision_dot(outward, reference_center);
+    polygon = dd2_car_clip(polygon, (dd2_vehicle_vector){0}, direction, front);
     if (polygon.count == 0) {
         return dd2_collision_scale(dd2_collision_add(center, incident_center), 1.0 / 2);
     }
@@ -361,20 +389,21 @@ static dd2_vehicle_vector dd2_car_face_contact(const dd2_car_box *reference,
      * incident face would move the impulse to a separating part of that face.
      * Parallel faces retain the area centroid and its clipping continuity. */
     double deepest = dd2_car_radius * 4;
+    dd2_vehicle_vector deepest_point = {0};
     for (unsigned index = 0; index < polygon.count; ++index) {
-        const double value = dd2_collision_dot(
-            dd2_collision_add(polygon.points[index], dd2_collision_scale(center, -1)), outward);
-        deepest = fmin(deepest, value);
-    }
-    dd2_car_polygon nearest = {0};
-    for (unsigned index = 0; index < polygon.count; ++index) {
-        const double value = dd2_collision_dot(
-            dd2_collision_add(polygon.points[index], dd2_collision_scale(center, -1)), outward);
-        if (value <= deepest + dd2_car_contact_tolerance) {
-            nearest.points[nearest.count++] = polygon.points[index];
+        const double value = dd2_collision_dot(polygon.points[index], direction);
+        if (value < deepest) {
+            deepest = value;
+            deepest_point = polygon.points[index];
         }
     }
-    const dd2_vehicle_vector point = dd2_car_centroid(&nearest, outward);
+    /* Clip the deepest contact band instead of selecting its vertices. A
+     * vertex crossing the tolerance otherwise discards an entire distant edge,
+     * abruptly moving the impulse arm by hundreds of units for a tiny tilt. */
+    const dd2_car_polygon nearest =
+        dd2_car_clip(polygon, deepest_point, direction, dd2_car_contact_tolerance);
+    const dd2_vehicle_vector point =
+        dd2_collision_add(incident_center, dd2_car_centroid(&nearest, outward));
     const double distance =
         dd2_collision_dot(dd2_collision_add(point, dd2_collision_scale(center, -1)), outward);
     return dd2_collision_add(point, dd2_collision_scale(outward, -distance / 2));
