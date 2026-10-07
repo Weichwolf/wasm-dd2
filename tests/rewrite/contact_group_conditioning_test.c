@@ -1,6 +1,8 @@
+#include "contact_chain_fixture.h"
 #include "physics/collision_math.h"
 #include "physics/contact_group.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -20,7 +22,15 @@ static const double dd2_conditioning_tolerance = 1e-6;
 static const double dd2_conditioning_position_tolerance = 1e-8;
 static const double dd2_conditioning_clearance = 0.0002;
 
-/* Certified event pose from the original arena-9 natural run at tick 4427.
+typedef struct {
+    const dd2_vehicle *initial;
+    unsigned body_count;
+    const dd2_group_contact *contacts;
+    unsigned contact_count;
+    const char *name;
+} dd2_conditioning_case;
+
+/* Certified rewrite event pose from an original-data arena-9 run at tick 4427.
  * Source fleet slots 3/4/5/19 form this isolated, poorly conditioned component.
  * The previous 4096-pass iteration fails at 9.83e-6 units/s residual. */
 static const dd2_vehicle dd2_conditioning_initial[DD2_CONDITIONING_BODIES] = {
@@ -108,10 +118,10 @@ static dd2_vehicle_vector dd2_conditioning_spin_momentum(const dd2_vehicle *body
                                                                    .z = spin.z * inertia_z});
 }
 
-static double dd2_conditioning_energy(const dd2_vehicle bodies[DD2_CONDITIONING_BODIES],
+static double dd2_conditioning_energy(const dd2_vehicle *bodies, unsigned count,
                                       dd2_vehicle_vector reference) {
     double energy = 0;
-    for (unsigned slot = 0; slot < DD2_CONDITIONING_BODIES; ++slot) {
+    for (unsigned slot = 0; slot < count; ++slot) {
         const dd2_vehicle *body = &bodies[slot];
         const dd2_vehicle_vector relative =
             dd2_collision_add(body->velocity, dd2_collision_scale(reference, -1));
@@ -121,14 +131,15 @@ static double dd2_conditioning_energy(const dd2_vehicle bodies[DD2_CONDITIONING_
     return energy;
 }
 
-static bool dd2_conditioning_conservation(const dd2_vehicle bodies[DD2_CONDITIONING_BODIES]) {
+static bool dd2_conditioning_conservation(const dd2_vehicle *bodies,
+                                          const dd2_conditioning_case *scenario) {
     dd2_vehicle_vector linear = {0};
     dd2_vehicle_vector angular = {0};
     dd2_vehicle_vector offset = {0};
     dd2_vehicle_vector reference = {0};
-    const dd2_vehicle_vector origin = dd2_conditioning_initial[0].position;
-    for (unsigned slot = 0; slot < DD2_CONDITIONING_BODIES; ++slot) {
-        const dd2_vehicle *before = &dd2_conditioning_initial[slot];
+    const dd2_vehicle_vector origin = scenario->initial[0].position;
+    for (unsigned slot = 0; slot < scenario->body_count; ++slot) {
+        const dd2_vehicle *before = &scenario->initial[slot];
         const dd2_vehicle *after = &bodies[slot];
         const dd2_vehicle_vector delta =
             dd2_collision_add(after->velocity, dd2_collision_scale(before->velocity, -1));
@@ -150,27 +161,28 @@ static bool dd2_conditioning_conservation(const dd2_vehicle bodies[DD2_CONDITION
             return false;
         }
     }
-    reference = dd2_collision_scale(reference, 1.0 / (double)DD2_CONDITIONING_BODIES);
+    reference = dd2_collision_scale(reference, 1.0 / scenario->body_count);
     return sqrt(dd2_collision_dot(linear, linear)) < dd2_conditioning_tolerance &&
            sqrt(dd2_collision_dot(angular, angular)) < dd2_conditioning_tolerance &&
            sqrt(dd2_collision_dot(offset, offset)) < dd2_conditioning_position_tolerance &&
-           dd2_conditioning_energy(bodies, reference) <=
-               dd2_conditioning_energy(dd2_conditioning_initial, reference);
+           dd2_conditioning_energy(bodies, scenario->body_count, reference) <=
+               dd2_conditioning_energy(scenario->initial, scenario->body_count, reference);
 }
 
-static bool dd2_conditioning_contact(const dd2_vehicle *bodies, dd2_group_contact contact,
+static bool dd2_conditioning_contact(const dd2_vehicle *bodies,
+                                     const dd2_conditioning_case *scenario, unsigned index,
                                      dd2_group_response response) {
+    const dd2_group_contact contact = scenario->contacts[index];
     dd2_vehicle_vector relative = {0};
     dd2_vehicle_vector displacement = {0};
     const unsigned slots[] = {contact.first, contact.second};
     for (unsigned side = 0; side < 2; ++side) {
         const unsigned slot = slots[side];
         const dd2_vehicle_vector arm = dd2_collision_add(
-            contact.point, dd2_collision_scale(dd2_conditioning_initial[slot].position, -1));
+            contact.point, dd2_collision_scale(scenario->initial[slot].position, -1));
         const dd2_vehicle_vector velocity = dd2_collision_point_velocity(&bodies[slot], arm);
-        const dd2_vehicle_vector offset =
-            dd2_collision_add(bodies[slot].position,
-                              dd2_collision_scale(dd2_conditioning_initial[slot].position, -1));
+        const dd2_vehicle_vector offset = dd2_collision_add(
+            bodies[slot].position, dd2_collision_scale(scenario->initial[slot].position, -1));
         relative = dd2_collision_add(relative, dd2_collision_scale(velocity, side == 0 ? 1 : -1));
         displacement =
             dd2_collision_add(displacement, dd2_collision_scale(offset, side == 0 ? 1 : -1));
@@ -198,32 +210,49 @@ static bool dd2_conditioning_contact(const dd2_vehicle *bodies, dd2_group_contac
                 dd2_conditioning_tolerance);
 }
 
-int main(void) {
-    dd2_vehicle bodies[DD2_CONDITIONING_BODIES] = {0};
-    for (unsigned slot = 0; slot < DD2_CONDITIONING_BODIES; ++slot) {
+static bool dd2_conditioning_run(const dd2_conditioning_case *scenario) {
+    dd2_vehicle bodies[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned slot = 0; slot < scenario->body_count; ++slot) {
         if (!dd2_vehicle_reset(&bodies[slot], (dd2_vehicle_spawn){0})) {
-            return EXIT_FAILURE;
+            return false;
         }
-        bodies[slot].position = dd2_conditioning_initial[slot].position;
-        bodies[slot].rotation = dd2_conditioning_initial[slot].rotation;
-        bodies[slot].velocity = dd2_conditioning_initial[slot].velocity;
-        bodies[slot].angular_velocity = dd2_conditioning_initial[slot].angular_velocity;
+        bodies[slot].position = scenario->initial[slot].position;
+        bodies[slot].rotation = scenario->initial[slot].rotation;
+        bodies[slot].velocity = scenario->initial[slot].velocity;
+        bodies[slot].angular_velocity = scenario->initial[slot].angular_velocity;
     }
     const dd2_group_query query = {.bodies = bodies,
-                                   .body_count = DD2_CONDITIONING_BODIES,
-                                   .contacts = dd2_conditioning_contacts,
-                                   .contact_count = DD2_CONDITIONING_CONTACTS};
+                                   .body_count = scenario->body_count,
+                                   .contacts = scenario->contacts,
+                                   .contact_count = scenario->contact_count};
     dd2_group_solution result = {0};
     bool valid =
-        dd2_contact_group_solve(&query, &result) && result.count == DD2_CONDITIONING_CONTACTS &&
+        dd2_contact_group_solve(&query, &result) && result.count == scenario->contact_count &&
         result.velocity_passes < DD2_CONDITIONING_PASS_LIMIT && result.accelerated_passes > 0 &&
-        result.rejected_extrapolations > 0 && dd2_conditioning_conservation(bodies);
-    for (unsigned index = 0; valid && index < DD2_CONDITIONING_CONTACTS; ++index) {
-        valid = dd2_conditioning_contact(bodies, dd2_conditioning_contacts[index],
-                                         result.contacts[index]);
+        result.rejected_extrapolations > 0 && dd2_conditioning_conservation(bodies, scenario);
+    for (unsigned index = 0; valid && index < scenario->contact_count; ++index) {
+        valid = dd2_conditioning_contact(bodies, scenario, index, result.contacts[index]);
     }
-    printf("Conditioned contact group: %s (passes=%u accepted=%u rejected=%u)\n",
+    printf("Conditioned contact group %s: %s (passes=%u accepted=%u rejected=%u)\n", scenario->name,
            valid ? "PASS" : "FAIL", result.velocity_passes, result.accelerated_passes,
            result.rejected_extrapolations);
+    return valid;
+}
+
+int main(void) {
+    const dd2_conditioning_case scenarios[] = {{.initial = dd2_conditioning_initial,
+                                                .body_count = DD2_CONDITIONING_BODIES,
+                                                .contacts = dd2_conditioning_contacts,
+                                                .contact_count = DD2_CONDITIONING_CONTACTS,
+                                                .name = "arena 9"},
+                                               {.initial = dd2_chain_initial,
+                                                .body_count = DD2_CHAIN_BODIES,
+                                                .contacts = dd2_chain_contacts,
+                                                .contact_count = DD2_CHAIN_CONTACTS,
+                                                .name = "arena 8"}};
+    bool valid = true;
+    for (unsigned index = 0; index < sizeof(scenarios) / sizeof(scenarios[0]); ++index) {
+        valid = dd2_conditioning_run(&scenarios[index]) && valid;
+    }
     return valid ? EXIT_SUCCESS : EXIT_FAILURE;
 }

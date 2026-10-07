@@ -13,7 +13,6 @@ static const double dd2_group_clearance = 1e-4;
 static const double dd2_group_velocity_tolerance = 1e-7;
 static const double dd2_group_position_tolerance = 1e-9;
 static const double dd2_group_active_tolerance = 1e-10;
-static const double dd2_group_normal_relaxation = 1.5;
 static const double dd2_group_position_relaxation = 1.8;
 static const double dd2_group_axis_tolerance = 1e-8;
 static const double dd2_group_secant_floor = 1e-30;
@@ -377,9 +376,10 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
             dd2_group_constraint *constraint = &workspace->constraints[index];
             const double speed =
                 dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
+            /* Exact unilateral coordinate response avoids amplifying coupled
+             * friction modes; the guarded secant handles slow convergence. */
             const double next =
-                fmax(0, constraint->normal_impulse -
-                            (dd2_group_normal_relaxation * speed / constraint->normal_mass));
+                fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass));
             dd2_group_apply(workspace, index,
                             dd2_collision_scale(contact.normal, next - constraint->normal_impulse));
             constraint->normal_impulse = next;

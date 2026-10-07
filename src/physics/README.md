@@ -300,8 +300,14 @@ and tangential friction are projected into their admissible cones, and every
 quantity is checked before application. A prediction is accepted only with a
 strictly smaller finite physical residual. Rejection restores exact saved motion
 and impulses. The velocity/position tolerances and pass bound are unchanged.
-`rewrite_contact_group_conditioning` freezes an original arena-9 four-car event
-which previously exceeded that bound. It checks released/active normals,
+Normal coordinate responses use their exact unilateral impulse without
+over-relaxation. Over-relaxation can amplify modes shared with Coulomb friction,
+even while individual secant predictions reduce the residual. A frozen
+eight-body/eight-support WASM event from arena 8 previously exceeded the bound
+despite those predictions; the exact coordinate response converges with the
+same residual tolerance and iteration bound.
+`rewrite_contact_group_conditioning` freezes that event and the original-data
+arena-9 four-car rewrite event which previously exceeded the bound. Both check released/active normals,
 Coulomb sliding/sticking, conserved linear/angular momentum, energy loss,
 position clearance, centered repair and unchanged orientation/physical clocks,
 including accepted and rejected predictions. These checks cover response at a
