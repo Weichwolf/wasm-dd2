@@ -103,13 +103,67 @@ prove all races or seasons. Successful raw output is hashed, reported and
 removed; the failed 81,622 input/query remains available. Receipt:
 /tmp/wasm-dd2/rewrite-position-66070/report.json.
 
+
+Sparse 1,024/4,096 velocity records and two Jacobian snapshots identify the
+81,622 failure. Both existing directions release two loaded wall supports;
+the resulting friction/load change needs a much larger branch transition.
+Full steps increase physical error, so backtracking accepts factors near
+6e-5 and convergence remains slow. A private unrefitted direction regresses
+an existing case. Analytic-only speculative refinement fixes the captured order
+but misses a reordered query whose analytic seed is singular. Those experiments
+are not production acceptance.
+
+Production now compares bounded speculative refinement after the existing
+coordinate restart, leaving the first phase and world-only behavior intact.
+Up to sixteen Newton steps re-evaluate loaded normals/friction from a full seed.
+Co-oriented world patches permit the existing projected Jacobian if the analytic
+seed is singular or its refinement cannot improve. One matrix is reused.
+Every original constraint remains checked; only a finite lower final physical
+residual replaces the outer iterate, otherwise exact state/better candidates
+are restored. No extra ordinary sweeps, material/tolerance/bound changes.
+
+Strict LLVM19 and all 34 Native/32 WASM CTests pass. Native/WASM/instrumented C
+pass twenty-one captured queries, sixty-eight captured-query orderings, twenty
+analytic friction cases and seventy-two analytic position cases. The new query
+takes 545 Native velocity passes (error 3.2301169239730312e-8), 513 WASM and
+513 sanitizer passes, with one restart; position takes 54 passes. The actual
+saved production input advances from 81,622 to 81,623. Native static stack
+usage is bounded; actual WASM cases exercise refinement within the 1 MiB stack.
+All eleven actual Native SDL, instrumented SDL and Chromium/WASM window/input
+checks pass. All eleven original-data ground checks pass on Native, WASM and
+instrumented C: 79,100 queries and 26,400 vehicle steps per target. Scoped
+Circuit-2/live and full eight-lap Circuit-5 race checks pass on all three targets.
+Circuit 5 takes 167,472 ticks and 3,341,440 vehicle steps, with 167,072 independent
+player geometry queries, player place 2 and 75 points; this is a scoped
+regression, not complete all-track racing acceptance.
+Receipt directory: /tmp/wasm-dd2/rewrite-refinement-81622/.
+
+The unchanged-bound production natural season again completes round 1 at
+287,087 ticks, with unchanged scores for all twenty drivers and correct
+championship consumption. Ordinary racing crosses 81,622 and next fails
+second-round advancement at 105,335. AI/frame/championship validity remain true;
+race and championship remain RACING. Player health is 0.36360009215113553,
+credited laps zero, throttle -0.6, brake zero and steering -1. This is a failed
+full-season attempt, despite the separately verified saved-input correction.
+The advancement contract remains active.
+
+A sparse diagnostic reproduces all eighty-one production JSON records exactly,
+including checkpoints, round-1 scores, failure and summary. Its single
+31,216-byte input fails identically under both production and diagnostic
+replayers: no advancement, step 105,335. Drivers 3/4 form five contacts, four
+world supports and one car pair. Velocity exhausts the unchanged 4,096-pass
+bound at residual 0.0015343071284616529; position repair is not reached. This
+identifies the failed stage, not its correction or full-season completion.
+Input/query/source/binary receipt: /tmp/wasm-dd2/rewrite-season-105335/report.json.
+Successful raw verification output is hashed, reported and removed; unresolved
+105,335 input/query evidence remains available.
+
 ## Next
 
-Freeze and inspect sparse velocity multipliers, material branches and correction
-attempts in the reproduced 81,622 eight-contact query before choosing further
-changes. Preserve all constraints, rollback, material laws and bounds. Continue
-ordinary racing after its correction; keep full campaigns and remaining gameplay
-under their existing owners.
+Diagnose the five-contact velocity failure at 105,335 with unchanged production
+inputs and bounds before choosing its correction. Retain source/binary-identified
+sparse input and query evidence. Keep full campaigns and remaining gameplay under
+their existing owners.
 
 ## Accept
 

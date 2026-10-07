@@ -16,7 +16,8 @@ enum {
     DD2_GROUP_NEWTON_DIMENSIONS = DD2_GROUP_NEWTON_AXES * DD2_VEHICLE_CONTACT_LIMIT,
     DD2_GROUP_NEWTON_PERIOD = 32,
     DD2_GROUP_NEWTON_DELAY = 512,
-    DD2_GROUP_NEWTON_SEARCHES = 16
+    DD2_GROUP_NEWTON_SEARCHES = 16,
+    DD2_GROUP_NEWTON_REFINEMENTS = 16
 };
 /* Late stick/slip roots need a smaller forward difference than coarse sweep
  * errors. Keep enough separation from cancellation in accumulated body motion;
@@ -821,14 +822,14 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
  * uses automatic storage, never allocation. Singular directions are skipped. Every
  * rejected/backtracked trial restores exact motion, and only a smaller physical residual is
  * accepted. */
-static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error,
-                                   dd2_group_newton_method method) {
+static bool dd2_group_newton_step(dd2_group_workspace *workspace, double *error,
+                                  dd2_group_newton_method method, dd2_group_linear_system *system) {
     const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, method);
-    dd2_group_linear_system system = {.dimensions = state.dimensions};
-    if (!dd2_group_newton_direction(workspace, &state, &system)) {
+    system->dimensions = state.dimensions;
+    if (!dd2_group_newton_direction(workspace, &state, system)) {
         return false;
     }
-    dd2_group_newton_prediction prediction = {&state, system.direction, 1};
+    dd2_group_newton_prediction prediction = {&state, system->direction, 1};
     for (unsigned attempt = 0; attempt < DD2_GROUP_NEWTON_SEARCHES; ++attempt) {
         const dd2_group_iterate candidate = dd2_group_newton_candidate(workspace, prediction);
         dd2_group_newton_apply(workspace, &state, &candidate);
@@ -842,6 +843,12 @@ static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error
     }
     dd2_group_restore(workspace, &state.base, state.motion);
     return false;
+}
+
+static bool dd2_group_newton_trial(dd2_group_workspace *workspace, double *error,
+                                   dd2_group_newton_method method) {
+    dd2_group_linear_system system = {0};
+    return dd2_group_newton_step(workspace, error, method, &system);
 }
 
 static void dd2_group_copy_motion(const dd2_group_workspace *workspace, dd2_group_motion *motion) {
@@ -858,7 +865,7 @@ static void dd2_group_copy_motion(const dd2_group_workspace *workspace, dd2_grou
  * refits, finite checks and exact rollback apply to both trials. World-only
  * groups retain their zero-friction-gradient alternate; the analytic material
  * direction handles pressure coupling with dynamic contact partners. */
-static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
+static bool dd2_group_newton_refitted(dd2_group_workspace *workspace, double *error) {
     bool supported = false;
     bool paired = false;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
@@ -896,12 +903,115 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     return false;
 }
 
+static bool dd2_group_normal_patch(const dd2_group_workspace *workspace) {
+    for (unsigned first = 0; first < workspace->query->contact_count; ++first) {
+        const dd2_group_contact source = workspace->query->contacts[first];
+        if (dd2_group_pair(source)) {
+            continue;
+        }
+        for (unsigned second = first + 1; second < workspace->query->contact_count; ++second) {
+            const dd2_group_contact target = workspace->query->contacts[second];
+            const dd2_vehicle_vector difference =
+                dd2_collision_add(source.normal, dd2_collision_scale(target.normal, -1));
+            if (!dd2_group_pair(target) && source.first == target.first &&
+                dd2_collision_dot(difference, difference) <
+                    dd2_group_axis_tolerance * dd2_group_axis_tolerance) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/* Co-oriented world supports can leave dependent active normal rows. Use the
+ * existing projected Jacobian only when the analytic seed is singular and
+ * such a patch exists; all inequalities remain in every physical check. */
+static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_newton_state *state,
+                                      dd2_group_linear_system *system) {
+    if (dd2_group_newton_direction(workspace, state, system)) {
+        return true;
+    }
+    if (!dd2_group_normal_patch(workspace)) {
+        return false;
+    }
+    *state = dd2_group_newton_prepare(workspace, DD2_GROUP_NEWTON_PROJECTED);
+    return dd2_group_newton_direction(workspace, state, system);
+}
+
+/* Refine a speculative branch after its full fitted step. Intermediate states
+ * stay private: the outer iterate changes only for a finite smaller residual.
+ * Re-evaluating loaded normals allows previously separating supports to load
+ * while friction directions settle. Reuse one bounded matrix for all steps. */
+static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *error) {
+    dd2_group_newton_state original =
+        dd2_group_newton_prepare(workspace, DD2_GROUP_NEWTON_CONSTITUTIVE);
+    dd2_group_linear_system system = {.dimensions = original.dimensions};
+    if (!dd2_group_refinement_seed(workspace, &original, &system)) {
+        return false;
+    }
+    const dd2_group_iterate seed = dd2_group_newton_candidate(
+        workspace, (dd2_group_newton_prediction){&original, system.direction, 1});
+    dd2_group_newton_apply(workspace, &original, &seed);
+    double current = dd2_group_velocity_error(workspace);
+    if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current)) {
+        for (unsigned refinement = 0; refinement < DD2_GROUP_NEWTON_REFINEMENTS; ++refinement) {
+            if (current < dd2_group_velocity_tolerance) {
+                break;
+            }
+            if (dd2_group_newton_step(workspace, &current, DD2_GROUP_NEWTON_CONSTITUTIVE,
+                                      &system)) {
+                continue;
+            }
+            if (!dd2_group_normal_patch(workspace) ||
+                !dd2_group_newton_step(workspace, &current, DD2_GROUP_NEWTON_PROJECTED, &system)) {
+                break;
+            }
+        }
+        if (current < *error) {
+            *error = current;
+            return true;
+        }
+    }
+    dd2_group_restore(workspace, &original.base, original.motion);
+    return false;
+}
+
+static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool coordinate) {
+    const dd2_group_iterate base = dd2_group_values(workspace);
+    dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_group_copy_motion(workspace, motion);
+    const double original_error = *error;
+    const bool corrected = dd2_group_newton_refitted(workspace, error);
+    bool paired = false;
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        paired = paired || dd2_group_pair(workspace->query->contacts[index]);
+    }
+    if (!coordinate || !paired) {
+        return corrected;
+    }
+    const dd2_group_iterate best = dd2_group_values(workspace);
+    dd2_group_motion best_motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_group_copy_motion(workspace, best_motion);
+    const double best_error = *error;
+    dd2_group_restore(workspace, &base, motion);
+    double refined_error = original_error;
+    const bool refined = dd2_group_newton_refine(workspace, &refined_error);
+    if (refined && (!corrected || refined_error < best_error)) {
+        *error = refined_error;
+        return true;
+    }
+    dd2_group_restore(workspace, &best, best_motion);
+    *error = best_error;
+    return corrected;
+}
+
 static bool dd2_group_newton_advance(dd2_group_workspace *workspace, unsigned pass,
                                      dd2_group_solution *result) {
     if (pass + 1 < DD2_GROUP_NEWTON_DELAY || (pass + 1) % DD2_GROUP_NEWTON_PERIOD != 0) {
         return false;
     }
-    const bool corrected = dd2_group_newton(workspace, &result->velocity_error);
+    const bool corrected =
+        dd2_group_newton(workspace, &result->velocity_error, result->coordinate_restarts > 0);
     result->accelerated_passes += (unsigned)corrected;
     return corrected;
 }

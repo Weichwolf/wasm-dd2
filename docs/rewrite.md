@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Twenty captured dense-contact
+almost parallel ground/wall supports. Twenty-one captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -277,8 +277,15 @@ responses, releases negative pressure and refits within contact_count + 1 solves
 Singular or non-improving fits preserve exact state. All twenty-four row
 orderings of the new four-contact query and forty-eight analytic tilted-plane
 cases check clearance, least-norm translation and released supports.
-The solver retains the stronger physical correction
-with unchanged material law, bounds and Coulomb acceptance.
+After restart, a mixed-group speculative branch can use up to sixteen bounded
+Newton refinements while contact loads and friction directions settle.
+Intermediate states remain private; only a finite lower full physical residual
+can replace the outer iterate. Co-oriented world patches permit a projected
+Jacobian fallback if the analytic seed is singular or refinement cannot improve.
+Sixteen additional orderings
+of the captured eight-contact query preserve independent physical checks.
+The solver retains the stronger physical correction with unchanged material law,
+bounds and Coulomb acceptance.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or
 clock changes. Groups beyond the report budget retain conservative serial

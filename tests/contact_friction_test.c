@@ -13,7 +13,8 @@ enum {
     DD2_FRICTION_PASS_LIMIT = 4096,
     DD2_FRICTION_PAIR = 2,
     DD2_FRICTION_COUPLED_CONTACTS = 7,
-    DD2_FRICTION_GROUND_CONTACTS = 4
+    DD2_FRICTION_GROUND_CONTACTS = 4,
+    DD2_FRICTION_REFINEMENT_CONTACTS = 8
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -313,6 +314,32 @@ static bool dd2_friction_ground_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_refinement_orderings(void) {
+    for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
+        for (unsigned start = 0; start < DD2_FRICTION_REFINEMENT_CONTACTS; ++start) {
+            dd2_group_contact contacts[DD2_FRICTION_REFINEMENT_CONTACTS] = {0};
+            for (unsigned index = 0; index < DD2_FRICTION_REFINEMENT_CONTACTS; ++index) {
+                const unsigned offset =
+                    reversed != 0 ? DD2_FRICTION_REFINEMENT_CONTACTS - index : index;
+                contacts[index] =
+                    dd2_friction_championship_refinement_contacts[(start + offset) %
+                                                                  DD2_FRICTION_REFINEMENT_CONTACTS];
+            }
+            const dd2_friction_case scenario = {.initial =
+                                                    dd2_friction_championship_refinement_bodies,
+                                                .contacts = contacts,
+                                                .body_count = DD2_FRICTION_PAIR,
+                                                .contact_count = DD2_FRICTION_REFINEMENT_CONTACTS,
+                                                .name = "championship refinement support ordering"};
+            printf("Refinement support ordering: start=%u reversed=%u\n", start, reversed);
+            if (!dd2_friction_run(&scenario)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
@@ -341,7 +368,7 @@ int main(void) {
         }
     }
     if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true) ||
-        !dd2_friction_ground_orderings()) {
+        !dd2_friction_ground_orderings() || !dd2_friction_refinement_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

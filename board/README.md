@@ -67,7 +67,15 @@ at 81,622. Production-equivalent input/query replay identifies an eight-contact
 velocity failure; position is not reached. All eleven actual Native/sanitized/
 Chromium input checks, all eleven original-data ground checks and six scoped
 Circuit-2/live plus Circuit-5/eight-lap target scopes pass.
-Full-campaign acceptance remains open. A separately
+A bounded nonlinear branch refinement now advances the saved 81,622 input.
+Twenty-one captured queries and sixty-eight orderings pass Native/WASM/ASan/
+UBSan alongside strict gates. All eleven actual Native/sanitized/Chromium input
+checks and original-data ground checks pass; Circuit-2/live and the complete
+eight-lap Circuit-5 race pass on all three targets. The natural season completes
+round 1 with unchanged scores, crosses 81,622 and next fails at second-round
+tick 105,335. Sparse production-equivalent replay identifies a five-contact
+velocity failure, retaining its input/query for diagnosis. Full-campaign
+acceptance remains open. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 

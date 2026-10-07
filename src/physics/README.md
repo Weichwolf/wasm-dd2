@@ -360,6 +360,22 @@ displacement cannot form a false fixed-point prediction. The dense matrix has
 at most 192 axes in automatic storage, with no allocation or contact omission.
 Corrections and restarts share the existing 4,096-pass bound.
 
+After the bounded restart, mixed car/world groups also compare a refined
+speculative branch from the same exact input. A full fitted seed may require
+previously separating supports to load while friction directions change. Up to
+sixteen Newton steps re-evaluate those branches, each with existing pressure
+refits, cone projection and bounded backtracking. Intermediate seed/refinement
+states remain private and may exceed the outer error; the final candidate must
+have finite motion and a strictly smaller full physical residual. Failure
+restores exact input, and a weaker candidate restores the previously better
+correction. Co-oriented world supports on one body permit the existing
+projected Jacobian when the analytic seed is singular or refinement cannot
+improve.
+Groups without that patch retain the analytic path. One bounded matrix is reused
+for every refinement; there are no additional ordinary sweeps or allocations.
+The first accelerated phase, world-only behavior, material laws, final tolerances
+and total ordinary-pass bound remain unchanged.
+
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a
 nine-contact/seven-body world-friction mode, a fifteen-contact/twelve-body chain
@@ -375,9 +391,11 @@ the tick-107,550 position-repair failure, with five nearly coincident wall
 inequalities of different strength. A four-contact query captures the later
 trajectory's tick-66,070 position failure with two differently tilted ground
 planes, a wall and one car pair. All twenty-four orderings of those four equations
-retain the same independent physical checks. Fourteen rotations/reversals of each query
+retain the same independent physical checks. An eight-contact query freezes
+the tick-81,622 mixed-support velocity failure; sixteen rotations/reversals
+retain all impulse, material, energy, clearance and clock checks. Fourteen rotations/reversals of each query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty frozen queries retain
+twenty-one frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
