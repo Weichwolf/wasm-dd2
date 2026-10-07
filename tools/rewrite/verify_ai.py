@@ -18,6 +18,7 @@ from pathlib import Path
 import struct
 import subprocess
 import sys
+import time
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from artifacts import WORK, check_space, prepare_output, run_bounded
@@ -87,14 +88,15 @@ def main():
     rows=list(struct.iter_unpack('<2i',image[0x63dcc:0x63e2c])); calls=[]
     def run(command,label):
         path=output/(label+'.log')
+        started=time.monotonic()
         with path.open('wb') as log:
-            # A dense arena completes about 50 simulation seconds in 180 wall
-            # seconds under ASan. Keep the full 60-second scenario and allow
-            # bounded instrumentation overhead; native/WASM retain their bound.
+            # Keep the full 60-second scenario with bounded sanitizer overhead.
+            # These deadlines apply independently to each target process.
             timeout=360 if str(sanitized) in command else 180
             result=run_bounded(command,directory=output,timeout=timeout,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
         content=path.read_text(errors='replace')
-        calls.append(dict(label=label,returncode=result.returncode,log_sha256=digest(path)))
+        calls.append(dict(label=label,returncode=result.returncode,
+                          elapsed_seconds=time.monotonic()-started,log_sha256=digest(path)))
         if result.returncode or 'Sanitizer:' in content or 'runtime error:' in content:
             raise RuntimeError(label+' failed: '+content[-3000:])
         return [json.loads(s) for s in content.splitlines() if s.startswith('{')]
@@ -102,7 +104,10 @@ def main():
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision','damage')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps','race','recovery','sound_events')]
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]+[ROOT/'src/platform/file.c']
-    flags=['-std=c11','-O1','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests/rewrite'),
+    # Match production optimization while retaining ASan/UBSan on every rewrite
+    # unit. Dense support iterations otherwise spend the bounded run in O1
+    # instrumentation overhead; simulation length and deadlines stay unchanged.
+    flags=['-std=c11','-O3','-g','-I',str(ROOT/'src'),'-I',str(ROOT/'tests/rewrite'),
            '-Wall','-Wextra','-Wpedantic','-Wno-unused-parameter','-Wno-unused-function',
            '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
            '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
@@ -166,7 +171,8 @@ def main():
     sources += [ROOT/'tests/rewrite/ai_export.c',ROOT/'tests/rewrite/ai_test.c',ROOT/'tests/rewrite/surface_fixture.h',ROOT/'CMakeLists.txt',Path(__file__).resolve()]
     binaries=[WORK/'rewrite-native/dd2_ai_export',WORK/'rewrite-wasm/dd2_ai_export.wasm',sanitized,synthetic]
     report=dict(pass_=True,scope=__doc__.strip(),verified_at=datetime.now(timezone.utc).isoformat(),
-                original_sha256=ORIGINAL_SHA256,calls=calls,levels=levels,path_queries_per_target=path_queries,
+                original_sha256=ORIGINAL_SHA256,calls=calls,sanitizer_flags=flags,
+                levels=levels,path_queries_per_target=path_queries,
                 seconds_per_level=60,vehicle_steps_per_target=2640000,
                 source_sha256={str(p.relative_to(ROOT)):digest(p) for p in sources},binary_sha256={str(p):digest(p) for p in binaries})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')

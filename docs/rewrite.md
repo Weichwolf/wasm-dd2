@@ -215,7 +215,9 @@ pursuit targets. Dense pursuit fields can exhaust the shared 64-contact solver
 budget; the solver then retains checked poses instead of accepting residual
 travel. The fleet solver now collects connected support neighborhoods at the actual
 swept event time, applies primary restitution once, and jointly solves inelastic
-normal/friction support and position repair. World supports retain Coulomb sticking;
+normal/friction support and position repair. Pair proximity now determines the primary contact’s connected component before
+querying world supports, avoiding road/barrier queries for unrelated cars while
+retaining contact order and solver budgets. World supports retain Coulomb sticking;
 car-pair friction permits at most 0.1 world units/s of low-speed creep, with
 unchanged Coulomb saturation above that threshold. Six captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning; see

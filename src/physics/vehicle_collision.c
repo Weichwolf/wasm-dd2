@@ -504,7 +504,7 @@ static void dd2_fleet_remainder(dd2_vehicle *start, dd2_vehicle *next, unsigned 
 }
 
 /* One primary contact plus every body probe/corner and unordered pair.
- * Collection keeps all constraints until connected-component filtering. */
+ * World constraints are queried only for the primary pair-connected component. */
 enum {
     DD2_FLEET_GROUP_LIMIT =
         1 + (DD2_VEHICLE_FLEET_LIMIT * (DD2_COLLISION_PROBES + DD2_VEHICLE_BODY_CORNERS)) +
@@ -565,12 +565,15 @@ static void dd2_fleet_group_add(dd2_fleet_neighborhood *group, dd2_fleet_event e
 }
 
 static void dd2_fleet_near_barriers(const dd2_fleet_group_query *query,
-                                    dd2_fleet_neighborhood *group) {
+                                    dd2_fleet_neighborhood *group, const bool *connected) {
     if (query->world == NULL) {
         return;
     }
     const double margin = 2 * dd2_collision_clearance;
     for (unsigned body = 0; body < query->count; ++body) {
+        if (!connected[body]) {
+            continue;
+        }
         const dd2_vehicle *vehicle = &query->bodies[body];
         for (unsigned probe = 0; probe < DD2_COLLISION_PROBES; ++probe) {
             const double local_z =
@@ -593,13 +596,16 @@ static void dd2_fleet_near_barriers(const dd2_fleet_group_query *query,
     }
 }
 
-static void dd2_fleet_near_ground(const dd2_fleet_group_query *query,
-                                  dd2_fleet_neighborhood *group) {
+static void dd2_fleet_near_ground(const dd2_fleet_group_query *query, dd2_fleet_neighborhood *group,
+                                  const bool *connected) {
     if (query->surface == NULL) {
         return;
     }
     const double margin = 2 * dd2_collision_clearance;
     for (unsigned body = 0; body < query->count; ++body) {
+        if (!connected[body]) {
+            continue;
+        }
         const dd2_vehicle *vehicle = &query->bodies[body];
         for (unsigned corner = 0; corner < DD2_VEHICLE_BODY_CORNERS; ++corner) {
             const dd2_vehicle_vector point = dd2_collision_add(
@@ -648,29 +654,40 @@ static void dd2_fleet_near_pairs(const dd2_fleet_group_query *query,
     }
 }
 
-static void dd2_fleet_group_connected(const dd2_fleet_group_query *query,
-                                      dd2_fleet_neighborhood *group) {
-    bool connected[DD2_VEHICLE_FLEET_LIMIT] = {false};
+static void dd2_fleet_group_connections(const dd2_fleet_group_query *query,
+                                        const dd2_fleet_neighborhood *pairs, bool *connected) {
     connected[query->primary.first] = true;
     if (query->primary.pair) {
         connected[query->primary.second] = true;
     }
     for (unsigned pass = 0; pass < query->count; ++pass) {
-        for (unsigned index = 0; index < group->count; ++index) {
-            const dd2_fleet_event event = group->events[index];
-            if (event.pair && (connected[event.first] || connected[event.second])) {
+        for (unsigned index = 0; index < pairs->count; ++index) {
+            const dd2_fleet_event event = pairs->events[index];
+            if (connected[event.first] || connected[event.second]) {
                 connected[event.first] = true;
                 connected[event.second] = true;
             }
         }
     }
-    unsigned used = 0;
-    for (unsigned index = 0; index < group->count; ++index) {
-        if (connected[group->events[index].first]) {
-            group->events[used++] = group->events[index];
+}
+
+/* World contacts cannot connect separate bodies. Find the pair component first,
+ * then query only its bodies, keeping primary/world/pair insertion order intact. */
+static void dd2_fleet_collect_group(const dd2_fleet_group_query *query,
+                                    dd2_fleet_neighborhood *group) {
+    dd2_fleet_neighborhood pairs = {0};
+    dd2_fleet_near_pairs(query, &pairs);
+    bool connected[DD2_VEHICLE_FLEET_LIMIT] = {false};
+    dd2_fleet_group_connections(query, &pairs, connected);
+    dd2_fleet_group_add(group, query->primary);
+    dd2_fleet_near_barriers(query, group, connected);
+    dd2_fleet_near_ground(query, group, connected);
+    for (unsigned index = 0; index < pairs.count; ++index) {
+        if (connected[pairs.events[index].first]) {
+            dd2_fleet_group_add(group, pairs.events[index]);
         }
     }
-    group->count = used;
+    group->overflow = group->overflow || pairs.overflow;
 }
 
 static double dd2_fleet_group_closing(const dd2_vehicle *bodies, dd2_fleet_event event) {
@@ -760,11 +777,7 @@ static bool dd2_fleet_respond(const dd2_fleet_group_query *query,
                               double remaining) {
     dd2_fleet_neighborhood group = {0};
     if (!*serial) {
-        dd2_fleet_group_add(&group, query->primary);
-        dd2_fleet_near_barriers(query, &group);
-        dd2_fleet_near_ground(query, &group);
-        dd2_fleet_near_pairs(query, &group);
-        dd2_fleet_group_connected(query, &group);
+        dd2_fleet_collect_group(query, &group);
         *serial = group.overflow || group.count > DD2_VEHICLE_CONTACT_LIMIT - recorded->count;
     }
     if (*serial) {

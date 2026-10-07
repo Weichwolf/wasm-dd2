@@ -429,3 +429,9 @@ checks an analytic wall/pair pressure cascade, sliding/sticking Coulomb friction
 two-point rotational support with active/released contacts, invalid queries and
 bounded failure for contradictory position constraints. These establish targeted
 joint-solver behavior; complete original-data arena coverage remains required.
+
+Contact collection first determines the primary event’s connected component from
+car-pair proximity. Only that component queries road and barrier support; world
+contacts cannot connect separate cars. Primary, barrier, ground and pair insertion
+order, support deduplication, contact budgets and response rules are preserved.
+This avoids repeated world queries for unrelated cars during dense-field events.
