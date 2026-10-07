@@ -40,7 +40,8 @@ unit-mobility/Jacobian snapshots. It reproduces the velocity failure at
 with one restart and no position repair. The constitutive matrix condition at
 pass 4,096 is about 4.11e+05. These are sparse
 standalone observations, not a valid root or production correction.
-Receipt: /tmp/wasm-dd2/rewrite-season-after-118647/sparse-analysis.json.
+Archived diagnosis/source-output identities:
+/tmp/wasm-dd2/rewrite-season-after-118647/diagnosis.json.
 
 Independent unit-mobility analysis finds a physical root with contact 1 (driver
 4's wall) unloaded and separating at 0.07392688476743503 units/s. The other ten
@@ -54,8 +55,8 @@ but fails rotation 2. Starting the coupled release fit directly from the exact
 outer state passes the query and all 22 rotations/reversals, plus all existing
 physical regressions. The production change uses that direct fit, preserving
 all ordinary bounds, material laws, tolerances and physical acceptance.
-Receipts: /tmp/wasm-dd2/rewrite-season-after-118647/mixed-root-candidates.json
-and /tmp/wasm-dd2/rewrite-season-after-118647/release-refit-experiments.json.
+Root calculations, ablations and sparse traces are archived in
+/tmp/wasm-dd2/rewrite-release-128036/independent-diagnosis.json.
 Production Native and instrumented C advance the saved owner input to tick
 128,037. Both standalone queries converge at velocity pass 641, with one restart,
 residual below 1.4e-13 and 56 position passes below 9.7e-10. All strict LLVM19
@@ -93,3 +94,8 @@ The advancement contract is proved by the saved-input checks, independent
 physical fixtures, strict gates, original-data/actual-input regressions and the
 natural prefix in advancement-report.json. Full-season/all-game acceptance
 remains open.
+
+Completed window/ground/race captures and the resolved tick-128,036 raw input
+and diagnostic helpers have been removed after archiving their identities and
+proof. The running season's executable, log and sparse diagnostic files remain
+available. Retained reports record the published code commit 9795cc3.
