@@ -264,6 +264,7 @@ typedef struct {
     unsigned second;
     bool ground;
     bool pair;
+    bool unresolved;
 } dd2_fleet_event;
 enum {
     DD2_FLEET_EVENT_LIMIT =
@@ -276,6 +277,7 @@ static bool dd2_fleet_contact(const dd2_vehicle *start, const dd2_vehicle *end, 
     dd2_fleet_event events[DD2_FLEET_EVENT_LIMIT] = {0};
     unsigned found = 0;
     double earliest = 1;
+    double unresolved_time = 2;
     for (unsigned body = 0; body < count; ++body) {
         dd2_barrier_contact contact = {0};
         bool touching =
@@ -302,18 +304,23 @@ static bool dd2_fleet_contact(const dd2_vehicle *start, const dd2_vehicle *end, 
                 events[found++] = (dd2_fleet_event){.first = first,
                                                     .second = second,
                                                     .pair = true,
+                                                    .unresolved = contact.unresolved,
                                                     .contact = {.time = contact.time,
                                                                 .penetration = contact.penetration,
                                                                 .normal = contact.normal,
                                                                 .point = contact.point}};
                 earliest = fmin(earliest, contact.time);
+                if (contact.unresolved) {
+                    unresolved_time = fmin(unresolved_time, contact.time);
+                }
             }
         }
     }
     /* Stable world/body order before pair lexicographic order, anchored globally
      * to earliest time. A tolerance chain must not depend on visitation order. */
     for (unsigned index = 0; index < found; ++index) {
-        if (events[index].contact.time <= earliest + dd2_collision_time_tolerance) {
+        if (events[index].contact.time <= earliest + dd2_collision_time_tolerance &&
+            events[index].contact.time <= unresolved_time) {
             *event = events[index];
             return true;
         }
@@ -513,6 +520,12 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
                                                          event.contact.time);
             next[body].rotation = dd2_collision_rotation(start[body].rotation, next[body].rotation,
                                                          event.contact.time);
+        }
+        if (event.unresolved) {
+            /* A conservative time bound is not a physical collision. Keep
+             * checked poses without inventing impulse, damage or attribution. */
+            ++recorded.unresolved_sweeps;
+            break;
         }
         dd2_vehicle_contact contact = {0};
         if (report != NULL) {

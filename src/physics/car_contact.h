@@ -10,12 +10,16 @@ typedef struct {
     double penetration;
     dd2_vehicle_vector normal; /* From second toward first. */
     dd2_vehicle_vector point;
+    bool unresolved; /* Conservative time bound; no physical point or impulse. */
 } dd2_car_contact;
 
 /* Source-sized oriented boxes, including roll/pitch and separate bridge heights.
- * Exact continuous translation per angular piece; rotation uses conservative
- * envelopes around the midpoint orientation, at most 0.01 rad per piece for
- * normal fixed-step motion. This is a body proxy, not mesh collision.
+ * Continuous translation/rotation with conservative endpoint envelopes for
+ * rotating SAT axes, refined until an actual-pose SAT check confirms contact.
+ * Initial angular pieces target 0.01 rad, capped at 64. Each query uses at most
+ * 512 refinement windows, at most 48 levels deep. Exhaustion returns true with
+ * unresolved set and an earliest possible time; the caller must stop there
+ * without applying an impulse. This is a body proxy, not mesh collision.
  * Clears output on no contact or invalid/nonfinite state. No allocations.
  * Equal-time axis ties use fixed source-axis order. Relative normal travel
  * within 1e-6 world units per sweep is stationary for contact selection; a

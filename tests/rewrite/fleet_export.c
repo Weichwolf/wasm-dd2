@@ -224,9 +224,10 @@ static bool dd2_fleet_probe_drive(dd2_driving *driving, unsigned level, bool acc
                 ? (dd2_vehicle_control){.throttle = -1}
                 : (dd2_vehicle_control){.throttle = 1, .steer = dd2_fleet_probe_arena_steer};
         for (unsigned part = 0; part < DD2_FLEET_PROBE_PARTS && valid; ++part) {
-            valid = dd2_driving_advance(
-                driving,
-                (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS, .control = control});
+            valid = dd2_driving_advance(driving,
+                                        (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS,
+                                                            .control = control}) &&
+                    dd2_driving_contact_report(driving)->unresolved_sweeps == 0;
             if (valid) {
                 dd2_fleet_probe_tick(driving, (frame * DD2_FLEET_PROBE_PARTS) + part + 1,
                                      accident_probe);

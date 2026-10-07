@@ -9,7 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { DD2_PAIR_TEST_BODIES = 2, DD2_PAIR_TEST_CHAIN = 3 };
+enum {
+    DD2_PAIR_TEST_BODIES = 2,
+    DD2_PAIR_TEST_CHAIN = 3,
+    DD2_PAIR_ROTATION_CASES = 60,
+    DD2_PAIR_ROOT_STEPS = 60
+};
 static const double dd2_pair_test_height = 5000;
 static const double dd2_pair_test_distance = 1000;
 static const double dd2_pair_test_fast = 200000;
@@ -364,13 +369,156 @@ static bool dd2_pair_test_small_closing(void) {
            report.count == 1 && report.contacts[0].impulse > 0;
 }
 
+typedef struct {
+    unsigned axis;
+    double turn;
+    double sign;
+    bool collision;
+} dd2_pair_rotation_case;
+typedef struct {
+    double extent;
+    double side;
+    double peak;
+    double gap;
+    double turn;
+} dd2_pair_rotation_geometry;
+static double dd2_pair_test_rotation_time(dd2_pair_rotation_geometry geometry) {
+    double low = 0;
+    double high = geometry.peak;
+    for (unsigned iteration = 0; iteration < DD2_PAIR_ROOT_STEPS; ++iteration) {
+        const double middle = (low + high) / 2;
+        if ((geometry.extent * cos(middle)) + (geometry.side * sin(middle)) - geometry.extent <
+            geometry.gap) {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    const double tangent = tan(high / 2);
+    return tangent / (sin(geometry.turn / 2) + ((1 - cos(geometry.turn / 2)) * tangent));
+}
+static bool dd2_pair_test_rotation_case(dd2_pair_rotation_case test) {
+    const double extent = test.axis == 2 ? 186 : 450;
+    const double side = test.axis == 1 ? 186 : 130;
+    const double peak = fmin(test.turn, atan2(side, extent));
+    const double reach = (extent * cos(peak)) + (side * sin(peak)) - extent;
+    const double gap = test.collision ? reach / 2 : reach + 0.01;
+    dd2_vehicle start[2] = {0};
+    dd2_vehicle end[2] = {0};
+    if (!dd2_pair_test_reset(&start[0], 0) || !dd2_pair_test_reset(&start[1], 0)) {
+        return false;
+    }
+    if (test.axis == 2) {
+        start[1].position.x = (2 * extent) + gap;
+    } else {
+        start[1].position.z = (2 * extent) + gap;
+    }
+    end[0] = start[0];
+    end[1] = start[1];
+    const double sine = sin(test.turn / 2) * test.sign;
+    end[0].rotation = (dd2_vehicle_rotation){.x = test.axis == 0 ? sine : 0,
+                                             .y = test.axis == 1 ? sine : 0,
+                                             .z = test.axis == 2 ? sine : 0,
+                                             .w = cos(test.turn / 2)};
+    dd2_car_contact hit = {0};
+    const bool found = dd2_car_contact_sweep(&start[0], &end[0], &start[1], &end[1], &hit);
+    if (found != test.collision || hit.unresolved) {
+        return false;
+    }
+    if (!found) {
+        return true;
+    }
+    /* Independent corner reach and quaternion interpolation determine the
+     * first contact, without using the sweep's SAT axes or envelopes. */
+    const double expected = dd2_pair_test_rotation_time((dd2_pair_rotation_geometry){
+        .extent = extent, .side = side, .peak = peak, .gap = gap, .turn = test.turn});
+    const double quaternion_y = expected * sin(test.turn / 2);
+    const double quaternion_w = 1 - (expected * (1 - cos(test.turn / 2)));
+    const double angle = 2 * atan2(quaternion_y, quaternion_w);
+    const double rate = (side * cos(angle) - extent * sin(angle)) * 2 * sin(test.turn / 2) /
+                        ((quaternion_y * quaternion_y) + (quaternion_w * quaternion_w));
+    const double tolerance = (3 * dd2_pair_test_tolerance) / rate;
+    if (fabs(hit.time - expected) > tolerance || hit.penetration > (3 * dd2_pair_test_tolerance)) {
+        printf("Rotating precision axis=%u turn=%.17g hit=%.17g expected=%.17g depth=%.17g\n",
+               test.axis, test.turn, hit.time, expected, hit.penetration);
+        return false;
+    }
+    return true;
+}
+static bool dd2_pair_test_rotation_precision(void) {
+    static const double turns[] = {0.0005, 0.005, 0.05, 0.32, 1};
+    for (unsigned index = 0; index < DD2_PAIR_ROTATION_CASES; ++index) {
+        const dd2_pair_rotation_case test = {.axis = index / 20,
+                                             .turn = turns[(index / 4) % 5],
+                                             .sign = ((index / 2) % 2) == 0 ? 1 : -1,
+                                             .collision = (index % 2) != 0};
+        if (!dd2_pair_test_rotation_case(test)) {
+            return false;
+        }
+    }
+    return true;
+}
+static bool dd2_pair_test_touching_crossing(void) {
+    dd2_vehicle start[2] = {0};
+    dd2_vehicle end[2] = {0};
+    if (!dd2_pair_test_reset(&start[0], -2 * dd2_pair_test_front_arm) ||
+        !dd2_pair_test_reset(&start[1], 0)) {
+        return false;
+    }
+    end[0] = start[0];
+    end[1] = start[1];
+    end[0].position.z = 2 * dd2_pair_test_front_arm;
+    dd2_car_contact hit = {0};
+    return dd2_car_contact_sweep(&start[0], &end[0], &start[1], &end[1], &hit) && !hit.unresolved &&
+           hit.time == 0;
+}
+
+static dd2_vehicle_rotation dd2_pair_test_pitch_yaw(dd2_vehicle_vector angles) {
+    return (dd2_vehicle_rotation){.x = sin(angles.x / 2) * cos(angles.y / 2),
+                                  .y = cos(angles.x / 2) * sin(angles.y / 2),
+                                  .z = -sin(angles.x / 2) * sin(angles.y / 2),
+                                  .w = cos(angles.x / 2) * cos(angles.y / 2)};
+}
+static bool dd2_pair_test_near_parallel_features(void) {
+    static const dd2_vehicle_vector angles[DD2_PAIR_TEST_BODIES] = {
+        {.x = -0.00023104685182753293, .y = -1.5707963267948966},
+        {.x = 0.00043841613351469372, .y = -1.5707963267948966}};
+    static const dd2_vehicle_vector offset = {
+        .x = -899.99900000000002, .y = 0.212744303728, .z = -0.36603131272848299};
+    dd2_vehicle cars[DD2_PAIR_TEST_BODIES] = {0};
+    if (!dd2_pair_test_reset(&cars[0], 0) || !dd2_pair_test_reset(&cars[1], 0)) {
+        return false;
+    }
+    cars[1].position.x += offset.x;
+    cars[1].position.y += offset.y;
+    cars[1].position.z += offset.z;
+    cars[0].rotation = dd2_pair_test_pitch_yaw(angles[0]);
+    dd2_car_contact hits[DD2_PAIR_TEST_BODIES] = {0};
+    for (unsigned variant = 0; variant < DD2_PAIR_TEST_BODIES; ++variant) {
+        dd2_vehicle_vector changed = angles[1];
+        changed.y += (variant == 0 ? -1 : 1) * dd2_pair_test_tiny_tilt;
+        cars[1].rotation = dd2_pair_test_pitch_yaw(changed);
+        if (!dd2_car_contact_sweep(&cars[0], &cars[0], &cars[1], &cars[1], &hits[variant]) ||
+            hits[variant].unresolved || hits[variant].penetration <= 0) {
+            return false;
+        }
+    }
+    /* A 2e-12 yaw perturbation must not choose a different distant edge
+     * when face/cross SAT depths describe the same contact within tolerance. */
+    const double difference =
+        hypot(hypot(hits[0].point.x - hits[1].point.x, hits[0].point.y - hits[1].point.y),
+              hits[0].point.z - hits[1].point.z);
+    return difference < dd2_pair_test_tolerance;
+}
+
 int main(void) {
-    if (!dd2_pair_test_common_motion() || !dd2_pair_test_small_closing() ||
-        !dd2_pair_test_head_on(false) || !dd2_pair_test_head_on(true) ||
-        !dd2_pair_test_glancing() || !dd2_pair_test_contact_continuity() ||
-        !dd2_pair_test_rotation() || !dd2_pair_test_chain() ||
-        !dd2_pair_test_bridge_and_invalid() || !dd2_pair_test_report_bound() ||
-        !dd2_pair_test_rotated_report()) {
+    if (!dd2_pair_test_near_parallel_features() || !dd2_pair_test_rotation_precision() ||
+        !dd2_pair_test_touching_crossing() || !dd2_pair_test_common_motion() ||
+        !dd2_pair_test_small_closing() || !dd2_pair_test_head_on(false) ||
+        !dd2_pair_test_head_on(true) || !dd2_pair_test_glancing() ||
+        !dd2_pair_test_contact_continuity() || !dd2_pair_test_rotation() ||
+        !dd2_pair_test_chain() || !dd2_pair_test_bridge_and_invalid() ||
+        !dd2_pair_test_report_bound() || !dd2_pair_test_rotated_report()) {
         puts("car pair contacts: FAIL");
         return EXIT_FAILURE;
     }

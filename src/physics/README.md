@@ -201,21 +201,42 @@ tolerances, not a claim of bitidentical dynamics or exact replay determinism.
 
 `car_contact.c` sweeps the source 372 x 260 x 900 oriented contact boxes against
 each other. A relative-motion sphere test prunes distant pairs. Fifteen separating
-axes provide continuous translation intervals within each angular piece. Rotation
-uses midpoint orientations with conservative chord padding, targeting 0.01 radians
-per piece and at most 64 pieces. This gives a small contact skin for normal fixed
-steps, not exact continuously rotating mesh collision. Face contacts clip the
-incident face against reference side planes and use its area centroid, so adding
-duplicate or collinear clipping vertices cannot move the impulse point. Relative
-quaternion difference/sum gives stable angles even for tiny rotations. Edge contacts use closest supported
-edge points. Bridge-separated boxes do not collide merely because their XZ
-footprints intersect. Geometry queries allocate nothing. Relative normal travel
-within the existing 1e-6 world-unit contact tolerance is treated as stationary.
-This prevents subtraction noise from creating time-zero contacts in a touching
-field moving as one rigid convoy. Closing motion beyond the tolerance still
-uses the analytic entry interval and produces impulses. A twenty-body regression
-covers five headings with common lateral motion; a separate low-speed collision
-checks that the tolerance preserves real near-contact impacts.
+axes provide continuous translation/rotation intervals. Each face/cross axis
+follows the two interpolated poses rather than holding the midpoint direction.
+Endpoint projection chords have a conservative quadratic curvature allowance;
+possible time intervals are refined earliest first. An actual-pose SAT check
+confirms both geometry and the normal before a physical contact is returned.
+The quaternion path bounds include the small endpoint norm error accepted by
+`dd2_vehicle_valid`. Initial pieces target 0.01 radians, capped at 64. Each query
+uses an explicit depth stack (48 levels) and at most 512 refinement windows.
+Exhaustion returns an `unresolved` time bound instead of pretending there is no
+contact. This remains source-sized box collision, not exact visual-mesh collision.
+
+For an axis with speed bound W and second-derivative bound C, the signed center
+projection has curvature at most 2|d'|W + |d|C. A body's signed support term has
+curvature at most C_body + 2W_body W + C. Their weighted sum times interval
+width squared / 8 bounds the endpoint chord error. This also bounds the
+cross-product axes without normalizing their changing directions; a constant
+midpoint scale is applied to the whole inequality. A query first excludes
+certified empty ranges, then confirms a contact within the 1e-6 spatial tolerance.
+Touching/escaping ranges must stay within that tolerance along the same signed
+axis at both endpoints, including curvature. Opposite endpoint sides cannot
+certify escape through the other box. Relative quaternion difference/sum gives
+stable initial piece counts even for tiny rotations.
+
+Face contacts clip the incident polygon against reference side and front planes.
+The impulse uses the deepest contact edge/corner for tilted faces and the area
+centroid for parallel faces. It therefore does not act on a separating portion
+of an otherwise colliding face; duplicate/collinear clipping vertices retain
+centroid continuity. Edge contacts use closest supported edge points.
+Bridge-separated boxes do not collide merely because their XZ footprints
+intersect. Queries allocate nothing. A twenty-body regression covers five
+headings with common lateral motion; a low-speed collision preserves real
+near-contact impacts. Sixty analytic cases cover positive/negative rotations
+around all three axes from 0.0005 to 1 radian, with both true corner contacts and
+nearby misses. They independently solve corner reach and nlerp contact time.
+A separate forced-budget test verifies the conservative time bound and the
+absence of invented impulse/contact records on Native and WASM.
 
 `dd2_vehicle_collide_fleet` resolves up to twenty already integrated bodies using
 one earliest-event clock for ground, barriers and pairs. It anchors time ties to
@@ -223,7 +244,9 @@ the global earliest event, then uses body/pair order. Equal-mass pair response
 uses restitution 0.2, friction 0.25, world inertia and opposite impulses at a
 shared contact point. Each response rechecks every body's remaining motion;
 initial overlaps receive symmetric separation. The 64-response budget keeps
-the last checked poses on exhaustion. Validation or final-state failure preserves
+the last checked poses on exhaustion. An unresolved sweep also stops at its
+conservative time bound, increments `unresolved_sweeps`, and leaves velocity,
+health and accident attribution without a manufactured response. Validation or final-state failure preserves
 every proposed body and clears known-size event outputs. Typed stack copies keep
 the solve transactional without per-step allocations; WASM consumers reserve
 256 KiB stack space. `collision_math.h` shares the existing vector, rotation and

@@ -47,6 +47,7 @@ typedef struct {
     dd2_vehicle_contact contacts[DD2_VEHICLE_CONTACT_LIMIT];
     unsigned count;
     unsigned pair_contacts;
+    unsigned unresolved_sweeps; /* Checked-pose stop without a physical response. */
 } dd2_vehicle_collision_report;
 /* Source contact box in local body coordinates. Out-of-range indices return
  * zero. The collision proxy is separate from visual mesh bounds. */
@@ -88,7 +89,9 @@ bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previou
  * second for a pair and is zero for a world contact. At most 64 contacts are
  * selected, matching the solver budget: no successful response is dropped.
  * Damage/scoring consumers must ignore zero-impulse repair/support contacts as
- * appropriate. Output must not alias bodies; it is cleared on entry and
+ * appropriate. An unresolved pair sweep stops at its conservative time bound,
+ * increments unresolved_sweeps and produces no contact record or impulse.
+ * Output must not alias bodies; it is cleared on entry and
  * published only after every resulting body passes validation. NULL output is
  * allowed. Failure preserves all proposed bodies. No allocations or callbacks. */
 bool dd2_vehicle_collide_fleet_report(dd2_vehicle *vehicles, const dd2_vehicle *previous,
