@@ -68,12 +68,12 @@ const double *dd2_driving_wheel_rolls(const dd2_driving *driving);
 uint64_t dd2_driving_pair_collisions(const dd2_driving *driving);
 const dd2_vehicle_spawn *dd2_driving_grid_start(const dd2_driving *driving, unsigned slot);
 
-/* Start/reset Wrecking, Stockcar or Time Trial, or return to the free-driving grid.
- * Countdown/results hold all physics and clocks; active race observation is
- * transactional with the complete field. Stockcar/Time Trial arenas are rejected.
- * Time Trial resets to one physical car and a continuous course; leaving it
- * restores the original lap limit and twenty-car field. Course pointers are
- * invalidated by a successful mode change. */
+/* Start/reset Wrecking, Stockcar, Time Trial or Total Destruction, or return to the free-driving
+ * grid. Countdown/results hold all physics and clocks; active race observation is transactional
+ * with the complete field. Stockcar/Time Trial arenas are rejected. Time Trial resets to one
+ * physical car and a continuous course. Total Destruction requires an arena; its opponents always
+ * pursue the player. Leaving Time Trial restores the original lap limit and twenty-car field.
+ * Course pointers are invalidated by a successful mode change. */
 bool dd2_driving_set_race(dd2_driving *driving, bool enabled, dd2_race_mode mode);
 const dd2_race *dd2_driving_race(const dd2_driving *driving);
 bool dd2_driving_withdraw(dd2_driving *driving);

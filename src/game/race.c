@@ -64,6 +64,9 @@ static bool dd2_race_rules_valid(dd2_race_rules rules) {
     if (rules.count == 0 || rules.count > DD2_VEHICLE_FLEET_LIMIT) {
         return false;
     }
+    if (rules.mode == DD2_RACE_TOTAL_DESTRUCTION) {
+        return rules.count >= 2 && rules.length == 0 && rules.laps == 0;
+    }
     if (rules.mode == DD2_RACE_TIME_TRIAL) {
         return rules.count == 1 && rules.length >= 3 && rules.length <= UINT16_MAX &&
                rules.laps == 0;
@@ -263,7 +266,8 @@ bool dd2_race_step(dd2_race *race, dd2_race_observation observation) {
     if (race == NULL || !dd2_race_rules_valid(race->rules) || race->phase < DD2_RACE_COUNTDOWN ||
         race->phase > DD2_RACE_RESULTS || race->end < DD2_RACE_NO_END ||
         race->end > DD2_RACE_WITHDRAWN || race->steps == UINT64_MAX ||
-        race->elapsed == UINT64_MAX || race->finishers > race->rules.count ||
+        race->elapsed == UINT64_MAX || race->survival > DD2_RACE_SURVIVAL_LIMIT ||
+        race->survival > race->elapsed || race->finishers > race->rules.count ||
         race->coasting > DD2_RACE_COAST_STEPS || !dd2_race_observation_valid(race, observation)) {
         return false;
     }
@@ -278,6 +282,10 @@ bool dd2_race_step(dd2_race *race, dd2_race_observation observation) {
         }
     } else {
         ++next.elapsed;
+        if (next.rules.mode == DD2_RACE_TOTAL_DESTRUCTION && !observation.damage[0].retired &&
+            next.survival < DD2_RACE_SURVIVAL_LIMIT) {
+            ++next.survival;
+        }
         dd2_race_observe(&next, observation);
         if (next.phase == DD2_RACE_RUNNING) {
             if (next.drivers[0].finish_place != 0) {

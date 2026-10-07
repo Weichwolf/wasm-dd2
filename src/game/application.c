@@ -86,12 +86,16 @@ int dd2_application_select_level(int number) {
     dd2_camera camera = {0};
     dd2_driving *driving = dd2_driving_create(dd2_track_road(track), (unsigned)number);
     const dd2_race *previous_race = dd2_driving_race(application->driving);
-    if (driving != NULL && previous_race != NULL &&
-        !dd2_driving_set_race(driving, true,
-                              number > DD2_APP_RACING_LEVELS ? DD2_RACE_WRECKING
-                                                             : previous_race->rules.mode)) {
-        dd2_driving_destroy(driving);
-        driving = NULL;
+    if (driving != NULL && previous_race != NULL) {
+        dd2_race_mode mode = previous_race->rules.mode;
+        if ((number <= DD2_APP_RACING_LEVELS && mode == DD2_RACE_TOTAL_DESTRUCTION) ||
+            (number > DD2_APP_RACING_LEVELS && mode != DD2_RACE_TOTAL_DESTRUCTION)) {
+            mode = DD2_RACE_WRECKING;
+        }
+        if (!dd2_driving_set_race(driving, true, mode)) {
+            dd2_driving_destroy(driving);
+            driving = NULL;
+        }
     }
     if (driving == NULL || materials == NULL ||
         !dd2_application_fit(&camera, track, application->car)) {
@@ -286,7 +290,7 @@ int dd2_application_set_driving(int enabled) {
 
 int dd2_application_start_race(int mode) {
     dd2_application *application = dd2_current_application;
-    if (application == NULL || (mode < DD2_RACE_WRECKING || mode > DD2_RACE_TIME_TRIAL) ||
+    if (application == NULL || (mode < DD2_RACE_WRECKING || mode > DD2_RACE_TOTAL_DESTRUCTION) ||
         !dd2_driving_set_race(application->driving, true, (dd2_race_mode)mode)) {
         return 0;
     }
@@ -334,6 +338,17 @@ unsigned dd2_application_race_points(void) {
     return race == NULL || race->phase != DD2_RACE_RESULTS ? 0 : race->drivers[0].total_points;
 }
 
+unsigned dd2_application_survival_steps(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    return race == NULL ? 0 : (unsigned)race->survival;
+}
+unsigned dd2_application_race_alive(void) {
+    const dd2_race *race =
+        dd2_current_application == NULL ? NULL : dd2_driving_race(dd2_current_application->driving);
+    return race == NULL ? 0 : race->alive;
+}
+
 int dd2_application_set_paused(int paused) {
     dd2_application *application = dd2_current_application;
     if (application == NULL || (paused != 0 && paused != 1)) {
@@ -360,11 +375,15 @@ static dd2_camera_motion dd2_application_motion(const dd2_input *input) {
 
 static void dd2_application_race_input(const dd2_input *input) {
     if (input->pressed[DD2_KEY_WRECKING] || input->pressed[DD2_KEY_STOCKCAR] ||
-        input->pressed[DD2_KEY_TIME_TRIAL]) {
-        const int mode = input->pressed[DD2_KEY_TIME_TRIAL] ? DD2_RACE_TIME_TRIAL
-                                                            : (int)input->pressed[DD2_KEY_STOCKCAR];
+        input->pressed[DD2_KEY_TIME_TRIAL] || input->pressed[DD2_KEY_TOTAL_DESTRUCTION]) {
+        int mode = input->pressed[DD2_KEY_STOCKCAR] ? DD2_RACE_STOCKCAR : DD2_RACE_WRECKING;
+        if (input->pressed[DD2_KEY_TIME_TRIAL]) {
+            mode = DD2_RACE_TIME_TRIAL;
+        } else if (input->pressed[DD2_KEY_TOTAL_DESTRUCTION]) {
+            mode = DD2_RACE_TOTAL_DESTRUCTION;
+        }
         if (dd2_application_start_race(mode) == 0) {
-            puts("Dieser Modus benötigt eine Rennstrecke.");
+            puts("Dieser Modus ist auf dieser Strecke nicht verfügbar.");
         }
     }
     if (input->pressed[DD2_KEY_WITHDRAW]) {

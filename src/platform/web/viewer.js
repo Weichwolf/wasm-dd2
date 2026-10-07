@@ -99,6 +99,7 @@ function reflectSelection() {
       view.value = String(Module._dd2_application_current_view());
       pauseButton.disabled = Number(view.value) < 2;
       for (const mode of [4, 5]) view.querySelector(`option[value="${mode}"]`).disabled = current > 7;
+      view.querySelector('option[value="6"]').disabled = current <= 7;
       const phase = Module._dd2_application_race_phase();
       finishButton.disabled = Number(view.value) < 3 || phase === 3;
       pauseButton.textContent = Module._dd2_application_is_paused() ? 'Weiterfahren' : 'Pause';

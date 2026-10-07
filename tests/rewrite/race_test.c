@@ -39,7 +39,7 @@ static bool dd2_race_test_same(const dd2_race *first, const dd2_race *second) {
         first->phase != second->phase || first->end != second->end ||
         first->steps != second->steps || first->elapsed != second->elapsed ||
         first->coasting != second->coasting || first->finishers != second->finishers ||
-        first->alive != second->alive) {
+        first->alive != second->alive || first->survival != second->survival) {
         return false;
     }
     for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
@@ -344,19 +344,102 @@ static bool dd2_race_test_trial(void) {
            race.drivers[0].last_lap_time == 1 && race.drivers[0].total_points == 0;
 }
 
+static bool dd2_race_test_total_clock(void) {
+    dd2_race_test test = {0};
+    if (!dd2_race_test_reset(&test, DD2_RACE_TOTAL_DESTRUCTION, true) ||
+        !dd2_race_test_start(&test) || test.race.survival != 0) {
+        return false;
+    }
+    test.accidents[0].points = DD2_ACCIDENT_SCORE_LIMIT;
+    for (unsigned tick = 1; tick <= DD2_RACE_TEST_LENGTH; ++tick) {
+        if (!dd2_race_test_tick(&test) || test.race.survival != tick) {
+            return false;
+        }
+    }
+    dd2_race_test_retire(&test, 0);
+    for (unsigned tick = 0; tick <= DD2_RACE_COAST_STEPS; ++tick) {
+        if (!dd2_race_test_tick(&test) || test.race.survival != DD2_RACE_TEST_LENGTH) {
+            return false;
+        }
+    }
+    const dd2_race frozen = test.race;
+    return test.race.phase == DD2_RACE_RESULTS && test.race.end == DD2_RACE_PLAYER_RETIRED &&
+           test.race.drivers[0].total_points == 0 && test.race.finishers == 0 &&
+           dd2_race_test_tick(&test) && dd2_race_test_same(&frozen, &test.race) &&
+           dd2_race_test_reset(&test, DD2_RACE_TOTAL_DESTRUCTION, true) && test.race.survival == 0;
+}
+static bool dd2_race_test_total_winner(void) {
+    dd2_race_test test = {0};
+    if (!dd2_race_test_reset(&test, DD2_RACE_TOTAL_DESTRUCTION, true) ||
+        !dd2_race_test_start(&test)) {
+        return false;
+    }
+    for (unsigned slot = 1; slot < DD2_RACE_TEST_CARS; ++slot) {
+        dd2_race_test_retire(&test, slot);
+    }
+    if (!dd2_race_test_tick(&test) || test.race.end != DD2_RACE_LAST_SURVIVOR ||
+        test.race.survival != 1) {
+        return false;
+    }
+    for (unsigned tick = 0; tick < DD2_RACE_COAST_STEPS; ++tick) {
+        if (!dd2_race_test_tick(&test) || test.race.survival != tick + 2) {
+            return false;
+        }
+    }
+    return test.race.phase == DD2_RACE_RESULTS && test.race.results[0] == 0 &&
+           test.race.alive == 1 && test.race.drivers[0].total_points == 0;
+}
+static bool dd2_race_test_total_limit(void) {
+    dd2_race_test test = {0};
+    if (!dd2_race_test_reset(&test, DD2_RACE_TOTAL_DESTRUCTION, true) ||
+        !dd2_race_test_start(&test)) {
+        return false;
+    }
+    const dd2_race initial = test.race;
+    dd2_race_rules bad = test.race.rules;
+    bad.length = DD2_RACE_TEST_LENGTH;
+    if (dd2_race_reset(&test.race, bad, dd2_race_test_observe(&test)) ||
+        !dd2_race_test_same(&initial, &test.race)) {
+        return false;
+    }
+    bad = test.race.rules;
+    bad.count = 1;
+    dd2_race_observation single = dd2_race_test_observe(&test);
+    single.count = 1;
+    if (dd2_race_reset(&test.race, bad, single)) {
+        return false;
+    }
+    test.race.survival = DD2_RACE_SURVIVAL_LIMIT + 1;
+    test.race.elapsed = test.race.survival;
+    test.race.steps = DD2_RACE_START_STEPS + test.race.elapsed;
+    const dd2_race corrupt = test.race;
+    if (dd2_race_test_tick(&test) || !dd2_race_test_same(&corrupt, &test.race)) {
+        return false;
+    }
+    test.race.survival = DD2_RACE_SURVIVAL_LIMIT - 1;
+    test.race.elapsed = test.race.survival;
+    test.race.steps = DD2_RACE_START_STEPS + test.race.elapsed;
+    return dd2_race_test_tick(&test) && test.race.survival == DD2_RACE_SURVIVAL_LIMIT &&
+           dd2_race_test_tick(&test) && test.race.survival == DD2_RACE_SURVIVAL_LIMIT &&
+           dd2_race_withdraw(&test.race) && test.race.end == DD2_RACE_WITHDRAWN &&
+           test.race.drivers[0].total_points == 0;
+}
+
 static bool dd2_race_test_temporary_overturn(void) {
     dd2_race_test test = {0};
-    if (!dd2_race_test_reset(&test, DD2_RACE_WRECKING, true) || !dd2_race_test_start(&test)) {
+    if (!dd2_race_test_reset(&test, DD2_RACE_TOTAL_DESTRUCTION, true) ||
+        !dd2_race_test_start(&test)) {
         return false;
     }
     test.recovery[0] = (dd2_recovery_driver){.rest_steps = 1, .overturned = true};
     if (!dd2_race_test_tick(&test) || test.race.alive != DD2_RACE_TEST_CARS - 1 ||
         test.race.phase != DD2_RACE_RUNNING || test.race.drivers[0].retired ||
-        test.race.drivers[0].retired_step != 0) {
+        test.race.drivers[0].retired_step != 0 || test.race.survival != 1) {
         return false;
     }
     test.recovery[0] = (dd2_recovery_driver){.recoveries = 1};
-    if (!dd2_race_test_tick(&test) || test.race.alive != DD2_RACE_TEST_CARS) {
+    if (!dd2_race_test_tick(&test) || test.race.alive != DD2_RACE_TEST_CARS ||
+        test.race.survival != 2) {
         return false;
     }
     for (unsigned slot = 1; slot < DD2_RACE_TEST_CARS; ++slot) {
@@ -373,12 +456,13 @@ static bool dd2_race_test_temporary_overturn(void) {
         test.recovery[slot] = (dd2_recovery_driver){0};
     }
     return dd2_race_test_tick(&test) && test.race.alive == DD2_RACE_TEST_CARS &&
-           test.race.end == DD2_RACE_LAST_SURVIVOR;
+           test.race.end == DD2_RACE_LAST_SURVIVOR && test.race.survival == 4;
 }
 
 int main(void) {
     const bool passed =
-        dd2_race_test_temporary_overturn() && dd2_race_test_trial() &&
+        dd2_race_test_temporary_overturn() && dd2_race_test_total_clock() &&
+        dd2_race_test_total_winner() && dd2_race_test_total_limit() && dd2_race_test_trial() &&
         dd2_race_test_finish_order() && dd2_race_test_scores() && dd2_race_test_arena() &&
         dd2_race_test_rejection() && dd2_race_test_withdrawal() && dd2_race_countdown(NULL) == 0 &&
         !dd2_race_step(NULL, (dd2_race_observation){0}) && !dd2_race_withdraw(NULL) &&

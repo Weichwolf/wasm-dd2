@@ -101,11 +101,7 @@ static bool dd2_driving_align(dd2_vehicle *vehicle, const dd2_driving *driving, 
     return true;
 }
 
-bool dd2_driving_reset(dd2_driving *driving) {
-    if (driving == NULL) {
-        return false;
-    }
-    dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT] = {0};
+static bool dd2_driving_settle(const dd2_driving *driving, dd2_vehicle *vehicles) {
     for (unsigned slot = 0; slot < driving->count; ++slot) {
         if (!dd2_vehicle_reset(&vehicles[slot], driving->starts[slot].spawn) ||
             !dd2_driving_align(&vehicles[slot], driving, slot)) {
@@ -126,6 +122,17 @@ bool dd2_driving_reset(dd2_driving *driving) {
             return false;
         }
     }
+    return true;
+}
+
+bool dd2_driving_reset(dd2_driving *driving) {
+    if (driving == NULL) {
+        return false;
+    }
+    dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    if (!dd2_driving_settle(driving, vehicles)) {
+        return false;
+    }
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT] = {0};
@@ -145,6 +152,9 @@ bool dd2_driving_reset(dd2_driving *driving) {
                                                                 .slot = slot,
                                                                 .count = driving->count})) {
             return false;
+        }
+        if (driving->racing && driving->race.rules.mode == DD2_RACE_TOTAL_DESTRUCTION) {
+            drivers[slot].target = 0;
         }
     }
     dd2_race race = {0};
@@ -280,11 +290,13 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
         controls[0] = (dd2_vehicle_control){.brake = 1};
     }
     for (unsigned slot = 1; slot < driving->count && driving->opponents; ++slot) {
-        const dd2_ai_observation observation = {.road = driving->road,
-                                                .surface = driving->surface,
-                                                .vehicles = previous,
-                                                .count = driving->count,
-                                                .slot = slot};
+        const dd2_ai_observation observation = {
+            .road = driving->road,
+            .surface = driving->surface,
+            .vehicles = previous,
+            .count = driving->count,
+            .slot = slot,
+            .pursue_player = race != NULL && race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION};
         if (race != NULL && race->drivers[slot].finish_place != 0) {
             continue;
         }
@@ -491,8 +503,10 @@ const dd2_vehicle_spawn *dd2_driving_grid_start(const dd2_driving *driving, unsi
 bool dd2_driving_set_race(dd2_driving *driving, bool enabled, dd2_race_mode mode) {
     if (driving == NULL ||
         (enabled && mode != DD2_RACE_WRECKING && mode != DD2_RACE_STOCKCAR &&
-         mode != DD2_RACE_TIME_TRIAL) ||
-        (enabled && mode != DD2_RACE_WRECKING && driving->course == NULL)) {
+         mode != DD2_RACE_TIME_TRIAL && mode != DD2_RACE_TOTAL_DESTRUCTION) ||
+        (enabled && (mode == DD2_RACE_STOCKCAR || mode == DD2_RACE_TIME_TRIAL) &&
+         driving->course == NULL) ||
+        (enabled && mode == DD2_RACE_TOTAL_DESTRUCTION && driving->course != NULL)) {
         return false;
     }
     dd2_course *course = NULL;

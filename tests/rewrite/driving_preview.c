@@ -61,7 +61,8 @@ int main(int argc, char **argv) {
         strchr(codes, argv[3][0]) == NULL ||
         (strcmp(argv[4], "start") != 0 && strcmp(argv[4], "drive") != 0 &&
          strcmp(argv[4], "race-start") != 0 && strcmp(argv[4], "race-results") != 0 &&
-         strcmp(argv[4], "trial-start") != 0 && strcmp(argv[4], "trial-results") != 0)) {
+         strcmp(argv[4], "trial-start") != 0 && strcmp(argv[4], "trial-results") != 0 &&
+         strcmp(argv[4], "total-start") != 0 && strcmp(argv[4], "total-results") != 0)) {
         return EXIT_FAILURE;
     }
     dd2_archive_fixture fixture = {0};
@@ -77,10 +78,17 @@ int main(int argc, char **argv) {
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     bool passed = driving != NULL && renderer != NULL && materials != NULL;
     if (strncmp(argv[4], "race-", sizeof("race-") - 1) == 0 ||
-        strncmp(argv[4], "trial-", sizeof("trial-") - 1) == 0) {
-        const dd2_race_mode mode = argv[4][0] == 't' ? DD2_RACE_TIME_TRIAL : DD2_RACE_WRECKING;
+        strncmp(argv[4], "trial-", sizeof("trial-") - 1) == 0 ||
+        strncmp(argv[4], "total-", sizeof("total-") - 1) == 0) {
+        dd2_race_mode mode = DD2_RACE_WRECKING;
+        if (strncmp(argv[4], "trial-", sizeof("trial-") - 1) == 0) {
+            mode = DD2_RACE_TIME_TRIAL;
+        } else if (argv[4][0] == 't') {
+            mode = DD2_RACE_TOTAL_DESTRUCTION;
+        }
         passed = passed && dd2_driving_set_race(driving, true, mode);
-        if (strcmp(argv[4], "race-results") == 0 || strcmp(argv[4], "trial-results") == 0) {
+        if (strcmp(argv[4], "race-results") == 0 || strcmp(argv[4], "trial-results") == 0 ||
+            strcmp(argv[4], "total-results") == 0) {
             passed = passed && dd2_driving_withdraw(driving);
         }
     }

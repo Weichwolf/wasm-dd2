@@ -210,6 +210,77 @@ static void dd2_race_draw_trial(const dd2_race *race, float scale, bool results)
         laps, (dd2_race_draw_pen){.x = times_left * scale, .y = y_pos, .scale = 2 * scale});
 }
 
+static void dd2_race_draw_survival(const dd2_race *race, float scale, bool results) {
+    static const float left = 20;
+    static const float bottom = 416;
+    static const float width = 300;
+    static const float height = 50;
+    static const float labels_left = 28;
+    static const float values_left = 144;
+    static const float first_line = 448;
+    static const float result_offset = 108;
+    static const float line_height = 24;
+    const float offset = results ? result_offset : 0;
+    if (!results) {
+        glColor3f(0, 0, 0);
+        dd2_race_draw_box(left * scale, bottom * scale, width * scale, height * scale);
+    }
+    glColor3f(1, 1, 0);
+    dd2_race_draw_text("SURVIVAL", (dd2_race_draw_pen){.x = labels_left * scale,
+                                                       .y = (first_line - offset) * scale,
+                                                       .scale = 2 * scale});
+    dd2_race_draw_time(race->survival, (dd2_race_draw_pen){.x = values_left * scale,
+                                                           .y = (first_line - offset) * scale,
+                                                           .scale = 2 * scale});
+    dd2_race_draw_text("ALIVE",
+                       (dd2_race_draw_pen){.x = labels_left * scale,
+                                           .y = (first_line - offset - line_height) * scale,
+                                           .scale = 2 * scale});
+    dd2_race_draw_number(race->alive,
+                         (dd2_race_draw_pen){.x = values_left * scale,
+                                             .y = (first_line - offset - line_height) * scale,
+                                             .scale = 2 * scale});
+}
+
+static void dd2_race_draw_table(const dd2_race *race, float scale) {
+    const char *labels[] = {"POS", "CAR", "PLACE", "PTS", "STATUS"};
+    const float columns[] = {36, 116, 218, 308, 412};
+    for (size_t column = 0; column < sizeof(columns) / sizeof(columns[0]); ++column) {
+        dd2_race_draw_text(labels[column],
+                           (dd2_race_draw_pen){.x = columns[column] * scale,
+                                               .y = dd2_race_draw_header_bottom * scale,
+                                               .scale = 2 * scale});
+    }
+    for (unsigned row = 0; row < race->rules.count; ++row) {
+        const unsigned slot = race->results[row];
+        const dd2_race_driver *driver = &race->drivers[slot];
+        const float bottom =
+            ((float)DD2_RACE_DRAW_FIRST_ROW - ((float)row * (float)DD2_RACE_DRAW_LINE)) * scale;
+        if (slot == 0) {
+            glColor3f(1, 1, 0);
+        } else {
+            glColor3f(1, 1, 1);
+        }
+        const unsigned numbers[] = {row + 1, slot + 1, driver->place, driver->total_points};
+        for (size_t column = 0; column < sizeof(numbers) / sizeof(numbers[0]); ++column) {
+            dd2_race_draw_number(
+                numbers[column],
+                (dd2_race_draw_pen){.x = columns[column] * scale, .y = bottom, .scale = 2 * scale});
+        }
+        const char *status = driver->retired ? "OUT" : "DNF";
+        if (driver->finish_place != 0) {
+            status = "FIN";
+        }
+        dd2_race_draw_text(
+            status, (dd2_race_draw_pen){.x = columns[4] * scale, .y = bottom, .scale = 2 * scale});
+        if (slot == 0) {
+            dd2_race_draw_text("YOU", (dd2_race_draw_pen){.x = dd2_race_draw_player_left * scale,
+                                                          .y = bottom,
+                                                          .scale = 2 * scale});
+        }
+    }
+}
+
 static void dd2_race_draw_results(const dd2_race *race, float scale) {
     glColor3f(0, 0, 0);
     dd2_race_draw_box(dd2_race_draw_panel_left * scale, dd2_race_draw_panel_bottom * scale,
@@ -240,52 +311,18 @@ static void dd2_race_draw_results(const dd2_race *race, float scale) {
         mode = "STOCKCAR";
     } else if (race->rules.mode == DD2_RACE_TIME_TRIAL) {
         mode = "TIME TRIAL";
+    } else if (race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION) {
+        mode = "TOTAL DESTRUCTION";
     }
     dd2_race_draw_text(mode, (dd2_race_draw_pen){.x = dd2_race_draw_mode_left * scale,
                                                  .y = dd2_race_draw_title_bottom * scale,
                                                  .scale = 2 * scale});
     if (race->rules.mode == DD2_RACE_TIME_TRIAL) {
         dd2_race_draw_trial(race, scale, true);
+    } else if (race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION) {
+        dd2_race_draw_survival(race, scale, true);
     } else {
-        const char *labels[] = {"POS", "CAR", "PLACE", "PTS", "STATUS"};
-        const float columns[] = {36, 116, 218, 308, 412};
-        for (size_t column = 0; column < sizeof(columns) / sizeof(columns[0]); ++column) {
-            dd2_race_draw_text(labels[column],
-                               (dd2_race_draw_pen){.x = columns[column] * scale,
-                                                   .y = dd2_race_draw_header_bottom * scale,
-                                                   .scale = 2 * scale});
-        }
-        for (unsigned row = 0; row < race->rules.count; ++row) {
-            const unsigned slot = race->results[row];
-            const dd2_race_driver *driver = &race->drivers[slot];
-            const float bottom =
-                ((float)DD2_RACE_DRAW_FIRST_ROW - ((float)row * (float)DD2_RACE_DRAW_LINE)) * scale;
-            if (slot == 0) {
-                glColor3f(1, 1, 0);
-            } else {
-                glColor3f(1, 1, 1);
-            }
-            const unsigned numbers[] = {row + 1, slot + 1, driver->place, driver->total_points};
-            for (size_t column = 0; column < sizeof(numbers) / sizeof(numbers[0]); ++column) {
-                dd2_race_draw_number(numbers[column],
-                                     (dd2_race_draw_pen){.x = columns[column] * scale,
-                                                         .y = bottom,
-                                                         .scale = 2 * scale});
-            }
-            const char *status = driver->retired ? "OUT" : "DNF";
-            if (driver->finish_place != 0) {
-                status = "FIN";
-            }
-            dd2_race_draw_text(
-                status,
-                (dd2_race_draw_pen){.x = columns[4] * scale, .y = bottom, .scale = 2 * scale});
-            if (slot == 0) {
-                dd2_race_draw_text("YOU",
-                                   (dd2_race_draw_pen){.x = dd2_race_draw_player_left * scale,
-                                                       .y = bottom,
-                                                       .scale = 2 * scale});
-            }
-        }
+        dd2_race_draw_table(race, scale);
     }
     glColor3f(1, 1, 1);
     dd2_race_draw_text("R RESTART   ENTER VIEW",
@@ -297,6 +334,8 @@ static void dd2_race_draw_results(const dd2_race *race, float scale) {
 static void dd2_race_draw_active(const dd2_race *race, float scale) {
     if (race->rules.mode == DD2_RACE_TIME_TRIAL) {
         dd2_race_draw_trial(race, scale, false);
+    } else if (race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION) {
+        dd2_race_draw_survival(race, scale, false);
     } else {
         glColor3f(0, 0, 0);
         dd2_race_draw_box(

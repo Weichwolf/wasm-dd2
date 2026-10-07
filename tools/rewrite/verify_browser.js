@@ -285,6 +285,55 @@ async function trialChecks(page) {
   report.time_trial={pass_:true,all_circuits:true,one_car:true,continuous_laps:true,real_keyboard_throttle:true,
                     clocks_pause:true,results:true,reset:true,arena_rejected:true,finite_rules_restored:true};
 }
+async function totalChecks(page) {
+  await page.selectOption('#level','8');
+  await page.keyboard.press('F9');
+  await page.waitForFunction(()=>Module._dd2_application_current_view()===6);
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  for(const [index,code] of [...'89AB'].entries()) {
+    await page.selectOption('#level',String(index+8));
+    await match(page,code,'total-start');
+    const grid=await page.evaluate(()=>({count:Module._dd2_application_vehicle_count(),alive:Module._dd2_application_race_alive(),
+      ticks:Module._dd2_application_survival_steps(),phase:Module._dd2_application_race_phase(),view:Module._dd2_application_current_view()}));
+    if(JSON.stringify(grid)!==JSON.stringify({count:20,alive:20,ticks:0,phase:0,view:6}))throw new Error('Total Destruction grid invalid');
+    await pause(150);
+    if(await page.evaluate(()=>Module._dd2_application_survival_steps())!==0)throw new Error('Paused survival time advances');
+    await page.locator('#finish').click();await match(page,code,'total-results');
+    if(await page.evaluate(()=>Module._dd2_application_race_points())!==0)throw new Error('Total Destruction awards placement points');
+    await page.locator('#pause').click();
+    const baseline=digest(await pixels(page));
+    if(await stable(page)!==baseline)throw new Error('Total Destruction results advance');
+    await page.locator('#pause').click();
+    await page.locator('#reset').click();await match(page,code,'total-start');
+  }
+  await page.selectOption('#level','1');await match(page,'1','race-start');
+  const rejected=await page.evaluate(()=>({bad:Module._dd2_application_start_race(3),view:Module._dd2_application_current_view(),
+    disabled:document.querySelector('#view option[value="6"]').disabled}));
+  if(rejected.bad!==0||rejected.view!==3||!rejected.disabled)throw new Error('Circuit Total Destruction rejection invalid');
+  await page.selectOption('#level','8');await page.selectOption('#view','6');
+  await page.evaluate(()=>{Module._dd2_application_set_paused(1);Module._dd2_application_reset_camera();});
+  await match(page,'8','total-start');
+  await page.keyboard.press('p');
+  await page.waitForFunction(()=>Module._dd2_application_is_paused()===0);
+  await page.waitForFunction(()=>Module._dd2_application_race_steps()>20);
+  if(await page.evaluate(()=>Module._dd2_application_survival_steps())!==0)throw new Error('Survival time runs during countdown');
+  await page.waitForFunction(()=>Module._dd2_application_survival_steps()>40,null,{timeout:15000});
+  await page.keyboard.press('p');
+  await page.waitForFunction(()=>Module._dd2_application_is_paused()===1);
+  const ticks=await page.evaluate(()=>Module._dd2_application_survival_steps());
+  await pause(200);
+  if(await page.evaluate(()=>Module._dd2_application_survival_steps())!==ticks)throw new Error('Pause advances survival clock');
+  await page.keyboard.press('F7');
+  await page.waitForFunction(()=>Module._dd2_application_race_phase()===3);
+  if(await page.evaluate(()=>Module._dd2_application_survival_steps())!==ticks)throw new Error('Withdrawal loses survival time');
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-total-results.png')});
+  await page.selectOption('#view','2');
+  await page.selectOption('#level','1');
+  await page.keyboard.press('Enter');await match(page,'1','scene');
+  report.total_destruction={pass_:true,all_arenas:true,twenty_cars:true,real_keyboard_mode:true,browser_selector:true,
+    countdown_holds_clock:true,survival_clock_runs:true,pause:true,results:true,reset:true,circuit_rejected:true};
+}
+
 async function main() {
   const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:680,height:1000}});
@@ -335,6 +384,7 @@ async function main() {
     await drivingChecks(page);
     await raceChecks(page);
     await trialChecks(page);
+    await totalChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);

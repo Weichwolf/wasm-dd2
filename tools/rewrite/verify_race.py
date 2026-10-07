@@ -9,12 +9,17 @@ required laps through physics, using AI only to supply player control inputs.
 Time Trial short runs cover all seven circuits with one physical vehicle and
 restoration of finite twenty-car rules. A long Time Trial on circuit 5 completes
 nine laps, beyond the source eight-lap race limit, with independent geometry and
-lap-time checks. Native, Node/WASM and instrumented C are verified separately.
+lap-time checks. Total Destruction short sessions cover all four arenas; physical
+destructive steering/shunting sessions retain all NPC pursuit targets and run to natural engine
+retirement/coasting results. Supported overturns are observed separately from engine retirement.
+Native, Node/WASM and instrumented C are verified separately.
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import struct
 import subprocess
@@ -43,6 +48,7 @@ class RaceOracle:
         self.count = 1 if mode == 2 else COUNT
         self.phase = self.end = self.steps = self.elapsed = self.coast = 0
         self.finishers, self.alive = 0, self.count
+        self.survival = 0
         self.drivers = [[0]*10 for _ in range(self.count)]
         for slot, lap in enumerate(initial_laps):
             self.drivers[slot][2:4] = lap[2:4]
@@ -87,6 +93,8 @@ class RaceOracle:
                 if current[0] not in (0,min(400,prior[0]+1)):
                     raise ValueError('Recovery rest deadline loses physical cadence')
             self.recovery = [state[:] for state in recovery]
+        if self.mode == 3 and not cars[0][-2]:
+            self.survival = min(99*60*200, self.survival+1)
         for slot, d in enumerate(self.drivers):
             retired, points = cars[slot][-2:]
             if retired and not d[9]:
@@ -125,7 +133,7 @@ class RaceOracle:
 
     def compare(self, row):
         expected = dict(state=[self.phase, self.end, self.steps, self.elapsed, self.coast, self.finishers, self.alive],
-                        drivers=self.drivers, order=self.order, results=self.results)
+                        drivers=self.drivers, order=self.order, results=self.results, survival=self.survival)
         for key, value in expected.items():
             if row[key] != value:
                 raise ValueError(f'{row["kind"]} tick {self.steps} {key} differs: {row[key]} != {value}')
@@ -251,6 +259,8 @@ def check(path, decoded, image, code, mode, kind, tables):
             else:
                 raise ValueError('Unexpected race output')
             race.compare(row)
+            if mode == 3 and any(driver != [race.elapsed,0] for driver in row['ai'][1:]):
+                raise ValueError('Total Destruction opponent abandons the player or loses cadence')
             if len(row['drivers']) != race.count or (kind == 'live' and len(row['cars']) != race.count):
                 raise ValueError('Race contains inactive vehicles')
             if course:
@@ -366,10 +376,73 @@ def check_auto(path, decoded, image, code, mode, tables):
                 scope='Complete physical twenty-car Stockcar race on original circuit 5; AI supplies player controls')
 
 
+def check_survive(path, decoded, image, code, tables):
+    with path.open() as stream:
+        meta = json.loads(next(stream))
+        if meta['mode'] != 3 or course_from_source(meta, decoded, image, code) is not None:
+            raise ValueError('Invalid Total Destruction arena rules')
+        race = RaceOracle(3, 0, [], tables)
+        initial = json.loads(next(stream))
+        race.compare(initial)
+        previous = initial
+        physical = 0
+        for line in stream:
+            row = json.loads(line)
+            if row['kind'] != 'survive' or row['rules'] != [20,0,0] or row['laps']:
+                raise ValueError('Total Destruction field/rules changed')
+            active = race.phase in (1,2)
+            if active: physical += COUNT
+            elif row['cars'] != previous['cars']:
+                raise ValueError('Arena countdown moves the field')
+            race.tick([], row['cars'], row.get('recovery'))
+            race.compare(row)
+            if len(row['cars']) != COUNT or len(row['ai']) != COUNT or len(row['damage']) != COUNT:
+                raise ValueError('Arena field is incomplete')
+            for slot, car in enumerate(row['cars']):
+                zones = row['damage'][slot]
+                if len(zones) != 6 or any(not math.isfinite(z) or not 0 <= z <= 1 for z in zones):
+                    raise ValueError('Invalid arena damage zones')
+                if any(z < old for z,old in zip(zones, previous['damage'][slot])):
+                    raise ValueError('Arena damage decreases without reset')
+                if car[-2] != int(zones[0] == 1 or zones[1] == 1):
+                    raise ValueError('Arena retirement does not come from front engine damage')
+                if car[0] != 200+race.elapsed or car[4] != race.elapsed:
+                    raise ValueError('Arena physical/accident clock differs')
+                if slot and row['ai'][slot] != [race.elapsed,0]:
+                    raise ValueError('Arena opponent abandons the player')
+                if any(not math.isfinite(value) for value in car[1:4]):
+                    raise ValueError('Nonfinite arena body')
+            previous = row
+        if race.phase != 3 or race.end not in (2,3) or race.coast != 600:
+            raise ValueError('Physical arena fails to reach natural coasting results')
+        if not race.survival or any(driver[0] or driver[5] or driver[7] or driver[8] for driver in race.drivers):
+            raise ValueError('Total Destruction timing/scoring invalid')
+        if race.end == 2 and (not previous['cars'][0][-2] or race.survival != race.drivers[0][1]-1):
+            raise ValueError('Physical engine retirement does not stop the survival timer')
+    return dict(pass_=True, level=code, physical_vehicle_steps=physical, ticks=race.steps,
+        survival_steps=race.survival, survival_seconds=race.survival/200, alive=race.alive,
+        end=race.end, all_opponents_pursue_player=True,
+        input_profile={'8':'constant gas/right steering','9':'constant gas/right steering',
+            'A':'constant gas/six-second alternating steering','B':'twenty-second shunts/one-second alternating steering'}[code]
+            + '; after 30,000 fixture ticks including countdown, twenty-second shunts/one-second alternating steering',
+        scope='Actual arena physics/contact damage to natural engine retirement or last survivor; overturn recovery pending')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=WORK/'rewrite-race-verification')
+    cases = []
+    for code in CODES:
+        for mode_name, mode in (('wreck',0), ('stock',1), ('trial',2), ('total',3)):
+            if (code not in '1234567' and mode in (1,2)) or (code in '1234567' and mode == 3): continue
+            for kind in ('live','route') if code in '1234567' and mode != 2 else ('live',):
+                cases.append((code,mode_name,mode,kind))
+    cases += [(code,'total',3,'survive') for code in '89AB']
+    cases += [('5',name,mode,'auto') for name,mode in (('stock',1), ('trial',2))]
+    parser.add_argument('--case', action='append', choices=['-'.join((code,name,kind)) for code,name,_,kind in cases],
+                        help='Select individual scenarios for diagnosis; omitted means the complete suite')
     args = parser.parse_args()
+    selected = [case for case in cases if not args.case or '-'.join((case[0],case[1],case[3])) in args.case]
     output = prepare_output(args.output)
     if WORK not in output.parents: parser.error('Use /tmp/wasm-dd2/')
     output.mkdir(parents=True, exist_ok=True)
@@ -388,7 +461,10 @@ def main():
                                  stdout=log, stderr=subprocess.STDOUT)
         calls.append(dict(label=label, returncode=result.returncode, sha256=digest(path)))
         if result.returncode:
-            raise RuntimeError(label+' failed: '+path.read_text(errors='replace')[-3000:])
+            with path.open('rb') as tail:
+                tail.seek(max(0, path.stat().st_size-3000))
+                message = tail.read().decode(errors='replace')
+            raise RuntimeError(label+' failed: '+message)
         if any('Sanitizer:' in line or 'runtime error:' in line for line in path.open(errors='replace')):
             raise ValueError('Sanitizer finding '+label)
         return path
@@ -407,40 +483,62 @@ def main():
     run([str(synthetic)], 'sanitized-rules').unlink()
     commands = {'native':[str(WORK/'rewrite-native/dd2_race_export')],
                 'wasm':['node',str(WORK/'rewrite-wasm/dd2_race_export.js')], 'sanitized':[str(sanitized)]}
-    for code in CODES:
-        decoded = reference(files[f'LEV{code}\\LEVEL.DAT'], code, rows)
-        for mode_name, mode in (('wreck',0), ('stock',1), ('trial',2)):
-            if code not in '1234567' and mode: continue
-            for kind in ('live','route') if code in '1234567' and mode != 2 else ('live',):
-                targets = {}
-                for target, command in commands.items():
-                    check_space(output)
-                    label = f'{code}-{mode_name}-{kind}-{target}'
-                    path = run([*command,str(archive),code,mode_name,kind], label)
-                    targets[target] = check(path, decoded, image, code, mode, kind, tables)
-                    path.unlink()
-                item = dict(level=code, mode=mode_name, scenario=kind, targets=targets)
-                results.append(item)
-                print(json.dumps(item), flush=True)
-    decoded = reference(files['LEV5\\LEVEL.DAT'], '5', rows)
-    for mode_name, mode in (('stock',1), ('trial',2)):
-        targets = {}
-        for target, command in commands.items():
-            path = run([*command,str(archive),'5',mode_name,'auto'], '5-'+mode_name+'-auto-'+target, timeout=360)
-            targets[target] = check_auto(path, decoded, image, '5', mode, tables)
-            path.unlink()
-        results.append(dict(level='5', mode=mode_name, scenario='auto', targets=targets))
-        print(json.dumps(results[-1]), flush=True)
     sources = [path for folder in ('src','tests/rewrite') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
     sources += [Path(__file__).resolve(), ROOT/'CMakeLists.txt', ROOT/'tools/rewrite/verify_laps.py']
-    report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
+    identity = dict(source_sha256={str(p.relative_to(ROOT)):digest(p) for p in sources},
+                    binary_sha256={str(p):digest(p) for p in (WORK/'rewrite-native/dd2_race_export',WORK/'rewrite-wasm/dd2_race_export.wasm',sanitized,synthetic)},
+                    original_sha256=digest(archive), image_sha256=hashlib.sha256(image).hexdigest(),
+                    selected_scenarios=['-'.join((code,name,kind)) for code,name,_,kind in selected],
+                    full_suite=not args.case)
+    (output/'identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+    def target_checks(executor, code, mode_name, kind, checker, timeout=180):
+        def target_check(item):
+            target, command = item
+            label = f'{code}-{mode_name}-{kind}-{target}'
+            receipt = dict(identity='identity.json', level=code, mode=mode_name, scenario=kind, target=target)
+            try:
+                check_space(output)
+                path = run([*command,str(archive),code,mode_name,kind], label, timeout=timeout)
+                result = checker(path)
+                path.unlink()
+            except Exception as error:
+                receipt.update(pass_=False, error=str(error))
+                (output/(label+'.json')).write_text(json.dumps(receipt,indent=2)+'\n')
+                raise
+            receipt.update(pass_=True, result=result)
+            (output/(label+'.json')).write_text(json.dumps(receipt,indent=2)+'\n')
+            return target, result
+        # Each target owns its process, oracle and file. Three maximum-length
+        # arena traces fit the output budget; run_bounded monitors it throughout.
+        return dict(executor.map(target_check, commands.items()))
+
+    with ThreadPoolExecutor(max_workers=len(commands)) as executor:
+        for code,mode_name,mode,kind in selected:
+            decoded = reference(files[f'LEV{code}\\LEVEL.DAT'], code, rows)
+            if kind == 'survive':
+                checker = lambda path: check_survive(path, decoded, image, code, tables)
+                timeout = 1800
+            elif kind == 'auto':
+                checker = lambda path: check_auto(path, decoded, image, code, mode, tables)
+                timeout = 600
+            else:
+                checker = lambda path: check(path, decoded, image, code, mode, kind, tables)
+                timeout = 180
+            targets = target_checks(executor, code, mode_name, kind, checker, timeout=timeout)
+            results.append(dict(level=code, mode=mode_name, scenario=kind, targets=targets))
+            print(json.dumps(results[-1]), flush=True)
+    sources = [path for folder in ('src','tests/rewrite') for path in (ROOT/folder).rglob('*') if path.suffix in ('.c','.h')]
+    sources += [Path(__file__).resolve(), ROOT/'CMakeLists.txt', ROOT/'tools/rewrite/verify_laps.py']
+    if identity['source_sha256'] != {str(p.relative_to(ROOT)):digest(p) for p in sources}:
+        raise ValueError('Race verification sources changed during the run')
+    report = dict(pass_=True, full_suite=not args.case, scope='Selected original-data race scenarios; not full-suite acceptance' if args.case else __doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=digest(archive), image_sha256=hashlib.sha256(image).hexdigest(), tables=tables,
                   scenarios=results, calls=calls, source_sha256={str(p.relative_to(ROOT)):digest(p) for p in sources},
                   binary_sha256={str(p):digest(p) for p in (WORK/'rewrite-native/dd2_race_export',WORK/'rewrite-wasm/dd2_race_export.wasm',sanitized,synthetic)})
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     sanitized.unlink(); synthetic.unlink()
     check_space(output)
-    print(json.dumps(dict(pass_=True, report=str(output/'report.json'), scenarios=len(results))))
+    print(json.dumps(dict(pass_=True, full_suite=not args.case, report=str(output/'report.json'), scenarios=len(results))))
 
 
 if __name__ == '__main__':

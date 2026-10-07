@@ -80,7 +80,7 @@ static bool dd2_ai_test_driver(const dd2_road *road, const dd2_road_surface *sur
                              (dd2_ai_start){.road = road, .cell = 1, .slot = 0, .count = 2})) {
         return false;
     }
-    const dd2_ai_observation observation = {
+    dd2_ai_observation observation = {
         .road = road, .surface = surface, .vehicles = vehicles, .count = 2, .slot = 0};
     dd2_vehicle_control control = {0};
     bool valid = dd2_ai_driver_step(&driver, &observation, &control) && control.throttle > 0 &&
@@ -94,6 +94,13 @@ static bool dd2_ai_test_driver(const dd2_road *road, const dd2_road_surface *sur
         uint64_t bits;
         double number;
     } invalid = {.bits = UINT64_C(0x7ff8000000000001)};
+    observation.slot = 1;
+    observation.pursue_player = true;
+    if (dd2_ai_driver_step(&driver, &observation, &control) || driver.steps != saved.steps) {
+        return false;
+    }
+    observation.slot = 0;
+    observation.pursue_player = false;
     vehicles[1].position.x = invalid.number;
     return valid && !dd2_ai_driver_step(&driver, &observation, &control) &&
            saved.cell == driver.cell && saved.lane == driver.lane &&

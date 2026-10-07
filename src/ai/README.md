@@ -20,7 +20,9 @@ uses speed-dependent lookahead, curvature braking, yaw damping and traffic
 headway. Passing compares both candidate lane corridors before choosing a shift;
 the planned corridor supplies the speed constraint. Arenas initially target the
 opposite starter slot, then periodically choose nearby cars with a forward
-preference and velocity lead. Prolonged stalls and low-speed backward targets
+preference and velocity lead. Total Destruction instead explicitly keeps player
+slot zero as the target; its periodic nearest-car selection is bypassed and
+inverted braking retains that same target. Prolonged stalls and low-speed backward targets
 trigger timed reverse/steering maneuvers. An inverted car brakes; tire traction,
 body support and collision impulses remain owned by physics.
 

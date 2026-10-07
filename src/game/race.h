@@ -10,7 +10,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum { DD2_RACE_WRECKING, DD2_RACE_STOCKCAR, DD2_RACE_TIME_TRIAL } dd2_race_mode;
+typedef enum {
+    DD2_RACE_WRECKING,
+    DD2_RACE_STOCKCAR,
+    DD2_RACE_TIME_TRIAL,
+    DD2_RACE_TOTAL_DESTRUCTION
+} dd2_race_mode;
 typedef enum {
     DD2_RACE_COUNTDOWN,
     DD2_RACE_RUNNING,
@@ -24,12 +29,16 @@ typedef enum {
     DD2_RACE_LAST_SURVIVOR,
     DD2_RACE_WITHDRAWN
 } dd2_race_end;
-enum { DD2_RACE_START_STEPS = 400, DD2_RACE_COAST_STEPS = 600 };
+enum {
+    DD2_RACE_START_STEPS = 400,
+    DD2_RACE_COAST_STEPS = 600,
+    DD2_RACE_SURVIVAL_LIMIT = 1188000
+}; /* Original 99:00 cap in 5 ms ticks. */
 
 typedef struct {
     dd2_race_mode mode;
     unsigned count;
-    /* Zero length/laps selects a Wrecking arena. Time Trial requires a
+    /* Zero length/laps selects a Wrecking/Total Destruction arena. Time Trial requires a
      * circuit, zero lap limit and exactly one vehicle. */
     uint32_t length;
     unsigned laps;
@@ -58,6 +67,9 @@ typedef struct {
     dd2_race_end end;
     uint64_t steps;
     uint64_t elapsed;
+    /* Total Destruction: after GO while the player's engine is alive, including
+     * coasting; freeze on retirement, withdrawal/results or the 99:00 cap. */
+    uint64_t survival;
     unsigned coasting;
     unsigned finishers;
     unsigned alive;

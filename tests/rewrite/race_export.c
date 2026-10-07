@@ -29,9 +29,17 @@ enum {
     DD2_RACE_EXPORT_ROUTE_LIMIT = 20000,
     DD2_RACE_EXPORT_PARTS = 5,
     DD2_RACE_EXPORT_SCORE_UNIT = 10,
-    DD2_RACE_EXPORT_AUTO_LIMIT = 240000
+    DD2_RACE_EXPORT_AUTO_LIMIT = 240000,
+    DD2_RACE_EXPORT_SURVIVE_LIMIT = 120000,
+    DD2_RACE_EXPORT_SHUNT_STEPS = 4000,
+    DD2_RACE_EXPORT_CONTROL_CHANGE = 30000,
+    DD2_RACE_EXPORT_WEAVE_STEPS = 1200,
+    DD2_RACE_EXPORT_ZIGZAG_STEPS = 200,
+    DD2_RACE_EXPORT_WEAVING_ARENA = 10,
+    DD2_RACE_EXPORT_LAST_ARENA = 11
 };
 static const double dd2_race_export_frame = 0.025;
+static const double dd2_race_export_arena_steer = 0.35;
 static const double dd2_race_export_partial = 0.004;
 static const double dd2_race_export_resume = 0.001;
 
@@ -67,7 +75,7 @@ static void dd2_race_export_state(const dd2_race *race) {
                driver->accident_points, driver->finish_points, driver->total_points,
                (int)driver->retired);
     }
-    printf("],\"order\":[");
+    printf("],\"survival\":%llu,\"order\":[", (unsigned long long)race->survival);
     for (unsigned index = 0; index < race->rules.count; ++index) {
         printf("%s%u", index == 0 ? "" : ",", race->order[index]);
     }
@@ -111,6 +119,21 @@ static void dd2_race_export_live(const dd2_driving *driving, const char *kind) {
                (unsigned long long)vehicle->steps, vehicle->position.x, vehicle->position.y,
                vehicle->position.z, (unsigned long long)accident->steps,
                (int)dd2_driving_damage(driving)[slot].retired, accident->points);
+    }
+    printf("],\"ai\":[");
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(driving); ++slot) {
+        const dd2_ai_driver driver = dd2_driving_drivers(driving)[slot];
+        printf("%s[%llu,%u]", slot == 0 ? "" : ",", (unsigned long long)driver.steps,
+               driver.target);
+    }
+    printf("],\"damage\":[");
+    for (unsigned slot = 0; slot < dd2_driving_vehicle_count(driving); ++slot) {
+        const dd2_vehicle_damage *damage = &dd2_driving_damage(driving)[slot];
+        printf("%s[", slot == 0 ? "" : ",");
+        for (unsigned zone = 0; zone < DD2_DAMAGE_REGIONS; ++zone) {
+            printf("%s%.17g", zone == 0 ? "" : ",", damage->regions[zone]);
+        }
+        printf("]");
     }
     printf("],\"recovery\":[");
     const dd2_recovery_driver *recovery = dd2_driving_recovery(driving);
@@ -339,14 +362,67 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
     return valid;
 }
 
+typedef struct {
+    unsigned level;
+    unsigned tick;
+} dd2_race_export_arena_input;
+
+static dd2_vehicle_control dd2_race_export_arena_control(dd2_race_export_arena_input input) {
+    double throttle = 1;
+    unsigned period = 0;
+    if (input.tick >= DD2_RACE_EXPORT_CONTROL_CHANGE) {
+        input.tick -= DD2_RACE_EXPORT_CONTROL_CHANGE;
+        input.level = DD2_RACE_EXPORT_LAST_ARENA;
+    }
+    if (input.level == DD2_RACE_EXPORT_LAST_ARENA) {
+        throttle = (input.tick / DD2_RACE_EXPORT_SHUNT_STEPS) % 2 == 0 ? 1 : -1;
+        period = DD2_RACE_EXPORT_ZIGZAG_STEPS;
+    } else if (input.level == DD2_RACE_EXPORT_WEAVING_ARENA) {
+        period = DD2_RACE_EXPORT_WEAVE_STEPS;
+    }
+    double steer = dd2_race_export_arena_steer;
+    if (period != 0 && (input.tick / period) % 2 != 0) {
+        steer = -steer;
+    }
+    return (dd2_vehicle_control){.throttle = throttle, .steer = steer};
+}
+
+static bool dd2_race_export_survive(unsigned level, const dd2_road *road) {
+    dd2_driving *driving = dd2_driving_create(road, level);
+    bool valid = driving != NULL && dd2_driving_set_race(driving, true, DD2_RACE_TOTAL_DESTRUCTION);
+    if (valid) {
+        dd2_race_export_meta(driving, road, DD2_RACE_TOTAL_DESTRUCTION);
+        dd2_race_export_live(driving, "survive");
+    }
+    for (unsigned tick = 0; tick < DD2_RACE_EXPORT_SURVIVE_LIMIT && valid &&
+                            dd2_driving_race(driving)->phase != DD2_RACE_RESULTS;
+         ++tick) {
+        /* Ordinary continuous steering, weaving and shunting patterns exercise
+         * the different arena layouts. Health and race state are never injected. */
+        valid = dd2_driving_advance(
+            driving,
+            (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS,
+                                .control = dd2_race_export_arena_control(
+                                    (dd2_race_export_arena_input){.level = level, .tick = tick})});
+        if (valid) {
+            dd2_race_export_live(driving, "survive");
+        }
+    }
+    valid = valid && dd2_driving_race(driving)->phase == DD2_RACE_RESULTS &&
+            (dd2_driving_race(driving)->end == DD2_RACE_PLAYER_RETIRED ||
+             dd2_driving_race(driving)->end == DD2_RACE_LAST_SURVIVOR);
+    dd2_driving_destroy(driving);
+    return valid;
+}
+
 int main(int argc, char **argv) {
     const char codes[] = "123456789AB";
     if (argc != DD2_RACE_EXPORT_ARGUMENTS || strlen(argv[2]) != 1 ||
         strchr(codes, argv[2][0]) == NULL ||
         (strcmp(argv[3], "wreck") != 0 && strcmp(argv[3], "stock") != 0 &&
-         strcmp(argv[3], "trial") != 0) ||
+         strcmp(argv[3], "trial") != 0 && strcmp(argv[3], "total") != 0) ||
         (strcmp(argv[4], "live") != 0 && strcmp(argv[4], "route") != 0 &&
-         strcmp(argv[4], "auto") != 0)) {
+         strcmp(argv[4], "auto") != 0 && strcmp(argv[4], "survive") != 0)) {
         return EXIT_FAILURE;
     }
     const unsigned level = (unsigned)(strchr(codes, argv[2][0]) - codes) + 1;
@@ -355,11 +431,16 @@ int main(int argc, char **argv) {
         mode = DD2_RACE_STOCKCAR;
     } else if (strcmp(argv[3], "trial") == 0) {
         mode = DD2_RACE_TIME_TRIAL;
+    } else if (strcmp(argv[3], "total") == 0) {
+        mode = DD2_RACE_TOTAL_DESTRUCTION;
     }
     dd2_road *road = dd2_race_export_load(argv[1], argv[2][0]);
     bool valid = false;
     if (road != NULL) {
-        if (strcmp(argv[4], "auto") == 0) {
+        if (strcmp(argv[4], "survive") == 0) {
+            valid = level > DD2_RACE_EXPORT_RACING_LEVELS && mode == DD2_RACE_TOTAL_DESTRUCTION &&
+                    dd2_race_export_survive(level, road);
+        } else if (strcmp(argv[4], "auto") == 0) {
             valid =
                 level <= DD2_RACE_EXPORT_RACING_LEVELS && dd2_race_export_auto(level, road, mode);
         } else if (strcmp(argv[4], "route") == 0) {

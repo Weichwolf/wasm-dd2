@@ -163,7 +163,9 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
         return dd2_race_draw(view.race, view.viewport);
     }
     return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
-           (view.score == NULL || dd2_score_draw(view.score, view.viewport)) &&
+           (view.score == NULL ||
+            (view.race != NULL && view.race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION) ||
+            dd2_score_draw(view.score, view.viewport)) &&
            (view.lap == NULL || view.required_laps == 0 ||
             dd2_lap_draw(view.lap, view.required_laps, view.viewport)) &&
            (view.race == NULL || dd2_race_draw(view.race, view.viewport));

@@ -68,7 +68,9 @@ a lap/finish HUD. Wrecking/Stockcar practice races now have a source-timed
 start countdown, persistent finishing order, retirement/survival endings,
 an explicit coasting phase and frozen twenty-driver results. Time Trial now uses
 one physical car on all seven circuits, continuous laps, current/last/best
-lap clocks and timed results on withdrawal or engine retirement. Detached parts,
+lap clocks and timed results on withdrawal or engine retirement. Total Destruction
+now starts twenty cars in each arena, keeps every opponent targeting the player
+and displays surviving engines and the player survival clock through results. Detached parts,
 smoke, billboard orientation, lighting and blending remain to be implemented. A shared C application now presents the
 eleven track/car views in a native SDL window and a browser canvas, with orbit,
 tilt, pan, zoom, reset and track/view selection. The same application now offers
@@ -77,7 +79,7 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Damage-aware tactics, off-road recovery, Total Destruction,
+Damage-aware tactics, off-road recovery,
 championships and the complete original front end remain pending.
 Supported overturned cars now have a separate temporary availability state and
 source-timed two-second recovery, with distance-gated opponent righting. Landing
@@ -143,7 +145,8 @@ left, followed by FIN when that driver completes the required laps. The initial
 grid approach starts lap 1 without crediting a complete lap; reverse finish
 crossings cannot earn another lap. Arenas omit the lap display. F5 starts Wrecking
 Racing on a circuit or a destruction arena; F6 starts Stockcar on a circuit.
-F8 starts Time Trial with one car and unlimited laps on a circuit. The browser
+F8 starts Time Trial with one car and unlimited laps on a circuit; F9 starts
+Total Destruction on an arena. The browser
 view selector offers the same modes. The two-second start countdown
 holds the settled field and all physics/lap/damage/accident clocks until GO;
 P and loss of focus freeze the countdown as well as an active race. Road position
@@ -157,7 +160,7 @@ race-exit button publishes provisional DNF results immediately. R restarts the
 same field/countdown; Enter returns to inspection, and selecting Freifahrt clears
 the race rules. Stockcar awards original position bonuses (100/75/50/.../0);
 Wrecking adds actual simulated accident points to the original 50/25/10 circuit
-bonuses, capped at 999. Arena results use accident points without circuit bonuses.
+bonuses, capped at 999. Wrecking arena results use accident points without circuit bonuses.
 No randomized post-race NPC score or progress boost is manufactured. The result
 list sorts total points, breaking ties by road/survival position; the player is
 highlighted yellow. These are practice results; season totals are still pending. Time Trial displays
@@ -169,6 +172,24 @@ placement/accident points. R clears the session record and restarts the countdow
 Returning to Freifahrt or a circuit race restores twenty cars and the original
 finite lap count; selecting an arena changes to Wrecking. Persistent track
 records, their original file compatibility and the full front end remain pending.
+
+Total Destruction uses twenty physical cars; every arena opponent retains player
+slot zero as its pursuit target, including periodic retarget ticks and inverted
+braking. SURVIVAL counts 5 ms ticks after GO while the player engine works,
+including the coasting phase for a surviving winner; player retirement freezes
+it before that tick. Withdrawal/results freeze it immediately. The original
+99:00 timer cap is preserved. ALIVE counts available cars with functioning engines;
+supported resting overturns are temporarily excluded until recovery. Timed results
+replace placement/accident scores. Selection stays in Total Destruction across
+arenas and switches to Wrecking on a circuit. R resets time, damage and all
+pursuit targets. Dense pursuit fields can exhaust the shared 64-contact solver
+budget; the solver then retains checked poses instead of accepting residual
+travel. A bounded synthetic convoy diagnosis also reproduces time-zero
+overlap-repair exhaustion: eight equally moving boxes with only 0.001 units
+of initial overlap lose their common lateral travel without any impact impulse.
+Dense-field contact convergence remains pending. Supported resting overturns now participate in arena availability and recover
+after two seconds; distant opponents retry placement after the deadline. This
+does not fix dense-field contact convergence.
 
 The WASM builder uses a private writable ports cache under
 `/tmp/wasm-dd2/emscripten-cache/`, including with Debian's frozen system SDK.
@@ -360,9 +381,9 @@ player control inputs; no position, lap, damage or race-state injection is used.
 An independent geometric oracle checks the player at every fixed step; final
 field placement/scoring is checked against crossing ticks and source tables.
 This establishes one physically completed circuit race, not complete gameplay or
-all-track completion. Additional complete races, overturned-car elimination,
-recovery, Total Destruction and championships remain to be implemented
-or verified. Native/browser window checks cover all eleven countdown/results
+all-track completion. Additional complete races, off-road rescue and championships remain to be
+implemented or verified. Supported overturn availability/righting is checked
+separately by `make rewrite-recovery-verify`. Native/browser window checks cover all eleven countdown/results
 views, real mode/exit keys and selectors, held throttle until GO, pause, frozen
 results, invalid arena Stockcar rejection and restart. SoftGL pixel tests check
 source-timed red lights, GO, the yellow player result row and exact Time Trial
@@ -374,7 +395,27 @@ limit. Independent geometry/checkpoint and lap-clock oracles check every tick
 on Native, Node/WASM and ASan/UBSan. Native/browser checks cover all seven
 single-car starts and timed result views, F8/selector entry, real throttle,
 paused clocks, arena rejection and finite-rule restoration. This verifies
-session timing; persistent records and full-game coverage remain open. Source-timed lights
+session timing; persistent records and full-game coverage remain open. Four additional
+short twenty-car scenarios check Total Destruction pursuit, countdown, timer,
+frame partitioning, pause, withdrawal/results and reset on every original arena.
+Separate physical arena completion checks use ordinary player steering/weaving
+and shunting commands with pursuing AI through contact/engine damage. They require natural
+coasting results and check each 5 ms tick with independent race/timer oracles on
+all three targets; those completion checks are still being diagnosed. The fixed
+inputs switch to alternating steering and twenty-second forward/reverse periods
+after 30,000 fixture ticks (including the countdown), so a single steady steering
+profile cannot define the entire long run. Native/browser
+checks cover all four arena starts and results, F9/selector entry, pause, restart
+and circuit rejection. The browser additionally checks actual timer progress
+after GO and frozen survival time on pause/withdrawal. Pixel charts check exact live
+and result SURVIVAL/ALIVE digits, including the 99:00 cap. These checks establish
+arena session timing/pursuit, not complete Total Destruction gameplay. Supported
+overturn availability/righting has its own controlled verification. To diagnose individual scenarios, run
+`python3 tools/rewrite/verify_race.py --case 8-total-survive --output /tmp/wasm-dd2/arena-probe`.
+Repeat `--case` for multiple scenarios; omitting it keeps the full suite. Scoped
+reports explicitly mark partial coverage, and each target writes its own result
+receipt against recorded source/binary hashes before another target can fail.
+Source changes during a run invalidate its final report. Source-timed lights
 are currently visual; sound cues and music remain pending.
 
 ## Migration and acceptance

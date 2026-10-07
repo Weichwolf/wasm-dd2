@@ -5,8 +5,10 @@
 #include "assets/road.h"
 #include "game/accidents.h"
 #include "game/driving.h"
+#include "game/race.h"
 #include "game/recovery.h"
 #include "physics/damage.h"
+#include "physics/road_surface.h"
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
 
@@ -234,6 +236,69 @@ static bool dd2_drive_test_rejection(dd2_driving *driving) {
     return true;
 }
 
+static bool dd2_drive_test_total(dd2_driving *driving) {
+    if (!dd2_driving_set_race(driving, true, DD2_RACE_TOTAL_DESTRUCTION) ||
+        dd2_driving_vehicle_count(driving) != DD2_VEHICLE_FLEET_LIMIT ||
+        dd2_driving_course(driving) != NULL) {
+        return false;
+    }
+    for (unsigned tick = 0; tick < DD2_RACE_START_STEPS + DD2_DRIVE_TEST_FRAMES; ++tick) {
+        if (!dd2_driving_advance(driving,
+                                 (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS})) {
+            return false;
+        }
+        for (unsigned slot = 1; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+            if (dd2_driving_drivers(driving)[slot].target != 0) {
+                return false;
+            }
+        }
+    }
+    if (dd2_driving_race(driving)->survival != DD2_DRIVE_TEST_FRAMES ||
+        !dd2_driving_withdraw(driving) || !dd2_driving_reset(driving) ||
+        dd2_driving_race(driving)->survival != 0) {
+        return false;
+    }
+    return dd2_driving_set_race(driving, false, DD2_RACE_WRECKING) &&
+           dd2_driving_drivers(driving)[1].target == 1 + DD2_VEHICLE_FLEET_LIMIT / 2;
+}
+static bool dd2_drive_test_pursuit(const dd2_road *road) {
+    enum { DD2_PURSUIT_CARS = 3, DD2_PURSUIT_TICKS = 1200, DD2_PURSUIT_RETARGET = 400 };
+    dd2_road_surface *surface = dd2_road_surface_create(road);
+    dd2_vehicle vehicles[DD2_PURSUIT_CARS] = {0};
+    const dd2_vehicle_spawn starts[] = {{.position = {.y = 190, .z = 5000}},
+                                        {.position = {.y = 190}},
+                                        {.position = {.y = 190, .z = 2000}}};
+    bool valid = surface != NULL;
+    for (unsigned slot = 0; slot < DD2_PURSUIT_CARS && valid; ++slot) {
+        valid = dd2_vehicle_reset(&vehicles[slot], starts[slot]);
+    }
+    dd2_ai_driver driver = {.cell = 0, .target = 2};
+    dd2_ai_observation observation = {.road = road,
+                                      .surface = surface,
+                                      .vehicles = vehicles,
+                                      .count = DD2_PURSUIT_CARS,
+                                      .slot = 1,
+                                      .pursue_player = true};
+    dd2_vehicle_control control = {0};
+    for (unsigned tick = 0; tick < DD2_PURSUIT_TICKS && valid; ++tick) {
+        valid = dd2_ai_driver_step(&driver, &observation, &control) && driver.target == 0;
+    }
+    /* Ordinary arena AI selects the closer opponent at the same retarget tick. */
+    observation.pursue_player = false;
+    driver.steps = DD2_PURSUIT_RETARGET;
+    valid = valid && dd2_ai_driver_step(&driver, &observation, &control) && driver.target == 2;
+    observation.pursue_player = true;
+    vehicles[1].rotation = (dd2_vehicle_rotation){.x = 1};
+    valid = valid && dd2_ai_driver_step(&driver, &observation, &control) && driver.target == 0 &&
+            control.brake == 1;
+    observation.slot = 0;
+    const uint64_t steps = driver.steps;
+    valid = valid && !dd2_ai_driver_step(&driver, &observation, &control) &&
+            driver.steps == steps && control.throttle == 0 && control.brake == 0;
+    dd2_road_surface_destroy(surface);
+    return valid;
+}
+
 int main(void) {
     dd2_road *road = dd2_drive_test_road();
     dd2_driving *first = dd2_driving_create(road, DD2_DRIVE_TEST_ARENA);
@@ -247,7 +312,8 @@ int main(void) {
         passed = spawn->position.x == 0 && spawn->position.z == dd2_drive_test_start &&
                  spawn->yaw == 0 && other->position.x == dd2_drive_test_start &&
                  other->position.z == 0 && other->yaw == dd2_drive_test_quarter_turn &&
-                 dd2_drive_test_frames(first, second) && dd2_drive_test_rejection(first);
+                 dd2_drive_test_frames(first, second) && dd2_drive_test_rejection(first) &&
+                 dd2_drive_test_pursuit(road) && dd2_drive_test_total(first);
     }
     dd2_driving *bad = dd2_driving_create(road, 1);
     passed = passed && bad == NULL && !dd2_driving_advance(NULL, (dd2_driving_frame){0}) &&

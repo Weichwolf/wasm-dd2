@@ -72,6 +72,8 @@ static bool dd2_ai_valid(const dd2_ai_driver *driver, const dd2_ai_observation *
     if (driver == NULL || observation == NULL || observation->road == NULL ||
         observation->surface == NULL || observation->vehicles == NULL || observation->count == 0 ||
         observation->count > DD2_VEHICLE_FLEET_LIMIT || observation->slot >= observation->count ||
+        (observation->pursue_player &&
+         (observation->slot == 0 || dd2_road_strip_count(observation->road) != 0)) ||
         driver->cell >= dd2_road_cell_count(observation->road) ||
         driver->target >= observation->count || driver->steps == UINT64_MAX ||
         driver->stuck_steps > DD2_AI_STUCK_STEPS || driver->reverse_steps > DD2_AI_REVERSE_STEPS ||
@@ -221,7 +223,8 @@ static unsigned dd2_ai_target(const dd2_ai_observation *observation, dd2_vehicle
 
 static dd2_ai_goal dd2_ai_arena(dd2_ai_driver *driver, const dd2_ai_observation *observation,
                                 dd2_vehicle_vector forward) {
-    if (driver->steps != 0 && driver->steps % DD2_AI_RETARGET_STEPS == 0) {
+    if (!observation->pursue_player && driver->steps != 0 &&
+        driver->steps % DD2_AI_RETARGET_STEPS == 0) {
         driver->target = dd2_ai_target(observation, forward);
     }
     if (driver->target == observation->slot) {
@@ -286,6 +289,9 @@ bool dd2_ai_driver_step(dd2_ai_driver *driver, const dd2_ai_observation *observa
         return false;
     }
     dd2_ai_driver next = *driver;
+    if (observation->pursue_player) {
+        next.target = 0;
+    }
     const dd2_vehicle *vehicle = &observation->vehicles[observation->slot];
     dd2_vehicle_vector forward =
         dd2_vehicle_rotate(vehicle->rotation, (dd2_vehicle_vector){.z = 1});

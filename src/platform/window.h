@@ -30,6 +30,7 @@ typedef enum {
     DD2_KEY_STOCKCAR,
     DD2_KEY_WITHDRAW,
     DD2_KEY_TIME_TRIAL,
+    DD2_KEY_TOTAL_DESTRUCTION,
     DD2_KEY_COUNT
 } dd2_key;
 

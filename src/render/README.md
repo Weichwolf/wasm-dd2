@@ -118,3 +118,8 @@ with current/last/best clocks and an unlimited lap count; its result panel
 retains those times and completed laps without scores. Timestamp rendering
 uses integer 5 ms ticks, MM:SS.mmm punctuation and a 99:59.995 display cap.
 Session records remain owned by game state; persistent records are pending.
+
+Total Destruction replaces POS/PTS/KO with SURVIVAL (MM:SS.mmm) and ALIVE
+(functioning engines); results retain survival time and surviving engine count
+without a placement-score table. Native/WASM pixel charts independently check
+00:01.235, capped 99:00.000 and ALIVE 20 in both active and result panels.

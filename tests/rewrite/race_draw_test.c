@@ -146,6 +146,63 @@ static bool dd2_race_pixel_trial(dd2_renderer *renderer) {
     return true;
 }
 
+static bool dd2_race_pixel_total_chart(dd2_renderer *renderer,
+                                       const uint8_t chart[][DD2_TRIAL_PIXEL_ROWS],
+                                       unsigned result) {
+    enum {
+        DD2_TOTAL_PIXEL_LEFT = 144,
+        DD2_TOTAL_PIXEL_TOP = 448,
+        DD2_TOTAL_PIXEL_OFFSET = 108,
+        DD2_TOTAL_PIXEL_PITCH = 12,
+        DD2_TOTAL_PIXEL_LINE = 24,
+        DD2_TOTAL_PIXEL_GLYPHS = 9
+    };
+    const unsigned bottom = DD2_TOTAL_PIXEL_TOP - (result * DD2_TOTAL_PIXEL_OFFSET);
+    for (unsigned glyph = 0; glyph < DD2_TOTAL_PIXEL_GLYPHS; ++glyph) {
+        if (!dd2_race_pixel_glyph(renderer, chart[glyph],
+                                  (dd2_trial_pixel_origin){.left = DD2_TOTAL_PIXEL_LEFT +
+                                                                   (glyph * DD2_TOTAL_PIXEL_PITCH),
+                                                           .bottom = bottom})) {
+            return false;
+        }
+    }
+    static const uint8_t two[] = {14, 17, 1, 2, 4, 8, 31};
+    static const uint8_t zero[] = {14, 17, 19, 21, 25, 17, 14};
+    return dd2_race_pixel_glyph(
+               renderer, two,
+               (dd2_trial_pixel_origin){.left = DD2_TOTAL_PIXEL_LEFT,
+                                        .bottom = bottom - DD2_TOTAL_PIXEL_LINE}) &&
+           dd2_race_pixel_glyph(
+               renderer, zero,
+               (dd2_trial_pixel_origin){.left = DD2_TOTAL_PIXEL_LEFT + DD2_TOTAL_PIXEL_PITCH,
+                                        .bottom = bottom - DD2_TOTAL_PIXEL_LINE});
+}
+static bool dd2_race_pixel_total(dd2_renderer *renderer) {
+    enum { DD2_TOTAL_PIXEL_TICKS = 247 };
+    static const uint8_t chart[][DD2_TRIAL_PIXEL_ROWS] = {
+        {14, 17, 19, 21, 25, 17, 14}, {14, 17, 19, 21, 25, 17, 14}, {0, 4, 4, 0, 4, 4, 0},
+        {14, 17, 19, 21, 25, 17, 14}, {4, 12, 4, 4, 4, 4, 14},      {0, 0, 0, 0, 0, 4, 4},
+        {14, 17, 1, 2, 4, 8, 31},     {30, 1, 1, 14, 1, 1, 30},     {31, 16, 16, 30, 1, 1, 30}};
+    static const uint8_t capped[][DD2_TRIAL_PIXEL_ROWS] = {
+        {14, 17, 17, 15, 1, 1, 14},   {14, 17, 17, 15, 1, 1, 14},   {0, 4, 4, 0, 4, 4, 0},
+        {14, 17, 19, 21, 25, 17, 14}, {14, 17, 19, 21, 25, 17, 14}, {0, 0, 0, 0, 0, 4, 4},
+        {14, 17, 19, 21, 25, 17, 14}, {14, 17, 19, 21, 25, 17, 14}, {14, 17, 19, 21, 25, 17, 14}};
+    dd2_race race = {
+        .rules = {.mode = DD2_RACE_TOTAL_DESTRUCTION, .count = DD2_VEHICLE_FLEET_LIMIT},
+        .alive = DD2_VEHICLE_FLEET_LIMIT};
+    for (unsigned maximum = 0; maximum < 2; ++maximum) {
+        race.survival = maximum == 0 ? DD2_TOTAL_PIXEL_TICKS : DD2_RACE_SURVIVAL_LIMIT;
+        for (unsigned result = 0; result < 2; ++result) {
+            race.phase = result == 0 ? DD2_RACE_RUNNING : DD2_RACE_RESULTS;
+            if (!dd2_race_pixel_draw(&race) ||
+                !dd2_race_pixel_total_chart(renderer, maximum == 0 ? chart : capped, result)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     dd2_renderer *renderer = dd2_renderer_create(
         &(dd2_render_options){.width = DD2_RACE_PIXEL_WIDTH, .height = DD2_RACE_PIXEL_HEIGHT});
@@ -191,7 +248,8 @@ int main(void) {
         dd2_race_pixel_color(renderer, DD2_RACE_PIXEL_PLAYER_X, DD2_RACE_PIXEL_PLAYER_Y, yellow) &&
         dd2_race_pixel_color(renderer, DD2_RACE_PIXEL_OTHER_X, DD2_RACE_PIXEL_OTHER_Y, white);
     race.results[0] = DD2_VEHICLE_FLEET_LIMIT;
-    passed = passed && !dd2_race_pixel_draw(&race) && dd2_race_pixel_trial(renderer);
+    passed = passed && !dd2_race_pixel_draw(&race) && dd2_race_pixel_trial(renderer) &&
+             dd2_race_pixel_total(renderer);
     dd2_renderer_destroy(renderer);
     puts(passed ? "race lights/GO/result highlight rendering: PASS" : "race pixel checks: FAIL");
     return passed ? EXIT_SUCCESS : EXIT_FAILURE;

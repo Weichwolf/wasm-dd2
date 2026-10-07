@@ -267,6 +267,38 @@ def native_trial_checks(ui, references):
                 real_keyboard_throttle=True, reset=True, frozen_results=True, arena_rejected=True)
 
 
+def native_total_checks(ui, references):
+    # Start from scene 1 after the Time Trial lifecycle. Match each change so
+    # edge-triggered page keys cannot collapse into one application frame.
+    for code in '2345678':
+        ui.command('key', 'Prior')
+        ui.match(Image.open(references[(code,'scene')]).convert('RGB'), 'total-select-'+code)
+    ui.command('key', 'F9')
+    ui.command('key', 'p')
+    ui.command('key', 'r')
+    comparisons = []
+    for code in '89AB':
+        start = Image.open(references[(code,'total-start')]).convert('RGB')
+        comparisons.append(ui.match(start, code+'-total-start'))
+        ui.command('key', 'F7')
+        result = Image.open(references[(code,'total-results')]).convert('RGB')
+        comparisons.append(ui.match(result, code+'-total-results'))
+        ui.command('key', 'p')
+        if ui.stable() != result.tobytes(): raise ValueError('Total Destruction results advance')
+        ui.command('key', 'p')
+        ui.command('key', 'r')
+        ui.match(start, code+'-total-reset')
+        if code != 'B': ui.command('key', 'Prior')
+    ui.command('key', 'Prior')
+    circuit = Image.open(references[('1','race-start')]).convert('RGB')
+    ui.match(circuit, 'total-to-circuit')
+    ui.command('key', 'F9')
+    ui.match(circuit, 'circuit-total-rejected')
+    ui.command('key', 'Return')
+    return dict(pass_=True, comparisons=comparisons, all_arenas=True,
+        real_keyboard_mode=True, results=True, reset=True, circuit_rejected=True)
+
+
 def native_checks(output, archive, references, binary, label='native'):
     ui = NativeWindow(output, archive, binary, label)
     results = []
@@ -315,6 +347,8 @@ def native_checks(output, archive, references, binary, label='native'):
         ui.match(expected, 'inspection-after-race')
         trial = native_trial_checks(ui, references)
         ui.match(expected, 'inspection-after-trial')
+        total = native_total_checks(ui, references)
+        ui.match(expected, 'inspection-after-total')
         ui.command('windowmove', ui.window, 0, 0)
         for size, offset in (((800, 480), (80, 0)), ((640, 600), (0, 60))):
             ui.command('windowsize', ui.window, *size)
@@ -328,7 +362,7 @@ def native_checks(output, archive, references, binary, label='native'):
     finally: ui.close()
     return dict(pass_=True, comparisons=results, real_x11_keys=True,
                 camera_motion_release=True, focus_loss_release=True, track_wrap=True,
-                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race, time_trial=trial)
+                wheel=True, resize_letterbox_scale=True, clean_exit=True, driving=driving, race=race, time_trial=trial, total_destruction=total)
 
 
 def build_sanitized(output):
@@ -338,7 +372,7 @@ def build_sanitized(output):
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'vehicle_collision', 'damage')]
-    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race','recovery')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'vendor/softgl/libsoftgl/include'),
@@ -379,7 +413,7 @@ def main():
                 references[(code, mode)] = path
         for code in CODES:
             for mode in (('driving', 'race-start', 'race-results', 'trial-start', 'trial-results')
-                         if code in '1234567' else ('driving', 'race-start', 'race-results')):
+                         if code in '1234567' else ('driving', 'race-start', 'race-results', 'total-start', 'total-results')):
                 path = output / f'{code}-{mode}.ppm'
                 run_bounded([str(WORK / 'rewrite-native/dd2_driving_preview'), str(archive), str(path), code,
                              'start' if mode == 'driving' else mode],

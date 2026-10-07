@@ -29,6 +29,9 @@ typedef struct {
     const dd2_vehicle *vehicles;
     unsigned count;
     unsigned slot;
+    /* Arena opponents only. Keep player slot zero as the target even across
+     * normal retarget intervals and temporary inverted/braking decisions. */
+    bool pursue_player;
 } dd2_ai_observation;
 
 /* One fixed-step decision from a simultaneous immutable field observation.
