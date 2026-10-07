@@ -252,7 +252,7 @@ Rewrite targets additionally use `-Werror -Wshadow -Wconversion
 retain their own quality rules. Fast-math permits arithmetic changes; new physics
 must be verified for stable behavior on native and WASM, including edge cases.
 
-CI on `rewrite` checks formatting, strict native build/analysis and both renderer
+CI on `master` checks formatting, strict native build/analysis and both renderer
 bootstraps, plus archive/level/texture bounds and texture rendering checks without proprietary data.
 With the original data provisioned, `make rewrite-archive-verify` also compares
 all archive entries on both targets and an ASan/UBSan build.
