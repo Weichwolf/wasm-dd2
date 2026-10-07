@@ -294,11 +294,123 @@ static bool dd2_group_test_infeasible(void) {
            body.velocity.x == 0;
 }
 
+enum {
+    DD2_GROUP_POSITION_ROWS = 6,
+    DD2_GROUP_POSITION_REPEATS = 5,
+    DD2_GROUP_POSITION_PASS_LIMIT = 4096
+};
+static const double dd2_group_position_tolerance = 1e-9;
+static const double dd2_group_position_pair_gap = 2;
+static const double dd2_group_position_wall_limit = 0.25;
+static const double dd2_group_position_requirement_step = 2e-9;
+
+typedef struct {
+    unsigned start;
+    bool reversed;
+    bool pair_duplicates;
+} dd2_group_position_order;
+
+static dd2_group_contact dd2_group_test_position_contact(dd2_group_position_order order,
+                                                         unsigned index) {
+    const dd2_vehicle_vector pair_normal = {.x = 0.8, .y = 0.6};
+    const dd2_vehicle_vector wall_normal = {.x = -1};
+    const unsigned offset = order.reversed ? DD2_GROUP_POSITION_ROWS - index : index;
+    const unsigned row = (order.start + offset) % DD2_GROUP_POSITION_ROWS;
+    const bool repeated = row < DD2_GROUP_POSITION_REPEATS;
+    const bool pair = repeated == order.pair_duplicates;
+    const double requirement =
+        (pair ? dd2_group_position_pair_gap : -dd2_group_position_wall_limit) -
+        (repeated ? (double)row * dd2_group_position_requirement_step : 0);
+    return (dd2_group_contact){.first = 0,
+                               .second = pair ? 1 : DD2_VEHICLE_NO_PARTNER,
+                               .normal = pair ? pair_normal : wall_normal,
+                               .penetration =
+                                   requirement - ((pair ? 2 : 1) * dd2_group_test_clearance)};
+}
+
+/* Independently solve the two active halfspaces' least-norm translation.
+ * Duplicate weaker rows must not change this solution or physical motion. */
+static bool dd2_group_test_position_order(dd2_group_position_order order) {
+    dd2_vehicle bodies[DD2_GROUP_TEST_PAIR] = {0};
+    for (unsigned slot = 0; slot < DD2_GROUP_TEST_PAIR; ++slot) {
+        if (!dd2_vehicle_reset(&bodies[slot], (dd2_vehicle_spawn){0})) {
+            return false;
+        }
+    }
+    const dd2_vehicle_vector pair_normal = {.x = 0.8, .y = 0.6};
+    dd2_group_contact contacts[DD2_GROUP_POSITION_ROWS] = {0};
+    for (unsigned index = 0; index < DD2_GROUP_POSITION_ROWS; ++index) {
+        contacts[index] = dd2_group_test_position_contact(order, index);
+    }
+    const dd2_group_query query = {.bodies = bodies,
+                                   .body_count = DD2_GROUP_TEST_PAIR,
+                                   .contacts = contacts,
+                                   .contact_count = DD2_GROUP_POSITION_ROWS};
+    dd2_group_solution result = {0};
+    if (!dd2_contact_group_solve(&query, &result) || result.count != DD2_GROUP_POSITION_ROWS ||
+        result.position_passes > DD2_GROUP_POSITION_PASS_LIMIT ||
+        result.position_error >= dd2_group_position_tolerance) {
+        return false;
+    }
+    const double pressure =
+        (dd2_group_position_pair_gap - pair_normal.x * dd2_group_position_wall_limit) /
+        (2 - pair_normal.x * pair_normal.x);
+    const dd2_vehicle_vector expected[] = {
+        {.x = dd2_group_position_wall_limit, .y = pressure * pair_normal.y},
+        {.x = -pressure * pair_normal.x, .y = -pressure * pair_normal.y}};
+    for (unsigned slot = 0; slot < DD2_GROUP_TEST_PAIR; ++slot) {
+        if (dd2_collision_dot(bodies[slot].velocity, bodies[slot].velocity) != 0 ||
+            dd2_collision_dot(bodies[slot].angular_velocity, bodies[slot].angular_velocity) != 0 ||
+            bodies[slot].steps != 0 || bodies[slot].rotation.w != 1 ||
+            fabs(bodies[slot].position.x - expected[slot].x) > dd2_group_test_tolerance ||
+            fabs(bodies[slot].position.y - expected[slot].y) > dd2_group_test_tolerance ||
+            bodies[slot].position.z != 0) {
+            return false;
+        }
+    }
+    for (unsigned index = 0; index < DD2_GROUP_POSITION_ROWS; ++index) {
+        const dd2_group_contact contact = contacts[index];
+        dd2_vehicle_vector relative = bodies[contact.first].position;
+        if (contact.second != DD2_VEHICLE_NO_PARTNER) {
+            relative = dd2_collision_add(relative,
+                                         dd2_collision_scale(bodies[contact.second].position, -1));
+        }
+        const double clearance =
+            (contact.second == DD2_VEHICLE_NO_PARTNER ? 1 : 2) * dd2_group_test_clearance;
+        if (dd2_collision_dot(relative, contact.normal) <
+                contact.penetration + clearance - dd2_group_position_tolerance ||
+            result.contacts[index].normal_impulse != 0 ||
+            dd2_collision_dot(result.contacts[index].friction_impulse,
+                              result.contacts[index].friction_impulse) != 0) {
+            return false;
+        }
+    }
+    printf("Analytic position supports: pair_duplicates=%u start=%u reversed=%u passes=%u "
+           "predictions=%u\n",
+           (unsigned)order.pair_duplicates, order.start, (unsigned)order.reversed,
+           result.position_passes, result.position_predictions);
+    return true;
+}
+
+static bool dd2_group_test_position_redundancy(void) {
+    for (unsigned pair = 0; pair < DD2_GROUP_TEST_PAIR; ++pair) {
+        for (unsigned reversed = 0; reversed < DD2_GROUP_TEST_PAIR; ++reversed) {
+            for (unsigned start = 0; start < DD2_GROUP_POSITION_ROWS; ++start) {
+                if (!dd2_group_test_position_order((dd2_group_position_order){
+                        .start = start, .reversed = reversed != 0, .pair_duplicates = pair != 0})) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     if (!dd2_group_test_cascade() || !dd2_group_test_friction(false) ||
         !dd2_group_test_friction(true) || !dd2_group_test_rocking(false) ||
         !dd2_group_test_rocking(true) || !dd2_group_test_chain() || !dd2_group_test_invalid() ||
-        !dd2_group_test_infeasible()) {
+        !dd2_group_test_infeasible() || !dd2_group_test_position_redundancy()) {
         puts("joint support projection: FAIL");
         return EXIT_FAILURE;
     }

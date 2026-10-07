@@ -13,6 +13,7 @@ typedef struct {
     unsigned contact_count;
     const char *name;
     bool require_restart;
+    bool require_position_prediction;
 } dd2_friction_case;
 
 /* Frozen rewrite event queries on original arena 9. These are reconstructed
@@ -2597,6 +2598,64 @@ static const dd2_group_contact dd2_friction_championship_coupled_contacts[] = {
      .friction = 0.80000000000000004},
 };
 
+/* Query SHA256: b0badf12185aff5c83c6df2795cf7f3d53ae07ecd4dac3b431a03fadcef86ff3 */
+static const dd2_vehicle dd2_friction_championship_position_bodies[] = {
+    {.position = {26710.90567743672, 8862.3080968597442, 66900.539568796463},
+     .velocity = {-0.30555588583436766, 0.20558492152349889, -0.60215207340443011},
+     .rotation = {0.043689541545604935, 0.41587666248172878, -0.10881567874343794,
+                  0.90182979193537305},
+     .angular_velocity = {0.0010597534431806659, -0.00125307544949551, 0.00031026300901777076}},
+    {.position = {25975.971027314652, 9029.2677619732458, 66377.958686196871},
+     .velocity = {1.0422767033124694, -0.26328635575277815, -2.2433666819418274},
+     .rotation = {0.0038190289855843853, 0.12535036228276603, -0.13023952164745109,
+                  0.98351937891138175},
+     .angular_velocity = {-0.0033531597890844836, -0.0051860704639987831, -0.0024364631249105813}},
+};
+static const dd2_group_contact dd2_friction_championship_position_contacts[] = {
+    {.first = 0,
+     .second = 1,
+     .point = {26289.505465337308, 9090.0023976364682, 66747.736935703811},
+     .normal = {0.9414622300698775, -0.22816888865469384, -0.24816894971356726},
+     .penetration = 0,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {26638.112557237462, 8907.005636672382, 66589.09883074509},
+     .normal = {-0.65980117321510623, 0, 0.75144022505051544},
+     .penetration = -0.0001121778204198563,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {26735.870663454923, 8884.6568667660631, 66674.935216692131},
+     .normal = {-0.65980117321509257, 0, 0.75144022505052754},
+     .penetration = -0.0001121797926875388,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {26833.628769672388, 8862.3080968597442, 66760.771602639172},
+     .normal = {-0.65980117321508991, 0, 0.75144022505052988},
+     .penetration = -0.00011218176737106661,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {26931.386875889853, 8839.9593269534253, 66846.607988586213},
+     .normal = {-0.65980117321508713, 0, 0.75144022505053221},
+     .penetration = -0.00011218374205459441,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {27029.144982107318, 8817.6105570471063, 66932.444374533254},
+     .normal = {-0.65980117321508447, 0, 0.75144022505053454},
+     .penetration = -0.00011218571673812222,
+     .friction = 0.25},
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {26044.288287105141, 9039.870878578904, 65992.387991822077},
+     .normal = {-0.71585347953750433, 0, 0.69825052512264363},
+     .penetration = -0.00015783444197172686,
+     .friction = 0.25},
+};
+
 static const dd2_friction_case dd2_friction_cases[] = {
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
@@ -2694,6 +2753,12 @@ static const dd2_friction_case dd2_friction_cases[] = {
      .body_count = 2,
      .contact_count = 7,
      .name = "championship circuit 2 coupled supports"},
+    {.initial = dd2_friction_championship_position_bodies,
+     .contacts = dd2_friction_championship_position_contacts,
+     .body_count = 2,
+     .contact_count = 7,
+     .name = "championship circuit 2 position supports",
+     .require_position_prediction = true},
 };
 
 #endif

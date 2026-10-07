@@ -1023,6 +1023,162 @@ static double dd2_group_position_error(const dd2_group_workspace *workspace,
     return error;
 }
 
+typedef struct {
+    double impulses[DD2_VEHICLE_CONTACT_LIMIT];
+    dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT];
+} dd2_group_position_state;
+
+static dd2_group_position_state
+dd2_group_position_save(const dd2_group_workspace *workspace,
+                        const dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT]) {
+    dd2_group_position_state state = {0};
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        state.offsets[body] = offsets[body];
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        state.impulses[index] = workspace->constraints[index].position_impulse;
+    }
+    return state;
+}
+
+static void dd2_group_position_restore(dd2_group_workspace *workspace,
+                                       dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
+                                       const dd2_group_position_state *state) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        offsets[body] = state->offsets[body];
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        workspace->constraints[index].position_impulse = state->impulses[index];
+    }
+}
+
+/* Nearly coincident response columns can retain positive multipliers on
+ * weaker inequalities for thousands of sweeps. Predict their release toward
+ * the strongest matching row, retaining every inequality in physical checks. */
+static unsigned dd2_group_position_target(const dd2_group_workspace *workspace, unsigned index) {
+    const dd2_group_contact source = workspace->query->contacts[index];
+    unsigned target = index;
+    for (unsigned candidate = 0; candidate < workspace->query->contact_count; ++candidate) {
+        const dd2_group_contact contact = workspace->query->contacts[candidate];
+        const dd2_vehicle_vector difference =
+            dd2_collision_add(contact.normal, dd2_collision_scale(source.normal, -1));
+        if (contact.first == source.first && contact.second == source.second &&
+            dd2_collision_dot(difference, difference) <
+                dd2_group_axis_tolerance * dd2_group_axis_tolerance &&
+            dd2_group_required_offset(contact) >
+                dd2_group_required_offset(workspace->query->contacts[target])) {
+            target = candidate;
+        }
+    }
+    return target;
+}
+
+typedef struct {
+    unsigned index;
+    double impulse;
+} dd2_group_position_shift;
+
+static void dd2_group_position_delta(const dd2_group_workspace *workspace,
+                                     dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
+                                     dd2_group_position_shift shift) {
+    const dd2_group_contact contact = workspace->query->contacts[shift.index];
+    const dd2_vehicle_vector delta = dd2_collision_scale(contact.normal, shift.impulse);
+    offsets[contact.first] = dd2_collision_add(offsets[contact.first], delta);
+    if (dd2_group_pair(contact)) {
+        offsets[contact.second] =
+            dd2_collision_add(offsets[contact.second], dd2_collision_scale(delta, -1));
+    }
+}
+
+static bool dd2_group_position_transfer(dd2_group_workspace *workspace, bool *selected) {
+    bool changed = false;
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const unsigned target = dd2_group_position_target(workspace, index);
+        const double impulse = workspace->constraints[index].position_impulse;
+        if (target != index && impulse > 0) {
+            workspace->constraints[target].position_impulse += impulse;
+            workspace->constraints[index].position_impulse = 0;
+            selected[target] = true;
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+static void dd2_group_position_rebuild(const dd2_group_workspace *workspace,
+                                       dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT]) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        offsets[body] = (dd2_vehicle_vector){0};
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        dd2_group_position_delta(
+            workspace, offsets,
+            (dd2_group_position_shift){.index = index,
+                                       .impulse = workspace->constraints[index].position_impulse});
+    }
+}
+
+static void dd2_group_position_project(dd2_group_workspace *workspace,
+                                       dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
+                                       unsigned index) {
+    const dd2_group_contact contact = workspace->query->contacts[index];
+    dd2_group_constraint *constraint = &workspace->constraints[index];
+    const double gap =
+        dd2_collision_dot(dd2_group_relative_offset(contact, offsets), contact.normal);
+    const double next =
+        fmax(0, constraint->position_impulse + ((dd2_group_required_offset(contact) - gap) /
+                                                (dd2_group_pair(contact) ? 2 : 1)));
+    dd2_group_position_delta(
+        workspace, offsets,
+        (dd2_group_position_shift){.index = index, .impulse = next - constraint->position_impulse});
+    constraint->position_impulse = next;
+}
+
+static bool dd2_group_position_finite(const dd2_group_workspace *workspace,
+                                      const dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT]) {
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        if (!dd2_group_vector_finite(&offsets[body])) {
+            return false;
+        }
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const double *impulse = &workspace->constraints[index].position_impulse;
+        if (!dd2_numeric_finite(impulse) || *impulse < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* This bounded correction changes multipliers, never the query's contacts.
+ * Rebuild offsets from their response columns to preserve least-norm
+ * stationarity and equal/opposite pair shifts. Project only recipients, then
+ * accept a smaller full finite residual or restore exact saved state. */
+static bool dd2_group_position_prediction(dd2_group_workspace *workspace,
+                                          dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
+                                          double *error) {
+    const dd2_group_position_state original = dd2_group_position_save(workspace, offsets);
+    bool selected[DD2_VEHICLE_CONTACT_LIMIT] = {false};
+    if (!dd2_group_position_transfer(workspace, selected)) {
+        return false;
+    }
+    dd2_group_position_rebuild(workspace, offsets);
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        if (selected[index]) {
+            dd2_group_position_project(workspace, offsets, index);
+        }
+    }
+    if (dd2_group_position_finite(workspace, offsets)) {
+        const double predicted = dd2_group_position_error(workspace, offsets);
+        if (dd2_numeric_finite(&predicted) && predicted < *error) {
+            *error = predicted;
+            return true;
+        }
+    }
+    dd2_group_position_restore(workspace, offsets, &original);
+    return false;
+}
+
 static bool dd2_group_positions(dd2_group_workspace *workspace, dd2_group_solution *result) {
     dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT] = {0};
     for (unsigned pass = 0; pass < DD2_GROUP_PASSES; ++pass) {
@@ -1046,6 +1202,11 @@ static bool dd2_group_positions(dd2_group_workspace *workspace, dd2_group_soluti
         }
         result->position_passes = pass + 1;
         result->position_error = dd2_group_position_error(workspace, offsets);
+        if (pass + 1 >= DD2_GROUP_NEWTON_DELAY && (pass + 1) % DD2_GROUP_NEWTON_PERIOD == 0) {
+            result->position_predictions += (unsigned)dd2_group_position_prediction(
+                workspace, offsets, &result->position_error);
+        }
+
         if (result->position_error < dd2_group_position_tolerance) {
             for (unsigned body = 0; body < workspace->query->body_count; ++body) {
                 dd2_vehicle *vehicle = &workspace->query->bodies[body];

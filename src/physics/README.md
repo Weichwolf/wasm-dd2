@@ -370,9 +370,11 @@ Circuit-2 championship query additionally checks a stronger projected correction
 against a weaker accepted alternate direction. A four-world-support Circuit-2
 query checks the shared low-speed law at the later tick-66,449 failure. A
 two-body/seven-contact Circuit-2 query captures the tick-86,643 failure, with six
-world supports and one car pair. Fourteen rotations/reversals of those same
-equations additionally check convergence without depending on captured row order. All
-eighteen frozen queries retain
+world supports and one car pair. A second two-body/seven-contact query captures
+the tick-107,550 position-repair failure, with five nearly coincident wall
+inequalities of different strength. Fourteen rotations/reversals of each query
+(twenty-eight total) check convergence without depending on captured row order. All
+nineteen frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
@@ -402,7 +404,19 @@ states, not original executable trajectories. Passing these cases does not
 establish complete natural arena behavior. A separate equal-mass, least-norm
 position solve requires complementarity within 1e-9 world units, uses signed support gaps and
 preserves shared motion without changing velocity, spin or physical clocks.
-Every body's remaining motion is swept again after correction.
+After 512 ordinary position sweeps, every 32 sweeps a bounded prediction may
+transfer positive multipliers from weaker near-parallel constraints to a stronger
+row with the same body partners. Matching uses the existing 1e-8 axis tolerance;
+every original inequality remains in the query and full physical residual.
+Offsets are rebuilt from all response columns, preserving least-norm stationarity
+and equal/opposite pair translations. Exact coordinate projections apply only to
+transfer recipients. A prediction must strictly reduce the finite full position
+residual; otherwise offsets and multipliers are restored exactly. The 4,096-sweep
+budget, 1e-9 position tolerance and ordinary 1.8 relaxation remain unchanged.
+`rewrite_contact_group` also checks twenty-four independent analytic least-norm
+cases with weaker duplicated world or pair rows and rotated/reversed orderings.
+These verify translation, every inequality and unchanged motion/clocks separately
+from the captured gameplay state. Every body's remaining motion is swept again after correction.
 
 Report incident speed retains actual initial closing/primary impact speed, and
 also represents pressure transferred through another contact as effective normal

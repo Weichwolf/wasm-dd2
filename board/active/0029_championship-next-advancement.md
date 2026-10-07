@@ -33,24 +33,42 @@ slow multiplier release in the position solve, not a friction/velocity failure.
 Reproduction/input/source/binary receipt:
 /tmp/wasm-dd2/rewrite-season-107550/report.json.
 
-A private Native-only candidate transfers multipliers toward a stronger,
-near-parallel inequality, rebuilds offsets and predicts its exact coordinate
-response. It checks every original constraint, accepts only a smaller finite
-position residual and restores exact offsets/multipliers on rejection. The
-nineteen captured queries and fourteen existing velocity-query reorderings pass
-independent physical conditions. The new query needs 515 position passes at
-5.902707408142818e-10; the saved actual input advances to 107,551. Production is
-unchanged. Strict LLVM19, WASM, sanitizer, reordered position-query/analytic
-checks and ordinary racing have not established acceptance for this candidate.
+Production now has a bounded multiplier transfer toward a stronger,
+near-parallel inequality with the same partners. It rebuilds offsets from all
+response columns, projects only recipients and checks every original constraint.
+It accepts only a smaller finite full position residual and restores exact
+state on rejection. No material law, tolerance, relaxation or pass bound changes.
+
+Strict LLVM19 format/tidy, all 34 Native and 32 WASM CTests pass. Native, WASM
+and instrumented rewrite C pass nineteen captured queries, twenty-eight rotated
+or reversed captured-query orderings, twenty analytic friction cases and
+twenty-four independent analytic least-norm position cases. The new production
+query takes 515 position passes with one prediction and residual
+5.9027074081428182e-10; velocity remains 12 passes at
+5.3753121290722745e-8. The saved actual input advances to 107,551 with rebuilt
+production libraries. Actual Native SDL, instrumented SDL and Chromium/WASM
+checks pass all eleven levels and existing mode/championship/pause/reset/focus/exit controls.
+Verification receipt: /tmp/wasm-dd2/rewrite-position-107550/report.json.
+Successful raw verification output has been hashed, reported and removed.
+
+The new production natural first-season probe again completes round 1 at
+287,087 ticks with exactly the previous twenty driver scores and consumes them
+correctly. Its second-round trajectory now fails advancement at tick 66,070:
+AI/frame/championship validity pass, health is 0.48667347418173146 and credited
+laps are zero. This is another failed full-season attempt. The old saved input
+is fixed, but ordinary full-campaign acceptance remains unproved. A sparse
+diagnostic reproduces every production JSON checkpoint/result/failure exactly. Its 31,216-byte saved input fails identically under production and
+diagnostic replay. Drivers 2/8 form four contacts (three world, one pair).
+Velocity converges in 12 passes at 2.4753696444140237e-8; position exhausts
+4,096 passes at 2.2943640119247986e-9. This is another position failure, with
+different support normals. Receipt: /tmp/wasm-dd2/rewrite-season-66070/report.json.
 
 ## Next
 
-Review and implement the general bounded position prediction in readable C11.
-Preserve all constraints and existing physical acceptance, add focused independent
-position checks and row reorderings, and verify Native/WASM and instrumented C.
-Then replay the saved input with production code, run mandatory/application
-checks and continue ordinary racing. Keep full seasons and remaining gameplay
-under their existing owners.
+Inspect sparse position multipliers and the four response columns in the new
+66,070 reproducer before choosing further changes. Keep the position
+improvement's targeted proof separate from natural season completion. Full
+seasons and remaining gameplay retain their existing owners.
 
 ## Accept
 

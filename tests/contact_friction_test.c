@@ -147,7 +147,10 @@ static bool dd2_friction_run(const dd2_friction_case *scenario) {
                                    .body_count = scenario->body_count,
                                    .contact_count = scenario->contact_count};
     if (!dd2_contact_group_solve(&query, &result) || result.count != scenario->contact_count ||
-        result.velocity_passes > DD2_FRICTION_PASS_LIMIT || result.coordinate_restarts > 1 ||
+        result.velocity_passes > DD2_FRICTION_PASS_LIMIT ||
+        result.position_passes > DD2_FRICTION_PASS_LIMIT ||
+        result.position_predictions > result.position_passes || result.coordinate_restarts > 1 ||
+        (scenario->require_position_prediction && result.position_predictions == 0) ||
         (scenario->require_restart && result.coordinate_restarts != 1) ||
         dd2_friction_energy(bodies, scenario->body_count) > energy + dd2_friction_tolerance) {
         return false;
@@ -188,8 +191,10 @@ static bool dd2_friction_run(const dd2_friction_case *scenario) {
             return false;
         }
     }
-    printf("Car-body friction %s: PASS (contacts=%u passes=%u restarts=%u)\n", scenario->name,
-           result.count, result.velocity_passes, result.coordinate_restarts);
+    printf("Car-body friction %s: PASS (contacts=%u passes=%u restarts=%u position_passes=%u "
+           "position_predictions=%u)\n",
+           scenario->name, result.count, result.velocity_passes, result.coordinate_restarts,
+           result.position_passes, result.position_predictions);
     return true;
 }
 
@@ -228,23 +233,27 @@ static bool dd2_friction_analytic(double speed, bool pair) {
 
 /* Redundant supports must not require the captured row ordering to converge.
  * Reorder the same equations without changing geometry or physical acceptance. */
-static bool dd2_friction_permutations(void) {
+static bool dd2_friction_permutations(bool position) {
     for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
         for (unsigned start = 0; start < DD2_FRICTION_COUPLED_CONTACTS; ++start) {
             dd2_group_contact contacts[DD2_FRICTION_COUPLED_CONTACTS] = {0};
             for (unsigned index = 0; index < DD2_FRICTION_COUPLED_CONTACTS; ++index) {
                 const unsigned offset =
                     reversed != 0 ? DD2_FRICTION_COUPLED_CONTACTS - index : index;
-                contacts[index] =
-                    dd2_friction_championship_coupled_contacts[(start + offset) %
-                                                               DD2_FRICTION_COUPLED_CONTACTS];
+                contacts[index] = (position ? dd2_friction_championship_position_contacts
+                                            : dd2_friction_championship_coupled_contacts)
+                    [(start + offset) % DD2_FRICTION_COUPLED_CONTACTS];
             }
-            const dd2_friction_case scenario = {.initial = dd2_friction_championship_coupled_bodies,
-                                                .contacts = contacts,
-                                                .body_count = DD2_FRICTION_PAIR,
-                                                .contact_count = DD2_FRICTION_COUPLED_CONTACTS,
-                                                .name = "championship coupled support ordering"};
-            printf("Coupled support ordering: start=%u reversed=%u\n", start, reversed);
+            const dd2_friction_case scenario = {
+                .initial = position ? dd2_friction_championship_position_bodies
+                                    : dd2_friction_championship_coupled_bodies,
+                .contacts = contacts,
+                .body_count = DD2_FRICTION_PAIR,
+                .contact_count = DD2_FRICTION_COUPLED_CONTACTS,
+                .name = position ? "championship position support ordering"
+                                 : "championship coupled support ordering"};
+            printf("Coupled support ordering: position=%u start=%u reversed=%u\n",
+                   (unsigned)position, start, reversed);
             if (!dd2_friction_run(&scenario)) {
                 return false;
             }
@@ -280,7 +289,7 @@ int main(void) {
             return EXIT_FAILURE;
         }
     }
-    if (!dd2_friction_permutations()) {
+    if (!dd2_friction_permutations(false) || !dd2_friction_permutations(true)) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

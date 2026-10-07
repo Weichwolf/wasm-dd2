@@ -54,9 +54,13 @@ the shared low-speed material law advances the saved tick-66,449 input under
 0027. Analytic mixed-contact corrections now advance the saved tick-86,643 input
 under 0028; all eighteen frozen queries and fourteen reorderings pass on three
 targets. The unchanged-bound natural season proceeds to tick 107,550, whose
-position-repair failure is reproduced under 0029. A private Native-only
-prediction advances that saved step; production implementation and three-target
-acceptance remain pending. A separately
+position-repair failure is reproduced under 0029. The production position prediction advances that saved step; nineteen captured
+queries, twenty-eight reorderings and twenty-four independent analytic position
+cases pass on Native, WASM and ASan/UBSan. Actual Native/sanitized/Chromium input checks pass all eleven levels. The new
+natural season again
+completes round 1 with the same scores, then fails round 2 at tick 66,070; a
+31,216-byte replay and exact sparse trace identify a different four-contact
+position failure. Full-campaign acceptance remains open. A separately
 verified complete eight-lap Circuit-5 race passes on Native, WASM and ASan/UBSan;
 full physical seasons and remaining arena completion stay open.
 
