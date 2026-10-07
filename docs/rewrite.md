@@ -1,6 +1,6 @@
 # Readable C rewrite
 
-The `rewrite` branch is the new implementation. `master` retains the executable
+The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game
 coverage. It is evidence for behavior, not a claim that every feature is correct.
@@ -469,10 +469,10 @@ and remove completed raw captures without deleting files in use.
 
 ## Goal
 
-Implementiere im Branch `rewrite` von `/home/cosmo/Git/wasm-dd2` eine vollständig
+Implementiere im Branch `master` von `/home/cosmo/Git/wasm-dd2` eine vollständig
 spielbare, gut lesbare und modular aufgebaute C11-Neuimplementierung von
 Destruction Derby 2 für Native und WebAssembly mit der gepinnten SoftGL-Bibliothek
-als Renderer; nutze `master`, den Tag `reconstruction-baseline` und das laufende
+als Renderer; nutze `ghidra`, den Tag `reconstruction-baseline` und das laufende
 Original als Referenzen für Spielverhalten und Datenformate, ersetze schrittweise
 absolute Speicheradressen und Registeremulation durch dokumentierte Typen und
 klare Schnittstellen, implementiere und prüfe alle Strecken, Fahrzeuge, Physik,

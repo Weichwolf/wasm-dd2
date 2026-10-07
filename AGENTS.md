@@ -11,7 +11,7 @@ after verification work. Do not delete files needed by running processes.
 After each successfully verified improvement, commit and push it as requested
 by the user. Do not claim original parity for a diagnostic or partial comparison.
 
-On the `rewrite` branch, read `docs/rewrite.md` before implementation. New game
+On the `master` branch, read `docs/rewrite.md` before implementation. New game
 modules are handwritten C11 under `src/`, using typed state and explicit ownership
 instead of original absolute addresses or emulated registers. Keep the reference
 reconstruction and original game data available for functional comparisons.

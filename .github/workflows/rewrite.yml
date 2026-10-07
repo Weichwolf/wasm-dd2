@@ -2,9 +2,9 @@ name: Rewrite C quality and builds
 
 on:
   push:
-    branches: [rewrite]
+    branches: [master]
   pull_request:
-    branches: [rewrite]
+    branches: [master]
 
 permissions:
   contents: read

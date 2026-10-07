@@ -1,10 +1,12 @@
 # wasm-dd2 — Readable C rewrite
 
-The active `rewrite` branch prepares a new C11 implementation using SoftGL.
-Start with [the rewrite architecture, build commands and goal](docs/rewrite.md).
-The current scaffold builds and checks the renderer dependency; gameplay is
-still to be implemented. Original bitidentical output is not required for the
-rewrite, which will gain visual improvements incrementally.
+The default `master` branch contains the handwritten C11 implementation using
+SoftGL for Native and WebAssembly. Start with
+[the rewrite architecture, build commands and goal](docs/rewrite.md).
+Track/car inspection, free driving, opponents, damage, practice race modes,
+Redbook music and motor/countdown/impact effects are implemented. The complete
+front end, championships and other full-game features remain in progress.
+Original bitidentical output is not required; graphics improve incrementally.
 
 ```sh
 git submodule update --init --recursive
@@ -13,8 +15,8 @@ make rewrite-wasm
 ctest --preset rewrite-wasm
 ```
 
-The reference reconstruction remains on `master` and at the annotated tag
-`reconstruction-baseline` (`b1111bd`). The following documentation describes
+The decompiled and patched reference reconstruction remains on `ghidra` and at
+the annotated tag `reconstruction-baseline` (`b1111bd`). The following documentation describes
 that reference and its explicitly bounded verification evidence.
 
 # Reference reconstruction documentation
