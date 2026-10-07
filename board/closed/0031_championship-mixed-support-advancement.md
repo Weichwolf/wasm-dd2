@@ -97,5 +97,10 @@ remains open.
 
 Completed window/ground/race captures and the resolved tick-128,036 raw input
 and diagnostic helpers have been removed after archiving their identities and
-proof. The running season's executable, log and sparse diagnostic files remain
-available. Retained reports record the published code commit 9795cc3.
+proof. The terminal season outcome and next unresolved sparse diagnosis are recorded
+separately. Retained reports record the published code commit 9795cc3.
+
+The completed unchanged-bound attempt next fails round 2 at tick 220,415.
+All 104 production/diagnostic records match, and both actual failure replayers
+agree. The new four-body/ten-contact velocity failure stays active under 0032.
+Final parent receipt: /tmp/wasm-dd2/rewrite-release-128036/report.json.

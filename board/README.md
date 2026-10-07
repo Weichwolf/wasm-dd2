@@ -36,6 +36,7 @@ its game requirements or acceptance rules.
 | [0029](closed/0029_championship-next-advancement.md) | Scheduled racing advancement through the captured failures | closed |
 | [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
 | [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
+| [0032](active/0032_championship-dependent-support-advancement.md) | Next championship dependent-support advancement failure | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -123,9 +124,14 @@ orderings, strict LLVM19/Native/WASM gates, eleven-level actual input and
 original-data ground checks, and six scoped race targets pass on three variants.
 The unmodified natural season retains identical round-1 results and reaches
 round-2 tick 150,000; its diagnostic prefix matches exactly. The advancement
-contract closes under 0031. The season attempt is still running under 0025/0004;
-full seasons, the remaining arena and all-game acceptance remain open. Receipt:
-/tmp/wasm-dd2/rewrite-release-128036/advancement-report.json.
+contract closes under 0031. The terminal season attempt next fails at round-2 tick 220,415. Its failure-only
+diagnostic matches all 104 production records, and two actual replayers retain
+the failure. Four cars form ten contacts; velocity remains above tolerance at
+4,096 passes. A sparse constitutive matrix is nearly singular; the cause and
+correction remain to be diagnosed under 0032. Full seasons, the remaining arena
+and all-game acceptance remain open. Receipts:
+/tmp/wasm-dd2/rewrite-release-128036/report.json and
+/tmp/wasm-dd2/rewrite-season-after-128036/report.json.
 
 ## Workflow and acceptance
 
