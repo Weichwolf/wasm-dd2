@@ -13,6 +13,8 @@ A private best-residual secant safeguard solves that frozen query and six prior 
 
 The full post-pruning AI run passes the first ten levels on all targets; arena B Native and sanitized slot12 miss sustained travel (9010.022/9769.014<10000), although all2400 samples are supported. Keep the original threshold and diagnose this behavior. Report: /tmp/wasm-dd2/rewrite-connected-ai-verification/terminal-report.json.
 
+Closed0017 now supplies a bounded ordinary-coordinate restart while retaining all contacts/material checks and4096 total passes. The5contact failure completes in477 passes and the3world junction in40 on all targets. Required31Native/30WASM gates and independent material checks pass. A fresh production B-total-survive run is active under /tmp/wasm-dd2/rewrite-restart-arenaB-verification; natural behavior is not yet accepted.
+
 ## Next
 
 Inspect the next failed query, prove the cause and fix the solver without changing constitutive acceptance checks. Re-run the complete production race suite and all required gates. Expand ordinary physically completed circuit coverage beyond circuit 5.

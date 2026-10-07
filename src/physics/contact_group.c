@@ -5,11 +5,17 @@
 #include "physics/vehicle.h"
 #include "physics/vehicle_collision.h"
 
+#include <float.h>
 #include <math.h>
 #include <stddef.h>
 
-enum { DD2_GROUP_PASSES = 4096 };
+enum {
+    DD2_GROUP_PASSES = 4096,
+    DD2_GROUP_ACCELERATION_PASSES = DD2_GROUP_PASSES / 2,
+    DD2_GROUP_STALLED_PASSES = 64
+};
 static const double dd2_group_clearance = 1e-4;
+static const double dd2_group_progress_fraction = 0.999;
 static const double dd2_group_velocity_tolerance = 1e-7;
 static const double dd2_group_position_tolerance = 1e-9;
 static const double dd2_group_active_tolerance = 1e-10;
@@ -387,6 +393,14 @@ static dd2_group_extrapolation dd2_group_extrapolate(dd2_group_workspace *worksp
 
 static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solution *result) {
     dd2_group_history history = {0};
+    dd2_group_motion initial[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned body = 0; body < workspace->query->body_count; ++body) {
+        const dd2_vehicle *vehicle = &workspace->query->bodies[body];
+        initial[body] = (dd2_group_motion){vehicle->velocity, vehicle->angular_velocity};
+    }
+    double progress_error = DBL_MAX;
+    unsigned stalled = 0;
+    bool accelerated = true;
     for (unsigned pass = 0; pass < DD2_GROUP_PASSES; ++pass) {
         const dd2_group_iterate before = dd2_group_values(workspace);
         for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
@@ -412,6 +426,9 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
         if (result->velocity_error < dd2_group_velocity_tolerance) {
             return true;
         }
+        if (!accelerated) {
+            continue;
+        }
         const dd2_group_iterate image = dd2_group_values(workspace);
         const dd2_group_iterate step =
             dd2_group_subtract(&image, &before, workspace->query->contact_count);
@@ -428,6 +445,24 @@ static bool dd2_group_velocities(dd2_group_workspace *workspace, dd2_group_solut
             if (result->velocity_error < dd2_group_velocity_tolerance) {
                 return true;
             }
+        }
+        if (result->velocity_error < progress_error * dd2_group_progress_fraction) {
+            progress_error = result->velocity_error;
+            stalled = 0;
+        } else {
+            ++stalled;
+        }
+        if (stalled >= DD2_GROUP_STALLED_PASSES || pass + 1 == DD2_GROUP_ACCELERATION_PASSES) {
+            /* Locally improving secants can keep revisiting a worse cycle.
+             * Restart once from the exact input motion, with zero accumulated
+             * impulses and ordinary coordinate steps. Retain every contact and
+             * reserve half the existing total budget for unaccelerated response. */
+            const dd2_group_iterate empty = {0};
+            dd2_group_restore(workspace, &empty, initial);
+            accelerated = false;
+            ++result->coordinate_restarts;
+            history.ready = false;
+            continue;
         }
         history = (dd2_group_history){.image = image, .step = step, .ready = true};
     }

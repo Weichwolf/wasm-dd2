@@ -4,12 +4,15 @@
 #include "physics/contact_group.h"
 #include "physics/vehicle.h"
 
+#include <stdbool.h>
+
 typedef struct {
     const dd2_vehicle *initial;
     const dd2_group_contact *contacts;
     unsigned body_count;
     unsigned contact_count;
     const char *name;
+    bool require_restart;
 } dd2_friction_case;
 
 /* Frozen rewrite event queries on original arena 9. These are reconstructed
@@ -1341,7 +1344,128 @@ static const dd2_group_contact dd2_friction_native11_contacts[] = {
      .friction = 0.25},
 };
 
+/* Arena B WASM rewrite failure at frame 51704, published a72ecf0.
+ * Only the connected source slots 0/15/16 are retained, with original contact order.
+ * The old accelerated solver cycles at about 0.1 units/s residual.
+ * This is a rewrite stress capture on original assets, not original physics. */
+static const dd2_vehicle dd2_friction_arena_b_initial[] = {
+    {
+        .position = {.x = -8719.5855028489004, .y = -2988.4076337257925, .z = 10944.251763607712},
+        .velocity = {.x = 744.55036754451771, .y = -571.12089557800368, .z = 689.0479765656288},
+        .rotation = {.x = 0.31791006999463728,
+                     .y = -0.44619813632257083,
+                     .z = -0.16864710620509268,
+                     .w = 0.81938914082804237},
+        .angular_velocity = {.x = 0.10873161787483664,
+                             .y = -1.3742995050892708,
+                             .z = -1.4671983155195985},
+    },
+    {
+        .position = {.x = -9394.4484394920564, .y = -2739.5083963957231, .z = 10663.991688257585},
+        .velocity = {.x = -4.1525177983198986, .y = -7.2747062587121825, .z = -1.525219187735235},
+        .rotation = {.x = 0.34065212837837988,
+                     .y = 0.31795153215507954,
+                     .z = 0.12142694736893528,
+                     .w = 0.87642366871518196},
+        .angular_velocity = {.x = -0.0078748759981575565,
+                             .y = -0.012339828090323572,
+                             .z = 0.02924014408991869},
+    },
+    {
+        .position = {.x = -9063.0157927311921, .y = -2611.2959571610545, .z = 10532.742642671465},
+        .velocity = {.x = 601.65975541950797, .y = -499.82020020337904, .z = 545.20106320840137},
+        .rotation = {.x = 0.33774448114318401,
+                     .y = 0.3175472053713384,
+                     .z = 0.12248024387485053,
+                     .w = 0.87754830503997439},
+        .angular_velocity = {.x = 0.033208997369104085,
+                             .y = 0.013110323650500556,
+                             .z = 0.021056678290290742},
+    },
+};
+static const dd2_group_contact dd2_friction_arena_b_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = -9199.1971366356956, .y = -2954.6233976245076, .z = 11095.338824977187},
+     .normal = {.x = 0, .y = 0.29276890100005609, .z = -0.95618323066618316},
+     .penetration = 6.7608836886624569e-07,
+     .friction = 0.80000000000000004},
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = -9346.1972766448671, .y = -2876.7607841859453, .z = 10954.84351627334},
+     .normal = {.x = 0.64904147754478247, .y = 0, .z = -0.76075302196342642},
+     .penetration = -0.00016825055313820486,
+     .friction = 0.25},
+    {.first = 1,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = -9248.8434376706027, .y = -2957.3469265559752, .z = 11094.504921446425},
+     .normal = {.x = 0, .y = 0.29276890100005609, .z = -0.95618323066618316},
+     .penetration = -5.7608389774511537e-05,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = 2,
+     .point = {.x = -8917.9551344465344, .y = -2830.3513921958556, .z = 10961.273308878535},
+     .normal = {.x = 0.54494839986020382, .y = -0.5620567975506402, .z = 0.62219241221419763},
+     .penetration = -0.00018122456492619676,
+     .friction = 0.25},
+    {.first = 1,
+     .second = 2,
+     .point = {.x = -8963.9715613542558, .y = -2982.2421901034145, .z = 10749.328839655951},
+     .normal = {.x = -0.76832472427210996, .y = -0.42946456467157773, .z = 0.47459172534257105},
+     .penetration = -0.00019999934296444088,
+     .friction = 0.25},
+};
+
+/* Original-data arena B frame 20430 from the private failed best-residual
+ * acceleration guard. Only source slot 6 and its three world contacts remain.
+ * It exercises simultaneous sloped ground, wall and flat-ground support.
+ * This is a rewrite stress capture, not original-executable vehicle motion. */
+static const dd2_vehicle dd2_friction_arena_b_world_initial[] = {
+    {
+        .position = {.x = 7904.1489176111108, .y = -3792.6324254797705, .z = 11809.444074222694},
+        .velocity = {.x = -2.1994684503174682, .y = -10.684719966711778, .z = 0.88230946551235756},
+        .rotation = {.x = 0.85907040581626071,
+                     .y = -0.092669310994983711,
+                     .z = 0.40226912940078785,
+                     .w = -0.3026383719582374},
+        .angular_velocity = {.x = 0.022463923325298528,
+                             .y = 0.00058640850205356502,
+                             .z = 0.00073099449050087635},
+    },
+};
+static const dd2_group_contact dd2_friction_arena_b_world_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 8128.7557069325139, .y = -3621.2447821490337, .z = 11392.102408553017},
+     .normal = {.x = 0, .y = 0.74107913231337486, .z = 0.67141769387591765},
+     .penetration = 6.1874867160255018e-10,
+     .friction = 0.80000000000000004},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 8207.4345053507404, .y = -3675.0417218541511, .z = 11832.075846628861},
+     .normal = {.x = -0.56996072953824584, .y = 0, .z = -0.82167193379367087},
+     .penetration = -0.00010000235811749009,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 7701.4510864296662, .y = -4171.9277924095832, .z = 12072.207590416554},
+     .normal = {.x = 0, .y = 0.99999950000037507, .z = -0.00099999950000037498},
+     .penetration = -6.7997959817997359e-05,
+     .friction = 0.80000000000000004},
+};
+
 static const dd2_friction_case dd2_friction_cases[] = {
+    {.initial = dd2_friction_arena_b_world_initial,
+     .body_count = 1,
+     .contacts = dd2_friction_arena_b_world_contacts,
+     .contact_count = 3,
+     .name = "arena B world junction"},
+    {.initial = dd2_friction_arena_b_initial,
+     .body_count = 3,
+     .contacts = dd2_friction_arena_b_contacts,
+     .contact_count = 5,
+     .name = "arena B world/car cycle",
+     .require_restart = true},
     {.initial = dd2_friction_native15_bodies,
      .contacts = dd2_friction_native15_contacts,
      .body_count = sizeof(dd2_friction_native15_bodies) / sizeof(dd2_friction_native15_bodies[0]),

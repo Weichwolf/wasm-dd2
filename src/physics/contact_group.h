@@ -38,6 +38,7 @@ typedef struct {
     unsigned velocity_passes;
     unsigned position_passes;
     unsigned accelerated_passes;      /* Accepted finite predictions reducing physical residual. */
+    unsigned coordinate_restarts;     /* At most one; velocity_passes includes both phases. */
     unsigned rejected_extrapolations; /* Invalid or non-improving candidates, without drift. */
     double velocity_error;            /* Normal complementarity and projected friction, units/s. */
     double position_error;            /* Normal position complementarity, world units. */

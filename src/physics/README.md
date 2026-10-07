@@ -308,7 +308,17 @@ secant prediction for slowly converging coupled supports. Its normal impulses
 and tangential friction are projected into their admissible cones, and every
 quantity is checked before application. A prediction is accepted only with a
 strictly smaller finite physical residual. Rejection restores exact saved motion
-and impulses. The velocity/position tolerances and pass bound are unchanged.
+and impulses. If the best physical residual does not improve by 0.1% over
+64 accelerated passes, the solver restarts once from exact original velocities
+and angular velocities, clearing all accumulated impulses. It then uses ordinary
+coordinate response without secants. Acceleration also stops at pass 2,048 to
+reserve half the unchanged 4,096 total-pass bound for that response. All contacts,
+material laws, initial-normal-speed metadata and position repair are retained;
+reported velocity passes include work before and after restart. The result
+reports the single restart explicitly. Two arena-B regressions cover a captured
+five-contact cycle and simultaneous sloped-ground/wall/flat-ground support, with
+independent contact, impulse, friction, energy and physical-clock checks. The
+velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without
 over-relaxation. Over-relaxation can amplify modes shared with Coulomb friction,
 even while individual secant predictions reduce the residual. A frozen

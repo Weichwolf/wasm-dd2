@@ -154,7 +154,8 @@ static bool dd2_friction_run(const dd2_friction_case *scenario) {
                                    .body_count = scenario->body_count,
                                    .contact_count = scenario->contact_count};
     if (!dd2_contact_group_solve(&query, &result) || result.count != scenario->contact_count ||
-        result.velocity_passes > DD2_FRICTION_PASS_LIMIT ||
+        result.velocity_passes > DD2_FRICTION_PASS_LIMIT || result.coordinate_restarts > 1 ||
+        (scenario->require_restart && result.coordinate_restarts != 1) ||
         dd2_friction_energy(bodies, scenario->body_count) > energy + dd2_friction_tolerance) {
         return false;
     }
@@ -194,8 +195,8 @@ static bool dd2_friction_run(const dd2_friction_case *scenario) {
             return false;
         }
     }
-    printf("Car-body friction %s: PASS (contacts=%u passes=%u)\n", scenario->name, result.count,
-           result.velocity_passes);
+    printf("Car-body friction %s: PASS (contacts=%u passes=%u restarts=%u)\n", scenario->name,
+           result.count, result.velocity_passes, result.coordinate_restarts);
     return true;
 }
 

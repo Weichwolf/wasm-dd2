@@ -24,6 +24,7 @@ its game requirements or acceptance rules.
 | [0011](open/0011_complete-functional-acceptance.md) | Complete requested game on both targets | open |
 | [0012](closed/0012_accepted-motion-stall-detection.md) | Accepted-motion AI stall detection | closed |
 | [0013](closed/0013_connected-world-query-pruning.md) | Connected contact world queries | closed |
+| [0017](closed/0017_bounded-contact-restart.md) | Bounded restart for cycling accelerated contacts | closed |
 
 Stabilize ordinary races first, then publish the proven league foundation and
 connect full championship/front-end/save flows. Audio, input and visual work
