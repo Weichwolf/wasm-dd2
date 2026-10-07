@@ -70,7 +70,17 @@ def native_check(output, archive, binary, label):
         ui.command('key', 'Return')
         expected = motor_prefix(archive)
         ui.wait(lambda: expected in raw.read_bytes()[start:], timeout=10)
-        ui.command('key', 'p'); time.sleep(.15)
+        ui.command('key', 'p')
+        # A completed render acknowledges that the preceding pause command was
+        # processed. Instrumented twenty-car frames can outlast a short sleep.
+        ui.command('windowsize', ui.window, 800, 480)
+        def pause_presented():
+            image = ui.image()
+            return (image.size == (800, 480) and
+                    not any(image.crop((0, 0, 80, 480)).tobytes()) and
+                    not any(image.crop((720, 0, 800, 480)).tobytes()))
+        ui.wait(pause_presented)
+        pause_image_sha256 = hashlib.sha256(ui.image().tobytes()).hexdigest()
         paused_start = raw.stat().st_size; time.sleep(.2)
         if any(raw.read_bytes()[paused_start:]): raise ValueError('Paused Native effects emitted PCM')
         ui.command('key', 'r')
@@ -78,7 +88,8 @@ def native_check(output, archive, binary, label):
         if ui.process.wait(timeout=10) != 0: raise ValueError('Application failed on audio close')
         return dict(pass_=True, idle_frames=2400, frequency=6192, output_rate=48000, gain=80,
                     original_engine_pcm_sha256=hashlib.sha256(expected).hexdigest(),
-                    capture_sha256=digest(raw), controls=['real Enter starts engine', 'pause silences device', 'reset/close'])
+                    capture_sha256=digest(raw), pause_presentation_sha256=pause_image_sha256,
+                    controls=['real Enter starts engine', 'acknowledged pause silences device', 'reset/close'])
     finally: ui.close()
 
 

@@ -33,34 +33,43 @@ selection, owned browser-loop close/reopen and all existing eleven-track
 scene/car/driving/race/trial/arena flows. The focus observer requires an actual
 letterboxed presentation before comparing released input.
 
-Earlier nine natural ten-lap application sessions passed both modes and
-missing-next rollback on Native, Chromium/WASM and ASan/UBSan. The independently
-corrected nearest-integer pixel oracle accepted all twenty names/ranks/scores and
-actual X11/canvas presentation. Receipt:
-/tmp/wasm-dd2/rewrite-championship-application-integration/accepted-report.json.
-That receipt predates the ordered-input, visible-track and lifecycle changes.
-Fresh Native and Chromium/WASM cases now pass all six cases on the current source;
-three instrumented races remain running under
-/tmp/wasm-dd2/rewrite-championship-application-current/. No score, lap, position,
-damage or result injection supplies natural completion. Reached rewrite units
-are sanitizer-instrumented; SDL2 and pinned release SoftGL are uninstrumented.
+All nine fresh natural ten-lap application cases pass on Native, Chromium/WASM
+and ASan/UBSan, covering both modes and missing-next rollback:
+/tmp/wasm-dd2/rewrite-championship-application-current/report.json. Source and
+binary identities remain unchanged throughout. The independent original-data
+score/name and pixel oracles accept all twenty standings and actual X11/canvas
+presentation. Frozen results, second-round preparation/restart, unscored exit and
+close/reopen pass. No score, lap, position, damage or result injection supplies
+natural completion. Reached rewrite units are sanitizer-instrumented; SDL2 and
+pinned release SoftGL are uninstrumented. These first-round cases do not establish
+complete physical seasons.
 
-Actual Redbook output passes the current source in
-/tmp/wasm-dd2/rewrite-championship-music-current/report.json. Native effects output
-passes, but the instrumented effect test observed PCM before acknowledging the
-pause event. The bounded visible-event diagnostic passes:
-/tmp/wasm-dd2/rewrite-championship-effects-pause-ack/report.json. The production
-verifier still needs this acknowledgement and a complete effects rerun.
-Successful raw captures are removed after reports; completed failure diagnoses
-retain receipts instead of raw captures.
+Actual effects and Redbook output pass the current runtime on Native and real
+WebAudio at 44,100/48,000 Hz, including sanitized application lifetime:
+/tmp/wasm-dd2/rewrite-championship-effects-ack-current/report.json and
+/tmp/wasm-dd2/rewrite-championship-music-current/report.json. The effects observer
+now acknowledges actual letterboxed presentation after Pause before checking PCM,
+replacing an unacknowledged short delay. This verification-only change follows
+the championship source-identity run; production sources/binaries are unchanged.
+Successful raw captures are removed after reports. The earlier pixel-oracle and
+pause-observation diagnoses retain compact receipts.
+
+A separate Native headless first Stockcar-season probe naturally completes round
+1, then fails advancement in round 2 at tick 59,399. Ordinary AI input, frame input
+and championship state remain valid; race/season phase remains RACING, player
+engine health is 0.6396117204829093 and no complete lap is credited. No points or
+results are manufactured to continue. Source and library identities match the
+published runtime. Report:
+/tmp/wasm-dd2/rewrite-stock-season-probe/report.json. The sparse diagnostic and
+probe remain available for this unresolved simulation failure.
 
 ## Next
 
-Finish the fresh instrumented natural first-round application checks without
-changing their source identity. Make the effect pause observer acknowledge actual
-presentation, then rerun actual effects output. Follow with physical full-season
-continuation/outcome flows, including the next assigned field after promotion.
-Full original front end and persistence stay in 0003/0008.
+Locate the failing simulation stage at round-2 tick 59,399 using the retained
+bounded probe and only the needed checkpoint. Preserve the regular race rules,
+AI controls, damage and score ownership. Follow with complete physical seasons
+and continuing/terminal outcome application flows, including the assigned field
+after promotion. Full original front end and persistence stay in 0003/0008.
 
 ## Accept
 

@@ -43,7 +43,10 @@ all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural
 completion at the unchanged fixture bound. Its sparse movement diagnosis
 matches the production trace exactly. Assigned physical grids now preserve
 driver IDs on all eleven original levels; complete championships remain open
-under 0004.
+under 0004. Shared championship entry, prepared round transitions, named
+standings and first-round Native/browser/sanitized application checks now pass
+under 0025. A separate full-season probe fails round-2 advancement at tick 59,399;
+its retained sparse diagnosis is the next application/physics task.
 
 ## Workflow and acceptance
 
