@@ -745,7 +745,16 @@ reversed-order comparisons reduce child CPU by 1.48..1.92 percent on Native and
 Fresh patterned O1 ASan/UBSan and Native Memcheck cover the physical/ownership
 corpora, with strict LLVM19/170-file, 38/36 gates, all eleven original ground
 levels, 220 recovery cases and 45 prior race scenarios passing again per target.
-Closed 0054 proves this scratch contract. The new actual Arena-8 owner checks
-remain live under 0053 at unchanged limits; full-case speed and natural results
-remain unproved. Receipt:
+Closed 0054 proves this scratch contract. At source 0323ba9, actual Native and
+fresh O1 sanitized Arena-8 owners repeat their natural results at ticks
+81219/13083 (401.09/60.41 seconds survival). WASM times out at the unchanged
+1800-second deadline after 86042 complete ticks (428.21 seconds survival, twenty
+available engines). Every complete prefix row passes the independent oracle;
+the full public tick-77251 checkpoint matches the prior source exactly. Neither
+check proves a natural WASM result or isolated whole-case speed improvement.
+Active 0053 remains open for late field motion/cost diagnosis. Completed raw
+output and private binaries are removed after retaining hashes and receipts.
+Receipts: `/tmp/wasm-dd2/rewrite-arena8-profile-0053/`
+`{terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json`.
+Scratch verification receipt:
 `/tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json`.

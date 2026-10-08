@@ -68,8 +68,10 @@ to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
 Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance.
-The selected three-target owner rerun is live after the position correction and
-closed 0054 scratch reduction. Closed 0052 proves ground support and closed 0050
+After closed 0054, the selected Native/sanitized owners reach natural results;
+WASM still times out at the unchanged 1800-second limit after 86042 complete ticks.
+Diagnose late field motion and cost before another unchanged owner retry.
+Closed 0052 proves ground support and closed 0050
 proves ordinary first-season movement. The broader 0016/0044/0049 contracts and
 0046/0045 remain active.
 The following owned-report comparison is historical evidence, before 0050. Owned collision reports preserve
@@ -781,6 +783,14 @@ percent on the private named WASM link; these are prefix costs only. Nine fresh
 patterned O1 ASan/UBSan corpora (24 shared units), six Native Memcheck corpora,
 all 742 physical checks, strict LLVM19/170-file and 38/36 gates pass. All eleven
 original ground levels, 220 recovery cases and 45 prior race scenarios pass again
-per target. The actual selected Arena-8 runs now continue at unchanged limits
-under 0053; natural results and full-scenario timing remain unproved.
+per target. At source 0323ba9, the selected actual Native and fresh O1 sanitized
+owners again reach natural results at ticks 81219/13083, with 401.09/60.41 seconds
+survival. WASM times out after 86042 complete ticks (428.21 seconds survival,
+twenty available engines). Every complete prefix row passes the independent
+oracle; the full public field at tick 77251 matches the prior source exactly.
+These are prefix/checkpoint preservation, not natural WASM results or an isolated
+whole-case speed comparison. Active 0053 remains open. Completed raw output and
+private binaries were removed after retaining hashes, receipts and typed fields.
+Receipts: /tmp/wasm-dd2/rewrite-arena8-profile-0053/
+{terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json.

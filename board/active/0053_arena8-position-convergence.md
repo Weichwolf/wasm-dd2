@@ -75,11 +75,25 @@ The counted scratch correction is proved under closed 0054: eight ordinary
 6000-tick prefixes preserve every per-target field, with a scoped WASM child-CPU
 reduction of 5.50..6.01 percent. This supplies no natural-result acceptance.
 Strict LLVM19/170-file and 38/36 gates, all eleven original ground levels,
-220 recovery cases and 45 prior race scenarios pass again per target. The new
-selected Native/WASM/sanitized owner runs are live under unchanged limits.
-Finish these actual runs and retain all prior
-component/race contracts. Keep the unchanged scenario deadlines visible; do not
-close on the component or a pre-timeout prefix alone.
+220 recovery cases and 45 prior race scenarios pass again per target.
+
+The selected source-0323ba9 owners are terminal. Native and fresh O1 ASan/UBSan
+again reach engine-retirement/coasting results at ticks 81219 and 13083, with
+401.09 and 60.41 seconds survival respectively. WASM times out at the unchanged
+1800-second deadline after 86042 complete ticks: state
+[1,0,86042,85642,0,0,20], 428.21 seconds survival, no solver rejection and no
+natural result. Every complete WASM row passes the independent prefix oracle.
+Its full public field at tick 77251 matches the prior source exactly; this is
+one checkpoint, not a full-trace or original-parity comparison. Completed raw
+output and private binaries are removed after recording hashes and receipts.
+Receipts: /tmp/wasm-dd2/rewrite-arena8-profile-0053/
+{terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json.
+
+Diagnose late WASM field motion and simulation cost with bounded typed
+checkpoints and sampling before another unchanged long retry. Preserve all
+component/race contracts and unchanged deadlines; do not close on a component
+or a pre-timeout prefix alone. More completed ticks in this run do not establish
+an isolated whole-case speed improvement.
 
 ## Accept
 

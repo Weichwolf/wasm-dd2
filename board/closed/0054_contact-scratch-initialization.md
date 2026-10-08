@@ -46,7 +46,12 @@ recording their hashes and reports.
 
 The counted-scratch contract is proved. Continue the actual natural Arena-8
 owner under 0053 with the unchanged 120000-tick/1800-second limits. Its new
-Native/WASM/sanitized runs remain live; no whole-case timing or result claim.
+Native/sanitized runs reach the same natural results; WASM still times out
+after 86042 complete ticks. The full public tick-77251 checkpoint matches the
+prior source exactly. Diagnose late field motion/cost under 0053; no isolated
+whole-case speed or natural WASM result claim.
+Receipts: /tmp/wasm-dd2/rewrite-arena8-profile-0053/
+{terminal-owner-report,late-checkpoint-report}.json.
 
 ## Accept
 

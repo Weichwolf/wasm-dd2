@@ -210,14 +210,22 @@ field, with scoped child-CPU reductions of 1.48..1.92 percent Native and
 5.50..6.01 percent on a private named WASM link. Fresh patterned O1 sanitizer,
 Memcheck, strict LLVM19/170-file, 38/36 gates, all original ground/recovery
 comparisons and the 45 previously proved race scenarios pass again. This proves
-the scratch contract, not whole-case cost or natural completion. The actual
-selected Arena-8 owner runs are now live at unchanged limits under 0053.
+the scratch contract, not whole-case cost or natural completion. At source
+0323ba9, actual Native/sanitized Arena-8 results repeat at ticks 81219/13083
+(401.09/60.41 seconds survival). WASM again reaches the unchanged 1800-second
+deadline, now after 86042 complete ticks with twenty available engines. All
+complete prefix rows pass the independent oracle, and the full public tick-77251
+checkpoint matches the prior source exactly. This supplies no natural WASM
+result or isolated whole-case timing claim. Active 0053 remains open.
+Receipts: /tmp/wasm-dd2/rewrite-arena8-profile-0053/
+{terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json.
 
 ## Next
 
-Finish the current actual Arena-8 natural-result checks under 0053 after closed
-0054, retaining the unchanged scenario deadlines. The reproduced nonterminal
+Diagnose late WASM Arena-8 motion and cost under 0053 after the terminal
+source-0323ba9 timeout, retaining the unchanged scenario deadlines. Do not simply
+repeat the unchanged long owner without a new bounded diagnosis. The reproduced nonterminal
 Native B movement/tactics behavior remains separate; preserve material laws,
 tolerances and the shared pass budget while diagnosing it. Expand ordinary
 physically completed circuit coverage beyond circuit 5. Do not replace a missing
