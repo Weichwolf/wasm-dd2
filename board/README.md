@@ -15,7 +15,7 @@ its game requirements or acceptance rules.
 | [0015](closed/0015_typed-league-foundation.md) → [0004](open/0004_championships.md) | League foundation and complete championships | closed / open |
 | [0003](open/0003_frontend-and-menus.md) | Complete front end and menu actions | open |
 | [0005](open/0005_vehicles-and-damage.md) | Every vehicle/class/livery and damage behavior | open |
-| [0016](open/0016_ai-tactics-and-offroad-recovery.md) | AI tactics and off-road recovery | open |
+| [0016](active/0016_ai-tactics-and-offroad-recovery.md) | AI tactics and off-road recovery | active |
 | [0006](open/0006_replays.md) | Replays | open |
 | [0007](open/0007_keyboard-gamepad-and-platforms.md) | Keyboard/gamepad/platform lifecycle | open |
 | [0008](open/0008_settings-save-load-and-records.md) | Settings, save/load and records | open |
@@ -186,6 +186,14 @@ restarted; read-only exit monitoring preserves its original allowance. Full
 physical seasons remain unproved under 0025/0004, and the player has zero credited
 laps at this checkpoint. Follow the live runs to their actual terminal outcomes.
 Advancement receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
+
+The same natural attempts are now terminal at round-2 tick 300,000, with all 120
+JSON records matching. Every requested step advances; no contact failure or
+failure checkpoint is recorded. Player health is 0.4003601829670652 and credited
+laps remain zero, so the season is incomplete at the unchanged fixture bound.
+Sparse movement/controller diagnosis now belongs to active 0016 alongside the
+remaining arena-B tactics. No specific tactical cause or correction is proved.
+Terminal receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
 
 ## Workflow and acceptance
 

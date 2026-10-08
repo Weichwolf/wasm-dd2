@@ -23,8 +23,24 @@ AI-target and recovery snapshots match the terminal production Native B trace
 exactly; see production-checkpoint-match.json in the same directory.
 These observations do not establish a specific tactical fix or full AI acceptance.
 
+The current two-endpoint contact runtime (69d97d7) completes the first natural
+Stockcar championship round with unchanged 287,087 ticks and twenty-driver scores.
+Both production and logging-only attempts then reach the unchanged 300,000-tick
+round-2 bound, matching all 120 JSON records. Every requested physical step
+advances; there is no logged contact failure or failure checkpoint. The player
+has zero credited laps and health 0.4003601829670652; race/championship stay RACING
+with no scores manufactured. Both processes exit 1 without timeout. The same
+production child was adopted after launcher termination, without engine restart.
+This proves current natural noncompletion, not its tactical/kinematic cause.
+Current terminal receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
+Closed 0033 proves the separate contact saved-input/continuation correction.
+
 ## Next
 
+Capture sparse public owner/controller observations of the current Stockcar
+noncompletion, match its unchanged production trace and diagnose supported motion,
+orientation, damage, guidance and reverse/progress decisions before choosing a fix.
+Keep every engine, damage, lap and score rule and the ordinary fixture bound.
 Diagnose the reproduced contact-bound B movement and reverse maneuvers while preserving the Total
 Destruction player target. Use ordinary complete races to identify off-road and
 tactical failures; recover original behavior and implement explicit recovery/tactics

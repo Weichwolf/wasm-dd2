@@ -40,10 +40,10 @@ human identity, multiplayer and persistence still require implementation/evidenc
 
 ## Next
 
-Follow the same natural first-season attempts to terminal outcomes under 0025.
-Saved-step corrections through 233,358 and ordinary continuation through 240,000
-are proved under closed 0033. Diagnose subsequent physical failures or healthy
-noncompletion without changing the race bound or manufacturing results.
+Resolve current healthy natural noncompletion at the round-2 300,000-tick bound
+under active 0016, then continue full-season verification under 0025. Contact
+advancement through 233,358 and natural continuation are proved under closed 0033.
+Preserve the race bound and actual score/outcome ownership.
 Require complete physical seasons and continuing/terminal application outcomes.
 Add profile-wide unlock retention, configurable human identity, original
 menu flows, multiplayer and compatible save/load. Preserve real twenty-driver

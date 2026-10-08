@@ -96,11 +96,17 @@ Close this advancement contract. A complete physical season remains unproved;
 the player still has zero credited laps in round 2 at this checkpoint.
 Advancement receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
 
+Both attempts subsequently terminate at the unchanged round-2 tick-300,000 bound
+with all 120 records matching, no contact abort and no failure checkpoint. Player
+health remains 0.4003601829670652 with zero credited laps; race/season stay RACING.
+Both exit 1 without timeout. This different natural noncompletion is diagnosed
+under active 0016; the closed contact advancement contract remains proved.
+Terminal receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
+
 ## Next
 
-Follow the same live natural attempts to terminal outcomes under 0025/0004,
-keeping exact prefixes and source/binary identities. Diagnose any later contact
-failure or healthy noncompletion separately, preserving ordinary bounds/controls.
+Follow the terminal healthy noncompletion under 0016 and full-season verification
+under 0025/0004, preserving ordinary bounds/controls and real outcome ownership.
 Movement/tactics and remaining arena completion stay under 0016/0002.
 
 ## Accept

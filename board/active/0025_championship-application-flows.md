@@ -144,11 +144,17 @@ physics, actual eleven-level input/original-data and six scoped race target chec
 pass. Full physical seasons remain unproved; the same natural processes continue.
 Current advancement: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
 
+Those attempts are now terminal at the unchanged second-round 300,000-tick bound.
+All 120 production/diagnostic records match, with no contact abort or failure
+checkpoint. The player's engine remains healthy at 0.4003601829670652 but laps
+remain zero; no scores/results are manufactured. Diagnose current movement and
+controller behavior under active 0016. Terminal receipt:
+/tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
+
 ## Next
 
-Follow the same natural season attempts to terminal outcomes after closed 0033's
-proved continuation through 240,000. Diagnose any later contact failure or healthy
-noncompletion at the unchanged physical round bound.
+Resolve the current healthy natural noncompletion under active 0016, then require
+complete physical seasons at the unchanged ordinary bounds and real score rules.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field
