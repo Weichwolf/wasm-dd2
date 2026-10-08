@@ -54,15 +54,20 @@ contact layouts match the independent root's motion within 2.02e-13.
 
 Strict LLVM19 gates, 35 Native/33 WASM CTests, and all 31 captured queries plus
 536 orderings (567 checks per target) pass on Native/WASM/ASan/UBSan. All eleven
-original-data ground checks pass. Actual input/scoped race gates and fresh natural
-continuation are still running; this advancement contract remains active.
+original-data ground checks pass. All eleven actual Native/sanitized/Chromium
+input/view checks and all six selected race targets now pass. The latter include
+the complete eight-lap Circuit-5 race on all three targets; full race-suite
+acceptance is not claimed. The fresh ordinary campaign retains identical round-1
+results and is still running in round 2. Continuation beyond 190,078 is pending;
+this advancement contract remains active.
 
 Component receipt: /tmp/wasm-dd2/rewrite-merit-190078/component-report.json.
+Broader receipt: /tmp/wasm-dd2/rewrite-merit-190078/gates-report.json.
 
 ## Next
 
-Follow the same actual-input, scoped-race and fresh natural campaign processes
-to their terminal receipts. Require ordinary advancement beyond the failure
+Follow the same fresh natural campaign process to its terminal receipt. Require
+ordinary advancement beyond the failure
 before closing this saved-step contract. Preserve
 physical inequalities, finite residual reduction, rollback, damage and scores.
 Continue full physical seasons under 0025/0004 and AI tactics under 0016.

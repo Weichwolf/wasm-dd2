@@ -273,6 +273,14 @@ Actual-input, scoped-race and natural-continuation gates remain running; 0036
 stays active and full seasons remain unproved. Component receipt:
 /tmp/wasm-dd2/rewrite-merit-190078/component-report.json.
 
+All eleven actual Native/sanitized/Chromium input/view checks and all six selected
+race targets now pass for the constitutive-merit correction, including the
+complete eight-lap Circuit-5 race on every target. The same fresh ordinary
+campaign retains identical first-round results and continues in round 2;
+advancement past 190,078 remains pending under active 0036. Full physical seasons,
+the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
+/tmp/wasm-dd2/rewrite-merit-190078/gates-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight
