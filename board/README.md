@@ -71,7 +71,9 @@ remain part of the full goal; no component milestone replaces final acceptance.
 Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance.
 After closed 0054, the selected Native/sanitized owners reach natural results;
 WASM still times out at the unchanged 1800-second limit after 86042 complete ticks.
-Diagnose late field motion and cost before another unchanged owner retry.
+The bounded late observer now proves moving dense-contact behavior at a matched
+production checkpoint. Capture one actual late fleet step and contact times
+before another unchanged natural-owner retry.
 Closed 0052 proves ground support and closed 0050
 proves ordinary first-season movement. The broader 0016/0044/0049 contracts and
 0046/0045 remain active.
@@ -818,3 +820,16 @@ Strict LLVM19/174-file, 39/37 gates and Native Memcheck pass. Typed payloads,
 durable adapters and frontend integration remain open under 0008/0003. The
 frozen Arena-8 binary separately collects late motion/contact evidence under
 0053. Receipt: /tmp/wasm-dd2/rewrite-save-card-0055/verification-report.json.
+
+The bounded late Arena-8 WASM observer stops as planned at tick 83591 without
+natural results. Its full public tick-77251 checkpoint matches production exactly.
+Across ticks 70000..83591, the field averages 58.411 response events per step;
+the player travels 24557.623 units with nearly all wheel steps supported and only
+five damage-eligible contact records. Late V8 samples identify fleet resolution,
+static car SAT and source-surface traversal, including inlined callees. This is
+scoped moving-field/cost evidence, not retirement or an isolated speed comparison.
+Active 0053 now needs one actual late fleet step with previous/proposed typed
+bodies and contact times/rows to distinguish repeated supports from legitimate
+dense pursuit. Budgets/material/health/controls remain unchanged. Completed raw
+profiling output is removed; three required typed checkpoints and receipts remain.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-late-0053/diagnosis-report.json.

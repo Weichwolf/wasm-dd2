@@ -221,6 +221,35 @@ Receipts: /tmp/wasm-dd2/rewrite-arena8-profile-0053/
 {terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json.
 
+## Late Arena-8 motion and cost
+
+The read-only late WASM diagnostic is now terminal after its planned 1740-second
+stop at tick 83591, state [1,0,83591,83191,0,0,20]. It retains ordinary controls,
+120000 fixture ticks and frozen production library code; it is not a standard
+natural-result run. Its full public tick-77251 field matches the saved production
+checkpoint exactly; tick 86042 was not reached. All 85 sparse field/motion windows
+pass finite-state, physical clocks, monotonic damage and pursuit checks.
+
+Between ticks 70000 and 83591, 13591 actual steps cover 67.955 simulated seconds.
+The field averages 58.411 response events per step, with no unresolved sweeps.
+The player actually travels 24557.623 horizontal units, compared with 49706.963
+from integrating published post-solve horizontal speed; that integral is not a
+prediction of free-step motion. Its wheels are grounded in 99.181 percent of
+counted wheel steps. Only five player contact records exceed both existing
+damage thresholds; front damage grows from 0.809816/0.241110 to 0.929339/0.256481.
+This is moving dense-contact behavior, not a frozen player or natural retirement.
+
+The late named V8 profile has 48181 samples: fleet resolver 56.03 percent,
+static car SAT 9.63, surface traversal 7.10, memset 6.50 and rotation 6.02.
+Compiled labels include inlined callees; these percentages do not attribute all
+fleet work to one helper or isolate the earlier scratch optimization. Capture
+one actual late fleet step's previous/proposed typed bodies and selected contact
+times/rows, then distinguish repeated supports from legitimate dense pursuit.
+Keep material laws, damage, controls, event/pass bounds and ordinary deadlines.
+Receipts: /tmp/wasm-dd2/rewrite-arena8-late-0053/
+{terminal-report,diagnosis-report}.json. Completed profiler/raw output is removed;
+only three needed typed checkpoints and immutable reports remain.
+
 ## Next
 
 Diagnose late WASM Arena-8 motion and cost under 0053 after the terminal

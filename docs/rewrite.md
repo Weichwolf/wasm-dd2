@@ -763,3 +763,16 @@ Receipts: `/tmp/wasm-dd2/rewrite-arena8-profile-0053/`
 `{terminal-owner-report,late-checkpoint-report,terminal-cleanup-report}.json`.
 Scratch verification receipt:
 `/tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json`.
+
+The bounded late Arena-8 WASM observer stops as planned at tick 83591 without
+natural results. Its full public tick-77251 checkpoint matches production exactly.
+Across ticks 70000..83591, the field averages 58.411 response events per step;
+the player travels 24557.623 units with nearly all wheel steps supported and only
+five damage-eligible contact records. Late V8 samples identify fleet resolution,
+static car SAT and source-surface traversal, including inlined callees. This is
+scoped moving-field/cost evidence, not retirement or an isolated speed comparison.
+Active 0053 now needs one actual late fleet step with previous/proposed typed
+bodies and contact times/rows to distinguish repeated supports from legitimate
+dense pursuit. Budgets/material/health/controls remain unchanged. Completed raw
+profiling output is removed; three required typed checkpoints and receipts remain.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-late-0053/diagnosis-report.json.
