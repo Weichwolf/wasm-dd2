@@ -32,6 +32,13 @@ interpretations, state transitions and hashes remain at
 /tmp/wasm-dd2/rewrite-frontend-info-config/report.json.
 Entry/cancel evidence does not prove subordinate actions or rewrite menus.
 
+A subsequent 19-key original run opens/cancels the lap-times table, Credits,
+Control Method/Keyboard remapping prompt and Audio Volume. Escape preserves
+parents and the original main selections; both save files remain unchanged.
+The bounded screen observations are interpreted and identified at
+/tmp/wasm-dd2/rewrite-frontend-submenus/report.json. Remapping submission,
+volume changes, record updates, joystick actions and persistence remain unproved.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager

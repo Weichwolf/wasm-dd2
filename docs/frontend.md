@@ -76,6 +76,16 @@ Configuration initially selects Control Method. Both screens return to their
 retained main-menu entry on Escape. These entry/cancel observations do not prove
 record/statistics actions, remapping, audio edits, credits or saved settings.
 
+A subsequent 19-key original run opens the five-row lap-times table and Credits
+from Information, then the Keyboard remapping prompt through Control Method and
+Audio Volume through Configuration. Right from View Lap Times selects View
+Credits on the empty-statistics profile. The Keyboard prompt initially asks for
+Left; Audio Volume initially presents Sound Effects. Escape unwinds each route
+to its retained parent and main selection. Both save files remain unchanged.
+Receipt: `/tmp/wasm-dd2/rewrite-frontend-submenus/report.json`. These observations
+establish actual subordinate entry/cancel routes; record updates, submitted
+bindings, volume changes, joystick actions and persistence remain unproved.
+
 ## Shared ownership and acceptance
 
 Implement typed navigation and explicit actions in `src/game/`, with the same

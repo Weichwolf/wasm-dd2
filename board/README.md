@@ -195,6 +195,12 @@ Sparse movement/controller diagnosis now belongs to active 0016 alongside the
 remaining arena-B tactics. No specific tactical cause or correction is proved.
 Terminal receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
 
+Original Information/Configuration subordinate entry and cancel routes are now
+observed through 19 actual keys: lap times, Credits, Keyboard remapping prompt
+and Audio Volume. The isolated/provisioned saves stay unchanged. Remaining
+editing, persistence, joystick and rewrite-menu acceptance stay open under 0003.
+Receipt: /tmp/wasm-dd2/rewrite-frontend-submenus/report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight
