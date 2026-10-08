@@ -18,7 +18,13 @@ pre-step field, keeping cell/lane, target, stuck/reverse timers and decision cou
 in a typed state. Road-height sampling distinguishes stacked levels. Racing
 uses speed-dependent lookahead, curvature braking, yaw damping and traffic
 headway. Passing compares both candidate lane corridors before choosing a shift;
-the planned corridor supplies the speed constraint. Arenas initially target the
+the planned corridor supplies the speed constraint. The body-heading traffic
+guard remains active for immediate avoidance. Return-to-base decisions also
+sample the base-lane target: a clear passing path must not cause a merge into
+traffic still blocking that base path. The existing lane candidates and lateral
+rate remain unchanged; merging resumes when heading and base paths are clear.
+Mirrored blocked-base/clear-passing cases check both sides and preserve immediate
+heading avoidance before permitting a return. Arenas initially target the
 opposite starter slot, then periodically choose nearby cars with a forward
 preference and velocity lead. Total Destruction instead explicitly keeps player
 slot zero as the target; its periodic nearest-car selection is bypassed and
@@ -54,7 +60,8 @@ independent archive/image reader, on Native, Node/WASM and ASan/UBSan. Sixty-sec
 twenty-car scenarios on all eleven levels require sustained movement, at least
 95% tire-supported samples, finite state, exact decision cadence and full reset.
 Synthetic tests exercise an analytic right-angle path, whole-loop wrap, straight
-control, zero-speed and position-limited stalls, slow creep, oscillation,
+control, mirrored blocked-base passing hold/return, retained immediate-heading
+avoidance, zero-speed and position-limited stalls, slow creep, oscillation,
 sustained travel, reverse expiry and transactional nonfinite rejection.
 Frame-partition, pause/reset and real window/browser presentation checks include
 the driving AI.

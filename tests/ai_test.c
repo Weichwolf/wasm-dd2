@@ -16,7 +16,8 @@
 enum {
     DD2_AI_TEST_STALL_STEPS = 350,
     DD2_AI_TEST_PROGRESS_STEPS = 300,
-    DD2_AI_TEST_MOVING_STEPS = 1000
+    DD2_AI_TEST_MOVING_STEPS = 1000,
+    DD2_AI_TEST_PASSING_STEPS = 140
 };
 static const double dd2_ai_test_tolerance = 1e-8;
 static const double dd2_ai_test_height = 190;
@@ -70,6 +71,54 @@ static bool dd2_ai_test_path(const dd2_road *road) {
     } invalid = {.bits = UINT64_C(0x7ff8000000000001)};
     query.lane = invalid.number;
     return valid && !dd2_ai_path(road, query, &sample) && sample.width == 0;
+}
+
+/* Mirrored clear passing lanes with an obstructed base path. Heading-only
+ * traffic misses the obstacle and starts merging back into it. A remaining
+ * body-heading obstacle still prevents merging; both paths must be clear. */
+static bool dd2_ai_test_passing_return(const dd2_road *road, const dd2_road_surface *surface,
+                                       bool mirrored) {
+    const double side = mirrored ? -1 : 1;
+    const double shifted_lane = mirrored ? 0.57 : 0.43;
+    dd2_vehicle vehicles[2] = {0};
+    dd2_ai_driver driver = {0};
+    if (!dd2_vehicle_reset(&vehicles[0],
+                           (dd2_vehicle_spawn){.position = {.x = side * dd2_ai_test_lane,
+                                                            .y = dd2_ai_test_height}}) ||
+        !dd2_vehicle_reset(&vehicles[1],
+                           (dd2_vehicle_spawn){.position = {.x = -side * dd2_ai_test_lane,
+                                                            .y = dd2_ai_test_height,
+                                                            .z = dd2_ai_test_lane}}) ||
+        !dd2_ai_driver_reset(
+            &driver,
+            (dd2_ai_start){.road = road, .cell = mirrored ? 1U : 0U, .slot = 0, .count = 2})) {
+        return false;
+    }
+    driver.lane = shifted_lane;
+    const dd2_ai_observation observation = {
+        .road = road, .surface = surface, .vehicles = vehicles, .count = 2, .slot = 0};
+    dd2_vehicle_control control = {0};
+    if (!dd2_ai_driver_step(&driver, &observation, &control) || control.throttle <= 0 ||
+        fabs(driver.lane - shifted_lane) >= dd2_ai_test_tolerance) {
+        return false;
+    }
+    vehicles[1].position.x = vehicles[0].position.x;
+    vehicles[1].position.z = 3 * dd2_ai_test_lane;
+    /* The mirrored heading guard chooses its preferred outer candidate;
+     * allow the original rate-limited traversal across the clear base lane. */
+    for (unsigned step = 0; step < DD2_AI_TEST_PASSING_STEPS; ++step) {
+        if (!dd2_ai_driver_step(&driver, &observation, &control) || control.throttle <= 0) {
+            return false;
+        }
+    }
+    if (mirrored ? driver.lane <= driver.base_lane
+                 : fabs(driver.lane - shifted_lane) >= dd2_ai_test_tolerance) {
+        return false;
+    }
+    const double passing_lane = driver.lane;
+    vehicles[1].position.z = -dd2_ai_test_lane;
+    return dd2_ai_driver_step(&driver, &observation, &control) && control.throttle > 0 &&
+           fabs(driver.lane - driver.base_lane) < fabs(passing_lane - driver.base_lane);
 }
 
 static bool dd2_ai_test_driver(const dd2_road *road, const dd2_road_surface *surface) {
@@ -281,6 +330,8 @@ int main(void) {
     dd2_road_surface *surface = dd2_road_surface_create(road);
     const bool valid = road != NULL && surface != NULL && dd2_ai_test_path(road) &&
                        dd2_ai_test_driver(road, surface) &&
+                       dd2_ai_test_passing_return(road, surface, false) &&
+                       dd2_ai_test_passing_return(road, surface, true) &&
                        dd2_ai_test_stopped_reverse(road, surface) && dd2_ai_test_progress();
     dd2_road_surface_destroy(surface);
     dd2_road_destroy(road);

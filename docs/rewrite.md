@@ -79,8 +79,10 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
-Stalling is detected from both low forward speed and insufficient accepted
-horizontal movement, so retained solver velocities cannot mask a blocked car.
+Passing retains immediate body-heading avoidance and checks the base-lane
+return path before merging back from a clear passing lane. Existing lane choices, rate
+and physical limits are preserved. Stalling is detected from both low forward
+speed and insufficient accepted horizontal movement, so retained solver velocities cannot mask a blocked car.
 Damage-aware tactics, off-road recovery,
 complete physical campaigns and the original front end remain pending.
 Handwritten single-player league rules now own score/rank/division permutations,

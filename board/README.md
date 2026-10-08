@@ -52,6 +52,8 @@ its game requirements or acceptance rules.
 | [0045](active/0045_complete-fleet-event-recording.md) | Complete fleet event recording with explicit ownership | active |
 | [0046](active/0046_arena-b-contact-cost.md) | Diagnose and reduce actual Arena-B contact cost | active |
 | [0047](closed/0047_linear-world-pressure-basin.md) | Recover a stronger linear world-pressure basin | closed |
+| [0048](closed/0048_passing-lane-return.md) | Keep a clear passing lane while its base path is blocked | closed |
+| [0049](active/0049_next-wasm-round2-rejection.md) | Diagnose the next ordinary WASM round-2 rejection | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -60,7 +62,7 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0044/0016, following the bounded correction under closed 0047,
+Current work is 0048/0049 under 0044/0016, following closed 0047,
 with 0046/0045 still active. Owned collision reports preserve
 physical work bounds and restore previously clipped movement. The prior
 owned-report source's ordinary
@@ -665,3 +667,17 @@ baseline processes are terminal; successful raw logs/binaries are removed.
 Receipts: /tmp/wasm-dd2/rewrite-linear-pressure-0047/ and the baseline
 /tmp/wasm-dd2/rewrite-season-body-support-0016/canonical-report.json. Complete
 movement and cross-platform ordinary campaigns remain open.
+
+The frozen d0a1bd7 ordinary WASM season advances beyond tick 137455 but rejects
+round-2 tick 155992; its exact typed checkpoint is retained under 0049.
+Native's late movement reveals a false return into a blocked base lane. Closed 0048
+retains immediate heading avoidance and checks the base path before merging.
+A base-only variant fails Native level-1 support and is rejected. The final
+source passes strict LLVM19/168-file checks, 38 Native/36 WASM CTests, both-target
+old-source negatives, fresh 34-unit O3 ASan/UBSan and zero-error/leak Valgrind.
+Its six-second public-field component moves over 4000 net units on all three
+targets. The unchanged eleven-level AI suite passes 29214 independent path
+queries and 2640000 vehicle steps per target. Component health is frozen; actual
+corrected-source damage/recovery/lap/result campaigns remain pending under
+0016/0044. The nineteen-contact velocity failure remains active under 0049.
+Receipt: /tmp/wasm-dd2/rewrite-native-movement-0044/component-report.json.

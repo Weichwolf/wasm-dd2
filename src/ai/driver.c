@@ -176,7 +176,18 @@ static dd2_ai_goal dd2_ai_racing(dd2_ai_driver *driver, const dd2_ai_observation
                                .lane = driver->lane,
                                .position = vehicle->position,
                                .distance = dd2_ai_lookahead + (speed * dd2_ai_look_seconds)};
-    const double target_lane = dd2_ai_obstacle(observation, forward).found
+    /* Keep immediate body-heading avoidance. A clear passing path also must
+     * not pull the car back into an obstructed base lane: judge that return
+     * path with the same target direction used by traffic braking. */
+    dd2_ai_path_query base_query = query;
+    base_query.lane = driver->base_lane;
+    dd2_ai_path_sample base_aim = {0};
+    if (!dd2_ai_path(observation->road, base_query, &base_aim)) {
+        return (dd2_ai_goal){0};
+    }
+    const dd2_vehicle_vector base_direction = dd2_ai_toward(base_aim.point, vehicle->position);
+    const double target_lane = (dd2_ai_obstacle(observation, forward).found ||
+                                dd2_ai_obstacle(observation, base_direction).found)
                                    ? dd2_ai_passing_lane(driver, observation, query)
                                    : driver->base_lane;
     driver->lane +=

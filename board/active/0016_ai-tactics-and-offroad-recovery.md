@@ -221,3 +221,17 @@ behavior without manufactured score, damage or route progress.
 ## Accept
 
 Every track/mode sustains valid AI decisions and physically reaches required race outcomes, including damaged/off-road/overturned states, reset and paused clocks on both targets.
+
+## Verified heading-safe lane return
+
+Closed 0048 preserves immediate heading avoidance and prevents a return into
+an obstructed base lane. Exact portable terminal-state controls and independent
+original-level geometry identify the false merge. Final Native/WASM/O3 ASan/UBSan
+public components advance more than 4000 net units in six seconds; health is
+frozen and the damage/recovery/lap/result owner is not replayed. Strict LLVM19,
+38/36 Native/WASM CTests, mirrored previous-source negatives, fresh instrumented
+synthetic tests, zero-error/leak Valgrind and unchanged sixty-second AI cases on
+all eleven levels pass. Complete ordinary corrected-AI movement/campaigns remain
+open. The frozen solver-only d0a1bd7 WASM trajectory rejects tick 155992 under 0049;
+it is not a corrected-AI trajectory. Receipt:
+/tmp/wasm-dd2/rewrite-native-movement-0044/component-report.json.
