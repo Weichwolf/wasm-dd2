@@ -1,3 +1,4 @@
+#include "contact_position_fixture.h"
 #include "physics/collision_math.h"
 #include "physics/contact_group.h"
 #include "physics/vehicle.h"
@@ -534,12 +535,79 @@ static bool dd2_group_test_tilted_supports(void) {
     return true;
 }
 
+typedef struct {
+    unsigned start;
+    bool reversed;
+    bool remapped;
+} dd2_group_boundary_order;
+
+static unsigned dd2_group_position_slot(unsigned slot, bool remapped) {
+    return remapped ? DD2_VEHICLE_FLEET_LIMIT - 1 - slot : slot;
+}
+
+static bool dd2_group_test_boundary_order(dd2_group_boundary_order order) {
+    dd2_vehicle bodies[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        if (!dd2_vehicle_reset(&bodies[slot], (dd2_vehicle_spawn){0})) {
+            return false;
+        }
+    }
+    dd2_group_contact contacts[DD2_POSITION_FIXTURE_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_POSITION_FIXTURE_CONTACTS; ++index) {
+        const unsigned offset = order.reversed ? DD2_POSITION_FIXTURE_CONTACTS - index : index;
+        contacts[index] =
+            dd2_position_fixture_contacts[(order.start + offset) % DD2_POSITION_FIXTURE_CONTACTS];
+        contacts[index].first = dd2_group_position_slot(contacts[index].first, order.remapped);
+        if (contacts[index].second != DD2_VEHICLE_NO_PARTNER) {
+            contacts[index].second =
+                dd2_group_position_slot(contacts[index].second, order.remapped);
+        }
+    }
+    const dd2_group_query query = {.bodies = bodies,
+                                   .body_count = DD2_VEHICLE_FLEET_LIMIT,
+                                   .contacts = contacts,
+                                   .contact_count = DD2_POSITION_FIXTURE_CONTACTS};
+    dd2_group_solution result = {0};
+    if (!dd2_contact_group_solve(&query, &result) ||
+        result.count != DD2_POSITION_FIXTURE_CONTACTS ||
+        result.position_passes > DD2_GROUP_POSITION_PASS_LIMIT ||
+        result.position_error >= dd2_group_position_tolerance ||
+        !dd2_group_test_position_rows(&query, &result)) {
+        return false;
+    }
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        const unsigned original = dd2_group_position_slot(slot, order.remapped);
+        if (!dd2_group_test_position_body(&bodies[slot], dd2_position_fixture_offsets[original])) {
+            return false;
+        }
+    }
+    printf(
+        "Position boundary selection: start=%u reversed=%u remapped=%u passes=%u predictions=%u\n",
+        order.start, (unsigned)order.reversed, (unsigned)order.remapped, result.position_passes,
+        result.position_predictions);
+    return true;
+}
+
+static bool dd2_group_test_boundary_selection(void) {
+    for (unsigned remapped = 0; remapped < DD2_GROUP_TEST_PAIR; ++remapped) {
+        for (unsigned reversed = 0; reversed < DD2_GROUP_TEST_PAIR; ++reversed) {
+            for (unsigned start = 0; start < DD2_POSITION_FIXTURE_CONTACTS; ++start) {
+                if (!dd2_group_test_boundary_order((dd2_group_boundary_order){
+                        .start = start, .reversed = reversed != 0, .remapped = remapped != 0})) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     if (!dd2_group_test_cascade() || !dd2_group_test_friction(false) ||
         !dd2_group_test_friction(true) || !dd2_group_test_rocking(false) ||
         !dd2_group_test_rocking(true) || !dd2_group_test_chain() || !dd2_group_test_invalid() ||
         !dd2_group_test_infeasible() || !dd2_group_test_position_redundancy() ||
-        !dd2_group_test_tilted_supports()) {
+        !dd2_group_test_tilted_supports() || !dd2_group_test_boundary_selection()) {
         puts("joint support projection: FAIL");
         return EXIT_FAILURE;
     }

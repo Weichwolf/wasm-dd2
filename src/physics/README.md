@@ -706,16 +706,26 @@ These verify translation, every inequality and unchanged motion/clocks separatel
 from the captured gameplay state. If the residual remains above tolerance after
 that prediction, a bounded active-equation fit uses exact unit-multiplier
 translations to assemble the coupled position Gram matrix. Unloaded satisfied
-rows enforce zero pressure; active rows enforce their required gaps. A fit with
-negative pressure releases that row and refits all remaining equations. Each
-refit releases at least one row, so at most contact_count + 1 solves are needed.
+rows enforce zero pressure; active rows enforce their required gaps. When several fitted pressures are negative, only the first warm multiplier
+boundary is released before refitting the remaining equations. Releasing all
+negative rows at once can remove a support that becomes positive after its
+neighbor leaves. Released identity rows retain exactly zero pressure; elimination
+roundoff cannot reintroduce a tiny negative value there. Each refit releases one
+row, so at most contact_count + 1 solves are needed.
 Singular fits leave state unchanged. The final finite candidate must reduce the
 full residual for every original row, or restore exact offsets and multipliers.
 It reuses the velocity solver's checked Gaussian elimination and pivot floor;
 there are no allocations or additional ordinary sweeps. Forty-eight analytic
 tilted-plane cases provide known least-norm KKT solutions and inactive-plane
 slack at three inclinations with rotated/reversed rows, independently checking
-pressure release, centered pair translation and unchanged motion/clocks. Every body's remaining motion is swept again after correction.
+pressure release, centered pair translation and unchanged motion/clocks. Another
+48 variants freeze the Arena-8 twelve-row translation geometry with rotated,
+reversed and body-remapped rows. Independent enumeration of all 4096 active sets
+supplies the unique least-norm offsets; the old simultaneous-release fit fails
+that check. The captured full-motion query converges at 512 position passes on
+Native/WASM/sanitized C without changing velocity equations or bounds. Complete
+natural arena results remain separately tracked under 0053/0002. Every body's
+remaining motion is swept again after correction.
 
 Report incident speed retains actual initial closing/primary impact speed, and
 also represents pressure transferred through another contact as effective normal

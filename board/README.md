@@ -66,8 +66,10 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0048/0049 under 0044/0016, following closed 0047,
-with 0046/0045 still active. Owned collision reports preserve
+Current work is 0053 under 0002: the actual Arena-8 position correction,
+following closed 0052 ground support and closed 0050 ordinary first-season
+movement. The broader 0016/0044/0049 contracts and 0046/0045 remain active.
+The following owned-report comparison is historical evidence, before 0050. Owned collision reports preserve
 physical work bounds and restore previously clipped movement. The prior
 owned-report source's ordinary
 Native first Stockcar season completes four real results (two finishes, two
@@ -731,3 +733,14 @@ changed world API. Active 0053 isolates this twelve-contact position problem;
 velocity already converges. Receipts: /tmp/wasm-dd2/rewrite-ground-stability-0052/
 {component-report,owner-report}.json and
 /tmp/wasm-dd2/rewrite-arena8-rejection-0053/capture-report.json.
+
+
+Active 0053 now has a verified component correction: one warm multiplier boundary
+is released per refit, and released-row pressure is restored to its exact zero
+identity equation. Independent enumeration checks the actual twelve-row position
+root; 48 geometry reorder/remap cases, prior-source negatives and all 742 earlier
+physical cases pass per target, including fresh O1 ASan/UBSan. Native Valgrind has
+zero errors/leaks. Strict LLVM19/170-file and 38/36 CTest gates pass. All eleven original ground levels, 220 recovery cases and 45 prior race scenarios
+pass again per target. Sanitized Arena 8 naturally completes; its Native/WASM
+owner runs remain live, so the complete 0053 contract is still open.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/component-report.json.

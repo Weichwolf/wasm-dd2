@@ -1717,10 +1717,31 @@ static void dd2_group_position_rows(const dd2_group_workspace *workspace,
     }
 }
 
+static unsigned dd2_group_position_boundary(const dd2_group_workspace *workspace,
+                                            const dd2_group_position_state *original,
+                                            const bool released[DD2_VEHICLE_CONTACT_LIMIT],
+                                            const dd2_group_linear_system *system) {
+    unsigned boundary = workspace->query->contact_count;
+    double fraction = 1;
+    for (unsigned i = 0; i < workspace->query->contact_count; i++) {
+        if (!released[i] && system->direction[i] < 0) {
+            const double step =
+                original->impulses[i] / (original->impulses[i] - system->direction[i]);
+            if (boundary == workspace->query->contact_count || step < fraction) {
+                boundary = i;
+                fraction = step;
+            }
+        }
+    }
+    return boundary;
+}
+
 /* Solve the active least-norm translation equations from exact unit responses.
- * Each refit releases at least one negative multiplier, so contact_count + 1
- * solves suffice. Singular systems leave the iterate unchanged. All contacts
- * remain in the finite residual; an unhelpful fit restores exact state. */
+ * When several fitted multipliers are negative, release only the first warm
+ * multiplier to reach zero along that direction. Releasing every negative row
+ * at once can remove a support that becomes positive after its neighbor leaves.
+ * Releases are monotone: at most contact_count + 1 solves. Singular/unhelpful
+ * fits preserve exact saved state; every contact remains in the finite residual. */
 static bool dd2_group_position_fit(dd2_group_workspace *workspace,
                                    dd2_vehicle_vector offsets[DD2_VEHICLE_FLEET_LIMIT],
                                    double *error) {
@@ -1740,18 +1761,16 @@ static bool dd2_group_position_fit(dd2_group_workspace *workspace,
         if (!dd2_group_linear_solve(&system, system.dimensions)) {
             return false;
         }
-        bool negative = false;
-        for (unsigned i = 0; i < workspace->query->contact_count; i++) {
-            if (!released[i] && system.direction[i] < 0) {
-                released[i] = true;
-                negative = true;
-            }
-        }
-        if (negative) {
+        const unsigned boundary =
+            dd2_group_position_boundary(workspace, &original, released, &system);
+        if (boundary != workspace->query->contact_count) {
+            released[boundary] = true;
             continue;
         }
         for (unsigned i = 0; i < workspace->query->contact_count; i++) {
-            workspace->constraints[i].position_impulse = system.direction[i];
+            /* Released rows prescribe exactly zero. Elimination roundoff must
+             * not reintroduce a negative multiplier on that fixed branch. */
+            workspace->constraints[i].position_impulse = released[i] ? 0 : system.direction[i];
         }
         dd2_group_position_rebuild(workspace, offsets);
         if (dd2_group_position_finite(workspace, offsets)) {

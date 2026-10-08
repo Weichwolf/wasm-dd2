@@ -27,13 +27,42 @@ Receipts: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/
 {capture-report,stage-native,independent-root-report}.json and
 /tmp/wasm-dd2/rewrite-ground-stability-0052/owner-report.json.
 
+## Verified component correction
+
+The translation equality refit previously released every negative fitted
+multiplier together. In the frozen query this releases rows 3 and 4, although
+row 4 must remain loaded after row 3 leaves. The correction selects the first
+nonnegative warm multiplier boundary, releases that one row and refits the
+remaining equations. At most contact_count + 1 solves remain; contacts, geometry,
+4096 passes, clearance and the 1e-9 residual requirement are unchanged.
+
+Released identity rows now prescribe exact zero instead of importing elimination
+roundoff. The reordered WASM query otherwise produces -1.2151947010832075e-20
+on a released row and rejects an otherwise 1.8973538018496328e-19 residual.
+This preserves its fixed branch equation; fitted loaded values are unchanged.
+
+Independent enumeration of all 4096 position active sets finds one admissible
+least-norm root. The actual captured full query now converges in 512 position
+passes on Native/WASM/fresh O1 ASan/UBSan, matching that root within 1e-12.
+Forty-eight zero-motion geometry variants independently check final offsets,
+all inequalities, untouched motion/steps and row/body-order independence on every
+target. Prior source fails the new check on all three. All 742 earlier physical
+checks pass per target. Valgrind reports zero errors/leaks for the Native analytic
+joint-support corpus. Strict LLVM19 checks all 170 C/header files; 38 Native and
+36 WASM CTests pass. All eleven original ground levels, 220 recovery cases and the 45 previously
+proved race scenarios pass again per target. The sanitized ordinary Arena-8
+owner naturally reaches results; Native/WASM are still running, so the full
+contract is not closed.
+
+Receipts: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/
+{position-root-report,position-fit-diagnosis,released-zero-diagnosis,
+component-report,valgrind-report}.json.
+
 ## Next
 
-Independently solve the twelve-row least-norm translation complementarity problem.
-Compare active/released rows and the production refit's restored iterate; isolate
-why the finite correction cannot reach the existing position tolerance. Verify a
-causal correction on Native/WASM/sanitized physical components, strict gates and
-the unchanged real owner, keeping independent arena deadlines visible.
+Finish the actual Arena-8 owner on Native/WASM through natural results, retaining
+the passing sanitized result and all preserved component/race contracts. Keep the independent original scenario
+deadlines visible; do not close on the component alone.
 
 ## Accept
 

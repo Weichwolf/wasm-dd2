@@ -185,10 +185,28 @@ The new advancement owner is 0031; complete physical seasons remain unproved.
 Current receipts: /tmp/wasm-dd2/rewrite-linear-118647/report.json and
 /tmp/wasm-dd2/rewrite-season-after-118647/report.json.
 
+## Current Arena-8 position diagnosis
+
+Closed 0050 proves naturally completed first Stockcar seasons on all three
+targets, and closed 0052 restores the full original ground/recovery comparison.
+These contracts do not complete every natural arena or the full racing game.
+The separate Arena-8 rejection at owner step 10574 is isolated under 0053:
+velocity converges, while the twelve-row position fit prematurely releases two
+negative rows. Its correction releases one warm boundary at a time and preserves
+exact zero on released identity rows. The independent position root, 48 geometry
+orderings and all 742 earlier physical checks pass per target with fresh O1
+ASan/UBSan, Valgrind, strict LLVM19/170-file and 38/36 CTest gates. All eleven
+original ground levels and 220 recovery cases pass again. All 45 earlier race contracts pass per target against this source. Sanitized
+Arena 8 naturally completes; Native/WASM still run. Full natural-arena acceptance
+remains open.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/verification-report.json.
+
 ## Next
 
-Diagnose the reproduced nonterminal Native B movement/tactics behavior while
-preserving material laws, tolerances and the shared pass budget. Expand ordinary
+Finish the current actual Arena-8 checks under 0053, preserving natural result
+requirements and the unchanged scenario deadline. The reproduced nonterminal
+Native B movement/tactics behavior remains separate; preserve material laws,
+tolerances and the shared pass budget while diagnosing it. Expand ordinary
 physically completed circuit coverage beyond circuit 5. Do not replace a missing
 natural result with a longer bound, forced retirement, health changes or scores.
 

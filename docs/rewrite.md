@@ -716,3 +716,16 @@ exact Native query, with converged velocity and zero calls to the changed world 
 late-race traffic. Closed 0050 now proves continued finished-NPC controls and naturally completed
 first Stockcar seasons on all three targets; broader campaign coverage remains
 open. See the board for these separate acceptance contracts.
+
+
+The captured Arena-8 owner-step-10574 position failure now has an independently
+checked component correction under active 0053. The private equality refit releases
+one warm multiplier boundary before refitting, retaining supports whose fitted
+pressure becomes positive after their neighbor leaves. Released identity rows
+prescribe exact zero even when elimination roundoff is slightly negative. The
+captured full query reaches its independent twelve-row position root at 512
+passes on Native/WASM/sanitized C; all 48 geometry reorder/remap checks, 742 prior
+physical cases, eleven original ground levels, 220 recovery cases and strict
+170-file/38/36 gates pass. All 45 previously proved race scenarios pass per target again. Sanitized Arena 8
+naturally completes; Native/WASM are still running, and all-arena completion
+remains unproved.
