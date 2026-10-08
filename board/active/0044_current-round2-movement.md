@@ -1,6 +1,6 @@
 Type: Work item
 Title: Restore actual dense round-2 movement
-Depends: 0016, 0042, 0043
+Depends: 0016, 0042, 0043, 0045
 
 ## Contract
 
@@ -40,23 +40,42 @@ movement. Controller counters, route location, barriers, available turning
 space and physical contact response still need causal diagnosis.
 Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-diagnosis/geometry-report.json.
 
-One terminal-owner/pilot capture is running from the frozen production source
-and libraries. It adds only one snapshot at the same round-2 bound and relocates
-optional diagnostic paths into its own directory. It preserves ordinary inputs,
-the 300,000-tick round bound and 3,600-second process budget. Require all 120
-production records and thirteen movement observations to match before using
-that Native ABI owner for physical escape probes. Reproduction and correction
-are not yet proved; no full-frame memory dumps are requested.
-Live receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-owner-capture/identity.json.
+The terminal-owner/pilot capture is complete: exit 1 without timeout after
+1,198.36 seconds, with one 31,216-byte owner and 72-byte pilot. It preserves
+ordinary inputs, the 300,000-tick bound and 3,600-second process budget. All 120
+production records, thirteen movement observations and both twenty-car snapshots
+match exactly. No full-frame memory dumps were taken. Correction and complete
+AI movement remain unproved.
+Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-owner-capture/capture-report.json.
+
+Ten ordinary six-second control probes all advance 1,200 steps from this exact
+owner without changing poses, damage, lap state or scores. Every step fills the
+64-record contact list. Original AI accepts 5.054 of 168.710 proposed XZ path
+units; forward control accepts 56.338 of 1,559.319. An independent prescribed
+field query confirms global clipping for a distant free spectator: 0.602 of
+4.998 units is accepted with the dense field, while all 4.998 is accepted alone.
+That query has refreshed wheel hints and is not an actual-owner replay.
+Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-escape/summary-report.json
+and movement-diagnosis/collision-budget-report.json.
+
+Active 0045 separates report storage from the 64-event/64-constraint solver
+bounds. Its private Native prototype translates the old owner fields explicitly.
+The same forward control accepts 3,704.412 path units and 3,686.500 net units
+in six seconds. Unchanged AI accepts 66.827 path units and remains at zero laps.
+Metadata clipping is a proved motion-loss factor; no complete tactic, production
+correction or WASM acceptance is claimed. Two focused cases reject the old
+solver and pass the prototype, including a later collision after more than 64
+support records. Production requires owned heap storage and borrowed report
+views because two enlarged reports exceed the unchanged 1 MiB WASM stack.
+Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/report-capacity-prototype/comparison-report.json.
 
 ## Next
 
-Finish the exact terminal capture. Replay the captured owner with ordinary
-controls to separate available escape motions from controller choices, without
-altering damage, scores, checkpoints or collision rules. Independently verify
-the relevant road/barrier/car geometry before choosing a readable typed tactic
-or recovery correction. Preserve all captured contact regressions and strict
-Native/WASM gates, including the known Arena-B movement failures under 0016.
+Implement and verify owned event storage under 0045 before choosing a tactical
+change. Then replay the exact terminal state and diagnose remaining AI choices
+against available physical escape motion. Preserve damage, scores, checkpoints,
+collision laws, captured contact regressions and strict Native/WASM gates,
+including the known Arena-B movement failures under 0016.
 
 ## Accept
 

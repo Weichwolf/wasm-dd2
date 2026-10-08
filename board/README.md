@@ -49,6 +49,7 @@ its game requirements or acceptance rules.
 | [0042](active/0042_natural-first-phase-next-advancement.md) | Next ordinary championship advancement after first-phase refinement | active |
 | [0043](active/0043_natural-fixed-active-next-advancement.md) | Next ordinary championship advancement after fixed-active refinement | active |
 | [0044](active/0044_current-round2-movement.md) | Restore actual dense round-2 movement | active |
+| [0045](active/0045_complete-fleet-event-recording.md) | Complete fleet event recording with explicit ownership | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -512,14 +513,23 @@ Thirteen late observations show only 221.786 sampled XZ units of supported
 upright travel in 300 simulated seconds. Bounded contact advancement does not
 prove dense-region spatial escape or a complete season. Active 0044 now owns
 the actual movement diagnosis; a read-only typed 280,000 reconstruction matches
-all twenty next-copy controls and independent original road targets. One
-terminal owner/pilot capture is running from the frozen code, requiring all
-120 production records and thirteen movement observations to match before
-attributing a cause. Full game, seasons, AI and component spatial contracts remain open.
+all twenty next-copy controls and independent original road targets. The terminal
+owner/pilot capture now matches all 120 records, thirteen movement observations
+and both twenty-car snapshots. Ten ordinary control probes fill the contact
+list and lose most proposed motion. A distant free spectator also loses motion
+when unrelated contacts fill the report. Active 0045 owns this proved coupling.
+Its private Native prototype preserves 64 CCD events and 64 constraints per group
+while allowing all derived 4,096 records; forward control reaches 3,686.500 net
+units in six seconds, compared with 55.746 previously. Two focused cases reject
+the previous implementation and pass the prototype. Native and Emscripten
+sizeof checks require owned heap buffers and borrowed views to retain the
+1 MiB WASM stack. Production, multi-platform and tactical correction remain
+open, as do the full game/seasons.
 Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/next-failure-diagnosis/production-report.json
 and /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
 broader-report.json, natural-season/terminal-report.json,
-movement-diagnosis/geometry-report.json and movement-owner-capture/identity.json.
+movement-diagnosis/geometry-report.json, movement-owner-capture/capture-report.json,
+movement-escape/summary-report.json and report-capacity-prototype/comparison-report.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
