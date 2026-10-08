@@ -601,6 +601,20 @@ broader-report.json, natural-season/terminal-report.json,
 movement-diagnosis/geometry-report.json, movement-owner-capture/capture-report.json,
 movement-escape/summary-report.json and report-capacity-prototype/comparison-report.json.
 
+
+Current per-pair profiling locates frequent adjacent-car refinement rather than
+observed budget exhaustion through frame 600. A private shared-rotation candidate
+reduces captured-field pair-query CPU by 17.1..20.4 percent and passes functional
+pair/rotation comparisons and all three-target sixty-second checks on levels
+1..A. It still fails Arena-B supported motion (Native slot 16: 1,419 frames;
+sanitized slot 19: 1,362; required 2,280), despite full inventories/reset and a
+passing WASM case. It is rejected and production geometry remains at 9511875.
+Sixteen independent public vehicle-rotation checks are retained; final strict
+LLVM19, 37 Native/35 WASM CTests, nine sanitizer targets and 716 physical checks
+per target pass. The complete
+contact-cost, support/traction and full-game contracts remain open. Receipts:
+/tmp/wasm-dd2/rewrite-pair-distribution-0046/{diagnosis-report,ai/canonical-report}.json.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,

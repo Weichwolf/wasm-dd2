@@ -363,15 +363,65 @@ static bool dd2_vehicle_test_invalid(void) {
     return valid;
 }
 
+static bool dd2_vehicle_test_rotations(void) {
+    enum { DD2_ROTATION_TEST_SIDE = 3, DD2_ROTATION_TEST_LONG = 5 };
+    const double half_sine = sin(dd2_vehicle_test_quarter_turn / 2);
+    const double half_cosine = cos(dd2_vehicle_test_quarter_turn / 2);
+    const double tolerance = 1e-12;
+    const dd2_vehicle_vector inputs[] = {
+        {.x = 1},
+        {.y = 1},
+        {.z = 1},
+        {.x = 2, .y = -DD2_ROTATION_TEST_SIDE, .z = DD2_ROTATION_TEST_LONG}};
+    /* Positive quarter turns permute signed Cartesian coordinates. These
+     * expected vectors are independent of the quaternion implementation. */
+    const struct {
+        dd2_vehicle_rotation rotation;
+        dd2_vehicle_vector expected[sizeof(inputs) / sizeof(inputs[0])];
+    } cases[] = {{{.w = 1},
+                  {{.x = 1},
+                   {.y = 1},
+                   {.z = 1},
+                   {.x = 2, .y = -DD2_ROTATION_TEST_SIDE, .z = DD2_ROTATION_TEST_LONG}}},
+                 {{.x = half_sine, .w = half_cosine},
+                  {{.x = 1},
+                   {.z = 1},
+                   {.y = -1},
+                   {.x = 2, .y = -DD2_ROTATION_TEST_LONG, .z = -DD2_ROTATION_TEST_SIDE}}},
+                 {{.y = half_sine, .w = half_cosine},
+                  {{.z = -1},
+                   {.y = 1},
+                   {.x = 1},
+                   {.x = DD2_ROTATION_TEST_LONG, .y = -DD2_ROTATION_TEST_SIDE, .z = -2}}},
+                 {{.z = half_sine, .w = half_cosine},
+                  {{.y = 1},
+                   {.x = -1},
+                   {.z = 1},
+                   {.x = DD2_ROTATION_TEST_SIDE, .y = 2, .z = DD2_ROTATION_TEST_LONG}}}};
+    for (size_t rotation = 0; rotation < sizeof(cases) / sizeof(cases[0]); ++rotation) {
+        for (size_t vector = 0; vector < sizeof(inputs) / sizeof(inputs[0]); ++vector) {
+            const dd2_vehicle_vector expected = cases[rotation].expected[vector];
+            const dd2_vehicle_vector output =
+                dd2_vehicle_rotate(cases[rotation].rotation, inputs[vector]);
+            if (fabs(output.x - expected.x) > tolerance ||
+                fabs(output.y - expected.y) > tolerance ||
+                fabs(output.z - expected.z) > tolerance) {
+                printf("Vehicle rotation case=%zu vector=%zu failed\n", rotation, vector);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     const struct {
         const char *name;
         bool (*check)(void);
-    } checks[] = {{"driving", dd2_vehicle_test_driving},
-                  {"landing", dd2_vehicle_test_landing},
-                  {"airborne", dd2_vehicle_test_airborne},
-                  {"slope/grip", dd2_vehicle_test_slope_and_grip},
-                  {"invalid", dd2_vehicle_test_invalid}};
+    } checks[] = {
+        {"rotations", dd2_vehicle_test_rotations},       {"driving", dd2_vehicle_test_driving},
+        {"landing", dd2_vehicle_test_landing},           {"airborne", dd2_vehicle_test_airborne},
+        {"slope/grip", dd2_vehicle_test_slope_and_grip}, {"invalid", dd2_vehicle_test_invalid}};
     for (size_t index = 0; index < sizeof(checks) / sizeof(checks[0]); ++index) {
         if (!checks[index].check()) {
             printf("Vehicle %s failed\n", checks[index].name);

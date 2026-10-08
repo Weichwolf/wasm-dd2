@@ -247,6 +247,83 @@ This proves a component gain, not the full deadline contract or whole-game
 acceptance. Receipts: production-arena-verified/{native,wasm}/report.json,
 axis-candidate/report.json and component-report.json in the same directory.
 
+
+A separate fixed-190-pair distribution profile now preserves all 80 available
+current-production rows over a bounded 100-second diagnostic. At frame 400,
+1,453,902 of 17,147,500 attempts survive the existing sphere rejection and
+produce 7,310,589 refinement windows and 87,658,746 axis evaluations. At frame
+600 those totals are 2,663,065 survivors, 12,152,727 windows and 145,697,531
+axes. No observed pair query exhausts its refinement, depth or precision budget;
+maximum per-query windows/depth are 255/16. The largest frame-400 workloads are
+pairs 13/14 and 12/13 (791,163 and 766,773 windows). This locates frequent valid
+adjacent-pair work, rather than observed per-pair budget exhaustion. It covers
+only the recorded prefix, not later roof riding or the complete scenario.
+Native and sanitized optimized LLVM IR already move the common relative-distance
+and travel square roots outside the axis loop; a manual cache for those bounds
+is not justified. Receipts: profile-report.json, diagnosis-report.json and
+current-car-contact{,-sanitized}.ll in
+/tmp/wasm-dd2/rewrite-pair-distribution-0046/.
+
+A private shared quaternion/vector helper allows literal unit-axis callers to
+specialize the same arithmetic as the general vehicle rotation API. It removes
+three external general rotations per contact box without a retained cache,
+allocation or changed query/response bound. Four alternating O3 ASan/UBSan
+trials on the actual Native field reduce pair-query CPU by 17.1..20.4 percent.
+The first exact-field comparison fails: fast-math specialization permits small
+rounding differences. The two captured hits differ by at most 7.20e-11 in time,
+2.58e-14 in normal and 2.12e-7 in point coordinates, with equal depth. The
+additional functional comparison uses the existing SAT time/spatial accuracies
+(1e-10/1e-6), a fixed 1e-12 normal tolerance and exact hit/identity/order/unresolved
+flags. No existing acceptance test or production tolerance is relaxed.
+Another 4,096 deterministic translated/rotated/reversed queries pass those
+bounds (1,296 hits, no unresolved queries); 4,096 independently frozen general
+vector rotations have zero error. The vehicle test adds 32 independently
+specified identity/positive-quarter-turn vector checks through both API paths.
+Receipts: benchmark-report.json (the retained exact-comparison failure),
+rotation-inspection-report.json, benchmark-functional-report.json and
+frozen-pairs-functional-report.json in the same directory.
+
+Strict LLVM19 formatting/tidy for all 163 C/header files, 37 Native/35 WASM
+CTests, 716 physical checks per target and nine focused sanitizer targets pass.
+All 46 reached rewrite C units are freshly instrumented with O1 ASan/UBSan;
+pinned release SoftGL/system SDL remain outside instrumentation. The private
+full O3 ASan/UBSan Arena-B attempt still times out at the unchanged 360-second
+bound (360.217 wallclock/300.695 child CPU seconds). It produces 232 complete
+rows, with the first previous-trajectory difference at row 20 and empty stderr;
+summary/reset inventories do not complete. Different trajectories and CPU
+availability prevent using these prefix counts as a whole-case speedup claim.
+The deadline contract stays open. Receipts: native-quality-report.json,
+wasm-quality-report.json, physical-report.json, sanitizer-report.json,
+san-build-report.json, production-identity.json and candidate/report.json in the
+same directory. These receipts describe the candidate, not the final production
+source after its rejection.
+
+The broader candidate check passes all unchanged sixty-second twenty-car and
+reset gates on levels 1..A across Native, WASM and O3 ASan/UBSan. Independent
+original circuit guidance checks cover 29,214 queries per target. Arena B
+produces all 300 records, twenty summaries and the exact reset inventory on all
+three targets, with no sanitizer findings. WASM passes sustained motion, but
+Native slot 16 has only 1,419 supported frames (41,314.61 travel), and sanitized
+slot 19 has only 1,362 (43,044.96 travel), versus the unchanged required 2,280.
+The existing frozen Native failure is slot 17 with 1,929 supported frames.
+Small contact rounding changes therefore alter the dense-field trajectory and
+do not establish a stable functional improvement. The faster specialization is
+rejected; all three production C/header edits are restored byte for byte to
+9511875. The vehicle test retains only the sixteen independently specified
+public-API identity/quarter-turn checks. This diagnostic does not correct the
+underlying support/traction behavior or close 0046/0016. Receipts:
+ai/{identity,partial-report,canonical-report}.json in the same directory.
+
+
+The final retained test-only source is rechecked after restoring production:
+all 163 strict LLVM19 files, 37 Native/35 WASM CTests, nine freshly instrumented
+O1 sanitizer targets and all 716 physical checks per target pass. Production
+C/header/build and pinned SoftGL files have no diff from 9511875. The sixteen
+public rotation checks run in each vehicle test; the private helper is absent.
+Final receipts: final/{identity,native-quality-report,wasm-quality-report,
+sanitizer-report,san-build-report,physical-report}.json and component-report.json
+in the same directory.
+
 ## Next
 
 Retain the verified partial pair-preparation correction without closing the
@@ -254,11 +331,14 @@ full deadline contract. Use the terminal current-production receipt and its
 separate child CPU measurement to diagnose remaining pair-window/pose and
 world-query work from actual inputs before further changes. The local pose
 cache also fails measured adoption criteria. Retain the proved empty-interval
-axis rejection without closing the full deadline. Measure per-pair refinement
-work and unresolved-query frequency to locate the remaining dense-field cost;
-evaluate shared relative-distance bounds only after measuring their actual
-repetition. Keep initial rejection cheap, query ownership explicit and stack
-use bounded. Prepared road planes and skipped empty intervals are verified local
+axis rejection without closing the full deadline. Pair-level distribution now
+locates frequent adjacent-pair work without observed budget exhaustion, and
+optimized IR already shares the relative-distance bounds. Shared rotation specialization fails the actual supported-motion gate and
+remains private. Diagnose the remaining later-stage pair-window/contact work
+using the unchanged production geometry, and investigate the known body-roof
+traction/support failure under 0016. Require actual functional behavior as well
+as scoped timing before adopting another arithmetic change. Keep initial rejection cheap, query ownership
+explicit and stack use bounded. Prepared road planes and skipped empty intervals are verified local
 gains; they do not close the full deadline.
 Preserve every existing
 acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
