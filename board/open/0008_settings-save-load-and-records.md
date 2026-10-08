@@ -72,9 +72,21 @@ is prevented for new entries while existing duplicate payloads remain distinct.
 This does not complete typed settings/game/replay, durable adapters or frontend
 persistence. Receipt: /tmp/wasm-dd2/rewrite-save-card-0055/verification-report.json.
 
+Closed 0056 adds assets/save_profile.h: owned, complete typed configuration/
+profile blocks, including five season records, current drivers, player names,
+seven lap tables and bindings. Three hundred independent original-x86/actual
+card comparisons check 306300 values and full blocks on Native/WASM/fresh O1
+sanitized C, including predicted edits; strict LLVM19/178-file, 40/38 gates and
+zero-error/leak Memcheck pass. Truncation, all 320 unterminated text fields,
+unsupported kinds and alias/rollback checks pass. The source controller word at
+byte 18 is not Redbook gain; the original configuration packer has no separate
+CD gain. Parsing preserves numeric fields but does not validate a playable race
+or championship. No durable write, restart or frontend persistence claim.
+Receipt: /tmp/wasm-dd2/rewrite-save-profile-0056/verification-report.json.
+
 ## Next
 
-Implement typed settings/championship/replay payload codecs on the proved container, then stage durable Native/browser writes and connect the actual frontend. Keep selected physical identity through loading; prevent new ambiguous names after display compaction.
+Translate and validate complete typed source configuration/game state, stage durable Native/browser publication and connect actual frontend actions. Replays need a separate codec. Keep selected physical identity through loading, preserve prior application state on invalid gameplay/failed writes, and prevent new ambiguous names after display compaction. Persist rewrite music gain explicitly because the source configuration does not store it.
 
 ## Accept
 

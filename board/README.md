@@ -60,6 +60,7 @@ its game requirements or acceptance rules.
 | [0053](active/0053_arena8-position-convergence.md) | Restore natural Arena-8 contact position convergence | active |
 | [0054](closed/0054_contact-scratch-initialization.md) | Reduce redundant contact scratch initialization | closed |
 | [0055](closed/0055_owned-save-card-container.md) | Own the original Windows save-card container | closed |
+| [0056](closed/0056_typed-save-profile.md) | Typed original configuration and profile payload | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -833,3 +834,17 @@ bodies and contact times/rows to distinguish repeated supports from legitimate
 dense pursuit. Budgets/material/health/controls remain unchanged. Completed raw
 profiling output is removed; three required typed checkpoints and receipts remain.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-late-0053/diagnosis-report.json.
+
+
+Closed 0056 now owns the complete source configuration/profile payload: typed
+settings, five seasons, twenty current drivers, ten player names, seven lap
+tables and bindings, with retained reserved bytes. Three hundred independent
+Native/WASM/fresh O1 sanitized comparisons check 50 original packs/cards,
+306300 typed values and complete encoded blocks, including predicted edits.
+Strict LLVM19/178-file and 40/38 gates, all truncated extents, 320 invalid fixed
+texts, overlap/rollback and zero-error/leak Memcheck pass. Controller type is
+explicit; source configuration does not contain a separate Redbook gain.
+Complete playable-state translation, durable Native/browser publication and
+actual frontend save/load remain next under 0008/0003. Broader Arena-8 natural
+WASM results remain active under 0053. Receipt:
+/tmp/wasm-dd2/rewrite-save-profile-0056/verification-report.json.

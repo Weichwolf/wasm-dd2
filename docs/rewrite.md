@@ -146,9 +146,14 @@ software surfaces, with shared keyboard input and monotonic timing. Gamepad and 
 persistence remain pending. An owned Windows save-card container now preserves
 all fifteen physical blocks, exposes compact logical entries and stages complete
 borrowed replacement inputs. Original image reads and put/delete transitions
-are independently checked on Native/WASM/fresh sanitized C. Typed payload codecs,
-durable adapters and frontend save actions remain open; see
-`src/assets/README.md` and `make rewrite-save-card-verify`. Typed sound-bank/WAVE readers
+are independently checked on Native/WASM/fresh sanitized C. A typed original
+configuration/profile codec now owns settings, five season records, current
+drivers, names, lap tables and bindings while retaining reserved bytes. All
+fields and encoded blocks match independently decoded original-x86 packs and
+actual A/B cards on Native/WASM/fresh sanitized C. Playable-state translation,
+replay codecs, durable adapters and frontend save actions remain open; see
+`src/assets/README.md`, `make rewrite-save-card-verify` and
+`make rewrite-save-profile-verify`. Typed sound-bank/WAVE readers
 now preserve all 45 original effects, including their independent playback
 frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
 Redbook tracks; source/binary-identified three-target verification compares every

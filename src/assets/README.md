@@ -337,7 +337,7 @@ Invalid, full and duplicate operations preserve every image byte.
 
 `dd2_save_card_image` borrows immutable bytes for a platform adapter to stage and
 persist. Container mutation alone does not establish durable save success.
-Typed configuration/championship/replay payloads, atomic Native/browser storage
+Typed replay payloads, playable-state translation, atomic Native/browser storage
 and frontend actions remain separate work under 0008/0003.
 
 `make rewrite-save-card-verify` checks ownership/bounds/rollback on Native, WASM
@@ -347,3 +347,51 @@ isolated reference checkpoints to `tools/rewrite/verify_save_card.py` using
 `--original-cards /tmp/wasm-dd2/<run>/original-cards`. Reference commands remain
 under the frozen `/tmp` reference. The actual 63-key original run and full-image
 comparisons are scoped container evidence; they do not implement persistence UI.
+
+
+## Original configuration and profile payload
+
+`assets/save_profile.h` decodes a selected complete 8192-byte physical block into
+an owned value. Configuration `0x1010`, startup `0x1020` and saved-game `0x3030`
+share this packed schema; replay `0x2020` has a separate layout and is rejected.
+Each multibyte field is decoded explicitly as little endian, without assuming
+C struct layout or alignment.
+
+| Byte offset | Stored fields | Extent |
+| --- | --- | --- |
+| 0 | Kind and 23 signed settings/session words | 48 bytes |
+| 48 | Five seasons, oldest first: eleven track winner/destruction/retirement records, twenty driver win/destruction/retirement records and twenty final standing names | 5 × 940 bytes |
+| 4748 | Twenty current drivers: name, total points, division, rank, pending points, finish place, race place, round points and retained reserved bytes | 20 × 54 bytes |
+| 5828 | Ten player names | 10 × 12 bytes |
+| 5948 | Seven circuit tables, each with five name/minute/second/fraction records | 7 × 5 × 16 bytes |
+| 6508 | Controller bindings and their retained suffix | 18 bytes |
+| 6526 | Unused physical block suffix | 1666 bytes |
+
+Header word order is documented by `dd2_save_profile_header`. Word nine, at
+byte 18, is the controller type, not Redbook volume. The original input poll
+sets keyboard type 1 and joystick type 2; the packer has no separate CD gain.
+Statistics tracks and lap tables retain source/UI order; mapping them to runtime
+level numbers is part of gameplay translation. Lap fractions retain the original
+unsigned 16-bit fractional second; conversion
+to displayed centiseconds is separate. Track and driver destruction counters
+retain their original unsigned 16-bit/8-bit widths respectively.
+
+Fixed text must have a terminator within its field. Bytes after that terminator,
+reserved driver data and the unused suffix survive round trips and edits.
+Unsupported magic, wrong extents and unterminated text leave the existing owner
+or output unchanged. Reads and writes stage overlapping caller storage before
+publication. Numeric fields remain lossless, including signed values; parsing a
+profile does not validate a playable race, division permutation or unlock range.
+The application must translate source IDs and validate the complete candidate
+before accepting saved gameplay. Durable adapters and actual frontend actions
+remain open under 0008/0003.
+
+`make rewrite-save-profile-verify` compares every typed field and encoded byte
+with an independent reader of 48 patterned immutable original-x86 packs,
+covering all three supported kinds. Independently predicted edits touch settings,
+statistics, standings, names, lap tables, bindings and retained data. Bounds,
+320 malformed fixed text fields, rollback and aliases are checked on Native,
+Node/WASM and fresh O1 ASan/UBSan, with Native Memcheck. Optional
+`--original-cards /tmp/wasm-dd2/<observed-run>` adds the two physically observed
+A/B configurations from `saved-A-B.card` and its identified original receipt.
+These are codec comparisons, not proof of saved-game continuation or durability.
