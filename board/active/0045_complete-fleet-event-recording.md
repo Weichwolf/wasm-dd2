@@ -98,7 +98,7 @@ and 4 end on engine retirement. The league consumes those results once, awards
 and process bounds remain 300,000 ticks and 3,600 seconds. This is a Native
 first-season result including two DNF rounds, not complete player finishing,
 WASM campaigns, Wrecking or full-game acceptance. The full AI gate remains unsuccessful: levels 1..A pass all three targets.
-Arena-B Native slot 17 travels 37,518.840 units but has only 1,929 supported
+Arena-B Native opponents travel at least 37,518.840 units; slot 17 has only 1,929 supported
 frames against the unchanged 2,280/2,400 requirement. WASM passes Arena B
 (minimum travel 44,399.075; support 2,352); O3 ASan/UBSan exceeds its unchanged
 360-second deadline before completing. Neither motion/support criteria nor
@@ -107,13 +107,22 @@ remains active while its reached movement/cost gates are diagnosed.
 Receipt: /tmp/wasm-dd2/rewrite-owned-events-0045/ai-partial-report.json.
 Receipt: natural-season/terminal-report.json in the same directory.
 
+The separate WASM and O3 ASan/UBSan public-session seasons are now terminal:
+both exceed the unchanged 3,600-second process bound. Each completes the first
+round naturally (287,089/287,081 ticks), then reaches round-2 checkpoints
+230,000/155,000 with zero player laps. There is no recorded contact failure,
+but continuation and complete seasons are unproved. These use the prior
+owned-report source, original data and ordinary controls, with no Native
+checkpoint or renderer. Receipts: season-owner/{wasm,sanitized}/terminal-report.json
+in /tmp/wasm-dd2/rewrite-owned-events-0045/.
+
 ## Next
 
 Diagnose actual Arena-B cost under 0046 and Native slot-17 support under 0016.
-Independent WASM and instrumented-C public-session seasons are running with
-300,000-tick/3,600-second bounds, original data and ordinary controls; neither
-uses a Native checkpoint or renderer. Keep those separate from the completed
-Native application season. Continue damage-aware tactics/escape under 0044/0016 and
+Use the terminal negative WASM/instrumented public-session season receipts
+alongside the completed Native application season. Preserve their existing
+300,000-tick/3,600-second bounds and distinguish advancement from actual route
+progress. Continue damage-aware tactics/escape under 0044/0016 and
 all-track/mode/campaign work under 0002/0004. Keep every captured physical and
 functional comparison, explicit old Native translation and owned view lifetime.
 Only close this contract after its remaining reached gates have receipts.

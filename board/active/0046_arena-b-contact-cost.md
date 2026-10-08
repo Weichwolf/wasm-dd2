@@ -61,17 +61,62 @@ frame 1,000 is completely exported and frame 1,200 is partial. Its isolated
 timing gain does not establish a sufficient full-scenario improvement, and no
 candidate code has been adopted. Receipt: broadphase-prototype/report.json.
 
+A separate typed batch now validates every immutable body once and reuses
+prepared motion/boxes across its unordered pairs. The scalar APIs retain full
+validation before sphere rejection. Preparation is call-local, with caller-owned
+190-pair inventories, lexicographic order and unchanged per-pair geometry/work
+bounds. Fleet invalid preparation rejects the transaction. O3 ASan/UBSan trials
+on one actual Native field preserve all 190 frozen scalar results exactly,
+including two sweep hits and one neighbor. Four alternating-order trials of
+380,000 pairs each reduce thread CPU time by 40.2..41.5 percent for sweeps and
+61.3..62.7 percent for neighborhoods. These are scoped query measurements.
+Receipt: /tmp/wasm-dd2/rewrite-pair-preparation-0046/benchmark-report.json.
+
+Current production passes strict LLVM19 formatting/tidy for 163 C/header files,
+37 Native and 35 WASM CTests, all 716 physical checks per Native/WASM/ASan/UBSan
+target and six focused instrumented targets. All eleven original-data ground
+and fleet levels pass on three targets (79,100 queries/26,400 ground steps and
+220 starts/132,000 fleet steps each). Actual Native/sanitized/Chromium input and
+presentation pass 31/31/144 comparisons with no browser errors. These verify
+the partial repeated-work correction, preserving physical response/constraint/
+pass/record bounds; the full deadline contract remains separate and active.
+Receipts: native-quality-report.json, wasm-quality-report.json,
+physical-report.json, sanitizer-report.json and ground/fleet/window reports
+in /tmp/wasm-dd2/rewrite-pair-preparation-0046/.
+
+Complete production Native/WASM Arena-B runs exit zero within the original
+180-second exporter bound (97.23/115.25 seconds), each retaining all 300 rows
+byte for byte against its previous completed target. Native slot 17 still has
+only 1,929 supported frames, so Native motion acceptance remains unsuccessful;
+WASM motion passes. The first private instrumented batch attempt times out at
+360 seconds with 72 complete matching prefix rows. Its partial prefix and empty
+stderr establish neither completion nor a whole-scenario speedup. A separate
+current-production O3 ASan/UBSan build records every reached source and measures
+child CPU independently of wallclock for the unchanged full case.
+Receipts: production-arena-verified/native/report.json,
+production-arena-verified/wasm/report.json, report.json and
+production-arena-instrumented/build-report.json in the same directory.
+
+The current-production instrumented attempt is now terminal: timeout after
+360.172 wallclock seconds and 360.015 child CPU seconds. It retains 232 complete
+rows through frame 2,200/slot 11; all 108 available frozen production prefix rows
+match exactly. No summary/reset inventory completes and stderr is empty. Every
+reached C unit is O3 ASan/UBSan-instrumented. This attempt uses almost all its
+wallclock budget as actual CPU work; it still fails the unchanged deadline.
+The scoped pair-preparation gain is verified, while 0046 remains active.
+Receipts: production-arena-instrumented/report.json and component-report.json
+in /tmp/wasm-dd2/rewrite-pair-preparation-0046/.
+
 ## Next
 
-Use the terminal negative candidate receipt before choosing production work.
-Measure remaining repeated pair validation, pose construction and neighborhood
-search against actual inputs. Consider bounded, typed fleet query preparation
-that validates each immutable body/motion once and reuses geometry across its
-pairs, preserving all public invalid-input behavior and full instrumentation.
-Prove output equivalence and the unchanged full-scenario deadline before
-adoption. Keep slot-17 roof riding under 0016 and
-actual-owner continuation/public-session seasons separate. Capture only the
-typed inputs needed for a proved correction.
+Retain the verified partial pair-preparation correction without closing the
+full deadline contract. Use the terminal current-production receipt and its
+separate child CPU measurement to diagnose remaining world/swept query work
+from actual inputs before further changes. Preserve every existing
+acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
+under 0016 and actual-owner continuation/public-session seasons separate;
+the older independent WASM/instrumented seasons both timed out in round 2.
+Capture only typed inputs needed for a proved correction.
 
 ## Accept
 

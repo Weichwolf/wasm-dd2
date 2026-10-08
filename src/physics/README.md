@@ -212,6 +212,29 @@ uses an explicit depth stack (48 levels) and at most 512 refinement windows.
 Exhaustion returns an `unresolved` time bound instead of pretending there is no
 contact. This remains source-sized box collision, not exact visual-mesh collision.
 
+The fleet uses `dd2_car_contacts_sweep` and `dd2_car_contacts_proximity` to query
+an immutable field of up to twenty bodies. Each call validates every body once,
+then shares its prepared geometry among its unordered pairs. Sweeps prepare a
+body lazily after the existing relative-motion sphere rejection; neighborhoods
+prepare one box per body. The caller owns a bounded 190-pair inventory in
+lexicographic body order. An empty valid inventory returns true; invalid input
+returns false with zero count. Borrowed bodies must not overlap output storage.
+Preparation lives only inside the call, so later motion cannot reuse stale poses.
+The scalar APIs retain their validation and output contracts. Each pair keeps
+its own angular/refinement bounds and the same SAT, contact point and tolerance.
+The fleet propagates invalid preparation transactionally and preserves world/
+body/pair order and globally anchored event ties.
+
+An O3 ASan/UBSan comparison against the frozen scalar implementation preserves
+every contact field for all 190 pairs of one actual Native Arena-B field. Four
+alternating-order trials of 380,000 pairs each reduce measured thread CPU time
+by 40.2..41.5 percent for sweeps and 61.3..62.7 percent for neighborhoods. These
+are query timings, not whole-game speedup or AI acceptance. Full Native/WASM
+Arena-B exporters preserve all 300 previous rows byte for byte, including the
+known Native slot-17 support failure. Focused inventory/invalid-input/ownership
+tests, 716 physical checks per target and eleven-level ground/fleet/window
+checks pass. Receipts: /tmp/wasm-dd2/rewrite-pair-preparation-0046/.
+
 For an axis with speed bound W and second-derivative bound C, the signed center
 projection has curvature at most 2|d'|W + |d|C. A body's signed support term has
 curvature at most C_body + 2W_body W + C. Their weighted sum times interval

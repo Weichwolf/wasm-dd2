@@ -2,6 +2,7 @@
 #define DD2_PHYSICS_CAR_CONTACT_H
 
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <stdbool.h>
 
@@ -19,17 +20,18 @@ typedef struct {
     double margin;
 } dd2_car_neighborhood;
 
-/* Source-sized oriented boxes, including roll/pitch and separate bridge heights.
- * Continuous translation/rotation with conservative endpoint envelopes for
- * rotating SAT axes, refined until an actual-pose SAT check confirms contact.
- * Initial angular pieces target 0.01 rad, capped at 64. Each query uses at most
- * 512 refinement windows, at most 48 levels deep. Exhaustion returns true with
- * unresolved set and an earliest possible time; the caller must stop there
- * without applying an impulse. This is a body proxy, not mesh collision.
- * Clears output on no contact or invalid/nonfinite state. No allocations.
- * Equal-time axis ties use fixed source-axis order. Relative normal travel
- * within 1e-6 world units per sweep is stationary for contact selection; a
- * touching pair must close beyond that tolerance to create an event. */
+/* Source-sized oriented boxes, including roll/pitch and separate bridge
+ * heights. Continuous translation/rotation with conservative endpoint envelopes
+ * for rotating SAT axes, refined until an actual-pose SAT check confirms
+ * contact. Initial angular pieces target 0.01 rad, capped at 64. Each query
+ * uses at most 512 refinement windows, at most 48 levels deep. Exhaustion
+ * returns true with unresolved set and an earliest possible time; the caller
+ * must stop there without applying an impulse. This is a body proxy, not mesh
+ * collision. Clears output on no contact or invalid/nonfinite state. No
+ * allocations. Equal-time axis ties use fixed source-axis order. Relative
+ * normal travel within 1e-6 world units per sweep is stationary for contact
+ * selection; a touching pair must close beyond that tolerance to create an
+ * event. */
 bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *first_end,
                            const dd2_vehicle *second_start, const dd2_vehicle *second_end,
                            dd2_car_contact *contact);
@@ -42,6 +44,43 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
  * the earliest-event clock and distinguish support from the primary collision.
  * Query and body pointers are borrowed only during the call. Object storage
  * preserves nonfinite margin bits for validation under fast-math.
- * Clears output on failure, leaves inputs untouched and makes no allocations. */
+ * Clears output on failure, leaves inputs untouched and makes no allocations.
+ */
 bool dd2_car_contact_proximity(const dd2_car_neighborhood *query, dd2_car_contact *contact);
+enum { DD2_CAR_PAIR_LIMIT = DD2_VEHICLE_FLEET_LIMIT * (DD2_VEHICLE_FLEET_LIMIT - 1) / 2 };
+
+typedef struct {
+    unsigned first;
+    unsigned second;
+    dd2_car_contact contact;
+} dd2_car_pair_contact;
+
+typedef struct {
+    dd2_car_pair_contact pairs[DD2_CAR_PAIR_LIMIT];
+    unsigned count;
+} dd2_car_pair_contacts;
+
+typedef struct {
+    const dd2_vehicle *start;
+    const dd2_vehicle *end;
+    unsigned count;
+} dd2_car_fleet_motion;
+
+typedef struct {
+    const dd2_vehicle *vehicles;
+    unsigned count;
+    double margin;
+} dd2_car_fleet_neighborhood;
+
+/* Validate every immutable body once, then reuse pose/motion preparation across
+ * its unordered pairs. Results own entries in first/second lexicographic order;
+ * each entry has exactly the single-pair query's meaning and work limits. A
+ * successful empty inventory is true. Query arrays are borrowed only during the
+ * call and must not overlap result storage. Count is 1..FLEET_LIMIT. No
+ * allocation or retained cache; failed queries clear count and entries past
+ * count are unspecified. Inputs remain unchanged, including failed validation.
+ */
+bool dd2_car_contacts_sweep(const dd2_car_fleet_motion *query, dd2_car_pair_contacts *result);
+bool dd2_car_contacts_proximity(const dd2_car_fleet_neighborhood *query,
+                                dd2_car_pair_contacts *result);
 #endif

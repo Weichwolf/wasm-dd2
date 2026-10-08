@@ -132,6 +132,15 @@ This identifies the traction/support failure to address, not a proved tactical
 or recovery fix. Receipts: /tmp/wasm-dd2/rewrite-arena-cost-0046/support/support-report.json
 and support-steady/report.json. Contact cost is tracked separately under 0046.
 
+Typed fleet pair preparation preserves both complete Native/WASM Arena-B
+inventories byte for byte, including Native slot-17 support at 1,929 frames;
+it does not correct roof riding. The separate prior-source WASM/instrumented
+public-session seasons both time out at 3,600 seconds, after natural first-round
+finishes and round-2 checkpoints 230,000/155,000 with zero player laps. Complete
+route recovery on those targets remains open. Receipts:
+/tmp/wasm-dd2/rewrite-pair-preparation-0046/production-arena-verified/{native,wasm}/report.json
+and /tmp/wasm-dd2/rewrite-owned-events-0045/season-owner/{wasm,sanitized}/terminal-report.json.
+
 ## Next
 
 Follow the current terminal movement/owner diagnosis under 0044. Diagnose the

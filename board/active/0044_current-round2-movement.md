@@ -78,10 +78,14 @@ zero laps in that same short terminal-state probe. The new ordinary Native
 application completes four first-season results and opens season 2; rounds 2
 and 4 end by engine retirement. The full AI suite passes ten levels but still fails Native Arena-B support
 and the instrumented Arena-B deadline. Those are retained under 0016/0046;
-independent WASM/instrumented session seasons are running. Sustained route
+independent WASM/instrumented session seasons both time out at their unchanged
+3,600-second bound. Their last round-2 checkpoints are 230,000/155,000 ticks,
+with zero player laps. Each completes a real first-round finish, but neither
+establishes a completed season. Sustained route
 recovery remains a separate contract.
 Receipts: /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json,
-0-report.json, 2-report.json and natural-season/terminal-report.json.
+0-report.json, 2-report.json, natural-season/terminal-report.json and
+season-owner/{wasm,sanitized}/terminal-report.json.
 
 ## Next
 

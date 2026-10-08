@@ -59,24 +59,32 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0046/0016, following 0045/0044: production collision reports now use owned heap
-buffers and borrowed views, separating metadata capacity from physical work.
-Strict Native/WASM, instrumented rollback, 716 captured physical cases per
-target, all eleven original-data ground/fleet and actual window/input checks,
-six scoped race targets and seven old Native owners pass. The ordinary Native
-first Stockcar season completes four real results (two finishes, two engine
-retirements) and opens season 2; independent WASM/instrumented owner seasons are running. The AI gate passes
-ten levels but still fails Native Arena-B slot-17 support and its instrumented
-360-second deadline, retained under 0016/0046. Exact-prefix profiling identifies
-car-pair search as the largest measured cost component. Native slot 17 rides
-body 18's roof above intact terrain, losing wheel traction; a small read-only
-owner/contact capture proves this diagnosis. A private sphere-ordering candidate
-saves 29..31 percent in captured pair-query timing, but still times out in the
-unchanged full instrumented case and remains unadopted. Corrected manual escape is proved; complete tactics, modes,
-menus, audio, visual work and game acceptance remain open. Current receipts:
-/tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json and
-natural-season/terminal-report.json. The historical evidence below is scoped
-to its recorded source epochs.
+Current work is 0046/0016, following 0045/0044. Owned collision reports preserve
+physical work bounds and restore previously clipped movement. The ordinary
+Native first Stockcar season completes four real results (two finishes, two
+engine retirements) and opens season 2. The separate WASM/instrumented public
+session seasons both time out at 3,600 seconds in round 2 with zero player laps;
+their first-round finishes do not establish complete seasons.
+
+Typed immutable fleet pair preparation now avoids repeated body validation and
+pose construction, retaining caller-owned ordered inventories and transactional
+failure. Frozen actual-field O3 ASan/UBSan trials reduce sweep query CPU by
+40.2..41.5 percent and neighborhood query CPU by 61.3..62.7 percent. Strict LLVM19
+(163 C/header files), 37 Native/35 WASM CTests, 716 physical checks per target,
+six focused instrumented targets and all eleven original-data ground/fleet/
+actual-input levels pass. These are verified component gains, not whole-game
+speedup or complete AI acceptance. Both full Native/WASM Arena-B exporters
+preserve all 300 previous rows byte for byte. Native still fails slot-17 support
+(1,929 versus 2,280 frames); two small read-only captures show it riding body
+18's roof above intact terrain. Its tactics/traction correction remains under
+0016. The current instrumented case times out at 360.172 wallclock/360.015 CPU
+seconds with 232 complete rows and no completed summary/reset inventory; its
+full-case deadline remains under active 0046. The prior
+sphere-ordering candidate remains unadopted. Complete tactics, modes, menus,
+audio, visuals and all-game acceptance remain open. Current receipts:
+/tmp/wasm-dd2/rewrite-pair-preparation-0046/ and
+/tmp/wasm-dd2/rewrite-owned-events-0045/{natural-season,season-owner}/.
+Historical evidence below is scoped to its recorded source epoch.
 
 The terminal a326993 race attempt and separate Circuit-5 follow-up account for
 all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural

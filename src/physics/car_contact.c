@@ -3,6 +3,7 @@
 #include "physics/collision_math.h"
 #include "physics/numeric.h"
 #include "physics/vehicle.h"
+#include "physics/vehicle_collision.h"
 
 #include <math.h>
 #include <stdbool.h>
@@ -12,7 +13,8 @@
 #define DD2_CAR_QUERY_WINDOWS 512
 #endif
 
-/* Match Get_Corner_Positions and Check_2D_Car_Collision, retaining full pose. */
+/* Match Get_Corner_Positions and Check_2D_Car_Collision, retaining full pose.
+ */
 enum {
     DD2_CAR_AXES = 3,
     DD2_CAR_SAT_AXES = 15,
@@ -623,17 +625,9 @@ static bool dd2_car_refine(dd2_car_sweep *sweep, double begin, double end, dd2_c
     }
     return false;
 }
-bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *first_end,
-                           const dd2_vehicle *second_start, const dd2_vehicle *second_end,
-                           dd2_car_contact *contact) {
-    if (contact == NULL) {
-        return false;
-    }
-    *contact = (dd2_car_contact){0};
-    if (!dd2_vehicle_valid(first_start) || !dd2_vehicle_valid(first_end) ||
-        !dd2_vehicle_valid(second_start) || !dd2_vehicle_valid(second_end)) {
-        return false;
-    }
+static bool dd2_car_spheres_overlap(const dd2_vehicle *first_start, const dd2_vehicle *first_end,
+                                    const dd2_vehicle *second_start,
+                                    const dd2_vehicle *second_end) {
     const dd2_vehicle_vector relative =
         dd2_collision_add(first_start->position, dd2_collision_scale(second_start->position, -1));
     const dd2_vehicle_vector finish =
@@ -647,15 +641,33 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
     if (dd2_collision_dot(closest, closest) > 4 * dd2_car_radius * dd2_car_radius) {
         return false;
     }
-    const double angle = fmax(dd2_car_angle(first_start->rotation, first_end->rotation),
-                              dd2_car_angle(second_start->rotation, second_end->rotation));
+    return true;
+}
+typedef struct {
+    dd2_car_motion motion;
+    dd2_car_box initial;
+    double angle;
+    bool ready;
+} dd2_car_prepared_motion;
+
+static dd2_car_prepared_motion dd2_car_prepare(const dd2_vehicle *start, const dd2_vehicle *end) {
+    return (dd2_car_prepared_motion){.motion = dd2_car_motion_create(start, end),
+                                     .initial = dd2_car_box_at(start, end, 0),
+                                     .angle = dd2_car_angle(start->rotation, end->rotation),
+                                     .ready = true};
+}
+
+static bool dd2_car_sweep_prepared(const dd2_car_prepared_motion *first_motion,
+                                   const dd2_car_prepared_motion *second_motion,
+                                   dd2_car_contact *contact) {
+    const double angle = fmax(first_motion->angle, second_motion->angle);
     const unsigned pieces =
         (unsigned)fmin((double)DD2_CAR_ANGULAR_PIECES, fmax(1, ceil(angle / dd2_car_piece_angle)));
-    dd2_car_sweep sweep = {.first = dd2_car_motion_create(first_start, first_end),
-                           .second = dd2_car_motion_create(second_start, second_end),
+    dd2_car_sweep sweep = {.first = first_motion->motion,
+                           .second = second_motion->motion,
                            .remaining = DD2_CAR_REFINEMENT_LIMIT};
-    const dd2_car_box initial_first = dd2_car_box_at(first_start, first_end, 0);
-    const dd2_car_box initial_second = dd2_car_box_at(second_start, second_end, 0);
+    const dd2_car_box initial_first = first_motion->initial;
+    const dd2_car_box initial_second = second_motion->initial;
     const dd2_car_interval overlap =
         dd2_car_static(&initial_first, &initial_second, dd2_car_contact_tolerance);
     if (overlap.found && overlap.depth > dd2_car_contact_tolerance) {
@@ -676,8 +688,10 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
             *contact = (dd2_car_contact){.time = found_time, .unresolved = true};
             return true;
         }
-        const dd2_car_box first = dd2_car_box_at(first_start, first_end, found_time);
-        const dd2_car_box second = dd2_car_box_at(second_start, second_end, found_time);
+        const dd2_car_box first =
+            dd2_car_box_at(first_motion->motion.start, first_motion->motion.end, found_time);
+        const dd2_car_box second =
+            dd2_car_box_at(second_motion->motion.start, second_motion->motion.end, found_time);
         *contact = (dd2_car_contact){
             .time = found_time,
             .penetration = hit.depth,
@@ -686,6 +700,37 @@ bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *fi
         return true;
     }
     return false;
+}
+bool dd2_car_contact_sweep(const dd2_vehicle *first_start, const dd2_vehicle *first_end,
+                           const dd2_vehicle *second_start, const dd2_vehicle *second_end,
+                           dd2_car_contact *contact) {
+    if (contact == NULL) {
+        return false;
+    }
+    *contact = (dd2_car_contact){0};
+    if (!dd2_vehicle_valid(first_start) || !dd2_vehicle_valid(first_end) ||
+        !dd2_vehicle_valid(second_start) || !dd2_vehicle_valid(second_end)) {
+        return false;
+    }
+    if (!dd2_car_spheres_overlap(first_start, first_end, second_start, second_end)) {
+        return false;
+    }
+    const dd2_car_prepared_motion first = dd2_car_prepare(first_start, first_end);
+    const dd2_car_prepared_motion second = dd2_car_prepare(second_start, second_end);
+    return dd2_car_sweep_prepared(&first, &second, contact);
+}
+
+static bool dd2_car_proximity_boxes(const dd2_car_box *first_box, const dd2_car_box *second_box,
+                                    double margin, dd2_car_contact *contact) {
+    const dd2_car_interval hit = dd2_car_static(first_box, second_box, margin);
+    if (!hit.found) {
+        return false;
+    }
+    *contact = (dd2_car_contact){
+        .penetration = hit.depth,
+        .normal = hit.normal,
+        .point = dd2_car_point(first_box, second_box, hit, margin + dd2_car_contact_tolerance)};
+    return true;
 }
 
 bool dd2_car_contact_proximity(const dd2_car_neighborhood *query, dd2_car_contact *contact) {
@@ -700,13 +745,74 @@ bool dd2_car_contact_proximity(const dd2_car_neighborhood *query, dd2_car_contac
     }
     const dd2_car_box first_box = dd2_car_box_at(query->first, query->first, 0);
     const dd2_car_box second_box = dd2_car_box_at(query->second, query->second, 0);
-    const dd2_car_interval hit = dd2_car_static(&first_box, &second_box, query->margin);
-    if (!hit.found) {
+    return dd2_car_proximity_boxes(&first_box, &second_box, query->margin, contact);
+}
+
+bool dd2_car_contacts_sweep(const dd2_car_fleet_motion *query, dd2_car_pair_contacts *result) {
+    if (result == NULL) {
         return false;
     }
-    *contact = (dd2_car_contact){.penetration = hit.depth,
-                                 .normal = hit.normal,
-                                 .point = dd2_car_point(&first_box, &second_box, hit,
-                                                        query->margin + dd2_car_contact_tolerance)};
+    result->count = 0;
+    if (query == NULL || query->start == NULL || query->end == NULL || query->count == 0 ||
+        query->count > DD2_VEHICLE_FLEET_LIMIT) {
+        return false;
+    }
+    for (unsigned body = 0; body < query->count; ++body) {
+        if (!dd2_vehicle_valid(&query->start[body]) || !dd2_vehicle_valid(&query->end[body])) {
+            return false;
+        }
+    }
+    dd2_car_prepared_motion prepared[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned first = 0; first < query->count; ++first) {
+        for (unsigned second = first + 1; second < query->count; ++second) {
+            if (!dd2_car_spheres_overlap(&query->start[first], &query->end[first],
+                                         &query->start[second], &query->end[second])) {
+                continue;
+            }
+            if (!prepared[first].ready) {
+                prepared[first] = dd2_car_prepare(&query->start[first], &query->end[first]);
+            }
+            if (!prepared[second].ready) {
+                prepared[second] = dd2_car_prepare(&query->start[second], &query->end[second]);
+            }
+            dd2_car_contact contact = {0};
+            if (dd2_car_sweep_prepared(&prepared[first], &prepared[second], &contact)) {
+                result->pairs[result->count++] =
+                    (dd2_car_pair_contact){.first = first, .second = second, .contact = contact};
+            }
+        }
+    }
+    return true;
+}
+
+bool dd2_car_contacts_proximity(const dd2_car_fleet_neighborhood *query,
+                                dd2_car_pair_contacts *result) {
+    if (result == NULL) {
+        return false;
+    }
+    result->count = 0;
+    if (query == NULL || query->vehicles == NULL || query->count == 0 ||
+        query->count > DD2_VEHICLE_FLEET_LIMIT || !dd2_numeric_finite(&query->margin) ||
+        query->margin < 0 || query->margin > dd2_car_radius) {
+        return false;
+    }
+    for (unsigned body = 0; body < query->count; ++body) {
+        if (!dd2_vehicle_valid(&query->vehicles[body])) {
+            return false;
+        }
+    }
+    dd2_car_box boxes[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned body = 0; body < query->count; ++body) {
+        boxes[body] = dd2_car_box_at(&query->vehicles[body], &query->vehicles[body], 0);
+    }
+    for (unsigned first = 0; first < query->count; ++first) {
+        for (unsigned second = first + 1; second < query->count; ++second) {
+            dd2_car_contact contact = {0};
+            if (dd2_car_proximity_boxes(&boxes[first], &boxes[second], query->margin, &contact)) {
+                result->pairs[result->count++] =
+                    (dd2_car_pair_contact){.first = first, .second = second, .contact = contact};
+            }
+        }
+    }
     return true;
 }
