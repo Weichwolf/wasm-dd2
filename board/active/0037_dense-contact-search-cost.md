@@ -78,6 +78,13 @@ image parity or the failed campaign's continuation. Only the causal failure
 capture and continuation diagnosis remain pending for this item.
 Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/window-gate-receipt.json.
 
+The targeted capture is terminal and matches all 83 production records exactly.
+Current and pre-optimization solvers reject the same saved owner/full/remapped
+four-contact input, ruling out a newly introduced rejection for this input.
+An independent all-loaded root and private complete cold refinement identify the
+next correction under active 0038; no production/platform/natural fix is proved.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/diagnosis/diagnosis-report.json.
+
 ## Next
 
 Require the failure-only capture to reproduce all 83 records. Replay its actual

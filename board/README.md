@@ -42,6 +42,7 @@ its game requirements or acceptance rules.
 | [0035](closed/0035_championship-world-support-advancement.md) | Championship world-support advancement | closed |
 | [0036](active/0036_championship-next-advancement.md) | Next natural championship advancement | active |
 | [0037](active/0037_dense-contact-search-cost.md) | Avoid redundant dense contact model search | active |
+| [0038](active/0038_cold-constitutive-contact-root.md) | Recover a complete cold constitutive contact root | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -283,6 +284,19 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 /tmp/wasm-dd2/rewrite-merit-190078/gates-report.json.
 
 ## Workflow and acceptance
+
+The 115,420 capture now matches all 83 production records exactly. Current and
+pre-optimization solvers both reject the saved owner and full/remapped query.
+Independent geometry and all sixteen normal active sets establish an admissible
+all-loaded root. A private complete cold constitutive refinement advances the
+actual owner and passes all 608 existing Native physical checks; integration,
+other platforms and natural continuation remain under active 0038. Partial cold
+improvements are rejected to preserve existing warm progress. Receipt:
+/tmp/wasm-dd2/rewrite-dense-search-0037/diagnosis/diagnosis-report.json.
+The old immutable 18c0a01 run separately terminates at 168,287 (exit 1, no timeout),
+before proving the 0036 continuation contract. Its 93 records/source/binary remain
+identified; an exact old-runtime failure capture is running. Receipt:
+/tmp/wasm-dd2/rewrite-merit-190078/natural-season/terminal-report.json.
 
 All current-source actual-input/window checks for 0037 now pass on Native,
 sanitized Native and Chromium/WASM, including all eleven scene/car views and

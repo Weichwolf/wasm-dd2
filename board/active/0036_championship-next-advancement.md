@@ -71,9 +71,16 @@ advances the same saved owner to 190,079 on Native/instrumented C and passes all
 ordinary continuation past the failed tick yet; both fresh-run identities remain
 separate. Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/component-report.json.
 
+The immutable 18c0a01 natural process is now terminal at round-2 tick 168,287,
+exit 1 without timeout after 3,122.36 seconds. All 93 records, the frozen source
+commit and exact binary identity are retained. Valid AI/frame/championship inputs
+remain, but continuation past 190,078 is not proved. A separate failure-only
+capture of this exact old runtime is running; newer source changes do not test it.
+Receipt: /tmp/wasm-dd2/rewrite-merit-190078/natural-season/terminal-report.json.
+
 ## Next
 
-Follow the same fresh natural campaign process to its terminal receipt. Require
+Follow the exact old-runtime failure capture to its terminal receipt. Require
 ordinary advancement beyond the failure
 before closing this saved-step contract. Preserve
 physical inequalities, finite residual reduction, rollback, damage and scores.
