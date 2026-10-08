@@ -40,9 +40,10 @@ human identity, multiplayer and persistence still require implementation/evidenc
 
 ## Next
 
-Follow the proved tick-233,358 contact failure under active 0033, then continue
-natural first-season verification under 0025. Saved-step and ordinary-continuation
-corrections through 220,415 are proved under closed 0032.
+Follow the same natural first-season attempts to terminal outcomes under 0025.
+Saved-step corrections through 233,358 and ordinary continuation through 240,000
+are proved under closed 0033. Diagnose subsequent physical failures or healthy
+noncompletion without changing the race bound or manufacturing results.
 Require complete physical seasons and continuing/terminal application outcomes.
 Add profile-wide unlock retention, configurable human identity, original
 menu flows, multiplayer and compatible save/load. Preserve real twenty-driver

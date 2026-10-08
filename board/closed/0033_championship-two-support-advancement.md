@@ -86,11 +86,22 @@ writing game state and preserves the original wallclock allowance. Its terminal
 exit is still pending; the launcher status does not establish a game failure.
 Verified scope: /tmp/wasm-dd2/rewrite-endpoints-233358/gates-report.json.
 
+Both unchanged-bound natural runs now reach round-2 tick 240,000. Every complete
+JSON record through that checkpoint matches exactly; round 1 retains its previous
+287,087 ticks and twenty-driver scores. The same identified Native child continues
+without restart, and read-only exit monitoring does not write game state.
+Ordinary continuation past 233,358 is proved alongside saved-owner advancement,
+independent material/impulse checks, three-target regressions and strict gates.
+Close this advancement contract. A complete physical season remains unproved;
+the player still has zero credited laps in round 2 at this checkpoint.
+Advancement receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
+
 ## Next
 
-Continue the natural production and failure-only diagnostic attempts,
-keeping their exact prefixes and source/binary identities. Preserve unchanged
-physical bounds and ordinary controls; record its terminal outcome separately.
+Follow the same live natural attempts to terminal outcomes under 0025/0004,
+keeping exact prefixes and source/binary identities. Diagnose any later contact
+failure or healthy noncompletion separately, preserving ordinary bounds/controls.
+Movement/tactics and remaining arena completion stay under 0016/0002.
 
 ## Accept
 

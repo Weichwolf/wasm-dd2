@@ -37,7 +37,7 @@ its game requirements or acceptance rules.
 | [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
 | [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
 | [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
-| [0033](active/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | active |
+| [0033](closed/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -178,6 +178,14 @@ same live production child continues under read-only exit monitoring after its
 launcher terminated; no engine restart occurred. Natural advancement under 0033
 and full physical seasons remain unproved. Verified scope:
 /tmp/wasm-dd2/rewrite-endpoints-233358/gates-report.json.
+
+Both unchanged-bound natural runs now reach round-2 tick 240,000 with exact
+matching prefixes and identical previous round-1 results. The saved-input and
+ordinary-continuation contract closes under 0033. The same Native process has not
+restarted; read-only exit monitoring preserves its original allowance. Full
+physical seasons remain unproved under 0025/0004, and the player has zero credited
+laps at this checkpoint. Follow the live runs to their actual terminal outcomes.
+Advancement receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
 
 ## Workflow and acceptance
 

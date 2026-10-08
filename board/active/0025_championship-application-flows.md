@@ -137,10 +137,18 @@ diagnosis are tracked under active 0033. A private Native correction advances
 the saved step; production/multi-target/natural continuation remain unproved.
 Current diagnosis: /tmp/wasm-dd2/rewrite-season-after-220415-long/diagnosis.json.
 
+Closed 0033 now proves the production saved-input correction and natural
+continuation through round-2 tick 240,000, with identical production/diagnostic
+prefixes and previous first-round results. Strict gates, three-target captured
+physics, actual eleven-level input/original-data and six scoped race target checks
+pass. Full physical seasons remain unproved; the same natural processes continue.
+Current advancement: /tmp/wasm-dd2/rewrite-endpoints-233358/advancement-report.json.
+
 ## Next
 
-Resolve the proved tick-233,358 contact failure under 0033, then continue the
-natural season to a terminal outcome at the unchanged physical round bound.
+Follow the same natural season attempts to terminal outcomes after closed 0033's
+proved continuation through 240,000. Diagnose any later contact failure or healthy
+noncompletion at the unchanged physical round bound.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field
