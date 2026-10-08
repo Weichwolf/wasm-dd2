@@ -288,7 +288,9 @@ bool dd2_vehicle_collide_world(dd2_vehicle *vehicle, const dd2_vehicle *previous
         }
         return false;
     }
-    return dd2_collision_resolve(vehicle, previous, surface, world, impact);
+    /* Simultaneous body supports use the same inelastic joint solve as a
+     * one-car field. Serial impulses can leave another touching corner closing. */
+    return dd2_vehicle_collide_fleet(vehicle, previous, 1, surface, world, impact, NULL);
 }
 
 typedef struct {

@@ -202,6 +202,16 @@ static bool dd2_ground_test_fast(void) {
                 (2 * DD2_SURFACE_TEST_HEIGHT) - dd2_ground_test_tolerance &&
             fabs(next.velocity.y) < dd2_ground_test_fast_residual &&
             dd2_ground_test_energy(&next) <= dd2_ground_test_energy(&previous);
+    /* All four roof points land together on this inelastic plane. A response
+     * at one corner must not leave another support closing into the road. */
+    for (unsigned corner = DD2_GROUND_TEST_ROOF; valid && corner < DD2_GROUND_TEST_CORNERS;
+         ++corner) {
+        const dd2_vehicle_vector arm =
+            dd2_vehicle_rotate(next.rotation, dd2_vehicle_body_corner(corner));
+        const double speed =
+            next.velocity.y + (next.angular_velocity.z * arm.x) - (next.angular_velocity.x * arm.z);
+        valid = speed >= -dd2_ground_test_tolerance;
+    }
     if (!valid) {
         printf("Fast drop y=%.17g v=%.17g omega=%.17g,%.17g contacts=%u\n", next.position.y,
                next.velocity.y, next.angular_velocity.x, next.angular_velocity.z, impact.contacts);

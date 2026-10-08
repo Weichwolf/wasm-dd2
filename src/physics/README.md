@@ -212,6 +212,10 @@ angular chords approximate rotated corner paths (target 0.02 radians, at most
 16 pieces). Corner time ties prefer source order. This is a corner-contact proxy,
 not exact mesh/triangle collision or an exact continuous rotating-box solver.
 
+The standalone world API uses the existing count-one joint field solver, so all
+simultaneously touching body corners satisfy the inelastic support equations
+together. Serial corner impulses could leave another support closing; an
+independent roof-corner normal-velocity check rejects that old behavior.
 Ground and barrier contacts share earliest selection and the remaining fixed
 step. Rebound/friction can change both linear and angular travel before the next
 sweep. At most 64 combined responses keep the last checked pose on exhaustion;
@@ -847,6 +851,9 @@ cone and constitutive law. The 324-model, 4096-pass and sixteen-step refinement/
 backtracking bounds remain unchanged. The captured round-2 tick-155992 query has
 nineteen contacts among nine bodies; its independent pressure root, both full
 fields and remapped row orderings are retained in the 742-case physical corpus.
-The older Arena-A spinning-body comparison still exceeds its angular bound on
-Native/WASM identically before/after this change; complete ground acceptance is
-open under board item 0052.
+The independent old Arena-A spinning-body discrepancy was unchanged by this
+world-pressure correction. Closed 0052 subsequently corrects the standalone
+serial world-contact path and passes all eleven original ground levels and 220
+controlled recovery cases per target without changing their acceptance bounds.
+Active 0053 owns a separate natural Arena-8 joint position failure; its velocity
+phase passes, and the changed standalone API is never called in that capture.

@@ -703,9 +703,15 @@ projected warm normal branches during private refinement. Its nineteen contacts
 among nine bodies reach an independently verified physical root; full/remapped
 Native/WASM/O1 ASan/UBSan cases, all 742 physical checks and unchanged eleven-level
 AI contracts pass, with strict LLVM19/169-file and 38/36 CTest gates. This proves
-the captured field component, not a full natural owner campaign. The unchanged
-Arena-A spinning-body comparison still exceeds its angular bound identically at
-previous/current source; full ground acceptance remains open under 0052. Fresh
+the captured field component, not a full natural owner campaign. The independent
+Arena-A spinning-body discrepancy was unchanged by that correction. Closed 0052
+now uses the existing one-car joint world-contact solver and passes the unchanged
+eleven-level ground and 220-case recovery contracts on all three targets, plus
+169-file strict gates, 38/36 CTests and all 45 previously proved race scenarios.
+The full natural-arena suite still fails independently: Native Arena 8 rejects
+position correction at owner step 10574; WASM exceeds the unchanged 1800-second
+deadline, while sanitized reaches natural engine retirement. Active 0053 owns the
+exact Native query, with converged velocity and zero calls to the changed world API. Fresh
 570df9d ordinary baselines instead stop at round-1 or round-3 tick bounds behind
 late-race traffic. Closed 0050 now proves continued finished-NPC controls and naturally completed
 first Stockcar seasons on all three targets; broader campaign coverage remains

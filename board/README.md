@@ -54,9 +54,10 @@ its game requirements or acceptance rules.
 | [0047](closed/0047_linear-world-pressure-basin.md) | Recover a stronger linear world-pressure basin | closed |
 | [0048](closed/0048_passing-lane-return.md) | Keep a clear passing lane while its base path is blocked | closed |
 | [0049](active/0049_next-wasm-round2-rejection.md) | Diagnose the next ordinary WASM round-2 rejection | active |
-| [0050](active/0050_ordinary-finish-movement.md) | Restore ordinary movement through late-race traffic | active |
+| [0050](closed/0050_ordinary-finish-movement.md) | Restore ordinary movement through late-race traffic | closed |
 | [0051](closed/0051_warm-pressure-normal-branches.md) | Preserve warm normal branches during world-pressure refinement | closed |
-| [0052](active/0052_arena-a-body-state-stability.md) | Restore the original Arena-A body-state comparison | active |
+| [0052](closed/0052_arena-a-body-state-stability.md) | Restore the original Arena-A body-state comparison | closed |
+| [0053](active/0053_arena8-position-convergence.md) | Restore natural Arena-8 contact position convergence | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -694,8 +695,8 @@ Valgrind. All eleven unchanged original AI levels pass 29214 path queries and
 full seasons are not proved. All frozen 570df9d ordinary baselines are terminal:
 Native round-1/credited-lap9 bound and WASM/sanitized round-3/credited-lap7 bound,
 without timeout/contact rejection. Closed 0050 corrects late-race movement and verifies naturally finished NPC
-control in the actual three-target first Stockcar season. Active 0052 owns the
-existing Arena-A angular comparison, exactly unchanged before/after 0051.
+control in the actual three-target first Stockcar season. The independent Arena-A angular comparison was exactly unchanged before/after
+0051; closed 0052 subsequently corrects its standalone serial contact path.
 Receipts: /tmp/wasm-dd2/rewrite-next-round2-rejection-0049/component-report.json
 and /tmp/wasm-dd2/rewrite-season-passing-return-0016/canonical-report.json.
 
@@ -713,7 +714,20 @@ bounds; the originally blocked round-1/round-3 approaches both complete.
 Fresh 34-unit O3 ASan/UBSan now also completes all four rounds and opens season 2
 within 1330.16 seconds, with unchanged 300000-tick/3600-second limits and source
 identity. Closed 0050 proves these blocked finish approaches; broader modes,
-leagues and seasons remain open. Active 0052 owns the independent body-ground
-comparison and a private shared-contact candidate. No renderer/menu/save or full-game/parity claim.
+leagues and seasons remain open. Closed 0052 restores the independent body-ground
+comparison by using the existing simultaneous one-car joint solver. No renderer/menu/save or full-game/parity claim.
 Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/ and
 /tmp/wasm-dd2/rewrite-season-finisher-movement-0050/.
+
+
+Closed 0052 passes all eleven unchanged ground levels (79100 queries/26400
+steps per target), all 220 controlled original-grid recovery cases per target,
+strict LLVM19/169-file checks and 38/36 CTests. All 45 previously proved race
+contracts remain passing on Native/WASM/sanitized builds. The full natural arena
+suite fails separately: Native rejects Arena-8 owner step 10574 in position
+correction, WASM exceeds the unchanged 1800-second limit and sanitized reaches
+natural engine retirement. The exact Native capture records zero calls to the
+changed world API. Active 0053 isolates this twelve-contact position problem;
+velocity already converges. Receipts: /tmp/wasm-dd2/rewrite-ground-stability-0052/
+{component-report,owner-report}.json and
+/tmp/wasm-dd2/rewrite-arena8-rejection-0053/capture-report.json.
