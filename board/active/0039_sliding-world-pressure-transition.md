@@ -81,11 +81,20 @@ selected-race gates remain running.
 Receipts: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/ground-gate-receipt.json and
 natural-season/prefix-report.json.
 
+All final-source actual input checks now pass: 31 Native and 31 instrumented
+comparisons plus 144 Chromium comparisons, including all eleven scene/car views
+and empty browser error lists. The selected Circuit-2 live session and complete
+eight-lap Circuit-5 Stockcar race pass on Native/WASM/ASan (six scenario/target
+scopes). Source hashes match, and successful raw frames are removed by the
+verifiers. These scopes do not establish the full race suite or a complete season.
+Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/broader-report.json.
+
 ## Next
 
-Finish current-source actual input, selected-race checks and the fresh
-ordinary campaign with unchanged bounds. Keep the old immutable 18c0a01 failure capture
-separate until its own exact records and query can be compared.
+Finish the fresh ordinary campaign with unchanged bounds and audit the dense
+region continuation contract. The old immutable 18c0a01 capture matches all 93
+records; current production still rejects that separate saved 168,287 input.
+Diagnose it under 0040 without treating the older trajectory as the new campaign.
 
 ## Accept
 

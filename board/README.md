@@ -44,6 +44,7 @@ its game requirements or acceptance rules.
 | [0037](active/0037_dense-contact-search-cost.md) | Avoid redundant dense contact model search | active |
 | [0038](active/0038_cold-constitutive-contact-root.md) | Recover a complete cold constitutive contact root | active |
 | [0039](active/0039_sliding-world-pressure-transition.md) | Recover a loaded sliding world support's linear branch | active |
+| [0040](active/0040_captured-three-car-contact-root.md) | Resolve the captured three-car contact failure | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -409,6 +410,15 @@ campaign reaches round-2 checkpoint 110,000 beyond the actual failure, with no
 terminal season acceptance. Actual input/scoped-race gates and dense-region
 continuation remain live. Receipt:
 /tmp/wasm-dd2/rewrite-sliding-pressure-0039/ground-gate-receipt.json.
+
+Final 0039 actual Native/instrumented/Chromium input checks pass 31/31/144
+comparisons and all eleven scene/car views; six selected Circuit-2 live/
+Circuit-5 complete eight-lap race target scopes also pass. Receipt:
+/tmp/wasm-dd2/rewrite-sliding-pressure-0039/broader-report.json.
+The older immutable 18c0a01 failure-only capture now matches all 93 production
+records and saves its separate three-car/eight-contact tick-168,287 state.
+Current d160c06 still rejects that query and owner; 0040 owns its diagnosis.
+This older trajectory does not establish the outcome of the current campaign.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
