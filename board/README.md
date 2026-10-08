@@ -285,6 +285,14 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+The new 0038 natural run has now terminated at round-2 tick 108,716 (exit 1, no
+timeout, 310.03 seconds) after identical first-round results. All 81 records are
+retained and input validity remains true. Component correction of the saved
+115,420 case is proved; ordinary continuation is not. The targeted next-failure
+capture is running, with no causal diagnosis yet. Active 0038 stays open and
+full campaign acceptance remains unproved. Receipt:
+/tmp/wasm-dd2/rewrite-cold-root-0038/natural-season/terminal-report.json.
+
 The complete cold constitutive fallback is now integrated under active 0038,
 after existing warm branches and with stricter complete-root acceptance. Exact
 rollback, the physical law, initial refitted competition and ordinary certification

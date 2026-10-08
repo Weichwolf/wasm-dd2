@@ -49,15 +49,21 @@ ASan/UBSan. The actual owner advances to 115,421 on Native/instrumented C; the
 prior saved 190,078 step still advances to 190,079. Current full/remapped query
 motion agrees with the independent root within 1.72e-9. Five paired single-query
 Native CPU timings preserve the dense-search benefit (20.48-fold versus 18c0a01).
-The fresh unchanged-bound campaign retains identical first-round results and
-continues in round 2; past-failure/dense-region and broader gates are pending.
+The fresh unchanged-bound campaign retains identical first-round results, then
+fails advancement in round 2 at tick 108,716 (exit 1, no timeout, 310.03 seconds).
+All 81 records are retained. AI/frame/championship inputs are valid; health is
+0.2677000161305475 and laps remain zero. The saved 115,420 correction remains
+proved at component scope, but natural continuation is not accepted. A targeted
+capture of this next actual failure is running; its cause is not yet established.
 Component receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/component-report.json.
+Terminal receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/natural-season/terminal-report.json.
 
 ## Next
 
 Finish current-source actual-input, original-data ground and selected-race gates.
-Follow the same fresh ordinary campaign beyond 115,420 and the dense-contact
-region; diagnose its next terminal condition without altered fixture bounds.
+Require the next failure capture to reproduce all 81 production records, then
+replay its actual owner/query and diagnose the rejected condition before further
+correction and unchanged-bound natural continuation.
 Keep the old immutable18c168287 failure capture separate until its exact records,
 saved owner and query are available for comparison.
 
