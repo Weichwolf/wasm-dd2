@@ -284,6 +284,15 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+The new 0037 natural campaign is terminal at round-2 tick 115,420 (exit 1, no
+timeout) after identical first-round results. All 83 production records are
+retained; AI/frame/championship inputs are valid, player health is 0.2677000161305475
+and laps remain zero. Component/ground proofs remain scoped; natural acceptance
+has failed and 0037 stays active. A failure-only owner/query capture is running
+to reproduce the exact records and distinguish a regression from another exposed
+contact state. The old immutable 18c0a01 campaign is followed separately. Receipt:
+/tmp/wasm-dd2/rewrite-dense-search-0037/natural-season/terminal-report.json.
+
 Active 0037 now verifies a bounded dense-contact search improvement: further
 private models stop once an accepted full physical residual already reaches the
 existing tolerance; both initial refitted directions and ordinary certification

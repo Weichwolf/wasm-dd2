@@ -53,11 +53,23 @@ Native/WASM/ASan: 79,100 independent queries and 26,400 physical drop steps per
 target. Actual-input, selected-race and natural-continuation gates remain running.
 Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/ground-gate-receipt.json.
 
+The separate fresh campaign is now terminal: exit 1, no timeout, 418.94 seconds.
+Its 83 production records retain identical first-round results, then report a
+round-2 advancement failure at tick 115,420. AI/frame/championship inputs remain
+valid; health is 0.2677000161305475, credited laps remain zero and no result is
+published. This fails natural-continuation acceptance; it does not by itself
+establish whether the optimization caused a solver regression or exposed another
+contact state along its different trajectory. A failure-only owner/query capture
+is running and must match every production record before causal diagnosis.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/natural-season/terminal-report.json.
+
 ## Next
 
 Finish current-source actual-input and selected-race gates.
-Follow fresh ordinary continuation
-without altered bounds or manufactured state. Follow the old run separately.
+Require the failure-only capture to reproduce all 83 records. Replay its actual
+saved owner/query on current and pre-optimization libraries, isolate the rejected
+condition, and correct its proved cause before retrying unchanged-bound natural
+continuation. Follow the old immutable run separately.
 
 ## Accept
 
