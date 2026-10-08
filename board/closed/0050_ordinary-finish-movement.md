@@ -58,9 +58,13 @@ rounds consume actual twenty-driver results exactly once, retain the original
 points table and clear totals for season 2. Native thereby clears its original
 round-1 bound; WASM clears its original round-3 bound. Accepted vehicle-step
 counts are 16892000/16141340. No renderer, menu, saved-game or original-parity
-claim follows. The fresh 34-unit O3 ASan/UBSan season remains running; preserve
-its 300000-tick round bounds and 3600-second deadline and keep this item active
-until its terminal outcome is recorded.
+claim follows. The fresh 34-unit O3 ASan/UBSan season also completes all four rounds naturally
+at ticks 287114/108522/169621/257499, then opens season 2 with cleared totals
+and promotion from division 4 to 3. Its 1330.16-second wall time stays within
+the unchanged 3600-second deadline; every round stays below 300000 ticks.
+The final guardian confirms unchanged compiled sources and all three passing
+target inventories. The completed run resolves the Native round-1 and both
+WASM/sanitized round-3 blocked approaches.
 Receipt: /tmp/wasm-dd2/rewrite-season-finisher-movement-0050/native-wasm-report.json.
 Guardian/source/binary identity: {launch,identity}.json in the same directory.
 The build identity records HEAD before the improvement was committed; the
@@ -69,10 +73,10 @@ blobs, so these are correction evidence rather than a mislabeled old baseline.
 
 ## Next
 
-Collect terminal fresh ordinary Native/WASM/instrumented campaigns at the
-unchanged limits and compare the originally blocked round-1/round-3 finish
-approaches. Diagnose any remaining physical or movement failures separately.
-Keep this item active until its actual-owner acceptance is proved.
+This bounded ordinary-finish contract is proved and closed. Continue broader
+league/mode/season coverage under existing campaign items. Preserve the completed
+three-target receipts when future source epochs change. Ground stability remains
+separate under 0052.
 
 ## Accept
 
@@ -80,3 +84,14 @@ The failing finish approaches reproduce, a causal correction passes focused
 previous-source negatives and physical/rule/rollback/platform checks, and actual
 ordinary owners publish natural correct results on both platforms. Finish places
 and points remain exactly once; full campaigns/game remain open until proved.
+
+## Acceptance proof
+
+The causal prior-source negative, continued naturally finished opponent motion,
+latched completion/time/place data, independent final points, strict/physical/
+rollback/platform checks and unchanged-bound actual four-round owners all pass
+on Native/WASM/fresh instrumented C. Source identity is d7dfdd4 (also unchanged
+compiled C at e537b84). Final receipt:
+/tmp/wasm-dd2/rewrite-season-finisher-movement-0050/terminal-report.json.
+This closes 0050 only: three naturally finished rounds plus one engine retirement
+per target, not every championship/mode or the complete game.

@@ -82,9 +82,10 @@ avoid traffic and pursue other cars in arenas, including timed reverse maneuvers
 Finished opponents continue normal AI steering and motion while lap records and
 finish places stay latched. An original-circuit-5 natural race checks continued
 post-finish movement and final scores on Native/WASM/ASan/UBSan. The current
-ordinary Native/WASM first Stockcar seasons naturally complete all four scheduled
-rounds and open season 2; the instrumented season, broader campaigns and original
-front end remain under verification.
+ordinary Native/WASM/fresh O3 ASan/UBSan first Stockcar seasons naturally complete
+all four scheduled rounds (three player finishes and one engine retirement each)
+and open season 2. The unchanged limits and actual result consumption are proved
+under closed 0050; broader campaigns and the original front end remain open.
 Passing retains immediate body-heading avoidance and checks the base-lane
 return path before merging back from a clear passing lane. Existing lane choices, rate
 and physical limits are preserved. Stalling is detected from both low forward
@@ -706,5 +707,6 @@ the captured field component, not a full natural owner campaign. The unchanged
 Arena-A spinning-body comparison still exceeds its angular bound identically at
 previous/current source; full ground acceptance remains open under 0052. Fresh
 570df9d ordinary baselines instead stop at round-1 or round-3 tick bounds behind
-late-race traffic. Finished-NPC controls and actual natural results remain under
-0050. See the board for these separate acceptance contracts.
+late-race traffic. Closed 0050 now proves continued finished-NPC controls and naturally completed
+first Stockcar seasons on all three targets; broader campaign coverage remains
+open. See the board for these separate acceptance contracts.

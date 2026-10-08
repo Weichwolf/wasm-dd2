@@ -693,8 +693,8 @@ Valgrind. All eleven unchanged original AI levels pass 29214 path queries and
 2640000 vehicle steps per target. Complete owner outcomes remain under 0049;
 full seasons are not proved. All frozen 570df9d ordinary baselines are terminal:
 Native round-1/credited-lap9 bound and WASM/sanitized round-3/credited-lap7 bound,
-without timeout/contact rejection. Active 0050 owns late-race movement and the
-reference evidence that NPC AI continues after finishing. Active 0052 owns the
+without timeout/contact rejection. Closed 0050 corrects late-race movement and verifies naturally finished NPC
+control in the actual three-target first Stockcar season. Active 0052 owns the
 existing Arena-A angular comparison, exactly unchanged before/after 0051.
 Receipts: /tmp/wasm-dd2/rewrite-next-round2-rejection-0049/component-report.json
 and /tmp/wasm-dd2/rewrite-season-passing-return-0016/canonical-report.json.
@@ -710,7 +710,10 @@ outside this scope. Native and WASM now naturally complete all four first-season
 (three finishes and one engine retirement each), consume correct actual points
 and open season 2 at d7dfdd4. Wall times are 406.58/445.36 seconds with unchanged
 bounds; the originally blocked round-1/round-3 approaches both complete.
-The fresh O3 sanitized campaign remains running, so 0050 stays active pending
-that outcome. No renderer/menu/save or full-game/parity claim.
+Fresh 34-unit O3 ASan/UBSan now also completes all four rounds and opens season 2
+within 1330.16 seconds, with unchanged 300000-tick/3600-second limits and source
+identity. Closed 0050 proves these blocked finish approaches; broader modes,
+leagues and seasons remain open. Active 0052 owns the independent body-ground
+comparison and a private shared-contact candidate. No renderer/menu/save or full-game/parity claim.
 Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/ and
 /tmp/wasm-dd2/rewrite-season-finisher-movement-0050/.
