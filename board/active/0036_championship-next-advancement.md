@@ -64,6 +64,13 @@ this advancement contract remains active.
 Component receipt: /tmp/wasm-dd2/rewrite-merit-190078/component-report.json.
 Broader receipt: /tmp/wasm-dd2/rewrite-merit-190078/gates-report.json.
 
+The old natural run keeps its immutable statically linked 18c0a01 binary while
+0037 verifies a separate dense-search optimization. That newer component also
+advances the same saved owner to 190,079 on Native/instrumented C and passes all
+608 independent physical checks per target. Neither component receipt establishes
+ordinary continuation past the failed tick yet; both fresh-run identities remain
+separate. Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/component-report.json.
+
 ## Next
 
 Follow the same fresh natural campaign process to its terminal receipt. Require

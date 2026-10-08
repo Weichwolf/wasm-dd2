@@ -29,12 +29,15 @@ enum {
     DD2_FRICTION_ENDPOINT_BODIES = 6,
     DD2_FRICTION_ENDPOINT_CONTACTS = 14,
     DD2_FRICTION_FITTED_CONTACTS = 3,
-    DD2_FRICTION_MERIT_CONTACTS = 5
+    DD2_FRICTION_MERIT_CONTACTS = 5,
+    DD2_FRICTION_DENSE_CONTACTS = 20,
+    DD2_FRICTION_DENSE_BODIES = 7
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
 static const double dd2_friction_clearance = 1e-4;
 static const double dd2_friction_micro_slip = 0.1;
+static const double dd2_friction_max_softness = 1e12;
 static const double dd2_friction_load = 10;
 static const double dd2_friction_coefficient = 0.25;
 static const dd2_vehicle_vector dd2_friction_inertia = {
@@ -107,10 +110,47 @@ static bool dd2_friction_law(dd2_vehicle_vector slip, dd2_group_response respons
     const double speed = dd2_friction_length(slip);
     /* The constitutive oracle checks final velocity directly, rather than
      * the solver's projected-gradient residual or its iteration history. */
-    const dd2_vehicle_vector residual =
-        dd2_collision_add(slip, dd2_collision_scale(response.friction_impulse,
-                                                    fmax(dd2_friction_micro_slip, speed) / limit));
+    const dd2_vehicle_vector residual = dd2_collision_add(
+        slip,
+        dd2_collision_scale(
+            response.friction_impulse,
+            fmax(fmin(dd2_friction_micro_slip, dd2_friction_max_softness * limit), speed) / limit));
     return dd2_friction_length(residual) < dd2_friction_tolerance;
+}
+
+static bool dd2_friction_capped_oracle(void) {
+    /* Exercise below, at and above the existing 1e-13 cone-radius cap.
+     * Both linear and saturated branches must oppose slip; omitting the cap
+     * must fail the below-cap case rather than silently relaxing its oracle. */
+    const double limits[] = {1e-14, 1e-13, 1e-12};
+    for (unsigned index = 0; index < sizeof(limits) / sizeof(limits[0]); ++index) {
+        const double limit = limits[index];
+        const double transition = fmin(dd2_friction_micro_slip, dd2_friction_max_softness * limit);
+        const dd2_group_contact contact = {.normal = {.y = 1},
+                                           .friction = dd2_friction_coefficient};
+        for (unsigned saturated = 0; saturated < 2; ++saturated) {
+            const double speed = transition * (saturated != 0 ? 2 : 0.5);
+            const double impulse = limit * (saturated != 0 ? 1 : 0.5);
+            for (int direction = -1; direction <= 1; direction += 2) {
+                const dd2_vehicle_vector slip = {.x = direction * speed};
+                dd2_group_response response = {.normal_impulse = limit / dd2_friction_coefficient,
+                                               .friction_impulse = {.x = -direction * impulse}};
+                if (!dd2_friction_law(slip, response, contact)) {
+                    return false;
+                }
+                response.friction_impulse.x = -response.friction_impulse.x;
+                if (dd2_friction_law(slip, response, contact)) {
+                    return false;
+                }
+            }
+        }
+    }
+    const dd2_group_contact contact = {.normal = {.y = 1}, .friction = dd2_friction_coefficient};
+    const dd2_vehicle_vector slip = {.x = 0.005};
+    const dd2_group_response uncapped = {
+        .normal_impulse = limits[0] / dd2_friction_coefficient,
+        .friction_impulse = {.x = -limits[0] * slip.x / dd2_friction_micro_slip}};
+    return !dd2_friction_law(slip, uncapped, contact);
 }
 
 static bool dd2_friction_contact(const dd2_vehicle *bodies, const dd2_friction_case *scenario,
@@ -590,7 +630,34 @@ static bool dd2_friction_merit_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_dense_orderings(void) {
+    for (unsigned reversed = 0; reversed < 2; ++reversed) {
+        for (unsigned start = 0; start < DD2_FRICTION_DENSE_CONTACTS; ++start) {
+            dd2_group_contact contacts[DD2_FRICTION_DENSE_CONTACTS] = {0};
+            for (unsigned index = 0; index < DD2_FRICTION_DENSE_CONTACTS; ++index) {
+                contacts[index] = dd2_friction_dense_contacts
+                    [(start + (reversed != 0 ? DD2_FRICTION_DENSE_CONTACTS - index : index)) %
+                     DD2_FRICTION_DENSE_CONTACTS];
+            }
+            const dd2_friction_case scenario = {.initial = dd2_friction_dense_bodies,
+                                                .contacts = contacts,
+                                                .body_count = DD2_FRICTION_DENSE_BODIES,
+                                                .contact_count = DD2_FRICTION_DENSE_CONTACTS,
+                                                .name = "natural dense support ordering"};
+            if (!dd2_friction_run(&scenario)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
+    if (!dd2_friction_capped_oracle()) {
+        puts("Capped material oracle: FAIL");
+        return EXIT_FAILURE;
+    }
+    puts("Capped material oracle: PASS");
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
     const double speeds[] = {0,
@@ -623,7 +690,8 @@ int main(void) {
         !dd2_friction_load_orderings() || !dd2_friction_release_orderings() ||
         !dd2_friction_linear_orderings() || !dd2_friction_mixed_release_orderings() ||
         !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings() ||
-        !dd2_friction_fitted_orderings() || !dd2_friction_merit_orderings()) {
+        !dd2_friction_fitted_orderings() || !dd2_friction_merit_orderings() ||
+        !dd2_friction_dense_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

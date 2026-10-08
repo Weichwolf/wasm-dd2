@@ -453,6 +453,18 @@ finite checks, impulse accounting, the final material law and exact rollback.
 The bounded model array holds at most four models per contact plus two base
 models (258 total); ordinary pass/refinement/backtracking limits are unchanged.
 
+Both initial refitted directions still compete before branch-model search.
+If that accepted correction already has full physical error below the existing
+1e-7 velocity tolerance, further private models are unnecessary. Otherwise the
+bounded enumeration stops when its best finite, strictly improving candidate
+reaches that same tolerance. The next ordinary sweep still certifies normal
+complementarity and friction before success; this does not skip that sweep or
+weaken any material, pass, rollback or position condition. A captured seven-car,
+twenty-contact ordinary campaign query and forty rotated/reversed orderings
+exercise the dense path. Its independent constitutive oracle includes the
+documented 1e12 softness cap, with explicit valid/invalid checks below, at and
+above the corresponding 1e-13 cone radius.
+
 A sliding world support can also need to return to the linear friction branch.
 After restart, a world-only field compares a private refinement of the existing
 linear world-friction direction. Its full fitted seed and up to sixteen steps

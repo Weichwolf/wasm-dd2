@@ -41,6 +41,7 @@ its game requirements or acceptance rules.
 | [0034](closed/0034_original-font-glyph-data.md) | Original font glyph data | closed |
 | [0035](closed/0035_championship-world-support-advancement.md) | Championship world-support advancement | closed |
 | [0036](active/0036_championship-next-advancement.md) | Next natural championship advancement | active |
+| [0037](active/0037_dense-contact-search-cost.md) | Avoid redundant dense contact model search | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -282,6 +283,18 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 /tmp/wasm-dd2/rewrite-merit-190078/gates-report.json.
 
 ## Workflow and acceptance
+
+Active 0037 now verifies a bounded dense-contact search improvement: further
+private models stop once an accepted full physical residual already reaches the
+existing tolerance; both initial refitted directions and ordinary certification
+remain. Strict LLVM19, 35/33 CTests, all 608 independent physical checks per target,
+and the saved actual 190,078 owner pass. One captured dense query averages 20.49
+times less Native CPU work across five paired runs; no frame-rate claim is made.
+The expanded oracle includes the existing capped law, rather than interpreting
+vanishing-load uncapped-oracle failures as solver failures. A fresh natural run
+retains identical first-round results; its dense-region continuation and broader
+gates are pending. The old natural 18c0a01 binary is followed separately.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/component-report.json.
 
 Additional original File Manager input now establishes directional slot selection,
 the empty-load Not a DD2 file error, empty-delete return without confirmation,

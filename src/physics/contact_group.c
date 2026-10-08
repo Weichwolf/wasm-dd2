@@ -1243,7 +1243,10 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         paired = paired || dd2_group_pair(workspace->query->contacts[index]);
     }
-    if (!coordinate) {
+    /* Both refitted directions still compete. Once a finite physical root is
+     * already acceptable, additional branch models cannot improve acceptance;
+     * the next ordinary sweep must still certify the unilateral active set. */
+    if (!coordinate || (corrected && *error < dd2_group_velocity_tolerance)) {
         return corrected;
     }
     dd2_group_iterate best = dd2_group_values(workspace);
@@ -1267,6 +1270,9 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
             dd2_group_copy_motion(workspace, best_motion);
             best_error = refined_error;
             corrected = true;
+        }
+        if (corrected && best_error < dd2_group_velocity_tolerance) {
+            break;
         }
     }
     dd2_group_restore(workspace, &best, best_motion);
