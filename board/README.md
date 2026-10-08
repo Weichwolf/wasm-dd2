@@ -257,6 +257,14 @@ is not yet proved. The closed 0035 continuation contract remains valid; complete
 physical seasons remain open. Terminal receipt:
 /tmp/wasm-dd2/rewrite-fitted-83450/natural-season/terminal-report.json.
 
+The 0036 capture is terminal and matches all 98 production records. Actual owner
+replay and twenty-body/two-body contact queries reproduce the failure. A
+byte-identical read-only observer and independent material root isolate a private
+release-refinement merit obstacle in the five-contact group. A bounded diagnostic
+trajectory reaches the admissible root, but production correction and natural
+continuation remain unproved under active 0036. Receipt:
+/tmp/wasm-dd2/rewrite-next-190078/diagnosis-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight
