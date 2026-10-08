@@ -47,6 +47,7 @@ its game requirements or acceptance rules.
 | [0040](active/0040_captured-three-car-contact-root.md) | Resolve the captured three-car contact failure | active |
 | [0041](active/0041_captured-five-car-contact-root.md) | Resolve the captured five-car contact failure | active |
 | [0042](active/0042_natural-first-phase-next-advancement.md) | Next ordinary championship advancement after first-phase refinement | active |
+| [0043](active/0043_natural-fixed-active-next-advancement.md) | Next ordinary championship advancement after fixed-active refinement | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -471,6 +472,21 @@ advance. Full/remapped motion agrees with the independent root within 9.15e-15.
 The new first regression rejects frozen first-phase production. Broader checks
 and fresh ordinary continuation remain pending; no full season is proved.
 Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/component-report.json.
+
+Current 0041 source now passes all eleven original-data ground and actual
+Native/instrumented/Chromium input scopes plus six selected race targets.
+Its fresh ordinary campaign nevertheless fails valid advancement at round-2
+tick 142,893 (exit 1, no timeout, 424.42 seconds, 88 records, zero player laps).
+The exact fixed-source capture is running under 0043. Separately, the 0042
+capture exactly matches all 98 older first-phase records and isolates three
+world contacts on slot 14. Independent pressure continuation confirms an
+admissible stronger wall-pressure root. A private incident-pressure seed advances
+that saved owner and passes all 702 Native checks, but production adoption,
+other platforms and ordinary continuation remain pending. Complete seasons
+and the full game remain unproved.
+Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/broader-report.json,
+natural-season/terminal-report.json and
+/tmp/wasm-dd2/rewrite-next-world-load-0042/candidate-owner-report.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.

@@ -78,11 +78,27 @@ the new first regression. Pinned SoftGL is unchanged. Current-source broader
 checks and ordinary continuation remain unproved; the work item stays active.
 Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/component-report.json.
 
+All current-source broader gates now pass. Eleven original levels each pass
+Native/WASM/ASan ground checks (79,100 independent queries and 26,400 drop steps
+per target). Actual Native/instrumented/Chromium input checks pass 31/31/144
+comparisons and all eleven scene/car views, with empty browser error lists.
+Six selected race targets pass, including the complete eight-lap Circuit-5 race
+on every variant; this is partial race-suite coverage. Source hashes match.
+Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/broader-report.json.
+
+The fresh ordinary fixed-active campaign is now terminal: exit 1 without timeout
+after 424.42 seconds, failing valid advancement at round-2 tick 142,893. All 88
+records are retained. Player health is 0.18102661831774292 and laps remain zero.
+Its collision trajectory differs from the older campaigns; the saved component
+correction does not prove natural continuation. The exact frozen-source
+failure-only capture is running under 0043; full season acceptance remains false.
+Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/natural-season/terminal-report.json.
+
 ## Next
 
-Run current-source original-data/input/selected-race checks and fresh ordinary
-continuation. The separate first-phase campaign fails at 194,353 after crossing
-190,000; follow its exact failure capture under 0042 without restarting it.
+Follow the exact current-trajectory capture under 0043. Preserve the saved
+223,337 component correction while integrating the separate 0042 diagnosis;
+require new current-source ordinary continuation and keep full seasons open.
 
 ## Accept
 
