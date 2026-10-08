@@ -89,10 +89,21 @@ scopes). Source hashes match, and successful raw frames are removed by the
 verifiers. These scopes do not establish the full race suite or a complete season.
 Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/broader-report.json.
 
+The fresh ordinary d160c06 campaign is now terminal: exit 1 without timeout after
+889.72 seconds, failing valid advancement at round-2 tick 223,337. All 104 records
+are retained. It crosses the old 108,716, 115,420 and 190,078 ticks and reaches
+220,000, but lap count remains zero and health is 0.2677000161305475. This proves
+that prefix's advancement, not completion of a round/season or the whole dense
+region. The new failure-only capture is running; require exact reproduction of
+all 104 records before attributing its cause. Full season acceptance remains
+false, and the work item stays active.
+Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/natural-season/terminal-report.json.
+
 ## Next
 
-Finish the fresh ordinary campaign with unchanged bounds and audit the dense
-region continuation contract. The old immutable 18c0a01 capture matches all 93
+Finish the actual 223,337 failure capture, require all 104 matching records and
+diagnose its saved owner/query before further natural continuation. The old
+immutable 18c0a01 capture matches all 93
 records; current production still rejects that separate saved 168,287 input.
 Diagnose it under 0040 without treating the older trajectory as the new campaign.
 

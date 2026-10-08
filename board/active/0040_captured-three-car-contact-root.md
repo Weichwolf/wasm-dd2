@@ -28,12 +28,26 @@ campaign follows the older trajectory. The cause and an admissible correction
 remain unproved.
 Receipt: /tmp/wasm-dd2/rewrite-merit-190078/next-failure-diagnosis/production-report.json.
 
+Read-only current terminal observation records 4,096 velocity passes, 71
+corrections, 4,024 rejected extrapolations and no coordinate restart; its error
+is still 0.0002418228056035969. The phase guard therefore excludes every private
+branch model from this failing solve. A private Native eligibility ablation
+permits those existing models after the ordinary 512-pass delay and solves the
+full query in 513 velocity/50 position passes, advancing the actual owner to
+168,288. That unintegrated candidate still fails an existing captured-case
+regression; its reason and complete physical validity are unproved. Do not
+adopt it or claim production/multi-platform correction from this trial.
+Receipts: /tmp/wasm-dd2/rewrite-merit-190078/next-failure-diagnosis/terminal.json and
+first-phase-trial/report.json.
+
 ## Next
 
-Inspect the current terminal contact state, reconstruct independent mobility and
-normal/material branches, then test a bounded correction derived from that
-evidence. Keep the new frozen d160c06 ordinary campaign and its acceptance
-separate. Add focused independent regressions for the proved failure, run strict
+Diagnose the first-phase candidate's existing regression before integration,
+separating physical acceptance from historical restart expectations using
+independent checks. Reconstruct mobility/material branches as needed. The new
+frozen d160c06 campaign separately fails at 223,337 after crossing the prior
+ticks; require its actual capture and keep its acceptance separate. Add focused
+independent regressions for the proved failure, run strict
 Native/WASM/instrumented gates, and verify actual saved-owner advancement.
 
 ## Accept

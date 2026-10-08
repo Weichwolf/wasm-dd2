@@ -420,6 +420,15 @@ records and saves its separate three-car/eight-contact tick-168,287 state.
 Current d160c06 still rejects that query and owner; 0040 owns its diagnosis.
 This older trajectory does not establish the outcome of the current campaign.
 
+The d160c06 ordinary campaign has now ended with valid advancement failure at
+round-2 tick 223,337 (exit 1, no timeout, 889.72 seconds, 104 retained records).
+It crosses the old failing ticks and reaches 220,000; lap count remains zero.
+Targeted new-state capture is running, and complete physical seasons remain
+unproved. Separately, current read-only observation of the old 168,287 state
+finds no restart, excluding private branch models. A first-phase Native trial
+advances that saved owner but still fails an existing regression; 0040 owns
+further diagnosis and no production fix is claimed for that input.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,
