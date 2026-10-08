@@ -28,7 +28,8 @@ enum {
     DD2_FRICTION_PATCH_CONTACTS = 10,
     DD2_FRICTION_ENDPOINT_BODIES = 6,
     DD2_FRICTION_ENDPOINT_CONTACTS = 14,
-    DD2_FRICTION_FITTED_CONTACTS = 3
+    DD2_FRICTION_FITTED_CONTACTS = 3,
+    DD2_FRICTION_MERIT_CONTACTS = 5
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -566,6 +567,29 @@ static bool dd2_friction_endpoint_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_merit_orderings(void) {
+    unsigned order[DD2_FRICTION_MERIT_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_MERIT_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_MERIT_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_MERIT_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_championship_merit_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {
+            .initial = dd2_friction_championship_merit_bodies,
+            .contacts = contacts,
+            .body_count = DD2_FRICTION_PAIR,
+            .contact_count = DD2_FRICTION_MERIT_CONTACTS,
+            .name = "championship private constitutive release merit ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order, DD2_FRICTION_MERIT_CONTACTS));
+    return true;
+}
+
 int main(void) {
     const double transition =
         (dd2_friction_coefficient * dd2_friction_load) + dd2_friction_micro_slip;
@@ -599,7 +623,7 @@ int main(void) {
         !dd2_friction_load_orderings() || !dd2_friction_release_orderings() ||
         !dd2_friction_linear_orderings() || !dd2_friction_mixed_release_orderings() ||
         !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings() ||
-        !dd2_friction_fitted_orderings()) {
+        !dd2_friction_fitted_orderings() || !dd2_friction_merit_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

@@ -405,7 +405,11 @@ A release direction instead fits the selected support's normal and tangential
 impulses to zero while refitting the remaining coupled equations. It starts
 from the exact outer state, avoiding the fixed-load friction seed's different
 active branch. Subsequent release directions retain those zero-impulse rows;
-backtracking and the unchanged physical residual still apply. Their private
+bounded backtracking uses the fitted complementarity/constitutive equation merit
+inside this private refinement. That merit permits a physical-error increase
+between private steps while the material root settles; nonfinite equations are
+rejected. Projected fallback steps retain their physical-error merit, then
+recompute the private equation merit. Their private
 constitutive steps retain the fitted tangent direction across sliding/linear
 transitions, instead of clipping that direction before the coupled equations
 settle. After the bounded refinement, every tangent impulse is projected back
@@ -496,10 +500,15 @@ branch separately from production convergence. A three-world-contact query
 captured at tick 83,450 after the stationary reverse retry correction checks a
 released wall with one sliding and one linear road support. All six permutations
 retain the independent material, impulse, energy, clearance and clock checks.
+A two-body/five-contact query captured at tick 190,078 checks a released road/wall
+branch whose private steps cross a physical-error ridge. All 120 permutations
+retain those independent checks; the accepted response matches a separately
+solved feasible material root. Final cone projection and physical acceptance
+remain unchanged.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-thirty frozen queries retain
+thirty-one frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

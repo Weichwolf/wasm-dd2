@@ -3469,7 +3469,68 @@ static const dd2_group_contact dd2_friction_championship_fitted_contacts[] = {
      .penetration = -9.2633473674983791e-05,
      .friction = 0.8}};
 
+/* Natural Stockcar round 2, tick 190078, production c68c83c runtime.
+ * Physical slots 13/17 are remapped to 0/1. Its released road/wall root
+ * crosses a physical-residual ridge during private constitutive refinement.
+ * This is rewrite contact evidence, not original parity or a completed season.
+ * Query SHA256: adc6607579ddf1c9d1dd154f4126939a63752b09da3ba8dd84827008781d3459 */
+static const dd2_vehicle dd2_friction_championship_merit_bodies[] = {
+    {.position = {.x = 28550.351662400277, .y = 8303.930086928389, .z = 68151.23583520087},
+     .velocity = {.x = 0.6634650097562351, .y = -10.318222812708868, .z = 0.5672664835006938},
+     .rotation = {.x = -0.8311321841421876,
+                  .y = 0.17234954753168966,
+                  .z = 0.5098735351984932,
+                  .w = 0.13979951377901667},
+     .angular_velocity = {.x = 0.01945090392398221,
+                          .y = 0.001801596669527862,
+                          .z = -0.006130364149808191}},
+    {.position = {.x = 28151.119669280968, .y = 8647.136498778125, .z = 68617.22104231468},
+     .velocity = {.x = 5.028961194972105, .y = -2.95253335893619, .z = -4.072220563304926},
+     .rotation = {.x = -0.09934094573189013,
+                  .y = -0.20387662025340217,
+                  .z = -0.08317131992799962,
+                  .w = 0.970385609825588},
+     .angular_velocity = {
+         .x = 0.0030599993719658014, .y = -0.0025130855676833604, .z = 0.004415076651186391}}};
+static const dd2_group_contact dd2_friction_championship_merit_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28213.105702775254, .y = 8343.625102481481, .z = 67778.83085610307},
+     .normal = {.x = 0.22128621917954439, .y = 0.9748071102774185, .z = -0.027991194219102462},
+     .penetration = 0,
+     .friction = 0.8},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28534.736337790968, .y = 8357.804130884608, .z = 67930.19629618441},
+     .normal = {.x = -0.4833311745476994, .y = 0, .z = 0.8754375909854119},
+     .penetration = -9.999984856581251e-05,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 29044.079133033243, .y = 8210.69278181575, .z = 68190.42799850793},
+     .normal = {.x = 0.17483556101468664, .y = 0.9740601739681869, .z = -0.14366385799408737},
+     .penetration = -0.00018798012289698317,
+     .friction = 0.8},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28056.62419176731, .y = 8397.167071290442, .z = 68112.04367189381},
+     .normal = {.x = 0.20531409029527312, .y = 0.9662225739829723, .z = -0.15575641833306317},
+     .penetration = -0.0001234488827102831,
+     .friction = 0.8},
+    {.first = 0,
+     .second = 1,
+     .point = {.x = 28479.274899840668, .y = 8472.717301875551, .z = 68298.38687397813},
+     .normal = {.x = 0.37915376808019857, .y = -0.22671149409397762, .z = -0.8971311601969152},
+     .penetration = -0.00017571825543427622,
+     .friction = 0.25}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
+    {.initial = dd2_friction_championship_merit_bodies,
+     .contacts = dd2_friction_championship_merit_contacts,
+     .body_count = 2,
+     .contact_count = 5,
+     .name = "championship private constitutive release merit",
+     .require_restart = true},
     {.initial = dd2_friction_championship_fitted_bodies,
      .contacts = dd2_friction_championship_fitted_contacts,
      .body_count = 1,

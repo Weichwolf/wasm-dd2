@@ -36,21 +36,34 @@ Independent geometry/inertia reconstruction matches terminal point velocities
 within 1.30e-14. All 32 normal active sets are tested against the existing
 regularized material law. A feasible root releases road contact 0 and wall
 contact 1, retains two road supports and the pair, and has full physical residual
-1.20e-12. Current private release refinement does not accept this branch from
+1.20e-12. The previous private release refinement does not accept this branch from
 the terminal state. A bounded diagnostic trajectory reaches the same root in
 five full fitted steps: its second step increases physical residual from 0.239
 to 0.302 while reducing constitutive residual from 6.89 to 0.218. This identifies
 an internal refinement merit obstacle; final cone and physical acceptance must
-remain unchanged. No production correction is proved yet.
+remain unchanged.
 
 Receipt: /tmp/wasm-dd2/rewrite-next-190078/diagnosis-report.json.
 
+Production private release refinement now uses finite fitted equation merit
+internally, retains physical merit for projected fallback, and still projects
+every cone before requiring a finite lower full physical residual. No material,
+ordinary/refinement/backtracking bound or state owner changes. The actual saved
+owner advances to 190,079 on Native and fully instrumented ASan/UBSan C. Both
+contact layouts match the independent root's motion within 2.02e-13.
+
+Strict LLVM19 gates, 35 Native/33 WASM CTests, and all 31 captured queries plus
+536 orderings (567 checks per target) pass on Native/WASM/ASan/UBSan. All eleven
+original-data ground checks pass. Actual input/scoped race gates and fresh natural
+continuation are still running; this advancement contract remains active.
+
+Component receipt: /tmp/wasm-dd2/rewrite-merit-190078/component-report.json.
+
 ## Next
 
-Evaluate constitutive merit for bounded private release refinement while retaining
-final physical residual reduction and cone projection. Replay the actual owner
-and preserve all captured contact regressions on three targets before natural
-continuation. Preserve
+Follow the same actual-input, scoped-race and fresh natural campaign processes
+to their terminal receipts. Require ordinary advancement beyond the failure
+before closing this saved-step contract. Preserve
 physical inequalities, finite residual reduction, rollback, damage and scores.
 Continue full physical seasons under 0025/0004 and AI tactics under 0016.
 

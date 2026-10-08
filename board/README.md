@@ -265,6 +265,14 @@ trajectory reaches the admissible root, but production correction and natural
 continuation remain unproved under active 0036. Receipt:
 /tmp/wasm-dd2/rewrite-next-190078/diagnosis-report.json.
 
+The production private constitutive merit now advances that saved step to
+190,079 on Native and instrumented C while preserving outer cone/physical
+acceptance and all solver bounds. Strict LLVM19, 35/33 CTests, all 567 captured
+query/order checks per target and eleven-level original-data ground checks pass.
+Actual-input, scoped-race and natural-continuation gates remain running; 0036
+stays active and full seasons remain unproved. Component receipt:
+/tmp/wasm-dd2/rewrite-merit-190078/component-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight

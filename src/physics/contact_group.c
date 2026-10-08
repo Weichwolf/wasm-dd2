@@ -902,10 +902,29 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
     return candidate;
 }
 
-/* Cold Newton corrections preserve the same physical contact equations. The bounded dense matrix
- * uses automatic storage, never allocation. Singular directions are skipped. Every
- * rejected/backtracked trial restores exact motion, and only a smaller physical residual is
- * accepted. */
+/* A private release path can cross a physical-error ridge while approaching
+ * its constitutive root. Use that fitted equation merit only inside refinement;
+ * the projected full physical residual still controls outer acceptance. */
+static double dd2_group_refinement_error(const dd2_group_workspace *workspace,
+                                         dd2_group_newton_model model) {
+    if (model.method != DD2_GROUP_NEWTON_RELEASE) {
+        return dd2_group_velocity_error(workspace);
+    }
+    const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, model);
+    double error = 0;
+    for (size_t row = 0; row < state.dimensions; ++row) {
+        if (!dd2_numeric_finite(&state.residual[row])) {
+            return DBL_MAX;
+        }
+        error = fmax(error, fabs(state.residual[row]));
+    }
+    return error;
+}
+
+/* The bounded dense matrix uses automatic storage, never allocation. Singular
+ * directions are skipped and rejected/backtracked trials restore exact motion.
+ * Ordinary corrections reduce physical error. Private release steps reduce
+ * fitted equation error before the outer physical acceptance check. */
 static bool dd2_group_newton_step(dd2_group_workspace *workspace, double *error,
                                   dd2_group_newton_model model, dd2_group_linear_system *system) {
     const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, model);
@@ -917,7 +936,7 @@ static bool dd2_group_newton_step(dd2_group_workspace *workspace, double *error,
     for (unsigned attempt = 0; attempt < DD2_GROUP_NEWTON_SEARCHES; ++attempt) {
         const dd2_group_iterate candidate = dd2_group_newton_candidate(workspace, prediction);
         dd2_group_newton_apply(workspace, &state, &candidate);
-        const double predicted_error = dd2_group_velocity_error(workspace);
+        const double predicted_error = dd2_group_refinement_error(workspace, model);
         if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&predicted_error) &&
             predicted_error < *error) {
             *error = predicted_error;
@@ -1101,7 +1120,7 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
     const dd2_group_iterate seed = dd2_group_newton_candidate(
         workspace, (dd2_group_newton_prediction){&prepared, system.direction, 1});
     dd2_group_newton_apply(workspace, &prepared, &seed);
-    double current = dd2_group_velocity_error(workspace);
+    double current = dd2_group_refinement_error(workspace, model);
     if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current)) {
         for (unsigned refinement = 0; refinement < DD2_GROUP_NEWTON_REFINEMENTS; ++refinement) {
             if (current < dd2_group_velocity_tolerance) {
@@ -1110,12 +1129,14 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
             if (dd2_group_newton_step(workspace, &current, model, &system)) {
                 continue;
             }
+            double projected_error = dd2_group_velocity_error(workspace);
             if (!dd2_group_normal_patch(workspace) ||
                 !dd2_group_newton_step(
-                    workspace, &current,
+                    workspace, &projected_error,
                     (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_PROJECTED}, &system)) {
                 break;
             }
+            current = dd2_group_refinement_error(workspace, model);
         }
         if (model.method == DD2_GROUP_NEWTON_RELEASE) {
             dd2_group_refinement_project(workspace);

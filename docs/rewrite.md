@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Thirty captured dense-contact
+almost parallel ground/wall supports. Thirty-one captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -317,6 +317,12 @@ residual is recomputed. Finite reduction, exact rollback, material rules and
 ordinary/refinement bounds remain unchanged. All six permutations of the
 three-world-contact tick-83,450 query independently check the released wall
 and its two road supports.
+Within private release refinement, fitted complementarity/constitutive equation
+merit also guides bounded backtracking across physical-error ridges. Projected
+fallback steps keep their physical merit. Only the projected finite lower full
+physical residual can replace the outer state; final rules and every ordinary,
+refinement and backtracking bound stay unchanged. All 120 permutations of the
+two-body/five-contact tick-190,078 query check the released road/wall branch.
 Co-oriented world patches additionally compare each retained support against a
 fixed private set of released matching contacts. The retained normal uses its
 active equation even from zero pressure; every released normal/tangent impulse
