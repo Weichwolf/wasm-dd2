@@ -81,8 +81,10 @@ respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
 Finished opponents continue normal AI steering and motion while lap records and
 finish places stay latched. An original-circuit-5 natural race checks continued
-post-finish movement and final scores on Native/WASM/ASan/UBSan; complete ordinary
-campaigns remain under verification.
+post-finish movement and final scores on Native/WASM/ASan/UBSan. The current
+ordinary Native/WASM first Stockcar seasons naturally complete all four scheduled
+rounds and open season 2; the instrumented season, broader campaigns and original
+front end remain under verification.
 Passing retains immediate body-heading avoidance and checks the base-lane
 return path before merging back from a clear passing lane. Existing lane choices, rate
 and physical limits are preserved. Stalling is detected from both low forward

@@ -49,13 +49,23 @@ still-open long Total Destruction completions. Strict LLVM19 checks cover all
 Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/{races,short-races,arena-races}/report.json
 and /tmp/wasm-dd2/rewrite-finish-movement-0050/negative/report.json.
 
-Fresh unchanged-bound public-owner campaigns are running on Native/WASM and
-fresh 34-unit O3 ASan/UBSan. Native now naturally finishes round 1 at tick 290349,
-where the frozen 570df9d run reached its 300000 bound. WASM naturally finishes
-round 1 at 287118. Later rounds and sanitized completion remain pending; these
-intermediate results do not prove a complete ordinary season or full gameplay.
-Guardian and source/binary identity:
-/tmp/wasm-dd2/rewrite-season-finisher-movement-0050/{launch,identity}.json.
+Fresh unchanged-bound public-owner campaigns at published d7dfdd4 naturally
+complete all four first-season rounds on Native and WASM and open season 2.
+Each target has three player finishes and one physical engine retirement.
+Native round ticks: 290349/112745/166518/276588, 406.58 wall seconds.
+WASM: 287118/118018/170193/233338, 445.36 wall seconds. All original-schedule
+rounds consume actual twenty-driver results exactly once, retain the original
+points table and clear totals for season 2. Native thereby clears its original
+round-1 bound; WASM clears its original round-3 bound. Accepted vehicle-step
+counts are 16892000/16141340. No renderer, menu, saved-game or original-parity
+claim follows. The fresh 34-unit O3 ASan/UBSan season remains running; preserve
+its 300000-tick round bounds and 3600-second deadline and keep this item active
+until its terminal outcome is recorded.
+Receipt: /tmp/wasm-dd2/rewrite-season-finisher-movement-0050/native-wasm-report.json.
+Guardian/source/binary identity: {launch,identity}.json in the same directory.
+The build identity records HEAD before the improvement was committed; the
+publication receipt verifies every compiled source hash against d7dfdd4 Git
+blobs, so these are correction evidence rather than a mislabeled old baseline.
 
 ## Next
 

@@ -706,8 +706,11 @@ and independently checked final points. Prior driving.c fails that new check at
 the first opponent finish. All 45 selected race scenarios per target pass
 (29 short physical, 14 ordered-rule, two long circuit-5 runs), along with strict
 LLVM19/169-file and 38/36 CTest gates. Long Total Destruction completions remain
-outside this scope. Native's new ordinary campaign naturally passes its formerly
-blocked first round at tick 290349; complete fresh Native/WASM/O3 sanitized
-campaign outcomes remain pending under 0050. No full-game/parity claim.
+outside this scope. Native and WASM now naturally complete all four first-season rounds
+(three finishes and one engine retirement each), consume correct actual points
+and open season 2 at d7dfdd4. Wall times are 406.58/445.36 seconds with unchanged
+bounds; the originally blocked round-1/round-3 approaches both complete.
+The fresh O3 sanitized campaign remains running, so 0050 stays active pending
+that outcome. No renderer/menu/save or full-game/parity claim.
 Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/ and
 /tmp/wasm-dd2/rewrite-season-finisher-movement-0050/.
