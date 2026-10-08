@@ -113,7 +113,7 @@ def main():
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
     units += [ROOT / f'src/physics/{name}.c' for name in
-              ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact',
+              ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact',
                'contact_group', 'vehicle_collision', 'damage')]
     units += [ROOT / f'src/game/{name}.c' for name in
               ('starting_grid', 'driving', 'accidents', 'course', 'laps', 'race', 'recovery',

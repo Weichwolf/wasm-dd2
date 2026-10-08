@@ -1,5 +1,6 @@
 #include "physics/car_contact.h"
 
+#include "physics/body_geometry.h"
 #include "physics/collision_math.h"
 #include "physics/numeric.h"
 #include "physics/vehicle.h"
@@ -23,7 +24,8 @@ enum {
     DD2_CAR_REFINEMENT_LIMIT = DD2_CAR_QUERY_WINDOWS,
     DD2_CAR_REFINEMENT_DEPTH = 48
 };
-static const double dd2_car_half[DD2_CAR_AXES] = {186, 130, 450};
+static const double dd2_car_half[DD2_CAR_AXES] = {DD2_BODY_HALF_WIDTH, DD2_BODY_HALF_HEIGHT,
+                                                  DD2_BODY_HALF_LENGTH};
 static const double dd2_car_radius = 504;
 static const double dd2_car_piece_angle = 0.01;
 static const double dd2_car_axis_tolerance = 1e-12;

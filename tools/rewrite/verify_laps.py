@@ -304,7 +304,7 @@ def main():
              '-Wformat=2', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     units = [ROOT/f'src/assets/{name}.c' for name in ('archive', 'level', 'road', 'barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
-              ('road_contact', 'road_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
+              ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid', 'driving', 'accidents', 'course', 'laps', 'race','recovery','sound_events')]
     units += [ROOT/f'src/ai/{name}.c' for name in ('path', 'driver')]
     units += [ROOT/'src/platform/file.c']

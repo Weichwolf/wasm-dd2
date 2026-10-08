@@ -527,6 +527,18 @@ chronology, local contact points and reduction back to aggregate impacts. Report
 publish with all validated bodies; repair-only contacts carry no impulse. Distinct
 vehicle classes, liveries, detached parts and race rules remain pending.
 
+The fleet suspension also supports reachable finite faces of other moving
+vehicles through `body_surface.c` and `dd2_vehicle_step_field`. Every prediction
+uses the immutable initial field; spring and tire forces exchange momentum at a
+common contact point. Suspension-axis sphere/face geometry prevents spurious
+loads from steep side faces. Focused Native/WASM and instrumented checks cover
+banked contact, shared motion, conservation, rejection and physical roof escape.
+The full unchanged sixty-second AI suite now passes all eleven playable levels
+on Native, WASM and fresh O3 ASan/UBSan, including the previous Arena-B support
+failure. This establishes sustained driving coverage with damage disabled;
+natural races, damage-aware tactics and complete championships remain open.
+Receipt: `/tmp/wasm-dd2/rewrite-strut-support-0016/component-report.json`.
+
 `make rewrite-ai-verify` independently checks source-linked guidance from every
 original racing strip, including branches and loop wrap, with three lane fractions
 and three lookahead lengths. Native, Node/WASM and ASan/UBSan also run sixty-second

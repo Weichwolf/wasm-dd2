@@ -168,24 +168,55 @@ physical drops per Native/WASM/ASan/UBSan target pass. This proves a landing
 selection correction, not complete B AI, roof traction or natural campaigns.
 Receipt: /tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
 
+The fleet now uses reachable body-supported tires with immutable simultaneous
+prediction and equal/opposite spring/traction forces at one common contact point.
+An initial retest of the vertical prototype plus the accepted bank-recovery fix
+still fails WASM B support at 2,211 frames. A read-only observer preserves all
+300 ordinary rows and captures a 5,417-unit rear-tire load on another car's nose.
+Independent sphere/plane geometry requires suspension displacement -264.224,
+outside the unchanged -15..70 window. The corrected finite-face query follows
+the actual suspension axis; a banked two-car fixture checks sphere contact and
+load independently. The previous vertical algorithm fails both new geometry
+checks. Native/WASM replay of the portable twenty-body checkpoint replaces the
+false nose support with a real road contact and 572-unit load.
+
+The final source passes strict LLVM19/167-file formatting, 38 Native/36 WASM
+CTests, ten fresh O1 sanitizer targets with 47 instrumented library units, and
+716 physical contact checks per target. Valgrind reports zero errors/leaks for
+the focused subsystem and the original-data twenty-body replay. All eleven
+unchanged sixty-second AI cases pass on Native/WASM/fresh O3 ASan/UBSan:
+2,640,000 vehicle steps and 29,214 independent path queries per target. Arena-B
+minimum supported counts are 2,374/2,323/2,340 of 2,400, above the unchanged
+2,280 requirement. Its observed target times are 66.42/89.73/263.70 seconds,
+within the existing 180/180/360 deadlines. The full-suite launcher terminates
+in level 9; completed 1..8 checks are independently revalidated, repeated 9
+results are byte-identical with observed bounded exits, and A/B retain complete
+receipts. No interrupted target is counted as a successful run.
+
+Original-data scalar vehicle and fleet checks pass on all eleven levels, as do
+31 Native/31 instrumented window and 144 Chromium comparisons with real input
+and no browser errors. This accepts reachable moving-body suspension and the
+existing sustained-driving suite, not complete tactics, natural races, seasons
+or original handling parity. Receipts:
+/tmp/wasm-dd2/rewrite-strut-support-0016/{component-report,field-report,negative-report}.json
+and ai/canonical-report.json.
+
 ## Next
 
-Reevaluate the archived body-supported tire experiment against this independent
-recovery correction. Preserve the full sixty-second supported-motion gate;
-righting one isolated overturned pose does not prove that the whole scenario
-meets it. Continue diagnosing the existing upright Native B roof ride and
-natural round-2 route blockage.
+Resume fresh ordinary damage-enabled races and public-session seasons on the
+accepted source. Diagnose remaining round-2 dense-route blockage with portable
+typed checkpoints and actual controls; expanded wheel state makes older binary
+owner captures valid only for their matching frozen build. Preserve every
+physical work bound, damage/lap/score rule and unchanged acceptance deadline.
 
-Follow the current terminal movement/owner diagnosis under 0044. Diagnose the
-proved Native B roof-riding trajectory and original traction/recovery behavior
-before choosing a correction; preserve physical contacts and the ordinary
-supported-movement requirement. Do not treat the negative terrain elevation
-as proof that a car fell through the terrain. Keep the older B travel failures
-scoped to their recorded source epochs.
-Preserve the Total Destruction player target and every engine, damage, lap and
-score rule. Use ordinary complete races to identify off-road and
-tactical failures; recover original behavior and implement explicit recovery/tactics
-without manufactured score, damage or route progress.
+Follow the terminal route/movement diagnosis under 0044. Body-supported tires
+now address the proved roof-support gap; they do not establish damage-aware
+traffic escape or general off-road rescue. Keep contact-cost profiling under
+0046 and older failed trajectories/timings attached to their source epochs.
+
+Preserve the Total Destruction player target and require naturally published
+results in complete races. Implement remaining tactics/recovery from observed
+behavior without manufactured score, damage or route progress.
 
 ## Accept
 

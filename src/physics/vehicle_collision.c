@@ -1,6 +1,7 @@
 #include "physics/vehicle_collision.h"
 
 #include "physics/barrier_world.h"
+#include "physics/body_geometry.h"
 #include "physics/car_contact.h"
 #include "physics/collision_math.h"
 #include "physics/contact_group.h"
@@ -54,10 +55,14 @@ static const double dd2_collision_time_tolerance = 1e-10;
 /* Get_Corner_Positions uses this box, separate from the rendered mesh and
  * visual body offset. The lower four points match the source wheel rig. */
 static const dd2_vehicle_vector dd2_collision_corners[DD2_VEHICLE_BODY_CORNERS] = {
-    {.x = 186, .y = -130, .z = 450},  {.x = 186, .y = -130, .z = -450},
-    {.x = -186, .y = -130, .z = 450}, {.x = -186, .y = -130, .z = -450},
-    {.x = 186, .y = 130, .z = 450},   {.x = 186, .y = 130, .z = -450},
-    {.x = -186, .y = 130, .z = 450},  {.x = -186, .y = 130, .z = -450}};
+    {.x = DD2_BODY_HALF_WIDTH, .y = -DD2_BODY_HALF_HEIGHT, .z = DD2_BODY_HALF_LENGTH},
+    {.x = DD2_BODY_HALF_WIDTH, .y = -DD2_BODY_HALF_HEIGHT, .z = -DD2_BODY_HALF_LENGTH},
+    {.x = -DD2_BODY_HALF_WIDTH, .y = -DD2_BODY_HALF_HEIGHT, .z = DD2_BODY_HALF_LENGTH},
+    {.x = -DD2_BODY_HALF_WIDTH, .y = -DD2_BODY_HALF_HEIGHT, .z = -DD2_BODY_HALF_LENGTH},
+    {.x = DD2_BODY_HALF_WIDTH, .y = DD2_BODY_HALF_HEIGHT, .z = DD2_BODY_HALF_LENGTH},
+    {.x = DD2_BODY_HALF_WIDTH, .y = DD2_BODY_HALF_HEIGHT, .z = -DD2_BODY_HALF_LENGTH},
+    {.x = -DD2_BODY_HALF_WIDTH, .y = DD2_BODY_HALF_HEIGHT, .z = DD2_BODY_HALF_LENGTH},
+    {.x = -DD2_BODY_HALF_WIDTH, .y = DD2_BODY_HALF_HEIGHT, .z = -DD2_BODY_HALF_LENGTH}};
 
 dd2_vehicle_vector dd2_vehicle_body_corner(unsigned corner) {
     return corner < DD2_VEHICLE_BODY_CORNERS ? dd2_collision_corners[corner]

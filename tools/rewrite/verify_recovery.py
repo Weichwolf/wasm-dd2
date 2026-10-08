@@ -175,7 +175,7 @@ def main():
     corners = [list(struct.unpack_from('<3h',image,0x66a98+i*8)) for i in range(8)]
     units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
-              ('road_contact','road_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision')]
+              ('road_contact','road_surface','body_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','recovery')]
     units += [ROOT/'src/platform/file.c']
     sources = [*units,ROOT/'tests/recovery_export.c',ROOT/'tests/recovery_test.c',

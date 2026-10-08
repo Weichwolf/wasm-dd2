@@ -67,17 +67,23 @@ engine retirements) and opens season 2. The separate WASM/instrumented public
 session seasons both time out at 3,600 seconds in round 2 with zero player laps;
 their first-round finishes do not establish complete seasons.
 
-Recovery now chooses the actual road contact facing an overturned roof when
-different body corners touch opposing banks. The previous first-corner choice
-can extrapolate the wrong center road and prevent righting indefinitely.
-An independent valley regression and a portable WASM-derived original B pose
-fail the old recovery and pass the correction with real tire support. Strict
-LLVM19/163-file checks, 37 Native/35 WASM CTests and 220 original-grid drops per
-Native/WASM/ASan/UBSan target pass. The dynamic body-supported tire experiment
-remains unadopted: although Native B movement improves, WASM B support falls to
-1,172 frames. This landing correction does not prove its whole-case acceptance
-or complete tactics/campaigns. Current receipt:
-/tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
+Moving-body suspension is now integrated: tires contact reachable finite faces
+along their actual suspension axis and exchange equal/opposite forces at one
+common point. Independent banked/nose cases reject the earlier vertical
+prototype; a portable twenty-body replay replaces its false nose load with
+real road support. The accepted road-bank recovery remains in place.
+Strict LLVM19/167-file checks, 38 Native/36 WASM CTests, ten fresh O1 sanitizer
+targets and 716 physical checks per target pass. The complete unchanged
+sixty-second AI suite passes all eleven original playable levels on
+Native/WASM/O3 ASan/UBSan, with 2,640,000 vehicle steps and 29,214 independent
+path queries per target. Arena-B minimum support is 2,374/2,323/2,340 frames,
+above the unchanged 2,280 requirement; all target deadlines and reset checks
+pass. Original-data vehicle/fleet and actual window/browser input checks also
+pass. The interrupted full-suite launcher has a separately revalidated prefix
+and bounded continuation receipts. This proves the suspension and sustained
+AI-driving improvement; tactics, off-road rescue and complete natural seasons
+remain open. Current receipt:
+/tmp/wasm-dd2/rewrite-strut-support-0016/component-report.json.
 Older timings and failed movement evidence below retain their source epochs.
 
 Typed immutable fleet pair preparation now avoids repeated body validation and

@@ -331,32 +331,35 @@ from establishing a query optimization or closing the deadline contract.
 The experiment is archived under /tmp/wasm-dd2/rewrite-roof-support-0016/.
 Its read-only WASM observations separately expose a blocked road-bank recovery,
 corrected and checked under 0016 without adopting the tire-force experiment.
+The corrected body-supported tire source now passes the complete unchanged
+sixty-second twenty-body B gate on all three targets. Native/WASM/fresh O3
+ASan/UBSan complete all 300 rows and exact reset inventories in
+66.42/89.73/263.70 seconds under the original 180/180/360 deadlines. Minimum
+supported counts are 2,374/2,323/2,340, exceeding 2,280; all opponents exceed
+10,000 travel. All eleven AI levels, strict LLVM19/167-file checks, 38 Native/36
+WASM CTests, 716 physical checks per target, original-data vehicle/fleet and
+actual window/input checks pass. The instrumentation covers 24 library units
+plus each AI export/test unit; separate O1 checks cover 47 library units.
+This satisfies the recorded B deadline and movement gate for the new source.
+Different body-support encounters prevent treating it as a frozen-query cost
+benchmark or closing tactics/campaign contracts. Receipts:
+/tmp/wasm-dd2/rewrite-strut-support-0016/{component-report,arena-report}.json
+and ai/canonical-report.json.
+
 ## Next
 
-Reprofile the accepted production source before claiming any full-case gain.
-Both 0046 and 0016 remain active; all prior deadlines and movement bounds stay
-unchanged. Receipts: diagnosis-report.json in that archive and
-/tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
+Reprofile the accepted moving-body suspension source before claiming another
+query or whole-case optimization. Its complete B deadline now passes; previous
+cost and support-loss traces retain their recorded source epochs. Require a
+causal redundant-work comparison against frozen typed inputs alongside the
+current physical, ownership and rollback checks. Keep all work bounds and the
+original full-case deadlines unchanged.
 
-Retain the verified partial pair-preparation correction without closing the
-full deadline contract. Use the terminal current-production receipt and its
-separate child CPU measurement to diagnose remaining pair-window/pose and
-world-query work from actual inputs before further changes. The local pose
-cache also fails measured adoption criteria. Retain the proved empty-interval
-axis rejection without closing the full deadline. Pair-level distribution now
-locates frequent adjacent-pair work without observed budget exhaustion, and
-optimized IR already shares the relative-distance bounds. Shared rotation specialization fails the actual supported-motion gate and
-remains private. Diagnose the remaining later-stage pair-window/contact work
-using the unchanged production geometry, and investigate the known body-roof
-traction/support failure under 0016. Require actual functional behavior as well
-as scoped timing before adopting another arithmetic change. Keep initial rejection cheap, query ownership
-explicit and stack use bounded. Prepared road planes and skipped empty intervals are verified local
-gains; they do not close the full deadline.
-Preserve every existing
-acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
-under 0016 and actual-owner continuation/public-session seasons separate;
-the older independent WASM/instrumented seasons both timed out in round 2.
-Capture only typed inputs needed for a proved correction.
+Use portable typed inputs or a matching frozen build for older owner captures;
+the expanded wheel state changes their binary layout. Preserve cheap initial
+rejection, explicit query ownership and the bounded WASM stack. Route/tactical
+completion and fresh public-session seasons remain under 0016/0044; this cost
+item does not close those or the full game.
 
 ## Accept
 

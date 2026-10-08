@@ -353,11 +353,12 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
         if (driving->damage_enabled) {
             controls[slot] = dd2_damage_control(&damages[slot], controls[slot]);
         }
-        if (!dd2_vehicle_step(&vehicles[slot], driving->road, driving->surface, controls[slot])) {
-            return false;
-        }
     }
-    if (!dd2_vehicle_collide_fleet_report(vehicles, previous, driving->count, driving->surface,
+    if (!dd2_vehicle_step_field(vehicles, &(dd2_vehicle_field_step){.road = driving->road,
+                                                                    .surface = driving->surface,
+                                                                    .controls = controls,
+                                                                    .count = driving->count}) ||
+        !dd2_vehicle_collide_fleet_report(vehicles, previous, driving->count, driving->surface,
                                           driving->barrier_world, driving->working_contacts,
                                           report) ||
         (driving->damage_enabled &&

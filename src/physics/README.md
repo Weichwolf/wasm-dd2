@@ -98,6 +98,38 @@ integration update the pose. A swept vertical landing window limits penetration
 at full compression and keeps a vehicle below a bridge on its existing surface.
 This is vertical road contact, not a general swept body/wall collision solver.
 
+`body_surface.c` prepares an owned, immutable view of up to twenty validated
+vehicle boxes, using the same source dimensions as body collision. Its finite
+face queries exclude the querying vehicle and include each surface's linear and
+angular point velocity. Upward support requires world normal Y at least 0.2.
+The wheel query intersects a radius-60 sphere with a face along the vehicle's
+actual suspension axis, within the existing -15..70 displacement window. The
+contact patch must lie on the finite box face; a steep side outside suspension
+travel cannot supply spring load. Negative displacement allows the bounded bump
+window with the tire fully compressed at its mount. Tolerance ties use the
+lowest body ID and source-axis order, anchored to the global closest reachable
+face. Road/body selection retains road priority within the same anchored
+suspension tolerance.
+
+`dd2_vehicle_step_field` predicts every vehicle from this initial field before
+publishing any new pose. Body-supported tires use relative contact velocity and
+apply equal/opposite spring and tire forces at one common point, including both
+bodies' torque. Their tuned grip scale is 0.5. Invalid controls or resulting
+state preserve every vehicle; the step owns no allocations or borrowed lifetime.
+The game driving owner then runs the existing coupled collision, damage,
+accident and recovery stages. The scalar vehicle step and pose refresh continue
+to provide the documented road contact operation.
+
+The body-support CTest covers finite faces, shared motion, spring and drive
+momentum, permutation, transactional rejection and a six-second physical roof
+escape back to road tires. A tilted two-car fixture independently specifies
+sphere/face geometry and normal load. A portable observed Arena-B nose fixture
+rejects an unreachable face that the old vertical sample accepted. Behavioral
+negative controls fail both new geometry checks. Native and WASM also replay the
+explicit twenty-car pre-overturn checkpoint: the erroneous 5,417-unit nose load
+becomes a real 572-unit road load. These establish suspension contact behavior;
+complete tactics, campaigns and original handling remain separate acceptance.
+
 The current default spring, damper, acceleration, steering and speed curve are
 rewrite tuning in world units/seconds. They are not a transcription of the
 original fixed-point update cadence or its visual suspension recurrence. On a

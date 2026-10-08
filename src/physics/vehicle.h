@@ -35,12 +35,21 @@ typedef struct {
     double yaw;
 } dd2_vehicle_spawn;
 
+typedef enum {
+    DD2_VEHICLE_WHEEL_NONE,
+    DD2_VEHICLE_WHEEL_ROAD,
+    DD2_VEHICLE_WHEEL_BODY
+} dd2_vehicle_wheel_support;
 typedef struct {
     dd2_vehicle_vector mount;
     dd2_vehicle_vector center;
+    dd2_vehicle_vector point;
+    /* Height/normal apply to every support; cell/triangle only to roads. */
     dd2_road_contact contact;
     double compression;
     double load; /* Normal force divided by body mass, world units/s^2. */
+    dd2_vehicle_wheel_support support;
+    unsigned body; /* Physical slot, meaningful only for BODY support. */
     bool grounded;
 } dd2_vehicle_wheel;
 
@@ -77,6 +86,19 @@ bool dd2_vehicle_refresh_wheels(dd2_vehicle *vehicle, const dd2_road *road,
                                 const dd2_road_surface *surface);
 bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
                       dd2_vehicle_control control);
+typedef struct {
+    const dd2_road *road;
+    const dd2_road_surface *surface;
+    const dd2_vehicle_control *controls;
+    unsigned count;
+} dd2_vehicle_field_step;
+/* One simultaneous field step, including tires supported by other bodies.
+ * All observations use the immutable initial field. Body support exchanges
+ * equal/opposite force at one common contact point. No allocation or retained
+ * pointers; invalid input/output preserves every body. Count is 1..20; controls
+ * and geometry are borrowed and must not overlap writable vehicle storage.
+ * Body collisions remain a separate call after this prediction. */
+bool dd2_vehicle_step_field(dd2_vehicle *vehicles, const dd2_vehicle_field_step *step);
 dd2_vehicle_vector dd2_vehicle_rotate(dd2_vehicle_rotation rotation, dd2_vehicle_vector vector);
 
 #endif
