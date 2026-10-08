@@ -16,12 +16,18 @@ The race selectors establish circuit/arena/car-count constraints, championship
 track locking and one-to-ten multiplayer name entry. Track cancel restores the
 entry selection; confirm-release gating prevents successive held confirmations.
 See docs/frontend.md and /tmp/wasm-dd2/rewrite-frontend-inventory/report.json.
-This does not prove live menu behavior or resolve CARD/LINK action semantics.
+The subsequent unmodified-original Wine observation opens CARD's File Manager
+Load view (fifteen slots), returns through Escape and opens LINK's CD Audio Player
+with title/group and previous/play/stop/next controls. Ten actual X11 key actions,
+read-only observations and an isolated save are recorded; the provisioned save
+is unchanged. Receipt: /tmp/wasm-dd2/rewrite-frontend-card-link/report.json.
+This resolves those entry routes, not save/delete or accepted audio playback.
 
 ## Next
 
-Click through the original front end to resolve rendered labels, CARD/LINK,
-submenus and multiplayer input/turn topology. Complete the route inventory,
+Continue original navigation to resolve remaining labels, submenus, File Manager
+save/delete/failure paths, CD transport and multiplayer input/turn topology.
+Complete the route inventory,
 decode its assets and implement typed navigation/actions using docs/frontend.md.
 Connect real championship, persistence, replay, input and audio owners.
 

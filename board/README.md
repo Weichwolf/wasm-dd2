@@ -149,9 +149,11 @@ uses the same physical bounds, binary and ordinary control profile; see 0032.
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight
-main slots and source-backed session/cancel/confirm constraints. Actual menu
-navigation, CARD/LINK semantics and complete backend routes remain open under
-0003; static inventory does not establish a functioning frontend.
+main slots and source-backed session/cancel/confirm constraints. Actual original
+input now identifies CARD as File Manager and LINK as CD Audio Player, with
+entry/cancel observations and unchanged provisioned saves. Complete navigation,
+submenu actions and handwritten backend routes remain open under 0003;
+inventory and two observed entry routes do not establish a functioning frontend.
 
 Use RFC 822 headers `Type`, `Title`, optional `Depends`, then **Contract**,
 **Evidence**, **Next**, **Accept**. Keep one owner for each behavior contract.
