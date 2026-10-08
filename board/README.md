@@ -40,6 +40,7 @@ its game requirements or acceptance rules.
 | [0033](closed/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | closed |
 | [0034](closed/0034_original-font-glyph-data.md) | Original font glyph data | closed |
 | [0035](closed/0035_championship-world-support-advancement.md) | Championship world-support advancement | closed |
+| [0036](active/0036_championship-next-advancement.md) | Next natural championship advancement | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -247,6 +248,14 @@ The unchanged-bound natural season retains the same first-round result and
 crosses the former failure through round-2 tick 160,000. That same process remains
 running; full seasons and the remaining Arena-B AI movement remain open.
 Receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
+
+That natural process is now terminal at round-2 tick 190,078 (exit 1, no timeout).
+AI/frame/championship inputs remain valid; player health is 0.23458961198271322
+and laps remain zero. All 98 production records are retained. Active 0036 owns
+the next advancement diagnosis; a failure-only capture is running and its cause
+is not yet proved. The closed 0035 continuation contract remains valid; complete
+physical seasons remain open. Terminal receipt:
+/tmp/wasm-dd2/rewrite-fitted-83450/natural-season/terminal-report.json.
 
 ## Workflow and acceptance
 

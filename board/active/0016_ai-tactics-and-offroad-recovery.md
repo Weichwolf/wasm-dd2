@@ -80,9 +80,14 @@ round-2 tick 160,000, with mandatory, three-target physical and actual-input gat
 The full campaign and the recorded Arena-B movement failures remain open.
 Receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
 
+That natural campaign is now terminal at tick 190,078 with valid inputs, healthy
+player engine and no credited laps. Active 0036 owns the next failure-only
+advancement diagnosis; its cause is not yet proved. Terminal receipt:
+/tmp/wasm-dd2/rewrite-fitted-83450/natural-season/terminal-report.json.
+
 ## Next
 
-Follow the corrected natural campaign to its actual terminal outcome. Diagnose the completed
+Follow the next advancement diagnosis under 0036. Diagnose the completed
 Native/sanitized B movement failures using the retained observations, before
 choosing a tactical correction; keep the ordinary movement requirement and bound.
 Preserve the Total Destruction player target and every engine, damage, lap and

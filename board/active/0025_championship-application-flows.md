@@ -172,10 +172,16 @@ round and crosses the former failure through second-round tick 160,000. The same
 process remains running; complete physical seasons are still unproved.
 Current receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
 
+The same natural process is now terminal at round-2 tick 190,078 with valid
+AI/frame/championship inputs, exit 1 and no timeout. Player health remains
+0.23458961198271322 and laps remain zero. The next failure-only diagnosis belongs
+to active 0036; its cause is not yet proved. All 98 production records remain in
+/tmp/wasm-dd2/rewrite-fitted-83450/natural-season/terminal-report.json.
+
 ## Next
 
-Follow the same corrected natural season to its actual terminal outcome.
-Retain controller/tactical work
+Diagnose the actual terminal advancement failure under 0036, then follow the
+corrected natural season to its outcome. Retain controller/tactical work
 under 0016 and require complete physical seasons at unchanged ordinary bounds.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons
