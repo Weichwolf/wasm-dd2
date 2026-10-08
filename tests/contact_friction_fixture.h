@@ -3435,7 +3435,47 @@ static const dd2_group_contact dd2_friction_championship_endpoint_contacts[] = {
      .penetration = -4.2914353230116831e-05,
      .friction = 0.25}};
 
+/* Natural Stockcar round 2, tick 83450, after the stationary reverse retry fix.
+ * Physical slot 14 is remapped to zero. The admissible branch releases the wall
+ * while the road supports straddle the sliding/linear transition. This is
+ * rewrite contact evidence, not original handling or a completed championship.
+ * Query SHA256: 0e6765d3dc4a8dddbc58fa8ee44b504054d37ea201b58e43acccae3e979f1bf2 */
+static const dd2_vehicle dd2_friction_championship_fitted_bodies[] = {
+    {.position = {.x = 27498.923418184637, .y = 8505.2212568427531, .z = 67668.043409624981},
+     .velocity = {.x = 4.9845384126780816, .y = -11.657923036362455, .z = -0.4157083258903822},
+     .rotation = {.x = -0.91297158504708176,
+                  .y = 0.22760139779465588,
+                  .z = 0.32543684231540265,
+                  .w = 0.093655487198123291},
+     .angular_velocity = {
+         .x = 0.0071441824226448972, .y = 0.0050738050491727447, .z = 0.028497983823092016}}};
+static const dd2_group_contact dd2_friction_championship_fitted_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27936.42421455558, .y = 8409.8938172236649, .z = 67899.347824693992},
+     .normal = {.x = 0.22128621917954439, .y = 0.97480711027741851, .z = -0.027991194219102462},
+     .penetration = 0,
+     .friction = 0.8},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27476.024910319102, .y = 8589.4766872494129, .z = 67324.826750524095},
+     .normal = {.x = -0.65980117321510678, .y = 0, .z = 0.751440225050515},
+     .penetration = -0.00010011718657001439,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27061.422621813654, .y = 8600.5486012014644, .z = 67436.738994555955},
+     .normal = {.x = 0.23136005789828434, .y = 0.97242396191320646, .z = -0.029396630866905662},
+     .penetration = -9.2633473674983791e-05,
+     .friction = 0.8}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
+    {.initial = dd2_friction_championship_fitted_bodies,
+     .contacts = dd2_friction_championship_fitted_contacts,
+     .body_count = 1,
+     .contact_count = 3,
+     .name = "championship fitted released-wall friction",
+     .require_restart = true},
     {.initial = dd2_friction_arena_b_sticking_initial,
      .contacts = dd2_friction_arena_b_sticking_contacts,
      .body_count = 6,

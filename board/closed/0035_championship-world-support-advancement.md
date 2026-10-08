@@ -52,13 +52,30 @@ Receipt: private-release-constitutive/physical-report.json, with query and actua
 owner receipts in that directory. Faithful branch observations and independent
 acceptance analysis remain in debug-query/ within the same capture directory.
 
+The production correction retains fitted tangent directions only inside the
+bounded selected-release refinement. It restores all friction cones before
+outer acceptance, recomputes the unchanged full physical error, and requires
+finite reduction or exact rollback. Material rules, model/pass/refinement/search
+bounds, normal inequalities and all game-state ownership remain unchanged.
+
+All mandatory LLVM19/Native/WASM gates pass (35 Native / 33 WASM CTests).
+Thirty captured queries and 416 orderings retain independent physical checks
+on Native, WASM and ASan/UBSan, including all six new permutations. The actual
+saved owner advances to 83,451 on Native and instrumented C. Production full-field
+and remapped responses match the independent admissible root within 7.53e-12.
+Eleven-level actual Native/sanitized/Chromium input and original-data ground
+checks pass; six scoped race targets include the complete eight-lap Circuit-5
+race. The unchanged-bound natural campaign retains round-1 tick 287,087 and all
+twenty scores, then crosses the old failure through round-2 tick 160,000.
+That same natural process remains running; complete physical seasons and the
+remaining Arena-B AI motion/tactics are not proved by this contract.
+Receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
+
 ## Next
 
-Turn the private fitted refinement into a bounded production correction, restoring
-cone projection before any outer acceptance. Preserve every inequality, finite
-residual reduction, exact rollback and ordinary solver bound. Add this input to focused physical checks,
-retain existing captured queries and verify actual owner advancement followed
-by ordinary natural continuation. Full campaigns remain under 0025/0004.
+Follow the same natural campaign to its actual terminal outcome under 0025/0004.
+Keep ordinary controls, damage, score ownership and fixture bounds. Continue
+complete AI tactics and the recorded Arena-B movement failures under 0016.
 
 ## Accept
 

@@ -871,7 +871,9 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
         const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
         /* The fitted target is exactly zero. Avoid reconstructing tiny
          * positive loads whose pressure-dependent softness amplifies roundoff. */
-        if (dd2_group_newton_released(prediction.state->model, index)) {
+        if (dd2_group_newton_released(prediction.state->model, index) ||
+            (prediction.state->model.method == DD2_GROUP_NEWTON_RELEASE &&
+             prediction.state->model.selected_contact == index)) {
             candidate.normal[index] *= 1 - prediction.factor;
             candidate.friction[index] =
                 dd2_collision_scale(candidate.friction[index], 1 - prediction.factor);
@@ -889,7 +891,10 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
         const double magnitude =
             sqrt(dd2_collision_dot(candidate.friction[index], candidate.friction[index]));
         const double limit = workspace->query->contacts[index].friction * candidate.normal[index];
-        if (magnitude > limit) {
+        /* A private release fit must preserve its coupled tangent direction
+         * across sliding/linear transitions. Its bounded refinement restores
+         * every cone before any outer acceptance. Other trials project here. */
+        if (prediction.state->model.method != DD2_GROUP_NEWTON_RELEASE && magnitude > limit) {
             candidate.friction[index] =
                 dd2_collision_scale(candidate.friction[index], limit / magnitude);
         }
@@ -1052,6 +1057,26 @@ static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, unsigned ind
     return dd2_group_motion_finite(workspace);
 }
 
+/* Fitted private release iterates may lie outside a tangent cone. Restore all
+ * cone bounds before comparing their final physical error with the outer state. */
+static void dd2_group_refinement_project(dd2_group_workspace *workspace) {
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        dd2_group_constraint *constraint = &workspace->constraints[index];
+        const double limit =
+            workspace->query->contacts[index].friction * constraint->normal_impulse;
+        const double magnitude =
+            sqrt(dd2_collision_dot(constraint->friction, constraint->friction));
+        if (magnitude > limit) {
+            const dd2_vehicle_vector projected =
+                dd2_collision_scale(constraint->friction, limit / magnitude);
+            dd2_group_apply(
+                workspace, index,
+                dd2_collision_add(projected, dd2_collision_scale(constraint->friction, -1)));
+            constraint->friction = projected;
+        }
+    }
+}
+
 /* Refine a speculative branch after its full fitted step. Intermediate states
  * stay private: the outer iterate changes only for a finite smaller residual.
  * Re-evaluating loaded normals allows previously separating supports to load
@@ -1092,7 +1117,12 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
                 break;
             }
         }
-        if (current < *error) {
+        if (model.method == DD2_GROUP_NEWTON_RELEASE) {
+            dd2_group_refinement_project(workspace);
+            current = dd2_group_velocity_error(workspace);
+        }
+        if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current) &&
+            current < *error) {
             *error = current;
             return true;
         }

@@ -163,12 +163,19 @@ Receipt: /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/report.json.
 Production replay/query receipts: production-query/owner-replay-report.json and
 production-query/report.json within the same capture directory.
 
-Active 0035 owns this separate contact failure.
+Closed 0035 now advances the actual saved step on Native and instrumented C;
+thirty captured queries and 416 orderings pass independent physical checks on
+three targets. Strict 35/33 CTests, eleven-level actual input/original-data ground
+checks and six scoped race targets pass, including the complete eight-lap
+Circuit-5 race. The unchanged-bound natural campaign retains its previous first
+round and crosses the former failure through second-round tick 160,000. The same
+process remains running; complete physical seasons are still unproved.
+Current receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
 
 ## Next
 
-Resolve the reproduced step-83,450 contact failure under active 0035, then follow
-the same natural season to its actual outcome. Retain controller/tactical work
+Follow the same corrected natural season to its actual terminal outcome.
+Retain controller/tactical work
 under 0016 and require complete physical seasons at unchanged ordinary bounds.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons

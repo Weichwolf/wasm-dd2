@@ -39,7 +39,7 @@ its game requirements or acceptance rules.
 | [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
 | [0033](closed/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | closed |
 | [0034](closed/0034_original-font-glyph-data.md) | Original font glyph data | closed |
-| [0035](active/0035_championship-world-support-advancement.md) | Championship world-support advancement | active |
+| [0035](closed/0035_championship-world-support-advancement.md) | Championship world-support advancement | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -210,8 +210,8 @@ input lifetime and mandatory quality gates pass. Rendering/menu actions remain
 open under 0003. Receipt:
 /tmp/wasm-dd2/rewrite-font-verification-complete/report.json.
 
-Active 0035 owns the new step-83,450 natural world-support failure after the
-controller's forward-retry correction. All 76 production/diagnostic records
+The step-83,450 natural world-support failure after the
+controller's forward-retry correction was reproduced under 0035. All 76 production/diagnostic records
 match; one saved owner and its three world contacts reproduce failure against
 production libraries, both with twenty bodies and a single-body remap. A contact
 correction and complete physical campaign remain unproved. Receipt:
@@ -236,6 +236,17 @@ outer acceptance and pass shared-platform/regression/natural-continuation gates.
 This is a private diagnostic milestone, not a production correction or completed
 season. Receipt:
 /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/private-release-constitutive/physical-report.json.
+
+Closed 0035 now proves the production fitted-release correction, with restored
+friction cones before finite lower-residual acceptance and unchanged physical
+rules/bounds. The saved owner advances to 83,451 on Native and instrumented C;
+thirty captured queries / 416 orderings, strict 35/33 CTests, eleven-level actual
+input/original-data ground checks and six scoped race targets pass on all three
+variants. Those race targets include the complete eight-lap Circuit-5 race.
+The unchanged-bound natural season retains the same first-round result and
+crosses the former failure through round-2 tick 160,000. That same process remains
+running; full seasons and the remaining Arena-B AI movement remain open.
+Receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
 
 ## Workflow and acceptance
 

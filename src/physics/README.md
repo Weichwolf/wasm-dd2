@@ -405,7 +405,13 @@ A release direction instead fits the selected support's normal and tangential
 impulses to zero while refitting the remaining coupled equations. It starts
 from the exact outer state, avoiding the fixed-load friction seed's different
 active branch. Subsequent release directions retain those zero-impulse rows;
-backtracking, cone projection and the unchanged physical residual still apply.
+backtracking and the unchanged physical residual still apply. Their private
+constitutive steps retain the fitted tangent direction across sliding/linear
+transitions, instead of clipping that direction before the coupled equations
+settle. After the bounded refinement, every tangent impulse is projected back
+into its cone and the full physical error is recomputed. Only a finite smaller
+error after that projection can replace the outer state; rejection restores
+exact input. Other trial methods keep their existing per-step cone projection.
 Every original contact, including the released support's normal inequality,
 contributes to final physical acceptance. Ordinary sweeps can reload a support.
 One matrix is reused for the fixed-load solve and at most sixteen refinements.
@@ -436,6 +442,7 @@ inequalities, material law, finite-residual acceptance and exact rollback.
 A full fitted release must have exactly zero impulse. Reconstructing it from
 nearly cancelling basis components can leave tiny positive pressure/friction;
 the pressure-dependent softness then amplifies that roundoff. Released patch
+and selected world-release
 candidates instead scale their saved normal/tangent impulses by one minus the
 backtracking factor, reaching exact zero at the full step. This preserves cones,
 finite checks, impulse accounting, the final material law and exact rollback.
@@ -485,11 +492,14 @@ patch and simultaneous releases through twenty rotations/reversals.
 A six-body/fourteen-contact query captured at tick 233,358 checks two retained
 wall supports with two released interior rows through twenty-eight rotations/
 reversals. Independent analytic and finite-difference roots check the admissible
-branch separately from production convergence.
+branch separately from production convergence. A three-world-contact query
+captured at tick 83,450 after the stationary reverse retry correction checks a
+released wall with one sliding and one linear road support. All six permutations
+retain the independent material, impulse, energy, clearance and clock checks.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-nine frozen queries retain
+thirty frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

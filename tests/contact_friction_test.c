@@ -27,7 +27,8 @@ enum {
     DD2_FRICTION_PATCH_BODIES = 4,
     DD2_FRICTION_PATCH_CONTACTS = 10,
     DD2_FRICTION_ENDPOINT_BODIES = 6,
-    DD2_FRICTION_ENDPOINT_CONTACTS = 14
+    DD2_FRICTION_ENDPOINT_CONTACTS = 14,
+    DD2_FRICTION_FITTED_CONTACTS = 3
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -374,6 +375,28 @@ static bool dd2_friction_sliding_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_fitted_orderings(void) {
+    unsigned order[DD2_FRICTION_FITTED_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_FITTED_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_FITTED_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_FITTED_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_championship_fitted_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {.initial = dd2_friction_championship_fitted_bodies,
+                                            .contacts = contacts,
+                                            .body_count = 1,
+                                            .contact_count = DD2_FRICTION_FITTED_CONTACTS,
+                                            .name = "championship fitted release ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order, DD2_FRICTION_FITTED_CONTACTS));
+    return true;
+}
+
 static bool dd2_friction_release_orderings(void) {
     unsigned order[DD2_FRICTION_RELEASE_CONTACTS] = {0};
     for (unsigned index = 0; index < DD2_FRICTION_RELEASE_CONTACTS; ++index) {
@@ -575,7 +598,8 @@ int main(void) {
         !dd2_friction_sliding_orderings() || !dd2_friction_selective_orderings() ||
         !dd2_friction_load_orderings() || !dd2_friction_release_orderings() ||
         !dd2_friction_linear_orderings() || !dd2_friction_mixed_release_orderings() ||
-        !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings()) {
+        !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings() ||
+        !dd2_friction_fitted_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

@@ -75,11 +75,14 @@ Receipt: /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/report.json.
 Production replay/query receipts: production-query/owner-replay-report.json and
 production-query/report.json within the same capture directory.
 
-Active 0035 owns this separate contact failure.
+Closed 0035 now advances this saved contact step and the natural campaign through
+round-2 tick 160,000, with mandatory, three-target physical and actual-input gates.
+The full campaign and the recorded Arena-B movement failures remain open.
+Receipt: /tmp/wasm-dd2/rewrite-fitted-83450/report.json.
 
 ## Next
 
-Advance the reproduced natural contact failure under 0035. Diagnose the completed
+Follow the corrected natural campaign to its actual terminal outcome. Diagnose the completed
 Native/sanitized B movement failures using the retained observations, before
 choosing a tactical correction; keep the ordinary movement requirement and bound.
 Preserve the Total Destruction player target and every engine, damage, lap and
