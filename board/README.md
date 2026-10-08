@@ -161,6 +161,14 @@ continuation remain under active 0033. Full seasons remain unproved. Receipts:
 /tmp/wasm-dd2/rewrite-patch-220415/report.json and
 /tmp/wasm-dd2/rewrite-season-after-220415-long/diagnosis.json.
 
+The production two-endpoint branch now advances the saved 233,358 input on
+Native and instrumented C. Twenty-nine queries and 410 orderings pass all three
+targets with strict LLVM19, 34 Native and 32 WASM CTests. Full material laws and
+ordinary pass bounds remain unchanged. Broader original-data/actual-input/scoped-
+race checks and fresh natural continuation remain in progress under 0033;
+its advancement contract is still active. Component receipt:
+/tmp/wasm-dd2/rewrite-endpoints-233358/component-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight

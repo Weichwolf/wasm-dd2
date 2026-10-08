@@ -411,8 +411,8 @@ contributes to final physical acceptance. Ordinary sweeps can reload a support.
 One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
-previously better correction. The model array holds at most three models per
-contact plus two base models (194 total). Ordinary sweeps, material laws and
+previously better correction. The model array holds at most four models per
+contact plus two base models (258 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
 
 Co-oriented world supports can have dependent normal equations: collinear points
@@ -424,14 +424,23 @@ The other matching supports retain fixed zero-normal/tangent rows during private
 refinement. The retained support uses its active normal equation even when its
 initial pressure is zero. All original contacts remain in physical acceptance.
 
+Matching normals do not always permit a single loaded support. Distinct contact
+arms can require two loaded endpoints to balance torque while interior rows
+release. Each retained world support also compares a second support at the
+farthest finite matching point. Both retained normals use active equations,
+including from zero pressure; the other matching supports have fixed zero
+impulse targets. This adds at most one model per contact, avoiding an unbounded
+subset search. It preserves the single-support directions, all normal
+inequalities, material law, finite-residual acceptance and exact rollback.
+
 A full fitted release must have exactly zero impulse. Reconstructing it from
 nearly cancelling basis components can leave tiny positive pressure/friction;
 the pressure-dependent softness then amplifies that roundoff. Released patch
 candidates instead scale their saved normal/tangent impulses by one minus the
 backtracking factor, reaching exact zero at the full step. This preserves cones,
 finite checks, impulse accounting, the final material law and exact rollback.
-The bounded model array holds at most three models per contact plus two base
-models (194 total); ordinary pass/refinement/backtracking limits are unchanged.
+The bounded model array holds at most four models per contact plus two base
+models (258 total); ordinary pass/refinement/backtracking limits are unchanged.
 
 A sliding world support can also need to return to the linear friction branch.
 After restart, a world-only field compares a private refinement of the existing
@@ -473,10 +482,14 @@ captured at tick 128,036 checks a separating wall with the remaining ten support
 loaded. Twenty-two rotations/reversals retain the same independent checks.
 A four-body/ten-contact query captured at tick 220,415 checks a dependent wall
 patch and simultaneous releases through twenty rotations/reversals.
+A six-body/fourteen-contact query captured at tick 233,358 checks two retained
+wall supports with two released interior rows through twenty-eight rotations/
+reversals. Independent analytic and finite-difference roots check the admissible
+branch separately from production convergence.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-eight frozen queries retain
+twenty-nine frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

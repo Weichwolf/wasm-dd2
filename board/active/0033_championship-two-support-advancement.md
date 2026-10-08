@@ -54,13 +54,29 @@ continuation past this new failure remain unproved.
 Diagnosis and private-ablation receipt:
 /tmp/wasm-dd2/rewrite-season-after-220415-long/diagnosis.json.
 
+Production C now compares each matching patch's single retained support with a
+second support at the farthest finite matching point. Both normal equations stay
+active, with exact zero targets for the other matching rows. The existing branch
+directions and physical acceptance remain intact; bounded storage permits four
+models per contact plus two base models. The captured six-body query and all 28
+rotations/reversals join the previous physical regression set.
+
+Strict LLVM19 for 157 owned C/header files, all 34 Native and 32 WASM CTests pass.
+Twenty-nine captured queries and 410 orderings pass on Native/WASM/ASan/UBSan,
+with twenty analytic friction and seventy-two analytic position checks per target.
+Native and instrumented production C advance the actual saved owner to 233,359.
+The canonical query uses 513 velocity/83 position passes, one restart, velocity
+error below 7.6e-15 and position error below 8.0e-10. The Native static solver frame
+is 356,168 bytes; actual WASM physical fixtures exercise the reserved 1 MiB stack.
+This verifies the saved-input/material correction, not complete seasons or the
+still-running broader actual-input/original-data checks.
+Component receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/component-report.json.
+
 ## Next
 
-Implement the bounded two-endpoint branch in readable production C, retaining
-the existing single-support/pressure/friction directions and full physical
-acceptance. Add the captured query and focused ordering checks. Verify strict
-LLVM19, Native/WASM/sanitizers, actual saved-owner advancement and relevant
-original-data/application regressions. Continue the natural season with unchanged
+Follow the current actual-input/original-data/scoped-race checks to terminal
+outcomes. Continue the natural production and failure-only diagnostic attempts,
+keeping their exact prefixes and source/binary identities. Preserve unchanged
 physical bounds and ordinary controls; record its terminal outcome separately.
 
 ## Accept

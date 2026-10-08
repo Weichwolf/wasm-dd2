@@ -21,7 +21,7 @@ enum {
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
     DD2_GROUP_NEWTON_BASE_MODELS = 2,
-    DD2_GROUP_NEWTON_CONTACT_MODELS = 3,
+    DD2_GROUP_NEWTON_CONTACT_MODELS = 4,
     DD2_GROUP_NEWTON_MODEL_LIMIT =
         DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
 };
@@ -429,6 +429,7 @@ typedef struct {
     uint64_t released_contacts; /* Fixed zero-impulse rows of a private patch branch. */
     dd2_group_newton_method method;
     unsigned selected_contact; /* Contact limit selects the complete saturated branch. */
+    unsigned second_contact;   /* Second retained endpoint of a private world patch. */
 } dd2_group_newton_model;
 
 typedef struct {
@@ -516,7 +517,8 @@ static bool dd2_group_newton_material(dd2_group_newton_method method) {
 }
 
 static bool dd2_group_newton_retained(const dd2_group_newton_state *state, unsigned index) {
-    return state->model.method == DD2_GROUP_NEWTON_PATCH && state->model.selected_contact == index;
+    return state->model.method == DD2_GROUP_NEWTON_PATCH &&
+           (state->model.selected_contact == index || state->model.second_contact == index);
 }
 
 static bool dd2_group_newton_released(dd2_group_newton_model model, unsigned index) {
@@ -1104,14 +1106,19 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
  * direction through a sliding-to-linear transition. All models stay local to
  * one solve and preserve the final material law. */
 /* Dependent co-oriented rows can require several simultaneous releases.
- * Try each retained support without changing the final normal inequalities. */
+ * Compare one retained support with two separated endpoints. The second
+ * endpoint permits torque support when matching normals have distinct arms.
+ * Both branches preserve every final normal inequality and material check. */
 static dd2_group_newton_model dd2_group_patch_model(const dd2_group_workspace *workspace,
-                                                    unsigned retained) {
+                                                    unsigned retained, bool endpoints) {
     const dd2_group_contact target = workspace->query->contacts[retained];
-    dd2_group_newton_model model = {.method = DD2_GROUP_NEWTON_PATCH, .selected_contact = retained};
+    dd2_group_newton_model model = {.method = DD2_GROUP_NEWTON_PATCH,
+                                    .selected_contact = retained,
+                                    .second_contact = DD2_VEHICLE_CONTACT_LIMIT};
     if (dd2_group_pair(target)) {
         return model;
     }
+    double farthest = -1;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const dd2_group_contact contact = workspace->query->contacts[index];
         const dd2_vehicle_vector difference =
@@ -1120,7 +1127,17 @@ static dd2_group_newton_model dd2_group_patch_model(const dd2_group_workspace *w
             dd2_collision_dot(difference, difference) <
                 dd2_group_axis_tolerance * dd2_group_axis_tolerance) {
             model.released_contacts |= UINT64_C(1) << index;
+            const dd2_vehicle_vector arm =
+                dd2_collision_add(contact.point, dd2_collision_scale(target.point, -1));
+            const double distance = dd2_collision_dot(arm, arm);
+            if (endpoints && dd2_numeric_finite(&distance) && distance > farthest) {
+                farthest = distance;
+                model.second_contact = index;
+            }
         }
+    }
+    if (model.second_contact != DD2_VEHICLE_CONTACT_LIMIT) {
+        model.released_contacts &= ~(UINT64_C(1) << model.second_contact);
     }
     return model;
 }
@@ -1139,9 +1156,14 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
     }
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const dd2_group_contact contact = workspace->query->contacts[index];
-        const dd2_group_newton_model patch = dd2_group_patch_model(workspace, index);
+        const dd2_group_newton_model patch = dd2_group_patch_model(workspace, index, false);
         if (patch.released_contacts != 0) {
             models[count++] = patch;
+        }
+        const dd2_group_newton_model endpoints = dd2_group_patch_model(workspace, index, true);
+        if (endpoints.released_contacts != 0 &&
+            endpoints.released_contacts != patch.released_contacts) {
+            models[count++] = endpoints;
         }
         if (contact.friction <= 0 || workspace->constraints[index].normal_impulse <= 0) {
             continue;
