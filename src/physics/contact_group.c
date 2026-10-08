@@ -21,7 +21,7 @@ enum {
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
     DD2_GROUP_NEWTON_BASE_MODELS = 4,
-    DD2_GROUP_NEWTON_CONTACT_MODELS = 4,
+    DD2_GROUP_NEWTON_CONTACT_MODELS = 5,
     DD2_GROUP_NEWTON_MODEL_LIMIT =
         DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
 };
@@ -1330,14 +1330,13 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
                                                                      ? DD2_GROUP_NEWTON_SATURATED
                                                                      : DD2_GROUP_NEWTON_LOAD,
                                                        .selected_contact = index};
-        } else if (!dd2_group_pair(contact)) {
-            /* A sliding world support can return to the linear branch as its
-             * coupled pressure grows. Reuse the fixed-load seed, retaining
-             * fitted tangent directions until final physical acceptance. */
-            models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_WORLD_PRESSURE,
-                                                       .selected_contact = index};
         }
         if (!dd2_group_pair(contact)) {
+            /* Both sliding and linear world supports can need a stronger
+             * pressure basin. Preserve the small-load trial while comparing
+             * the incident-load seed with complete physical acceptance. */
+            models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_WORLD_PRESSURE,
+                                                       .selected_contact = index};
             models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_RELEASE,
                                                        .selected_contact = index};
         }

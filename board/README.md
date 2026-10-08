@@ -51,6 +51,7 @@ its game requirements or acceptance rules.
 | [0044](active/0044_current-round2-movement.md) | Restore actual dense round-2 movement | active |
 | [0045](active/0045_complete-fleet-event-recording.md) | Complete fleet event recording with explicit ownership | active |
 | [0046](active/0046_arena-b-contact-cost.md) | Diagnose and reduce actual Arena-B contact cost | active |
+| [0047](closed/0047_linear-world-pressure-basin.md) | Recover a stronger linear world-pressure basin | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -59,7 +60,8 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0046/0016, following 0045/0044. Owned collision reports preserve
+Current work is 0044/0016, following the bounded correction under closed 0047,
+with 0046/0045 still active. Owned collision reports preserve
 physical work bounds and restore previously clipped movement. The prior
 owned-report source's ordinary
 Native first Stockcar season completes four real results (two finishes, two
@@ -646,3 +648,20 @@ contact-cost, support/traction and full-game contracts remain open. Receipts:
 Original runs and reconstructed C supply evidence. They do not replace the
 handwritten game. A partial comparison, successful unit test or static preview
 cannot prove complete gameplay, original parity or a feature it does not reach.
+
+Current ordinary-season baseline at cae5001: fresh O3 ASan/UBSan completes four
+natural Stockcar rounds and opens season 2. WASM instead rejects level-2 round-2
+tick 137455. Its saved twenty-body field isolates a three-world-contact velocity
+root failure in slot 13 on both Native/WASM; an independent mobility calculation
+proves a stronger loaded linear-pressure root. The small-load direction is
+preserved while the existing complete-root incident-pressure trial becomes
+eligible for positive linear world contacts. The correction passes strict LLVM19/168-file checks,
+38 Native/36 WASM CTests, 728 physical checks per target plus the independent
+pressure root, fresh O1 ASan/UBSan on 34 reached units, the saved twenty-body
+field on all three targets, and Valgrind with zero errors/leaks. Native's baseline
+reaches the 300000-tick round-2 bound with zero player laps after 1799.94 seconds;
+it is frozen prior-source evidence, not verification of the correction. All
+baseline processes are terminal; successful raw logs/binaries are removed.
+Receipts: /tmp/wasm-dd2/rewrite-linear-pressure-0047/ and the baseline
+/tmp/wasm-dd2/rewrite-season-body-support-0016/canonical-report.json. Complete
+movement and cross-platform ordinary campaigns remain open.

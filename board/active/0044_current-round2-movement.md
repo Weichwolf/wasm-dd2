@@ -104,3 +104,16 @@ Native/WASM/instrumented C without relaxed bounds or manufactured state. Strict
 LLVM19, captured physical/material/rollback checks and reached original-data/
 actual-input/race gates pass. Ordinary current-source continuation demonstrates
 the corrected movement; no partial scope proves a complete campaign or game.
+
+## Current ordinary baseline after reachable body support
+
+At cae5001, a fresh unchanged public-owner Native season reaches the round-2
+300000-tick bound with zero player laps after 1799.94 seconds and no solver
+rejection. The exact terminal twenty-body core/controller/tire state is retained
+at /tmp/wasm-dd2/rewrite-season-body-support-0016/native-terminal-field.json;
+canonical frozen-source/binary receipt is beside it. Fresh O3 ASan/UBSan completes
+four natural rounds and starts season 2; WASM instead rejects tick 137455.
+Closed 0047 independently proves and corrects that captured world's stronger
+linear-pressure root on Native/WASM/O1 ASan/UBSan, without proving this movement
+contract. Continue with actual Native route/control progress and corrected-source
+ordinary WASM outcomes; preserve the same bounds and physical acceptance.

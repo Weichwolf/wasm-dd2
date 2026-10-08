@@ -1,4 +1,5 @@
 #include "contact_friction_fixture.h"
+#include "contact_linear_pressure_fixture.h"
 #include "physics/collision_math.h"
 #include "physics/contact_group.h"
 #include "physics/vehicle.h"
@@ -781,7 +782,35 @@ static bool dd2_friction_incident_load_orderings(const dd2_vehicle *bodies,
     return true;
 }
 
+/* Independent NumPy mobility/loaded-branch root for the WASM capture: normal
+ * error below 4e-15, material error below 3e-14. Every support is loaded and
+ * remains below the unchanged 0.1-unit linear/sliding transition. */
+static bool dd2_friction_linear_pressure_root(void) {
+    const double pressure[] = {3.9337215580373024, 0.18083300787068124, 6.07619004214208};
+    const double root_tolerance = 1e-5;
+    dd2_vehicle body = dd2_friction_linear_pressure_wasm_bodies[0];
+    dd2_group_solution result = {0};
+    const dd2_group_query query = {.bodies = &body,
+                                   .body_count = 1,
+                                   .contacts = dd2_friction_linear_pressure_wasm_contacts,
+                                   .contact_count = DD2_FRICTION_INCIDENT_LOAD_CONTACTS};
+    if (!dd2_contact_group_solve(&query, &result)) {
+        return false;
+    }
+    for (unsigned index = 0; index < DD2_FRICTION_INCIDENT_LOAD_CONTACTS; ++index) {
+        if (fabs(result.contacts[index].normal_impulse - pressure[index]) >= root_tolerance) {
+            return false;
+        }
+    }
+    puts("Independent linear world pressure root: PASS");
+    return true;
+}
+
 int main(void) {
+    if (!dd2_friction_linear_pressure_root()) {
+        puts("Independent linear world pressure root: FAIL");
+        return EXIT_FAILURE;
+    }
     if (!dd2_friction_capped_oracle()) {
         puts("Capped material oracle: FAIL");
         return EXIT_FAILURE;
@@ -823,6 +852,12 @@ int main(void) {
         !dd2_friction_dense_orderings() || !dd2_friction_cold_orderings() ||
         !dd2_friction_sliding_load_orderings() || !dd2_friction_first_phase_orderings() ||
         !dd2_friction_fixed_active_orderings() ||
+        !dd2_friction_incident_load_orderings(dd2_friction_linear_pressure_native_bodies,
+                                              dd2_friction_linear_pressure_native_contacts,
+                                              "native linear world pressure ordering") ||
+        !dd2_friction_incident_load_orderings(dd2_friction_linear_pressure_wasm_bodies,
+                                              dd2_friction_linear_pressure_wasm_contacts,
+                                              "wasm linear world pressure ordering") ||
         !dd2_friction_incident_load_orderings(
             dd2_friction_next_incident_bodies, dd2_friction_next_incident_contacts,
             "championship next incident world pressure ordering") ||

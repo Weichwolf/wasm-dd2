@@ -496,8 +496,8 @@ contributes to final physical acceptance. Ordinary sweeps can reload a support.
 One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
-previously better correction. The model array holds at most four models per
-contact plus four base models (260 total). Ordinary sweeps, material laws and
+previously better correction. The current model array holds at most five models per
+contact plus four base models (324 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
 
 Co-oriented world supports can have dependent normal equations: collinear points
@@ -525,8 +525,8 @@ and selected world-release
 candidates instead scale their saved normal/tangent impulses by one minus the
 backtracking factor, reaching exact zero at the full step. This preserves cones,
 finite checks, impulse accounting, the final material law and exact rollback.
-The bounded model array holds at most four models per contact plus four base
-models (260 total); ordinary pass/refinement/backtracking limits are unchanged.
+The current bounded model array holds at most five models per contact plus four base
+models (324 total); ordinary pass/refinement/backtracking limits are unchanged.
 
 Both initial refitted directions still compete before branch-model search.
 If that accepted correction already has full physical error below the existing
@@ -586,6 +586,21 @@ The three-world-contact tick-194353/tick-142893 queries and all six permutations
 each check a loaded wall whose previous doubling seed stayed below an admissible stronger
 pressure basin. Small-slip LOAD seeds preserve their current-load increment.
 No model, matrix, refinement/pass bound or physical acceptance rule is added.
+
+A currently linear world support can also have an admissible stronger-pressure
+root outside its small-load basin. Positive linear contacts retain the existing
+LOAD trial and additionally compare the incident-load WORLD_PRESSURE trial.
+Both begin from the same saved outer state; only the latter's complete finite
+physical root may replace progress. The ordinary sweep still certifies it.
+The bounded array now reserves five models per contact plus four base models
+(324 total); no matrix, ordinary pass, refinement, search, material or tolerance
+limit changes. Two platform captures of level-2 round-2 tick 137455 at cae5001
+and all six permutations of each exercise this case. An independent rigid-body
+mobility/Newton calculation gives pressures 3.933721558, 0.180833008 and
+6.076190042, with every contact remaining below the 0.1-unit slip transition.
+The C regression checks those pressures separately from its existing full
+normal, material, energy, impulse and position checks. These are rewrite-event
+regressions, not original physics parity or a completed campaign.
 
 A sliding world support can also need to return to the linear friction branch.
 After the delay, a world-only field compares a private refinement of the existing

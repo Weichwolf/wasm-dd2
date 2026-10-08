@@ -344,6 +344,14 @@ Doubling a tiny sliding load can miss a higher-pressure linear-branch root.
 The incident scale adds no model or matrix and still requires complete physical
 acceptance and exact rollback. The actual three-world-contact tick-194353 and
 tick-142893 queries and all six permutations of each exercise that basin.
+Positive linear world supports now also compare that private incident-load
+pressure basin alongside their existing small-load trial. The level-2 round-2
+tick-137455 Native/WASM captures need this stronger linear root; an independent
+mobility solve and all six contact permutations per capture check it. The model
+array reserves five entries per contact plus four base entries (324 maximum).
+Material, pass, search, refinement, matrix and final acceptance limits remain
+unchanged. Complete seasons and movement remain separate acceptance work.
+
 Selected world-release refinements also retain their fitted tangent directions
 through private sliding/linear transitions. Before outer acceptance, every
 friction impulse is projected into its original cone and the full physical
