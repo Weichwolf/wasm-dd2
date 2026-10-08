@@ -97,15 +97,23 @@ and 4 end on engine retirement. The league consumes those results once, awards
 136 player points and opens season 2 at division 4 with cleared points. Round
 and process bounds remain 300,000 ticks and 3,600 seconds. This is a Native
 first-season result including two DNF rounds, not complete player finishing,
-WASM campaigns, Wrecking or full-game acceptance. The longer AI suite is still
-running; its completed levels 1..9 pass all three targets.
+WASM campaigns, Wrecking or full-game acceptance. The full AI gate remains unsuccessful: levels 1..A pass all three targets.
+Arena-B Native slot 17 travels 37,518.840 units but has only 1,929 supported
+frames against the unchanged 2,280/2,400 requirement. WASM passes Arena B
+(minimum travel 44,399.075; support 2,352); O3 ASan/UBSan exceeds its unchanged
+360-second deadline before completing. Neither motion/support criteria nor
+process budgets are relaxed. The storage component is verified; this item
+remains active while its reached movement/cost gates are diagnosed.
+Receipt: /tmp/wasm-dd2/rewrite-owned-events-0045/ai-partial-report.json.
 Receipt: natural-season/terminal-report.json in the same directory.
 
 ## Next
 
-Finish the current unchanged-bound full AI suite and retain separate movement
-contracts. Verify ordinary season continuation independently on WASM and
-instrumented C, then continue damage-aware tactics/escape under 0044/0016 and
+Diagnose actual Arena-B cost under 0046 and Native slot-17 support under 0016.
+Independent WASM and instrumented-C public-session seasons are running with
+300,000-tick/3,600-second bounds, original data and ordinary controls; neither
+uses a Native checkpoint or renderer. Keep those separate from the completed
+Native application season. Continue damage-aware tactics/escape under 0044/0016 and
 all-track/mode/campaign work under 0002/0004. Keep every captured physical and
 functional comparison, explicit old Native translation and owned view lifetime.
 Only close this contract after its remaining reached gates have receipts.

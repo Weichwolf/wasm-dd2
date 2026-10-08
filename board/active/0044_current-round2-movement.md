@@ -76,8 +76,10 @@ probes reproduce the private prototype's restored physical escape: forward
 motion reaches 3,686.500 net XZ units in six seconds. Unchanged AI still credits
 zero laps in that same short terminal-state probe. The new ordinary Native
 application completes four first-season results and opens season 2; rounds 2
-and 4 end by engine retirement. The full AI suite is still running, and complete
-WASM/instrumented campaigns and sustained route recovery remain separate gates.
+and 4 end by engine retirement. The full AI suite passes ten levels but still fails Native Arena-B support
+and the instrumented Arena-B deadline. Those are retained under 0016/0046;
+independent WASM/instrumented session seasons are running. Sustained route
+recovery remains a separate contract.
 Receipts: /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json,
 0-report.json, 2-report.json and natural-season/terminal-report.json.
 

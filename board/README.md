@@ -50,6 +50,7 @@ its game requirements or acceptance rules.
 | [0043](active/0043_natural-fixed-active-next-advancement.md) | Next ordinary championship advancement after fixed-active refinement | active |
 | [0044](active/0044_current-round2-movement.md) | Restore actual dense round-2 movement | active |
 | [0045](active/0045_complete-fleet-event-recording.md) | Complete fleet event recording with explicit ownership | active |
+| [0046](active/0046_arena-b-contact-cost.md) | Diagnose and reduce actual Arena-B contact cost | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -64,8 +65,9 @@ Strict Native/WASM, instrumented rollback, 716 captured physical cases per
 target, all eleven original-data ground/fleet and actual window/input checks,
 six scoped race targets and seven old Native owners pass. The ordinary Native
 first Stockcar season completes four real results (two finishes, two engine
-retirements) and opens season 2; full WASM campaigns and the running AI suite
-remain separate. Corrected manual escape is proved; complete tactics, modes,
+retirements) and opens season 2; independent WASM/instrumented owner seasons are running. The AI gate passes
+ten levels but still fails Native Arena-B slot-17 support and its instrumented
+360-second deadline, retained under 0016/0046. Corrected manual escape is proved; complete tactics, modes,
 menus, audio, visual work and game acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json and
 natural-season/terminal-report.json. The historical evidence below is scoped

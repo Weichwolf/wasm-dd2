@@ -106,6 +106,17 @@ or an accepted tactical correction. Active 0044 owns one terminal owner/pilot
 capture and the next movement/escape diagnosis.
 Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-diagnosis/geometry-report.json.
 
+After production owned event recording d6df3ba, the full sixty-second AI suite
+passes levels 1..A on Native/WASM/instrumented C. Arena-B Native has improved
+travel (every opponent exceeds 37,518.840 units) but slot 17 remains supported
+for only 1,929 of 2,400 frames, below the unchanged 2,280-frame requirement.
+WASM passes that arena (minimum travel 44,399.075 and support 2,352). The O3
+ASan/UBSan arena exceeds its unchanged 360-second deadline and is not a
+completed movement case. Diagnose the actual support-loss trajectory and its
+physical/controller/recovery cause; do not infer a fix from increased travel.
+Keep deadline/work diagnosis under 0046 and preserve every acceptance bound.
+Receipt: /tmp/wasm-dd2/rewrite-owned-events-0045/ai-partial-report.json.
+
 ## Next
 
 Follow the current terminal movement/owner diagnosis under 0044. Diagnose the completed
