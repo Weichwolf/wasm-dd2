@@ -107,6 +107,18 @@ consume multiple volume increments; these are observed values, not inferred from
 key counts. Renamed overwrite, multiple slots, game/replay data, restart and
 storage failures remain open, as do rewrite menu/storage implementation.
 
+A further 63-key original run saves distinct configurations A/B, deletes A, loads
+B from the first visible slot and saves C into the next visible empty slot. Ten
+actual X11 windows and six bounded card checkpoints are reviewed. Logical
+entries compact occupied physical headers in ascending order: B remains in
+physical block 1 after A is deleted but appears at logical slot 0. Saving C uses
+first-free physical block 0, producing visible C/B order. Deletion retains both
+payload blocks; loading preserves every byte, and C leaves B unchanged. The
+provisioned save remains unchanged. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-multiple-card-0008-3/report.json`.
+This proves these original configuration paths and mapping, not game/replay
+codecs, corrupt/full/failing storage or accepted rewrite persistence.
+
 The observed CD Player displays the selected
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must

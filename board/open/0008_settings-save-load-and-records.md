@@ -36,6 +36,18 @@ the new adapter. Receipt:
 Renamed replacement, multiple slots, game/replay data, restart, storage failures
 and Native/browser codecs/adapters remain unproved.
 
+A further 63-key original run saves distinct configurations A/B, deletes A, loads
+B from the first visible slot and saves C into the next visible empty slot. Ten
+actual X11 windows and six bounded card checkpoints are reviewed. Logical
+entries compact occupied physical headers in ascending order: B remains in
+physical block 1 after A is deleted but appears at logical slot 0. Saving C uses
+first-free physical block 0, producing visible C/B order. Deletion retains both
+payload blocks; loading preserves every byte, and C leaves B unchanged. The
+provisioned save remains unchanged. Receipt:
+/tmp/wasm-dd2/rewrite-frontend-multiple-card-0008-3/report.json.
+This proves these original configuration paths and mapping, not game/replay
+codecs, corrupt/full/failing storage or accepted rewrite persistence.
+
 ## Next
 
 Document supported file layouts, implement typed codecs plus Native/browser storage adapters, and connect ownership to settings, championship and replay flows.
