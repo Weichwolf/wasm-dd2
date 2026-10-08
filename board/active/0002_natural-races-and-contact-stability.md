@@ -197,14 +197,17 @@ exact zero on released identity rows. The independent position root, 48 geometry
 orderings and all 742 earlier physical checks pass per target with fresh O1
 ASan/UBSan, Valgrind, strict LLVM19/170-file and 38/36 CTest gates. All eleven
 original ground levels and 220 recovery cases pass again. All 45 earlier race contracts pass per target against this source. Sanitized
-Arena 8 naturally completes; Native/WASM still run. Full natural-arena acceptance
-remains open.
-Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/verification-report.json.
+Arena 8 naturally completes. Native now also reaches engine-retirement/coasting
+results at tick 81219 with 401.09 seconds survival. WASM times out at the unchanged
+1800-second limit after 77251 complete ticks; its independently checked prefix
+advances beyond the former rejection without providing result acceptance.
+Full natural-arena acceptance remains open.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json.
 
 ## Next
 
-Finish the current actual Arena-8 checks under 0053, preserving natural result
-requirements and the unchanged scenario deadline. The reproduced nonterminal
+Profile and correct actual WASM simulation cost under 0053 before repeating
+its Arena-8 natural-result check at the unchanged scenario deadline. The reproduced nonterminal
 Native B movement/tactics behavior remains separate; preserve material laws,
 tolerances and the shared pass budget while diagnosing it. Expand ordinary
 physically completed circuit coverage beyond circuit 5. Do not replace a missing

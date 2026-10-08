@@ -726,6 +726,12 @@ prescribe exact zero even when elimination roundoff is slightly negative. The
 captured full query reaches its independent twelve-row position root at 512
 passes on Native/WASM/sanitized C; all 48 geometry reorder/remap checks, 742 prior
 physical cases, eleven original ground levels, 220 recovery cases and strict
-170-file/38/36 gates pass. All 45 previously proved race scenarios pass per target again. Sanitized Arena 8
-naturally completes; Native/WASM are still running, and all-arena completion
-remains unproved.
+170-file/38/36 gates pass. All 45 previously proved race scenarios pass per target
+again. Native Arena 8 now naturally reaches engine-retirement/coasting results
+at tick 81219 (401.09 seconds survival), within the unchanged scenario deadline;
+fresh O1 ASan/UBSan completes at tick 13083 (60.41 seconds survival). WASM exceeds
+the unchanged 1800-second deadline after 77251 complete ticks. Its independently
+checked prefix passes the former rejection but supplies no natural-result
+acceptance. Active 0053 retains that missing contract; all-arena completion
+remains unproved. Receipt:
+`/tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json`.

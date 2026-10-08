@@ -50,9 +50,19 @@ target. Prior source fails the new check on all three. All 742 earlier physical
 checks pass per target. Valgrind reports zero errors/leaks for the Native analytic
 joint-support corpus. Strict LLVM19 checks all 170 C/header files; 38 Native and
 36 WASM CTests pass. All eleven original ground levels, 220 recovery cases and the 45 previously
-proved race scenarios pass again per target. The sanitized ordinary Arena-8
-owner naturally reaches results; Native/WASM are still running, so the full
-contract is not closed.
+proved race scenarios pass again per target.
+
+The selected ordinary Arena-8 runs are now terminal at source 6efaa44. Native
+naturally reaches engine-retirement/coasting results at tick 81219 (401.09 seconds
+survival); the independent private Native run finishes in 1535.956 seconds,
+within the unchanged 1800-second limit. Fresh O1 ASan/UBSan naturally reaches
+results at tick 13083 (60.41 seconds survival). WASM times out at 1800 seconds
+after 77251 complete ticks; its last state is [1,0,77251,76851,0,0,20].
+The independent oracle checks every complete WASM row for phase/order, clocks,
+recovery, finite positions, monotonic damage, retirement and NPC pursuit. It
+advances beyond the prior rejection but supplies no natural-result acceptance.
+The full contract remains open; all run limits and ordinary inputs are unchanged.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json.
 
 Receipts: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/
 {position-root-report,position-fit-diagnosis,released-zero-diagnosis,
@@ -60,9 +70,10 @@ component-report,valgrind-report}.json.
 
 ## Next
 
-Finish the actual Arena-8 owner on Native/WASM through natural results, retaining
-the passing sanitized result and all preserved component/race contracts. Keep the independent original scenario
-deadlines visible; do not close on the component alone.
+Measure actual WASM simulation cost and address the cause before repeating its
+natural owner check. Retain the passing Native/sanitized results and all prior
+component/race contracts. Keep the unchanged scenario deadlines visible; do not
+close on the component or a pre-timeout prefix alone.
 
 ## Accept
 

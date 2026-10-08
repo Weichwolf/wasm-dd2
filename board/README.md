@@ -66,7 +66,8 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0053 under 0002: the actual Arena-8 position correction,
+Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance
+after the verified position correction and Native/sanitized natural results,
 following closed 0052 ground support and closed 0050 ordinary first-season
 movement. The broader 0016/0044/0049 contracts and 0046/0045 remain active.
 The following owned-report comparison is historical evidence, before 0050. Owned collision reports preserve
@@ -750,6 +751,11 @@ identity equation. Independent enumeration checks the actual twelve-row position
 root; 48 geometry reorder/remap cases, prior-source negatives and all 742 earlier
 physical cases pass per target, including fresh O1 ASan/UBSan. Native Valgrind has
 zero errors/leaks. Strict LLVM19/170-file and 38/36 CTest gates pass. All eleven original ground levels, 220 recovery cases and 45 prior race scenarios
-pass again per target. Sanitized Arena 8 naturally completes; its Native/WASM
-owner runs remain live, so the complete 0053 contract is still open.
-Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/component-report.json.
+pass again per target. Native Arena 8 now reaches engine-retirement/coasting
+results at tick 81219 (401.09 seconds survival), within the unchanged deadline;
+fresh O1 ASan/UBSan completes at tick 13083 (60.41 seconds survival). WASM exceeds
+the unchanged 1800-second deadline after 77251 complete ticks. Every complete
+prefix row passes the independent state/damage/clock/pursuit oracle and advances
+beyond the former rejection; natural WASM results remain unproved. Active 0053
+therefore stays open while actual simulation cost is measured and addressed.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json.
