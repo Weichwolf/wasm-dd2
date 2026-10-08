@@ -40,8 +40,10 @@ human identity, multiplayer and persistence still require implementation/evidenc
 
 ## Next
 
-Resolve the retained round-2 advancement failure at tick 59,399 under 0025,
-then complete physical seasons and continuing/terminal application outcomes. Add profile-wide unlock retention, configurable human identity, original
+Follow the current natural first-season attempts under 0025 after the saved-step
+and ordinary-continuation corrections through 220,415 under closed 0032.
+Require complete physical seasons and continuing/terminal application outcomes.
+Add profile-wide unlock retention, configurable human identity, original
 menu flows, multiplayer and compatible save/load. Preserve real twenty-driver
 scores and transactional next-field preparation.
 

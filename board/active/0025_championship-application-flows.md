@@ -124,11 +124,19 @@ The new advancement owner is 0031; complete physical seasons remain unproved.
 Current receipts: /tmp/wasm-dd2/rewrite-linear-118647/report.json and
 /tmp/wasm-dd2/rewrite-season-after-118647/report.json.
 
+Closed 0031/0032 now prove saved-step corrections at 128,036/220,415, with strict
+gates and reached three-target physical/original-data/actual-input regressions.
+The unmodified Native first-season attempt and logging-only companion reach
+round-2 tick 230,000 with matching prefixes and identical previous round-1 results.
+Full-season completion remains unproved. Current advancement receipt:
+/tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
+
 ## Next
 
-Resolve the next advancement failure at round-2 tick 128,036 under 0031 using
-the bounded production probe and sparse diagnosis. Preserve the regular race rules,
-AI controls, damage and score ownership. Follow with complete physical seasons
+Follow the current longer-wallclock first-season attempts to terminal outcomes;
+diagnose any contact failure or healthy noncompletion at the unchanged round bound.
+Preserve regular race rules, AI controls, damage and score ownership.
+Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field
 after promotion. Full original front end and persistence stay in 0003/0008.
 

@@ -36,7 +36,7 @@ its game requirements or acceptance rules.
 | [0029](closed/0029_championship-next-advancement.md) | Scheduled racing advancement through the captured failures | closed |
 | [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
 | [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
-| [0032](active/0032_championship-dependent-support-advancement.md) | Next championship dependent-support advancement failure | active |
+| [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -138,13 +138,16 @@ zero-impulse targets now advances the saved 220,415 step on Native and instrumen
 C. Twenty-eight captured queries and 382 orderings pass on Native/WASM/ASan/UBSan,
 with strict LLVM19 gates. All eleven original-data ground and actual Native/
 sanitized/Chromium input checks pass. Six scoped race targets pass, including the
-complete eight-lap Circuit-5 race. Natural-season continuation remains in progress
-under 0032; complete seasons and all-game acceptance remain open. Verified scope:
+complete eight-lap Circuit-5 race. The longer natural production and diagnostic
+attempts now reach round-2 tick 230,000 with exact matching prefixes and identical
+previous round-1 results. This closes advancement under 0032; complete seasons
+and all-game acceptance remain open. Verified scope:
 /tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
 The first production/diagnostic attempt stops at its 900-second wallclock budget
 after round-2 tick 160,000, with exactly matching records and no logged solver
 failure. It does not close the continuation contract. A longer-wallclock attempt
-uses the same physical bounds, binary and ordinary control profile; see 0032.
+uses the same physical bounds, binary and ordinary control profile. Advancement
+receipt: /tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
 
 ## Workflow and acceptance
 

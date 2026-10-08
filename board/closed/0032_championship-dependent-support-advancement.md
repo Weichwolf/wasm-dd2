@@ -1,5 +1,5 @@
 Type: Work item
-Title: Resolve the next championship dependent-support advancement failure
+Title: Advance dependent world supports in scheduled racing
 Depends: 0031
 
 ## Contract
@@ -37,7 +37,7 @@ from the full-owner residual. Only passes 512/4,096 and unit-mobility/Jacobian
 checkpoints are retained. The constitutive matrix condition at pass 4,096 is
 about 1.59e+18. This suggests dependent equations need investigation; it does
 not prove the physical cause or a correction. Sparse receipt:
-/tmp/wasm-dd2/rewrite-season-after-128036/sparse-analysis.json.
+/tmp/wasm-dd2/rewrite-season-after-128036/diagnosis.json (archived sparse analysis).
 
 Independent branch enumeration finds a physical root loading wall contacts 1/5
 and releasing contacts 2/3/4. Its constitutive error is below 6.2e-13; released
@@ -72,16 +72,25 @@ The same production binary and a fresh logging-only companion now run with a
 3,600-second wallclock allowance, unchanged 300,000-tick round bounds and ordinary
 AI controls. Outputs are under /tmp/wasm-dd2/rewrite-patch-220415-natural-long/
 and /tmp/wasm-dd2/rewrite-season-after-220415-long/.
-This contract stays active pending continuation beyond 220,415.
+Both longer-wallclock runs now reach round-2 tick 230,000, with exactly matching
+complete JSON prefixes. Round 1 retains its previous 287,087 ticks and twenty
+scores. Ordinary advancement beyond 220,415 is proved; no position, damage, lap
+or result injection supplies it. Close this saved-input/continuation contract.
+Complete physical seasons and all-game acceptance remain unproved. Receipt:
+/tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
+Completed input/query/matrix/private-ablation captures are removed after their
+hashes, independent diagnosis and correction receipt are archived in
+/tmp/wasm-dd2/rewrite-season-after-128036/diagnosis.json. Current live natural
+processes and required files remain intact.
 Verified scope: /tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
 Independent diagnosis/ablation receipt:
 /tmp/wasm-dd2/rewrite-patch-220415/independent-diagnosis.json.
 
 ## Next
 
-Follow the current longer-wallclock natural attempts to their terminal outcomes.
-Require ordinary continuation beyond this failure; record any next contact
-failure, healthy round bound or timeout separately from the saved-input correction.
+Follow the current longer-wallclock natural attempts to their terminal outcomes
+under 0025/0004. Record any next contact failure, healthy round bound or timeout
+separately from this proved saved-input/continuation correction.
 Preserve frozen-query, analytic, original-data and actual application checks.
 Complete physical seasons remain under 0025/0004; natural arena completion and
 movement/tactics retain 0002/0016.
