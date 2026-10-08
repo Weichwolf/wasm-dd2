@@ -49,7 +49,8 @@ backtracking, passes all 656 private Native checks. The existing pressure and
 release methods are preserved. Mandatory and multi-platform gates are rerunning
 for that final source; the initial failed receipts remain under `before-reload/`.
 Candidate evidence: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/
-reload-retained-1.log and ordering-diagnosis/terminal.json.
+ablation-report.json and ordering-diagnosis/terminal.json. Completed raw trials
+were removed after recording their outcomes and source/binary/log hashes.
 
 Final production now retains the selected world-pressure normal equation and
 prevents its provisional release inside that private trial. Normal candidates
@@ -71,9 +72,18 @@ current-source input/ground/selected-race checks are running; those outcomes and
 ordinary continuation remain unproved.
 Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/component-report.json.
 
+The final-source eleven-level ground gate now passes on Native/WASM/ASan:
+79,100 independent queries and 26,400 physical drop steps per target, with matching
+source hashes. The fresh ordinary frozen production campaign reaches round-2
+checkpoint 110,000, beyond the actual 108,716 failure. This live prefix does not
+prove completion of the dense region, a round or a season. Actual input and
+selected-race gates remain running.
+Receipts: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/ground-gate-receipt.json and
+natural-season/prefix-report.json.
+
 ## Next
 
-Finish current-source actual input, ground, selected-race checks and the fresh
+Finish current-source actual input, selected-race checks and the fresh
 ordinary campaign with unchanged bounds. Keep the old immutable 18c0a01 failure capture
 separate until its own exact records and query can be compared.
 

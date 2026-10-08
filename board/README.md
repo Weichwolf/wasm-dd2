@@ -403,6 +403,13 @@ and current-source original-data/input/scoped-race checks are running. Natural
 continuation and complete seasons remain unproved; the work item stays active.
 Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/component-report.json.
 
+Final 0039 source also passes the eleven-level original-data ground gate on all
+three targets (79,100 queries and 26,400 drop steps each). Its frozen ordinary
+campaign reaches round-2 checkpoint 110,000 beyond the actual failure, with no
+terminal season acceptance. Actual input/scoped-race gates and dense-region
+continuation remain live. Receipt:
+/tmp/wasm-dd2/rewrite-sliding-pressure-0039/ground-gate-receipt.json.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,
