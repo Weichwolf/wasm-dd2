@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Twenty-seven captured dense-contact
+almost parallel ground/wall supports. Twenty-eight captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -303,13 +303,21 @@ refitting the remaining coupled equations, starting from the same exact outer
 state. Released contacts retain their normal inequalities in physical acceptance
 and can reload in ordinary sweeps. The fixed-load solve and refinement reuse one
 matrix; every candidate remains subject to the unchanged final physical law,
-finite residual reduction and exact rollback. At most two models per contact
+finite residual reduction and exact rollback. At most three models per contact
 plus two base models use bounded automatic storage; ordinary pass limits and
 material acceptance remain unchanged. All six orderings of a three-world-contact
 query check higher pressure, and all 120 permutations of a three-body/five-contact
 query check released world support with loaded car pairs. Twenty-two additional
 rotations/reversals of a six-body/eleven-contact query check coupled release
 without a fixed-load seed.
+Co-oriented world patches additionally compare each retained support against a
+fixed private set of released matching contacts. The retained normal uses its
+active equation even from zero pressure; every released normal/tangent impulse
+has an exact zero full-step target. Backtracking scales its prior impulses toward
+zero, avoiding tiny reconstructed loads amplified by friction softness. All
+contacts retain their physical inequalities and material law; only a finite
+lower full residual is accepted. Twenty rotations/reversals of the tick-220,415
+four-body/ten-contact query check dependent normal rows and simultaneous release.
 World-only fields also privately refine the existing linear friction direction
 after restart, allowing a sliding support to return to the linear branch while
 pressures settle. The full seed and up to sixteen steps retain all contact,

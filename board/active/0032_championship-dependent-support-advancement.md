@@ -27,7 +27,8 @@ advancement. The single 31,216-byte input has SHA-256
 Drivers 0/1/4/13 form ten contacts: six world supports and four pairs. Query SHA-256:
 9f915f45161365ec385871213f275b9b30e96259f7f9f2baeb09fd4e46af9af5.
 Velocity exhausts 4,096 passes at residual 0.0001827040936497326; position repair
-is not reached. This identifies the failed stage, not a proved cause or root.
+is not reached. This initial capture identifies the failed stage; the diagnosis
+below establishes the dependent-row cause and admissible branch.
 Receipt: /tmp/wasm-dd2/rewrite-season-after-128036/report.json.
 
 A remapped four-body standalone query also fails velocity at
@@ -38,9 +39,39 @@ about 1.59e+18. This suggests dependent equations need investigation; it does
 not prove the physical cause or a correction. Sparse receipt:
 /tmp/wasm-dd2/rewrite-season-after-128036/sparse-analysis.json.
 
+Independent branch enumeration finds a physical root loading wall contacts 1/5
+and releasing contacts 2/3/4. Its constitutive error is below 6.2e-13; released
+normal speeds are positive (about 0.000354/0.000236/0.000118 units/s). The two
+collinear normal-row second differences are below 3.9e-14. Retaining those rows
+as loaded leaves dependent equations, while the admissible root uses simultaneous
+releases. This is equation-level diagnosis, not original-output parity.
+
+Private ablations show that choosing releases only from current separating
+velocities misses rotation 4. A fixed geometric patch mask, an active retained
+normal and exact zero impulse targets pass the captured query and all twenty
+rotations/reversals, alongside the previous 389 physical cases. Tiny reconstructed
+loads otherwise amplify through pressure-dependent friction softness.
+A Native private owner replay advances the actual saved step to 220,416.
+Production Native and instrumented C now also advance the saved owner input
+from 220,415 to 220,416. Their captured queries converge at velocity pass 513
+with one restart, residual below 5.3e-15 and 99 position passes below 6.8e-10.
+All strict LLVM19 checks, 34 Native and 32 WASM CTests pass. Twenty-eight queries
+and 382 orderings preserve independent physical checks on Native/WASM/ASan/UBSan.
+The Native solver frame is 353,016 bytes; actual WASM fixtures retain the reserved
+1 MiB stack. All eleven original-data ground checks and actual Native/sanitized/
+Chromium window/input checks pass. Six scoped Circuit-2/live and Circuit-5/complete
+eight-lap race targets pass. The latter is partial race-suite coverage.
+The unmodified natural season and logging-only companion still run with unchanged
+300,000-tick round bounds and ordinary AI controls; their complete JSON prefix
+matches exactly. This contract stays active pending continuation beyond 220,415.
+Verified scope: /tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
+Independent diagnosis/ablation receipt:
+/tmp/wasm-dd2/rewrite-patch-220415/independent-diagnosis.json.
+
 ## Next
 
-Diagnose dependent normal/friction rows and active branches in the actual query.
+Continue the unchanged-bound natural season beyond this failure and record its
+terminal outcome separately from the verified saved-input correction.
 Preserve frozen-query, analytic, original-data and actual application checks.
 Complete physical seasons remain under 0025/0004; natural arena completion and
 movement/tactics retain 0002/0016.

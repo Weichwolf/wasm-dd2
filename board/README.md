@@ -127,11 +127,20 @@ round-2 tick 150,000; its diagnostic prefix matches exactly. The advancement
 contract closes under 0031. The terminal season attempt next fails at round-2 tick 220,415. Its failure-only
 diagnostic matches all 104 production records, and two actual replayers retain
 the failure. Four cars form ten contacts; velocity remains above tolerance at
-4,096 passes. A sparse constitutive matrix is nearly singular; the cause and
-correction remain to be diagnosed under 0032. Full seasons, the remaining arena
+4,096 passes. Sparse diagnosis identifies dependent normal rows; the correction
+and natural continuation are tracked under 0032. Full seasons, the remaining arena
 and all-game acceptance remain open. Receipts:
 /tmp/wasm-dd2/rewrite-release-128036/report.json and
 /tmp/wasm-dd2/rewrite-season-after-128036/report.json.
+
+A private retained normal with a fixed co-oriented patch release mask and exact
+zero-impulse targets now advances the saved 220,415 step on Native and instrumented
+C. Twenty-eight captured queries and 382 orderings pass on Native/WASM/ASan/UBSan,
+with strict LLVM19 gates. All eleven original-data ground and actual Native/
+sanitized/Chromium input checks pass. Six scoped race targets pass, including the
+complete eight-lap Circuit-5 race. Natural-season continuation remains in progress
+under 0032; complete seasons and all-game acceptance remain open. Verified scope:
+/tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
 
 ## Workflow and acceptance
 

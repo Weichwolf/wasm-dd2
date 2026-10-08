@@ -411,9 +411,27 @@ contributes to final physical acceptance. Ordinary sweeps can reload a support.
 One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
-previously better correction. The model array holds at most two models per
-contact plus two base models (130 total). Ordinary sweeps, material laws and
+previously better correction. The model array holds at most three models per
+contact plus two base models (194 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
+
+Co-oriented world supports can have dependent normal equations: collinear points
+on one rigid body have affine normal velocities. A valid active set may require
+several interior supports to release together. After restart, the search also
+tries each world support as the retained member of its matching normal patch,
+using the existing normal-axis tolerance and a local bounded contact mask.
+The other matching supports retain fixed zero-normal/tangent rows during private
+refinement. The retained support uses its active normal equation even when its
+initial pressure is zero. All original contacts remain in physical acceptance.
+
+A full fitted release must have exactly zero impulse. Reconstructing it from
+nearly cancelling basis components can leave tiny positive pressure/friction;
+the pressure-dependent softness then amplifies that roundoff. Released patch
+candidates instead scale their saved normal/tangent impulses by one minus the
+backtracking factor, reaching exact zero at the full step. This preserves cones,
+finite checks, impulse accounting, the final material law and exact rollback.
+The bounded model array holds at most three models per contact plus two base
+models (194 total); ordinary pass/refinement/backtracking limits are unchanged.
 
 A sliding world support can also need to return to the linear friction branch.
 After restart, a world-only field compares a private refinement of the existing
@@ -421,7 +439,7 @@ linear world-friction direction. Its full fitted seed and up to sixteen steps
 can pass through a larger intermediate residual before the active pressures
 settle. Every candidate keeps normal refits, friction-cone projection, bounded
 backtracking and exact rollback. The original physical law accepts only a finite
-lower final residual. The extra world-only base model fits the existing 130-model
+lower final residual. The extra world-only base model fits the bounded model
 array; mixed-field models and first-phase behavior are unchanged.
 
 Nine arena-B regressions cover a five-contact cycle, simultaneous
@@ -453,10 +471,12 @@ A three-world-support query captured at tick 118,647 checks the sliding-to-linea
 transition through all six row permutations. A six-body/eleven-contact query
 captured at tick 128,036 checks a separating wall with the remaining ten supports
 loaded. Twenty-two rotations/reversals retain the same independent checks.
+A four-body/ten-contact query captured at tick 220,415 checks a dependent wall
+patch and simultaneous releases through twenty rotations/reversals.
 Fourteen
 rotations/reversals of each seven-contact query
 (twenty-eight total) check convergence without depending on captured row order. All
-twenty-seven frozen queries retain
+twenty-eight frozen queries retain
 independent contact, impulse, friction, energy and physical-clock checks. The
 velocity/position tolerances and pass bound are unchanged.
 Normal coordinate responses use their exact unilateral impulse without

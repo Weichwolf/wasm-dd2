@@ -6,8 +6,10 @@
 #include "physics/vehicle_collision.h"
 
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 
 enum {
     DD2_GROUP_PASSES = 4096,
@@ -19,10 +21,12 @@ enum {
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
     DD2_GROUP_NEWTON_BASE_MODELS = 2,
-    DD2_GROUP_NEWTON_CONTACT_MODELS = 2,
+    DD2_GROUP_NEWTON_CONTACT_MODELS = 3,
     DD2_GROUP_NEWTON_MODEL_LIMIT =
         DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
 };
+_Static_assert(DD2_VEHICLE_CONTACT_LIMIT <= sizeof(uint64_t) * CHAR_BIT,
+               "Contact branch selection must fit its mask");
 /* Late stick/slip roots need a smaller forward difference than coarse sweep
  * errors. Keep enough separation from cancellation in accumulated body motion;
  * the captured pressure-sensitive supports verify this scale independently. */
@@ -417,10 +421,12 @@ typedef enum {
     DD2_GROUP_NEWTON_CONSTITUTIVE,
     DD2_GROUP_NEWTON_SATURATED,
     DD2_GROUP_NEWTON_LOAD,
-    DD2_GROUP_NEWTON_RELEASE
+    DD2_GROUP_NEWTON_RELEASE,
+    DD2_GROUP_NEWTON_PATCH
 } dd2_group_newton_method;
 
 typedef struct {
+    uint64_t released_contacts; /* Fixed zero-impulse rows of a private patch branch. */
     dd2_group_newton_method method;
     unsigned selected_contact; /* Contact limit selects the complete saturated branch. */
 } dd2_group_newton_model;
@@ -506,7 +512,15 @@ static bool dd2_group_newton_pressure(dd2_group_newton_method method) {
 
 static bool dd2_group_newton_material(dd2_group_newton_method method) {
     return method == DD2_GROUP_NEWTON_CONSTITUTIVE || method == DD2_GROUP_NEWTON_SATURATED ||
-           dd2_group_newton_pressure(method);
+           dd2_group_newton_pressure(method) || method == DD2_GROUP_NEWTON_PATCH;
+}
+
+static bool dd2_group_newton_retained(const dd2_group_newton_state *state, unsigned index) {
+    return state->model.method == DD2_GROUP_NEWTON_PATCH && state->model.selected_contact == index;
+}
+
+static bool dd2_group_newton_released(dd2_group_newton_model model, unsigned index) {
+    return (model.released_contacts & (UINT64_C(1) << index)) != 0;
 }
 
 static void dd2_group_residuals(const dd2_group_workspace *workspace,
@@ -521,6 +535,9 @@ static void dd2_group_residuals(const dd2_group_workspace *workspace,
             constraint->normal_mass *
             (constraint->normal_impulse -
              fmax(0, constraint->normal_impulse - (speed / constraint->normal_mass)));
+        if (dd2_group_newton_retained(state, index)) {
+            residual[offset] = speed;
+        }
         const dd2_vehicle_vector difference =
             dd2_collision_add(constraint->friction, dd2_collision_scale(friction.impulse, -1));
         const dd2_group_contact contact = workspace->query->contacts[index];
@@ -659,7 +676,8 @@ static void dd2_group_material_row(const dd2_group_workspace *workspace,
     const dd2_group_material material =
         dd2_group_material_at(workspace, index, dd2_group_newton_saturated(state, index));
     const double speed = dd2_collision_dot(dd2_group_velocity(workspace, index), contact.normal);
-    const bool loaded = constraint->normal_impulse - speed / constraint->normal_mass > 0;
+    const bool loaded = dd2_group_newton_retained(state, index) ||
+                        constraint->normal_impulse - speed / constraint->normal_mass > 0;
     const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
     for (size_t column = 0; column < state->dimensions; ++column) {
         const unsigned source = (unsigned)(column / DD2_GROUP_NEWTON_AXES);
@@ -808,6 +826,9 @@ static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
         released[state->model.selected_contact] = true;
     }
     const unsigned count = workspace->query->contact_count;
+    for (unsigned index = 0; index < count; ++index) {
+        released[index] = released[index] || dd2_group_newton_released(state->model, index);
+    }
     for (unsigned attempt = 0; attempt <= count; ++attempt) {
         dd2_group_newton_matrix(workspace, state, system);
         for (unsigned index = 0; index < count; ++index) {
@@ -846,6 +867,14 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
     dd2_group_iterate candidate = prediction.state->base;
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const size_t offset = DD2_GROUP_NEWTON_AXES * (size_t)index;
+        /* The fitted target is exactly zero. Avoid reconstructing tiny
+         * positive loads whose pressure-dependent softness amplifies roundoff. */
+        if (dd2_group_newton_released(prediction.state->model, index)) {
+            candidate.normal[index] *= 1 - prediction.factor;
+            candidate.friction[index] =
+                dd2_collision_scale(candidate.friction[index], 1 - prediction.factor);
+            continue;
+        }
         candidate.normal[index] =
             fmax(0, candidate.normal[index] + (prediction.factor * prediction.direction[offset]));
         candidate.friction[index] = dd2_collision_add(
@@ -1074,6 +1103,28 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
  * same connected field. World-only fields also refine their linear friction
  * direction through a sliding-to-linear transition. All models stay local to
  * one solve and preserve the final material law. */
+/* Dependent co-oriented rows can require several simultaneous releases.
+ * Try each retained support without changing the final normal inequalities. */
+static dd2_group_newton_model dd2_group_patch_model(const dd2_group_workspace *workspace,
+                                                    unsigned retained) {
+    const dd2_group_contact target = workspace->query->contacts[retained];
+    dd2_group_newton_model model = {.method = DD2_GROUP_NEWTON_PATCH, .selected_contact = retained};
+    if (dd2_group_pair(target)) {
+        return model;
+    }
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_group_contact contact = workspace->query->contacts[index];
+        const dd2_vehicle_vector difference =
+            dd2_collision_add(contact.normal, dd2_collision_scale(target.normal, -1));
+        if (index != retained && !dd2_group_pair(contact) && contact.first == target.first &&
+            dd2_collision_dot(difference, difference) <
+                dd2_group_axis_tolerance * dd2_group_axis_tolerance) {
+            model.released_contacts |= UINT64_C(1) << index;
+        }
+    }
+    return model;
+}
+
 static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
                                         dd2_group_newton_model *models, bool paired) {
     unsigned count = 0;
@@ -1088,6 +1139,10 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
     }
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
         const dd2_group_contact contact = workspace->query->contacts[index];
+        const dd2_group_newton_model patch = dd2_group_patch_model(workspace, index);
+        if (patch.released_contacts != 0) {
+            models[count++] = patch;
+        }
         if (contact.friction <= 0 || workspace->constraints[index].normal_impulse <= 0) {
             continue;
         }
