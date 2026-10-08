@@ -71,8 +71,8 @@ ten levels but still fails Native Arena-B slot-17 support and its instrumented
 car-pair search as the largest measured cost component. Native slot 17 rides
 body 18's roof above intact terrain, losing wheel traction; a small read-only
 owner/contact capture proves this diagnosis. A private sphere-ordering candidate
-saves 29..31 percent in captured pair-query timing, but is not a production fix
-or a full AI pass. Corrected manual escape is proved; complete tactics, modes,
+saves 29..31 percent in captured pair-query timing, but still times out in the
+unchanged full instrumented case and remains unadopted. Corrected manual escape is proved; complete tactics, modes,
 menus, audio, visual work and game acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json and
 natural-season/terminal-report.json. The historical evidence below is scoped

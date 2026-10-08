@@ -54,14 +54,22 @@ CPU time by 29.2..31.4 percent. This is a local measurement only: the complete
 unchanged Arena-B scenario remains a separate gate, and the candidate has not
 been adopted on master. Receipt: broadphase-prototype/benchmark-report.json.
 
+The candidate's full instrumented case is now terminal: it exceeds the
+unchanged 360-second deadline without summaries or reset completion. All 126
+complete exported rows match the frozen failed production prefix exactly;
+frame 1,000 is completely exported and frame 1,200 is partial. Its isolated
+timing gain does not establish a sufficient full-scenario improvement, and no
+candidate code has been adopted. Receipt: broadphase-prototype/report.json.
+
 ## Next
 
-Inspect the terminal full-scenario receipt for the private sphere-ordering
-candidate before choosing production work. Measure any remaining redundant
-pair validation, pose construction or neighborhood search against actual
-inputs; preserve the public query's invalid-input behavior and complete
-validation of geometry survivors. A local timing gain does not close the
-unchanged full-scenario deadline. Keep slot-17 roof riding under 0016 and
+Use the terminal negative candidate receipt before choosing production work.
+Measure remaining repeated pair validation, pose construction and neighborhood
+search against actual inputs. Consider bounded, typed fleet query preparation
+that validates each immutable body/motion once and reuses geometry across its
+pairs, preserving all public invalid-input behavior and full instrumentation.
+Prove output equivalence and the unchanged full-scenario deadline before
+adoption. Keep slot-17 roof riding under 0016 and
 actual-owner continuation/public-session seasons separate. Capture only the
 typed inputs needed for a proved correction.
 
