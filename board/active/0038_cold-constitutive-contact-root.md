@@ -58,9 +58,20 @@ capture of this next actual failure is running; its cause is not yet established
 Component receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/component-report.json.
 Terminal receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/natural-season/terminal-report.json.
 
+Current-source original-data ground checks pass all eleven levels on Native,
+WASM and ASan: 79,100 independent queries and 26,400 physical drop steps per
+target. Actual input checks pass 31 Native and 31 instrumented comparisons and
+144 Chromium comparisons, including all eleven scene/car views; browser error
+lists are empty. The selected Circuit-2 live session and complete eight-lap
+Circuit-5 Stockcar race pass on all three targets (six scenario/target scopes).
+The complete race takes 167,472 ticks with player place 2 and 75 points, checked
+against independent geometry and source rules. This is selected-race coverage,
+not a complete campaign or full race suite. All recorded source hashes still
+match; successful raw captures were removed by the verifiers.
+Receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/broader-report.json.
+
 ## Next
 
-Finish current-source actual-input, original-data ground and selected-race gates.
 Require the next failure capture to reproduce all 81 production records, then
 replay its actual owner/query and diagnose the rejected condition before further
 correction and unchanged-bound natural continuation.

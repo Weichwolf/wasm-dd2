@@ -384,6 +384,15 @@ the complete rewrite frontend remain open. Receipt:
 Use RFC 822 headers `Type`, `Title`, optional `Depends`, then **Contract**,
 **Evidence**, **Next**, **Accept**. Keep one owner for each behavior contract.
 
+The current 0038 cold-root implementation passes eleven-level original-data
+ground checks on Native/WASM/ASan (79,100 queries and 26,400 drop steps per target),
+actual Native/instrumented/Chromium input comparisons (31/31/144), and six
+selected Circuit-2 live/Circuit-5 complete eight-lap race target scopes. Recorded
+source hashes match current production. Its natural campaign still fails round 2
+at tick 108,716; exact failure capture and diagnosis remain pending. The saved
+115,420 component fix does not prove natural continuation or complete seasons.
+Receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/broader-report.json.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,
