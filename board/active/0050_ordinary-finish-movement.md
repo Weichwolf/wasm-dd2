@@ -33,11 +33,36 @@ excluded handling state 5 belongs to rolling/recovery. This is reconstruction
 source evidence, not an executed original comparison. Receipt:
 /tmp/wasm-dd2/rewrite-finish-movement-0050/reference-finisher-report.json.
 
+Finished opponents now continue ordinary AI decisions and physical movement;
+only the player retains finish/coasting braking. Completion remains owned by
+lap/race rules, so continuing damage/accidents do not invent another finish.
+The focused original-circuit-5 Stockcar race naturally completes all eight laps
+on Native, WASM and fresh O1 ASan/UBSan. Each target checks 1570 post-finish
+opponent steps, with 21688.791 units of accepted horizontal travel and unchanged
+finish place, finish tick and lap records. Restoring only prior-source driving.c
+makes this check fail immediately after the first natural opponent finish.
+Independent original-data geometry and placement tables validate the final field
+and scores. The nine-lap Time Trial and all 29 short physical/14 ordered-rule
+scenarios pass on all three targets: 45 scenarios per target, excluding the four
+still-open long Total Destruction completions. Strict LLVM19 checks cover all
+169 C/header files; 38 Native and 36 WASM CTests pass.
+Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/{races,short-races,arena-races}/report.json
+and /tmp/wasm-dd2/rewrite-finish-movement-0050/negative/report.json.
+
+Fresh unchanged-bound public-owner campaigns are running on Native/WASM and
+fresh 34-unit O3 ASan/UBSan. Native now naturally finishes round 1 at tick 290349,
+where the frozen 570df9d run reached its 300000 bound. WASM naturally finishes
+round 1 at 287118. Later rounds and sanitized completion remain pending; these
+intermediate results do not prove a complete ordinary season or full gameplay.
+Guardian and source/binary identity:
+/tmp/wasm-dd2/rewrite-season-finisher-movement-0050/{launch,identity}.json.
+
 ## Next
 
-Prove the intended finished-NPC movement and frozen lap/place/score behavior in
-the actual typed driving/race owner. Check original/reference behavior as needed.
-Then rerun ordinary Native/WASM/instrumented campaigns at the same limits.
+Collect terminal fresh ordinary Native/WASM/instrumented campaigns at the
+unchanged limits and compare the originally blocked round-1/round-3 finish
+approaches. Diagnose any remaining physical or movement failures separately.
+Keep this item active until its actual-owner acceptance is proved.
 
 ## Accept
 

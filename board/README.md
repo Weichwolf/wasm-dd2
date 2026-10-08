@@ -698,3 +698,16 @@ reference evidence that NPC AI continues after finishing. Active 0052 owns the
 existing Arena-A angular comparison, exactly unchanged before/after 0051.
 Receipts: /tmp/wasm-dd2/rewrite-next-round2-rejection-0049/component-report.json
 and /tmp/wasm-dd2/rewrite-season-passing-return-0016/canonical-report.json.
+
+Finished NPCs now continue steering after their natural completion. The original
+circuit-5 eight-lap Stockcar race checks 1570 subsequent opponent steps and
+21688.791 travel units on Native/WASM/O1 ASan/UBSan, with latched places/timing
+and independently checked final points. Prior driving.c fails that new check at
+the first opponent finish. All 45 selected race scenarios per target pass
+(29 short physical, 14 ordered-rule, two long circuit-5 runs), along with strict
+LLVM19/169-file and 38/36 CTest gates. Long Total Destruction completions remain
+outside this scope. Native's new ordinary campaign naturally passes its formerly
+blocked first round at tick 290349; complete fresh Native/WASM/O3 sanitized
+campaign outcomes remain pending under 0050. No full-game/parity claim.
+Receipts: /tmp/wasm-dd2/rewrite-finish-movement-0050/ and
+/tmp/wasm-dd2/rewrite-season-finisher-movement-0050/.

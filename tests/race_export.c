@@ -15,6 +15,7 @@
 #include "physics/vehicle_collision.h"
 #include "platform/file.h"
 
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -299,7 +300,70 @@ static bool dd2_race_export_route(unsigned level, const dd2_road *road, dd2_race
     return valid;
 }
 
+typedef struct {
+    dd2_race_driver race;
+    dd2_lap_driver lap;
+    dd2_vehicle_vector position;
+    uint64_t decisions;
+    uint64_t checks;
+    double distance;
+} dd2_race_export_finisher;
+
+/* Observe naturally finished opponents through the public owner. Damage and
+ * accident attribution may continue; completion, lap records and places latch. */
+static bool dd2_race_export_finishers(const dd2_driving *driving,
+                                      dd2_race_export_finisher *finishers) {
+    const dd2_race *race = dd2_driving_race(driving);
+    const dd2_lap_driver *laps = dd2_driving_laps(driving);
+    const dd2_vehicle *vehicles = dd2_driving_vehicles(driving);
+    const dd2_ai_driver *drivers = dd2_driving_drivers(driving);
+    for (unsigned slot = 1; slot < dd2_driving_vehicle_count(driving); ++slot) {
+        dd2_race_export_finisher *previous = &finishers[slot];
+        const dd2_race_driver *current = &race->drivers[slot];
+        const dd2_lap_driver *lap = &laps[slot];
+        if (previous->race.finish_place != 0) {
+            if (drivers[slot].steps != previous->decisions + 1 ||
+                lap->steps != previous->lap.steps + 1 ||
+                current->finish_place != previous->race.finish_place ||
+                current->finish_step != previous->race.finish_step ||
+                current->current_lap_time != previous->race.current_lap_time ||
+                current->last_lap_time != previous->race.last_lap_time ||
+                current->best_lap_time != previous->race.best_lap_time ||
+                lap->lap_start != previous->lap.lap_start ||
+                lap->last_lap != previous->lap.last_lap ||
+                lap->best_lap != previous->lap.best_lap ||
+                lap->finish_step != previous->lap.finish_step || lap->cell != previous->lap.cell ||
+                lap->relative != previous->lap.relative ||
+                lap->checkpoint != previous->lap.checkpoint ||
+                lap->started_laps != previous->lap.started_laps ||
+                lap->credited_laps != previous->lap.credited_laps || !lap->finished) {
+                printf("{\"kind\":\"finisher-failure\",\"slot\":%u}\n", slot);
+                return false;
+            }
+            ++previous->checks;
+            previous->distance += hypot(vehicles[slot].position.x - previous->position.x,
+                                        vehicles[slot].position.z - previous->position.z);
+        }
+        previous->race = *current;
+        previous->lap = *lap;
+        previous->position = vehicles[slot].position;
+        previous->decisions = drivers[slot].steps;
+    }
+    return true;
+}
+
+static void dd2_race_export_finisher_report(const dd2_race_export_finisher *finishers,
+                                            unsigned count) {
+    printf("{\"kind\":\"auto-finishers\",\"opponents\":[");
+    for (unsigned slot = 1; slot < count; ++slot) {
+        printf("%s[%u,%llu,%.17g]", slot == 1 ? "" : ",", slot,
+               (unsigned long long)finishers[slot].checks, finishers[slot].distance);
+    }
+    puts("]}");
+}
+
 static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_mode mode) {
+    dd2_race_export_finisher finishers[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_driving *driving = dd2_driving_create(road, level);
     dd2_road_surface *surface = dd2_road_surface_create(road);
     dd2_ai_driver pilot = {0};
@@ -328,6 +392,7 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
         valid = valid && dd2_driving_advance(
                              driving, (dd2_driving_frame){.seconds = DD2_VEHICLE_STEP_SECONDS,
                                                           .control = control});
+        valid = valid && dd2_race_export_finishers(driving, finishers);
         if (valid && mode == DD2_RACE_TIME_TRIAL) {
             dd2_course_rules original = {0};
             valid = dd2_course_original_rules(level, &original);
@@ -352,6 +417,7 @@ static bool dd2_race_export_auto(unsigned level, const dd2_road *road, dd2_race_
         }
     }
     if (valid) {
+        dd2_race_export_finisher_report(finishers, dd2_driving_vehicle_count(driving));
         dd2_race_export_live(driving, "auto-final");
         valid = dd2_driving_race(driving)->phase == DD2_RACE_RESULTS &&
                 dd2_driving_race(driving)->end ==

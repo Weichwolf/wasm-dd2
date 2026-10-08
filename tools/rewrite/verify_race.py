@@ -295,8 +295,14 @@ def check_auto(path, decoded, image, code, mode, tables):
         position = initial['cars'][0][1:4]
         phase = end = elapsed = coast = ticks = max_samples = 0
         final = None
+        finisher_checks = None
         for line in stream:
             row = json.loads(line)
+            if row['kind'] == 'auto-finishers':
+                if finisher_checks is not None:
+                    raise ValueError('Duplicate finished-opponent receipt')
+                finisher_checks = row['opponents']
+                continue
             if row['kind'] == 'auto-final':
                 final = row
                 break
@@ -344,6 +350,10 @@ def check_auto(path, decoded, image, code, mode, tables):
             raise ValueError('Physical race does not complete all required laps')
         if final['kind'] != 'auto-final' or final['state'][:5] != [phase,end,ticks,elapsed,coast]:
             raise ValueError('Final physical race snapshot differs')
+        if finisher_checks is None or [row[0] for row in finisher_checks] != list(range(1, COUNT)):
+            raise ValueError('Missing finished-opponent observations')
+        if not any(row[1] > 0 and row[2] > 100 for row in finisher_checks):
+            raise ValueError('No naturally finished opponent continues physical driving')
         drivers = final['drivers']
         finishers = [slot for slot,d in enumerate(drivers) if d[5]]
         if sorted(drivers[slot][5] for slot in finishers) != list(range(1,len(finishers)+1)):
@@ -372,6 +382,8 @@ def check_auto(path, decoded, image, code, mode, tables):
                 completed_laps=oracle.values[9]-1, elapsed_seconds=elapsed*.005, ticks=ticks,
                 physical_vehicle_steps=elapsed*COUNT, independent_player_geometry_queries=surface.queries,
                 max_progress_samples=max_samples, player_place=drivers[0][4],player_points=drivers[0][8],
+                finished_opponent_checks=sum(row[1] for row in finisher_checks),
+                finished_opponent_distance=sum(row[2] for row in finisher_checks),
                 best_lap_seconds=oracle.values[3]*.005, finishers=len(finishers),
                 scope='Complete physical twenty-car Stockcar race on original circuit 5; AI supplies player controls')
 

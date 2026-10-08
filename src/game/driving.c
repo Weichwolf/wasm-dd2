@@ -342,9 +342,6 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
             .count = driving->count,
             .slot = slot,
             .pursue_player = race != NULL && race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION};
-        if (race != NULL && race->drivers[slot].finish_place != 0) {
-            continue;
-        }
         if (!dd2_ai_driver_step(&drivers[slot], &observation, &controls[slot])) {
             return false;
         }

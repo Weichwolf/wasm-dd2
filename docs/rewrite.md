@@ -79,6 +79,10 @@ all twenty source-grid positions with road-aligned initial orientation, fixed-st
 accumulation, pause/reset and focus-loss suspension. Other cars are rendered and
 respond to impacts. Opponents now follow source road paths, brake for curves,
 avoid traffic and pursue other cars in arenas, including timed reverse maneuvers.
+Finished opponents continue normal AI steering and motion while lap records and
+finish places stay latched. An original-circuit-5 natural race checks continued
+post-finish movement and final scores on Native/WASM/ASan/UBSan; complete ordinary
+campaigns remain under verification.
 Passing retains immediate body-heading avoidance and checks the base-lane
 return path before merging back from a clear passing lane. Existing lane choices, rate
 and physical limits are preserved. Stalling is detected from both low forward
