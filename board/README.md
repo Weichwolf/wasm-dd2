@@ -228,6 +228,15 @@ branch for 0035; the production contact correction remains unproved. Receipts:
 /tmp/wasm-dd2/rewrite-reverse-expiry/report.json and
 /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/independent-root/report.json.
 
+The private 0035 diagnostic now reproduces that admissible root by retaining
+fitted friction through its bounded released-wall refinement. Both isolated
+query layouts pass independent material checks; the saved actual Native owner
+advances to 83,451. Production integration must restore cone projection before
+outer acceptance and pass shared-platform/regression/natural-continuation gates.
+This is a private diagnostic milestone, not a production correction or completed
+season. Receipt:
+/tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/private-release-constitutive/physical-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight

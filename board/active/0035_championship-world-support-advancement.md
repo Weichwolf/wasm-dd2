@@ -38,11 +38,25 @@ This proves a feasible branch, not a production fix or original parity.
 Receipts: debug-query/identity.json, debug-query/terminal.json and
 independent-root/report.json within the same capture directory.
 
+Read-only observation of all 108 selected wall-release attempts shows that
+their fitted seeds and refinement endpoints remain above the outer residual;
+the smallest observed endpoint error is 0.207525. A private Native candidate
+keeps fitted friction unclipped throughout that bounded constitutive refinement.
+It solves the full-field and one-body query in 673 velocity / 50 position passes,
+matches the independently admissible impulses within 7.98e-12 and has independently
+checked physical residual 5.35e-12 with no cone violation. The actual saved owner
+then advances from 83,450 to 83,451. Exact zero for the selected release alone,
+or omitting clipping only in the first seed, does not solve the input.
+These are private diagnostic results; production sources remain unchanged.
+Receipt: private-release-constitutive/physical-report.json, with query and actual
+owner receipts in that directory. Faithful branch observations and independent
+acceptance analysis remain in debug-query/ within the same capture directory.
+
 ## Next
 
-Trace the current released-wall refinement through the sliding/linear road
-transition. Implement a bounded correction preserving the independently proved
-root and physical acceptance. Add this input to focused physical checks,
+Turn the private fitted refinement into a bounded production correction, restoring
+cone projection before any outer acceptance. Preserve every inequality, finite
+residual reduction, exact rollback and ordinary solver bound. Add this input to focused physical checks,
 retain existing captured queries and verify actual owner advancement followed
 by ordinary natural continuation. Full campaigns remain under 0025/0004.
 
