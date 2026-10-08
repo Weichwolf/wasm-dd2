@@ -119,6 +119,20 @@ provisioned save remains unchanged. Receipt:
 This proves these original configuration paths and mapping, not game/replay
 codecs, corrupt/full/failing storage or accepted rewrite persistence.
 
+A 68-key actual-original follow-up exposes a filename ambiguity after display
+compaction. With only B in physical block 1 and logical slot 0, saving another B
+from logical empty slot 1 succeeds and places the new B in physical block 0.
+The two configurations contain distinct effects volumes (3272/3681). Selecting
+the second visible B for load restores 3272 from the first physical B, rather
+than 3681 from the selected block. Ten actual X11 windows and seven bounded card
+checkpoints are reviewed; provisioned data remains unchanged. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-duplicate-card-0008-1/report.json`.
+The frozen duplicate check excludes a logical index as though it were physical;
+load searches by filename. Rewrite uniqueness must use physical identity, and
+loading must consume the selected entry's payload. Preserve existing duplicate
+images for recovery while preventing new ambiguous names. This is a reproduced
+original bug, not accepted rewrite frontend behavior.
+
 The observed CD Player displays the selected
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must

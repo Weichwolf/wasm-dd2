@@ -59,6 +59,7 @@ its game requirements or acceptance rules.
 | [0052](closed/0052_arena-a-body-state-stability.md) | Restore the original Arena-A body-state comparison | closed |
 | [0053](active/0053_arena8-position-convergence.md) | Restore natural Arena-8 contact position convergence | active |
 | [0054](closed/0054_contact-scratch-initialization.md) | Reduce redundant contact scratch initialization | closed |
+| [0055](closed/0055_owned-save-card-container.md) | Own the original Windows save-card container | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -806,3 +807,14 @@ provisioned save remains unchanged. Receipt:
 /tmp/wasm-dd2/rewrite-frontend-multiple-card-0008-3/report.json.
 This proves these original configuration paths and mapping, not game/replay
 codecs, corrupt/full/failing storage or accepted rewrite persistence.
+
+Closed 0055 now owns the original Windows save-card container. Sixty-six
+production Native/WASM/fresh O1 sanitized comparisons prove exact image/entry
+reads, complete physical payload selection, actual put/delete transitions and
+compacted duplicate rejection. An actual 68-key original run reproduces B/B
+creation after compaction and loading the wrong physical B; existing duplicate
+images remain readable in the new container without creating new ambiguity.
+Strict LLVM19/174-file, 39/37 gates and Native Memcheck pass. Typed payloads,
+durable adapters and frontend integration remain open under 0008/0003. The
+frozen Arena-8 binary separately collects late motion/contact evidence under
+0053. Receipt: /tmp/wasm-dd2/rewrite-save-card-0055/verification-report.json.

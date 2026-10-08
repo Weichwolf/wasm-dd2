@@ -16,6 +16,14 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-accidents-verify
 .PHONY: rewrite-race-verify
 
+.PHONY: rewrite-save-card-verify
+rewrite-save-card-verify: ## verify owned original save container and transactional block operations
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_save_card.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-font-verify
 rewrite-font-verify: ## verify owned original font glyphs and live original font loading
 	$(MAKE) clean-logs

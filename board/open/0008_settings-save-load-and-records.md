@@ -48,9 +48,33 @@ provisioned save remains unchanged. Receipt:
 This proves these original configuration paths and mapping, not game/replay
 codecs, corrupt/full/failing storage or accepted rewrite persistence.
 
+A 68-key actual-original follow-up exposes a filename ambiguity after display
+compaction. With only B in physical block 1 and logical slot 0, saving another B
+from logical empty slot 1 succeeds and places the new B in physical block 0.
+The two configurations contain distinct effects volumes (3272/3681). Selecting
+the second visible B for load restores 3272 from the first physical B, rather
+than 3681 from the selected block. Ten actual X11 windows and seven bounded card
+checkpoints are reviewed; provisioned data remains unchanged. Receipt:
+/tmp/wasm-dd2/rewrite-frontend-duplicate-card-0008-1/report.json.
+The frozen duplicate check excludes a logical index as though it were physical;
+load searches by filename. Rewrite uniqueness must use physical identity, and
+loading must consume the selected entry's payload. Preserve existing duplicate
+images for recovery while preventing new ambiguous names. This is a reproduced
+original bug, not accepted rewrite frontend behavior.
+
+Closed 0055 now supplies assets/save_card.h: an owned opaque Windows container,
+compact logical-to-physical entries, complete payload views and staged borrowed
+put/delete inputs. Production Native/WASM/fresh O1 sanitizer pass 66 independent
+original image/payload/mutation/duplicate comparisons and synthetic bounds,
+ownership, reserved-byte preservation and rollback. Strict LLVM19/174-file,
+39/37 gates and Native Memcheck pass. The reproduced original duplicate-name bug
+is prevented for new entries while existing duplicate payloads remain distinct.
+This does not complete typed settings/game/replay, durable adapters or frontend
+persistence. Receipt: /tmp/wasm-dd2/rewrite-save-card-0055/verification-report.json.
+
 ## Next
 
-Document supported file layouts, implement typed codecs plus Native/browser storage adapters, and connect ownership to settings, championship and replay flows.
+Implement typed settings/championship/replay payload codecs on the proved container, then stage durable Native/browser writes and connect the actual frontend. Keep selected physical identity through loading; prevent new ambiguous names after display compaction.
 
 ## Accept
 

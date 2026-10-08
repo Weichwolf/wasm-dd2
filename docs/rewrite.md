@@ -142,8 +142,13 @@ offline asset-preparation tools and is not linked into either runtime. The
 rewrite build does not enable a C++ compiler or build those tools.
 The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
 covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
-software surfaces, with shared keyboard input and monotonic timing. Gamepad,
-persistence remain pending. Typed sound-bank/WAVE readers
+software surfaces, with shared keyboard input and monotonic timing. Gamepad and durable
+persistence remain pending. An owned Windows save-card container now preserves
+all fifteen physical blocks, exposes compact logical entries and stages complete
+borrowed replacement inputs. Original image reads and put/delete transitions
+are independently checked on Native/WASM/fresh sanitized C. Typed payload codecs,
+durable adapters and frontend save actions remain open; see
+`src/assets/README.md` and `make rewrite-save-card-verify`. Typed sound-bank/WAVE readers
 now preserve all 45 original effects, including their independent playback
 frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
 Redbook tracks; source/binary-identified three-target verification compares every

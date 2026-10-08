@@ -314,3 +314,36 @@ diagonal edge. All main and alternate branch strips participate. Arena boundarie
 retain the original radii: 14,990, 14,600, 14,400 and 14,400 units. They use an
 analytic circle rather than the square height grid. Source executable tables
 are used only by the independent verifier; runtime constants/data are typed C.
+
+## Windows save-card container
+
+`assets/save_card.h` owns an exact 128 KiB `SaveGames` image. Its fifteen physical
+headers are 512 bytes apart; complete 8 KiB payloads start at offset 8 KiB.
+Occupied headers contain little-endian marker one and a filename terminated
+within nine bytes. Empty headers, unused name tails, reserved bytes and opaque
+payloads are retained. Unsupported occupancy, unterminated names and any other
+image extent are rejected without replacing the caller's existing owner.
+
+Logical entries compact occupied physical headers in ascending order. Creating
+an entry uses the first free physical header. Replacing an occupied logical
+entry first releases its old physical header in the candidate and then uses the
+first free header; unrelated occupied entries retain their names and payloads.
+New duplicate names are rejected using physical identity, independent of display
+compaction. Existing duplicate-name images remain readable as distinct physical
+entries with their complete original payloads; opening does not rewrite them. Deletion clears only occupancy and the first filename byte, retaining
+the old payload. Names have the original eight-byte limit, including its empty
+name case. Complete borrowed payload/name inputs are staged before any mutation.
+Invalid, full and duplicate operations preserve every image byte.
+
+`dd2_save_card_image` borrows immutable bytes for a platform adapter to stage and
+persist. Container mutation alone does not establish durable save success.
+Typed configuration/championship/replay payloads, atomic Native/browser storage
+and frontend actions remain separate work under 0008/0003.
+
+`make rewrite-save-card-verify` checks ownership/bounds/rollback on Native, WASM
+and fresh O1 ASan/UBSan plus an independent inventory and exact round trip of
+the provisioned image. For actual-original mutation comparisons, provide six
+isolated reference checkpoints to `tools/rewrite/verify_save_card.py` using
+`--original-cards /tmp/wasm-dd2/<run>/original-cards`. Reference commands remain
+under the frozen `/tmp` reference. The actual 63-key original run and full-image
+comparisons are scoped container evidence; they do not implement persistence UI.
