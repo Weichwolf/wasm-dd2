@@ -151,10 +151,25 @@ remain zero; no scores/results are manufactured. Diagnose current movement and
 controller behavior under active 0016. Terminal receipt:
 /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
 
+The corrected controller exposes a new natural physical failure at round-2
+step 83,450. AI/frame/championship inputs remain valid; all 76 records match
+between production and failure-only diagnosis. A single 31,216-byte owner
+checkpoint and three world contacts involve only physical body 14. Velocity
+exhausts 4,096 passes at residual 0.000335284234228977; position is not reached.
+Both the actual owner replay and the isolated full-field / one-body-remapped
+queries reproduce failure against unchanged production libraries. This is a
+separate contact advancement task; natural campaign acceptance remains open.
+Receipt: /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/report.json.
+Production replay/query receipts: production-query/owner-replay-report.json and
+production-query/report.json within the same capture directory.
+
+Active 0035 owns this separate contact failure.
+
 ## Next
 
-Resolve the current healthy natural noncompletion under active 0016, then require
-complete physical seasons at the unchanged ordinary bounds and real score rules.
+Resolve the reproduced step-83,450 contact failure under active 0035, then follow
+the same natural season to its actual outcome. Retain controller/tactical work
+under 0016 and require complete physical seasons at unchanged ordinary bounds.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field

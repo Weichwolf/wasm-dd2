@@ -39,6 +39,7 @@ its game requirements or acceptance rules.
 | [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
 | [0033](closed/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | closed |
 | [0034](closed/0034_original-font-glyph-data.md) | Original font glyph data | closed |
+| [0035](active/0035_championship-world-support-advancement.md) | Championship world-support advancement | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -208,6 +209,24 @@ characters checked at normal Wine frontend startup. Twelve original mutations,
 input lifetime and mandatory quality gates pass. Rendering/menu actions remain
 open under 0003. Receipt:
 /tmp/wasm-dd2/rewrite-font-verification-complete/report.json.
+
+Active 0035 owns the new step-83,450 natural world-support failure after the
+controller's forward-retry correction. All 76 production/diagnostic records
+match; one saved owner and its three world contacts reproduce failure against
+production libraries, both with twenty bodies and a single-body remap. A contact
+correction and complete physical campaign remain unproved. Receipt:
+/tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/report.json.
+
+The low-speed reverse timer now permits a fresh forward attempt, with a focused
+before-fail/after-pass regression on Native/WASM/ASan and passing mandatory
+35/33 CTests and eleven-level actual input checks. The completed guidance suite
+passes all 29,214 path queries per target, but sustained movement passes only
+31 of 33 scopes: Native and sanitized B remain below the unchanged movement
+requirement under active 0016. Full AI and physical seasons remain open. A faithful
+terminal observer and independent physical root identify a feasible released-wall
+branch for 0035; the production contact correction remains unproved. Receipts:
+/tmp/wasm-dd2/rewrite-reverse-expiry/report.json and
+/tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/independent-root/report.json.
 
 ## Workflow and acceptance
 

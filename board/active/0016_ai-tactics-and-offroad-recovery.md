@@ -35,14 +35,55 @@ This proves current natural noncompletion, not its tactical/kinematic cause.
 Current terminal receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/report.json.
 Closed 0033 proves the separate contact saved-input/continuation correction.
 
+A sparse current-runtime reproduction matches all 120 production records, with
+13 late player samples and two full-fleet observations. The supported upright
+player moves only 16.0535 XZ units over the final 100 simulated seconds, without
+sampled unresolved sweeps. Its reverse/stuck counters sum to 299 at every sample
+after tick 240,000, while the requested sampled throttle remains -0.6. Independent
+source geometry confirms the path target is forward-facing (dot above 0.988)
+at both fleet checkpoints. The low-speed timer counts reverse decisions and can
+therefore rearm reverse immediately on expiry. This is a controller defect;
+other dense-field tactics and complete natural outcome causes remain separate.
+Receipt: /tmp/wasm-dd2/rewrite-stock-round2-movement/report.json.
+
+The low-speed timer now counts forward decisions only. A stationary reverse
+cannot immediately rearm that timer; the focused regression requires two full
+forward/reverse cycles. The regression fails against the unchanged previous
+controller and passes on Native, WASM and ASan/UBSan. Strict LLVM19, all 35 Native
+and 33 WASM CTests, and actual eleven-level Native/sanitized/Chromium input checks
+pass. Receipt: /tmp/wasm-dd2/rewrite-reverse-expiry/report.json.
+
+The unchanged sixty-second guidance/driving suite completes all eleven levels
+on three targets. All 29,214 independent path queries per target and pose,
+decision-cadence and reset checks pass. Sustained movement passes 31 of 33 target
+scopes: Native B slot 12 travels 9,728.9505 units; sanitized B slots 12/13 travel
+9,194.5768/9,937.1477, below the unchanged 10,000-unit requirement. All retain
+2,400 supported samples. WASM B passes. This is an open movement failure, not
+complete AI acceptance; no thresholds, deadlines or simulation lengths change.
+Completed receipt with all B observations:
+/tmp/wasm-dd2/rewrite-reverse-expiry/ai/diagnosis-report.json.
+
+The corrected controller exposes a new natural physical failure at round-2
+step 83,450. AI/frame/championship inputs remain valid; all 76 records match
+between production and failure-only diagnosis. A single 31,216-byte owner
+checkpoint and three world contacts involve only physical body 14. Velocity
+exhausts 4,096 passes at residual 0.000335284234228977; position is not reached.
+Both the actual owner replay and the isolated full-field / one-body-remapped
+queries reproduce failure against unchanged production libraries. This is a
+separate contact advancement task; natural campaign acceptance remains open.
+Receipt: /tmp/wasm-dd2/rewrite-reverse-expiry/failure-capture/report.json.
+Production replay/query receipts: production-query/owner-replay-report.json and
+production-query/report.json within the same capture directory.
+
+Active 0035 owns this separate contact failure.
+
 ## Next
 
-Capture sparse public owner/controller observations of the current Stockcar
-noncompletion, match its unchanged production trace and diagnose supported motion,
-orientation, damage, guidance and reverse/progress decisions before choosing a fix.
-Keep every engine, damage, lap and score rule and the ordinary fixture bound.
-Diagnose the reproduced contact-bound B movement and reverse maneuvers while preserving the Total
-Destruction player target. Use ordinary complete races to identify off-road and
+Advance the reproduced natural contact failure under 0035. Diagnose the completed
+Native/sanitized B movement failures using the retained observations, before
+choosing a tactical correction; keep the ordinary movement requirement and bound.
+Preserve the Total Destruction player target and every engine, damage, lap and
+score rule. Use ordinary complete races to identify off-road and
 tactical failures; recover original behavior and implement explicit recovery/tactics
 without manufactured score, damage or route progress.
 

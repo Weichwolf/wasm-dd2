@@ -29,6 +29,11 @@ positions: it must move at least 120 world units from a retained anchor within
 velocity still exceeds the 80-unit/s low-speed threshold. Small oscillations do
 not reset the position timer. Reverse, inverted braking and missing guidance
 restart this observation window; an expired reverse gets a fresh forward attempt.
+The low-speed counter counts only forward decisions and clears during reverse;
+otherwise a stationary reverse
+would fill that counter and immediately rearm itself on expiry. A zero-velocity
+regression requires two complete 1.5-second forward/reverse cycles, separately
+from the accepted-position cases that advertise substantial velocity.
 Position history belongs to the driver and resets with the rest of its state.
 An inverted car brakes; tire traction, body support and collision impulses remain
 owned by physics.

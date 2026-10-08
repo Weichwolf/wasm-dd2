@@ -284,7 +284,7 @@ static dd2_vehicle_control dd2_ai_control(dd2_ai_driver *driver, const dd2_vehic
         .throttle = fmax(0, dd2_ai_clamp((wanted - speed) / dd2_ai_control_speed)),
         .brake = fmax(0, dd2_ai_clamp((speed - wanted) / dd2_ai_control_speed)),
         .steer = steer};
-    if (fabs(speed) < dd2_ai_stuck_speed) {
+    if (driver->reverse_steps == 0 && fabs(speed) < dd2_ai_stuck_speed) {
         if (driver->stuck_steps < DD2_AI_STUCK_STEPS) {
             ++driver->stuck_steps;
         }

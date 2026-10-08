@@ -120,6 +120,43 @@ static bool dd2_ai_test_driver(const dd2_road *road, const dd2_road_surface *sur
            control.steer == 0;
 }
 
+/* A car that cannot move during reverse still needs a new forward attempt.
+ * A reverse-speed counter must not rearm reverse on its expiration tick. */
+static bool dd2_ai_test_stopped_reverse(const dd2_road *road, const dd2_road_surface *surface) {
+    dd2_vehicle vehicle = {0};
+    dd2_ai_driver driver = {0};
+    if (!dd2_vehicle_reset(&vehicle, (dd2_vehicle_spawn){.position = {.y = dd2_ai_test_height}}) ||
+        !dd2_ai_driver_reset(&driver,
+                             (dd2_ai_start){.road = road, .cell = 0, .slot = 0, .count = 1})) {
+        return false;
+    }
+    const dd2_ai_observation observation = {
+        .road = road, .surface = surface, .vehicles = &vehicle, .count = 1, .slot = 0};
+    dd2_vehicle_control control = {0};
+    for (unsigned cycle = 0; cycle < 2; ++cycle) {
+        for (unsigned step = 1; step <= DD2_AI_TEST_PROGRESS_STEPS; ++step) {
+            if (!dd2_ai_driver_step(&driver, &observation, &control) ||
+                (step < DD2_AI_TEST_PROGRESS_STEPS &&
+                 (control.throttle <= 0 || driver.reverse_steps != 0 ||
+                  driver.stuck_steps != step || driver.progress_steps != step))) {
+                return false;
+            }
+        }
+        if (control.throttle >= 0 || driver.reverse_steps != DD2_AI_TEST_PROGRESS_STEPS - 1 ||
+            driver.stuck_steps != 0 || driver.progress_steps != 0) {
+            return false;
+        }
+        for (unsigned step = 1; step < DD2_AI_TEST_PROGRESS_STEPS; ++step) {
+            if (!dd2_ai_driver_step(&driver, &observation, &control) || control.throttle >= 0 ||
+                driver.reverse_steps != DD2_AI_TEST_PROGRESS_STEPS - 1 - step ||
+                driver.progress_steps != 0) {
+                return false;
+            }
+        }
+    }
+    return driver.reverse_steps == 0;
+}
+
 typedef enum {
     DD2_AI_TEST_STATIONARY,
     DD2_AI_TEST_MOVING,
@@ -243,7 +280,8 @@ int main(void) {
     dd2_road *road = dd2_ai_test_road();
     dd2_road_surface *surface = dd2_road_surface_create(road);
     const bool valid = road != NULL && surface != NULL && dd2_ai_test_path(road) &&
-                       dd2_ai_test_driver(road, surface) && dd2_ai_test_progress();
+                       dd2_ai_test_driver(road, surface) &&
+                       dd2_ai_test_stopped_reverse(road, surface) && dd2_ai_test_progress();
     dd2_road_surface_destroy(surface);
     dd2_road_destroy(road);
     puts(valid ? "AI guidance/control/recovery validation: PASS" : "AI validation: FAIL");
