@@ -235,3 +235,16 @@ all eleven levels pass. Complete ordinary corrected-AI movement/campaigns remain
 open. The frozen solver-only d0a1bd7 WASM trajectory rejects tick 155992 under 0049;
 it is not a corrected-AI trajectory. Receipt:
 /tmp/wasm-dd2/rewrite-native-movement-0044/component-report.json.
+
+## Terminal ordinary heading-safe baseline
+
+All immutable 570df9d baselines are terminal without timeout/contact rejection:
+Native reaches round-1 bound at credited lap9; WASM/sanitized naturally finish/
+retire rounds1/2 but reach round-3 bound at credited lap7. The new source does not
+inherit those baseline trajectories as proof. Finished NPCs brake in the rewrite;
+the original reference keeps calling their AI. Active 0050 owns actual finish
+movement; closed 0051 resolves the independent nineteen-contact component while
+0049 retains full-owner continuation. Existing Arena-A cross-target angular
+acceptance remains open under 0052. Receipts:
+/tmp/wasm-dd2/rewrite-season-passing-return-0016/canonical-report.json and
+/tmp/wasm-dd2/rewrite-finish-movement-0050/reference-finisher-report.json.

@@ -690,3 +690,15 @@ functional or compatibility errors remain.
 with independently decoded source-plane and wheel contact checks and subsequent
 acceleration. It covers Native, Node/WASM and ASan/UBSan. These are recovery
 subsystem checks, not naturally completed arena races or original handling parity.
+
+The captured ordinary round-2 tick-155992 world-pressure query now preserves
+projected warm normal branches during private refinement. Its nineteen contacts
+among nine bodies reach an independently verified physical root; full/remapped
+Native/WASM/O1 ASan/UBSan cases, all 742 physical checks and unchanged eleven-level
+AI contracts pass, with strict LLVM19/169-file and 38/36 CTest gates. This proves
+the captured field component, not a full natural owner campaign. The unchanged
+Arena-A spinning-body comparison still exceeds its angular bound identically at
+previous/current source; full ground acceptance remains open under 0052. Fresh
+570df9d ordinary baselines instead stop at round-1 or round-3 tick bounds behind
+late-race traffic. Finished-NPC controls and actual natural results remain under
+0050. See the board for these separate acceptance contracts.

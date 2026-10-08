@@ -54,6 +54,9 @@ its game requirements or acceptance rules.
 | [0047](closed/0047_linear-world-pressure-basin.md) | Recover a stronger linear world-pressure basin | closed |
 | [0048](closed/0048_passing-lane-return.md) | Keep a clear passing lane while its base path is blocked | closed |
 | [0049](active/0049_next-wasm-round2-rejection.md) | Diagnose the next ordinary WASM round-2 rejection | active |
+| [0050](active/0050_ordinary-finish-movement.md) | Restore ordinary movement through late-race traffic | active |
+| [0051](closed/0051_warm-pressure-normal-branches.md) | Preserve warm normal branches during world-pressure refinement | closed |
+| [0052](active/0052_arena-a-body-state-stability.md) | Restore the original Arena-A body-state comparison | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -681,3 +684,17 @@ queries and 2640000 vehicle steps per target. Component health is frozen; actual
 corrected-source damage/recovery/lap/result campaigns remain pending under
 0016/0044. The nineteen-contact velocity failure remains active under 0049.
 Receipt: /tmp/wasm-dd2/rewrite-native-movement-0044/component-report.json.
+
+Closed 0051 preserves warm normal branches inside incident world-pressure
+refinement. The independent nineteen-contact root and exact twenty-body field
+advance on Native/WASM/O1 ASan/UBSan, with 742 physical checks per target, strict
+LLVM19/169-file checks, 38/36 CTests, previous-source negatives and zero-error/leak
+Valgrind. All eleven unchanged original AI levels pass 29214 path queries and
+2640000 vehicle steps per target. Complete owner outcomes remain under 0049;
+full seasons are not proved. All frozen 570df9d ordinary baselines are terminal:
+Native round-1/credited-lap9 bound and WASM/sanitized round-3/credited-lap7 bound,
+without timeout/contact rejection. Active 0050 owns late-race movement and the
+reference evidence that NPC AI continues after finishing. Active 0052 owns the
+existing Arena-A angular comparison, exactly unchanged before/after 0051.
+Receipts: /tmp/wasm-dd2/rewrite-next-round2-rejection-0049/component-report.json
+and /tmp/wasm-dd2/rewrite-season-passing-return-0016/canonical-report.json.

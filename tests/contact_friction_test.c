@@ -1,5 +1,6 @@
 #include "contact_friction_fixture.h"
 #include "contact_linear_pressure_fixture.h"
+#include "contact_warm_pressure_fixture.h"
 #include "physics/collision_math.h"
 #include "physics/contact_group.h"
 #include "physics/vehicle.h"
@@ -40,7 +41,10 @@ enum {
     DD2_FRICTION_FIRST_PHASE_BODIES = 3,
     DD2_FRICTION_FIXED_ACTIVE_CONTACTS = 14,
     DD2_FRICTION_FIXED_ACTIVE_BODIES = 5,
-    DD2_FRICTION_INCIDENT_LOAD_CONTACTS = 3
+    DD2_FRICTION_INCIDENT_LOAD_CONTACTS = 3,
+    DD2_FRICTION_WARM_PRESSURE_CONTACTS = 19,
+    DD2_FRICTION_WARM_PRESSURE_BODIES = 9,
+    DD2_FRICTION_WARM_PRESSURE_ORDERINGS = 6
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -806,7 +810,104 @@ static bool dd2_friction_linear_pressure_root(void) {
     return true;
 }
 
+static bool dd2_friction_warm_pressure_orderings(const dd2_friction_case *scenario) {
+    if (!dd2_friction_run(scenario)) {
+        return false;
+    }
+    unsigned mapping[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    unsigned count = 0;
+    dd2_vehicle bodies[DD2_FRICTION_WARM_PRESSURE_BODIES] = {0};
+    for (unsigned slot = 0; slot < scenario->body_count; ++slot) {
+        bool involved = false;
+        for (unsigned index = 0; index < scenario->contact_count; ++index) {
+            involved = involved || scenario->contacts[index].first == slot ||
+                       scenario->contacts[index].second == slot;
+        }
+        if (involved) {
+            if (count >= DD2_FRICTION_WARM_PRESSURE_BODIES) {
+                return false;
+            }
+            mapping[slot] = count;
+            bodies[count++] = scenario->initial[slot];
+        }
+    }
+    if (count != DD2_FRICTION_WARM_PRESSURE_BODIES) {
+        return false;
+    }
+    for (unsigned ordering = 0; ordering < DD2_FRICTION_WARM_PRESSURE_ORDERINGS; ++ordering) {
+        dd2_group_contact contacts[DD2_FRICTION_WARM_PRESSURE_CONTACTS] = {0};
+        const unsigned shift = (ordering / 2) * (DD2_FRICTION_WARM_PRESSURE_CONTACTS /
+                                                 (DD2_FRICTION_WARM_PRESSURE_ORDERINGS / 2));
+        for (unsigned index = 0; index < scenario->contact_count; ++index) {
+            const unsigned source =
+                (shift + ((ordering & 1U) == 0 ? index : scenario->contact_count - 1 - index)) %
+                scenario->contact_count;
+            contacts[index] = scenario->contacts[source];
+            contacts[index].first = mapping[contacts[index].first];
+            if (contacts[index].second != DD2_VEHICLE_NO_PARTNER) {
+                contacts[index].second = mapping[contacts[index].second];
+            }
+        }
+        const dd2_friction_case remapped = {.initial = bodies,
+                                            .contacts = contacts,
+                                            .body_count = count,
+                                            .contact_count = scenario->contact_count,
+                                            .name = scenario->name};
+        if (!dd2_friction_run(&remapped)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool dd2_friction_warm_pressure_root(void) {
+    const double root_tolerance = 1e-5;
+    dd2_vehicle bodies[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    for (unsigned slot = 0; slot < DD2_VEHICLE_FLEET_LIMIT; ++slot) {
+        bodies[slot] = dd2_friction_warm_pressure_wasm_bodies[slot];
+    }
+    dd2_group_solution result = {0};
+    const dd2_group_query query = {.bodies = bodies,
+                                   .body_count = DD2_VEHICLE_FLEET_LIMIT,
+                                   .contacts = dd2_friction_warm_pressure_wasm_contacts,
+                                   .contact_count = DD2_FRICTION_WARM_PRESSURE_CONTACTS};
+    if (!dd2_contact_group_solve(&query, &result)) {
+        return false;
+    }
+    for (unsigned index = 0; index < DD2_FRICTION_WARM_PRESSURE_CONTACTS; ++index) {
+        if (fabs(result.contacts[index].normal_impulse -
+                 dd2_friction_warm_pressure_reference[index]) >= root_tolerance) {
+            return false;
+        }
+    }
+    puts("Independent warm world pressure root: PASS");
+    return true;
+}
+
+static bool dd2_friction_warm_pressure(void) {
+    const dd2_friction_case scenarios[] = {{.initial = dd2_friction_warm_pressure_native_bodies,
+                                            .contacts = dd2_friction_warm_pressure_native_contacts,
+                                            .body_count = DD2_VEHICLE_FLEET_LIMIT,
+                                            .contact_count = DD2_FRICTION_WARM_PRESSURE_CONTACTS,
+                                            .name = "native warm world pressure neighborhood"},
+                                           {.initial = dd2_friction_warm_pressure_wasm_bodies,
+                                            .contacts = dd2_friction_warm_pressure_wasm_contacts,
+                                            .body_count = DD2_VEHICLE_FLEET_LIMIT,
+                                            .contact_count = DD2_FRICTION_WARM_PRESSURE_CONTACTS,
+                                            .name = "wasm warm world pressure neighborhood"}};
+    for (unsigned index = 0; index < sizeof(scenarios) / sizeof(scenarios[0]); ++index) {
+        if (!dd2_friction_warm_pressure_orderings(&scenarios[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(void) {
+    if (!dd2_friction_warm_pressure() || !dd2_friction_warm_pressure_root()) {
+        puts("Warm world pressure neighborhood: FAIL");
+        return EXIT_FAILURE;
+    }
     if (!dd2_friction_linear_pressure_root()) {
         puts("Independent linear world pressure root: FAIL");
         return EXIT_FAILURE;

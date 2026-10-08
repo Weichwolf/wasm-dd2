@@ -37,8 +37,9 @@ active-branch diagnosis. Receipt: independent-root-report.json beside the diagno
 
 ## Next
 
-Check independent normal/friction equations for the exact nineteen-contact
-velocity query and find a valid physical correction. Preserve every saved
+Independent continuation now proves a valid all-loaded root; the correction
+and component acceptance are tracked under 0051. Continue actual full-owner
+outcomes and retain the exact saved controls/contacts. Preserve every saved
 actual control and captured contact regression. Preserve 0048's AI
 verification and distinguish old-source rejection from corrected-AI campaigns.
 
@@ -48,3 +49,15 @@ A reproducible causal defect and physically valid correction pass Native/WASM/
 instrumented C and all reached strict/functional regressions, followed by actual
 ordinary owner advancement beyond this failure. No partial result proves a
 complete natural campaign or game.
+
+## Verified root and separated ordinary epochs
+
+Independent pressure continuation recovers pressure 0.44282582792513747 and
+0.08963866964215116 slip on world row 3. A read-only trace shows the pressure
+trial prematurely releases still-needed rows 5/16. Preserving warm normal
+branches recovers the captured query and exact portable field on all three
+targets; production gates and the broader component proof are under 0051.
+The separate immutable 570df9d baselines are all terminal: Native is blocked at
+round-1 bound/credited lap9, WASM/sanitized at round-3 bound/credited lap7. They
+naturally finish/retire earlier rounds but do not complete a season or exercise
+the newer pressure correction. Those actual movement contracts are under 0050.

@@ -836,3 +836,17 @@ car-pair proximity. Only that component queries road and barrier support; world
 contacts cannot connect separate cars. Primary, barrier, ground and pair insertion
 order, support deduplication, contact budgets and response rules are preserved.
 This avoids repeated world queries for unrelated cars during dense-field events.
+
+The complete incident world-pressure trial now freezes its projected warm normal
+branches before applying the seed. The selected support stays loaded, existing
+released rows fit zero impulse, and other loaded rows keep their normal equations
+while friction settles. A negative unconstrained full-step prediction therefore
+uses nonnegative candidates and backtracking instead of prematurely dropping
+another needed support. Full physical acceptance still checks every constraint,
+cone and constitutive law. The 324-model, 4096-pass and sixteen-step refinement/
+backtracking bounds remain unchanged. The captured round-2 tick-155992 query has
+nineteen contacts among nine bodies; its independent pressure root, both full
+fields and remapped row orderings are retained in the 742-case physical corpus.
+The older Arena-A spinning-body comparison still exceeds its angular bound on
+Native/WASM identically before/after this change; complete ground acceptance is
+open under board item 0052.
