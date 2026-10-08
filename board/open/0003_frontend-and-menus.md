@@ -53,13 +53,24 @@ file dialog and retained main-menu selection after Escape. Internal framebuffer
 reads in the first run are torn; visible claims use the separate window capture.
 Receipts: /tmp/wasm-dd2/rewrite-frontend-file-manager-errors-confirmed/report.json
 and /tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json.
-This is original route evidence, not implemented rewrite menus or successful
-occupied-slot load/save/delete. Those paths and storage failures remain open.
+This establishes the empty-slot routes; it does not implement rewrite menus.
+
+A subsequent 38-key original run saves Configuration as A, cancels an occupied
+overwrite, commits a staged Sound Effects edit from 4090 to 3681, reloads A to
+restore 4090, cancels deletion and confirms deletion. Nine actual X11 windows
+are reviewed. Six bounded card checkpoints match the original's in-memory card;
+load and both cancellations preserve all bytes. Confirmed deletion clears the
+occupied header/name prefix but retains the old payload. The provisioned save
+is unchanged. Receipt:
+/tmp/wasm-dd2/rewrite-frontend-occupied-card-0003-5/report.json.
+This is original configuration-route evidence, not implemented rewrite menus or
+accepted occupied overwrite, game/replay data, restart or storage-failure proof.
 
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager
-save/occupied-delete/storage-failure paths, CD transport and multiplayer input/turn topology.
+accepted occupied overwrite, game/replay data and storage-failure paths,
+CD transport and multiplayer input/turn topology.
 Complete the route inventory,
 decode its assets and implement typed navigation/actions using docs/frontend.md.
 Connect real championship, persistence, replay, input and audio owners.

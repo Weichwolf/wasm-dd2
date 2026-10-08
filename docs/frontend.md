@@ -75,8 +75,21 @@ selected slot is red in a three-column/five-row grid, the error dialog visibly
 reads `ERROR` and `Not a DD2 file`, and cancellation retains File Manager on the
 main menu. Receipt:
 `/tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json`.
-These observations cover empty-slot navigation/error/cancel only. Saving,
-occupied-slot load/delete, confirmation, reload and storage failures remain open.
+These observations cover empty-slot navigation/error/cancel only.
+
+A separate 38-key original run saves Configuration as `A`, cancels an occupied
+overwrite, edits and commits Sound Effects, reloads `A`, cancels an occupied
+delete and then confirms deletion. Nine actual X11 client windows are reviewed;
+bounded read-only state and six 128 KiB card checkpoints establish the effects.
+The edit changes working volume from 4090 to 3681 without changing committed
+volume until Return; loading restores 4090. Overwrite/delete cancellation and
+load preserve every card byte. Confirmed deletion clears the occupied header and
+first filename byte while retaining the old 8 KiB payload. The provisioned save
+remains unchanged throughout; only the isolated copy changes. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-occupied-card-0003-5/report.json`.
+This proves these original configuration paths, not accepted occupied overwrite,
+game/championship/replay data, restart persistence, storage failures or rewrite UI.
+Completed images/cards/logs are removed after recording their hashes and review.
 The observed CD Player displays the selected
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must
@@ -96,8 +109,9 @@ Credits on the empty-statistics profile. The Keyboard prompt initially asks for
 Left; Audio Volume initially presents Sound Effects. Escape unwinds each route
 to its retained parent and main selection. Both save files remain unchanged.
 Receipt: `/tmp/wasm-dd2/rewrite-frontend-submenus/report.json`. These observations
-establish actual subordinate entry/cancel routes; record updates, submitted
-bindings, volume changes, joystick actions and persistence remain unproved.
+establish actual subordinate entry/cancel routes. The subsequent occupied-card
+run establishes the volume/configuration path above; record updates, submitted
+bindings, joystick actions and the remaining persistence paths remain unproved.
 
 The original font-bank glyph data is now available as owned C structures through
 `assets/font.h`. All three base tables match Native/WASM/ASan exports and the six

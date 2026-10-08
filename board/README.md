@@ -475,6 +475,15 @@ load/delete, reload and storage failures remain open. Receipts:
 /tmp/wasm-dd2/rewrite-frontend-file-manager-errors-confirmed/report.json and
 /tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json.
 
+A subsequent 38-key original configuration run saves A, cancels occupied
+overwrite, commits a staged Sound Effects edit, loads A to restore volume,
+cancels deletion and confirms deletion. Nine actual X11 windows and six bounded
+card checkpoints establish these paths; the provisioned save is unchanged.
+Cancellation/load preserve all bytes; deletion retains the old payload after
+clearing the occupied marker/name prefix. Open 0003/0008 still require rewrite
+menus/codecs, accepted overwrite, game/replay data and storage-failure handling.
+Receipt: /tmp/wasm-dd2/rewrite-frontend-occupied-card-0003-5/report.json.
+
 The frontend migration inventory in docs/frontend.md records the original eight
 main slots and source-backed session/cancel/confirm constraints. Actual original
 input now identifies CARD as File Manager and LINK as CD Audio Player, with
