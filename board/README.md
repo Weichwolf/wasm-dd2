@@ -141,6 +141,10 @@ sanitized/Chromium input checks pass. Six scoped race targets pass, including th
 complete eight-lap Circuit-5 race. Natural-season continuation remains in progress
 under 0032; complete seasons and all-game acceptance remain open. Verified scope:
 /tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
+The first production/diagnostic attempt stops at its 900-second wallclock budget
+after round-2 tick 160,000, with exactly matching records and no logged solver
+failure. It does not close the continuation contract. A longer-wallclock attempt
+uses the same physical bounds, binary and ordinary control profile; see 0032.
 
 ## Workflow and acceptance
 

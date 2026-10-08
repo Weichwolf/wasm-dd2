@@ -61,17 +61,27 @@ The Native solver frame is 353,016 bytes; actual WASM fixtures retain the reserv
 1 MiB stack. All eleven original-data ground checks and actual Native/sanitized/
 Chromium window/input checks pass. Six scoped Circuit-2/live and Circuit-5/complete
 eight-lap race targets pass. The latter is partial race-suite coverage.
-The unmodified natural season and logging-only companion still run with unchanged
-300,000-tick round bounds and ordinary AI controls; their complete JSON prefix
-matches exactly. This contract stays active pending continuation beyond 220,415.
+The unmodified natural season and logging-only companion both exhaust the
+900-second wallclock allowance after reaching round-2 tick 160,000. Their complete
+JSON prefix matches exactly; neither logs a contact failure or produces a failure
+checkpoint. This is an incomplete attempt, not a physical advancement proof.
+Cumulative CPU time is about 56% of elapsed wallclock time; no algorithmic
+performance cause is established. Receipt:
+/tmp/wasm-dd2/rewrite-patch-220415/natural-timeout-report.json.
+The same production binary and a fresh logging-only companion now run with a
+3,600-second wallclock allowance, unchanged 300,000-tick round bounds and ordinary
+AI controls. Outputs are under /tmp/wasm-dd2/rewrite-patch-220415-natural-long/
+and /tmp/wasm-dd2/rewrite-season-after-220415-long/.
+This contract stays active pending continuation beyond 220,415.
 Verified scope: /tmp/wasm-dd2/rewrite-patch-220415/gates-report.json.
 Independent diagnosis/ablation receipt:
 /tmp/wasm-dd2/rewrite-patch-220415/independent-diagnosis.json.
 
 ## Next
 
-Continue the unchanged-bound natural season beyond this failure and record its
-terminal outcome separately from the verified saved-input correction.
+Follow the current longer-wallclock natural attempts to their terminal outcomes.
+Require ordinary continuation beyond this failure; record any next contact
+failure, healthy round bound or timeout separately from the saved-input correction.
 Preserve frozen-query, analytic, original-data and actual application checks.
 Complete physical seasons remain under 0025/0004; natural arena completion and
 movement/tactics retain 0002/0016.
