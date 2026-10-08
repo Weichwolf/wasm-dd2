@@ -285,6 +285,17 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+The complete cold constitutive fallback is now integrated under active 0038,
+after existing warm branches and with stricter complete-root acceptance. Exact
+rollback, the physical law, initial refitted competition and ordinary certification
+remain; only one bounded base model is added (259 total). Strict LLVM19, 35/33
+CTests and all 633 independent physical checks per target pass. Actual saved
+115,420/190,078 owners advance, independent root motion agrees within 1.72e-9,
+and the dense-query Native CPU benefit remains 20.48-fold. A fresh ordinary
+campaign retains identical first-round results; continuation and broader gates
+are running. Full physical seasons/all-game acceptance remain open. Receipt:
+/tmp/wasm-dd2/rewrite-cold-root-0038/component-report.json.
+
 The 115,420 capture now matches all 83 production records exactly. Current and
 pre-optimization solvers both reject the saved owner and full/remapped query.
 Independent geometry and all sixteen normal active sets establish an admissible

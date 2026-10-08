@@ -422,7 +422,7 @@ One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
 previously better correction. The model array holds at most four models per
-contact plus two base models (258 total). Ordinary sweeps, material laws and
+contact plus three base models (259 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
 
 Co-oriented world supports can have dependent normal equations: collinear points
@@ -450,8 +450,8 @@ and selected world-release
 candidates instead scale their saved normal/tangent impulses by one minus the
 backtracking factor, reaching exact zero at the full step. This preserves cones,
 finite checks, impulse accounting, the final material law and exact rollback.
-The bounded model array holds at most four models per contact plus two base
-models (258 total); ordinary pass/refinement/backtracking limits are unchanged.
+The bounded model array holds at most four models per contact plus three base
+models (259 total); ordinary pass/refinement/backtracking limits are unchanged.
 
 Both initial refitted directions still compete before branch-model search.
 If that accepted correction already has full physical error below the existing
@@ -464,6 +464,19 @@ twenty-contact ordinary campaign query and forty rotated/reversed orderings
 exercise the dense path. Its independent constitutive oracle includes the
 documented 1e12 softness cap, with explicit valid/invalid checks below, at and
 above the corresponding 1e-13 cone radius.
+
+If mixed-contact warm branches still miss a complete root after restart, one
+final cold constitutive model privately undoes every accumulated impulse. It
+retains every contact and uses the existing analytic material Jacobian, fitted
+nonnegative pressure directions, equation merit and sixteen-step refinement.
+Its coupled tangent direction remains unprojected inside refinement; final cone
+projection and full physical error still control acceptance. A cold candidate
+must already meet the unchanged velocity tolerance and strictly improve the
+outer error. A partial cold improvement is rejected so it cannot interrupt warm
+progress. Rejection restores exact outer motion and impulses; the next ordinary
+sweep remains required for certification. This adds one bounded base model,
+without additional ordinary sweeps, a new matrix or relaxed material conditions.
+The actual step-115420 query and all twenty-four orderings exercise this root.
 
 A sliding world support can also need to return to the linear friction branch.
 After restart, a world-only field compares a private refinement of the existing

@@ -20,7 +20,7 @@ enum {
     DD2_GROUP_NEWTON_DELAY = 512,
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
-    DD2_GROUP_NEWTON_BASE_MODELS = 2,
+    DD2_GROUP_NEWTON_BASE_MODELS = 3,
     DD2_GROUP_NEWTON_CONTACT_MODELS = 4,
     DD2_GROUP_NEWTON_MODEL_LIMIT =
         DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
@@ -422,7 +422,8 @@ typedef enum {
     DD2_GROUP_NEWTON_SATURATED,
     DD2_GROUP_NEWTON_LOAD,
     DD2_GROUP_NEWTON_RELEASE,
-    DD2_GROUP_NEWTON_PATCH
+    DD2_GROUP_NEWTON_PATCH,
+    DD2_GROUP_NEWTON_COLD
 } dd2_group_newton_method;
 
 typedef struct {
@@ -511,9 +512,14 @@ static bool dd2_group_newton_pressure(dd2_group_newton_method method) {
     return method == DD2_GROUP_NEWTON_LOAD || method == DD2_GROUP_NEWTON_RELEASE;
 }
 
+static bool dd2_group_newton_private(dd2_group_newton_method method) {
+    return method == DD2_GROUP_NEWTON_RELEASE || method == DD2_GROUP_NEWTON_COLD;
+}
+
 static bool dd2_group_newton_material(dd2_group_newton_method method) {
     return method == DD2_GROUP_NEWTON_CONSTITUTIVE || method == DD2_GROUP_NEWTON_SATURATED ||
-           dd2_group_newton_pressure(method) || method == DD2_GROUP_NEWTON_PATCH;
+           dd2_group_newton_pressure(method) || method == DD2_GROUP_NEWTON_PATCH ||
+           method == DD2_GROUP_NEWTON_COLD;
 }
 
 static bool dd2_group_newton_retained(const dd2_group_newton_state *state, unsigned index) {
@@ -891,10 +897,10 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
         const double magnitude =
             sqrt(dd2_collision_dot(candidate.friction[index], candidate.friction[index]));
         const double limit = workspace->query->contacts[index].friction * candidate.normal[index];
-        /* A private release fit must preserve its coupled tangent direction
+        /* A private constitutive fit must preserve its coupled tangent direction
          * across sliding/linear transitions. Its bounded refinement restores
          * every cone before any outer acceptance. Other trials project here. */
-        if (prediction.state->model.method != DD2_GROUP_NEWTON_RELEASE && magnitude > limit) {
+        if (!dd2_group_newton_private(prediction.state->model.method) && magnitude > limit) {
             candidate.friction[index] =
                 dd2_collision_scale(candidate.friction[index], limit / magnitude);
         }
@@ -902,12 +908,12 @@ static dd2_group_iterate dd2_group_newton_candidate(const dd2_group_workspace *w
     return candidate;
 }
 
-/* A private release path can cross a physical-error ridge while approaching
+/* A private constitutive path can cross a physical-error ridge while approaching
  * its constitutive root. Use that fitted equation merit only inside refinement;
  * the projected full physical residual still controls outer acceptance. */
 static double dd2_group_refinement_error(const dd2_group_workspace *workspace,
                                          dd2_group_newton_model model) {
-    if (model.method != DD2_GROUP_NEWTON_RELEASE) {
+    if (!dd2_group_newton_private(model.method)) {
         return dd2_group_velocity_error(workspace);
     }
     const dd2_group_newton_state state = dd2_group_newton_prepare(workspace, model);
@@ -923,7 +929,7 @@ static double dd2_group_refinement_error(const dd2_group_workspace *workspace,
 
 /* The bounded dense matrix uses automatic storage, never allocation. Singular
  * directions are skipped and rejected/backtracked trials restore exact motion.
- * Ordinary corrections reduce physical error. Private release steps reduce
+ * Ordinary corrections reduce physical error. Private constitutive steps reduce
  * fitted equation error before the outer physical acceptance check. */
 static bool dd2_group_newton_step(dd2_group_workspace *workspace, double *error,
                                   dd2_group_newton_model model, dd2_group_linear_system *system) {
@@ -1076,7 +1082,7 @@ static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, unsigned ind
     return dd2_group_motion_finite(workspace);
 }
 
-/* Fitted private release iterates may lie outside a tangent cone. Restore all
+/* Fitted private constitutive iterates may lie outside a tangent cone. Restore all
  * cone bounds before comparing their final physical error with the outer state. */
 static void dd2_group_refinement_project(dd2_group_workspace *workspace) {
     for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
@@ -1096,6 +1102,36 @@ static void dd2_group_refinement_project(dd2_group_workspace *workspace) {
     }
 }
 
+static bool dd2_group_refinement_start(dd2_group_workspace *workspace,
+                                       const dd2_group_newton_state *original,
+                                       dd2_group_linear_system *system) {
+    const dd2_group_newton_model model = original->model;
+    const bool cold = model.method == DD2_GROUP_NEWTON_COLD;
+    if (cold) {
+        /* Undo accumulated responses only inside this private candidate. Its
+         * zero-impulse basin can recover a root missed by warm directions;
+         * rejection restores the exact saved outer motion and impulses. */
+        const dd2_group_iterate empty = {0};
+        dd2_group_newton_apply(workspace, original, &empty);
+        if (!dd2_group_motion_finite(workspace)) {
+            return false;
+        }
+    }
+    const bool seeded = model.method == DD2_GROUP_NEWTON_LOAD;
+    if (seeded && !dd2_group_pressure_seed(workspace, model.selected_contact, system)) {
+        return false;
+    }
+    dd2_group_newton_state prepared =
+        seeded || cold ? dd2_group_newton_prepare(workspace, model) : *original;
+    if (!dd2_group_refinement_seed(workspace, &prepared, system)) {
+        return false;
+    }
+    const dd2_group_iterate seed = dd2_group_newton_candidate(
+        workspace, (dd2_group_newton_prediction){&prepared, system->direction, 1});
+    dd2_group_newton_apply(workspace, &prepared, &seed);
+    return true;
+}
+
 /* Refine a speculative branch after its full fitted step. Intermediate states
  * stay private: the outer iterate changes only for a finite smaller residual.
  * Re-evaluating loaded normals allows previously separating supports to load
@@ -1106,20 +1142,10 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
                                     dd2_group_newton_model model) {
     const dd2_group_newton_state original = dd2_group_newton_prepare(workspace, model);
     dd2_group_linear_system system = {.dimensions = original.dimensions};
-    const bool seeded = model.method == DD2_GROUP_NEWTON_LOAD;
-    if (seeded && !dd2_group_pressure_seed(workspace, model.selected_contact, &system)) {
+    if (!dd2_group_refinement_start(workspace, &original, &system)) {
         dd2_group_restore(workspace, &original.base, original.motion);
         return false;
     }
-    dd2_group_newton_state prepared =
-        seeded ? dd2_group_newton_prepare(workspace, model) : original;
-    if (!dd2_group_refinement_seed(workspace, &prepared, &system)) {
-        dd2_group_restore(workspace, &original.base, original.motion);
-        return false;
-    }
-    const dd2_group_iterate seed = dd2_group_newton_candidate(
-        workspace, (dd2_group_newton_prediction){&prepared, system.direction, 1});
-    dd2_group_newton_apply(workspace, &prepared, &seed);
     double current = dd2_group_refinement_error(workspace, model);
     if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current)) {
         for (unsigned refinement = 0; refinement < DD2_GROUP_NEWTON_REFINEMENTS; ++refinement) {
@@ -1138,12 +1164,13 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
             }
             current = dd2_group_refinement_error(workspace, model);
         }
-        if (model.method == DD2_GROUP_NEWTON_RELEASE) {
+        if (dd2_group_newton_private(model.method)) {
             dd2_group_refinement_project(workspace);
             current = dd2_group_velocity_error(workspace);
         }
         if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current) &&
-            current < *error) {
+            current < *error &&
+            (model.method != DD2_GROUP_NEWTON_COLD || current < dd2_group_velocity_tolerance)) {
             *error = current;
             return true;
         }
@@ -1229,6 +1256,10 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
             models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_RELEASE,
                                                        .selected_contact = index};
         }
+    }
+    if (paired) {
+        models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_COLD,
+                                                   .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
     }
     return count;
 }

@@ -3711,7 +3711,61 @@ static const dd2_group_contact dd2_friction_dense_contacts[] = {
      .normal = {.x = 0.8923386592339534, .y = -0.242450461364672, .z = -0.38072232797750155},
      .penetration = -0.00019999944078108456,
      .friction = 0.25}};
+/* Actual production 5b79736 step-115420 query; slots 4 and 16 are remapped.
+ * Warm directions reject this all-loaded constitutive basin on both solvers.
+ * Query SHA256: e544471dd36934912c73d735cad859532ca85e38881f927e7a3de87c2cf22d23 */
+static const dd2_vehicle dd2_friction_cold_bodies[] = {
+    {.position = {.x = 29064.754200021107, .y = 8214.361670445483, .z = 68219.49148049038},
+     .velocity = {.x = -1.3374061819802916, .y = -7.307016760748789, .z = -1.2029041040919248},
+     .rotation = {.x = -0.7532138593358322,
+                  .y = 0.27798328145897405,
+                  .z = 0.5952925999001214,
+                  .w = -0.03195149195070651},
+     .angular_velocity = {.x = -0.012824969618710168,
+                          .y = 0.004438633206342966,
+                          .z = -0.0132315329309603}},
+    {.position = {.x = 29787.60907897924, .y = 8327.672353029473, .z = 68620.18811913862},
+     .velocity = {.x = 816.2199441795633, .y = -167.3262894267884, .z = -113.12527604095794},
+     .rotation = {.x = -0.11623406562886596,
+                  .y = -0.6563627694739051,
+                  .z = -0.016912657426231534,
+                  .w = 0.7452459452118563},
+     .angular_velocity = {
+         .x = -0.0038200123025842886, .y = 0.041268047547751645, .z = -0.0027650596302416504}}};
+static const dd2_group_contact dd2_friction_cold_contacts[] = {
+    {.first = 0,
+     .second = 20,
+     .point = {.x = 28578.2953975814, .y = 8316.957403603401, .z = 68302.12288532795},
+     .normal = {.x = 0.20531409029527312, .y = 0.9662225739829723, .z = -0.15575641833306317},
+     .penetration = 2.787518325430942e-11,
+     .friction = 0.8},
+    {.first = 0,
+     .second = 20,
+     .point = {.x = 28794.00458394998, .y = 8289.028834683832, .z = 67959.46391488475},
+     .normal = {.x = 0.15760145702905043, .y = 0.0, .z = 0.9875028003718876},
+     .penetration = -0.00017252473821163222,
+     .friction = 0.25},
+    {.first = 0,
+     .second = 20,
+     .point = {.x = 29551.21300246185, .y = 8111.765824725606, .z = 68136.86007565161},
+     .normal = {.x = 0.17483556101468664, .y = 0.9740601739681869, .z = -0.14366385799408737},
+     .penetration = -0.00010964174679093685,
+     .friction = 0.8},
+    {.first = 0,
+     .second = 1,
+     .point = {.x = 29477.060166560128, .y = 8230.082516518612, .z = 68487.04813638746},
+     .normal = {.x = -0.17344447853675954, .y = -0.337558978565822, .z = -0.9251869804827079},
+     .penetration = -0.00018775479105670456,
+     .friction = 0.25}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
+    {.initial = dd2_friction_cold_bodies,
+     .contacts = dd2_friction_cold_contacts,
+     .body_count = 2,
+     .contact_count = 4,
+     .name = "championship cold constitutive basin",
+     .require_restart = true},
+
     {.initial = dd2_friction_dense_bodies,
      .contacts = dd2_friction_dense_contacts,
      .body_count = 7,

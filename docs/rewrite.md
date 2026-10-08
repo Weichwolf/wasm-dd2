@@ -304,7 +304,7 @@ state. Released contacts retain their normal inequalities in physical acceptance
 and can reload in ordinary sweeps. The fixed-load solve and refinement reuse one
 matrix; every candidate remains subject to the unchanged final physical law,
 finite residual reduction and exact rollback. At most four models per contact
-plus two base models use bounded automatic storage; ordinary pass limits and
+plus three base models use bounded automatic storage; ordinary pass limits and
 material acceptance remain unchanged. All six orderings of a three-world-contact
 query check higher pressure, and all 120 permutations of a three-body/five-contact
 query check released world support with loaded car pairs. Twenty-two additional

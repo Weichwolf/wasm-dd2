@@ -31,7 +31,8 @@ enum {
     DD2_FRICTION_FITTED_CONTACTS = 3,
     DD2_FRICTION_MERIT_CONTACTS = 5,
     DD2_FRICTION_DENSE_CONTACTS = 20,
-    DD2_FRICTION_DENSE_BODIES = 7
+    DD2_FRICTION_DENSE_BODIES = 7,
+    DD2_FRICTION_COLD_CONTACTS = 4
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -630,6 +631,28 @@ static bool dd2_friction_merit_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_cold_orderings(void) {
+    unsigned order[DD2_FRICTION_COLD_CONTACTS] = {0};
+    for (unsigned index = 0; index < DD2_FRICTION_COLD_CONTACTS; ++index) {
+        order[index] = index;
+    }
+    do {
+        dd2_group_contact contacts[DD2_FRICTION_COLD_CONTACTS] = {0};
+        for (unsigned index = 0; index < DD2_FRICTION_COLD_CONTACTS; ++index) {
+            contacts[index] = dd2_friction_cold_contacts[order[index]];
+        }
+        const dd2_friction_case scenario = {.initial = dd2_friction_cold_bodies,
+                                            .contacts = contacts,
+                                            .body_count = DD2_FRICTION_PAIR,
+                                            .contact_count = DD2_FRICTION_COLD_CONTACTS,
+                                            .name = "championship cold constitutive ordering"};
+        if (!dd2_friction_run(&scenario)) {
+            return false;
+        }
+    } while (dd2_friction_order_next(order, DD2_FRICTION_COLD_CONTACTS));
+    return true;
+}
+
 static bool dd2_friction_dense_orderings(void) {
     for (unsigned reversed = 0; reversed < 2; ++reversed) {
         for (unsigned start = 0; start < DD2_FRICTION_DENSE_CONTACTS; ++start) {
@@ -691,7 +714,7 @@ int main(void) {
         !dd2_friction_linear_orderings() || !dd2_friction_mixed_release_orderings() ||
         !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings() ||
         !dd2_friction_fitted_orderings() || !dd2_friction_merit_orderings() ||
-        !dd2_friction_dense_orderings()) {
+        !dd2_friction_dense_orderings() || !dd2_friction_cold_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }
