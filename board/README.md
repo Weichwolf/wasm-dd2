@@ -284,6 +284,14 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+All current-source actual-input/window checks for 0037 now pass on Native,
+sanitized Native and Chromium/WASM, including all eleven scene/car views and
+31/31/144 comparisons. No browser errors are reported. Shared-build, focused
+physical, ground and selected-race gates pass; natural campaign acceptance is
+still contradicted by the recorded 115,420 advancement failure. Its targeted
+capture remains running and no causal correction is claimed. Receipt:
+/tmp/wasm-dd2/rewrite-dense-search-0037/window-gate-receipt.json.
+
 The 0037 current-source selected race gate passes all six scenario/target pairs,
 including the complete eight-lap Circuit-5 Stockcar race on Native/WASM/ASan.
 Its 167,472 ticks, place 2 and 75 player points match independent geometry/result

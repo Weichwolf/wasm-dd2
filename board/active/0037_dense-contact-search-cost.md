@@ -70,9 +70,16 @@ geometry/results checks. This is selected-race coverage, not a passing full suit
 or the failed campaign's continuation. Actual-input checks and causal capture
 remain running. Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/race-gate-receipt.json.
 
+Actual-input verification is now complete: all eleven original-data scene/car
+views and real input/lifetime checks pass on Native, sanitized Native and
+Chromium/WASM (31, 31 and 144 comparisons respectively). The browser reports no
+errors. These are rewrite presentation/input checks and do not establish original
+image parity or the failed campaign's continuation. Only the causal failure
+capture and continuation diagnosis remain pending for this item.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/window-gate-receipt.json.
+
 ## Next
 
-Finish current-source actual-input checks.
 Require the failure-only capture to reproduce all 83 records. Replay its actual
 saved owner/query on current and pre-optimization libraries, isolate the rejected
 condition, and correct its proved cause before retrying unchanged-bound natural
