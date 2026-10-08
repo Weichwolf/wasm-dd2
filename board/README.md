@@ -284,6 +284,13 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+The 0037 current-source selected race gate passes all six scenario/target pairs,
+including the complete eight-lap Circuit-5 Stockcar race on Native/WASM/ASan.
+Its 167,472 ticks, place 2 and 75 player points match independent geometry/result
+checks. Full race-suite and campaign acceptance remain unproved; the separate
+115,420 natural failure is still being captured. Actual-input checks are running.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/race-gate-receipt.json.
+
 The new 0037 natural campaign is terminal at round-2 tick 115,420 (exit 1, no
 timeout) after identical first-round results. All 83 production records are
 retained; AI/frame/championship inputs are valid, player health is 0.2677000161305475

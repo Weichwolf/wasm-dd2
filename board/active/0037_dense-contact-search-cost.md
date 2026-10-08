@@ -63,9 +63,16 @@ contact state along its different trajectory. A failure-only owner/query capture
 is running and must match every production record before causal diagnosis.
 Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/natural-season/terminal-report.json.
 
+All six current-source selected race targets pass: Circuit-2 short Stockcar and
+the complete eight-lap Circuit-5 Stockcar race on Native/WASM/ASan. The latter
+retains 167,472 ticks, player place 2 and 75 points with independent per-step
+geometry/results checks. This is selected-race coverage, not a passing full suite
+or the failed campaign's continuation. Actual-input checks and causal capture
+remain running. Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/race-gate-receipt.json.
+
 ## Next
 
-Finish current-source actual-input and selected-race gates.
+Finish current-source actual-input checks.
 Require the failure-only capture to reproduce all 83 records. Replay its actual
 saved owner/query on current and pre-optimization libraries, isolate the rejected
 condition, and correct its proved cause before retrying unchanged-bound natural
