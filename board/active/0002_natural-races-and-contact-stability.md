@@ -204,10 +204,20 @@ advances beyond the former rejection without providing result acceptance.
 Full natural-arena acceptance remains open.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json.
 
+Closed 0054 proves counted internal contact scratch initialization without
+redundant zero writes. Eight actual 6000-tick prefixes preserve every per-target
+field, with scoped child-CPU reductions of 1.48..1.92 percent Native and
+5.50..6.01 percent on a private named WASM link. Fresh patterned O1 sanitizer,
+Memcheck, strict LLVM19/170-file, 38/36 gates, all original ground/recovery
+comparisons and the 45 previously proved race scenarios pass again. This proves
+the scratch contract, not whole-case cost or natural completion. The actual
+selected Arena-8 owner runs are now live at unchanged limits under 0053.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json.
+
 ## Next
 
-Profile and correct actual WASM simulation cost under 0053 before repeating
-its Arena-8 natural-result check at the unchanged scenario deadline. The reproduced nonterminal
+Finish the current actual Arena-8 natural-result checks under 0053 after closed
+0054, retaining the unchanged scenario deadlines. The reproduced nonterminal
 Native B movement/tactics behavior remains separate; preserve material laws,
 tolerances and the shared pass budget while diagnosing it. Expand ordinary
 physically completed circuit coverage beyond circuit 5. Do not replace a missing

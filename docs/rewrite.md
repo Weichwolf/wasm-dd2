@@ -727,7 +727,7 @@ captured full query reaches its independent twelve-row position root at 512
 passes on Native/WASM/sanitized C; all 48 geometry reorder/remap checks, 742 prior
 physical cases, eleven original ground levels, 220 recovery cases and strict
 170-file/38/36 gates pass. All 45 previously proved race scenarios pass per target
-again. Native Arena 8 now naturally reaches engine-retirement/coasting results
+again. On 6efaa44, Native Arena 8 naturally reaches engine-retirement/coasting results
 at tick 81219 (401.09 seconds survival), within the unchanged scenario deadline;
 fresh O1 ASan/UBSan completes at tick 13083 (60.41 seconds survival). WASM exceeds
 the unchanged 1800-second deadline after 77251 complete ticks. Its independently
@@ -735,3 +735,17 @@ checked prefix passes the former rejection but supplies no natural-result
 acceptance. Active 0053 retains that missing contract; all-arena completion
 remains unproved. Receipt:
 `/tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json`.
+
+Internal contact scratch now initializes live counted prefixes instead of
+clearing unused capacity. Degenerate static SAT axes explicitly clear their
+selection flag; tie selection reads the other fields only on live axes. Eight
+ordinary 6000-tick prefixes preserve all per-target public fields. Two
+reversed-order comparisons reduce child CPU by 1.48..1.92 percent on Native and
+5.50..6.01 percent on a private named WASM link; these are scoped prefix costs.
+Fresh patterned O1 ASan/UBSan and Native Memcheck cover the physical/ownership
+corpora, with strict LLVM19/170-file, 38/36 gates, all eleven original ground
+levels, 220 recovery cases and 45 prior race scenarios passing again per target.
+Closed 0054 proves this scratch contract. The new actual Arena-8 owner checks
+remain live under 0053 at unchanged limits; full-case speed and natural results
+remain unproved. Receipt:
+`/tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json`.

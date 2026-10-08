@@ -70,8 +70,14 @@ component-report,valgrind-report}.json.
 
 ## Next
 
-Measure actual WASM simulation cost and address the cause before repeating its
-natural owner check. Retain the passing Native/sanitized results and all prior
+The bounded named V8 profile attributes 11.86 percent of samples to zero writes.
+The counted scratch correction is proved under closed 0054: eight ordinary
+6000-tick prefixes preserve every per-target field, with a scoped WASM child-CPU
+reduction of 5.50..6.01 percent. This supplies no natural-result acceptance.
+Strict LLVM19/170-file and 38/36 gates, all eleven original ground levels,
+220 recovery cases and 45 prior race scenarios pass again per target. The new
+selected Native/WASM/sanitized owner runs are live under unchanged limits.
+Finish these actual runs and retain all prior
 component/race contracts. Keep the unchanged scenario deadlines visible; do not
 close on the component or a pre-timeout prefix alone.
 

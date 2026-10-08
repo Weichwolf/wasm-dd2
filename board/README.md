@@ -58,6 +58,7 @@ its game requirements or acceptance rules.
 | [0051](closed/0051_warm-pressure-normal-branches.md) | Preserve warm normal branches during world-pressure refinement | closed |
 | [0052](closed/0052_arena-a-body-state-stability.md) | Restore the original Arena-A body-state comparison | closed |
 | [0053](active/0053_arena8-position-convergence.md) | Restore natural Arena-8 contact position convergence | active |
+| [0054](closed/0054_contact-scratch-initialization.md) | Reduce redundant contact scratch initialization | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -66,10 +67,11 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance
-after the verified position correction and Native/sanitized natural results,
-following closed 0052 ground support and closed 0050 ordinary first-season
-movement. The broader 0016/0044/0049 contracts and 0046/0045 remain active.
+Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance.
+The selected three-target owner rerun is live after the position correction and
+closed 0054 scratch reduction. Closed 0052 proves ground support and closed 0050
+proves ordinary first-season movement. The broader 0016/0044/0049 contracts and
+0046/0045 remain active.
 The following owned-report comparison is historical evidence, before 0050. Owned collision reports preserve
 physical work bounds and restore previously clipped movement. The prior
 owned-report source's ordinary
@@ -751,7 +753,7 @@ identity equation. Independent enumeration checks the actual twelve-row position
 root; 48 geometry reorder/remap cases, prior-source negatives and all 742 earlier
 physical cases pass per target, including fresh O1 ASan/UBSan. Native Valgrind has
 zero errors/leaks. Strict LLVM19/170-file and 38/36 CTest gates pass. All eleven original ground levels, 220 recovery cases and 45 prior race scenarios
-pass again per target. Native Arena 8 now reaches engine-retirement/coasting
+pass again per target. On 6efaa44, Native Arena 8 reaches engine-retirement/coasting
 results at tick 81219 (401.09 seconds survival), within the unchanged deadline;
 fresh O1 ASan/UBSan completes at tick 13083 (60.41 seconds survival). WASM exceeds
 the unchanged 1800-second deadline after 77251 complete ticks. Every complete
@@ -759,3 +761,15 @@ prefix row passes the independent state/damage/clock/pursuit oracle and advances
 beyond the former rejection; natural WASM results remain unproved. Active 0053
 therefore stays open while actual simulation cost is measured and addressed.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-rejection-0053/terminal-owner-report.json.
+
+Closed 0054 removes redundant internal contact scratch zero writes while fully
+initializing live counted entries and degenerate-axis selection flags. Eight
+actual 6000-tick prefixes preserve every per-target field. Two reversed-order
+comparisons reduce child CPU by 1.48..1.92 percent on Native and 5.50..6.01
+percent on the private named WASM link; these are prefix costs only. Nine fresh
+patterned O1 ASan/UBSan corpora (24 shared units), six Native Memcheck corpora,
+all 742 physical checks, strict LLVM19/170-file and 38/36 gates pass. All eleven
+original ground levels, 220 recovery cases and 45 prior race scenarios pass again
+per target. The actual selected Arena-8 runs now continue at unchanged limits
+under 0053; natural results and full-scenario timing remain unproved.
+Receipt: /tmp/wasm-dd2/rewrite-arena8-profile-0053/verification-report.json.

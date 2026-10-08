@@ -488,7 +488,9 @@ static dd2_vehicle_vector dd2_car_point(const dd2_car_box *first, const dd2_car_
 
 static dd2_car_interval dd2_car_static(const dd2_car_box *first, const dd2_car_box *second,
                                        double margin) {
-    dd2_car_interval axes[DD2_CAR_SAT_AXES] = {0};
+    /* Each live axis is written in full; a degenerate axis needs only its
+     * selection flag because the tie scan never reads its other fields. */
+    dd2_car_interval axes[DD2_CAR_SAT_AXES];
     double minimum = 4 * dd2_car_radius;
     const dd2_vehicle_vector relative =
         dd2_collision_add(first->center, dd2_collision_scale(second->center, -1));
@@ -496,6 +498,7 @@ static dd2_car_interval dd2_car_static(const dd2_car_box *first, const dd2_car_b
         dd2_vehicle_vector axis = dd2_car_axis(first, second, index);
         const double squared = dd2_collision_dot(axis, axis);
         if (squared <= dd2_car_axis_tolerance * dd2_car_axis_tolerance) {
+            axes[index].found = false;
             continue;
         }
         axis = dd2_collision_scale(axis, 1 / sqrt(squared));
@@ -580,7 +583,8 @@ static bool dd2_car_refine(dd2_car_sweep *sweep, double begin, double end, dd2_c
                            double *time) {
     /* Earliest-first depth search keeps at most one pending right half per
      * depth. The explicit stack also bounds native/WASM stack consumption. */
-    dd2_car_refinement pending[DD2_CAR_REFINEMENT_DEPTH + 2] = {{.begin = begin, .end = end}};
+    dd2_car_refinement pending[DD2_CAR_REFINEMENT_DEPTH + 2];
+    pending[0] = (dd2_car_refinement){.begin = begin, .end = end};
     unsigned count = 1;
     while (count > 0) {
         const dd2_car_refinement current = pending[--count];
@@ -808,7 +812,7 @@ bool dd2_car_contacts_proximity(const dd2_car_fleet_neighborhood *query,
             return false;
         }
     }
-    dd2_car_box boxes[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_car_box boxes[DD2_VEHICLE_FLEET_LIMIT];
     for (unsigned body = 0; body < query->count; ++body) {
         boxes[body] = dd2_car_box_at(&query->vehicles[body], &query->vehicles[body], 0);
     }

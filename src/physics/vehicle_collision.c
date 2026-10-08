@@ -311,7 +311,9 @@ enum {
 static bool dd2_fleet_contact(const dd2_vehicle *start, const dd2_vehicle *end, unsigned count,
                               const dd2_road_surface *surface, const dd2_barrier_world *world,
                               dd2_fleet_event *event, bool *valid) {
-    dd2_fleet_event events[DD2_FLEET_EVENT_LIMIT] = {0};
+    /* Only the completely written prefix below found participates in the
+     * earliest-event scan. Unused capacity has no contact meaning. */
+    dd2_fleet_event events[DD2_FLEET_EVENT_LIMIT];
     unsigned found = 0;
     double earliest = 1;
     double unresolved_time = 2;
@@ -715,7 +717,9 @@ static void dd2_fleet_group_connections(const dd2_fleet_group_query *query,
  * intact. */
 static bool dd2_fleet_collect_group(const dd2_fleet_group_query *query,
                                     dd2_fleet_neighborhood *group) {
-    dd2_fleet_neighborhood pairs = {0};
+    dd2_fleet_neighborhood pairs;
+    pairs.count = 0;
+    pairs.overflow = false;
     if (!dd2_fleet_near_pairs(query, &pairs)) {
         return false;
     }
@@ -759,9 +763,9 @@ static void dd2_fleet_group_impact(dd2_vehicle_impact *impact, dd2_vehicle_conta
 static bool dd2_fleet_group_response(const dd2_fleet_group_query *query,
                                      const dd2_fleet_neighborhood *group,
                                      dd2_fleet_recording *recorded, double remaining) {
-    dd2_group_contact constraints[DD2_VEHICLE_CONTACT_LIMIT] = {0};
-    dd2_vehicle_contact contacts[DD2_VEHICLE_CONTACT_LIMIT] = {0};
-    double closing[DD2_VEHICLE_CONTACT_LIMIT] = {0};
+    dd2_group_contact constraints[DD2_VEHICLE_CONTACT_LIMIT];
+    dd2_vehicle_contact contacts[DD2_VEHICLE_CONTACT_LIMIT];
+    double closing[DD2_VEHICLE_CONTACT_LIMIT];
     for (unsigned index = 0; index < group->count; ++index) {
         dd2_fleet_event event = group->events[index];
         event.contact.time = query->primary.contact.time;
@@ -816,7 +820,9 @@ static bool dd2_fleet_group_response(const dd2_fleet_group_query *query,
 
 static bool dd2_fleet_respond(const dd2_fleet_group_query *query, dd2_fleet_recording *recorded,
                               bool *serial, double remaining) {
-    dd2_fleet_neighborhood group = {0};
+    dd2_fleet_neighborhood group;
+    group.count = 0;
+    group.overflow = false;
     if (!*serial) {
         if (!dd2_fleet_collect_group(query, &group)) {
             return false;
@@ -847,8 +853,8 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
         (report != NULL && storage == NULL)) {
         return false;
     }
-    dd2_vehicle start[DD2_VEHICLE_FLEET_LIMIT] = {0};
-    dd2_vehicle next[DD2_VEHICLE_FLEET_LIMIT] = {0};
+    dd2_vehicle start[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_vehicle next[DD2_VEHICLE_FLEET_LIMIT];
     dd2_fleet_recording recorded = {.contacts = report != NULL ? storage->contacts : NULL};
     recorded.report.contacts = recorded.contacts;
     for (unsigned body = 0; body < count; ++body) {
