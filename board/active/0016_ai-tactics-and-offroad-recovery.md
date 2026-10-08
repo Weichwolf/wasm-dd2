@@ -117,11 +117,29 @@ physical/controller/recovery cause; do not infer a fix from increased travel.
 Keep deadline/work diagnosis under 0046 and preserve every acceptance bound.
 Receipt: /tmp/wasm-dd2/rewrite-owned-events-0045/ai-partial-report.json.
 
+Two read-only Native Arena-B probes preserve all 300 production rows exactly,
+including the same slot-17 support failure. The steady-loss probe exits zero
+within the unchanged 180-second exporter deadline. The first continuous loss
+starts at frame 1,278 and lasts at least 460 observed frames. Two needed
+matching-ABI Native owner/event captures are only 24,712 bytes each; they are
+not WASM memory inputs. At frame 1,477, all four lower body corners are
+402.877..404.937 vertical units above independently queried original terrain.
+Actual pair reports carry upward pressure from body 18, while body 17 also
+contacts the radial arena barrier and body 16. The car rides another car's roof
+down the outer slope; this sample does not show terrain penetration or a
+supported overturned car. Wheel refresh remains unsupported there.
+This identifies the traction/support failure to address, not a proved tactical
+or recovery fix. Receipts: /tmp/wasm-dd2/rewrite-arena-cost-0046/support/support-report.json
+and support-steady/report.json. Contact cost is tracked separately under 0046.
+
 ## Next
 
-Follow the current terminal movement/owner diagnosis under 0044. Diagnose the completed
-Native/sanitized B movement failures using the retained observations, before
-choosing a tactical correction; keep the ordinary movement requirement and bound.
+Follow the current terminal movement/owner diagnosis under 0044. Diagnose the
+proved Native B roof-riding trajectory and original traction/recovery behavior
+before choosing a correction; preserve physical contacts and the ordinary
+supported-movement requirement. Do not treat the negative terrain elevation
+as proof that a car fell through the terrain. Keep the older B travel failures
+scoped to their recorded source epochs.
 Preserve the Total Destruction player target and every engine, damage, lap and
 score rule. Use ordinary complete races to identify off-road and
 tactical failures; recover original behavior and implement explicit recovery/tactics

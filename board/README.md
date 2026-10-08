@@ -59,7 +59,7 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0045/0044: production collision reports now use owned heap
+Current work is 0046/0016, following 0045/0044: production collision reports now use owned heap
 buffers and borrowed views, separating metadata capacity from physical work.
 Strict Native/WASM, instrumented rollback, 716 captured physical cases per
 target, all eleven original-data ground/fleet and actual window/input checks,
@@ -67,7 +67,12 @@ six scoped race targets and seven old Native owners pass. The ordinary Native
 first Stockcar season completes four real results (two finishes, two engine
 retirements) and opens season 2; independent WASM/instrumented owner seasons are running. The AI gate passes
 ten levels but still fails Native Arena-B slot-17 support and its instrumented
-360-second deadline, retained under 0016/0046. Corrected manual escape is proved; complete tactics, modes,
+360-second deadline, retained under 0016/0046. Exact-prefix profiling identifies
+car-pair search as the largest measured cost component. Native slot 17 rides
+body 18's roof above intact terrain, losing wheel traction; a small read-only
+owner/contact capture proves this diagnosis. A private sphere-ordering candidate
+saves 29..31 percent in captured pair-query timing, but is not a production fix
+or a full AI pass. Corrected manual escape is proved; complete tactics, modes,
 menus, audio, visual work and game acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json and
 natural-season/terminal-report.json. The historical evidence below is scoped
