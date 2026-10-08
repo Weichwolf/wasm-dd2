@@ -6,7 +6,7 @@ if ! command -v emcc >/dev/null 2>&1; then
     source "$DD2_EMSDK_ENV" >/dev/null 2>&1
   fi
   if ! command -v emcc >/dev/null 2>&1; then
-    echo 'Emscripten fehlt: emcc installieren oder EMSDK auf das SDK-Verzeichnis setzen.' >&2
+    echo 'Emscripten is missing: install emcc or set EMSDK to the SDK directory.' >&2
     return 1
   fi
 fi
