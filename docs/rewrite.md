@@ -142,18 +142,24 @@ offline asset-preparation tools and is not linked into either runtime. The
 rewrite build does not enable a C++ compiler or build those tools.
 The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
 covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
-software surfaces, with shared keyboard input and monotonic timing. Gamepad and durable
-persistence remain pending. An owned Windows save-card container now preserves
+software surfaces, with shared keyboard input and monotonic timing. Gamepad
+remains pending. An owned Windows save-card container now preserves
 all fifteen physical blocks, exposes compact logical entries and stages complete
 borrowed replacement inputs. Original image reads and put/delete transitions
 are independently checked on Native/WASM/fresh sanitized C. A typed original
 configuration/profile codec now owns settings, five season records, current
 drivers, names, lap tables and bindings while retaining reserved bytes. All
 fields and encoded blocks match independently decoded original-x86 packs and
-actual A/B cards on Native/WASM/fresh sanitized C. Playable-state translation,
-replay codecs, durable adapters and frontend save actions remain open; see
+actual A/B cards on Native/WASM/fresh sanitized C. A polling save-store owner now
+publishes complete candidates after synchronized Native atomic replacement or
+strict IndexedDB transaction completion. Ninety-two Native/sanitized cases and
+25 actual Chromium checks prove full images, failure rollback, conflicting
+owners, real writer interruption and browser-process restart. Indeterminate
+Native directory synchronization requires reload and never reports success.
+Playable-state translation, replay codecs and frontend save actions remain open; see
 `src/assets/README.md`, `make rewrite-save-card-verify` and
-`make rewrite-save-profile-verify`. Typed sound-bank/WAVE readers
+`make rewrite-save-profile-verify`, plus `src/platform/README.md` and
+`make rewrite-save-store-verify`. Typed sound-bank/WAVE readers
 now preserve all 45 original effects, including their independent playback
 frequencies and loop/channel metadata. Raw CDDA views expose the 18 provisioned
 Redbook tracks; source/binary-identified three-target verification compares every

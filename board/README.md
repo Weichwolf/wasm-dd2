@@ -61,6 +61,7 @@ its game requirements or acceptance rules.
 | [0054](closed/0054_contact-scratch-initialization.md) | Reduce redundant contact scratch initialization | closed |
 | [0055](closed/0055_owned-save-card-container.md) | Own the original Windows save-card container | closed |
 | [0056](closed/0056_typed-save-profile.md) | Typed original configuration and profile payload | closed |
+| [0057](closed/0057_durable-save-store.md) | Durable Native/browser save-card owner | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -848,3 +849,19 @@ Complete playable-state translation, durable Native/browser publication and
 actual frontend save/load remain next under 0008/0003. Broader Arena-8 natural
 WASM results remain active under 0053. Receipt:
 /tmp/wasm-dd2/rewrite-save-profile-0056/verification-report.json.
+
+
+Closed 0057 adds the main-thread polling save-store owner and actual Native/
+IndexedDB persistence. Ninety-two Native/fresh O1 sanitized cases and 25 actual
+Chromium checks compare complete independently predicted card images, including
+physical compaction, full replacement, corrupt storage, short/interrupted writes,
+real killed Native writers, stale owners, transaction abort/exception and full
+browser-process restart. Pending operations keep accepted memory and refuse
+close/destroy. Post-rename sync failure explicitly requires reload; it cannot
+report durable success. Strict LLVM19/185-file and 41/39 gates pass, including
+the active WASM backend branch and zero-error/leak Native Memcheck. Original data
+and pinned SoftGL remain unchanged; completed raw output is removed after reports.
+Actual settings application, playable-session validation, replays, rewrite music
+gain and frontend save/load remain under 0008/0003. Arena-8 natural WASM results
+remain active under 0053. Receipt:
+/tmp/wasm-dd2/rewrite-save-store-0057-final/verification-report.json.

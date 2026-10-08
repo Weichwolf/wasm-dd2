@@ -84,9 +84,22 @@ CD gain. Parsing preserves numeric fields but does not validate a playable race
 or championship. No durable write, restart or frontend persistence claim.
 Receipt: /tmp/wasm-dd2/rewrite-save-profile-0056/verification-report.json.
 
+Closed 0057 now supplies platform/save_store.h with synchronized Native atomic
+replacement and strict IndexedDB transaction completion. Ninety-two Native/fresh
+O1 sanitized cases and 25 actual Chromium checks prove independent complete
+images, process interruption/restart, lease/stale-owner conflicts, syscall and
+transaction failures, corruption, compaction and full-card replacement. Pending
+owners retain accepted memory and refuse destruction; ambiguous post-rename
+sync failure requires reload without claiming save success. Strict LLVM19 checks
+185 C/header files including the active WASM backend branch; 41/39 CTests and
+zero-error/leak Native Memcheck pass. Successful raw output is removed and
+provisioned assets remain unchanged. This is durable container storage, not
+settings application or accepted playable championship restoration. Receipt:
+/tmp/wasm-dd2/rewrite-save-store-0057-final/verification-report.json.
+
 ## Next
 
-Translate and validate complete typed source configuration/game state, stage durable Native/browser publication and connect actual frontend actions. Replays need a separate codec. Keep selected physical identity through loading, preserve prior application state on invalid gameplay/failed writes, and prevent new ambiguous names after display compaction. Persist rewrite music gain explicitly because the source configuration does not store it.
+Translate and validate complete typed source configuration/game state and connect actual frontend actions through the proved durable store. Replays need a separate codec. Keep selected physical identity through loading, preserve prior application state on invalid gameplay/failed writes, and prevent new ambiguous names after display compaction. Persist rewrite music gain explicitly because the source configuration does not store it.
 
 ## Accept
 

@@ -21,8 +21,40 @@ server supplies COOP/COEP for the eight SoftGL workers and serves only the viewe
 files. Original assets are neither served nor bundled.
 
 Run `make rewrite-play` or `make rewrite-web`; `make rewrite-window-verify`
-exercises actual X11 pixels and Chromium canvas/input. Gamepad, persistent
-storage remain to be implemented.
+exercises actual X11 pixels and Chromium canvas/input. Gamepad remains to be
+implemented.
+
+`save_store.h` owns one original Windows save card and a staged replacement.
+Open, put, delete and reload accept one request at a time; callers poll to a
+terminal result. Acceptance is not save completion. The previous borrowed card
+stays available during pending work and ordinary failures; successful completion
+publishes the full replacement. Close/destroy refuse pending owners. Conflicts,
+invalid current storage or indeterminate publication require an explicit reload
+before another mutation. Reload publishes only a complete validated card.
+
+Native callers provide an existing dedicated writable folder, reserving
+`SaveGames`, `SaveGames.lock` and `.SaveGames.pending`. A nonblocking exclusive
+lease protects cooperating writers. Writes compare the complete previous image,
+synchronize a temporary file, close it, atomically rename it and synchronize the
+directory. Failure after rename is indeterminate: the new file is visible but
+the old memory snapshot stays accepted. Reload recovers the visible image; it
+does not turn an earlier ambiguous write into a successful durable save.
+Interruption leaves a complete old or new file; only an exclusive new owner may
+discard the reserved temporary file. Noncooperating writers must respect this
+dedicated directory; comparison is not an atomic file-system CAS against them.
+
+Browser callers provide a dedicated IndexedDB database name. One full card is
+one record. Strict-durability read/write transactions compare previous presence
+and all bytes before replacing that record. Only transaction completion permits
+publication; abort, enqueue exception and stale owners preserve the prior image.
+JavaScript owns copied bytes and obtains current WASM heap views during polling.
+Missing storage opens empty without creating a card until a mutation succeeds.
+No persistence location defaults to provisioned game assets. Application settings,
+playable-state validation, replay encoding and frontend actions are consumers to
+implement under 0008/0003; this adapter alone does not save a playable session.
+`make rewrite-save-store-verify` checks independent full images, real Native
+writer interruption and Chromium process restart, faults/conflicts, sanitized
+ownership and Memcheck. Successful runs retain receipts and remove raw output.
 
 `audio_device.c` owns an SDL2 signed-16 stereo device and a mixer at its negotiated
 sample rate. It opens paused, serializes control changes with the device lock,
