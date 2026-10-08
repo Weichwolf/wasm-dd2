@@ -499,11 +499,12 @@ and sixteen refinement/backtracking steps. The captured five-car/fourteen-contac
 tick-223337 query and twenty-eight rotations/reversals check this route.
 
 A world support may need higher pressure before it returns to the linear
-friction branch. After the delay, a sliding support's local model reuses the
-doubled pressure and fixed-load friction seed, followed by private constitutive
-refinement with fitted tangent directions and equation merit. An unloaded world
-support instead borrows the mean positive incident pressure as its private seed;
-without positive incident loads, the trial is rejected. The selected support's
+friction branch. After the delay, a sliding support's local model uses the larger
+of its current load and mean positive incident load as the private pressure
+increment, followed by fixed-load friction equilibrium and private constitutive
+refinement with fitted tangent directions and equation merit. The incident
+scale also initializes an unloaded world support; without positive incident
+loads, the trial is rejected. The selected support's
 normal equation stays active inside the trial, including at zero pressure.
 Provisional negative full-step predictions do not release that selected row;
 candidate normal impulses remain clamped nonnegative and backtracking still
@@ -514,6 +515,10 @@ final cone and physical residual is checked, and this alternate must meet the
 unchanged velocity tolerance before replacing warm progress. Partial roots are
 rejected with exact rollback. The actual five-car, eleven-contact step-108716
 query and twenty-two rotations/reversals check this sliding-to-linear transition.
+The three-world-contact tick-194353/tick-142893 queries and all six permutations
+each check a loaded wall whose previous doubling seed stayed below an admissible stronger
+pressure basin. Small-slip LOAD seeds preserve their current-load increment.
+No model, matrix, refinement/pass bound or physical acceptance rule is added.
 
 A sliding world support can also need to return to the linear friction branch.
 After the delay, a world-only field compares a private refinement of the existing

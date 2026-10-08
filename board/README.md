@@ -488,6 +488,23 @@ Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/broader-report.json,
 natural-season/terminal-report.json and
 /tmp/wasm-dd2/rewrite-next-world-load-0042/candidate-owner-report.json.
 
+The 0043 capture now exactly matches all 88 fixed-active production records and
+saves another three-world-contact owner on slot 14. Independent mobility and
+active-set/pressure-continuation roots identify an admissible all-loaded root.
+The 0042 incident-pressure candidate also advances this saved 142,893 owner.
+Both real queries and all six permutations each are integrated, bringing the
+physical corpus to 716 checks. The first strict build rejects a swappable
+index/method argument pair; the final implementation passes a typed contact
+model. The final source passes strict LLVM19, 35 Native/33 WASM CTests and all
+716 independent physical checks per Native/WASM/ASan/UBSan target. Both new
+Native full/remapped queries solve, seven retained Native failed owners advance,
+and instrumented rewrite C advances both new owners. Independent root motion
+agrees within 3.58e-11 and 1.34e-10. The frozen previous solver rejects the new
+first fixture. Broader gates and fresh ordinary continuation remain pending;
+no full season closes.
+Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/next-failure-diagnosis/production-report.json
+and /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,

@@ -326,18 +326,24 @@ motion and impulses. This adds one base model (260 maximum), while keeping one
 matrix, 4,096 shared passes and sixteen refinement/backtracking steps. The actual
 five-car/fourteen-contact tick-223337 query and twenty-eight rotations/reversals
 exercise this branch without changing material rules or physical tolerances.
-Loaded sliding world supports also compare the existing doubled-pressure and
+Loaded sliding world supports also compare a higher-pressure and
 fixed-load friction seed through a private constitutive refinement. The fitted
 equation merit and tangent direction permit a return to the linear branch while
-coupled pressures settle. Unloaded world supports borrow the mean positive
-incident pressure only as a private seed. Their selected normal equation stays
-active without provisional release during that trial; candidate normal impulses
+coupled pressures settle. Sliding/unloaded world supports use the larger of
+their current load and mean positive incident load only as a private pressure
+scale. Small-slip LOAD seeds retain their original current-load scale. Their
+selected normal equation stays active without provisional release during that
+trial; candidate normal impulses
 remain nonnegative. Final cone projection and the unchanged full physical
 tolerance remain mandatory; partial alternate roots restore exact warm state.
 Twenty-two rotations/reversals of the five-car/eleven-contact tick-108716 query
 check this transition. This alternate occupies the existing pressure-model slot,
 and unloaded supports omit the redundant release model, preserving the
 four-model-per-contact, pass, matrix and refinement bounds.
+Doubling a tiny sliding load can miss a higher-pressure linear-branch root.
+The incident scale adds no model or matrix and still requires complete physical
+acceptance and exact rollback. The actual three-world-contact tick-194353 and
+tick-142893 queries and all six permutations of each exercise that basin.
 Selected world-release refinements also retain their fitted tangent directions
 through private sliding/linear transitions. Before outer acceptance, every
 friction impulse is projected into its original cone and the full physical

@@ -4087,7 +4087,79 @@ static const dd2_group_contact dd2_friction_fixed_active_contacts[] = {
      .penetration = -3.650722314318955e-05,
      .friction = 0.25}};
 
+/* Frozen bb1c6d1 round-2 tick-194353 query; slot 14 remapped.
+ * Query SHA256: 617027b54a6586e6dd33ab0e6d0e5e90ed7189b78bb2d6069f2fb6ffb43a61e7 */
+static const dd2_vehicle dd2_friction_incident_load_bodies[] = {
+    {.position = {.x = 27801.458599240275, .y = 8438.39956000468, .z = 67743.54217365637},
+     .velocity = {.x = 0.16003629131842545, .y = -9.993442137512275, .z = 0.7697474633804791},
+     .rotation = {.x = -0.7184667503921459,
+                  .y = -0.42102475800403416,
+                  .z = 0.2163971944251607,
+                  .w = 0.5096233275405609},
+     .angular_velocity = {
+         .x = 0.014730620442653969, .y = 0.0009196331653110058, .z = -0.010909159526847546}}};
+static const dd2_group_contact dd2_friction_incident_load_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27415.76044335935, .y = 8515.997053761088, .z = 67428.56350531077},
+     .normal = {.x = 0.23136005789828434, .y = 0.9724239619132065, .z = -0.029396630866905662},
+     .penetration = 1.3998376568145898e-12,
+     .friction = 0.8},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28086.73844848191, .y = 8369.555227057293, .z = 67682.85559678526},
+     .normal = {.x = -0.4833311745477066, .y = 0.0, .z = 0.8754375909854079},
+     .penetration = -0.00013821103262803264,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28187.156755121203, .y = 8360.802055891274, .z = 68058.52084200199},
+     .normal = {.x = 0.20531409029527312, .y = 0.9662225739829723, .z = -0.15575641833306317},
+     .penetration = -1.0007165687516713e-05,
+     .friction = 0.8}};
+
+/* Frozen 9387f6a round-2 tick-142893 query; slot 14 remapped.
+ * Query SHA256: c963d619f57c6142266c478dca3bd93a5d361ce58a413faeffb8abd570805329 */
+static const dd2_vehicle dd2_friction_next_incident_bodies[] = {
+    {.position = {.x = 27785.091310043827, .y = 8441.185470382681, .z = 67730.1800437752},
+     .velocity = {.x = 0.18866140735754877, .y = -10.076390251900737, .z = 1.0251348715612998},
+     .rotation = {.x = -0.719883584748468,
+                  .y = -0.42638737963376966,
+                  .z = 0.2104928130783483,
+                  .w = 0.5056225890336647},
+     .angular_velocity = {
+         .x = 0.014953514317903649, .y = 0.0022330989015336266, .z = -0.011348954100041123}}};
+static const dd2_group_contact dd2_friction_next_incident_contacts[] = {
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 27404.931264578405, .y = 8517.962243942467, .z = 67408.34209251172},
+     .normal = {.x = 0.23136005789828434, .y = 0.9724239619132065, .z = -0.029396630866905662},
+     .penetration = 6.0712120552273985e-12,
+     .friction = 0.8},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28068.83108109181, .y = 8373.33639878226, .z = 67672.96889669054},
+     .normal = {.x = -0.48333117454769847, .y = 0.0, .z = 0.8754375909854123},
+     .penetration = -0.00013908339433801303,
+     .friction = 0.25},
+    {.first = 0,
+     .second = DD2_VEHICLE_NO_PARTNER,
+     .point = {.x = 28165.251355509256, .y = 8364.408499308904, .z = 68052.01799503867},
+     .normal = {.x = 0.20531409029527312, .y = 0.9662225739829723, .z = -0.15575641833306317},
+     .penetration = -0.00019084248094477176,
+     .friction = 0.8}};
+
 static const dd2_friction_case dd2_friction_cases[] = {
+    {.initial = dd2_friction_next_incident_bodies,
+     .contacts = dd2_friction_next_incident_contacts,
+     .body_count = 1,
+     .contact_count = 3,
+     .name = "championship next incident world pressure"},
+    {.initial = dd2_friction_incident_load_bodies,
+     .contacts = dd2_friction_incident_load_contacts,
+     .body_count = 1,
+     .contact_count = 3,
+     .name = "championship incident world pressure"},
     {.initial = dd2_friction_fixed_active_bodies,
      .contacts = dd2_friction_fixed_active_contacts,
      .body_count = 5,

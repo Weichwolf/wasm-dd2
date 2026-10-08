@@ -1077,14 +1077,17 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
 /* Explore higher world pressure while retaining every constraint.
  * Equilibrate friction with all normal loads held fixed before the constitutive
  * refinement. Cone projection and the final physical law still apply. */
-static double dd2_group_seed_pressure(const dd2_group_workspace *workspace, unsigned index) {
+static double dd2_group_seed_pressure(const dd2_group_workspace *workspace,
+                                      dd2_group_newton_model model) {
+    const unsigned index = model.selected_contact;
     const double current = workspace->constraints[index].normal_impulse;
-    if (current > 0) {
+    if (current > 0 && model.method == DD2_GROUP_NEWTON_LOAD) {
         return current;
     }
-    /* An unloaded support has no pressure to double. Borrow only a private
-     * starting scale from the body's incident positive loads; final acceptance
-     * still requires its actual coupled normal and friction equations. */
+    /* Doubling a small sliding load can stay below its linear-branch basin.
+     * Borrow a private scale from incident positive loads without reducing the
+     * current scale. Final acceptance still requires every actual coupled
+     * normal and friction equation; small-slip LOAD seeds remain unchanged. */
     const unsigned body = workspace->query->contacts[index].first;
     double pressure = 0;
     unsigned supports = 0;
@@ -1096,12 +1099,13 @@ static double dd2_group_seed_pressure(const dd2_group_workspace *workspace, unsi
             ++supports;
         }
     }
-    return supports > 0 ? pressure / (double)supports : 0;
+    return supports > 0 ? fmax(current, pressure / (double)supports) : 0;
 }
 
-static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, unsigned index,
-                                    dd2_group_linear_system *system) {
-    const double pressure = dd2_group_seed_pressure(workspace, index);
+static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, dd2_group_linear_system *system,
+                                    dd2_group_newton_model model) {
+    const unsigned index = model.selected_contact;
+    const double pressure = dd2_group_seed_pressure(workspace, model);
     if (pressure <= 0) {
         return false;
     }
@@ -1167,7 +1171,7 @@ static bool dd2_group_refinement_start(dd2_group_workspace *workspace,
     }
     const bool seeded =
         model.method == DD2_GROUP_NEWTON_LOAD || model.method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
-    if (seeded && !dd2_group_pressure_seed(workspace, model.selected_contact, system)) {
+    if (seeded && !dd2_group_pressure_seed(workspace, system, model)) {
         return false;
     }
     dd2_group_newton_state prepared =

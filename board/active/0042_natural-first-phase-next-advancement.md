@@ -20,13 +20,12 @@ championship validation remains true; health is 0.23930508697523567, laps are
 zero and controls are throttle -0.6, brake 0 and steering 1. This is a different
 trajectory from the d160c06 tick-223,337 input; no common cause is assumed.
 
-A failure-only capture is now running from the exact frozen first-phase code
-and libraries, with the same ordinary controls and unchanged bounds. Its
-diagnostic executable was fully linked and its source identity verified before
-the new 0041 source changes. Capture only one failed owner/query; no full-frame
-memory snapshots are requested. Reproduction and cause remain unproved.
+A failure-only capture used the exact frozen first-phase code and libraries,
+with the same ordinary controls and unchanged bounds. Its diagnostic executable
+was fully linked and its source identity verified before the 0041 source changes.
+Only one failed owner/query was captured, without full-frame memory snapshots.
 Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/natural-season/terminal-report.json.
-Live capture: /tmp/wasm-dd2/rewrite-first-phase-0040/failure-capture/.
+Capture: /tmp/wasm-dd2/rewrite-first-phase-0040/failure-capture/.
 
 The capture is now terminal: exit 1 without timeout after 649.00 seconds,
 matching all 98 production records exactly. One 31,216-byte owner and a
@@ -58,15 +57,40 @@ the actual owner to 194,354 and passes all 702 existing Native physical checks.
 Its motion agrees with the independent root within 3.58e-11. This is a private
 prototype; no production, strict or multi-platform correction is claimed.
 Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/candidate-report.json,
-candidate-owner-report.json and independent-motion-report.json.
+candidate-owner-report.json and prototype-independent-motion-report.json.
+
+The correction and both actual 194,353/142,893 queries are integrated with all
+six permutations each: 38 captured cases plus 678 orderings (716 independent
+checks). The private incident-pressure candidate also advances the newly
+captured 142,893 owner; its independent diagnosis remains under 0043.
+
+The initial strict build rejects adjacent convertible index/method parameters
+in the pressure-scale helper. The implementation now passes the existing typed
+contact model, keeping selection and method together. No check is disabled.
+The initial Native gate failed. The frozen final source now passes strict
+LLVM19 checks, all 35 Native and 33 WASM CTests, and all 716 independent physical
+checks on Native, WASM and ASan/UBSan. The frozen previous solver rejects the
+new first fixture, confirming regression sensitivity.
+Failed-scope receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/before-model-argument/.
+
+Final Native full/remapped queries solve at 513 velocity passes: 45 position
+passes for 194,353 and 52 for 142,893. All seven retained failed Native owners
+advance, including both current inputs; reached rewrite C under ASan/UBSan also
+advances both current owners. SoftGL/system SDL are uninstrumented dependencies.
+Independent root motion agrees within 3.58e-11 and 1.34e-10 respectively. Saved
+Native layouts are not used as WASM owner layouts. The pinned SoftGL, 260 models,
+finite bounds, physical acceptance and rollback remain unchanged. Broader gates
+and fresh ordinary continuation are still pending; no complete season is proved.
+Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
+physical-report.json, replay-report.json, san-next-owner-report.json,
+independent-motion-report.json and independent-next-motion-report.json.
 
 ## Next
 
-Integrate the proved seed scale with the actual three-contact fixture and all
-six permutations; run strict Native/WASM/instrumented gates and prior owner
-regressions, broader checks and fresh ordinary continuation. Keep the new
-fixed-active trajectory's 142,893 failure separate under 0043. Retain AI movement
-and zero-lap playability acceptance under 0016/0004.
+Run broader original-data/input/race scopes and fresh ordinary continuation
+from the verified incident-pressure source. Keep the two
+older trajectories distinct; retain AI movement and zero-lap playability
+acceptance under 0016/0004.
 
 ## Accept
 
