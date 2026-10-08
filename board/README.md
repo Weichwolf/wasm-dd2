@@ -114,6 +114,20 @@ prefix rows match. No cache is adopted and no whole-case gain is claimed.
 evaluate sharing window endpoints without slowing cheap initial rejection.
 Current receipt: /tmp/wasm-dd2/rewrite-pair-windows-0046/diagnosis-report.json.
 
+Production now rejects an already empty swept-axis time interval immediately.
+The measured actual frame-400 work drops from 109,577,906 to 87,658,746 axis
+evaluations, preserving all other window/world/group counts. Four alternating
+O3 ASan/UBSan actual-field trials reduce query CPU by 19.0..19.5 percent; 4,096
+additional frozen pair comparisons preserve every result field. Strict
+LLVM19/163-file gates, 37 Native/35 WASM CTests, 716 physical checks per target
+and eight fresh instrumented targets pass. Full Native/WASM Arena-B exporters
+preserve all 300 prior rows exactly; Native slot-17 support still fails. The
+production-equivalent fully instrumented attempt still times out at 360 seconds
+with 215 matching prefix rows and no summary/reset completion. A fourth private
+pose cache remains unadopted despite fewer box constructions. 0046 stays active;
+next locate the remaining cost by per-pair refinement/unresolved work. Current
+receipt: /tmp/wasm-dd2/rewrite-refinement-reuse-0046/component-report.json.
+
 The terminal a326993 race attempt and separate Circuit-5 follow-up account for
 all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural
 completion at the unchanged fixture bound. Its sparse movement diagnosis

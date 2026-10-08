@@ -233,6 +233,11 @@ static dd2_car_interval dd2_car_translation(const dd2_car_window *first,
         enter = fmax(enter, window.enter);
         leave = fmin(leave, window.leave);
         overlap = fmin(overlap, window.depth);
+        /* Axis intersections only shrink; later axes cannot restore time that
+         * has already been excluded from the sweep. */
+        if (enter > leave || enter > 1 || leave < 0) {
+            return (dd2_car_interval){0};
+        }
     }
     if (enter > leave || enter > 1 || leave < 0) {
         return (dd2_car_interval){0};

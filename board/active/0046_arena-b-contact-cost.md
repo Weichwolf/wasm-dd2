@@ -198,17 +198,68 @@ All candidates remain private and 0046 stays active. Receipts:
 scratch8/report.json, candidate/tidy-report.json, scratch8/tidy-report.json and
 diagnosis-report.json in the same directory.
 
+The separate refinement diagnostic now measures reuse within each pair rather
+than across a whole prepared fleet. At frame 400, 12,738,122 of 43,863,534 window
+box samples could reuse a previous window or the already prepared initial pose.
+A private three-entry pair-local cache actually reduces total box construction
+from 50,739,303 to 36,888,795 at that frame, preserving all 60 available rows.
+Its captured-field query CPU still increases by 4.8..8.4 percent, and its full
+instrumented case times out at 360.110 wallclock/356.004 cumulative child CPU
+seconds with 215 matching complete rows and no summaries/reset. It is not
+adopted. Eliminating box construction alone is insufficient evidence for a
+useful speed improvement. Receipts: profile-report.json,
+profile-candidate/profile-report.json, benchmark-local-report.json and
+candidate/report.json in /tmp/wasm-dd2/rewrite-refinement-reuse-0046/.
+
+The same actual trajectory identifies a different redundant operation:
+21,919,160 of 109,577,906 swept-axis evaluations at frame 400 happen after the
+intersection of their time intervals is already empty. Further intersections
+can only shrink that interval. Production now returns the unchanged no-contact
+result at that point, retaining source-axis order for surviving contacts and
+every angular/refinement/response/material bound. There is no cache or new
+allocation. Corrected instrumentation measures exactly 87,658,746 axis calls and
+zero calls after empty intervals, with identical box/window/world/group counts
+and all 80 available production rows matching. Receipts:
+axis-profile/profile-report.json and axis-corrected-profile/profile-report.json
+in the same directory. Diagnostic child CPU totals inherited from combined
+build/run shells are explicitly marked unsuitable for isolated process timing;
+the corrected profile and full axis attempt measure a per-process usage delta.
+
+Four alternating O3 ASan/UBSan trials preserve all 190 actual-field results and
+reduce query CPU by 19.0..19.5 percent against frozen current batch preparation.
+Another 4,096 finite translated/rotated queries, including swapped body order,
+match every frozen result field (1,296 hits). Strict LLVM19 format/tidy for 163
+C/header files, 37 Native/35 WASM CTests and all 716 physical checks per target
+pass. Eight focused instrumented targets pass with all 46 reached rewrite C
+units freshly compiled under O1 ASan/UBSan; pinned release SoftGL/system SDL
+remain outside instrumentation. Receipts: benchmark-axis-report.json,
+frozen-pairs-report.json, native-quality-report.json, wasm-quality-report.json,
+physical-report.json and sanitizer-report.json in the same directory.
+
+Current production Native/WASM Arena-B exporters complete within the unchanged
+180-second bound (79.48/97.20 seconds), each preserving all 300 preceding rows
+byte for byte. Native slot-17 support still fails at 1,929 frames; WASM motion
+passes. The production-equivalent axis candidate uses a byte-identical private
+copy of the production car-query C unit, instrumenting every reached C unit at
+O3. It times out at 360.249 wallclock/319.821 child CPU seconds, with all 215
+complete prefix rows matching and empty stderr. Summaries/reset do not complete.
+This proves a component gain, not the full deadline contract or whole-game
+acceptance. Receipts: production-arena-verified/{native,wasm}/report.json,
+axis-candidate/report.json and component-report.json in the same directory.
+
 ## Next
 
 Retain the verified partial pair-preparation correction without closing the
 full deadline contract. Use the terminal current-production receipt and its
 separate child CPU measurement to diagnose remaining pair-window/pose and
-world-query work from actual inputs before further changes. Count reuse and
-misses specifically inside surviving refinement trees before selecting another
-cache. Investigate passing already computed endpoints to child windows while
-keeping initial rejection cheap, query ownership explicit and stack use bounded.
-The three measured caches do not justify adoption. The prepared road planes
-are a verified local gain; they do not close the full deadline.
+world-query work from actual inputs before further changes. The local pose
+cache also fails measured adoption criteria. Retain the proved empty-interval
+axis rejection without closing the full deadline. Measure per-pair refinement
+work and unresolved-query frequency to locate the remaining dense-field cost;
+evaluate shared relative-distance bounds only after measuring their actual
+repetition. Keep initial rejection cheap, query ownership explicit and stack
+use bounded. Prepared road planes and skipped empty intervals are verified local
+gains; they do not close the full deadline.
 Preserve every existing
 acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
 under 0016 and actual-owner continuation/public-session seasons separate;
