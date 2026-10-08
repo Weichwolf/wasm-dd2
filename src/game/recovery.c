@@ -34,6 +34,8 @@ static bool dd2_recovery_rest(const dd2_vehicle *vehicle, const dd2_road_surface
             dd2_recovery_angular_limit * dd2_recovery_angular_limit) {
         return false;
     }
+    bool found = false;
+    double best_alignment = 0;
     for (unsigned corner = 0; corner < DD2_VEHICLE_BODY_CORNERS; ++corner) {
         const dd2_vehicle_vector point = dd2_collision_add(
             vehicle->position,
@@ -52,11 +54,19 @@ static bool dd2_recovery_rest(const dd2_vehicle *vehicle, const dd2_road_surface
         const dd2_vehicle_vector normal = {
             .x = road.normal[0], .y = road.normal[1], .z = road.normal[2]};
         if (fabs(dd2_collision_dot(vehicle->velocity, normal)) <= dd2_recovery_vertical_limit) {
-            *support = (dd2_recovery_support){.road = road, .point = point};
-            return true;
+            /* A corner can touch the opposite bank of a valley while the roof
+             * rests on this bank. Prefer the road facing the roof; extrapolating
+             * the first corner's plane can miss the actual center road. Equal
+             * alignments retain source-corner order. */
+            const double alignment = -dd2_collision_dot(upward, normal);
+            if (!found || alignment > best_alignment) {
+                *support = (dd2_recovery_support){.road = road, .point = point};
+                best_alignment = alignment;
+                found = true;
+            }
         }
     }
-    return false;
+    return found;
 }
 
 static double dd2_recovery_yaw(dd2_vehicle_rotation rotation) {

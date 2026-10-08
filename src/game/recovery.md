@@ -22,6 +22,12 @@ most 0.5 rad/s, a source body corner within two Y units of an upward road triang
 and road-normal speed at most 50 world units/s. Airborne/spinning cars are not
 unavailable merely because their roof is down. Any interrupted rest clears the
 counter. The eight contact corners are shared with the physical world solver.
+When corners touch different banks, recovery selects the road normal most
+aligned with the downward-facing roof, retaining source-corner order for equal
+alignment. A first corner on the opposite bank can extrapolate a center height
+outside the real road's local window and prevent every later recovery attempt.
+The selection still requires actual corner contact and bounded normal speed;
+the landing window, deadline and NPC distance rule are unchanged.
 
 Landing preserves XZ position and horizontal heading, queries the actual road triangle under the vehicle center
 within a local height window and aligns body up to its normal. Placement keeps
@@ -44,6 +50,10 @@ An already triggered coasting ending remains latched.
 `make rewrite-recovery-verify` checks roof/side/nose rest deadlines, upper/lower
 bridge support, airborne/spinning rejection, NPC distance boundaries and later
 retry, permanent wrecks, frame rollback and the no-extra-tick invariant. It also
+checks an independently constructed two-ramp valley where the first touching
+corner lies on the opposing bank, while the roof rests on the center bank.
+The old selection fails this case; the corrected selection rights the car with
+real tire support at the same deadline. The verifier additionally
 physically drops a partially damaged player car roof-down at all twenty source
 grid positions on all eleven levels. Native, Node/WASM and ASan/UBSan separately
 settle, right and accelerate it. An independent reader checks the original grid,

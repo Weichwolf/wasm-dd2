@@ -67,6 +67,19 @@ engine retirements) and opens season 2. The separate WASM/instrumented public
 session seasons both time out at 3,600 seconds in round 2 with zero player laps;
 their first-round finishes do not establish complete seasons.
 
+Recovery now chooses the actual road contact facing an overturned roof when
+different body corners touch opposing banks. The previous first-corner choice
+can extrapolate the wrong center road and prevent righting indefinitely.
+An independent valley regression and a portable WASM-derived original B pose
+fail the old recovery and pass the correction with real tire support. Strict
+LLVM19/163-file checks, 37 Native/35 WASM CTests and 220 original-grid drops per
+Native/WASM/ASan/UBSan target pass. The dynamic body-supported tire experiment
+remains unadopted: although Native B movement improves, WASM B support falls to
+1,172 frames. This landing correction does not prove its whole-case acceptance
+or complete tactics/campaigns. Current receipt:
+/tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
+Older timings and failed movement evidence below retain their source epochs.
+
 Typed immutable fleet pair preparation now avoids repeated body validation and
 pose construction, retaining caller-owned ordered inventories and transactional
 failure. Frozen actual-field O3 ASan/UBSan trials reduce sweep query CPU by

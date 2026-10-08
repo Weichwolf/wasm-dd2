@@ -324,7 +324,19 @@ Final receipts: final/{identity,native-quality-report,wasm-quality-report,
 sanitizer-report,san-build-report,physical-report}.json and component-report.json
 in the same directory.
 
+The unadopted body-supported tire experiment produces complete 300-row Native,
+WASM and O3 ASan/UBSan B inventories, with instrumented movement passing, but
+WASM support fails at 1,172 frames. Different physical encounters prevent this
+from establishing a query optimization or closing the deadline contract.
+The experiment is archived under /tmp/wasm-dd2/rewrite-roof-support-0016/.
+Its read-only WASM observations separately expose a blocked road-bank recovery,
+corrected and checked under 0016 without adopting the tire-force experiment.
 ## Next
+
+Reprofile the accepted production source before claiming any full-case gain.
+Both 0046 and 0016 remain active; all prior deadlines and movement bounds stay
+unchanged. Receipts: diagnosis-report.json in that archive and
+/tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
 
 Retain the verified partial pair-preparation correction without closing the
 full deadline contract. Use the terminal current-production receipt and its

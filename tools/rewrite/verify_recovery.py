@@ -85,6 +85,8 @@ def check(rows, expected, buckets, corners):
         if rotate(before['rotation'],[0,1,0])[1] >= .2 or dot(before['angular'],before['angular']) > .25:
             raise ValueError('Car did not physically settle upside down')
         support = None
+        upward_before = rotate(before['rotation'], [0,1,0])
+        resting = []
         for corner in corners:
             point = [a+b for a,b in zip(before['position'],rotate(before['rotation'],corner))]
             candidates = contacts(buckets,point,point[1]-2,point[1]+2)
@@ -94,16 +96,20 @@ def check(rows, expected, buckets, corners):
                 height,plane = min((p for p in candidates if p[0] >= highest-1e-6),
                                    key=lambda p:(p[1]['index'],p[1]['triangle']))
                 if plane['unit'][1] >= .2 and abs(dot(before['velocity'],plane['unit'])) <= 50:
-                    rest_normal = plane['unit']
-                    expected_height = height-(rest_normal[0]*(before['position'][0]-point[0])+
-                                              rest_normal[2]*(before['position'][2]-point[2]))/rest_normal[1]
-                    center = contacts(buckets,before['position'],expected_height-190,expected_height+190)
-                    if center:
-                        highest_center = max(value for value,_ in center)
-                        _,landing_plane = min((p for p in center if p[0]>=highest_center-1e-6),
-                            key=lambda p:(p[1]['index']!=plane['index'],p[1]['index'],p[1]['triangle']))
-                        support = landing_plane['unit']
-                    break
+                    resting.append((-dot(upward_before,plane['unit']),height,plane,point))
+        if resting:
+            # Roof-facing support from independently decoded source triangles;
+            # equal alignments preserve the original box-corner order.
+            _,height,plane,point = max(resting,key=lambda item:item[0])
+            rest_normal = plane['unit']
+            expected_height = height-(rest_normal[0]*(before['position'][0]-point[0])+
+                                      rest_normal[2]*(before['position'][2]-point[2]))/rest_normal[1]
+            center = contacts(buckets,before['position'],expected_height-190,expected_height+190)
+            if center:
+                highest_center = max(value for value,_ in center)
+                _,landing_plane = min((p for p in center if p[0]>=highest_center-1e-6),
+                    key=lambda p:(p[1]['index']!=plane['index'],p[1]['index'],p[1]['triangle']))
+                support = landing_plane['unit']
         if support is None:
             raise ValueError('Recovery lacks real original roof/side support')
         if landed['angular'] != [0,0,0] or abs(dot(landed['velocity'],support)) > 1e-8:

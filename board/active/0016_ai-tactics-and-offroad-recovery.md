@@ -141,7 +141,40 @@ route recovery on those targets remains open. Receipts:
 /tmp/wasm-dd2/rewrite-pair-preparation-0046/production-arena-verified/{native,wasm}/report.json
 and /tmp/wasm-dd2/rewrite-owned-events-0045/season-owner/{wasm,sanitized}/terminal-report.json.
 
+The dynamic body-supported tire experiment is not adopted. Its controlled
+six-second saved-input probe restores road contact, and its complete Native B
+case reaches at least 2,315 supported frames. Levels 1..A pass the unchanged
+three-target AI gates. However, WASM B slot 17 overturns and has only 1,172
+supported frames, below 2,280; the complete instrumented B inventory passes
+movement but cannot establish a safe three-target correction. Two read-only
+WASM observers preserve all 300 ordinary rows byte for byte. They show an
+overturned resting car whose recovery counter saturates at 400 without righting.
+The archived experiment, including its separately checked mixed-height tie
+correction, remains under /tmp/wasm-dd2/rewrite-roof-support-0016/unadopted-experiment/.
+Receipt: /tmp/wasm-dd2/rewrite-roof-support-0016/diagnosis-report.json.
+
+An independent original-triangle and quaternion-matrix calculation identifies
+the blocked recovery: the first touching source corner samples opposite bank
+cell 843 and extrapolates center height -4,432.3935, while roof-facing cell 812
+supports the actual center road at -2,942.7954. Recovery now selects the actual
+contact normal most aligned with the roof, with stable source-corner ties.
+A separate two-ramp valley regression fails against the previous production
+code and passes the correction. The portable WASM-derived core pose rights
+with four real tire contacts on Native, WASM and fresh O1 ASan/UBSan; the exact
+previous recovery still fails the instrumented negative control. Vehicle clock,
+rest deadline, damage, NPC distance and local landing window are unchanged.
+Strict LLVM19/163-file checks, 37 Native/35 WASM CTests and all 220 original-grid
+physical drops per Native/WASM/ASan/UBSan target pass. This proves a landing
+selection correction, not complete B AI, roof traction or natural campaigns.
+Receipt: /tmp/wasm-dd2/rewrite-bank-recovery-0016/component-report.json.
+
 ## Next
+
+Reevaluate the archived body-supported tire experiment against this independent
+recovery correction. Preserve the full sixty-second supported-motion gate;
+righting one isolated overturned pose does not prove that the whole scenario
+meets it. Continue diagnosing the existing upright Native B roof ride and
+natural round-2 route blockage.
 
 Follow the current terminal movement/owner diagnosis under 0044. Diagnose the
 proved Native B roof-riding trajectory and original traction/recovery behavior

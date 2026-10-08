@@ -30,6 +30,7 @@ enum {
 };
 static const double dd2_recovery_test_tolerance = 1e-8;
 static const double dd2_recovery_test_steering = 0.1;
+static const double dd2_recovery_test_inverted_bank = 3.92699081698724154808;
 
 typedef struct {
     dd2_surface_test_fixture bytes;
@@ -201,6 +202,60 @@ static bool dd2_recovery_test_rejection(const dd2_recovery_test_track *track) {
            !dd2_vehicle_refresh_wheels(&vehicle, NULL, track->surface) && vehicle.rotation.z == 1;
 }
 
+static bool dd2_recovery_test_bank_seam(void) {
+    dd2_surface_test_fixture fixture;
+    dd2_surface_test_fixture_init(&fixture, DD2_RECOVERY_TEST_CARS);
+    /* Two adjoining ramps meet at a valley: y=-z on the vehicle's supporting
+     * bank, y=3z on the opposing bank. The first touching source-box corner is
+     * on the opposing ramp; extrapolating that plane misses the center road. */
+    for (unsigned layer = 0; layer < DD2_RECOVERY_TEST_CARS; ++layer) {
+        for (unsigned corner = 0; corner < DD2_SURFACE_TEST_VERTICES; ++corner) {
+            uint8_t *vertex =
+                fixture.vertices + (((size_t)layer * DD2_SURFACE_TEST_VERTICES + corner) *
+                                    DD2_SURFACE_TEST_VERTEX_BYTES);
+            const int32_t zpos =
+                ((int32_t)layer - (corner < DD2_SURFACE_TEST_ROW_VERTICES ? 1 : 0)) *
+                DD2_SURFACE_TEST_SIDE;
+            dd2_test_write_le32(vertex + DD2_SURFACE_TEST_Z_OFFSET, (uint32_t)zpos);
+            dd2_test_write_le32(vertex + DD2_TEST_WORD_BYTES,
+                                (uint32_t)(layer == 0 ? -zpos : 3 * zpos));
+        }
+    }
+    dd2_road *road = dd2_road_create(&fixture.level, DD2_ROAD_RACING);
+    dd2_road_surface *surface = dd2_road_surface_create(road);
+    const double root = sqrt(1.0 / 2);
+    const double center_z = -(double)DD2_RECOVERY_TEST_NOSE_HEIGHT * root;
+    const double center_y = -center_z + ((double)DD2_RECOVERY_TEST_ROOF_HEIGHT / root);
+    dd2_vehicle vehicle = {0};
+    bool passed = road != NULL && surface != NULL &&
+                  dd2_vehicle_reset(
+                      &vehicle, (dd2_vehicle_spawn){.position = {.y = center_y, .z = center_z}});
+    vehicle.rotation = (dd2_vehicle_rotation){.x = sin(dd2_recovery_test_inverted_bank / 2),
+                                              .w = cos(dd2_recovery_test_inverted_bank / 2)};
+    vehicle.steps = DD2_RECOVERY_TEST_STEPS;
+    const dd2_vehicle_damage damage = {0};
+    dd2_recovery_driver state = {.rest_steps = DD2_RECOVERY_REST_STEPS - 1, .overturned = true};
+    passed =
+        passed &&
+        dd2_recovery_step(&state, &vehicle,
+                          (dd2_recovery_frame){
+                              .road = road, .surface = surface, .damage = &damage, .count = 1}) &&
+        state.recoveries == 1 && state.rest_steps == 0 && !state.overturned &&
+        vehicle.steps == DD2_RECOVERY_TEST_STEPS;
+    unsigned grounded = 0;
+    for (unsigned wheel = 0; wheel < DD2_VEHICLE_WHEELS; ++wheel) {
+        grounded += (unsigned)vehicle.wheels[wheel].grounded;
+    }
+    const dd2_vehicle_vector upward =
+        dd2_vehicle_rotate(vehicle.rotation, (dd2_vehicle_vector){.y = 1});
+    passed = passed && grounded != 0 && fabs(upward.y - root) <= dd2_recovery_test_tolerance &&
+             fabs(upward.z - root) <= dd2_recovery_test_tolerance;
+    dd2_road_surface_destroy(surface);
+    dd2_road_destroy(road);
+    printf("Recovery at opposing bank seam: %s\n", passed ? "PASS" : "FAIL");
+    return passed;
+}
+
 int main(void) {
     dd2_recovery_test_track track = {0};
     bool passed = dd2_recovery_test_track_init(&track);
@@ -223,6 +278,9 @@ int main(void) {
         if (!passed) {
             puts("Recovery rejection/rollback failed");
         }
+    }
+    if (passed) {
+        passed = dd2_recovery_test_bank_seam();
     }
     dd2_road_surface_destroy(track.surface);
     dd2_road_destroy(track.road);
