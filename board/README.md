@@ -38,6 +38,7 @@ its game requirements or acceptance rules.
 | [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
 | [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
 | [0033](closed/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | closed |
+| [0034](closed/0034_original-font-glyph-data.md) | Original font glyph data | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -200,6 +201,13 @@ observed through 19 actual keys: lap times, Credits, Keyboard remapping prompt
 and Audio Volume. The isolated/provisioned saves stay unchanged. Remaining
 editing, persistence, joystick and rewrite-menu acceptance stay open under 0003.
 Receipt: /tmp/wasm-dd2/rewrite-frontend-submenus/report.json.
+
+Closed 0034 supplies owned original font glyph tables, with all 288 decoded
+characters checked on Native/WASM/ASan and all 576 loaded original base/duplicate
+characters checked at normal Wine frontend startup. Twelve original mutations,
+input lifetime and mandatory quality gates pass. Rendering/menu actions remain
+open under 0003. Receipt:
+/tmp/wasm-dd2/rewrite-font-verification-complete/report.json.
 
 ## Workflow and acceptance
 

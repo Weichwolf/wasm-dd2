@@ -86,6 +86,12 @@ Receipt: `/tmp/wasm-dd2/rewrite-frontend-submenus/report.json`. These observatio
 establish actual subordinate entry/cancel routes; record updates, submitted
 bindings, volume changes, joystick actions and persistence remain unproved.
 
+The original font-bank glyph data is now available as owned C structures through
+`assets/font.h`. All three base tables match Native/WASM/ASan exports and the six
+loaded original base/duplicate tables. See closed 0034 and
+`make rewrite-font-verify`. Sprite/font texture bindings and shared original menu
+rendering remain to be implemented; the existing temporary HUD is unchanged.
+
 ## Shared ownership and acceptance
 
 Implement typed navigation and explicit actions in `src/game/`, with the same

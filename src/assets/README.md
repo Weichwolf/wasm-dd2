@@ -51,6 +51,31 @@ without crashes or sanitizer diagnostics, and accept an archive with unnecessary
 tail padding removed. Only the Node test binary enables host filesystem access.
 The bounded report stays under `/tmp/wasm-dd2/`; completed raw output is removed.
 
+## Font glyph data
+
+`font.h` copies the original `LEV0\FONT.BNK` tables into owned glyph storage.
+The bank owns no pointers into the input, so the caller can release its bytes
+immediately. Each font supplies 96 four-byte UV/width/height records for character
+codes 32..127, including valid unavailable zero-sized entries. Invalid lookup
+clears the output; destruction accepts null. Font texture pixels and sprite
+bindings are separate assets and are not decoded by this module.
+
+The file header has a `0x464f4e54` marker at byte 4, declared size at byte 8 and
+font count at byte 12. Records begin at byte 16. Each starts with its byte stride;
+the glyph table starts sixteen bytes into the record. `FUN_00415508` establishes
+this iteration/copy layout. All reads and UV extents are checked. The shipped
+last stride includes a four-byte trailing word absent from the logical asset;
+the original increments its final pointer without reading it. The decoder
+accepts that exact unused difference, keeping every glyph read inside the file.
+It also accepts explicit final padding with an updated file size.
+
+`make rewrite-font-verify` runs mandatory Native/WASM gates, compares all 288
+original glyphs on Native, Node/WASM and ASan/UBSan, and rejects twelve corrupted
+banks. A normal original Wine frontend startup additionally supplies six small
+read-only glyph tables: three base fonts and three copied color variants. Every
+loaded glyph byte matches, and both save files remain unchanged. This is font
+asset/lifetime evidence; text rendering and working menus remain under 0003.
+
 ## Level data and textures
 
 `level.h` decodes a borrowed `LEVEL.DAT` view into 29 read-only sections, with

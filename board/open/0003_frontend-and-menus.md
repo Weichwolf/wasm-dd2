@@ -39,6 +39,12 @@ The bounded screen observations are interpreted and identified at
 /tmp/wasm-dd2/rewrite-frontend-submenus/report.json. Remapping submission,
 volume changes, record updates, joystick actions and persistence remain unproved.
 
+Closed 0034 supplies owned original font glyph data. Every byte of the three
+96-character tables matches Native/WASM/ASan and all six loaded original
+base/duplicate tables. Source lifetime and twelve corrupted banks are checked.
+Receipt: /tmp/wasm-dd2/rewrite-font-verification-complete/report.json.
+Sprite/font texture bindings and original shared menu rendering remain open.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager

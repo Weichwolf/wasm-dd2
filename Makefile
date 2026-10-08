@@ -16,6 +16,14 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-accidents-verify
 .PHONY: rewrite-race-verify
 
+.PHONY: rewrite-font-verify
+rewrite-font-verify: ## verify owned original font glyphs and live original font loading
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_fonts.py --original
+	$(MAKE) clean-logs
+
 rewrite-race-verify: ## verify race phases/results, source rules and a complete physical race
 	$(MAKE) clean-logs
 	$(MAKE) rewrite-check rewrite-wasm
