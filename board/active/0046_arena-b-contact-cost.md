@@ -160,13 +160,55 @@ the timeout alone does not identify a physical defect or its cause.
 Receipts: window-first-attempt-report.json, window-retry/report.json and
 component-report.json in /tmp/wasm-dd2/rewrite-world-cost-0046/.
 
+The current 4e66b27 diagnostic counts actual pair geometry without changing
+motions, material laws or query bounds. All 60 complete exported rows match the
+frozen production prefix exactly. At frame 400, 2,200 fleet steps have built
+50,739,303 boxes and visited 7,310,589 refinement windows. Box evaluations at
+times 0/0.5/1 total 9,526,789/5,296,626/3,434,588. The zero-time count includes
+initial preparation and static neighborhoods; it is not entirely redundant.
+Thread CPU time is 31.374 seconds for pair sweeps, 17.839 for ground sweeps,
+5.805 for pair neighborhoods, 2.627 for barriers and 3.492 for solving.
+Counter/timer overhead makes these diagnostic timings unsuitable for claiming
+a gain against an uninstrumented baseline. This 100-second diagnostic is not
+full-case acceptance. Receipt:
+/tmp/wasm-dd2/rewrite-pair-windows-0046/profile-report.json.
+
+Three private call-local pose reuse designs now preserve all 190 scalar result
+fields from the captured actual Native field, including two hits. Four
+alternating O3 ASan/UBSan trials of 380,000 pairs compare against the current
+frozen batch API rather than the older scalar baseline. Caching only 0/0.5/1
+increases query CPU by 4.4..6.7 percent; an eight-entry cache increases it by
+4.7..7.8 percent. Separating eight-entry scratch storage from prepared motion
+and initializing only written entries passes strict clang-tidy, but increases
+CPU by 7.5..10.1 percent on the same field. None is adopted. These timings cover
+one field, not the complete scenario. The first eight-entry full attempt still
+times out at 360.102 wallclock/250.313 child CPU seconds; all 126 complete rows
+match, but summaries and reset do not complete. Receipts:
+benchmark-three-report.json, benchmark-report.json,
+benchmark-scratch-report.json and candidate8/report.json in the same directory.
+
+The separate scratch-storage candidate's full attempt is also terminal: timeout
+at 360.180 wallclock/243.991 child CPU seconds, with all 108 complete prefix rows
+matching exactly and empty stderr. Summaries/reset do not complete. Different
+CPU availability makes comparing these wallclock attempts unsuitable for a
+speedup claim. The three-fixed-pose and first eight-entry designs also fail
+strict clang-tidy padding checks; the separate scratch-storage variant passes.
+No production C/header, build setting or SoftGL source changes in this diagnosis.
+All candidates remain private and 0046 stays active. Receipts:
+scratch8/report.json, candidate/tidy-report.json, scratch8/tidy-report.json and
+diagnosis-report.json in the same directory.
+
 ## Next
 
 Retain the verified partial pair-preparation correction without closing the
 full deadline contract. Use the terminal current-production receipt and its
 separate child CPU measurement to diagnose remaining pair-window/pose and
-world-query work from actual inputs before further changes. The prepared
-road planes are a verified local gain; they do not close the full deadline.
+world-query work from actual inputs before further changes. Count reuse and
+misses specifically inside surviving refinement trees before selecting another
+cache. Investigate passing already computed endpoints to child windows while
+keeping initial rejection cheap, query ownership explicit and stack use bounded.
+The three measured caches do not justify adoption. The prepared road planes
+are a verified local gain; they do not close the full deadline.
 Preserve every existing
 acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
 under 0016 and actual-owner continuation/public-session seasons separate;

@@ -103,6 +103,17 @@ acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-world-cost-0046/component-report.json.
 Historical evidence below is scoped to its recorded source epoch.
 
+The next current-source pair-window diagnostic preserves all 60 available
+production rows and measures 50,739,303 box evaluations/7,310,589 refinement
+windows by frame 400. Three private bounded pose caches match every result in
+the actual 190-pair Native field but increase isolated query CPU by 4.4..10.1
+percent against the current batch API. Neither full eight-entry candidate
+completes the unchanged 360-second instrumented case; their 126/108 complete
+prefix rows match. No cache is adopted and no whole-case gain is claimed.
+0046 remains active; next measure reuse within surviving refinement trees and
+evaluate sharing window endpoints without slowing cheap initial rejection.
+Current receipt: /tmp/wasm-dd2/rewrite-pair-windows-0046/diagnosis-report.json.
+
 The terminal a326993 race attempt and separate Circuit-5 follow-up account for
 all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural
 completion at the unchanged fixture bound. Its sparse movement diagnosis
