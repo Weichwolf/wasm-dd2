@@ -66,10 +66,22 @@ is unchanged. Receipt:
 This is original configuration-route evidence, not implemented rewrite menus or
 accepted occupied overwrite, game/replay data, restart or storage-failure proof.
 
+A further 58-key original run proves same-name occupied overwrite, plus cancel
+at the retained-A filename prompt after Yes. Cancellation preserves every old
+card byte; accepted replacement preserves headers and writes the updated packed
+configuration. Committed Sound Effects are saved at 3272, edited to 3681 and
+restored to 3272 by load. Twelve actual X11 windows and eight bounded card
+checkpoints are reviewed; the provisioned save remains unchanged. The driver
+waits for completed replacement, including the original delete-before-save
+intermediate state. Receipt:
+/tmp/wasm-dd2/rewrite-frontend-overwrite-card-0003-5/report.json.
+Renamed overwrite, multiple occupied slots, game/replay data, restart, storage
+failures and rewrite menus/storage remain open.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager
-accepted occupied overwrite, game/replay data and storage-failure paths,
+renamed overwrite, multiple occupied slots, game/replay data and storage-failure paths,
 CD transport and multiplayer input/turn topology.
 Complete the route inventory,
 decode its assets and implement typed navigation/actions using docs/frontend.md.

@@ -90,6 +90,23 @@ remains unchanged throughout; only the isolated copy changes. Receipt:
 This proves these original configuration paths, not accepted occupied overwrite,
 game/championship/replay data, restart persistence, storage failures or rewrite UI.
 Completed images/cards/logs are removed after recording their hashes and review.
+
+A 58-key follow-up accepts an occupied same-name configuration overwrite. After
+Yes, the name prompt retains `A`; Escape at that prompt preserves every old card
+byte. The accepted replacement preserves the card headers and writes the updated
+0x197e-byte configuration exactly. Sound Effects are observed at 3272 when saved,
+3681 after another committed edit and 3272 after load. Twelve actual X11 windows
+and eight bounded card checkpoints are reviewed. Load and delete cancellation
+preserve all replacement bytes; confirmed deletion retains its payload. The
+provisioned save remains unchanged. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-overwrite-card-0003-5/report.json`.
+The original deletes the old entry before saving the replacement; the observer
+waits for completed occupancy/payload instead of treating the first changed bytes
+as completion. Rewrite storage must stage atomic replacement. Key repeat can
+consume multiple volume increments; these are observed values, not inferred from
+key counts. Renamed overwrite, multiple slots, game/replay data, restart and
+storage failures remain open, as do rewrite menu/storage implementation.
+
 The observed CD Player displays the selected
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must

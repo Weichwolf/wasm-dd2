@@ -487,6 +487,17 @@ clearing the occupied marker/name prefix. Open 0003/0008 still require rewrite
 menus/codecs, accepted overwrite, game/replay data and storage-failure handling.
 Receipt: /tmp/wasm-dd2/rewrite-frontend-occupied-card-0003-5/report.json.
 
+A further 58-key original run proves same-name occupied configuration overwrite
+and cancellation at the filename prompt after Yes. Twelve actual X11 windows
+and eight bounded card checkpoints are reviewed. Cancellation preserves all
+old bytes; accepted overwrite preserves headers and writes the updated packed
+configuration, subsequently restored by load after another volume edit.
+The provisioned save remains unchanged. The original delete-before-save
+intermediate state requires waiting for completed replacement; rewrite storage
+still needs atomic ownership. Renamed overwrite, multiple slots, game/replay
+data, restart, storage failures and rewrite menus/adapters remain open in 0003/0008.
+Receipt: /tmp/wasm-dd2/rewrite-frontend-overwrite-card-0003-5/report.json.
+
 The frontend migration inventory in docs/frontend.md records the original eight
 main slots and source-backed session/cancel/confirm constraints. Actual original
 input now identifies CARD as File Manager and LINK as CD Audio Player, with
