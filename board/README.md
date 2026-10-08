@@ -45,6 +45,7 @@ its game requirements or acceptance rules.
 | [0038](active/0038_cold-constitutive-contact-root.md) | Recover a complete cold constitutive contact root | active |
 | [0039](active/0039_sliding-world-pressure-transition.md) | Recover a loaded sliding world support's linear branch | active |
 | [0040](active/0040_captured-three-car-contact-root.md) | Resolve the captured three-car contact failure | active |
+| [0041](active/0041_captured-five-car-contact-root.md) | Resolve the captured five-car contact failure | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -428,6 +429,17 @@ unproved. Separately, current read-only observation of the old 168,287 state
 finds no restart, excluding private branch models. A first-phase Native trial
 advances that saved owner but still fails an existing regression; 0040 owns
 further diagnosis and no production fix is claimed for that input.
+
+The 0040 trial regression is now explained solely by one historical restart
+expectation. Production eligibility after the unchanged delay now applies in
+both phases, with unchanged materials, bounds, rollback and physical checks.
+All 673 contact checks per target, strict LLVM19/160-file formatting and 35/33
+Native/WASM CTests pass. The actual 168,287 owner advances on Native/instrumented
+C, with independent root motion agreement within 4.98e-14. A fresh frozen
+campaign and broader checks are being followed. The separate 223,337 capture
+matches all 104 records; its five-car/fourteen-contact owner still fails current
+production and is tracked under 0041. Full seasons remain unproved.
+Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/component-report.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.

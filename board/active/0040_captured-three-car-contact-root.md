@@ -40,15 +40,42 @@ adopt it or claim production/multi-platform correction from this trial.
 Receipts: /tmp/wasm-dd2/rewrite-merit-190078/next-failure-diagnosis/terminal.json and
 first-phase-trial/report.json.
 
+The trial regression is now isolated to the fitted released-wall fixture's
+historical requirement for exactly one restart: its complete solve succeeds
+after 513 velocity/50 position passes with zero restarts. All 656 previous
+independent physical checks pass when that counter expectation is separated.
+Only this fixture no longer requires a restart; its material, energy, impulse,
+motion and position checks, the global one-restart cap and the other three
+required-restart fixtures remain. No physical acceptance check is weakened.
+Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/diagnosis/physical-diagnosis-report.json.
+
+Independent geometry/inertia reconstruction agrees within 1.75e-13. Searching
+all 256 normal active sets finds an admissible root releasing rows 1 and 2,
+with complete physical error 6.09e-14. A central-difference Jacobian check and
+Jacobian-free solve corroborate it; this is not a uniqueness proof. Current
+full/remapped Native motion agrees with that root within 4.98e-14.
+Receipts: /tmp/wasm-dd2/rewrite-merit-190078/next-failure-diagnosis/
+independent-root/report.json and finite-difference-report.json;
+/tmp/wasm-dd2/rewrite-first-phase-0040/independent-motion-report.json.
+
+Production now permits the existing bounded private models after the unchanged
+512-pass delay in either phase. All 259 models, one matrix, 4,096 shared passes,
+sixteen refinements/backtracking steps, one-restart cap, exact rollback and
+ordinary full physical certification remain. The actual captured query and
+sixteen new orderings bring the corpus to 35 cases plus 638 orderings: all 673
+checks pass on Native/WASM/ASan/UBSan. Strict LLVM19/160-file formatting, 35
+Native and 33 WASM CTests pass. The actual 168,287 owner advances to 168,288 on
+Native and instrumented C; the prior 108,716, 115,420 and 190,078 Native owners
+still advance. The new first regression rejects frozen d160c06.
+Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/component-report.json.
+
 ## Next
 
-Diagnose the first-phase candidate's existing regression before integration,
-separating physical acceptance from historical restart expectations using
-independent checks. Reconstruct mobility/material branches as needed. The new
-frozen d160c06 campaign separately fails at 223,337 after crossing the prior
-ticks; require its actual capture and keep its acceptance separate. Add focused
-independent regressions for the proved failure, run strict
-Native/WASM/instrumented gates, and verify actual saved-owner advancement.
+Finish the current-source original-data, actual-input and selected-race gates;
+follow the same fresh ordinary campaign to its terminal outcome. Complete
+physical seasons remain unproved. The separately reproduced five-car/fourteen-
+contact 223,337 owner still fails current production and belongs to 0041;
+keep that defect and the older 168,287 trajectory distinct.
 
 ## Accept
 

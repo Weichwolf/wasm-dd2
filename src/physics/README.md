@@ -360,7 +360,7 @@ displacement cannot form a false fixed-point prediction. The dense matrix has
 at most 192 axes in automatic storage, with no allocation or contact omission.
 Corrections and restarts share the existing 4,096-pass bound.
 
-After the bounded restart, mixed car/world groups also compare a refined
+After the 512-pass delay in either phase, mixed car/world groups compare a refined
 speculative branch from the same exact input. A full fitted seed may require
 previously separating supports to load while friction directions change. Up to
 sixteen Newton steps re-evaluate those branches, each with existing pressure
@@ -373,11 +373,19 @@ projected Jacobian when the analytic seed is singular or refinement cannot
 improve.
 Groups without that patch retain the analytic path. One bounded matrix is reused
 for every refinement; there are no additional ordinary sweeps or allocations.
-The first accelerated phase, material laws, final tolerances
-and total ordinary-pass bound remain unchanged.
+Material laws, final tolerances and the total ordinary-pass bound remain unchanged.
+Slow progress can consume the entire accelerated phase without triggering a
+restart. Private models are therefore eligible in both phases after the existing
+delay, rather than requiring a restart that may never happen. Ordinary
+certification and exact rejection/rollback still apply. The actual tick-168287
+three-car/eight-contact query and sixteen orderings cover this initial phase.
+A released-wall fixture can now finish before restarting; its physical/material,
+energy, impulse and position checks remain, while the obsolete exact restart
+expectation is removed only for that fixture. Other required-restart cases and
+the global single-restart bound remain checked.
 
 A regularized direction can remain on a small-slip linear branch even when
-its valid solution requires saturated friction. After restart, mixed groups
+its valid solution requires saturated friction. After the delay, mixed groups
 with a positive regularized load also compare a saturated constitutive branch
 from the same exact outer state. Its private direction uses the normalized
 nonzero slip; zero slip keeps the regularized denominator. Both branches retain
@@ -396,7 +404,7 @@ refinement, pressure-fit and backtracking bounds. Only a smaller finite residual
 under the unchanged physical law can replace the best candidate.
 
 World loads can approach an inadmissible pressure root while a valid root exists
-on another active branch. After restart, local typed models try doubling each
+on another active branch. After the delay, local typed models try doubling each
 loaded small-slip world support and releasing each loaded world support, in both
 world-only and mixed fields. A higher-load seed applies the changed normal
 impulse and solves linear friction equilibrium with every normal load held fixed,
@@ -427,7 +435,7 @@ final tolerances are unchanged.
 
 Co-oriented world supports can have dependent normal equations: collinear points
 on one rigid body have affine normal velocities. A valid active set may require
-several interior supports to release together. After restart, the search also
+several interior supports to release together. After the delay, the search also
 tries each world support as the retained member of its matching normal patch,
 using the existing normal-axis tolerance and a local bounded contact mask.
 The other matching supports retain fixed zero-normal/tangent rows during private
@@ -465,7 +473,7 @@ exercise the dense path. Its independent constitutive oracle includes the
 documented 1e12 softness cap, with explicit valid/invalid checks below, at and
 above the corresponding 1e-13 cone radius.
 
-If mixed-contact warm branches still miss a complete root after restart, one
+If mixed-contact warm branches still miss a complete root after the delay, one
 final cold constitutive model privately undoes every accumulated impulse. It
 retains every contact and uses the existing analytic material Jacobian, fitted
 nonnegative pressure directions, equation merit and sixteen-step refinement.
@@ -479,7 +487,7 @@ without additional ordinary sweeps, a new matrix or relaxed material conditions.
 The actual step-115420 query and all twenty-four orderings exercise this root.
 
 A world support may need higher pressure before it returns to the linear
-friction branch. After restart, a sliding support's local model reuses the
+friction branch. After the delay, a sliding support's local model reuses the
 doubled pressure and fixed-load friction seed, followed by private constitutive
 refinement with fitted tangent directions and equation merit. An unloaded world
 support instead borrows the mean positive incident pressure as its private seed;
@@ -496,13 +504,13 @@ rejected with exact rollback. The actual five-car, eleven-contact step-108716
 query and twenty-two rotations/reversals check this sliding-to-linear transition.
 
 A sliding world support can also need to return to the linear friction branch.
-After restart, a world-only field compares a private refinement of the existing
+After the delay, a world-only field compares a private refinement of the existing
 linear world-friction direction. Its full fitted seed and up to sixteen steps
 can pass through a larger intermediate residual before the active pressures
 settle. Every candidate keeps normal refits, friction-cone projection, bounded
 backtracking and exact rollback. The original physical law accepts only a finite
 lower final residual. The extra world-only base model fits the bounded model
-array; mixed-field models and first-phase behavior are unchanged.
+array. Its material directions and all physical acceptance checks are unchanged.
 
 Nine arena-B regressions cover a five-contact cycle, simultaneous
 sloped-ground/wall/flat-ground support, a ten-contact/eight-body chain, a

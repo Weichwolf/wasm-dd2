@@ -1318,7 +1318,7 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
     return count;
 }
 
-static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool coordinate) {
+static bool dd2_group_newton(dd2_group_workspace *workspace, double *error) {
     const dd2_group_iterate base = dd2_group_values(workspace);
     dd2_group_motion motion[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_group_copy_motion(workspace, motion);
@@ -1331,7 +1331,10 @@ static bool dd2_group_newton(dd2_group_workspace *workspace, double *error, bool
     /* Both refitted directions still compete. Once a finite physical root is
      * already acceptable, additional branch models cannot improve acceptance;
      * the next ordinary sweep must still certify the unilateral active set. */
-    if (!coordinate || (corrected && *error < dd2_group_velocity_tolerance)) {
+    /* A slowly improving accelerated phase can consume its pass budget without
+     * restarting. Private branches must also be eligible in that phase; the
+     * ordinary delay and complete physical acceptance remain unchanged. */
+    if (corrected && *error < dd2_group_velocity_tolerance) {
         return corrected;
     }
     dd2_group_iterate best = dd2_group_values(workspace);
@@ -1370,8 +1373,7 @@ static bool dd2_group_newton_advance(dd2_group_workspace *workspace, unsigned pa
     if (pass + 1 < DD2_GROUP_NEWTON_DELAY || (pass + 1) % DD2_GROUP_NEWTON_PERIOD != 0) {
         return false;
     }
-    const bool corrected =
-        dd2_group_newton(workspace, &result->velocity_error, result->coordinate_restarts > 0);
+    const bool corrected = dd2_group_newton(workspace, &result->velocity_error);
     result->accelerated_passes += (unsigned)corrected;
     return corrected;
 }

@@ -277,7 +277,7 @@ responses, releases negative pressure and refits within contact_count + 1 solves
 Singular or non-improving fits preserve exact state. All twenty-four row
 orderings of the new four-contact query and forty-eight analytic tilted-plane
 cases check clearance, least-norm translation and released supports.
-After restart, a mixed-group speculative branch can use up to sixteen bounded
+After the existing 512-pass delay in either phase, a mixed-group speculative branch can use up to sixteen bounded
 Newton refinements while contact loads and friction directions settle.
 Intermediate states remain private; only a finite lower full physical residual
 can replace the outer iterate. Co-oriented world patches permit a projected
@@ -285,7 +285,7 @@ Jacobian fallback if the analytic seed is singular or refinement cannot improve.
 Sixteen additional orderings
 of the captured eight-contact query preserve independent physical checks.
 A loaded small-slip branch also permits a private saturated constitutive
-direction after restart; the original regularized physical residual still
+direction after that delay; the original regularized physical residual still
 controls final acceptance. All 120 permutations of a five-contact natural
 championship query check the transition without changing material rules.
 Mixed fields can also compare selective saturated directions for each loaded
@@ -294,7 +294,7 @@ The selection belongs to a local typed model; every trial starts from the same
 outer state and remains subject to the existing bounds and physical residual.
 Twenty rotations/reversals of a four-body, ten-contact championship query check
 these independent transitions.
-After restart, world-only and mixed fields also compare private pressure seeds:
+After the delay, world-only and mixed fields also compare private pressure seeds:
 double each loaded small-slip world support or release each loaded world support.
 Higher-load seeds equilibrate linear friction with all normal loads held fixed,
 then apply the bounded analytic constitutive refinement. Release directions
@@ -310,6 +310,13 @@ query check higher pressure, and all 120 permutations of a three-body/five-conta
 query check released world support with loaded car pairs. Twenty-two additional
 rotations/reversals of a six-body/eleven-contact query check coupled release
 without a fixed-load seed.
+Private branch eligibility does not require a coordinate restart: slowly improving
+accelerated solves can exhaust their pass budget without one. Existing model,
+refinement and backtracking bounds remain; every final candidate still reduces
+full physical error and requires ordinary certification. Sixteen orderings of
+the three-car/eight-contact tick-168287 query check this initial-phase route.
+The released-wall fixture keeps its independent physical checks while allowing
+completion before restart; other required-restart fixtures remain unchanged.
 Loaded sliding world supports also compare the existing doubled-pressure and
 fixed-load friction seed through a private constitutive refinement. The fitted
 equation merit and tangent direction permit a return to the linear branch while

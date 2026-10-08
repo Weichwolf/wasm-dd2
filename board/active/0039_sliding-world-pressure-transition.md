@@ -99,13 +99,18 @@ all 104 records before attributing its cause. Full season acceptance remains
 false, and the work item stays active.
 Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/natural-season/terminal-report.json.
 
+The completed failure-only capture matches all 104 production records exactly
+and saves one 31,216-byte owner with a fourteen-contact group involving slots
+1, 4, 11, 14 and 17. Frozen d160c06 and the current first-phase correction both
+reject the full/remapped query and actual owner. Read-only diagnostic and
+production instruction bytes match. This separate defect is tracked under 0041.
+Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/production-report.json.
+
 ## Next
 
-Finish the actual 223,337 failure capture, require all 104 matching records and
-diagnose its saved owner/query before further natural continuation. The old
-immutable 18c0a01 capture matches all 93
-records; current production still rejects that separate saved 168,287 input.
-Diagnose it under 0040 without treating the older trajectory as the new campaign.
+Follow current-source natural continuation and diagnose 223,337 under 0041.
+The older 168,287 captured owner now advances under 0040; its saved-input
+correction does not establish either trajectory's complete season acceptance.
 
 ## Accept
 
