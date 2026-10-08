@@ -107,12 +107,67 @@ The scoped pair-preparation gain is verified, while 0046 remains active.
 Receipts: production-arena-instrumented/report.json and component-report.json
 in /tmp/wasm-dd2/rewrite-pair-preparation-0046/.
 
+The separate 51605e8 thread CPU profile preserves all 60 available production
+rows exactly through its 100-second diagnostic budget. At frame 400, 90,250
+earliest searches have called ground/barrier sweeps 1,805,000 times each.
+Ground sweeps consume 19.903 CPU seconds, barriers 2.337, pair inventory 27.433,
+pair neighborhoods 4.904 and solving 3.024. This identifies repeated immutable
+road-plane preparation as relevant work while pair search remains larger.
+Receipt: /tmp/wasm-dd2/rewrite-world-cost-0046/profile-report.json.
+
+The road index now owns each triangle's initial sweep plane/origin and prepares
+it once from immutable source geometry. Inactive/degenerate triangles retain
+their original rejection. Construction checks allocation bounds and releases
+all storage on failure/destruction. Final-point triangle tests, heights, bridge
+separation, edge/time tolerance and traversal ties are unchanged. All 79,100
+original short/fast sweeps on eleven levels preserve every frozen previous
+result field and work count exactly under O3 ASan/UBSan. Four alternating-order
+trials reduce query CPU by 19.0..20.8 percent. These are local timings, not a
+whole-scenario speedup. Receipt: benchmark-report.json in the same directory.
+
+The private plane candidate's full instrumented attempt still times out after
+360.086 wallclock/355.559 CPU seconds. Its 232 complete rows match the prior
+production attempt exactly; summaries/reset do not complete and stderr is empty.
+Strict LLVM19 requires widening the triangle index before multiplication; the
+final production implementation fixes that finding. Its frozen-index comparison
+still passes all 79,100 queries. The final source passes 37 Native/35 WASM
+CTests, 163-file format/tidy, eight instrumented targets, 716 physical checks
+per target and eleven-level original-data ground/fleet checks. Actual window
+and final full-case checks are recorded separately before publication.
+Receipts: candidate/report.json, native-quality-report.json,
+wasm-quality-report.json, physical-report.json, sanitizer-report.json and
+ground/fleet reports in /tmp/wasm-dd2/rewrite-world-cost-0046/.
+
+Final Native/WASM Arena-B exporters complete within their unchanged 180-second
+bound (138.20/167.03 seconds) and preserve all 300 preceding rows byte for byte,
+including twenty summaries and reset owners. Native support acceptance still
+fails at slot 17; WASM motion passes. Current-production O3 ASan/UBSan times out
+at 360.062 wallclock seconds with only 217.797 child CPU seconds and 108 complete
+matching prefix rows. Its wallclock result cannot isolate a code speedup or
+regression relative to the prior mostly-CPU-bound attempts. Neither process
+deadlines nor motion requirements are relaxed, and no complete AI acceptance is
+claimed. Receipts: production-arena-verified/{native,wasm}/report.json and
+production-arena-instrumented/report.json in the same directory.
+
+The first actual-window attempt passes 31 Native/31 instrumented comparisons,
+then reaches the browser's unchanged 15-second real reverse-to-arena-8 contact
+wait without observing the contact. Its 59 completed browser comparisons and
+empty browser error list do not establish a full pass. The complete unchanged
+retry passes all 31/31/144 comparisons and input/lifecycle/mode checks, with no
+browser errors. No code, wait limit or acceptance threshold changes between
+attempts. The terminal negative receipt is retained alongside the passing retry;
+the timeout alone does not identify a physical defect or its cause.
+Receipts: window-first-attempt-report.json, window-retry/report.json and
+component-report.json in /tmp/wasm-dd2/rewrite-world-cost-0046/.
+
 ## Next
 
 Retain the verified partial pair-preparation correction without closing the
 full deadline contract. Use the terminal current-production receipt and its
-separate child CPU measurement to diagnose remaining world/swept query work
-from actual inputs before further changes. Preserve every existing
+separate child CPU measurement to diagnose remaining pair-window/pose and
+world-query work from actual inputs before further changes. The prepared
+road planes are a verified local gain; they do not close the full deadline.
+Preserve every existing
 acceptance bound and instrument every reached C unit. Keep slot-17 roof riding
 under 0016 and actual-owner continuation/public-session seasons separate;
 the older independent WASM/instrumented seasons both timed out in round 2.

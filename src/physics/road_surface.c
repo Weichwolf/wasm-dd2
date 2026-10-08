@@ -33,9 +33,16 @@ typedef struct {
     uint32_t right;
 } dd2_surface_node;
 
+typedef struct {
+    dd2_track_vertex origin;
+    dd2_road_contact contact;
+    bool active;
+} dd2_surface_plane;
+
 struct dd2_road_surface {
     const dd2_road *road;
     dd2_surface_entry *entries;
+    dd2_surface_plane *planes;
     dd2_surface_node *nodes;
     size_t node_count;
 };
@@ -53,6 +60,7 @@ typedef struct {
 void dd2_road_surface_destroy(dd2_road_surface *surface) {
     if (surface != NULL) {
         free(surface->entries);
+        free(surface->planes);
         free(surface->nodes);
         free(surface);
     }
@@ -79,6 +87,19 @@ static void dd2_surface_entry_init(dd2_surface_entry *entry, const dd2_road *roa
         entry->center[axis] = (entry->bounds.min[axis] + entry->bounds.max[axis]) / 2;
         entry->bounds.min[axis] -= DD2_ROAD_EDGE_TOLERANCE;
         entry->bounds.max[axis] += DD2_ROAD_EDGE_TOLERANCE;
+    }
+}
+
+static void dd2_surface_planes_init(dd2_road_surface *surface, const dd2_road *road,
+                                    uint32_t cell) {
+    for (unsigned triangle = 0; triangle < 2; ++triangle) {
+        dd2_surface_plane *plane = &surface->planes[((size_t)cell * 2) + triangle];
+        plane->origin =
+            dd2_road_vertices(road)[dd2_road_cells(road)[cell].vertices[(size_t)triangle * 2]];
+        plane->active = dd2_road_contact_triangle(
+            road, cell, triangle,
+            (dd2_road_point){.x = (double)plane->origin.x, .z = (double)plane->origin.z},
+            &plane->contact);
     }
 }
 
@@ -137,7 +158,8 @@ static void dd2_surface_build(dd2_road_surface *surface) {
 dd2_road_surface *dd2_road_surface_create(const dd2_road *road) {
     const size_t count = dd2_road_cell_count(road);
     if (count == 0 || count > UINT32_MAX / 2 || count > SIZE_MAX / sizeof(dd2_surface_entry) ||
-        count > SIZE_MAX / sizeof(dd2_surface_node) / 2) {
+        count > SIZE_MAX / sizeof(dd2_surface_node) / 2 ||
+        count > SIZE_MAX / sizeof(dd2_surface_plane) / 2) {
         return NULL;
     }
     dd2_road_surface *surface = calloc(1, sizeof(*surface));
@@ -146,13 +168,15 @@ dd2_road_surface *dd2_road_surface_create(const dd2_road *road) {
     }
     surface->road = road;
     surface->entries = calloc(count, sizeof(*surface->entries));
+    surface->planes = calloc(count * 2, sizeof(*surface->planes));
     surface->nodes = calloc((count * 2) - 1, sizeof(*surface->nodes));
-    if (surface->entries == NULL || surface->nodes == NULL) {
+    if (surface->entries == NULL || surface->nodes == NULL || surface->planes == NULL) {
         dd2_road_surface_destroy(surface);
         return NULL;
     }
     for (size_t index = 0; index < count; ++index) {
         dd2_surface_entry_init(&surface->entries[index], road, (uint32_t)index);
+        dd2_surface_planes_init(surface, road, (uint32_t)index);
     }
     surface->node_count = 1;
     surface->nodes[0].count = (uint32_t)count;
@@ -285,17 +309,17 @@ static double dd2_surface_plane_distance(dd2_road_position point, dd2_track_vert
            ((point.z - (double)origin.z) * plane->normal[2]);
 }
 
-static bool dd2_surface_triangle_sweep(const dd2_road *road, uint32_t cell, unsigned triangle,
-                                       dd2_surface_sweep sweep, dd2_surface_hit *hit) {
-    /* The first vertex of each triangle is also its corresponding quad corner. */
-    const dd2_track_vertex origin =
-        dd2_road_vertices(road)[dd2_road_cells(road)[cell].vertices[(size_t)triangle * 2]];
-    dd2_road_contact plane = {0};
-    if (!dd2_road_contact_triangle(road, cell, triangle,
-                                   (dd2_road_point){.x = (double)origin.x, .z = (double)origin.z},
-                                   &plane)) {
+static bool dd2_surface_triangle_sweep(const dd2_road_surface *surface, uint32_t cell,
+                                       unsigned triangle, dd2_surface_sweep sweep,
+                                       dd2_surface_hit *hit) {
+    /* The road is immutable for the index lifetime. Reuse its exact source
+     * plane while retaining the original final-point triangle test below. */
+    const dd2_surface_plane *prepared = &surface->planes[((size_t)cell * 2) + triangle];
+    if (!prepared->active) {
         return false;
     }
+    const dd2_track_vertex origin = prepared->origin;
+    dd2_road_contact plane = prepared->contact;
     const double start = dd2_surface_plane_distance(sweep.start, origin, &plane);
     const double end = dd2_surface_plane_distance(sweep.end, origin, &plane);
     double time = 0;
@@ -314,7 +338,7 @@ static bool dd2_surface_triangle_sweep(const dd2_road *road, uint32_t cell, unsi
     const dd2_road_position point = {.x = sweep.start.x + ((sweep.end.x - sweep.start.x) * time),
                                      .y = sweep.start.y + ((sweep.end.y - sweep.start.y) * time),
                                      .z = sweep.start.z + ((sweep.end.z - sweep.start.z) * time)};
-    if (!dd2_road_contact_triangle(road, cell, triangle,
+    if (!dd2_road_contact_triangle(surface->road, cell, triangle,
                                    (dd2_road_point){.x = point.x, .z = point.z}, &plane)) {
         return false;
     }
@@ -364,7 +388,7 @@ static void dd2_surface_sweep_visit(dd2_surface_sweep_search *search) {
             ++search->statistics.cell_tests;
             for (unsigned triangle = 0; triangle < 2; ++triangle) {
                 dd2_surface_hit hit = {0};
-                if (dd2_surface_triangle_sweep(search->surface->road, candidate->cell, triangle,
+                if (dd2_surface_triangle_sweep(search->surface, candidate->cell, triangle,
                                                search->sweep, &hit)) {
                     dd2_surface_sweep_consider(search, hit);
                 }

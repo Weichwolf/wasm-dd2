@@ -39,7 +39,8 @@ typedef struct {
     dd2_road_contact road;
 } dd2_surface_hit;
 
-/* Owns a balanced XZ bounds hierarchy; borrows immutable road geometry, which
+/* Owns a balanced XZ bounds hierarchy and prepared sweep planes; borrows
+ * immutable road geometry, which
  * must outlive it. Creation/destruction are separate from allocation-free queries.
  * Returns the highest contact within the inclusive height window. Heights within
  * DD2_ROAD_EDGE_TOLERANCE form a tie: prefer the supplied cell, otherwise the

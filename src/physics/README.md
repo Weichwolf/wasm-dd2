@@ -21,6 +21,18 @@ the index owns its balanced XZ bounds hierarchy and borrows immutable geometry.
 Construction and destruction allocate; queries have no allocations, rendering
 or operating-system calls. Both construction and traversal are iterative.
 
+The index also owns the initial sweep plane and source origin for each lane
+triangle. Immutable road geometry determines these values once at construction,
+including inactive/missing/degenerate triangles. Allocation overflow/failure
+rejects construction and releases all index storage. Sweeps reuse those exact
+normals before the unchanged final-point triangle test; heights, edge tolerance,
+bridge separation, traversal order and earliest-time ties retain their meanings.
+An O3 ASan/UBSan comparison against the frozen previous index preserves every
+result field and traversal count for all 79,100 short/fast original-data sweeps
+on eleven levels. Four alternating-order trials reduce measured query CPU by
+19.0..20.8 percent. This is a query measurement, not whole-game speedup or
+completed AI acceptance. Receipts: /tmp/wasm-dd2/rewrite-world-cost-0046/.
+
 A query supplies XZ coordinates, a finite inclusive height window and an optional
 preferred cell (`DD2_ROAD_NO_STRIP` for none). It returns the highest eligible
 contact. Contacts within 1e-6 below the global maximum form a tie: the preferred

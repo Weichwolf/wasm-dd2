@@ -60,7 +60,8 @@ to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
 Current work is 0046/0016, following 0045/0044. Owned collision reports preserve
-physical work bounds and restore previously clipped movement. The ordinary
+physical work bounds and restore previously clipped movement. The prior
+owned-report source's ordinary
 Native first Stockcar season completes four real results (two finishes, two
 engine retirements) and opens season 2. The separate WASM/instrumented public
 session seasons both time out at 3,600 seconds in round 2 with zero player laps;
@@ -84,6 +85,22 @@ sphere-ordering candidate remains unadopted. Complete tactics, modes, menus,
 audio, visuals and all-game acceptance remain open. Current receipts:
 /tmp/wasm-dd2/rewrite-pair-preparation-0046/ and
 /tmp/wasm-dd2/rewrite-owned-events-0045/{natural-season,season-owner}/.
+
+The road index now also prepares immutable sweep planes once, retaining the
+original final-point triangle test, tolerances, bridge separation and tie order.
+All 79,100 original-data short/fast sweeps preserve every frozen previous result
+field and work count; four O3 ASan/UBSan trials reduce query CPU by 19.0..20.8
+percent. Strict LLVM19/163-file checks, 37 Native/35 WASM CTests, 716 physical
+checks per target, eight instrumented targets and eleven-level ground/fleet
+checks pass. Actual Native/sanitized/Chromium input/presentation passes 31/31/144
+comparisons after an unchanged retry of a terminal browser reverse-to-barrier
+wait timeout. Both full Native/WASM Arena-B outputs still match their preceding
+300-row inventories exactly. Its Native support failure remains; the private
+and current-production instrumented cases still exceed 360 seconds. The latter
+uses only 217.797 CPU seconds, so its wallclock cannot isolate code speedup or
+regression. These are component gains; complete AI, campaigns and game
+acceptance remain open. Current receipts:
+/tmp/wasm-dd2/rewrite-world-cost-0046/component-report.json.
 Historical evidence below is scoped to its recorded source epoch.
 
 The terminal a326993 race attempt and separate Circuit-5 follow-up account for
