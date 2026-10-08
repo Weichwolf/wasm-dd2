@@ -253,7 +253,7 @@ querying world supports, avoiding road/barrier queries for unrelated cars while
 retaining contact order and solver budgets. World and car-pair supports share a
 0.1 world units/s linear low-speed friction transition, with unchanged Coulomb
 saturation above that threshold. This bounds microscopic creep while stabilizing
-almost parallel ground/wall supports. Thirty-one captured dense-contact
+almost parallel ground/wall supports. Captured dense-contact
 queries and independent analytic/material checks cover this rewrite tuning.
 A stalled accelerated solve restarts once from its exact input motion and zero
 impulses, retaining all constraints and the shared 4,096-pass bound. Converging
@@ -310,6 +310,18 @@ query check higher pressure, and all 120 permutations of a three-body/five-conta
 query check released world support with loaded car pairs. Twenty-two additional
 rotations/reversals of a six-body/eleven-contact query check coupled release
 without a fixed-load seed.
+Loaded sliding world supports also compare the existing doubled-pressure and
+fixed-load friction seed through a private constitutive refinement. The fitted
+equation merit and tangent direction permit a return to the linear branch while
+coupled pressures settle. Unloaded world supports borrow the mean positive
+incident pressure only as a private seed. Their selected normal equation stays
+active without provisional release during that trial; candidate normal impulses
+remain nonnegative. Final cone projection and the unchanged full physical
+tolerance remain mandatory; partial alternate roots restore exact warm state.
+Twenty-two rotations/reversals of the five-car/eleven-contact tick-108716 query
+check this transition. This alternate occupies the existing pressure-model slot,
+and unloaded supports omit the redundant release model, preserving the
+four-model-per-contact, pass, matrix and refinement bounds.
 Selected world-release refinements also retain their fitted tangent directions
 through private sliding/linear transitions. Before outer acceptance, every
 friction impulse is projected into its original cone and the full physical

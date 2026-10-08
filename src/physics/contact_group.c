@@ -423,7 +423,8 @@ typedef enum {
     DD2_GROUP_NEWTON_LOAD,
     DD2_GROUP_NEWTON_RELEASE,
     DD2_GROUP_NEWTON_PATCH,
-    DD2_GROUP_NEWTON_COLD
+    DD2_GROUP_NEWTON_COLD,
+    DD2_GROUP_NEWTON_WORLD_PRESSURE
 } dd2_group_newton_method;
 
 typedef struct {
@@ -509,11 +510,19 @@ static bool dd2_group_newton_saturated(const dd2_group_newton_state *state, unsi
 }
 
 static bool dd2_group_newton_pressure(dd2_group_newton_method method) {
-    return method == DD2_GROUP_NEWTON_LOAD || method == DD2_GROUP_NEWTON_RELEASE;
+    return method == DD2_GROUP_NEWTON_LOAD || method == DD2_GROUP_NEWTON_RELEASE ||
+           method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
 }
 
 static bool dd2_group_newton_private(dd2_group_newton_method method) {
-    return method == DD2_GROUP_NEWTON_RELEASE || method == DD2_GROUP_NEWTON_COLD;
+    return method == DD2_GROUP_NEWTON_RELEASE || method == DD2_GROUP_NEWTON_COLD ||
+           method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
+}
+
+/* These alternate basins must reach a complete physical root before replacing
+ * warm progress. Existing release refinements retain their reduction contract. */
+static bool dd2_group_newton_complete(dd2_group_newton_method method) {
+    return method == DD2_GROUP_NEWTON_COLD || method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
 }
 
 static bool dd2_group_newton_material(dd2_group_newton_method method) {
@@ -522,9 +531,15 @@ static bool dd2_group_newton_material(dd2_group_newton_method method) {
            method == DD2_GROUP_NEWTON_COLD;
 }
 
+static bool dd2_group_pressure_selected(const dd2_group_newton_state *state, unsigned index) {
+    return state->model.method == DD2_GROUP_NEWTON_WORLD_PRESSURE &&
+           state->model.selected_contact == index;
+}
+
 static bool dd2_group_newton_retained(const dd2_group_newton_state *state, unsigned index) {
-    return state->model.method == DD2_GROUP_NEWTON_PATCH &&
-           (state->model.selected_contact == index || state->model.second_contact == index);
+    return (state->model.method == DD2_GROUP_NEWTON_PATCH &&
+            (state->model.selected_contact == index || state->model.second_contact == index)) ||
+           dd2_group_pressure_selected(state, index);
 }
 
 static bool dd2_group_newton_released(dd2_group_newton_model model, unsigned index) {
@@ -849,7 +864,7 @@ static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
         }
         bool changed = false;
         for (unsigned index = 0; index < count; ++index) {
-            if (!released[index] &&
+            if (!released[index] && !dd2_group_pressure_selected(state, index) &&
                 state->base.normal[index] +
                         system->direction[DD2_GROUP_NEWTON_AXES * (size_t)index] <
                     0) {
@@ -1054,9 +1069,34 @@ static bool dd2_group_refinement_seed(dd2_group_workspace *workspace, dd2_group_
 /* Explore higher world pressure while retaining every constraint.
  * Equilibrate friction with all normal loads held fixed before the constitutive
  * refinement. Cone projection and the final physical law still apply. */
+static double dd2_group_seed_pressure(const dd2_group_workspace *workspace, unsigned index) {
+    const double current = workspace->constraints[index].normal_impulse;
+    if (current > 0) {
+        return current;
+    }
+    /* An unloaded support has no pressure to double. Borrow only a private
+     * starting scale from the body's incident positive loads; final acceptance
+     * still requires its actual coupled normal and friction equations. */
+    const unsigned body = workspace->query->contacts[index].first;
+    double pressure = 0;
+    unsigned supports = 0;
+    for (unsigned other = 0; other < workspace->query->contact_count; ++other) {
+        const dd2_group_contact contact = workspace->query->contacts[other];
+        const double load = workspace->constraints[other].normal_impulse;
+        if ((contact.first == body || contact.second == body) && load > 0) {
+            pressure += load;
+            ++supports;
+        }
+    }
+    return supports > 0 ? pressure / (double)supports : 0;
+}
+
 static bool dd2_group_pressure_seed(dd2_group_workspace *workspace, unsigned index,
                                     dd2_group_linear_system *system) {
-    const double pressure = workspace->constraints[index].normal_impulse;
+    const double pressure = dd2_group_seed_pressure(workspace, index);
+    if (pressure <= 0) {
+        return false;
+    }
     workspace->constraints[index].normal_impulse += pressure;
     dd2_group_apply(workspace, index,
                     dd2_collision_scale(workspace->query->contacts[index].normal, pressure));
@@ -1117,7 +1157,8 @@ static bool dd2_group_refinement_start(dd2_group_workspace *workspace,
             return false;
         }
     }
-    const bool seeded = model.method == DD2_GROUP_NEWTON_LOAD;
+    const bool seeded =
+        model.method == DD2_GROUP_NEWTON_LOAD || model.method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
     if (seeded && !dd2_group_pressure_seed(workspace, model.selected_contact, system)) {
         return false;
     }
@@ -1170,7 +1211,7 @@ static bool dd2_group_newton_refine(dd2_group_workspace *workspace, double *erro
         }
         if (dd2_group_motion_finite(workspace) && dd2_numeric_finite(&current) &&
             current < *error &&
-            (model.method != DD2_GROUP_NEWTON_COLD || current < dd2_group_velocity_tolerance)) {
+            (!dd2_group_newton_complete(model.method) || current < dd2_group_velocity_tolerance)) {
             *error = current;
             return true;
         }
@@ -1243,13 +1284,26 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
             endpoints.released_contacts != patch.released_contacts) {
             models[count++] = endpoints;
         }
-        if (contact.friction <= 0 || workspace->constraints[index].normal_impulse <= 0) {
+        if (contact.friction <= 0) {
+            continue;
+        }
+        if (workspace->constraints[index].normal_impulse <= 0) {
+            if (!dd2_group_pair(contact)) {
+                models[count++] = (dd2_group_newton_model){
+                    .method = DD2_GROUP_NEWTON_WORLD_PRESSURE, .selected_contact = index};
+            }
             continue;
         }
         if (!dd2_group_material_at(workspace, index, false).sliding) {
             models[count++] = (dd2_group_newton_model){.method = dd2_group_pair(contact)
                                                                      ? DD2_GROUP_NEWTON_SATURATED
                                                                      : DD2_GROUP_NEWTON_LOAD,
+                                                       .selected_contact = index};
+        } else if (!dd2_group_pair(contact)) {
+            /* A sliding world support can return to the linear branch as its
+             * coupled pressure grows. Reuse the fixed-load seed, retaining
+             * fitted tangent directions until final physical acceptance. */
+            models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_WORLD_PRESSURE,
                                                        .selected_contact = index};
         }
         if (!dd2_group_pair(contact)) {

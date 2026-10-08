@@ -72,9 +72,10 @@ Receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/broader-report.json.
 
 ## Next
 
-Require the next failure capture to reproduce all 81 production records, then
-replay its actual owner/query and diagnose the rejected condition before further
-correction and unchanged-bound natural continuation.
+The next failure capture matches all 81 records; the actual owner/query and
+independent root are diagnosed under 0039. Finish that pressure-transition
+correction and unchanged-bound natural continuation before accepting this
+component's ordinary continuation contract.
 Keep the old immutable18c168287 failure capture separate until its exact records,
 saved owner and query are available for comparison.
 

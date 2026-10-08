@@ -43,6 +43,7 @@ its game requirements or acceptance rules.
 | [0036](active/0036_championship-next-advancement.md) | Next natural championship advancement | active |
 | [0037](active/0037_dense-contact-search-cost.md) | Avoid redundant dense contact model search | active |
 | [0038](active/0038_cold-constitutive-contact-root.md) | Recover a complete cold constitutive contact root | active |
+| [0039](active/0039_sliding-world-pressure-transition.md) | Recover a loaded sliding world support's linear branch | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -392,6 +393,15 @@ source hashes match current production. Its natural campaign still fails round 2
 at tick 108,716; exact failure capture and diagnosis remain pending. The saved
 115,420 component fix does not prove natural continuation or complete seasons.
 Receipt: /tmp/wasm-dd2/rewrite-cold-root-0038/broader-report.json.
+
+The 0039 selected world-pressure refinement now advances the actual 108,716
+saved owner on Native/instrumented C. Strict 160-file format/LLVM19 checks,
+35 Native/33 WASM CTests and 656 independent contact checks per target pass.
+Current motion agrees with the independent root within 7.97e-12; prior 115,420
+and 190,078 Native saved steps still advance. A fresh unchanged-bound campaign
+and current-source original-data/input/scoped-race checks are running. Natural
+continuation and complete seasons remain unproved; the work item stays active.
+Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/component-report.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.

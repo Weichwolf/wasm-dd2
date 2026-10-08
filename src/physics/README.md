@@ -478,6 +478,23 @@ sweep remains required for certification. This adds one bounded base model,
 without additional ordinary sweeps, a new matrix or relaxed material conditions.
 The actual step-115420 query and all twenty-four orderings exercise this root.
 
+A world support may need higher pressure before it returns to the linear
+friction branch. After restart, a sliding support's local model reuses the
+doubled pressure and fixed-load friction seed, followed by private constitutive
+refinement with fitted tangent directions and equation merit. An unloaded world
+support instead borrows the mean positive incident pressure as its private seed;
+without positive incident loads, the trial is rejected. The selected support's
+normal equation stays active inside the trial, including at zero pressure.
+Provisional negative full-step predictions do not release that selected row;
+candidate normal impulses remain clamped nonnegative and backtracking still
+applies. Small-slip supports retain their existing pressure model. The
+four-model-per-contact bound is unchanged: an unloaded support has no additional
+release model. Every
+final cone and physical residual is checked, and this alternate must meet the
+unchanged velocity tolerance before replacing warm progress. Partial roots are
+rejected with exact rollback. The actual five-car, eleven-contact step-108716
+query and twenty-two rotations/reversals check this sliding-to-linear transition.
+
 A sliding world support can also need to return to the linear friction branch.
 After restart, a world-only field compares a private refinement of the existing
 linear world-friction direction. Its full fitted seed and up to sixteen steps
