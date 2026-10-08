@@ -72,10 +72,23 @@ This verifies the saved-input/material correction, not complete seasons or the
 still-running broader actual-input/original-data checks.
 Component receipt: /tmp/wasm-dd2/rewrite-endpoints-233358/component-report.json.
 
+All eleven actual Native/sanitized/Chromium window/input regressions now pass.
+Original-data ground checks pass all eleven levels on three targets, with 79,100
+queries and 26,400 physical steps per target. Six scoped race targets pass:
+Circuit-2/live and the naturally completed eight-lap Circuit-5 race on each
+variant. This is partial race-suite coverage. Successful functional raw output
+is removed after storing result/source/binary/image hashes.
+The fresh natural production and failure-only companion retain identical round-1
+results and exact round-2 prefixes, but have not yet proved continuation past
+233,358. The production Python launcher terminated while its child remained
+alive; read-only GDB adopts that same identified process without restarting or
+writing game state and preserves the original wallclock allowance. Its terminal
+exit is still pending; the launcher status does not establish a game failure.
+Verified scope: /tmp/wasm-dd2/rewrite-endpoints-233358/gates-report.json.
+
 ## Next
 
-Follow the current actual-input/original-data/scoped-race checks to terminal
-outcomes. Continue the natural production and failure-only diagnostic attempts,
+Continue the natural production and failure-only diagnostic attempts,
 keeping their exact prefixes and source/binary identities. Preserve unchanged
 physical bounds and ordinary controls; record its terminal outcome separately.
 

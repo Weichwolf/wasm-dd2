@@ -169,6 +169,16 @@ race checks and fresh natural continuation remain in progress under 0033;
 its advancement contract is still active. Component receipt:
 /tmp/wasm-dd2/rewrite-endpoints-233358/component-report.json.
 
+Current two-endpoint production code also passes all eleven actual Native/
+sanitized/Chromium input flows and original-data ground checks. Six scoped race
+targets pass, including the complete eight-lap Circuit-5 race on all three
+variants; this is partial race-suite coverage. Fresh natural production and
+diagnostic prefixes match, with unchanged previous first-round results. The
+same live production child continues under read-only exit monitoring after its
+launcher terminated; no engine restart occurred. Natural advancement under 0033
+and full physical seasons remain unproved. Verified scope:
+/tmp/wasm-dd2/rewrite-endpoints-233358/gates-report.json.
+
 ## Workflow and acceptance
 
 The frontend migration inventory in docs/frontend.md records the original eight
