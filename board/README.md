@@ -441,6 +441,16 @@ matches all 104 records; its five-car/fourteen-contact owner still fails current
 production and is tracked under 0041. Full seasons remain unproved.
 Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/component-report.json.
 
+Current 0040 source now also passes all eleven original-data ground and actual
+Native/instrumented/Chromium input scopes, with 31/31/144 view comparisons and
+six selected race targets including the complete eight-lap Circuit-5 race.
+The ordinary campaign is still live; these checks do not prove a full season.
+Independent 0041 equations confirm an admissible root releasing one world row,
+while the faithful production observer confirms private branches were already
+eligible. Production correction of that separate five-car state remains open.
+Receipts: /tmp/wasm-dd2/rewrite-first-phase-0040/broader-report.json and
+/tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/finite-difference-report.json.
+
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
 3. Run strict LLVM19 and required Native/WASM gates plus relevant functional,

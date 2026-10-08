@@ -26,11 +26,29 @@ instruction bytes match; the cause and an admissible root remain unproved.
 The 0040 saved-input correction does not resolve this separate state.
 Receipt: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/production-report.json.
 
+Faithful read-only terminal observation records 4,096 velocity passes, one
+restart, 191 accepted corrections and 111 rejected extrapolations. The private
+branches are eligible in this solve; the initial-phase exclusion from 0040
+does not explain this failure.
+
+Independent geometry/inertia reconstructs terminal contact speeds within
+4.26e-14. Selected active-set trials find an admissible root releasing world
+row 1 on slot 14 and retaining all other rows. Full physical error is 3.29e-14,
+and the released row separates at speed 0.04087746227902925. This selected
+search does not establish uniqueness. A central-difference step sweep confirms
+the analytic Jacobian within 9.23e-8; a Jacobian-free solve from a perturbed
+seed independently reaches physical error 2.36e-14. The initial 1e-5 difference
+step misses the 1e-6 check threshold; its 1e-6 step reduces the error by about
+100 times, with smaller steps exposing rounding cancellation. The complete
+sweep is retained rather than weakening the threshold.
+Receipts: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/terminal.json,
+independent-root/report.json and finite-difference-report.json.
+
 ## Next
 
-Inspect the faithful current terminal state without modifying its instructions.
-Reconstruct independent mobility and material equations, identify an admissible
-root and the specific missed branch before changing production. Continue
+Identify why existing bounded release/refinement models miss the verified root
+before changing production. Compare private merit, branch selection and
+rollback against complete physical acceptance. Continue
 observing the frozen first-phase ordinary campaign as a separate scope.
 
 ## Accept

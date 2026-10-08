@@ -69,10 +69,21 @@ Native and instrumented C; the prior 108,716, 115,420 and 190,078 Native owners
 still advance. The new first regression rejects frozen d160c06.
 Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/component-report.json.
 
+All current-source broader gates now pass. Eleven original levels each pass
+Native/WASM/ASan ground checks, totaling 79,100 independent queries and 26,400
+drop steps per target. Actual Native/instrumented/Chromium input checks pass
+31/31/144 comparisons, all eleven scene/car views and empty browser error lists.
+Six selected race target scopes pass, including the complete eight-lap Circuit-5
+race on all three variants. These scopes do not prove the full race suite or a
+season. Source hashes match the frozen component identity; the same ordinary
+campaign remains running. Successful completed component raw logs/helpers have
+been removed after compact receipts, preserving live processes and failed inputs.
+Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/broader-report.json and
+component-cleanup-report.json.
+
 ## Next
 
-Finish the current-source original-data, actual-input and selected-race gates;
-follow the same fresh ordinary campaign to its terminal outcome. Complete
+Follow the same fresh ordinary campaign to its terminal outcome. Complete
 physical seasons remain unproved. The separately reproduced five-car/fourteen-
 contact 223,337 owner still fails current production and belongs to 0041;
 keep that defect and the older 168,287 trajectory distinct.
