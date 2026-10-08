@@ -20,6 +20,11 @@ state/framebuffer observations. It opens/cancels the File Manager and opens the
 CD Player. Receipt: `/tmp/wasm-dd2/rewrite-frontend-card-link/report.json`.
 No debugger or engine-state writes are used, and the provisioned save is unchanged.
 This establishes those entry routes, rather than all submenu actions or playback.
+A further real-input original run opens/cancels Information and Configuration.
+Their initial selections are View Lap Times and Select Control Method. Seven
+key actions preserve the selected main entries and both the isolated/provisioned
+save files. Receipt: `/tmp/wasm-dd2/rewrite-frontend-info-config/report.json`.
+Its completed images/logs are removed after recording hashes and interpretations.
 
 The original image supplies eight main-menu slots. These identifiers name
 rendering assets, rather than final English UI labels:
@@ -63,6 +68,13 @@ paths still need direct observation. The observed CD Player displays the selecte
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must
 connect to the existing Redbook mixer/device, not a separate simulated player.
+
+The observed Information entry presents View Lap Times by default on the empty
+initial profile. `Show_Information` selects that entry when no statistics are
+recorded and uses a different navigation table when statistics are unavailable.
+Configuration initially selects Control Method. Both screens return to their
+retained main-menu entry on Escape. These entry/cancel observations do not prove
+record/statistics actions, remapping, audio edits, credits or saved settings.
 
 ## Shared ownership and acceptance
 

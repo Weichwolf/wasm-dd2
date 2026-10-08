@@ -23,9 +23,18 @@ read-only observations and an isolated save are recorded; the provisioned save
 is unchanged. Receipt: /tmp/wasm-dd2/rewrite-frontend-card-link/report.json.
 This resolves those entry routes, not save/delete or accepted audio playback.
 
+A further actual original run opens/cancels Information and Configuration.
+The initial visible actions are View Lap Times and Select Control Method. Seven
+real X11 actions preserve both selected main entries and the isolated/provisioned
+save files. Source excerpts separately establish the statistics-availability
+navigation guard and initial captions. Completed raw images/logs are removed;
+interpretations, state transitions and hashes remain at
+/tmp/wasm-dd2/rewrite-frontend-info-config/report.json.
+Entry/cancel evidence does not prove subordinate actions or rewrite menus.
+
 ## Next
 
-Continue original navigation to resolve remaining labels, submenus, File Manager
+Continue original navigation to resolve remaining submenus, File Manager
 save/delete/failure paths, CD transport and multiplayer input/turn topology.
 Complete the route inventory,
 decode its assets and implement typed navigation/actions using docs/frontend.md.
