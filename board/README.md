@@ -283,6 +283,16 @@ the remaining Arena-B AI movement and all-game acceptance remain open. Receipt:
 
 ## Workflow and acceptance
 
+Additional original File Manager input now establishes directional slot selection,
+the empty-load Not a DD2 file error, empty-delete return without confirmation,
+and cancellation with unchanged isolated/provisioned saves. A separate actual
+X11 client-window capture visibly confirms the selected slot and error dialog;
+torn internal framebuffer images do not support complete-image claims. Empty-slot
+routes are evidence for open 0003/0008; handwritten menus, saving, occupied-slot
+load/delete, reload and storage failures remain open. Receipts:
+/tmp/wasm-dd2/rewrite-frontend-file-manager-errors-confirmed/report.json and
+/tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json.
+
 The frontend migration inventory in docs/frontend.md records the original eight
 main slots and source-backed session/cancel/confirm constraints. Actual original
 input now identifies CARD as File Manager and LINK as CD Audio Player, with

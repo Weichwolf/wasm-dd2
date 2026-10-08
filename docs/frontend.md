@@ -63,8 +63,21 @@ These source observations do not establish complete playable original menus or
 the correctness of the current reference's championship scores.
 
 The observed File Manager opens a Load view with fifteen slots; Escape returns
-to its selected main-menu entry. Save/delete, occupied-slot selection and error
-paths still need direct observation. The observed CD Player displays the selected
+to its selected main-menu entry. A further seventeen-key original run selects
+slots 0, 1, 4, 3 and 0 through Right/Down/Left/Up. Loading an empty slot reports
+`Not a DD2 file`; Escape dismisses the error to Load button selection. Selecting
+Delete on an empty slot returns directly to Delete button selection without a
+confirmation or file change. Both save copies remain unchanged. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-file-manager-errors-confirmed/report.json`.
+Its internal framebuffer reads are torn and support no complete-image claim.
+A separate eight-key run captures the actual X11 client window: the first
+selected slot is red in a three-column/five-row grid, the error dialog visibly
+reads `ERROR` and `Not a DD2 file`, and cancellation retains File Manager on the
+main menu. Receipt:
+`/tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json`.
+These observations cover empty-slot navigation/error/cancel only. Saving,
+occupied-slot load/delete, confirmation, reload and storage failures remain open.
+The observed CD Player displays the selected
 track, title and group, with previous/play/stop/next controls. Metadata/navigation
 observation does not prove accepted PCM or playback behavior. Its actions must
 connect to the existing Redbook mixer/device, not a separate simulated player.

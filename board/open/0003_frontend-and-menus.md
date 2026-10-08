@@ -45,10 +45,21 @@ base/duplicate tables. Source lifetime and twelve corrupted banks are checked.
 Receipt: /tmp/wasm-dd2/rewrite-font-verification-complete/report.json.
 Sprite/font texture bindings and original shared menu rendering remain open.
 
+A seventeen-key original File Manager run now observes the 0/1/4/3/0 slot
+navigation sequence, empty-load error and empty-delete return without confirmation.
+Both save copies remain unchanged. A separate eight-key actual X11 client-window
+run visibly confirms the red selected slot, fifteen-slot grid, ERROR / Not a DD2
+file dialog and retained main-menu selection after Escape. Internal framebuffer
+reads in the first run are torn; visible claims use the separate window capture.
+Receipts: /tmp/wasm-dd2/rewrite-frontend-file-manager-errors-confirmed/report.json
+and /tmp/wasm-dd2/rewrite-frontend-file-manager-window/report.json.
+This is original route evidence, not implemented rewrite menus or successful
+occupied-slot load/save/delete. Those paths and storage failures remain open.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager
-save/delete/failure paths, CD transport and multiplayer input/turn topology.
+save/occupied-delete/storage-failure paths, CD transport and multiplayer input/turn topology.
 Complete the route inventory,
 decode its assets and implement typed navigation/actions using docs/frontend.md.
 Connect real championship, persistence, replay, input and audio owners.
