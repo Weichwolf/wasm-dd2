@@ -79,16 +79,34 @@ advance, including both current inputs; reached rewrite C under ASan/UBSan also
 advances both current owners. SoftGL/system SDL are uninstrumented dependencies.
 Independent root motion agrees within 3.58e-11 and 1.34e-10 respectively. Saved
 Native layouts are not used as WASM owner layouts. The pinned SoftGL, 260 models,
-finite bounds, physical acceptance and rollback remain unchanged. Broader gates
-and fresh ordinary continuation are still pending; no complete season is proved.
+finite bounds, physical acceptance and rollback remain unchanged. This component
+does not prove ordinary continuation or a complete season.
 Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
 physical-report.json, replay-report.json, san-next-owner-report.json,
 independent-motion-report.json and independent-next-motion-report.json.
 
+The adopted 268e3f9 source also passes the reached broader gates. All eleven
+original levels pass 79,100 independent ground queries and 26,400 body steps
+per Native/WASM/instrumented target. Actual input/canvas checks pass 31 Native,
+31 sanitized and 144 Chromium comparisons, covering all eleven scene/car views
+with no browser errors. The selected short Circuit-2 Stockcar/DNF scope and
+complete Circuit-5 eight-lap race pass on all three targets; the latter runs
+167,472 ticks, with player place 2 and 75 points. This is two selected cases,
+not full-suite acceptance. All 160 source fingerprints remain unchanged.
+Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/broader-report.json.
+
+The separate fresh ordinary campaign has completed round 1 at 287,087 ticks
+with twenty driver scores and is still running in round 2 past tick 150,000.
+The player has zero credited laps and health 0.2677000161305475 at that checkpoint.
+Its bound remains 300,000 ticks per round and 3,600 wall-clock seconds. No
+current terminal result or completed physical season is claimed.
+Live receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/natural-season/identity.json.
+
 ## Next
 
-Run broader original-data/input/race scopes and fresh ordinary continuation
-from the verified incident-pressure source. Keep the two
+Follow the fresh ordinary campaign to its terminal result. If advancement fails,
+capture one exact failed owner/query from frozen code and require the complete
+matching production prefix before assigning a cause. Keep the two
 older trajectories distinct; retain AI movement and zero-lap playability
 acceptance under 0016/0004.
 

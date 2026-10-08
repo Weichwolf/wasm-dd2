@@ -500,10 +500,15 @@ model. The final source passes strict LLVM19, 35 Native/33 WASM CTests and all
 Native full/remapped queries solve, seven retained Native failed owners advance,
 and instrumented rewrite C advances both new owners. Independent root motion
 agrees within 3.58e-11 and 1.34e-10. The frozen previous solver rejects the new
-first fixture. Broader gates and fresh ordinary continuation remain pending;
-no full season closes.
+first fixture. The adopted 268e3f9 source also passes all eleven original-data
+ground levels (79,100 queries/26,400 body steps per target), actual input/canvas
+checks (31 Native/31 sanitized/144 Chromium, no browser errors), and selected
+short Circuit-2/full eight-lap Circuit-5 races on all three targets. The fresh
+ordinary campaign completes round 1 and remains running past round-2 tick
+150,000 with zero player laps. No current terminal result or full season closes.
 Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/next-failure-diagnosis/production-report.json
-and /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json.
+and /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
+broader-report.json and natural-season/identity.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.

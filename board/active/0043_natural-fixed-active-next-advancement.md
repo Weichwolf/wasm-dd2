@@ -55,15 +55,20 @@ advances to 142,894 on Native and reached rewrite C under ASan/UBSan. Release
 SoftGL/system SDL remain uninstrumented. Independent root motion agrees within
 1.34e-10. All seven retained Native failed owners advance. The frozen 9387f6a
 solver rejects this new first fixture. Bounds and physical acceptance are unchanged.
-Fresh broader and ordinary continuation acceptance remain unproved.
+The adopted 268e3f9 source also passes the broader scopes recorded under 0042:
+all eleven original-data ground levels, actual Native/sanitized/Chromium inputs,
+and the selected short Circuit-2 and full eight-lap Circuit-5 races. The new
+ordinary campaign has completed round 1 and is still running past round-2 tick
+150,000, with zero player laps. No terminal or complete-season result is claimed.
 Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
 san-next-owner-report.json, independent-next-motion-report.json and
 negative-regression-report.json.
+Broader receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/broader-report.json.
 
 ## Next
 
-Run broader checks and fresh current-source ordinary continuation under 0042 before
-closing advancement. Keep full seasons and zero-lap AI acceptance open.
+Follow fresh current-source ordinary continuation under 0042 to its terminal
+result before closing advancement. Keep full seasons and zero-lap AI acceptance open.
 
 ## Accept
 
