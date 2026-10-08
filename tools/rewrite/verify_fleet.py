@@ -103,7 +103,11 @@ def contact_reports(samples, decoded, barriers):
     """Independently reduce selected contacts to the legacy per-body summary."""
     kinds = [0, 0, 0]; positive = [0, 0, 0]; repairs = 0; previous = 0
     for row in samples:
-        if not previous < row['step'] <= 600 or not 0 < len(row['events']) <= 64:
+        # Record capacity derives from unchanged response/group work bounds.
+        # Requiring the actual event count keeps the independent physical bound.
+        responses = row['response_events']
+        if (not previous < row['step'] <= 600 or not 0 < responses <= 64 or
+                not responses <= len(row['events']) <= responses * 64):
             raise ValueError('Contact step/order/budget differs')
         previous = row['step']; expected = [[0,0,0,0,0,0,0] for _ in range(20)]; time = 0; pairs = 0
         for event in row['events']:

@@ -57,20 +57,58 @@ adoption requires owned heap buffers and compact borrowed views, preserving
 stack, solver and fixture bounds.
 Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/report-capacity-prototype/storage-footprint-report.json.
 
+Production owned storage now separates 64 response events, 64 group constraints
+and their derived 4,096 records. Queries allocate nothing. Driving creates and
+releases two heap buffers, publishing only after whole-frame validation. Damage,
+accident attribution and sound validate bounded borrowed entries and consume a
+positive final record at index 4,095. The report is 984 bytes on both targets;
+the WASM stack remains 1 MiB. Strict LLVM19 passes all 162 C/header files, with
+36 Native and 34 WASM CTests. A late second-substep consumer rejection preserves
+the old report entries and complete field, including under ASan/UBSan. Both
+independent motion cases pass all three targets; overlapping oversized groups
+still retain the original 64-event serial bound. All 716 unchanged captured
+physical/material checks pass each target; seven explicitly translated frozen
+Native owners advance on both production Native and instrumented C.
+Receipts: /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json,
+physical-report.json, sanitizer-report.json and san-replay-report.json.
+
+The exact terminal-owner forward probe now accepts 3,704.412 XZ path units and
+3,686.500 net units through 1,200 Native steps. Instrumented C accepts 3,717.431
+path units and 3,699.564 net units; its O1 encounter trajectory is independent.
+Unchanged Native AI accepts 66.827 path units and still credits no lap in this
+six-second probe. These are Native ABI diagnostics with explicit legacy field
+translation and fresh owned buffers, never Native memory replayed as WASM.
+Receipts: 0-report.json, 2-report.json, 3-report.json and sanitizer-report.json.
+
+All eleven original-data ground and starter-field checks pass on Native/WASM/
+instrumented C: 79,100 ground queries, 26,400 ground steps, 220 grid slots and
+132,000 fleet steps per target. Fleet diagnostics expose the actual event count;
+the independent reduction retains both 64-event and 64-constraint bounds while
+validating every permitted record. Actual Native/sanitized/Chromium window and
+input/lifecycle checks pass all eleven levels. Scoped Circuit-2 short/DNF and
+Circuit-5 eight-lap races pass all three targets; these are six scopes, not the
+complete race suite. Circuit 5 remains 167,472 ticks, second place and 75 points.
+Receipts: ground/report.json, fleet/report.json, window/report.json and race/report.json.
+
+The fresh ordinary Native application completes its first Stockcar season,
+exit 0 without timeout after 557.21 seconds. Four real result owners publish at
+287,087 / 112,913 / 170,069 / 202,705 ticks; rounds 1 and 3 finish and rounds 2
+and 4 end on engine retirement. The league consumes those results once, awards
+136 player points and opens season 2 at division 4 with cleared points. Round
+and process bounds remain 300,000 ticks and 3,600 seconds. This is a Native
+first-season result including two DNF rounds, not complete player finishing,
+WASM campaigns, Wrecking or full-game acceptance. The longer AI suite is still
+running; its completed levels 1..9 pass all three targets.
+Receipt: natural-season/terminal-report.json in the same directory.
+
 ## Next
 
-Implement explicit event-storage lifetime and full borrowed report validation.
-Let driving own separate published and working buffers, swapping only after
-successful whole-frame validation. Preserve no-allocation stepping and
-failure/reset/destruction ownership. Separate group, CCD-event and record limits
-by meaning; do not enlarge physical work to fit a test.
-
-Port both focused cases and add ownership/consumer/rollback checks. Update old
-Native capture helpers with explicit typed field translation and retained source
-identity. Run strict LLVM19, make rewrite-check, make rewrite-wasm and ctest
---preset rewrite-wasm, all previous 716 physical cases, reached original-data/
-actual-input/race gates and the AI movement suite. Then run ordinary continuation
-with unchanged bounds, retaining separate tactical and full-game requirements.
+Finish the current unchanged-bound full AI suite and retain separate movement
+contracts. Verify ordinary season continuation independently on WASM and
+instrumented C, then continue damage-aware tactics/escape under 0044/0016 and
+all-track/mode/campaign work under 0002/0004. Keep every captured physical and
+functional comparison, explicit old Native translation and owned view lifetime.
+Only close this contract after its remaining reached gates have receipts.
 
 ## Accept
 

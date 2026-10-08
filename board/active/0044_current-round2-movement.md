@@ -69,10 +69,22 @@ support records. Production requires owned heap storage and borrowed report
 views because two enlarged reports exceed the unchanged 1 MiB WASM stack.
 Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/report-capacity-prototype/comparison-report.json.
 
+Production owned event recording under 0045 now passes strict Native/WASM and
+ASan/UBSan gates, independent free-body/later-impact cases and all reached ground,
+fleet, actual input and scoped race checks. Explicitly translated terminal-owner
+probes reproduce the private prototype's restored physical escape: forward
+motion reaches 3,686.500 net XZ units in six seconds. Unchanged AI still credits
+zero laps in that same short terminal-state probe. The new ordinary Native
+application completes four first-season results and opens season 2; rounds 2
+and 4 end by engine retirement. The full AI suite is still running, and complete
+WASM/instrumented campaigns and sustained route recovery remain separate gates.
+Receipts: /tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json,
+0-report.json, 2-report.json and natural-season/terminal-report.json.
+
 ## Next
 
-Implement and verify owned event storage under 0045 before choosing a tactical
-change. Then replay the exact terminal state and diagnose remaining AI choices
+Finish the remaining 0045 reached gates and diagnose remaining AI choices from
+the exact terminal state
 against available physical escape motion. Preserve damage, scores, checkpoints,
 collision laws, captured contact regressions and strict Native/WASM gates,
 including the known Arena-B movement failures under 0016.

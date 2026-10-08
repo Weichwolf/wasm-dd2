@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum {
     DD2_PAIR_TEST_BODIES = 2,
     DD2_PAIR_TEST_CHAIN = 3,
@@ -93,9 +95,12 @@ static bool dd2_pair_test_head_on(bool side) {
     dd2_vehicle_collision_report report = {0};
     valid = valid &&
             dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
-                                             &report) &&
+                                             dd2_test_storage, &report) &&
             report.count == 1 && report.pair_contacts == 1 &&
             report.impacts[0].pair_contacts == 1 && report.impacts[1].pair_contacts == 1;
+    if (!valid) {
+        return false;
+    }
     const dd2_vehicle_contact recorded = report.contacts[0];
     const double first_point = side ? recorded.local_points[0].x : recorded.local_points[0].z;
     const double second_point = side ? recorded.local_points[1].x : recorded.local_points[1].z;
@@ -161,7 +166,7 @@ static bool dd2_pair_test_rotated_report(void) {
     dd2_pair_test_motion(previous, next, DD2_PAIR_TEST_BODIES);
     dd2_vehicle_collision_report report = {0};
     return dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
-                                            &report) &&
+                                            dd2_test_storage, &report) &&
            report.count == 1 &&
            fabs(report.contacts[0].time - dd2_pair_test_front_time) < dd2_pair_test_tolerance &&
            fabs(report.contacts[0].local_points[0].x) < dd2_pair_test_tolerance &&
@@ -231,7 +236,7 @@ static bool dd2_pair_test_chain(void) {
     dd2_vehicle_collision_report report = {0};
     valid = valid &&
             dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_CHAIN, NULL, NULL,
-                                             &report) &&
+                                             dd2_test_storage, &report) &&
             report.pair_contacts >= 2 && report.count == report.pair_contacts &&
             next[2].velocity.z > 0;
     const double first_time = 1.0 / 8;
@@ -266,8 +271,9 @@ static bool dd2_pair_test_report_bound(void) {
     }
     dd2_vehicle_collision_report report = {0};
     if (!dd2_vehicle_collide_fleet_report(bodies, bodies, DD2_VEHICLE_FLEET_LIMIT, NULL, NULL,
-                                          &report) ||
-        report.count != DD2_VEHICLE_CONTACT_LIMIT || report.pair_contacts != report.count) {
+                                          dd2_test_storage, &report) ||
+        report.count != DD2_VEHICLE_CONTACT_LIMIT || report.pair_contacts != report.count ||
+        report.response_events != DD2_VEHICLE_EVENT_LIMIT) {
         return false;
     }
     for (unsigned event = 0; event < report.count; ++event) {
@@ -280,10 +286,11 @@ static bool dd2_pair_test_report_bound(void) {
     const dd2_vehicle saved = bodies[0];
     bodies[1].rotation = (dd2_vehicle_rotation){0};
     return !dd2_vehicle_collide_fleet_report(bodies, bodies, DD2_VEHICLE_FLEET_LIMIT, NULL, NULL,
-                                             &report) &&
+                                             dd2_test_storage, &report) &&
            report.count == 0 && report.pair_contacts == 0 && report.impacts[0].contacts == 0 &&
            bodies[0].position.x == saved.position.x && bodies[0].position.z == saved.position.z &&
-           !dd2_vehicle_collide_fleet_report(bodies, bodies, 0, NULL, NULL, &report) &&
+           !dd2_vehicle_collide_fleet_report(bodies, bodies, 0, NULL, NULL, dd2_test_storage,
+                                             &report) &&
            report.count == 0;
 }
 static bool dd2_pair_test_bridge_and_invalid(void) {
@@ -336,7 +343,7 @@ static bool dd2_pair_test_common_motion(void) {
         dd2_pair_test_motion(previous, next, DD2_VEHICLE_FLEET_LIMIT);
         dd2_vehicle_collision_report report = {0};
         if (!dd2_vehicle_collide_fleet_report(next, previous, DD2_VEHICLE_FLEET_LIMIT, NULL, NULL,
-                                              &report) ||
+                                              dd2_test_storage, &report) ||
             report.count != 0) {
             printf("Common motion angle=%.17g contacts=%u\n", angles[angle], report.count);
             return false;
@@ -372,7 +379,7 @@ static bool dd2_pair_test_small_closing(void) {
     }
     dd2_vehicle_collision_report report = {0};
     return dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
-                                            &report) &&
+                                            dd2_test_storage, &report) &&
            report.count == 1 && report.contacts[0].impulse > 0;
 }
 
@@ -586,7 +593,7 @@ static bool dd2_pair_test_band_collision(double factor) {
     dd2_pair_test_motion(previous, next, DD2_PAIR_TEST_BODIES);
     dd2_vehicle_collision_report report = {0};
     if (!dd2_vehicle_collide_fleet_report(next, previous, DD2_PAIR_TEST_BODIES, NULL, NULL,
-                                          &report) ||
+                                          dd2_test_storage, &report) ||
         report.count != 1 || report.contacts[0].impulse <= 0 ||
         fabs(next[0].angular_velocity.x) >= dd2_pair_test_band_spin ||
         fabs(next[1].angular_velocity.x) >= dd2_pair_test_band_spin ||
@@ -671,11 +678,11 @@ static bool dd2_pair_test_front_patch(void) {
     dd2_vehicle next[DD2_PAIR_TEST_BODIES] = {dd2_patch_end[0], dd2_patch_end[1]};
     dd2_vehicle_collision_report report = {0};
     return dd2_vehicle_collide_fleet_report(next, dd2_patch_start, DD2_PAIR_TEST_BODIES, NULL, NULL,
-                                            &report) &&
+                                            dd2_test_storage, &report) &&
            report.count > 0 && report.contacts[0].impulse > 0;
 }
 
-int main(void) {
+static int dd2_test_run(void) {
     if (!dd2_pair_test_front_patch() || !dd2_pair_test_face_band() ||
         !dd2_pair_test_near_parallel_features() || !dd2_pair_test_rotation_precision() ||
         !dd2_pair_test_touching_crossing() || !dd2_pair_test_common_motion() ||
@@ -689,4 +696,14 @@ int main(void) {
     }
     puts("car pair contacts: PASS");
     return EXIT_SUCCESS;
+}
+
+int main(void) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run();
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

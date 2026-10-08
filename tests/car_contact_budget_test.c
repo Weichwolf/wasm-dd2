@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum { DD2_BUDGET_BODIES = 2 };
 static const double dd2_budget_turn = 0.32;
 static const double dd2_budget_separation = 910;
@@ -42,7 +44,8 @@ static bool dd2_budget_test(void) {
         return false;
     }
     dd2_vehicle_collision_report report = {0};
-    if (!dd2_vehicle_collide_fleet_report(after, before, DD2_BUDGET_BODIES, NULL, NULL, &report) ||
+    if (!dd2_vehicle_collide_fleet_report(after, before, DD2_BUDGET_BODIES, NULL, NULL,
+                                          dd2_test_storage, &report) ||
         report.unresolved_sweeps != 1 || report.count != 0 || report.pair_contacts != 0) {
         return false;
     }
@@ -61,11 +64,21 @@ static bool dd2_budget_test(void) {
            fabs(after[0].rotation.w - (quaternion_w * factor)) < dd2_budget_tolerance;
 }
 
-int main(void) {
+static int dd2_test_run(void) {
     if (!dd2_budget_test()) {
         puts("unresolved car sweep: FAIL");
         return EXIT_FAILURE;
     }
     puts("unresolved car sweep: PASS");
     return EXIT_SUCCESS;
+}
+
+int main(void) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run();
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

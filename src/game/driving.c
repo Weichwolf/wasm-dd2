@@ -51,6 +51,8 @@ struct dd2_driving {
     dd2_accident_driver accidents[DD2_VEHICLE_FLEET_LIMIT];
     dd2_lap_driver laps[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_collision_report contacts;
+    dd2_vehicle_collision_storage *published_contacts;
+    dd2_vehicle_collision_storage *working_contacts;
     dd2_sound_state sounds;
     dd2_sound_batch sound_events;
     bool opponents;
@@ -235,6 +237,8 @@ dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
     driving->count = DD2_VEHICLE_FLEET_LIMIT;
     driving->opponents = true;
     driving->damage_enabled = true;
+    driving->published_contacts = dd2_vehicle_collision_storage_create();
+    driving->working_contacts = dd2_vehicle_collision_storage_create();
     driving->surface = dd2_road_surface_create(road);
     if (level <= DD2_DRIVING_RACING_LEVELS) {
         dd2_course_rules rules = {0};
@@ -251,7 +255,8 @@ dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
     }
     driving->barriers = dd2_barriers_create(road, level);
     driving->barrier_world = dd2_barrier_world_create(driving->barriers);
-    if (driving->surface == NULL || driving->barrier_world == NULL ||
+    if (driving->published_contacts == NULL || driving->working_contacts == NULL ||
+        driving->surface == NULL || driving->barrier_world == NULL ||
         !dd2_driving_make_grid(driving, level, slot_for_driver) || !dd2_driving_reset(driving)) {
         dd2_driving_destroy(driving);
         return NULL;
@@ -261,6 +266,8 @@ dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
 
 void dd2_driving_destroy(dd2_driving *driving) {
     if (driving != NULL) {
+        dd2_vehicle_collision_storage_destroy(driving->published_contacts);
+        dd2_vehicle_collision_storage_destroy(driving->working_contacts);
         dd2_barrier_world_destroy(driving->barrier_world);
         dd2_barriers_destroy(driving->barriers);
         dd2_road_surface_destroy(driving->surface);
@@ -351,7 +358,8 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
         }
     }
     if (!dd2_vehicle_collide_fleet_report(vehicles, previous, driving->count, driving->surface,
-                                          driving->barrier_world, report) ||
+                                          driving->barrier_world, driving->working_contacts,
+                                          report) ||
         (driving->damage_enabled &&
          !dd2_damage_step(damages,
                           (dd2_damage_frame){.contacts = report, .count = driving->count}))) {
@@ -482,6 +490,11 @@ bool dd2_driving_advance(dd2_driving *driving, dd2_driving_frame frame) {
     driving->sounds = sounds;
     driving->sound_events = sound_events;
     driving->pair_collisions = pairs;
+    /* Publish only after every fixed step and consumer succeeded. The previous
+     * published buffer was never used as scratch, so failures preserve its view. */
+    dd2_vehicle_collision_storage *previous_contacts = driving->published_contacts;
+    driving->published_contacts = driving->working_contacts;
+    driving->working_contacts = previous_contacts;
     driving->contacts = report;
     driving->accumulator = accumulator;
     driving->collisions = collisions;

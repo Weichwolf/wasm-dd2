@@ -150,8 +150,8 @@ static void dd2_accident_update(dd2_accident_driver *drivers, dd2_accident_frame
 
 bool dd2_accidents_step(dd2_accident_driver *drivers, dd2_accident_frame frame) {
     if (drivers == NULL || frame.contacts == NULL || frame.vehicles == NULL || frame.count == 0 ||
-        frame.count > DD2_VEHICLE_FLEET_LIMIT ||
-        frame.contacts->count > DD2_VEHICLE_CONTACT_LIMIT) {
+        frame.count > DD2_VEHICLE_FLEET_LIMIT || frame.contacts->count > DD2_VEHICLE_REPORT_LIMIT ||
+        (frame.contacts->count != 0 && frame.contacts->contacts == NULL)) {
         return false;
     }
     for (unsigned slot = 0; slot < frame.count; ++slot) {

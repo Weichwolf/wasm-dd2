@@ -46,7 +46,9 @@ bool dd2_driving_opponents(const dd2_driving *driving);
 const dd2_ai_driver *dd2_driving_drivers(const dd2_driving *driving);
 /* Borrowed contacts from the last fixed step of the last successful frame.
  * Reset and a frame without fixed steps publish an empty report. This snapshot
- * is diagnostic; gameplay consumers process each report inside the fixed step. */
+ * is diagnostic; gameplay consumers process each report inside the fixed step.
+ * Entries remain borrowed until the next successful advance, reset, withdrawal
+ * or destruction. Failed advances preserve both the view and its entries. */
 const dd2_vehicle_collision_report *dd2_driving_contact_report(const dd2_driving *driving);
 /* Frame-wide fixed-step sound events, published with the successful simulation
  * transaction. Reset/withdraw/no-step frames clear the batch; consume it once. */

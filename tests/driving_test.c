@@ -3,6 +3,7 @@
 #include "assets/bytes.h"
 #include "assets/level.h"
 #include "assets/road.h"
+#include "driving_sound_fixture.h"
 #include "game/accidents.h"
 #include "game/driving.h"
 #include "game/league.h"
@@ -81,10 +82,11 @@ static bool dd2_drive_test_vector(dd2_vehicle_vector first, dd2_vehicle_vector s
            fabs(first.z - second.z) < dd2_drive_test_tolerance;
 }
 
-static bool dd2_drive_test_contacts(const dd2_driving *first, const dd2_driving *second) {
-    const dd2_vehicle_collision_report *left = dd2_driving_contact_report(first);
-    const dd2_vehicle_collision_report *right = dd2_driving_contact_report(second);
-    if (left->count != right->count || left->pair_contacts != right->pair_contacts) {
+static bool dd2_drive_test_reports(const dd2_vehicle_collision_report *left,
+                                   const dd2_vehicle_collision_report *right) {
+    if (left->count != right->count || left->pair_contacts != right->pair_contacts ||
+        left->unresolved_sweeps != right->unresolved_sweeps ||
+        left->response_events != right->response_events) {
         return false;
     }
     for (unsigned index = 0; index < left->count; ++index) {
@@ -105,6 +107,11 @@ static bool dd2_drive_test_contacts(const dd2_driving *first, const dd2_driving 
         }
     }
     return true;
+}
+
+static bool dd2_drive_test_contacts(const dd2_driving *first, const dd2_driving *second) {
+    return dd2_drive_test_reports(dd2_driving_contact_report(first),
+                                  dd2_driving_contact_report(second));
 }
 
 static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *second) {
@@ -159,6 +166,46 @@ static bool dd2_drive_test_field(const dd2_driving *first, const dd2_driving *se
     return dd2_drive_test_contacts(first, second);
 }
 
+static unsigned dd2_drive_test_fail_tick;
+static unsigned dd2_drive_test_sound_calls;
+
+bool dd2_sound_events_step(dd2_sound_state *state, dd2_sound_batch *batch,
+                           dd2_sound_observation observation) {
+    const bool valid = dd2_drive_fixture_sound_step(state, batch, observation);
+    if (dd2_drive_test_fail_tick != 0) {
+        ++dd2_drive_test_sound_calls;
+        return valid && dd2_drive_test_sound_calls != dd2_drive_test_fail_tick;
+    }
+    return valid;
+}
+
+static bool dd2_drive_test_failed_publication(dd2_driving *first, const dd2_driving *second) {
+    const dd2_vehicle_collision_report before = *dd2_driving_contact_report(first);
+    dd2_vehicle_contact *entries = malloc(before.count * sizeof(*entries));
+    if (entries == NULL) {
+        return false;
+    }
+    for (unsigned index = 0; index < before.count; ++index) {
+        entries[index] = before.contacts[index];
+    }
+    dd2_vehicle_collision_report saved = before;
+    saved.contacts = entries;
+    dd2_drive_test_sound_calls = 0;
+    dd2_drive_test_fail_tick = 2;
+    /* The second fixed step has already written scratch contacts and consumed
+     * damage/attribution when this late sound consumer rejects the frame. */
+    const bool advanced =
+        dd2_driving_advance(first, (dd2_driving_frame){.seconds = 2 * DD2_VEHICLE_STEP_SECONDS,
+                                                       .control = {.throttle = 1, .steer = 0.1}});
+    dd2_drive_test_fail_tick = 0;
+    const dd2_vehicle_collision_report *after = dd2_driving_contact_report(first);
+    const bool valid = !advanced && dd2_drive_test_sound_calls == 2 &&
+                       after->contacts == before.contacts &&
+                       dd2_drive_test_reports(after, &saved) && dd2_drive_test_field(first, second);
+    free(entries);
+    return valid;
+}
+
 static bool dd2_drive_test_clear_contacts(dd2_driving *driving) {
     const dd2_vehicle_collision_report *report = dd2_driving_contact_report(driving);
     const unsigned count = report->count;
@@ -188,7 +235,8 @@ static bool dd2_drive_test_frames(dd2_driving *first, dd2_driving *second) {
             }
         }
         if (!cleared_contacts && dd2_driving_contact_report(first)->count != 0) {
-            if (!dd2_drive_test_clear_contacts(first) || !dd2_drive_test_clear_contacts(second)) {
+            if (!dd2_drive_test_failed_publication(first, second) ||
+                !dd2_drive_test_clear_contacts(first) || !dd2_drive_test_clear_contacts(second)) {
                 return false;
             }
             cleared_contacts = true;

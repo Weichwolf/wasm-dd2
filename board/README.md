@@ -58,6 +58,19 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
+Current work is 0045/0044: production collision reports now use owned heap
+buffers and borrowed views, separating metadata capacity from physical work.
+Strict Native/WASM, instrumented rollback, 716 captured physical cases per
+target, all eleven original-data ground/fleet and actual window/input checks,
+six scoped race targets and seven old Native owners pass. The ordinary Native
+first Stockcar season completes four real results (two finishes, two engine
+retirements) and opens season 2; full WASM campaigns and the running AI suite
+remain separate. Corrected manual escape is proved; complete tactics, modes,
+menus, audio, visual work and game acceptance remain open. Current receipts:
+/tmp/wasm-dd2/rewrite-owned-events-0045/component-report.json and
+natural-season/terminal-report.json. The historical evidence below is scoped
+to its recorded source epochs.
+
 The terminal a326993 race attempt and separate Circuit-5 follow-up account for
 all 49 scenarios and 147 target scopes: 146 pass; Native B fails natural
 completion at the unchanged fixture bound. Its sparse movement diagnosis

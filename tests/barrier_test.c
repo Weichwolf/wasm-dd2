@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum { DD2_BARRIER_TEST_WALL = 1000, DD2_BARRIER_TEST_RADIUS = 100, DD2_BARRIER_TEST_PROBES = 5 };
 static const double dd2_barrier_test_distant_start = 2147483000;
 static const double dd2_barrier_test_hit_time = 0.45;
@@ -193,7 +195,8 @@ static bool dd2_barrier_test_report(const dd2_barrier_world *world) {
     dd2_vehicle next = previous;
     next.position.x += previous.velocity.x * DD2_VEHICLE_STEP_SECONDS;
     dd2_vehicle_collision_report report = {0};
-    if (!dd2_vehicle_collide_fleet_report(&next, &previous, 1, NULL, world, &report) ||
+    if (!dd2_vehicle_collide_fleet_report(&next, &previous, 1, NULL, world, dd2_test_storage,
+                                          &report) ||
         report.count != 1 || report.pair_contacts != 0 || report.impacts[0].contacts != 1) {
         printf("Report wall count=%u pairs=%u impacts=%u\n", report.count, report.pair_contacts,
                report.impacts[0].contacts);
@@ -214,7 +217,7 @@ static bool dd2_barrier_test_report(const dd2_barrier_world *world) {
            contact.local_points[1].z == 0;
 }
 
-int main(void) {
+static int dd2_test_run(void) {
     dd2_surface_test_fixture fixture = {0};
     dd2_surface_test_fixture_init(&fixture, 1);
     dd2_road *road = dd2_road_create(&fixture.level, DD2_ROAD_RACING);
@@ -232,4 +235,14 @@ int main(void) {
      * additionally checks all four original radii and swept boundary events. */
     puts(passed ? "barrier sweeps/body response: PASS" : "barrier sweeps/body response: FAIL");
     return passed ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+int main(void) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run();
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum {
     DD2_GROUND_TEST_STEPS = 2000,
     DD2_GROUND_TEST_LAYERS = 3,
@@ -256,9 +258,14 @@ static bool dd2_ground_test_report(void) {
     next.position.y += next.velocity.y * DD2_VEHICLE_STEP_SECONDS;
     dd2_vehicle_collision_report report = {0};
     valid = valid &&
-            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL,
+                                             dd2_test_storage, &report) &&
             report.count > 0 && report.pair_contacts == 0 &&
             report.impacts[0].contacts == report.count;
+    if (!valid) {
+        dd2_ground_test_destroy(&track);
+        return false;
+    }
     const dd2_vehicle_contact contact = report.contacts[0];
     const double height = 2 * DD2_SURFACE_TEST_HEIGHT;
     const double time = (dd2_ground_test_drop_height - height - dd2_ground_test_body_height) /
@@ -277,7 +284,8 @@ static bool dd2_ground_test_report(void) {
     previous.velocity.y = 0;
     next = previous;
     valid = valid &&
-            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL,
+                                             dd2_test_storage, &report) &&
             report.count == DD2_GROUND_TEST_ROOF && report.pair_contacts == 0 &&
             report.impacts[0].contacts == DD2_GROUND_TEST_ROOF &&
             fabs(next.position.y - height - dd2_ground_test_body_height -
@@ -320,7 +328,8 @@ static bool dd2_ground_test_fleet_rotation(void) {
     next.rotation = dd2_collision_turn(&next, DD2_VEHICLE_STEP_SECONDS);
     dd2_vehicle_collision_report report = {0};
     valid = valid &&
-            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL, &report) &&
+            dd2_vehicle_collide_fleet_report(&next, &previous, 1, track.surface, NULL,
+                                             dd2_test_storage, &report) &&
             report.unresolved_sweeps == 0 && report.count > 2 &&
             report.count < DD2_VEHICLE_CONTACT_LIMIT && report.contacts[0].time > 0 &&
             report.contacts[0].time < 1 && report.contacts[1].time == report.contacts[0].time &&
@@ -353,7 +362,7 @@ static bool dd2_ground_test_upright(void) {
     return valid;
 }
 
-int main(void) {
+static int dd2_test_run(void) {
     if (!dd2_ground_test_sweep() || !dd2_ground_test_run(false, false, false) ||
         !dd2_ground_test_run(false, false, true) || !dd2_ground_test_run(true, false, false) ||
         !dd2_ground_test_run(false, true, true) || !dd2_ground_test_fast() ||
@@ -364,4 +373,14 @@ int main(void) {
     }
     puts("body ground contacts: PASS");
     return EXIT_SUCCESS;
+}
+
+int main(void) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run();
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

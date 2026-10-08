@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum {
     DD2_FLEET_PROBE_RACING = 7,
     DD2_FLEET_PROBE_CARS = 20,
@@ -80,8 +82,9 @@ static void dd2_fleet_probe_contacts(const dd2_vehicle_collision_report *report,
     if (report->count == 0) {
         return;
     }
-    printf("{\"contact_report\":true,\"world\":%d,\"step\":%u,\"pairs\":%u,\"impacts\":[",
-           (int)world, step, report->pair_contacts);
+    printf("{\"contact_report\":true,\"world\":%d,\"step\":%u,\"pairs\":%u,\"response_events\":%u,"
+           "\"impacts\":[",
+           (int)world, step, report->pair_contacts, report->response_events);
     for (unsigned slot = 0; slot < DD2_FLEET_PROBE_CARS; ++slot) {
         const dd2_vehicle_impact impact = report->impacts[slot];
         printf("%s[%u,%u,%.17g,%.17g,%.17g,%.17g,%.17g]", slot == 0 ? "" : ",", impact.contacts,
@@ -136,7 +139,8 @@ static bool dd2_fleet_probe_world_hit(dd2_vehicle previous, const dd2_road_surfa
         next.position.y += previous.velocity.y * DD2_VEHICLE_STEP_SECONDS;
         next.position.z += previous.velocity.z * DD2_VEHICLE_STEP_SECONDS;
         dd2_vehicle_collision_report report = {0};
-        if (!dd2_vehicle_collide_fleet_report(&next, &previous, 1, surface, world, &report)) {
+        if (!dd2_vehicle_collide_fleet_report(&next, &previous, 1, surface, world, dd2_test_storage,
+                                              &report)) {
             return false;
         }
         if (report.impacts[0].normal_speed > 0) {
@@ -252,7 +256,7 @@ static bool dd2_fleet_probe_drive(dd2_driving *driving, unsigned level, bool acc
     return valid;
 }
 
-int main(int argc, char **argv) {
+static int dd2_test_run(int argc, char **argv) {
     if ((argc != 3 && argc != 4) || strlen(argv[2]) != 1 ||
         strchr("123456789AB", argv[2][0]) == NULL ||
         (argc == 4 && strcmp(argv[3], "accidents") != 0)) {
@@ -269,4 +273,14 @@ int main(int argc, char **argv) {
     dd2_driving_destroy(driving);
     dd2_road_destroy(road);
     return valid ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+int main(int argc, char **argv) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run(argc, argv);
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

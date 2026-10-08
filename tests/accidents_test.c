@@ -23,6 +23,7 @@ static const double dd2_accident_test_degrees = 0.01745329251994329577;
 typedef struct {
     dd2_accident_driver drivers[DD2_ACCIDENT_TEST_CARS];
     dd2_accident_observation vehicles[DD2_ACCIDENT_TEST_CARS];
+    dd2_vehicle_contact events[2];
     dd2_vehicle_collision_report contacts;
 } dd2_accident_test;
 
@@ -38,12 +39,12 @@ static bool dd2_accident_test_reset(dd2_accident_test *test) {
 }
 
 static void dd2_accident_test_contact(dd2_accident_test *test, unsigned second) {
-    test->contacts = (dd2_vehicle_collision_report){.count = 1};
-    test->contacts.contacts[0] = (dd2_vehicle_contact){.kind = DD2_VEHICLE_CONTACT_PAIR,
-                                                       .first = 0,
-                                                       .second = second,
-                                                       .normal_speed = dd2_accident_test_speed,
-                                                       .impulse = dd2_accident_test_impulse};
+    test->contacts = (dd2_vehicle_collision_report){.contacts = test->events, .count = 1};
+    test->events[0] = (dd2_vehicle_contact){.kind = DD2_VEHICLE_CONTACT_PAIR,
+                                            .first = 0,
+                                            .second = second,
+                                            .normal_speed = dd2_accident_test_speed,
+                                            .impulse = dd2_accident_test_impulse};
 }
 
 static bool dd2_accident_test_expire(dd2_accident_test *test) {
@@ -200,13 +201,13 @@ static bool dd2_accident_test_support(void) {
         return false;
     }
     dd2_accident_test_contact(&test, 1);
-    test.contacts.contacts[0].impulse = 0;
+    test.events[0].impulse = 0;
     if (!dd2_accident_test_step(&test) || test.drivers[0].remaining != 0) {
         return false;
     }
-    test.contacts.contacts[0].kind = DD2_VEHICLE_CONTACT_BARRIER;
-    test.contacts.contacts[0].second = DD2_VEHICLE_NO_PARTNER;
-    test.contacts.contacts[0].impulse = dd2_accident_test_impulse;
+    test.events[0].kind = DD2_VEHICLE_CONTACT_BARRIER;
+    test.events[0].second = DD2_VEHICLE_NO_PARTNER;
+    test.events[0].impulse = dd2_accident_test_impulse;
     return dd2_accident_test_step(&test) && test.drivers[0].remaining == 0 &&
            test.drivers[0].points == 0;
 }
@@ -238,8 +239,8 @@ static bool dd2_accident_test_invalid(void) {
     } invalid = {.bits = UINT64_C(0x7ff8000000000001)};
     dd2_accident_test_contact(&test, 1);
     test.contacts.count = 2;
-    test.contacts.contacts[1] = test.contacts.contacts[0];
-    test.contacts.contacts[1].impulse = invalid.number;
+    test.events[1] = test.events[0];
+    test.events[1].impulse = invalid.number;
     dd2_accident_driver before[DD2_ACCIDENT_TEST_CARS] = {0};
     for (unsigned slot = 0; slot < DD2_ACCIDENT_TEST_CARS; ++slot) {
         before[slot] = test.drivers[slot];

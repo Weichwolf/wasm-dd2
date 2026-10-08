@@ -10,12 +10,32 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+struct dd2_vehicle_collision_storage {
+    dd2_vehicle_contact contacts[DD2_VEHICLE_REPORT_LIMIT];
+};
+
+dd2_vehicle_collision_storage *dd2_vehicle_collision_storage_create(void) {
+    return malloc(sizeof(dd2_vehicle_collision_storage));
+}
+
+void dd2_vehicle_collision_storage_destroy(dd2_vehicle_collision_storage *storage) {
+    free(storage);
+}
+
+/* Metadata-only queries use the same response clock without storing entries. */
+typedef struct {
+    dd2_vehicle_collision_report report;
+    dd2_vehicle_contact *contacts;
+    double last_time;
+} dd2_fleet_recording;
 
 /* Overlapping rounded body lobes fit the 372 x 900 footprint. They avoid
  * snagging a rectangular corner on a strip seam; they are rewrite tuning. */
 enum {
     DD2_COLLISION_PROBES = 5,
-    DD2_COLLISION_ITERATIONS = DD2_VEHICLE_CONTACT_LIMIT,
+    DD2_COLLISION_ITERATIONS = DD2_VEHICLE_EVENT_LIMIT,
     DD2_COLLISION_BARRIER_ITERATIONS = 16,
     DD2_COLLISION_ROTATION_SEGMENTS = 16
 };
@@ -475,16 +495,22 @@ static dd2_vehicle_contact dd2_fleet_record(const dd2_vehicle *vehicles, dd2_fle
         .kind = event.pair ? DD2_VEHICLE_CONTACT_PAIR : world_kind};
 }
 
-static void dd2_fleet_append(dd2_vehicle_collision_report *report, dd2_vehicle_contact contact,
-                             dd2_collision_response_result response) {
-    const double previous_time = report->count == 0 ? 0 : report->contacts[report->count - 1].time;
+static dd2_vehicle_contact dd2_fleet_append(dd2_fleet_recording *recording,
+                                            dd2_vehicle_contact contact,
+                                            dd2_collision_response_result response) {
+    dd2_vehicle_collision_report *report = &recording->report;
     /* Residual duration can round independently of the previous normalized
      * timestamp, especially for consecutive overlap repairs at time zero.
      * Keep report chronology exact without changing the solver's event clock. */
-    contact.time = fmax(previous_time, fmin(1, contact.time));
+    contact.time = fmax(recording->last_time, fmin(1, contact.time));
     contact.normal_speed = response.speed;
     contact.impulse = response.impulse;
-    report->contacts[report->count++] = contact;
+    if (recording->contacts != NULL) {
+        recording->contacts[report->count] = contact;
+    }
+    ++report->count;
+    recording->last_time = contact.time;
+    return contact;
 }
 
 typedef struct {
@@ -715,7 +741,7 @@ static void dd2_fleet_group_impact(dd2_vehicle_impact *impact, dd2_vehicle_conta
 
 static bool dd2_fleet_group_response(const dd2_fleet_group_query *query,
                                      const dd2_fleet_neighborhood *group,
-                                     dd2_vehicle_collision_report *recorded, double remaining) {
+                                     dd2_fleet_recording *recorded, double remaining) {
     dd2_group_contact constraints[DD2_VEHICLE_CONTACT_LIMIT] = {0};
     dd2_vehicle_contact contacts[DD2_VEHICLE_CONTACT_LIMIT] = {0};
     double closing[DD2_VEHICLE_CONTACT_LIMIT] = {0};
@@ -761,32 +787,30 @@ static bool dd2_fleet_group_response(const dd2_fleet_group_query *query,
                                fmax(closing[index], support.normal_mass * support.normal_impulse))
                         : 0;
         const dd2_collision_response_result response = {.speed = speed, .impulse = impulse};
-        dd2_fleet_append(recorded, contacts[index], response);
-        const dd2_vehicle_contact contact = recorded->contacts[recorded->count - 1];
-        dd2_fleet_group_impact(&recorded->impacts[contact.first], contact);
+        const dd2_vehicle_contact contact = dd2_fleet_append(recorded, contacts[index], response);
+        dd2_fleet_group_impact(&recorded->report.impacts[contact.first], contact);
         if (contact.kind == DD2_VEHICLE_CONTACT_PAIR) {
-            dd2_fleet_group_impact(&recorded->impacts[contact.second], contact);
-            ++recorded->pair_contacts;
+            dd2_fleet_group_impact(&recorded->report.impacts[contact.second], contact);
+            ++recorded->report.pair_contacts;
         }
     }
     return true;
 }
 
-static bool dd2_fleet_respond(const dd2_fleet_group_query *query,
-                              dd2_vehicle_collision_report *recorded, bool *serial,
-                              double remaining) {
+static bool dd2_fleet_respond(const dd2_fleet_group_query *query, dd2_fleet_recording *recorded,
+                              bool *serial, double remaining) {
     dd2_fleet_neighborhood group = {0};
     if (!*serial) {
         dd2_fleet_collect_group(query, &group);
-        *serial = group.overflow || group.count > DD2_VEHICLE_CONTACT_LIMIT - recorded->count;
+        *serial = group.overflow || group.count > DD2_VEHICLE_CONTACT_LIMIT;
     }
     if (*serial) {
         const dd2_vehicle_contact contact =
             dd2_fleet_record(query->bodies, query->primary, remaining);
         const dd2_collision_response_result response =
-            dd2_fleet_response(query->bodies, query->primary, recorded->impacts);
+            dd2_fleet_response(query->bodies, query->primary, recorded->report.impacts);
         dd2_fleet_append(recorded, contact, response);
-        recorded->pair_contacts += (unsigned)query->primary.pair;
+        recorded->report.pair_contacts += (unsigned)query->primary.pair;
         return true;
     }
     return dd2_fleet_group_response(query, &group, recorded, remaining);
@@ -795,16 +819,19 @@ static bool dd2_fleet_respond(const dd2_fleet_group_query *query,
 static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous, unsigned count,
                               const dd2_road_surface *surface, const dd2_barrier_world *world,
                               dd2_vehicle_impact *impacts, unsigned *pair_contacts,
+                              dd2_vehicle_collision_storage *storage,
                               dd2_vehicle_collision_report *report) {
     if (report != NULL) {
         *report = (dd2_vehicle_collision_report){0};
     }
-    if (!dd2_fleet_validate(vehicles, previous, count, impacts, pair_contacts)) {
+    if (!dd2_fleet_validate(vehicles, previous, count, impacts, pair_contacts) ||
+        (report != NULL && storage == NULL)) {
         return false;
     }
     dd2_vehicle start[DD2_VEHICLE_FLEET_LIMIT] = {0};
     dd2_vehicle next[DD2_VEHICLE_FLEET_LIMIT] = {0};
-    dd2_vehicle_collision_report recorded = {0};
+    dd2_fleet_recording recorded = {.contacts = report != NULL ? storage->contacts : NULL};
+    recorded.report.contacts = recorded.contacts;
     for (unsigned body = 0; body < count; ++body) {
         start[body] = previous[body];
         next[body] = vehicles[body];
@@ -812,9 +839,6 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
     double remaining = DD2_VEHICLE_STEP_SECONDS;
     bool serial = false;
     for (unsigned iteration = 0; iteration < DD2_COLLISION_ITERATIONS; ++iteration) {
-        if (recorded.count == DD2_VEHICLE_CONTACT_LIMIT) {
-            break;
-        }
         dd2_fleet_event event = {0};
         if (!dd2_fleet_contact(start, next, count, surface, world, &event)) {
             break;
@@ -828,7 +852,7 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
         if (event.unresolved) {
             /* A conservative time bound is not a physical collision. Keep
              * checked poses without inventing impulse, damage or attribution. */
-            ++recorded.unresolved_sweeps;
+            ++recorded.report.unresolved_sweeps;
             break;
         }
         const dd2_fleet_group_query query = {
@@ -836,13 +860,13 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
         if (!dd2_fleet_respond(&query, &recorded, &serial, remaining)) {
             return false;
         }
+        ++recorded.report.response_events;
         remaining *= 1 - event.contact.time;
         /* Exhaustion retains every body's last checked pose, never unchecked residual motion. */
         dd2_fleet_remainder(
             start, next, count,
             (dd2_fleet_remaining){.seconds = remaining,
-                                  .stop = recorded.count == DD2_VEHICLE_CONTACT_LIMIT ||
-                                          iteration + 1 == DD2_COLLISION_ITERATIONS});
+                                  .stop = iteration + 1 == DD2_COLLISION_ITERATIONS});
     }
     for (unsigned body = 0; body < count; ++body) {
         if (!dd2_vehicle_valid(&next[body])) {
@@ -852,14 +876,14 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
     for (unsigned body = 0; body < count; ++body) {
         vehicles[body] = next[body];
         if (impacts != NULL) {
-            impacts[body] = recorded.impacts[body];
+            impacts[body] = recorded.report.impacts[body];
         }
     }
     if (pair_contacts != NULL) {
-        *pair_contacts = recorded.pair_contacts;
+        *pair_contacts = recorded.report.pair_contacts;
     }
     if (report != NULL) {
-        *report = recorded;
+        *report = recorded.report;
     }
     return true;
 }
@@ -868,12 +892,14 @@ bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previou
                                const dd2_road_surface *surface, const dd2_barrier_world *world,
                                dd2_vehicle_impact *impacts, unsigned *pair_contacts) {
     return dd2_fleet_resolve(vehicles, previous, count, surface, world, impacts, pair_contacts,
-                             NULL);
+                             NULL, NULL);
 }
 
 bool dd2_vehicle_collide_fleet_report(dd2_vehicle *vehicles, const dd2_vehicle *previous,
                                       unsigned count, const dd2_road_surface *surface,
                                       const dd2_barrier_world *world,
+                                      dd2_vehicle_collision_storage *storage,
                                       dd2_vehicle_collision_report *report) {
-    return dd2_fleet_resolve(vehicles, previous, count, surface, world, NULL, NULL, report);
+    return dd2_fleet_resolve(vehicles, previous, count, surface, world, NULL, NULL, storage,
+                             report);
 }

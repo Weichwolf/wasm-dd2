@@ -18,7 +18,8 @@ static const double dd2_sound_distance = 12000;
 static bool dd2_sound_observation_valid(dd2_sound_observation observation) {
     if (observation.count == 0 || observation.count > DD2_VEHICLE_FLEET_LIMIT ||
         !dd2_vehicle_valid(observation.listener) || observation.contacts == NULL ||
-        observation.contacts->count > DD2_VEHICLE_CONTACT_LIMIT ||
+        observation.contacts->count > DD2_VEHICLE_REPORT_LIMIT ||
+        (observation.contacts->count != 0 && observation.contacts->contacts == NULL) ||
         (observation.race != NULL && observation.race->rules.count != observation.count)) {
         return false;
     }

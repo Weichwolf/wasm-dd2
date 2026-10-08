@@ -636,8 +636,9 @@ also represents pressure transferred through another contact as effective normal
 mass times the inelastic support impulse. Positive impulses remain represented
 by positive incident speed; zero-impulse overlap repairs do not cause damage.
 Each support is reported at the primary event time and uncorrected contact pose.
-Groups which cannot fit the remaining 64 entries retain the previous conservative
-serial response for the rest of that step; no successful response is dropped.
+Groups above the 64-constraint group limit retain conservative serial response
+for the rest of that step. Report storage no longer selects the physical response
+or clips unrelated bodies when the first 64 records have been written.
 A failed joint solve preserves all proposed bodies and clears the public output.
 The 64-response budget keeps the last checked poses on exhaustion. An unresolved sweep also stops at its
 conservative time bound, increments `unresolved_sweeps`, and leaves velocity,
@@ -660,8 +661,11 @@ sound remain pending. Counts record individual solver responses, not unique
 accidents. These checks establish rewrite behavior, not original collision parity.
 
 `dd2_vehicle_collide_fleet_report` exposes every selected ground, barrier and
-car-pair contact of one fixed step in a caller-owned typed report. The bounded
-64-entry array matches the solver's iteration budget: successful responses are
+car-pair contact of one fixed step as a small borrowed view. An explicitly owned
+heap buffer stores up to 4,096 records: 64 response events times at most 64
+constraints in each event. These are separate group, event and metadata bounds;
+no solver iteration, material law, acceptance tolerance or stack limit grows.
+The view includes the actual response-event count. Successful responses are
 never silently discarded. Each record identifies the bodies/source obstacle,
 full-step contact fraction, world point/impulse normal, and both body-local
 contact arms at the interpolated pose before overlap correction. Closing speed
@@ -670,7 +674,24 @@ overlap repair. Ground/barrier contacts use `DD2_VEHICLE_NO_PARTNER` and a zero
 second local point; car pairs use `UINT32_MAX` instead of an obstacle ID. The
 legacy aggregate API uses the same solver. Reports and bodies publish together
 after validation; a failure clears the report and preserves all proposed bodies.
-No callbacks, retained pointers or allocations are involved.
+Create/destroy `dd2_vehicle_collision_storage` outside stepping and pass it to
+report queries. Views borrow entries until the next query on that buffer or its
+destruction; failed queries clear the output view and may overwrite scratch
+entries. A NULL report needs no storage. Queries allocate nothing. Aggregate-only
+queries use the same physical solver without retaining entries.
+
+Driving owns published and working buffers, allocated once and released on
+destruction. Every fixed-step consumer reads working entries immediately. Only a
+whole successful frame swaps buffers and publishes its final report. A failed
+frame preserves the previous borrowed entries as well as the simulation state;
+reset, withdrawal and successful no-step frames publish empty views.
+`rewrite_driving` interposes a late sound consumer only in its test executable:
+the test rejects the second substep after the unchanged implementation and
+scratch contact/damage/attribution processing, proving old-view and field rollback.
+`rewrite_fleet_recording` checks nineteen disjoint support groups followed by
+free movement or a later pair impact, independent floor/chronology/aggregate
+checks, separate-buffer lifetime and all three consumers at record 4,096.
+The configured WASM stack remains 1 MiB.
 
 The fleet verifier now reads each 5 ms step's contact report. It independently
 reduces records back to all twenty bodies' aggregate counters/strongest impacts,

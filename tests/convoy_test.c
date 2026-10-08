@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum { DD2_CONVOY_CLOCK = 128 };
 static const double dd2_convoy_height = 5000;
 static const double dd2_convoy_front_spacing = 900;
@@ -47,7 +49,8 @@ static bool dd2_convoy_case_test(dd2_convoy_case sample) {
         next[body].position.z += next[body].velocity.z * DD2_VEHICLE_STEP_SECONDS;
     }
     dd2_vehicle_collision_report report = {0};
-    if (!dd2_vehicle_collide_fleet_report(next, before, sample.count, NULL, NULL, &report) ||
+    if (!dd2_vehicle_collide_fleet_report(next, before, sample.count, NULL, NULL, dd2_test_storage,
+                                          &report) ||
         report.unresolved_sweeps != 0 || report.count != sample.count - 1 ||
         report.pair_contacts != report.count) {
         return false;
@@ -102,7 +105,7 @@ static bool dd2_convoy_sizes(double yaw) {
     return true;
 }
 
-int main(void) {
+static int dd2_test_run(void) {
     const double headings[] = {0, 0.3, 1.1};
     for (unsigned index = 0; index < sizeof(headings) / sizeof(headings[0]); ++index) {
         if (!dd2_convoy_sizes(headings[index])) {
@@ -112,4 +115,14 @@ int main(void) {
     }
     puts("collective convoy repair: PASS (456 complete fixed steps)");
     return EXIT_SUCCESS;
+}
+
+int main(void) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run();
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }

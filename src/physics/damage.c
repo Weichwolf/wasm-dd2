@@ -86,8 +86,8 @@ static void dd2_damage_contact_load(const dd2_vehicle_contact *contact,
 
 bool dd2_damage_step(dd2_vehicle_damage *damage, dd2_damage_frame frame) {
     if (damage == NULL || frame.contacts == NULL || frame.count == 0 ||
-        frame.count > DD2_VEHICLE_FLEET_LIMIT ||
-        frame.contacts->count > DD2_VEHICLE_CONTACT_LIMIT) {
+        frame.count > DD2_VEHICLE_FLEET_LIMIT || frame.contacts->count > DD2_VEHICLE_REPORT_LIMIT ||
+        (frame.contacts->count != 0 && frame.contacts->contacts == NULL)) {
         return false;
     }
     for (unsigned body = 0; body < frame.count; ++body) {

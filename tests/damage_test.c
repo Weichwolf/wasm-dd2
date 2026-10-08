@@ -19,9 +19,9 @@ static const double dd2_damage_test_crushed_width = 148.8;
 static const double dd2_damage_test_crushed_height = 65;
 static const double dd2_damage_test_crushed_length = 247.5;
 
-static dd2_vehicle_collision_report dd2_damage_test_report(void) {
-    dd2_vehicle_collision_report report = {.count = 1};
-    report.contacts[0] = (dd2_vehicle_contact){
+static dd2_vehicle_collision_report dd2_damage_test_report(dd2_vehicle_contact *contacts) {
+    dd2_vehicle_collision_report report = {.contacts = contacts, .count = 1};
+    contacts[0] = (dd2_vehicle_contact){
         .first = 0,
         .second = 1,
         .kind = DD2_VEHICLE_CONTACT_PAIR,
@@ -35,10 +35,11 @@ static dd2_vehicle_collision_report dd2_damage_test_report(void) {
 
 static bool dd2_damage_test_impacts(void) {
     dd2_vehicle_damage damage[DD2_DAMAGE_TEST_BODIES] = {0};
-    dd2_vehicle_collision_report report = dd2_damage_test_report();
+    dd2_vehicle_contact contacts[2] = {0};
+    dd2_vehicle_collision_report report = dd2_damage_test_report(contacts);
     /* Repeated solver contacts must not double the regional load of this step. */
     report.count = 2;
-    report.contacts[1] = report.contacts[0];
+    contacts[1] = contacts[0];
     const dd2_damage_frame frame = {.contacts = &report, .count = DD2_DAMAGE_TEST_BODIES};
     if (!dd2_damage_step(damage, frame) ||
         fabs(damage[0].regions[DD2_DAMAGE_FRONT_LEFT] - (1.0 / 2)) > dd2_damage_test_tolerance ||
@@ -67,9 +68,10 @@ static bool dd2_damage_test_impacts(void) {
 
 static bool dd2_damage_test_support(void) {
     dd2_vehicle_damage damage[DD2_DAMAGE_TEST_BODIES] = {0};
-    dd2_vehicle_collision_report report = dd2_damage_test_report();
-    report.contacts[0].normal_speed = 0;
-    report.contacts[0].impulse = 0;
+    dd2_vehicle_contact contacts[2] = {0};
+    dd2_vehicle_collision_report report = dd2_damage_test_report(contacts);
+    contacts[0].normal_speed = 0;
+    contacts[0].impulse = 0;
     for (unsigned step = 0; step < DD2_DAMAGE_TEST_SUPPORT_STEPS; ++step) {
         if (!dd2_damage_step(
                 damage, (dd2_damage_frame){.contacts = &report, .count = DD2_DAMAGE_TEST_BODIES}) ||
@@ -83,14 +85,15 @@ static bool dd2_damage_test_support(void) {
 
 static bool dd2_damage_test_invalid(void) {
     dd2_vehicle_damage damage[DD2_DAMAGE_TEST_BODIES] = {0};
-    dd2_vehicle_collision_report report = dd2_damage_test_report();
+    dd2_vehicle_contact contacts[2] = {0};
+    dd2_vehicle_collision_report report = dd2_damage_test_report(contacts);
     report.count = 2;
-    report.contacts[1] = report.contacts[0];
+    contacts[1] = contacts[0];
     const union {
         uint64_t bits;
         double number;
     } invalid = {.bits = UINT64_C(0x7ff8000000000001)};
-    report.contacts[1].impulse = invalid.number;
+    contacts[1].impulse = invalid.number;
     if (dd2_damage_step(damage,
                         (dd2_damage_frame){.contacts = &report, .count = DD2_DAMAGE_TEST_BODIES}) ||
         damage[0].steps != 0 || damage[0].regions[DD2_DAMAGE_FRONT_LEFT] != 0) {

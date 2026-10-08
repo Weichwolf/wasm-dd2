@@ -244,7 +244,7 @@ it before that tick. Withdrawal/results freeze it immediately. The original
 supported resting overturns are temporarily excluded until recovery. Timed results
 replace placement/accident scores. Selection stays in Total Destruction across
 arenas and switches to Wrecking on a circuit. R resets time, damage and all
-pursuit targets. Dense pursuit fields can exhaust the shared 64-contact solver
+pursuit targets. Dense pursuit fields can exhaust the shared 64-event solver
 budget; the solver then retains checked poses instead of accepting residual
 travel. The fleet solver now collects connected support neighborhoods at the actual
 swept event time, applies primary restitution once, and jointly solves inelastic
@@ -382,8 +382,11 @@ the transition.
 The solver retains the stronger finite physical correction.
 See `src/physics/README.md`. Complete natural arena behavior remains a separate gate. A 456-case synthetic convoy
 regression checks full common motion and centered separation without impulses or
-clock changes. Groups beyond the report budget retain conservative serial
-response. Full natural arena completion and dense-field behavior remain subject
+clock changes. Groups beyond the 64-constraint group limit retain conservative
+serial response. A separate owned 4,096-entry record buffer stores all permitted
+responses as a borrowed view. Driving swaps working/published buffers only after
+whole-frame validation, preserving old entries on rejection. Neither the
+64-event physical work limit nor the 1 MiB WASM stack is increased. Full natural arena completion and dense-field behavior remain subject
 to original-data race verification. Supported resting overturns now participate in arena availability and recover
 after two seconds; distant opponents retry placement after the deadline. Complete arena behavior still requires natural race verification.
 

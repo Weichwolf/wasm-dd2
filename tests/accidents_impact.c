@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static dd2_vehicle_collision_storage *dd2_test_storage;
+
 enum { DD2_IMPACT_CARS = DD2_VEHICLE_FLEET_LIMIT, DD2_IMPACT_LEVEL = 8, DD2_IMPACT_STEPS = 400 };
 static const double dd2_impact_speed = 10000;
 static const double dd2_impact_destruction_speed = 20000;
@@ -73,7 +75,7 @@ static bool dd2_impact_step(dd2_impact_field *field, const dd2_road *road,
         }
     }
     if (!dd2_vehicle_collide_fleet_report(field->vehicles, previous, DD2_IMPACT_CARS, surface,
-                                          world, &field->contacts) ||
+                                          world, dd2_test_storage, &field->contacts) ||
         !dd2_damage_step(field->damages, (dd2_damage_frame){.contacts = &field->contacts,
                                                             .count = DD2_IMPACT_CARS})) {
         return false;
@@ -125,7 +127,7 @@ static bool dd2_impact_run(const dd2_driving *driving, const dd2_road *road,
     return reset;
 }
 
-int main(int argc, char **argv) {
+static int dd2_test_run(int argc, char **argv) {
     if ((argc != 2 && argc != 3) || (argc == 3 && strcmp(argv[2], "destruction") != 0)) {
         return EXIT_FAILURE;
     }
@@ -157,4 +159,14 @@ int main(int argc, char **argv) {
     dd2_road_destroy(road);
     dd2_archive_fixture_close(&archive);
     return pass ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+int main(int argc, char **argv) {
+    dd2_test_storage = dd2_vehicle_collision_storage_create();
+    if (dd2_test_storage == NULL) {
+        return EXIT_FAILURE;
+    }
+    const int result = dd2_test_run(argc, argv);
+    dd2_vehicle_collision_storage_destroy(dd2_test_storage);
+    return result;
 }
