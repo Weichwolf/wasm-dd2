@@ -296,6 +296,12 @@ retains identical first-round results; its dense-region continuation and broader
 gates are pending. The old natural 18c0a01 binary is followed separately.
 Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/component-report.json.
 
+The dense-search implementation now also passes the eleven-level original-data
+ground gate on Native/WASM/ASan, including 79,100 independent queries and 26,400
+drop steps per target. Current-source actual-input/scoped-race checks and natural
+continuation remain pending under 0037/0036. Receipt:
+/tmp/wasm-dd2/rewrite-dense-search-0037/ground-gate-receipt.json.
+
 Additional original File Manager input now establishes directional slot selection,
 the empty-load Not a DD2 file error, empty-delete return without confirmation,
 and cancellation with unchanged isolated/provisioned saves. A separate actual

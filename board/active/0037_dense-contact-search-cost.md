@@ -48,9 +48,14 @@ retains the identical first-round tick and all scores, then continues in round 2
 Natural dense-region continuation and current-source broader gates remain pending.
 Component receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/component-report.json.
 
+The current-source original-data ground gate also passes all eleven levels on
+Native/WASM/ASan: 79,100 independent queries and 26,400 physical drop steps per
+target. Actual-input, selected-race and natural-continuation gates remain running.
+Receipt: /tmp/wasm-dd2/rewrite-dense-search-0037/ground-gate-receipt.json.
+
 ## Next
 
-Finish current-source actual-input, original-data ground and selected-race gates.
+Finish current-source actual-input and selected-race gates.
 Follow fresh ordinary continuation
 without altered bounds or manufactured state. Follow the old run separately.
 
