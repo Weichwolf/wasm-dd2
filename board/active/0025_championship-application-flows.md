@@ -131,10 +131,16 @@ round-2 tick 230,000 with matching prefixes and identical previous round-1 resul
 Full-season completion remains unproved. Current advancement receipt:
 /tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
 
+Those longer attempts now terminate at round-2 tick 233,358 with matching records.
+The saved-owner failure, faithful isolated query and independent two-support
+diagnosis are tracked under active 0033. A private Native correction advances
+the saved step; production/multi-target/natural continuation remain unproved.
+Current diagnosis: /tmp/wasm-dd2/rewrite-season-after-220415-long/diagnosis.json.
+
 ## Next
 
-Follow the current longer-wallclock first-season attempts to terminal outcomes;
-diagnose any contact failure or healthy noncompletion at the unchanged round bound.
+Resolve the proved tick-233,358 contact failure under 0033, then continue the
+natural season to a terminal outcome at the unchanged physical round bound.
 Preserve regular race rules, AI controls, damage and score ownership.
 Follow with complete physical seasons
 and continuing/terminal outcome application flows, including the assigned field

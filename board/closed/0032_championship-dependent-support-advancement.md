@@ -78,6 +78,9 @@ scores. Ordinary advancement beyond 220,415 is proved; no position, damage, lap
 or result injection supplies it. Close this saved-input/continuation contract.
 Complete physical seasons and all-game acceptance remain unproved. Receipt:
 /tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
+The longer runs subsequently terminate at tick 233,358 with matching records.
+The different six-body/fourteen-contact velocity failure and its correction
+belong to active 0033; this closed advancement contract remains proved.
 Completed input/query/matrix/private-ablation captures are removed after their
 hashes, independent diagnosis and correction receipt are archived in
 /tmp/wasm-dd2/rewrite-season-after-128036/diagnosis.json. Current live natural
@@ -88,9 +91,9 @@ Independent diagnosis/ablation receipt:
 
 ## Next
 
-Follow the current longer-wallclock natural attempts to their terminal outcomes
-under 0025/0004. Record any next contact failure, healthy round bound or timeout
-separately from this proved saved-input/continuation correction.
+Follow the terminal tick-233,358 failure under active 0033, then continue natural
+season verification under 0025/0004. Record subsequent failures, healthy round
+bounds or timeouts separately from this proved saved-input/continuation correction.
 Preserve frozen-query, analytic, original-data and actual application checks.
 Complete physical seasons remain under 0025/0004; natural arena completion and
 movement/tactics retain 0002/0016.

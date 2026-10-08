@@ -37,6 +37,7 @@ its game requirements or acceptance rules.
 | [0030](closed/0030_championship-world-support-advancement.md) | Linear world-friction refinement in scheduled racing | closed |
 | [0031](closed/0031_championship-mixed-support-advancement.md) | Coupled world-release directions in scheduled racing | closed |
 | [0032](closed/0032_championship-dependent-support-advancement.md) | Dependent world supports in scheduled racing | closed |
+| [0033](active/0033_championship-two-support-advancement.md) | Two retained world supports in scheduled racing | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -148,6 +149,17 @@ after round-2 tick 160,000, with exactly matching records and no logged solver
 failure. It does not close the continuation contract. A longer-wallclock attempt
 uses the same physical bounds, binary and ordinary control profile. Advancement
 receipt: /tmp/wasm-dd2/rewrite-patch-220415/advancement-report.json.
+
+Both longer-wallclock attempts are now terminal: the Native season fails round 2
+at tick 233,358, with exactly matching production/diagnostic records. Six cars
+form fourteen contacts; two actual owner replays reproduce the velocity failure.
+Read-only inspection preserves identical diagnostic machine code. Independent
+analytic and finite-difference roots require two retained wall supports and two
+released supports. A private Native two-endpoint branch advances the saved step
+and passes 438 physical query/order checks; production correction and natural
+continuation remain under active 0033. Full seasons remain unproved. Receipts:
+/tmp/wasm-dd2/rewrite-patch-220415/report.json and
+/tmp/wasm-dd2/rewrite-season-after-220415-long/diagnosis.json.
 
 ## Workflow and acceptance
 

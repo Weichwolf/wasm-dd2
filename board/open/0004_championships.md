@@ -40,8 +40,9 @@ human identity, multiplayer and persistence still require implementation/evidenc
 
 ## Next
 
-Follow the current natural first-season attempts under 0025 after the saved-step
-and ordinary-continuation corrections through 220,415 under closed 0032.
+Follow the proved tick-233,358 contact failure under active 0033, then continue
+natural first-season verification under 0025. Saved-step and ordinary-continuation
+corrections through 220,415 are proved under closed 0032.
 Require complete physical seasons and continuing/terminal application outcomes.
 Add profile-wide unlock retention, configurable human identity, original
 menu flows, multiplayer and compatible save/load. Preserve real twenty-driver
