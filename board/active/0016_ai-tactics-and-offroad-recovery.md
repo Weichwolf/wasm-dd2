@@ -85,9 +85,30 @@ player engine and no credited laps. Active 0036 owns the next failure-only
 advancement diagnosis; its cause is not yet proved. Terminal receipt:
 /tmp/wasm-dd2/rewrite-fitted-83450/natural-season/terminal-report.json.
 
+The current 268e3f9 incident-pressure campaign now advances all physical steps
+through the unchanged 300,000-tick second-round bound without a contact failure.
+It exits 1 without timeout after 1,231.59 seconds, with zero player laps and
+health 0.2677000161305475. All 120 ordinary records are retained. Thirteen late
+samples show an upright supported player moving only 221.786 sampled XZ units
+over the last 300 simulated seconds, with no sampled unresolved sweeps. The
+two twenty-car snapshots match the exact production player/header at ticks
+280,000/300,000; optional copied helper destinations were relocated only after
+they closed. Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/natural-season/terminal-report.json.
+
+A read-only typed reconstruction of the 280,000 core/controller fields matches
+all twenty recorded next-copy controls exactly. An independent original road
+graph matches all target points within 1.82e-12. The player's target-facing dot
+is -0.43581666529655283. A retired car caps the goal-directed speed to zero;
+another retired car also lies inside the current-heading traffic gate. Changing
+one projection alone has not been proved to restore movement. The current
+controller/geometry evidence identifies a concrete diagnosis input, not a cause
+or an accepted tactical correction. Active 0044 owns one terminal owner/pilot
+capture and the next movement/escape diagnosis.
+Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/movement-diagnosis/geometry-report.json.
+
 ## Next
 
-Follow the next advancement diagnosis under 0036. Diagnose the completed
+Follow the current terminal movement/owner diagnosis under 0044. Diagnose the completed
 Native/sanitized B movement failures using the retained observations, before
 choosing a tactical correction; keep the ordinary movement requirement and bound.
 Preserve the Total Destruction player target and every engine, damage, lap and

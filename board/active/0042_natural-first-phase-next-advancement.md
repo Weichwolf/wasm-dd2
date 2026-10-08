@@ -95,20 +95,23 @@ complete Circuit-5 eight-lap race pass on all three targets; the latter runs
 not full-suite acceptance. All 160 source fingerprints remain unchanged.
 Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/broader-report.json.
 
-The separate fresh ordinary campaign has completed round 1 at 287,087 ticks
-with twenty driver scores and is still running in round 2 past tick 150,000.
-The player has zero credited laps and health 0.2677000161305475 at that checkpoint.
-Its bound remains 300,000 ticks per round and 3,600 wall-clock seconds. No
-current terminal result or completed physical season is claimed.
-Live receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/natural-season/identity.json.
+The separate fresh ordinary campaign is now terminal: exit 1 without timeout
+after 1,231.59 seconds. Round 1 completes at 287,087 ticks with twenty driver
+scores. Every round-2 step advances through the unchanged 300,000-tick bound,
+without a contact failure, but the race/championship remains RACING, all round
+scores are zero and the player has zero laps. Health is 0.2677000161305475.
+All 120 production records and thirteen sparse late movement observations are
+retained. In the last 300 simulated seconds the supported upright player covers
+only 221.786 sampled XZ units, without sampled unresolved sweeps. This proves
+bounded advancement, not spatial escape from dense traffic or a complete season.
+Receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/natural-season/terminal-report.json.
 
 ## Next
 
-Follow the fresh ordinary campaign to its terminal result. If advancement fails,
-capture one exact failed owner/query from frozen code and require the complete
-matching production prefix before assigning a cause. Keep the two
-older trajectories distinct; retain AI movement and zero-lap playability
-acceptance under 0016/0004.
+Follow the terminal movement diagnosis under 0044. Distinguish proved bounded
+contact advancement from dense-region spatial progress and full-season playability.
+Require exact matching records before using the terminal-owner capture. Keep
+the older trajectories distinct and retain full AI/campaign acceptance under 0016/0004.
 
 ## Accept
 

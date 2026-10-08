@@ -58,17 +58,22 @@ solver rejects this new first fixture. Bounds and physical acceptance are unchan
 The adopted 268e3f9 source also passes the broader scopes recorded under 0042:
 all eleven original-data ground levels, actual Native/sanitized/Chromium inputs,
 and the selected short Circuit-2 and full eight-lap Circuit-5 races. The new
-ordinary campaign has completed round 1 and is still running past round-2 tick
-150,000, with zero player laps. No terminal or complete-season result is claimed.
+ordinary campaign completes round 1 and advances every step through the unchanged
+round-2 300,000-tick bound without a contact failure. It exits 1 without timeout
+after 1,231.59 seconds: the player still has zero laps and no round-2 scores are
+manufactured. Thirteen late observations show supported upright slow movement,
+not spatial escape from the dense field. Complete-season acceptance remains false.
 Receipts: /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
 san-next-owner-report.json, independent-next-motion-report.json and
 negative-regression-report.json.
 Broader receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/broader-report.json.
+Terminal receipt: /tmp/wasm-dd2/rewrite-next-world-load-0042/natural-season/terminal-report.json.
 
 ## Next
 
-Follow fresh current-source ordinary continuation under 0042 to its terminal
-result before closing advancement. Keep full seasons and zero-lap AI acceptance open.
+Follow the actual terminal movement diagnosis under 0044. Preserve the proved
+saved-input and bounded advancement checks while requiring dense-region spatial
+progress. Keep full seasons and zero-lap AI acceptance open.
 
 ## Accept
 

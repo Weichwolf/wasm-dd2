@@ -48,6 +48,7 @@ its game requirements or acceptance rules.
 | [0041](active/0041_captured-five-car-contact-root.md) | Resolve the captured five-car contact failure | active |
 | [0042](active/0042_natural-first-phase-next-advancement.md) | Next ordinary championship advancement after first-phase refinement | active |
 | [0043](active/0043_natural-fixed-active-next-advancement.md) | Next ordinary championship advancement after fixed-active refinement | active |
+| [0044](active/0044_current-round2-movement.md) | Restore actual dense round-2 movement | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -504,11 +505,21 @@ first fixture. The adopted 268e3f9 source also passes all eleven original-data
 ground levels (79,100 queries/26,400 body steps per target), actual input/canvas
 checks (31 Native/31 sanitized/144 Chromium, no browser errors), and selected
 short Circuit-2/full eight-lap Circuit-5 races on all three targets. The fresh
-ordinary campaign completes round 1 and remains running past round-2 tick
-150,000 with zero player laps. No current terminal result or full season closes.
+ordinary campaign completes round 1 and advances all second-round steps to the
+unchanged 300,000-tick bound without a contact failure. It exits 1 without
+timeout after 1,231.59 seconds, with zero player laps and zero round-2 scores.
+Thirteen late observations show only 221.786 sampled XZ units of supported
+upright travel in 300 simulated seconds. Bounded contact advancement does not
+prove dense-region spatial escape or a complete season. Active 0044 now owns
+the actual movement diagnosis; a read-only typed 280,000 reconstruction matches
+all twenty next-copy controls and independent original road targets. One
+terminal owner/pilot capture is running from the frozen code, requiring all
+120 production records and thirteen movement observations to match before
+attributing a cause. Full game, seasons, AI and component spatial contracts remain open.
 Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/next-failure-diagnosis/production-report.json
 and /tmp/wasm-dd2/rewrite-next-world-load-0042/component-report.json,
-broader-report.json and natural-season/identity.json.
+broader-report.json, natural-season/terminal-report.json,
+movement-diagnosis/geometry-report.json and movement-owner-capture/identity.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
