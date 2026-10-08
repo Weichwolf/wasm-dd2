@@ -44,12 +44,45 @@ sweep is retained rather than weakening the threshold.
 Receipts: /tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/terminal.json,
 independent-root/report.json and finite-difference-report.json.
 
+The private terminal-state comparison now identifies provisional normal
+releases as an obstacle. The unchanged release trial reaches final physical
+error 0.048178166027913513 after its sixteen steps; retaining its other normal
+equations reaches 7.94e-15 within ten steps. Removing that release behavior from
+all existing production release trials preserves the old 673 Native checks but
+still fails the full actual query. That ablation is not adopted.
+
+A separate complete fixed-active-set fallback preserves the existing warm/cold
+trials and freezes the current projected normal branch. Exact zero targets apply
+to released rows; retained normal equations survive negative full-step
+predictions while nonnegative candidates and bounded backtracking settle the
+nonlinear friction direction. Partial roots restore exact warm state. One base
+model raises the finite capacity from 259 to 260; the existing 4,096 shared
+passes, one matrix and sixteen refinement/backtracking steps remain.
+
+The private full/remapped query succeeds in 673 velocity/61 position passes.
+Its actual five-car query and twenty-eight orderings are now integrated, with
+all 36 captured cases plus 666 orderings (702 independent physical checks) passing
+the preliminary Native run. Mandatory strict Native/WASM and instrumented gates
+are running; no multi-platform or actual-owner correction is yet claimed.
+Receipts: /tmp/wasm-dd2/rewrite-five-root-0041/private-model-report.json,
+private-retain-model-report.json, retain-release-report.json,
+fixed-active-report.json and integrated-friction-report.json.
+
+Integrated production now passes strict LLVM19/160-file formatting, 35 Native
+and 33 WASM CTests, and all 702 independent contact checks on Native/WASM/ASan/
+UBSan. Both full/remapped Native queries solve within the unchanged bounds;
+motion agrees with the independent root within 9.15e-15. The actual 223,337 owner
+advances to 223,338 on Native and instrumented C. The 168,287, 108,716, 115,420
+and 190,078 Native owners still advance; frozen first-phase production fails
+the new first regression. Pinned SoftGL is unchanged. Current-source broader
+checks and ordinary continuation remain unproved; the work item stays active.
+Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/component-report.json.
+
 ## Next
 
-Identify why existing bounded release/refinement models miss the verified root
-before changing production. Compare private merit, branch selection and
-rollback against complete physical acceptance. Continue
-observing the frozen first-phase ordinary campaign as a separate scope.
+Run current-source original-data/input/selected-race checks and fresh ordinary
+continuation. The separate first-phase campaign fails at 194,353 after crossing
+190,000; follow its exact failure capture under 0042 without restarting it.
 
 ## Accept
 

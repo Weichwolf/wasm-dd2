@@ -430,7 +430,7 @@ One matrix is reused for the fixed-load solve and at most sixteen refinements.
 All intermediate motion/impulses remain private; only a smaller finite physical
 residual replaces the outer state. Rejection restores the exact input or the
 previously better correction. The model array holds at most four models per
-contact plus three base models (259 total). Ordinary sweeps, material laws and
+contact plus four base models (260 total). Ordinary sweeps, material laws and
 final tolerances are unchanged.
 
 Co-oriented world supports can have dependent normal equations: collinear points
@@ -458,8 +458,8 @@ and selected world-release
 candidates instead scale their saved normal/tangent impulses by one minus the
 backtracking factor, reaching exact zero at the full step. This preserves cones,
 finite checks, impulse accounting, the final material law and exact rollback.
-The bounded model array holds at most four models per contact plus three base
-models (259 total); ordinary pass/refinement/backtracking limits are unchanged.
+The bounded model array holds at most four models per contact plus four base
+models (260 total); ordinary pass/refinement/backtracking limits are unchanged.
 
 Both initial refitted directions still compete before branch-model search.
 If that accepted correction already has full physical error below the existing
@@ -474,7 +474,7 @@ documented 1e12 softness cap, with explicit valid/invalid checks below, at and
 above the corresponding 1e-13 cone radius.
 
 If mixed-contact warm branches still miss a complete root after the delay, one
-final cold constitutive model privately undoes every accumulated impulse. It
+cold constitutive model privately undoes every accumulated impulse. It
 retains every contact and uses the existing analytic material Jacobian, fitted
 nonnegative pressure directions, equation merit and sixteen-step refinement.
 Its coupled tangent direction remains unprojected inside refinement; final cone
@@ -485,6 +485,18 @@ progress. Rejection restores exact outer motion and impulses; the next ordinary
 sweep remains required for certification. This adds one bounded base model,
 without additional ordinary sweeps, a new matrix or relaxed material conditions.
 The actual step-115420 query and all twenty-four orderings exercise this root.
+
+After the existing warm/cold trials, one private warm model freezes the current
+projected normal active set. Its released rows retain exact zero impulse targets;
+the other rows retain their normal equations throughout refinement. Negative
+full-step pressure predictions use the existing nonnegative candidate and
+backtracking instead of forcing additional releases. Fitted equation merit
+guides the private tangent fit; cone projection and complete physical tolerance
+control outer acceptance. An incomplete improvement restores exact state.
+Existing release trials preserve their earlier reduction contract. One base
+model increases the bounded maximum to 260, with one matrix, 4,096 shared passes
+and sixteen refinement/backtracking steps. The captured five-car/fourteen-contact
+tick-223337 query and twenty-eight rotations/reversals check this route.
 
 A world support may need higher pressure before it returns to the linear
 friction branch. After the delay, a sliding support's local model reuses the

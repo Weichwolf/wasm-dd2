@@ -36,7 +36,9 @@ enum {
     DD2_FRICTION_SLIDING_LOAD_CONTACTS = 11,
     DD2_FRICTION_SLIDING_LOAD_BODIES = 5,
     DD2_FRICTION_FIRST_PHASE_CONTACTS = 8,
-    DD2_FRICTION_FIRST_PHASE_BODIES = 3
+    DD2_FRICTION_FIRST_PHASE_BODIES = 3,
+    DD2_FRICTION_FIXED_ACTIVE_CONTACTS = 14,
+    DD2_FRICTION_FIXED_ACTIVE_BODIES = 5
 };
 static const double dd2_friction_tolerance = 1e-6;
 static const double dd2_friction_position_tolerance = 1e-8;
@@ -729,6 +731,31 @@ static bool dd2_friction_first_phase_orderings(void) {
     return true;
 }
 
+static bool dd2_friction_fixed_active_orderings(void) {
+    for (unsigned reversed = 0; reversed < DD2_FRICTION_PAIR; ++reversed) {
+        for (unsigned start = 0; start < DD2_FRICTION_FIXED_ACTIVE_CONTACTS; ++start) {
+            dd2_group_contact contacts[DD2_FRICTION_FIXED_ACTIVE_CONTACTS] = {0};
+            for (unsigned index = 0; index < DD2_FRICTION_FIXED_ACTIVE_CONTACTS; ++index) {
+                const unsigned offset =
+                    reversed != 0 ? DD2_FRICTION_FIXED_ACTIVE_CONTACTS - index : index;
+                contacts[index] =
+                    dd2_friction_fixed_active_contacts[(start + offset) %
+                                                       DD2_FRICTION_FIXED_ACTIVE_CONTACTS];
+            }
+            const dd2_friction_case scenario = {
+                .initial = dd2_friction_fixed_active_bodies,
+                .contacts = contacts,
+                .body_count = DD2_FRICTION_FIXED_ACTIVE_BODIES,
+                .contact_count = DD2_FRICTION_FIXED_ACTIVE_CONTACTS,
+                .name = "championship fixed normal active set ordering"};
+            if (!dd2_friction_run(&scenario)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main(void) {
     if (!dd2_friction_capped_oracle()) {
         puts("Capped material oracle: FAIL");
@@ -769,7 +796,8 @@ int main(void) {
         !dd2_friction_patch_orderings() || !dd2_friction_endpoint_orderings() ||
         !dd2_friction_fitted_orderings() || !dd2_friction_merit_orderings() ||
         !dd2_friction_dense_orderings() || !dd2_friction_cold_orderings() ||
-        !dd2_friction_sliding_load_orderings() || !dd2_friction_first_phase_orderings()) {
+        !dd2_friction_sliding_load_orderings() || !dd2_friction_first_phase_orderings() ||
+        !dd2_friction_fixed_active_orderings()) {
         puts("Coupled support ordering: FAIL");
         return EXIT_FAILURE;
     }

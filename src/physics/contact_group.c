@@ -20,7 +20,7 @@ enum {
     DD2_GROUP_NEWTON_DELAY = 512,
     DD2_GROUP_NEWTON_SEARCHES = 16,
     DD2_GROUP_NEWTON_REFINEMENTS = 16,
-    DD2_GROUP_NEWTON_BASE_MODELS = 3,
+    DD2_GROUP_NEWTON_BASE_MODELS = 4,
     DD2_GROUP_NEWTON_CONTACT_MODELS = 4,
     DD2_GROUP_NEWTON_MODEL_LIMIT =
         DD2_GROUP_NEWTON_BASE_MODELS + (DD2_GROUP_NEWTON_CONTACT_MODELS * DD2_VEHICLE_CONTACT_LIMIT)
@@ -424,11 +424,12 @@ typedef enum {
     DD2_GROUP_NEWTON_RELEASE,
     DD2_GROUP_NEWTON_PATCH,
     DD2_GROUP_NEWTON_COLD,
-    DD2_GROUP_NEWTON_WORLD_PRESSURE
+    DD2_GROUP_NEWTON_WORLD_PRESSURE,
+    DD2_GROUP_NEWTON_FIXED_ACTIVE
 } dd2_group_newton_method;
 
 typedef struct {
-    uint64_t released_contacts; /* Fixed zero-impulse rows of a private patch branch. */
+    uint64_t released_contacts; /* Fixed zero-impulse rows of a private normal branch. */
     dd2_group_newton_method method;
     unsigned selected_contact; /* Contact limit selects the complete saturated branch. */
     unsigned second_contact;   /* Second retained endpoint of a private world patch. */
@@ -515,20 +516,22 @@ static bool dd2_group_newton_pressure(dd2_group_newton_method method) {
 }
 
 static bool dd2_group_newton_private(dd2_group_newton_method method) {
-    return method == DD2_GROUP_NEWTON_RELEASE || method == DD2_GROUP_NEWTON_COLD ||
-           method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
+    return method == DD2_GROUP_NEWTON_FIXED_ACTIVE || method == DD2_GROUP_NEWTON_RELEASE ||
+           method == DD2_GROUP_NEWTON_COLD || method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
 }
 
-/* These alternate basins must reach a complete physical root before replacing
- * warm progress. Existing release refinements retain their reduction contract. */
+/* Alternate basins and a fixed normal branch must reach a complete physical
+ * root before replacing warm progress. Existing release refinements retain
+ * their reduction contract. */
 static bool dd2_group_newton_complete(dd2_group_newton_method method) {
-    return method == DD2_GROUP_NEWTON_COLD || method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
+    return method == DD2_GROUP_NEWTON_FIXED_ACTIVE || method == DD2_GROUP_NEWTON_COLD ||
+           method == DD2_GROUP_NEWTON_WORLD_PRESSURE;
 }
 
 static bool dd2_group_newton_material(dd2_group_newton_method method) {
     return method == DD2_GROUP_NEWTON_CONSTITUTIVE || method == DD2_GROUP_NEWTON_SATURATED ||
            dd2_group_newton_pressure(method) || method == DD2_GROUP_NEWTON_PATCH ||
-           method == DD2_GROUP_NEWTON_COLD;
+           method == DD2_GROUP_NEWTON_COLD || method == DD2_GROUP_NEWTON_FIXED_ACTIVE;
 }
 
 static bool dd2_group_pressure_selected(const dd2_group_newton_state *state, unsigned index) {
@@ -537,7 +540,9 @@ static bool dd2_group_pressure_selected(const dd2_group_newton_state *state, uns
 }
 
 static bool dd2_group_newton_retained(const dd2_group_newton_state *state, unsigned index) {
-    return (state->model.method == DD2_GROUP_NEWTON_PATCH &&
+    return (state->model.method == DD2_GROUP_NEWTON_FIXED_ACTIVE &&
+            (state->model.released_contacts & (UINT64_C(1) << index)) == 0) ||
+           (state->model.method == DD2_GROUP_NEWTON_PATCH &&
             (state->model.selected_contact == index || state->model.second_contact == index)) ||
            dd2_group_pressure_selected(state, index);
 }
@@ -838,6 +843,8 @@ static void dd2_group_linear_release(dd2_group_linear_system *system,
 
 /* Releases are monotone within one direction search: each refit adds at
  * least one contact, so there are at most contact_count + 1 linear solves.
+ * A fixed private branch instead retains its normal equations during negative
+ * full-step predictions; nonnegative candidates and backtracking still apply.
  * All original contacts remain in the physical residual and final checks. */
 static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
                                        const dd2_group_newton_state *state,
@@ -864,7 +871,8 @@ static bool dd2_group_newton_direction(dd2_group_workspace *workspace,
         }
         bool changed = false;
         for (unsigned index = 0; index < count; ++index) {
-            if (!released[index] && !dd2_group_pressure_selected(state, index) &&
+            if (!released[index] && state->model.method != DD2_GROUP_NEWTON_FIXED_ACTIVE &&
+                !dd2_group_pressure_selected(state, index) &&
                 state->base.normal[index] +
                         system->direction[DD2_GROUP_NEWTON_AXES * (size_t)index] <
                     0) {
@@ -1261,6 +1269,25 @@ static dd2_group_newton_model dd2_group_patch_model(const dd2_group_workspace *w
     return model;
 }
 
+/* Freeze the current projected normal active set for one private warm trial.
+ * A negative unconstrained prediction can be a poor full nonlinear step rather
+ * than evidence that another support must release. Keep its equation while
+ * backtracking settles friction; final complete physical acceptance still
+ * checks every normal inequality and cone. Existing warm/cold trials remain. */
+static dd2_group_newton_model dd2_group_fixed_model(const dd2_group_workspace *workspace) {
+    dd2_group_newton_model fixed = {.method = DD2_GROUP_NEWTON_FIXED_ACTIVE,
+                                    .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
+    for (unsigned index = 0; index < workspace->query->contact_count; ++index) {
+        const dd2_group_constraint *constraint = &workspace->constraints[index];
+        const double speed = dd2_collision_dot(dd2_group_velocity(workspace, index),
+                                               workspace->query->contacts[index].normal);
+        if (constraint->normal_impulse - speed / constraint->normal_mass <= 0) {
+            fixed.released_contacts |= UINT64_C(1) << index;
+        }
+    }
+    return fixed;
+}
+
 static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
                                         dd2_group_newton_model *models, bool paired) {
     unsigned count = 0;
@@ -1315,6 +1342,7 @@ static unsigned dd2_group_newton_models(const dd2_group_workspace *workspace,
         models[count++] = (dd2_group_newton_model){.method = DD2_GROUP_NEWTON_COLD,
                                                    .selected_contact = DD2_VEHICLE_CONTACT_LIMIT};
     }
+    models[count++] = dd2_group_fixed_model(workspace);
     return count;
 }
 

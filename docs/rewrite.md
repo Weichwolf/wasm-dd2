@@ -304,7 +304,7 @@ state. Released contacts retain their normal inequalities in physical acceptance
 and can reload in ordinary sweeps. The fixed-load solve and refinement reuse one
 matrix; every candidate remains subject to the unchanged final physical law,
 finite residual reduction and exact rollback. At most four models per contact
-plus three base models use bounded automatic storage; ordinary pass limits and
+plus four base models use bounded automatic storage; ordinary pass limits and
 material acceptance remain unchanged. All six orderings of a three-world-contact
 query check higher pressure, and all 120 permutations of a three-body/five-contact
 query check released world support with loaded car pairs. Twenty-two additional
@@ -317,6 +317,15 @@ full physical error and requires ordinary certification. Sixteen orderings of
 the three-car/eight-contact tick-168287 query check this initial-phase route.
 The released-wall fixture keeps its independent physical checks while allowing
 completion before restart; other required-restart fixtures remain unchanged.
+A final private warm trial freezes the current projected normal active set.
+Released rows have exact zero normal/tangent targets; retained rows keep their
+normal equations while bounded backtracking handles negative full-step
+predictions. It preserves the previous warm and cold models. Only a complete
+physical root can replace the outer state; a partial improvement restores exact
+motion and impulses. This adds one base model (260 maximum), while keeping one
+matrix, 4,096 shared passes and sixteen refinement/backtracking steps. The actual
+five-car/fourteen-contact tick-223337 query and twenty-eight rotations/reversals
+exercise this branch without changing material rules or physical tolerances.
 Loaded sliding world supports also compare the existing doubled-pressure and
 fixed-load friction seed through a private constitutive refinement. The fitted
 equation merit and tangent direction permit a return to the linear branch while

@@ -81,12 +81,21 @@ been removed after compact receipts, preserving live processes and failed inputs
 Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/broader-report.json and
 component-cleanup-report.json.
 
+The same frozen first-phase campaign is now terminal: exit 1 without timeout
+after 678.16 seconds, failing valid advancement at round-2 tick 194,353. All 98
+records are retained. Inputs/owners remain valid, player health is
+0.23930508697523567 and credited laps remain zero. It crosses 168,287 and
+190,000 but does not complete the second round or season. A failure-only capture
+of this exact source/runtime is running under 0042.
+Receipt: /tmp/wasm-dd2/rewrite-first-phase-0040/natural-season/terminal-report.json.
+
 ## Next
 
-Follow the same fresh ordinary campaign to its terminal outcome. Complete
-physical seasons remain unproved. The separately reproduced five-car/fourteen-
-contact 223,337 owner still fails current production and belongs to 0041;
-keep that defect and the older 168,287 trajectory distinct.
+Keep complete physical-season acceptance open and require exact reproduction
+of the separate 194,353 defect under 0042. Keep the reproduced five-car/fourteen-
+contact 223,337 state and the older 168,287 trajectory distinct. The bounded 0041
+fixed-active-set correction now advances that saved 223,337 owner on Native and
+instrumented C; its ordinary continuation remains separate and unproved.
 
 ## Accept
 

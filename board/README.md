@@ -46,6 +46,7 @@ its game requirements or acceptance rules.
 | [0039](active/0039_sliding-world-pressure-transition.md) | Recover a loaded sliding world support's linear branch | active |
 | [0040](active/0040_captured-three-car-contact-root.md) | Resolve the captured three-car contact failure | active |
 | [0041](active/0041_captured-five-car-contact-root.md) | Resolve the captured five-car contact failure | active |
+| [0042](active/0042_natural-first-phase-next-advancement.md) | Next ordinary championship advancement after first-phase refinement | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -450,6 +451,26 @@ while the faithful production observer confirms private branches were already
 eligible. Production correction of that separate five-car state remains open.
 Receipts: /tmp/wasm-dd2/rewrite-first-phase-0040/broader-report.json and
 /tmp/wasm-dd2/rewrite-sliding-pressure-0039/diagnosis/finite-difference-report.json.
+
+The same first-phase ordinary campaign now terminates at round-2 tick 194,353
+(exit 1, no timeout, 678.16 seconds, 98 retained records). Inputs remain valid;
+player health is 0.23930508697523567 and laps remain zero. Its exact failure-only
+capture is running under 0042, separately from the older five-car input.
+The private 0041 diagnosis confirms premature extra normal releases can obstruct
+the independent root. A separate complete fixed-active-set fallback preserves
+old trials, adds one bounded base model and passes the actual fourteen-contact
+query plus all 702 preliminary Native checks. Strict/multi-platform/owner gates
+are running; full production and complete-season acceptance remain unproved.
+Receipts: /tmp/wasm-dd2/rewrite-first-phase-0040/natural-season/terminal-report.json
+and /tmp/wasm-dd2/rewrite-five-root-0041/integrated-friction-report.json.
+
+Integrated 0041 production now passes strict LLVM19/160-file formatting, 35/33
+Native/WASM CTests and 702 independent contact checks per target. The actual
+223,337 owner advances on Native/instrumented C; four prior Native owners still
+advance. Full/remapped motion agrees with the independent root within 9.15e-15.
+The new first regression rejects frozen first-phase production. Broader checks
+and fresh ordinary continuation remain pending; no full season is proved.
+Receipt: /tmp/wasm-dd2/rewrite-five-root-0041/component-report.json.
 
 1. Reproduce the current failure and state the intended behavior and evidence.
 2. Implement readable typed C11 and meaningful checks for the reached behavior.
