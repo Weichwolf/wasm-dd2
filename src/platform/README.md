@@ -17,7 +17,7 @@ interaction, independently of future simulation timing.
 `src/platform/web/` contains the local-file browser UI and C application bridge. Its canvas
 has keyboard focus; canvas/window blur and hidden visibility release input.
 Selectors reflect C state, and closing permits reopening the archive. The local
-server supplies COOP/COEP for the eight SoftGL workers and serves only the viewer
+server supplies COOP/COEP for SoftGL's pthread workers and serves only the viewer
 files. Original assets are neither served nor bundled.
 
 Run `make rewrite-play` or `make rewrite-web`; `make rewrite-window-verify`

@@ -32,6 +32,15 @@ is removed after summarizing it in
 
 ## Next
 
+Use 640x360, 4x MSAA and four total render threads (including the caller) as the
+authored renderer's starting profile, targeting 60 FPS / 16.67 ms per complete
+frame on this machine. Plan 100,000-200,000 submitted triangles and 20-30
+materials per frame with headroom for overdraw, alpha tests and complex materials.
+These are planning values; throughput is unproved. Measure production Native
+and browser median/tail frame times including simulation, resolve/readback and
+presentation. The reference-backed 640x480 single-sample viewer has not yet
+adopted this profile; Native explicit thread selection and aspect/HUD work remain.
+
 Establish current real window/canvas images and performance budgets, then implement reviewable visual steps with before/after evidence.
 Use the owned Blender/procedural content pipeline under 0062. Prioritize the
 sky and

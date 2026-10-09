@@ -166,8 +166,8 @@ SoftGL is our rendering library and lives in `deps/softgl`. Other reusable build
 dependencies remain ignored under `deps/`.
 
 `deps/softgl` is a submodule pinned to
-`7963be1d5b5e1bebbe97ece2c655228c8bc0a838`, the latest published upstream
-version checked during preparation. Subsequent upgrades remain explicit and
+`a95534e8ac9f061a2e86286ffd4d80aa69c10bfa`, the published upstream `master`
+tip fetched on 2026-10-09. Subsequent upgrades remain explicit and
 reproducible. To initialize it:
 
 ```sh
@@ -180,8 +180,12 @@ submodule, and deliberate updates must include renderer regression evidence.
 The renderer and rewrite are C11. Meshoptimizer belongs to SoftGL's separate
 offline asset-preparation tools and is not linked into either runtime. The
 rewrite build does not enable a C++ compiler or build those tools.
-The initial WASM bootstrap uses SIMD and a prestarted eight-worker pthread pool,
-covering SoftGL's maximum render pool. Native/browser presentation uses SDL2
+The WASM build uses SIMD and a prestarted eight-worker pthread capacity.
+The updated library's automatic WASM render pool uses at most three helpers,
+with the calling thread participating: four total render threads. Native still
+uses the library's automatic core-based pool; a shared explicit thread-selection
+interface remains pending. Pool capacity is not the active render-thread count.
+Native/browser presentation uses SDL2
 software surfaces, with shared keyboard input and monotonic timing. Gamepad
 remains pending. An owned Windows save-card container now preserves
 all fifteen physical blocks, exposes compact logical entries and stages complete
@@ -757,13 +761,34 @@ receipt against recorded source/binary hashes before another target can fail.
 Source changes during a run invalidate its final report. Source-timed lights now
 have matching sound cues; automatic game-state music selection remains pending.
 
+## Authored scene performance target
+
+For this machine, plan around **640x360, 4x MSAA and four total render threads**
+at **60 FPS**, allowing **16.67 ms per complete frame**. The initial content
+budget is **100,000-200,000 submitted triangles and 20-30 materials per frame**,
+with reserve for overdraw, alpha tests and expensive material evaluation.
+These are user-supplied planning values, not measured guarantees at 60 FPS.
+Count the calling thread as part of the four threads. Use LOD, cockpit/exterior
+visibility and material sharing to keep detailed authored assets within the
+visible scene budget.
+
+The current reference-backed viewer still renders 640x480 single-sample frames;
+this dependency upgrade does not change its framebuffer or HUD layout. Enable
+the target profile in the authored renderer alongside aspect-correct cameras,
+HUD/menu layout and explicit Native thread selection. Measure actual production
+Native/browser gameplay with simulation, drawing, MSAA resolve, readback and
+presentation included. Record median and tail frame times, scene/material counts,
+CPU/browser identity and visual review evidence before accepting 60 FPS.
+
 ## Migration and acceptance
 
-First decode original assets into documented structures, then render one
-original track/car through SoftGL. Add native and browser presentation/input,
-then one complete playable race with physics, opponents, effects and music.
-Expand to all tracks, modes, menus, championships, replays, settings and
-save/load, using the reference and original to resolve uncertain behavior.
+Reference decoding and initial original-backed rendering/presentation are
+already established. Next build the owned Blender/procedural/audio pipeline
+and a playable authored track, vehicle and cockpit with new effects/music,
+then make Native/browser default launch independent of original files. Expand
+replacement content and functionality to all tracks, modes, menus,
+championships, replays, settings and save/load. Optional reference comparisons
+can resolve uncertain behavior; they must not become runtime dependencies.
 
 Keep simulation independent of rendering and give it explicit input and timing.
 Functional tests cover rules, outcomes, navigation and data compatibility.
@@ -779,7 +804,7 @@ and remove completed raw captures without deleting files in use.
 
 ## Goal
 
-Implement a fully playable, readable and modular standalone C11 Destruction Derby 2 reimplementation on `master` in `/home/cosmo/Git/wasm-dd2` for Native and WebAssembly with the pinned SoftGL renderer; rebuild every game asset and keep editable Blender models/scenes, complete cockpits/interiors, procedural texture generators, newly created effects/engine/ambient/commentary audio, newly composed music and all generated runtime content in the repository. Native and WASM must build, launch and provide every feature without original DD2 game files, archives, sound banks, CD images or Redbook content; use `ghidra`, the reconstruction baseline and the original only as optional development references. Replace absolute addresses/register emulation with documented types and explicit ownership; implement every track, vehicle, physics/damage model, AI behavior, mode, menu, race, championship, replay, setting, keyboard/gamepad control, save/load operation and relevant edge case, plus working cockpit views and all audio behavior. Substantially surpass the original in every visual, acoustic and gameplay-quality area through high-quality geometry, procedural materials/textures, resolution, lighting, shadows, effects, UI and newly authored audio; assess actual Native/browser gameplay, screenshots and audible output with concrete before/after evidence and measured performance, rather than relying only on physics or pixel tests. Original bitidentity is not required; standalone completeness, functional correctness, stability, appropriate data compatibility and demonstrably superior player experience on both targets are mandatory. Enforce strict clang-tidy/clang-format 19 and the agreed compiler flags, keep diagnostics bounded under `/tmp/wasm-dd2/`, maintain the backlog, remove completed captures/logs and commit/push every verified improvement until the entire expanded goal is implemented and no known functional, compatibility, content or visual/audio defects remain.
+Implement a fully playable, readable and modular standalone C11 Destruction Derby 2 reimplementation on `master` in `/home/cosmo/Git/wasm-dd2` for Native and WebAssembly with the pinned SoftGL renderer; target 60 FPS on this machine at 640x360, 4x MSAA and four total render threads including the caller, using an initial planning budget of 100,000-200,000 triangles and 20-30 materials per frame with overdraw/alpha-test/material headroom, validated by actual Native/browser complete-frame measurements; rebuild every game asset and keep editable Blender models/scenes, complete cockpits/interiors, procedural texture generators, newly created effects/engine/ambient/commentary audio, newly composed music and all generated runtime content in the repository. Native and WASM must build, launch and provide every feature without original DD2 game files, archives, sound banks, CD images or Redbook content; use `ghidra`, the reconstruction baseline and the original only as optional development references. Replace absolute addresses/register emulation with documented types and explicit ownership; implement every track, vehicle, physics/damage model, AI behavior, mode, menu, race, championship, replay, setting, keyboard/gamepad control, save/load operation and relevant edge case, plus working cockpit views and all audio behavior. Substantially surpass the original in every visual, acoustic and gameplay-quality area through high-quality geometry, procedural materials/textures, resolution, lighting, shadows, effects, UI and newly authored audio; assess actual Native/browser gameplay, screenshots and audible output with concrete before/after evidence and measured performance, rather than relying only on physics or pixel tests. Original bitidentity is not required; standalone completeness, functional correctness, stability, appropriate data compatibility and demonstrably superior player experience on both targets are mandatory. Enforce strict clang-tidy/clang-format 19 and the agreed compiler flags, keep diagnostics bounded under `/tmp/wasm-dd2/`, maintain the backlog, remove completed captures/logs and commit/push every verified improvement until the entire expanded goal is implemented and no known functional, compatibility, content or visual/audio defects remain.
 
 `make rewrite-recovery-verify` exercises supported rest/righting boundaries and
 220 controlled physical roof-down drops per target at every original grid slot,

@@ -48,6 +48,14 @@ Functional similarity or passing physics tests alone cannot close this contract.
 
 Use the pinned `deps/softgl` submodule by default. Do not alter SoftGL sources
 as part of a game change; deliberate dependency changes need their own evidence.
+Plan authored scenes against a 640x360, 4x MSAA, four-total-render-thread profile
+targeting 60 FPS (16.67 ms for the complete frame) on this machine. Start with
+100,000-200,000 submitted triangles and 20-30 materials per frame, retaining
+headroom for overdraw, alpha tests and expensive materials. These are planning
+budgets, not measured throughput guarantees. Measure Native and actual browser
+frames including simulation, resolve/readback and presentation; include the
+calling thread in the render-thread count. Keep asset detail scalable with LOD
+and visibility rather than assuming every detailed model is visible at once.
 All rewrite C/header files must pass clang-format 19. All rewrite C units must
 pass strict clang-tidy 19 and the compiler flags defined in `CMakeLists.txt`.
 Fix findings instead of disabling checks or adding blanket suppressions. Run

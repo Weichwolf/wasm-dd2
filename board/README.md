@@ -67,6 +67,7 @@ its game requirements or acceptance rules.
 | [0060](active/0060_automatic-redbook-selection.md) | Automatic game/frontend Redbook selection | active |
 | [0061](closed/0061_browser-modal-redraw.md) | Browser modal presentation after viewport changes | closed |
 | [0062](active/0062_standalone-authored-assets.md) | Standalone Blender assets, procedural textures and new audio | active |
+| [0063](closed/0063_softgl-upgrade.md) | Update SoftGL and record the 60-FPS content budget | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -74,6 +75,13 @@ its game requirements or acceptance rules.
 The expanded product goal is standalone Native/WASM with every asset rebuilt
 and committed: Blender models/cockpits, procedural textures and newly created
 audio. Visual/acoustic quality must substantially exceed the original throughout.
+Closed 0063 updates the untouched SoftGL pin to a95534e and passes strict
+208-file LLVM19 gates, 47/45 Native/WASM CTests and the all-eleven-level real
+window/canvas corpus (31 Native, 31 ASan/UBSan, 145 Chromium comparisons).
+Goal/AGENTS/content planning now target 60 FPS at 640x360, 4x MSAA and four
+total render threads with an initial 100,000-200,000-triangle / 20-30-material
+frame budget. This is a target, not measured throughput or an enabled profile.
+
 Original game files are optional development references; the current runtime
 still requires them and has not met this new contract. Active 0062 owns removal
 of those dependencies and the reproducible authored content pipeline. Prior
