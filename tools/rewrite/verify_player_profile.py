@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify player/audio profiles and actual Native/browser save dialogs.
+"""Verify player/car/audio profiles and actual Native/browser save dialogs.
 
 Independent complete images and unmodified original driver rosters cover identity,
 retained source bytes and persistence. This is not full configuration restoration,
@@ -29,6 +29,7 @@ from rewrite.verify_window import NativeWindow, build_sanitized
 from verify_season_transition import EXE_SHA
 
 PLAYER = 5828
+CAR = 6
 
 
 def named(payload, name):
@@ -53,15 +54,15 @@ def native_dialog(output, archive, binary, label, factory):
         rows = [json.loads(line) for line in lines if line.startswith('{')]
         return rows[-1] if rows else {}
 
-    def state(phase, *, draft=None, name=None, slot=None):
+    def state(phase, *, draft=None, name=None, slot=None, car=None):
         def observed():
             row = records()
             if row.get('phase') != phase:
                 return None
-            for key, value in [('draft_hex', draft), ('name_hex', name), ('slot', slot)]:
+            for key, value in [('draft_hex', draft), ('name_hex', name), ('slot', slot), ('car',car)]:
                 if value is None:
                     continue
-                wanted = value if key == 'slot' else value.encode('ascii').hex()
+                wanted = value if key in ('slot','car') else value.encode('ascii').hex()
                 if row.get(key) != wanted:
                     return None
             return row
@@ -203,7 +204,34 @@ def native_dialog(output, archive, binary, label, factory):
         image(delete(single,0),'delete-only-entry-keeps-live-identity')
         key('Return');state(0);key('Delete');state(11);key('Return');state(11)
         image(delete(single,0),'empty-card-delete-refuses-without-mutation')
-        key('Escape');state(0);key('Escape')
+        key('Escape');state(0)
+        key('Tab')
+        for car in range(3):
+            payload=bytearray(named(factory,'LongName_11'));struct.pack_into('<h',payload,CAR,car)
+            inventory=put(bytes(SIZE),0,'CLASS',bytes(payload));card.write_bytes(inventory)
+            key('F4');state(5);key('Return');state(9,car=car);key('Return');state(0,car=car)
+            key('F1');state(0,car=(car+1)%3)
+            key('F3');state(4);key('Return');state(6);edit('CLASS');key('Return');state(7);key('Return');state(9)
+            struct.pack_into('<h',payload,CAR,(car+1)%3);inventory=put(inventory,0,'CLASS',bytes(payload))
+            image(inventory,'F1-F3-saves-class-'+str((car+1)%3))
+            key('Return');state(0);key('F1');state(0,car=(car+2)%3)
+            previous=ui.image().crop((0,336,640,480)).tobytes()
+            key('F4');state(5);key('Return');state(9,car=(car+1)%3)
+            image(inventory,'F4-restores-class-'+str((car+1)%3))
+            def visible_modal():
+                capture=ui.image()
+                if any(pixel==(255,255,255) for pixel in capture.crop((40,150,150,185)).getdata()):
+                    return capture
+                return None
+            modal=ui.wait(visible_modal);modal.save(folder/('class-profile-'+str((car+1)%3)+'.png'))
+            pixels=modal.crop((0,336,640,480)).tobytes();key('Return');state(0)
+            if pixels==previous:
+                raise ValueError(label+' restored modal class paint/ratings are stale')
+            ui.wait(lambda: pixels==ui.image().crop((0,336,640,480)).tobytes())
+            cases.append(dict(label='restored-modal-class-pixels-'+str((car+1)%3),
+                              rgb_sha256=hashlib.sha256(pixels).hexdigest(),
+                              matches_closed_world=True,differs_from_previous_class=True))
+        key('Escape')
         if ui.process.wait(timeout=15)!=0:raise ValueError(label+' restarted window did not exit')
     finally:ui.close()
     return dict(target=label,real_x11_keys=True,cases=cases,pass_=True)
@@ -217,7 +245,7 @@ def main():
     output.mkdir(parents=True,exist_ok=True);check_space(output)
     files=[p for p in (ROOT/'src').rglob('*') if p.suffix in ('.c','.h','.js','.html')]
     files += [ROOT/p for p in ('CMakeLists.txt','Makefile','tests/profile_application_export.c',
-        'tests/profile_window_export.c','tests/profile_menu_test.c','tests/profile_draw_test.c',
+        'tests/profile_window_export.c','tests/configuration_test.c','tests/profile_menu_test.c','tests/profile_draw_test.c',
         'tests/window_input_test.c','tools/reference/player_identity_fixture.c',
         'tools/reference/configuration_defaults_fixture.c','tools/reference/save_profile_fixture.c',
         'tools/reference/pe_fixture.h','tools/rewrite/verify_window.py','tools/rewrite/verify_preferences.py',
@@ -250,7 +278,7 @@ def main():
         if roster(name)!=value:raise ValueError('Original player/NPC roster differs')
         cases.append(dict(label='original-roster-'+name,bytes=len(value),sha256=hashlib.sha256(value).hexdigest()))
     sanitized_dir=output/'sanitized-build';sanitized_dir.mkdir(exist_ok=True)
-    sanitized=build_sanitized(sanitized_dir,ROOT/'tests/profile_application_export.c')
+    sanitized=build_sanitized(sanitized_dir,ROOT/'tests/profile_application_export.c',('-Wl,--wrap=calloc',))
     window_dir=output/'window-sanitized-build';window_dir.mkdir(exist_ok=True)
     window_sanitized=build_sanitized(window_dir,ROOT/'tests/profile_window_export.c')
     commands={'native':WORK/'rewrite-native/dd2_profile_application_export','sanitized':sanitized}
@@ -261,7 +289,9 @@ def main():
     a=named(preferences(original,128,64),'Racer_7!')
     b=named(preferences(a,32,16),'PLAYER')
     ab=put(put(bytes(SIZE),0,'A',a),1,'B',b)
-    patterned=bytearray((output/'save_profile.bin').read_bytes()[:BLOCK]);struct.pack_into('<H',patterned,16,3681)
+    # Normalize only consumed effects, car and player fields in the original
+    # patterned payload; all dormant fields and reserved bytes remain exact.
+    patterned=bytearray((output/'save_profile.bin').read_bytes()[:BLOCK]);struct.pack_into('<H',patterned,16,3681);struct.pack_into('<h',patterned,CAR,2)
     patterned=named(bytes(patterned),'LongName_11')
     variants=[('eight-ascii',a,True,'Racer_7!',128,64),('legacy-eleven',named(factory,'LongName_11'),True,'LongName_11',256,256),
               ('empty-name',factory,True,'PLAYER',256,256),('patterned-legacy',patterned,True,'LongName_11',230,16)]
@@ -271,25 +301,35 @@ def main():
     for label,kind in [('game',0x3030),('replay',0x2020)]:
         payload=bytearray(a);struct.pack_into('<H',payload,0,kind);variants.append((label,bytes(payload),False,'LOCAL',32,16))
     payload=bytearray(a);payload[PREFIX+15]^=1;variants.append(('bad-music-extension',bytes(payload),False,'LOCAL',32,16))
+    for invalid_car in (-32768,-1,3,32767):
+        payload=bytearray(a);struct.pack_into('<h',payload,CAR,invalid_car)
+        variants.append(('invalid-car-'+str(invalid_car),bytes(payload),False,'LOCAL',32,16))
+    car_image=bytes(SIZE)
+    for car in range(3):
+        payload=bytearray(named(preferences(original,128,64),'C'+str(car)))
+        struct.pack_into('<h',payload,CAR,car);car_image=put(car_image,car,'C'+str(car),bytes(payload))
     for target,binary in commands.items():
         directory=output/target;directory.mkdir()
-        def action(label,operation,logical,image,expected,loaded,name,effects,music,folder=None):
+        def action(label,operation,logical,image,expected,loaded,name,effects,music,folder=None,car=0):
             folder=folder or directory/label;folder.mkdir(exist_ok=True)
             if image is not None:(folder/'SaveGames').write_bytes(image)
             snapshot=folder/'accepted.card';names=folder/'roster.bin'
             row=json.loads(run([str(binary),str(archive),str(folder),str(snapshot),str(names),operation,str(logical)],target+'-'+label,env=environment))
-            if row!=dict(loaded=int(loaded),effects=effects,music=music) or names.read_bytes()!=roster(name):raise ValueError(target+' '+label+' live identity/audio/roster differs')
+            if row!=dict(loaded=int(loaded),effects=effects,music=music,car=car) or names.read_bytes()!=roster(name):raise ValueError(target+' '+label+' live identity/car/audio/roster differs')
             if snapshot.read_bytes()!=expected or (folder/'SaveGames').read_bytes()!=expected:raise ValueError(target+' '+label+' complete accepted/disk bytes differ')
             cases.append(dict(target=target,label=label,live=row,name=name,bytes=len(expected),sha256=digest(snapshot),roster_sha256=digest(names)))
             return folder
         folder=action('self-test','self-test',0,None,ab,True,'Racer_7!',128,64)
         action('restart','load',1,None,ab,True,'PLAYER',32,16,folder)
+        cars=action('car-test','car-test',0,None,car_image,True,'C0',128,64)
+        for car in range(3):
+            action('car-restart-'+str(car),'load',car,None,car_image,True,'C'+str(car),128,64,cars,car)
         for label,payload,valid,name,effects,music in variants:
             image=put(bytes(SIZE),0,'SOURCE',payload);expected=image
             if valid:
                 encoded=bytearray(named(payload,name));struct.pack_into('<H',encoded,0,0x1010);encoded[PREFIX:PREFIX+16]=extension(music)
                 expected=put(image,0,'EDIT',bytes(encoded))
-            action(label,'load-save',0,image,expected,valid,name,effects,music)
+            action(label,'load-save',0,image,expected,valid,name,effects,music,car=struct.unpack_from('<h',payload,CAR)[0] if valid else 0)
         duplicate=bytearray(put(put(bytes(SIZE),0,'FIRST',a),1,'SECOND',b));duplicate[512+4:512+6]=b'F\0'
         # Duplicate source names still resolve the selected physical payload.
         duplicate[4:6]=b'F\0';duplicate=bytes(duplicate)
@@ -317,6 +357,7 @@ def main():
     opened=open_files();removed=[];retained=[]
     keep={output/'verification-report.json',output/'browser-report.json',output/'player-profile.png'}
     keep.update(output.rglob('*delete*.png'))
+    keep.update(output.rglob('class-profile-*.png'))
     keep.update(output/path/'sanitizer-build.json' for path in ('sanitized-build','window-sanitized-build'))
     keep.update(output/path/name for path in ('native-dialog','sanitized-dialog') for name in ('name-draft.png','save-completed.png'))
     for path in sorted(output.rglob('*'),key=lambda p:len(p.parts),reverse=True):

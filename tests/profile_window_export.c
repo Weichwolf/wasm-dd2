@@ -13,6 +13,7 @@
 
 typedef struct {
     int phase;
+    int car;
     unsigned slot;
     char name[DD2_SAVE_PROFILE_PLAYER_NAME];
     char draft[DD2_CONFIGURATION_NAME_LIMIT + 1];
@@ -27,6 +28,7 @@ static bool dd2_profile_window_hex(const char *text) {
 }
 static bool dd2_profile_window_record(dd2_profile_window_snapshot *previous) {
     dd2_profile_window_snapshot next = {.phase = dd2_application_profile_phase(),
+                                        .car = dd2_application_current_car(),
                                         .slot = dd2_application_profile_slot()};
     const char *name = dd2_application_player_name();
     const char *draft = dd2_application_profile_draft();
@@ -36,15 +38,15 @@ static bool dd2_profile_window_record(dd2_profile_window_snapshot *previous) {
     for (unsigned index = 0; draft[index] != '\0'; ++index) {
         next.draft[index] = draft[index];
     }
-    if (next.phase == previous->phase && next.slot == previous->slot &&
+    if (next.phase == previous->phase && next.car == previous->car && next.slot == previous->slot &&
         strcmp(next.name, previous->name) == 0 && strcmp(next.draft, previous->draft) == 0) {
         return true;
     }
     if (printf("{\"phase\":%d,\"slot\":%u,\"name_hex\":\"", next.phase, next.slot) < 0 ||
         !dd2_profile_window_hex(next.name) || fputs("\",\"draft_hex\":\"", stdout) == EOF ||
         !dd2_profile_window_hex(next.draft) ||
-        printf("\",\"race_steps\":%u,\"music_frame\":%u}\n", dd2_application_race_steps(),
-               dd2_application_music_frame()) < 0 ||
+        printf("\",\"race_steps\":%u,\"music_frame\":%u,\"car\":%d}\n",
+               dd2_application_race_steps(), dd2_application_music_frame(), next.car) < 0 ||
         fflush(stdout) != 0) {
         return false;
     }

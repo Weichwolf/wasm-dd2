@@ -2,6 +2,7 @@
 #define DD2_GAME_CONFIGURATION_H
 
 #include "assets/bytes.h"
+#include "assets/car_class.h"
 #include "assets/save_profile.h"
 
 #include <stdbool.h>
@@ -38,5 +39,10 @@ const char *dd2_configuration_player(const dd2_configuration *configuration);
 bool dd2_configuration_set_player(dd2_configuration *configuration, const char *name);
 bool dd2_configuration_name_valid(const char *name);
 bool dd2_configuration_player_valid(const char *name);
+/* Explicit class consumer for complete player/car/audio profiles. The lossless
+ * audio reader retains dormant invalid class fields; this getter validates
+ * before publishing. Failure preserves the output and setter preserves source. */
+bool dd2_configuration_car(const dd2_configuration *configuration, dd2_car_class *car_class);
+bool dd2_configuration_set_car(dd2_configuration *configuration, dd2_car_class car_class);
 
 #endif

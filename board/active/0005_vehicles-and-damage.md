@@ -87,12 +87,21 @@ LEVB now has Native X -5866.5017820426301, WASM -5864.8079891853395 and sanitize
 This does not prove cross-target convergence or fix the existing 0002 issue.
 Receipt: /tmp/wasm-dd2/rewrite-car-class-driving-0005/diagnosis-report.json.
 No tolerance/scenario was relaxed. These checks do not close full vehicle,
-original force parity, completed class campaigns or saved class restoration.
+original force parity or completed class campaigns. Saved class restoration has
+separate evidence below.
+
+0058 now persists the live class with player/audio profiles and restores a
+validated complete field transactionally. Native/sanitized allocation failure,
+moving-field retention, all three fresh-process classes and original-compatible
+complete images pass. Actual F1/F3/F4 and Chromium dialogs show restored class
+paint/ratings before closing; exact unoccluded pixels match the restored closed
+world. LLVM19/205-file and 46/44 gates pass. These are saved-class checks, not
+completed class campaigns or full damage acceptance. Receipt:
+/tmp/wasm-dd2/rewrite-saved-car-0058-release/verification-report.json
 
 ## Next
 
-Consume validated saved car choices through 0058 without partial live-state
-publication. Extend class comparisons through ordinary races, damage boundaries
+Extend class comparisons through ordinary races, damage boundaries
 and body-supported tires. Diagnose the LEVB accepted-step difference under 0002.
 Complete damage-dependent effects and behavior.
 

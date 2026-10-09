@@ -363,16 +363,16 @@ profileSave.addEventListener('click', () => {
     saveStatus.textContent = 'Use a shorter save name.';
     return;
   }
-  if (logical < Module._dd2_application_saves_count() && !window.confirm('Replace the selected entry with your player name and audio settings?')) {
+  if (logical < Module._dd2_application_saves_count() && !window.confirm('Replace the selected entry with your player name, car class and audio settings?')) {
     saveStatus.textContent = 'Replacement canceled.';
     return;
   }
-  beginSaveAction(Module.ccall('dd2_application_save_profile', 'number', ['number','string'], [logical,name]), 'Saving player and audio');
+  beginSaveAction(Module.ccall('dd2_application_save_profile', 'number', ['number','string'], [logical,name]), 'Saving player, car and audio');
 });
 profileLoad.addEventListener('click', () => {
   const accepted = Module._dd2_application_load_profile(Number(saveSlot.value));
   if (accepted) reflectPlayer(true);
   saveStatus.textContent = accepted ?
-    'Player and audio restored.' : 'The selected entry cannot restore player and audio settings.';
+    'Player, car and audio restored.' : 'The selected profile is invalid, or leave driving before restoring a different car class.';
   canvas.focus();
 });

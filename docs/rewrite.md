@@ -123,7 +123,7 @@ sessions and missing-next-track rollback on Native, WASM and ASan/UBSan. See
 `src/game/championship.md`. The shared application now connects Native C/N and browser entry to this owner,
 with scheduled track locking, unscored restart/exit, prepared renderer resources,
 real named division standings and explicit result continuation. Original NPC
-names and default human PLAYER are implemented; the player/audio profile actions
+names and default human PLAYER are implemented; the player/car/audio profile actions
 below now own configurable identity. `make rewrite-championship-application-verify`
 checks natural first-round
 application results/presentation on Native, Chromium/WASM and ASan/UBSan, separate
@@ -174,14 +174,17 @@ bridge and actual browser controls, with exact source effects volume preservatio
 and a separate versioned music extension. Restoring preferences preserves the
 active session; pending writes refuse application close. See
 `src/game/configuration.md` and `make rewrite-preferences-verify`.
-Player/audio profile actions now own the active human identity and provide F2
+Player/car/audio profile actions now own the active human name and class and provide F2
 name entry, F3 save selection/filename/overwrite confirmation and F4 explicit
 reload/restore on Native and the browser canvas. Browser controls expose these
 actions alongside audio-only restore. New names use eight printable ASCII
 characters; imported eleven-character names remain intact. Modal input suspends
 simulation/music and reuses the frozen world image, avoiding a full scene redraw
 for every character. An active championship locks identity while allowing audio
-restores. NPC names and stable IDs remain unchanged.
+restores. Profile saves capture the live class; restores validate it before
+preparing a replacement field. Different-class loads are rejected during play;
+same-class loads retain active motion. Audio-only actions leave live class/name
+unchanged and preserve dormant source fields. NPC names and stable IDs remain unchanged.
 `make rewrite-player-profile-verify` checks unmodified original rosters, complete
 independent cards, actual X11/browser input, restart and sanitized ownership.
 Complete configuration consumption, playable-state translation and replay codecs
@@ -265,8 +268,9 @@ a Car class selector; car preview shows the selected name and original ratings.
 Playing, profile dialogs and pending storage operations reject class changes
 without replacing the live field. Selection prepares the complete replacement
 before publishing and preserves the class through resets and scheduled owners.
-Saved class restoration remains under 0058; player/audio-only loads keep their
-existing partial contract. `make rewrite-car-class-verify` checks thirty isolated
+Saved class restoration now shares the player/car/audio actions under 0058;
+audio-only loads keep class selection unchanged. Complete configuration and
+playable saved-state restoration remain open. `make rewrite-car-class-verify` checks thirty isolated
 unmodified-original rating/force cases, class force behavior, 120 short original
 level/mode/class prefixes per target, session restarts and real Native/browser
 selection. These prefixes do not establish completed races or campaigns. The

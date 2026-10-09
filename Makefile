@@ -33,7 +33,7 @@ rewrite-car-livery-verify: ## verify original car palettes/numbers and cross-tar
 	$(MAKE) clean-logs
 
 .PHONY: rewrite-player-profile-verify
-rewrite-player-profile-verify: ## verify player/audio profiles and actual Native/browser save dialogs
+rewrite-player-profile-verify: ## verify player/car/audio profiles and actual Native/browser save dialogs
 	$(MAKE) clean-logs
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm

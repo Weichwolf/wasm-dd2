@@ -1,6 +1,7 @@
 #include "game/configuration.h"
 
 #include "assets/bytes.h"
+#include "assets/car_class.h"
 #include "assets/save_profile.h"
 #include "audio/mixer.h"
 
@@ -22,6 +23,23 @@ enum {
     DD2_CONFIG_CHECK_OFFSET = 12
 };
 static const uint8_t dd2_config_tag[DD2_CONFIG_TAG_BYTES] = {'D', '2', 'C', 'F'};
+bool dd2_configuration_car(const dd2_configuration *configuration, dd2_car_class *car_class) {
+    if (configuration == NULL || car_class == NULL || configuration->source.header.car < 0 ||
+        configuration->source.header.car >= DD2_CAR_CLASSES) {
+        return false;
+    }
+    *car_class = (dd2_car_class)configuration->source.header.car;
+    return true;
+}
+
+bool dd2_configuration_set_car(dd2_configuration *configuration, dd2_car_class car_class) {
+    if (configuration == NULL || (unsigned)car_class >= DD2_CAR_CLASSES) {
+        return false;
+    }
+    configuration->source.header.car = (int16_t)car_class;
+    return true;
+}
+
 static uint32_t dd2_config_check(const uint8_t *bytes) {
     uint32_t hash = UINT32_C(2166136261);
     for (unsigned index = 0; index < DD2_CONFIG_CHECK_OFFSET; ++index) {

@@ -117,15 +117,51 @@ visually reviewed. Original assets and pinned SoftGL remain unchanged. Receipt:
 This proves the shared deletion route, not full configuration or saved gameplay.
 The full contract remains active.
 
+Player/car/audio profiles now capture the live human class, independently of
+retained source metadata. CONFIG/STARTUP class consumers accept only Rookie,
+Amateur and Pro. Different-class restore prepares the complete field before
+publishing name, class and gains; invalid data or failed allocation retains all
+live owners. Different classes are rejected during driving; same-class restores
+keep the exact moving field. Audio-only actions preserve live class/name and
+retain even invalid dormant source car fields. Full profile saving overwrites
+only the consumed live name/class plus the existing audio extension/volume.
+
+A visual review reproduced stale prior-class paint/ratings inside the restored
+completion dialog. Publishing a prepared class now invalidates the retained world
+image once. Exact unoccluded paint/rating pixels match the closed restored world
+and differ from the prior class on Native, sanitized and Chromium for all three
+classes. Browser bounds use its actual 800x600 canvas; the initial fixed 640x480
+crop included the pane. Queued presentation is observed before captures. No image
+tolerance was relaxed. Native/sanitized completion images match exactly and
+restored class dialogs are visually reviewed.
+
+The final profile verifier passes 47 original/Native/fresh O1 sanitized cases,
+62 actual Native/sanitized X11 checks and 95 Chromium checks. All three classes
+survive fresh Native/browser processes; independent full card images retain
+unused fields/reserved bytes. Allocation-failed class preparation, moving-field
+preservation, championship locks and invalid signed class rollback pass. Strict
+LLVM19 checks all 205 C/header files; 46 Native/44 WASM CTests pass. Native
+Memcheck additionally exercises all three classes and failed allocation: zero
+errors/no lost blocks, descriptors enabled, no suppressions; DBus retains 3,580
+reachable bytes. The unchanged audio regression passes 37 original/Native/
+sanitized cases, 23 Chromium checks and eight restored-gain WebAudio buffers.
+The class handling corpus also passed before the presentation-only correction;
+its physics/class source units are unchanged. Provisioned reference inputs and
+pinned SoftGL remain unchanged. Completed raw output is removed after reporting.
+Receipts:
+/tmp/wasm-dd2/rewrite-saved-car-0058-release/verification-report.json
+/tmp/wasm-dd2/rewrite-saved-car-0058-memcheck/verification-report.json
+/tmp/wasm-dd2/rewrite-saved-car-0058-gates/quality-report.json
+/tmp/wasm-dd2/rewrite-saved-car-0058-audio/verification-report.json.
+This proves saved class/name/audio integration, not complete configuration,
+records, playable saved championships or full-game acceptance.
+
 ## Next
 
-Translate and validate mode/car/track/input/record fields, other player fields
-and playable saved championship state. Consume the now-proven 0005 class catalog
-and selected physical class transactionally. Current Native F1/browser selection
-survives live resets/track/mode/session restarts, but player/audio-only profile
-loads intentionally leave retained source car fields unapplied. Validate saved
-car identity before preparing and publishing a complete configuration candidate;
-preserve both class and active field on failure. Connect the complete Configuration/
+Translate and validate mode/track/input/record fields, other player fields and
+playable saved championship state. Saved class identity is now consumed through
+the proved profile route; full class race/damage behavior remains under 0005.
+Connect the complete Configuration/
 Information routes and remaining Native configuration actions.
 Prove named results through actual completed play; synthetic standings do not
 replace that acceptance. Keep imported source fields and reserved bytes through

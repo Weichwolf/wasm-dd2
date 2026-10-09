@@ -414,7 +414,7 @@ def native_championship_checks(ui, expected):
             'pause_and_restart': True, 'unscored_exit': True, 'cases': evidence}
 
 
-def build_sanitized(output, entry=None):
+def build_sanitized(output, entry=None, link_flags=()):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('car_class', 'archive', 'audio', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
@@ -435,7 +435,7 @@ def build_sanitized(output, entry=None):
     with (output / 'sanitizer-build.log').open('wb') as log:
         command = [tool('clang'), *flags, *map(str, units),
                    str(WORK / 'rewrite-native/softgl/libsoftgl.a'), *sdl,
-                   '-lm', '-o', str(binary)]
+                   '-lm', *link_flags, '-o', str(binary)]
         (output / 'sanitizer-build.json').write_text(json.dumps({'command': command,
             'scope': 'All reached rewrite units instrumented; SDL2 and pinned release SoftGL uninstrumented'}, indent=2) + '\n')
         run_bounded(command, directory=output, timeout=180,

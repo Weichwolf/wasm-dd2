@@ -6,7 +6,7 @@ if(!output||!path.resolve(output).startsWith('/tmp/wasm-dd2/'))throw new Error('
 const input=JSON.parse(fs.readFileSync(path.join(output,'browser-input.json')));
 const bytes=name=>Buffer.from(input[name],'hex');
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
-const report={scope:'Actual player/audio UI, complete independently predicted IndexedDB images, Native-style keyboard dialogs, process restart and championship identity lock. Not full configuration, playable saved-game restoration or natural named season results.',cases:[],errors:[],complete:false};
+const report={scope:'Actual player/car/audio UI, complete independently predicted IndexedDB images, Native-style keyboard dialogs, process restart and championship identity lock. Not full configuration, playable saved-game restoration or natural named season results.',cases:[],errors:[],complete:false};
 const database='wasm-dd2-saves-v1';
 let context;
 function check(value,message){if(!value)throw new Error(message);}
@@ -31,6 +31,20 @@ function extension(music){
   let value=2166136261;for(let i=0;i<12;++i)value=Math.imul(value^result[i],16777619)>>>0;
   result.writeUInt32LE(value,12);return result;
 }
+async function presented(page){
+  await page.evaluate(()=>new Promise(resolve=>{
+    requestAnimationFrame(()=>requestAnimationFrame(resolve));
+  }));
+}
+async function classPixels(page){
+  return Buffer.from(await page.evaluate(()=>{
+    const canvas=document.querySelector('#canvas');
+    const top=Math.ceil(canvas.height*0.7);
+    const rgba=canvas.getContext('2d').getImageData(0,top,canvas.width,canvas.height-top).data;
+    let binary='';for(let i=0;i<rgba.length;i+=32768)binary+=String.fromCharCode(...rgba.subarray(i,i+32768));
+    return btoa(binary);
+  }),'base64');
+}
 async function launch(){
   context=await chromium.launchPersistentContext(path.join(output,'chromium-profile'),{headless:true,viewport:{width:1120,height:1100},args:['--no-sandbox','--disable-dev-shm-usage']});
   const page=await context.newPage();page.on('pageerror',error=>report.errors.push(String(error)));
@@ -41,9 +55,9 @@ async function launch(){
 }
 async function open(page){await page.locator('#saves-open').click();await wait(page);}
 async function wait(page){await page.waitForFunction(()=>Module._dd2_application_saves_phase()===2&&!document.querySelector('#profile-save').disabled);}
-async function current(page,name,effects,music,label){
-  const row=await page.evaluate(()=>({name:Module.UTF8ToString(Module._dd2_application_player_name()),effects:Module._dd2_application_effects_gain(),music:Module._dd2_application_music_gain()}));
-  check(row.name===name&&row.effects===effects&&row.music===music,label+' live state differs: '+JSON.stringify(row));report.cases.push({label,...row});
+async function current(page,name,effects,music,label,car){
+  const row=await page.evaluate(()=>({name:Module.UTF8ToString(Module._dd2_application_player_name()),effects:Module._dd2_application_effects_gain(),music:Module._dd2_application_music_gain(),car:Module._dd2_application_current_car()}));
+  check(row.name===name&&row.effects===effects&&row.music===music&&(car===undefined||row.car===car),label+' live state differs: '+JSON.stringify(row));report.cases.push({label,...row});
 }
 async function player(page,name){
   const before=await page.evaluate(()=>[Module._dd2_application_current_view(),Module._dd2_application_championship_phase(),Module._dd2_application_current_level()]);
@@ -122,7 +136,7 @@ async function editor(page,before,after){
     await page.locator('#save-name').fill('EDIT');page.once('dialog',dialog=>dialog.accept());await page.locator('#profile-save').click();await wait(page);
     await card(page,put(legacy,0,'EDIT',bytes('legacy')),'unmodified-legacy-profile-resave-retains-full-name');
     const patterned=put(bytes('empty'),0,'SOURCE',bytes('patterned'));await inject(page,patterned);await page.locator('#profile-load').click();
-    await current(page,'LongName_11',230,256,'patterned-source-exact-effects-and-legacy-name');
+    await current(page,'LongName_11',230,256,'patterned-source-exact-effects-and-legacy-name',2);
     const saved=Buffer.from(bytes('patterned'));saved.writeUInt16LE(0x1010);extension(256).copy(saved,6526);
     await page.locator('#save-name').fill('EDIT');page.once('dialog',dialog=>dialog.accept());await page.locator('#profile-save').click();await wait(page);
     await card(page,put(patterned,0,'EDIT',saved),'complete-patterned-fields-reserved-bytes-and-volume-retained');
@@ -130,6 +144,24 @@ async function editor(page,before,after){
     for(const [label,text] of [['control',Buffer.from('BAD\n\0')],['utf8',Buffer.from('ä\0')],['unterminated',Buffer.alloc(12,88)]]){
       const payload=Buffer.from(bytes('a'));text.copy(payload,5828);const image=put(bytes('empty'),0,'BAD',payload);
       await inject(page,image);await page.locator('#profile-load').click();await current(page,'LOCAL',32,16,label+'-profile-rollback');await card(page,image,label+'-retained-image');
+    }
+    for(const invalidCar of [-32768,-1,3,32767]){
+      await gains(page,32,16);
+      const payload=Buffer.from(bytes('a'));payload.writeInt16LE(invalidCar,6);
+      const image=put(bytes('empty'),0,'BAD',payload);await inject(page,image);
+      await page.locator('#profile-load').click();
+      await current(page,'LOCAL',32,16,'invalid-car-'+invalidCar+'-profile-rollback',2);
+      await card(page,image,'invalid-car-'+invalidCar+'-retained-image');
+      await page.locator('#preferences-load').click();
+      await current(page,'LOCAL',128,64,'audio-only-invalid-dormant-car-'+invalidCar,2);
+      await page.locator('#save-name').fill('AUDIO');page.once('dialog',dialog=>dialog.accept());
+      await page.locator('#preferences-save').click();await wait(page);
+      const audioOnly=put(image,0,'AUDIO',payload);
+      await card(page,audioOnly,'audio-save-retains-dormant-car-'+invalidCar);
+      const owned=named(payload,'LOCAL');owned.writeInt16LE(2,6);
+      await page.locator('#save-name').fill('OWNED');page.once('dialog',dialog=>dialog.accept());
+      await page.locator('#profile-save').click();await wait(page);
+      await card(page,put(audioOnly,0,'OWNED',owned),'profile-save-captures-live-class-'+invalidCar);
     }
     await inject(page,a);await page.locator('#profile-load').click();
     // Actual SDL keyboard modal in the browser: no direct mutation of editor or
@@ -234,6 +266,51 @@ async function editor(page,before,after){
     }
     await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('Enter');await phase(page,11);
     await card(page,inventory,'empty-card-delete-refuses-without-mutation');await page.keyboard.press('Escape');await phase(page,0);
+    // Persist all three owned classes, then restore each in a fresh browser
+    // process. Complete images use the documented signed source car field.
+    await gains(page,128,64);
+    for(let carClass=0;carClass<3;++carClass){
+      await page.locator('#car-class').selectOption(String(carClass));
+      await player(page,'C'+carClass);
+      await page.locator('#save-slot').selectOption(String(carClass));
+      await page.locator('#save-name').fill('C'+carClass);await page.locator('#profile-save').click();await wait(page);
+      const payload=named(bytes('factory'),'C'+carClass);payload.writeInt16LE(carClass,6);
+      payload.writeUInt16LE(Math.floor((128*4090+128)/256),16);extension(64).copy(payload,6526);
+      inventory=put(inventory,carClass,'C'+carClass,payload);
+      await card(page,inventory,'all-class-save-'+carClass);
+      await current(page,'C'+carClass,128,64,'all-class-owned-'+carClass,carClass);
+    }
+    for(let carClass=0;carClass<3;++carClass){
+      await context.close();context=null;page=await launch();await open(page);
+      await current(page,'PLAYER',256,256,'class-restart-default-'+carClass,0);
+      await page.locator('#save-slot').selectOption(String(carClass));await page.locator('#profile-load').click();
+      await current(page,'C'+carClass,128,64,'class-restart-restores-'+carClass,carClass);
+      await page.waitForFunction(value=>document.querySelector('#car-class').value===String(value),carClass);
+      await card(page,inventory,'class-restart-complete-image-'+carClass);
+      await page.locator('#view').selectOption('2');await page.waitForFunction(()=>Module._dd2_application_current_view()===2);
+      await page.locator('#pause').click();await page.waitForFunction(()=>Module._dd2_application_is_paused()===1);
+      await player(page,'LOCAL');await gains(page,32,16);
+      const steps=await page.evaluate(()=>Module._dd2_application_race_steps());
+      await page.locator('#save-slot').selectOption(String((carClass+1)%3));await page.locator('#profile-load').click();
+      await current(page,'LOCAL',32,16,'different-class-driving-rollback-'+carClass,carClass);
+      await page.locator('#preferences-load').click();await current(page,'LOCAL',128,64,'driving-audio-only-keeps-class-'+carClass,carClass);
+      await page.locator('#save-slot').selectOption(String(carClass));await page.locator('#profile-load').click();
+      await current(page,'C'+carClass,128,64,'same-class-driving-restores-profile-'+carClass,carClass);
+      check(await page.evaluate(()=>Module._dd2_application_race_steps())===steps,'Same-class load reset paused driving clock');
+      await page.locator('#view').selectOption('1');await page.waitForFunction(()=>Module._dd2_application_current_view()===1);
+      await page.locator('#car-class').selectOption(String((carClass+1)%3));
+      await presented(page);
+      const previous=await classPixels(page);
+      await page.locator('#canvas').focus();await page.keyboard.press('F4');await phase(page,5);
+      for(let i=0;i<carClass;++i)await page.keyboard.press('ArrowRight');await phase(page,5,null,carClass);
+      await page.keyboard.press('Enter');await phase(page,9);
+      await current(page,'C'+carClass,128,64,'keyboard-modal-restores-class-'+carClass,carClass);
+      await page.locator('#canvas').screenshot({path:path.join(output,'class-profile-'+carClass+'.png')});
+      const modal=await classPixels(page);await page.keyboard.press('Enter');await phase(page,0);await presented(page);
+      const closed=await classPixels(page);
+      check(!modal.equals(previous)&&modal.equals(closed),'Restored modal class paint/ratings differ: '+JSON.stringify({sameAsPrevious:modal.equals(previous),matchesClosed:modal.equals(closed),previous:hash(previous),modal:hash(modal),closed:hash(closed)}));
+      report.cases.push({label:'restored-modal-class-pixels-'+carClass,rgba_sha256:hash(modal),canvas:await page.evaluate(()=>{const c=document.querySelector('#canvas');return {width:c.width,height:c.height};}),matches_closed_world:true,differs_from_previous_class:true});
+    }
     check(await page.evaluate(()=>Module._dd2_application_close())===1,'terminal application did not close');
     check(report.errors.length===0,'Browser errors: '+report.errors.join('; '));report.complete=true;
   }finally{

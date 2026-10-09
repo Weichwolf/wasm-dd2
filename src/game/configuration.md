@@ -1,13 +1,23 @@
-# Player, audio and retained configuration
+# Player, car, audio and retained configuration
 
 `configuration.h` owns the complete original profile and an independent rewrite
 music gain. CONFIG and STARTUP imports validate the complete codec, the consumed
 effects volume and any recognized music extension before publishing a value.
 GAME and REPLAY are separate formats and cannot restore audio preferences.
-Dormant mode, car, track, input, other players, records and season fields are
-retained; they are not applied as playable configuration by these actions.
-Full player/audio actions additionally validate and consume the first player
-name. Audio-only restore keeps the active human identity unchanged.
+Dormant mode, track, input, other players, records and season fields are retained;
+they are not applied as playable configuration by these actions. Full
+player/car/audio actions additionally validate and consume the first player name
+and the signed source car field: 0 Rookie, 1 Amateur, 2 Pro. Audio-only restore
+keeps the active human name and class unchanged, including when the retained
+source car field is invalid. The lossless codec does not reject dormant fields.
+
+Profile saves capture the live human class and name, independently of retained
+source metadata. A different-class restore prepares a complete physical field
+with the current track and practice mode before publishing class, name and audio.
+Failed validation or allocation preserves every live owner. During driving,
+a different class is rejected; a same-class restore keeps the existing physical
+field and motion. An owned championship rejects full profile restores. These
+actions do not restore an entire saved race or championship.
 
 New name entry accepts up to eight printable ASCII characters, as the original
 name editor does. Empty input resolves to `PLAYER`. Imported names may use all
@@ -52,7 +62,7 @@ The original packer leaves this suffix untouched; original playback ignores it.
 
 The actual application lazily opens a dedicated save store. Native C callers use
 `dd2_application_saves_open` with an existing writable folder; the browser's
-**Saved audio and player** controls use IndexedDB database `wasm-dd2-saves-v1`.
+**Saved player, car and audio** controls use IndexedDB database `wasm-dd2-saves-v1`.
 Save, delete and reload acceptance must be followed by polling a terminal result.
 Selected logical entries resolve directly to their physical payload, including
 legacy duplicate names. Imported preferences apply both mixer gains under one
@@ -63,8 +73,8 @@ application starts.
 
 Native F2 edits the human name. F3 selects any of fifteen entries and edits a
 save filename; replacing an occupied entry requires a separate confirmation.
-F4 explicitly reloads the complete file and selects an entry to restore player
-and audio. Delete explicitly reloads the inventory, selects one of fifteen
+F4 explicitly reloads the complete file and selects an entry to restore player,
+car and audio. Delete explicitly reloads the inventory, selects one of fifteen
 logical entries and requires a separate confirmation of its name and position.
 It deletes CONFIG/STARTUP/GAME/REPLAY entries without loading their payloads;
 duplicate source names still identify the selected physical entry. Completion
@@ -72,11 +82,13 @@ appears only after durable storage acknowledges the full candidate image.
 Escape cancels drafts and confirmations without changing stored data.
 Opening/writing must reach terminal completion before the dialog can dismiss.
 Dialogs suspend simulation and music and reuse the frozen world image underneath
-their opaque pane, so typing does not repeatedly render the whole circuit. The
+their opaque pane, so typing does not repeatedly render the whole circuit.
+Publishing a restored class invalidates that retained image once, so the open
+completion dialog immediately shows the restored paint and ratings. The
 Native store uses SDL's per-user `Weichwolf/wasm-dd2` preference folder unless
 a C caller has already opened a dedicated location. It never uses game assets.
 The same SDL dialogs work on the focused browser canvas; browser controls are
-disabled while a modal owns input. The HTML controls also expose player/audio
+disabled while a modal owns input. The HTML controls also expose player/car/audio
 save and restore separately from audio-only actions.
 Accepted HTML name/restore actions immediately synchronize the input and its
 reflection cache. A later presentation frame cannot replace a new edit with
@@ -91,7 +103,10 @@ stale owners, pending close and restored Redbook gain in WebAudio PCM. Memcheck
 checks the Native application. `make rewrite-player-profile-verify` compares
 unmodified original driver rosters, retained complete profiles, actual X11 and
 Chromium dialog input, cancellation, overwrite confirmation and process restart.
-The checks include fresh sanitizers and Native application Memcheck. A focused
+The checks include all three classes, fresh browser/Native processes, actual
+F1/F3/F4 class restoration, consumed-class rollback, an allocation-failed Native
+candidate, independent audio-only actions, fresh sanitizers and Native
+application Memcheck. A focused
 SoftGL test covers all printable ASCII glyphs and custom-name standings; a
 synthetic standings test does not prove a naturally completed named season.
 Full configuration consumption and playable saved championships remain under

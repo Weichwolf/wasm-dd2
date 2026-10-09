@@ -50,7 +50,7 @@ publication; abort, enqueue exception and stale owners preserve the prior image.
 JavaScript owns copied bytes and obtains current WASM heap views during polling.
 Missing storage opens empty without creating a card until a mutation succeeds.
 No persistence location defaults to provisioned game assets. The application now
-consumes this owner for player/audio profiles through Native C actions, actual
+consumes this owner for player/car/audio profiles through Native C actions, actual
 F2/F3/F4 keyboard dialogs and browser controls. The Delete key reloads the
 inventory and opens a separate deletion selection/confirmation dialog on Native
 and the focused browser canvas. Empty entries cannot be deleted. Pending deletion

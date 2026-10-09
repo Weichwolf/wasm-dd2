@@ -729,7 +729,7 @@ static const char *dd2_profile_draw_title(dd2_profile_phase phase) {
         return "PLAYER NAME";
     case DD2_PROFILE_OPEN_LOAD:
     case DD2_PROFILE_LOAD_SELECT:
-        return "RESTORE AUDIO AND PLAYER";
+        return "RESTORE PLAYER, CAR AND AUDIO";
     case DD2_PROFILE_OPEN_DELETE:
     case DD2_PROFILE_DELETE_SELECT:
     case DD2_PROFILE_DELETE_CONFIRM:
@@ -738,7 +738,7 @@ static const char *dd2_profile_draw_title(dd2_profile_phase phase) {
     case DD2_PROFILE_MESSAGE:
         return "SAVE STATUS";
     default:
-        return "SAVE AUDIO AND PLAYER";
+        return "SAVE PLAYER, CAR AND AUDIO";
     }
 }
 static const char *dd2_profile_draw_help(dd2_profile_phase phase) {

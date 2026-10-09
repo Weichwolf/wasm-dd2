@@ -80,11 +80,15 @@ int dd2_application_save_preferences(unsigned logical, const char *name);
 int dd2_application_load_preferences(unsigned logical);
 int dd2_application_delete_save(unsigned logical);
 int dd2_application_reload_saves(void);
-/* Full identity/audio actions consume player zero's source name, preserving
+/* Player/car/audio actions consume player zero's source name, preserving
  * eleven-character legacy names; new edits accept eight printable ASCII chars.
- * Other configuration/game fields remain retained and unapplied. Active
+ * Class is validated and its complete field is prepared before publication.
+ * A different class is rejected while driving; same-class identity/audio loads
+ * retain the current physical field. Other configuration/game fields remain
+ * retained and unapplied. Active
  * championships keep their human identity until exit. Audio-only load remains
- * independent. A save captures the current identity, not dormant imported text. */
+ * independent. A save captures current identity and class, rather than dormant
+ * imported fields. Failed class/audio preparation preserves every live owner. */
 const char *dd2_application_player_name(void);
 const char *dd2_application_driver_name(unsigned driver);
 int dd2_application_set_player_name(const char *name);

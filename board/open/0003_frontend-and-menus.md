@@ -135,6 +135,15 @@ in 44 Native/sanitized dialog checks and 45 Chromium checks; strict LLVM19/197-f
 rendering is visually reviewed. Full original menus remain open. Receipt:
 /tmp/wasm-dd2/rewrite-delete-0058-release/verification-report.json.
 
+Active 0058 now includes durable class/name/audio profiles. All three fresh-
+process classes, candidate-allocation rollback, driving/championship guards and
+exact restored modal paint/rating checks pass in 47 original/Native/sanitized
+cases, 62 X11 dialog checks and 95 Chromium checks, with strict LLVM19/205-file,
+46/44 gates and zero-error/no-lost-block Native Memcheck. Audio-only actions keep
+class/name unchanged. Complete configuration, records and playable saved games
+remain open. Receipt:
+/tmp/wasm-dd2/rewrite-saved-car-0058-release/verification-report.json
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager

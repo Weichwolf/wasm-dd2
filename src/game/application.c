@@ -353,6 +353,30 @@ unsigned dd2_application_car_rating(unsigned rating) {
     }
 }
 
+static dd2_driving *dd2_application_prepare_car(const dd2_application *application,
+                                                dd2_car_class car_class) {
+    dd2_driving *candidate = dd2_driving_create_class(
+        dd2_track_road(application->track), (unsigned)application->level, car_class, NULL);
+    const dd2_race *race = dd2_driving_race(application->driving);
+    if (candidate == NULL ||
+        (race != NULL && !dd2_driving_set_race(candidate, true, race->rules.mode))) {
+        dd2_driving_destroy(candidate);
+        return NULL;
+    }
+    return candidate;
+}
+
+static void dd2_application_publish_car(dd2_application *application, dd2_driving *candidate,
+                                        dd2_car_class car_class) {
+    dd2_driving_destroy(application->driving);
+    application->driving = candidate;
+    application->car_class = car_class;
+    application->dirty = true;
+    application->world_drawn = false;
+    dd2_window_release_input(application->window);
+    dd2_game_audio_reset_effects(application->audio);
+}
+
 int dd2_application_select_car(int car_class) {
     dd2_application *application = dd2_current_application;
     const int storage = dd2_application_saves_phase();
@@ -366,21 +390,11 @@ int dd2_application_select_car(int car_class) {
     if (application->car_class == (dd2_car_class)car_class) {
         return 1;
     }
-    dd2_driving *candidate =
-        dd2_driving_create_class(dd2_track_road(application->track), (unsigned)application->level,
-                                 (dd2_car_class)car_class, NULL);
-    const dd2_race *race = dd2_driving_race(application->driving);
-    if (candidate == NULL ||
-        (race != NULL && !dd2_driving_set_race(candidate, true, race->rules.mode))) {
-        dd2_driving_destroy(candidate);
+    dd2_driving *candidate = dd2_application_prepare_car(application, (dd2_car_class)car_class);
+    if (candidate == NULL) {
         return 0;
     }
-    dd2_driving_destroy(application->driving);
-    application->driving = candidate;
-    application->car_class = (dd2_car_class)car_class;
-    application->dirty = true;
-    dd2_window_release_input(application->window);
-    dd2_game_audio_reset_effects(application->audio);
+    dd2_application_publish_car(application, candidate, (dd2_car_class)car_class);
     return 1;
 }
 
@@ -665,6 +679,7 @@ int dd2_application_save_profile(unsigned logical, const char *name) {
     }
     dd2_configuration next = application->configuration;
     return dd2_configuration_set_player(&next, application->player_name) &&
+           dd2_configuration_set_car(&next, application->car_class) &&
            dd2_configuration_write(&next,
                                    (dd2_byte_buffer){.data = block, .size = sizeof(block)}) &&
            dd2_save_store_put(application->saves, logical, name,
@@ -681,11 +696,25 @@ int dd2_application_load_profile(unsigned logical) {
         return 0;
     }
     const char *name = dd2_configuration_player(&next);
+    dd2_car_class car_class = DD2_CAR_CLASSES;
+    if (name == NULL || !dd2_configuration_car(&next, &car_class) ||
+        (application->drive && car_class != application->car_class)) {
+        return 0;
+    }
+    dd2_driving *candidate = car_class == application->car_class
+                                 ? NULL
+                                 : dd2_application_prepare_car(application, car_class);
+    if (car_class != application->car_class && candidate == NULL) {
+        return 0;
+    }
     const dd2_audio_gains gains = {.effects = dd2_configuration_effects_gain(&next),
                                    .music = next.music_gain};
-    if (name == NULL ||
-        (application->audio != NULL && !dd2_game_audio_apply_gains(application->audio, gains))) {
+    if (application->audio != NULL && !dd2_game_audio_apply_gains(application->audio, gains)) {
+        dd2_driving_destroy(candidate);
         return 0;
+    }
+    if (candidate != NULL) {
+        dd2_application_publish_car(application, candidate, car_class);
     }
     dd2_application_copy_player(application, name);
     application->configuration = next;
@@ -738,7 +767,7 @@ static void dd2_application_profile_poll(dd2_application *application) {
     if (result != DD2_SAVE_STORE_OK) {
         dd2_application_profile_message(application, dd2_application_profile_error(result));
     } else if (menu->phase == DD2_PROFILE_WRITING) {
-        dd2_application_profile_message(application, "AUDIO AND PLAYER SAVED.");
+        dd2_application_profile_message(application, "PLAYER, CAR AND AUDIO SAVED.");
     } else if (menu->phase == DD2_PROFILE_DELETING) {
         dd2_application_profile_message(application, "SAVE ENTRY DELETED.");
     } else {
@@ -878,8 +907,8 @@ static void dd2_application_profile_select_input(dd2_application *application,
     } else if (menu->phase == DD2_PROFILE_LOAD_SELECT) {
         dd2_application_profile_message(application,
                                         dd2_application_load_profile(menu->logical)
-                                            ? "AUDIO AND PLAYER RESTORED."
-                                            : "ENTRY CANNOT RESTORE AUDIO AND PLAYER.");
+                                            ? "PLAYER, CAR AND AUDIO RESTORED."
+                                            : "PROFILE INVALID OR LEAVE PLAY TO CHANGE CAR.");
     } else {
         const char *name = dd2_application_save_name(menu->logical);
         dd2_profile_menu_edit(menu, DD2_PROFILE_SAVE_NAME,
@@ -1408,7 +1437,8 @@ static bool dd2_application_draw(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
     /* The modal pauses simulation/camera motion. Its opaque pane overwrites all
      * previous dialog text in the retained framebuffer; redraw the frozen world
-     * only for the first presentation or after returning to normal play. */
+     * only for the first presentation, after a restored class replaces the world,
+     * or after returning to normal play. */
     if (!application->world_drawn || application->profile_menu.phase == DD2_PROFILE_CLOSED) {
         if (!dd2_application_draw_scene(application)) {
             return false;

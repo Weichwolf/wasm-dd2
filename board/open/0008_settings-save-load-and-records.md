@@ -7,7 +7,7 @@ Persist and restore profiles, names, championships, unlocks, settings and track 
 
 ## Evidence
 
-Session Time Trial clocks work. The current durable owner persists player/audio
+Session Time Trial clocks work. The current durable owner persists player/car/audio
 profiles; complete configuration, persistent records and playable championship
 restoration remain open. Original SaveGames fixtures include fifteen slots and
 source championship/statistics regions. The following entries retain earlier
@@ -135,6 +135,15 @@ Native/sanitized dialog checks, 45 browser checks, strict LLVM19/197-file gates,
 44/42 CTests and Native application Memcheck pass. All unaffected payload/reserved
 bytes remain intact. Full settings/records/playable saves remain open. Receipt:
 /tmp/wasm-dd2/rewrite-delete-0058-release/verification-report.json.
+
+Active 0058 now includes durable class/name/audio profiles. All three fresh-
+process classes, candidate-allocation rollback, driving/championship guards and
+exact restored modal paint/rating checks pass in 47 original/Native/sanitized
+cases, 62 X11 dialog checks and 95 Chromium checks, with strict LLVM19/205-file,
+46/44 gates and zero-error/no-lost-block Native Memcheck. Audio-only actions keep
+class/name unchanged. Complete configuration, records and playable saved games
+remain open. Receipt:
+/tmp/wasm-dd2/rewrite-saved-car-0058-release/verification-report.json
 
 ## Next
 

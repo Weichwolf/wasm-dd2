@@ -1,4 +1,5 @@
 #include "assets/bytes.h"
+#include "assets/car_class.h"
 #include "assets/save_card.h"
 #include "assets/save_profile.h"
 #include "audio/mixer.h"
@@ -70,6 +71,38 @@ static void dd2_config_test_gains(void) {
                                 memcmp(&before, &source, sizeof(source)) == 0,
                             "Invalid gain partially applied\n");
 }
+static void dd2_config_test_car(void) {
+    dd2_configuration source;
+    dd2_configuration_defaults(&source);
+    dd2_car_class selected = DD2_CAR_PRO;
+    dd2_config_test_require(!dd2_configuration_car(NULL, &selected) && selected == DD2_CAR_PRO &&
+                                !dd2_configuration_car(&source, NULL) &&
+                                !dd2_configuration_set_car(NULL, DD2_CAR_ROOKIE) &&
+                                !dd2_configuration_set_car(&source, DD2_CAR_CLASSES) &&
+                                source.source.header.car == 0,
+                            "Invalid class access changed configuration\n");
+    for (unsigned index = 0; index < DD2_CAR_CLASSES; ++index) {
+        dd2_config_test_require(
+            dd2_configuration_set_car(&source, (dd2_car_class)index) &&
+                dd2_configuration_write(&source, dd2_config_test_output()) &&
+                dd2_configuration_read(dd2_config_test_view(), 0, &dd2_config_test_owner) &&
+                dd2_configuration_car(&dd2_config_test_owner, &selected) &&
+                (unsigned)selected == index,
+            "Selected class did not survive the original profile codec\n");
+    }
+    static const int16_t invalid[] = {INT16_MIN, -1, DD2_CAR_CLASSES, INT16_MAX};
+    for (unsigned index = 0; index < sizeof(invalid) / sizeof(invalid[0]); ++index) {
+        source.source.header.car = invalid[index];
+        selected = DD2_CAR_PRO;
+        dd2_config_test_require(
+            dd2_configuration_write(&source, dd2_config_test_output()) &&
+                dd2_configuration_read(dd2_config_test_view(), 0, &dd2_config_test_owner) &&
+                dd2_config_test_owner.source.header.car == invalid[index] &&
+                !dd2_configuration_car(&dd2_config_test_owner, &selected) &&
+                selected == DD2_CAR_PRO,
+            "Dormant class was discarded or invalid class was published\n");
+    }
+}
 static void dd2_config_test_legacy(void) {
     dd2_configuration source;
     dd2_configuration_defaults(&source);
@@ -125,6 +158,7 @@ int main(int argc, char **argv) {
     dd2_configuration_defaults(&dd2_config_test_owner);
     dd2_configuration_defaults(NULL);
     dd2_config_test_gains();
+    dd2_config_test_car();
     dd2_config_test_legacy();
     if (argc == 2) {
         dd2_configuration_defaults(&dd2_config_test_owner);

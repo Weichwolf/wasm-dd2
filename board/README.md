@@ -94,10 +94,13 @@ PCM counters remain unavailable to this user. Use bounded contact cases for
 instrumented cost diagnosis and separate WASM sampling. This supplies diagnostics
 for remaining contact work; it does not establish a performance improvement.
 
-Current application integration is 0058 under 0008/0003: player/audio profiles
+Current application integration is 0058 under 0008/0003: player/car/audio profiles
 now have actual Native/browser name/save/load/delete dialogs, restart and
-validated rollback. LLVM19/197-file checks, 44 Native/42 WASM CTests, 31 original/Native/
-sanitized profile cases, 44 Native/sanitized dialog checks and 45 browser checks
+validated rollback. All three classes persist after fresh processes; failed
+class preparation retains every live owner, and same-class loads keep active
+motion. Restored dialogs redraw class paint/ratings once. LLVM19/205-file checks,
+46 Native/44 WASM CTests, 47 original/Native/sanitized profile cases,
+62 Native/sanitized dialog checks and 95 browser checks
 pass, including deletion confirmation, complete physical images, empty/duplicate/
 GAME/REPLAY entries, external-writer conflicts and pending/aborted IndexedDB
 transactions. Full configuration/records, remaining Native configuration actions
