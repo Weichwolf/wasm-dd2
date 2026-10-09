@@ -174,3 +174,14 @@ Total Destruction replaces POS/PTS/KO with SURVIVAL (MM:SS.mmm) and ALIVE
 (functioning engines); results retain survival time and surviving engine count
 without a placement-score table. Native/WASM pixel charts independently check
 00:01.235, capped 99:00.000 and ALIVE 20 in both active and result panels.
+
+
+Prepared gameplay additionally owns `sky_draw.c`. It borrows eight immutable
+track templates and the context-local world/vehicle texture cache, owns lazy
+patch draw buffers and computes actual local bounds once. Each frame drops only
+modelview translation, preserves camera rotation/projection, and culls patches
+before uploads. Background model draws disable depth testing/writes; the pass
+restores modelview and enables world depth state even when every patch is culled.
+The sky is drawn before world/vehicles/HUD. Orthographic inspectors and explicit
+legacy reference rendering retain their existing paths. Source-derived textures
+and black bottom caps remain intermediate content, not remodeled-quality proof.

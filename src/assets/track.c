@@ -74,8 +74,9 @@ static const dd2_model *dd2_track_named_model(const dd2_track *track, const char
 }
 
 const dd2_model *dd2_track_prepared_model(const dd2_track *track, dd2_track_model_kind kind) {
-    static const char *const names[DD2_TRACK_MODEL_COUNT] = {
-        "car-close", "car-medium", "car-distant", "wheel-primary", "wheel-secondary", "sky"};
+    static const char *const names[DD2_TRACK_MODEL_COUNT] = {"car-close",       "car-medium",
+                                                             "car-distant",     "wheel-primary",
+                                                             "wheel-secondary", "detached-trunk"};
     return (unsigned)kind >= DD2_TRACK_MODEL_COUNT ? NULL
                                                    : dd2_track_named_model(track, names[kind]);
 }
@@ -97,6 +98,18 @@ const dd2_model *dd2_track_prepared_car(const dd2_track *track, unsigned livery,
     name[cursor++] = '-';
     name[cursor++] = (char)('0' + (livery / DD2_TRACK_DECIMAL_RADIX));
     name[cursor] = (char)('0' + (livery % DD2_TRACK_DECIMAL_RADIX));
+    return dd2_track_named_model(track, name);
+}
+
+const dd2_model *dd2_track_prepared_sky(const dd2_track *track, unsigned patch) {
+    enum { DD2_TRACK_SKY_BAND_PATCHES = 4 };
+    if (patch >= DD2_TRACK_SKY_PATCHES) {
+        return NULL;
+    }
+    char lower[] = "sky-lower-0";
+    char upper[] = "sky-upper-0";
+    char *name = patch < DD2_TRACK_SKY_BAND_PATCHES ? lower : upper;
+    name[sizeof(lower) - 2] = (char)('0' + (patch % DD2_TRACK_SKY_BAND_PATCHES));
     return dd2_track_named_model(track, name);
 }
 
@@ -130,6 +143,12 @@ dd2_track *dd2_track_create_prepared(unsigned number, dd2_track_prepared_source 
     track->world = dd2_world_create(source.scene, loader, user);
     for (unsigned kind = 0; kind < DD2_TRACK_MODEL_COUNT; ++kind) {
         if (dd2_track_prepared_model(track, (dd2_track_model_kind)kind) == NULL) {
+            dd2_track_destroy(track);
+            return NULL;
+        }
+    }
+    for (unsigned patch = 0; patch < DD2_TRACK_SKY_PATCHES; ++patch) {
+        if (dd2_track_prepared_sky(track, patch) == NULL) {
             dd2_track_destroy(track);
             return NULL;
         }

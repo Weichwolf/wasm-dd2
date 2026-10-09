@@ -501,8 +501,13 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
     glVertexPointer(DD2_MODEL_DRAW_AXES, GL_FLOAT, sizeof(*vertices), vertices[0].position);
     glNormalPointer(GL_FLOAT, sizeof(*vertices), vertices[0].normal);
     glTexCoordPointer(2, GL_FLOAT, sizeof(*vertices), vertices[0].uv);
-    glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
+    if (options.background) {
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+    } else {
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+    }
     if (options.cutout_textures) {
         const float threshold = 0.5F;
         glEnable(GL_ALPHA_TEST);
@@ -541,6 +546,7 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
         dd2_model_draw_batch(draw, &draw->batches[draw->order[index]], options);
     }
     glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_LIGHTING);

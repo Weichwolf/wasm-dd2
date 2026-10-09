@@ -188,7 +188,7 @@ def convert(archive, executable, runtime, recipe_path):
     manifest['liveries']=dict(recipe=str(recipe_path.relative_to(ROOT)),levels=converted)
     manifest['limitations']=[v for v in manifest['limitations'] if 'default game still' not in v
                              and 'Driving metadata, livery variants' not in v]
-    pending='UI, new audio, cockpit/sky policy and visual damage migration remain pending.'
+    pending='UI, new audio, cockpit policy and visual damage migration remain pending.'
     if pending not in manifest['limitations']:manifest['limitations'].append(pending)
     prepare(runtime,manifest)
     (runtime/'reference/manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

@@ -112,7 +112,7 @@ def main():
     initial = source_hash()
     report = dict(pass_=False, scope='Prepared game presentation and short original-free launches',
                   started=datetime.now(timezone.utc).isoformat(), cases=[], comparisons=[],
-                  limitations=['New audio owner, body deformation, cockpit and sky pending',
+                  limitations=['New audio owner, body deformation and cockpit pending',
                                'No full-game, quality-superiority or 60-FPS acceptance'], source_sha256=initial)
     environment = dict(os.environ, SDL_VIDEODRIVER='dummy',
                        ASAN_OPTIONS='detect_leaks=1:halt_on_error=1:exitcode=86',
@@ -138,6 +138,7 @@ def main():
             build = WORK/'rewrite-native' if target == 'native' else args.sanitized_build
             run([build/'dd2_track_draw_test'],target+'-pose-cache')
             run([build/'dd2_world_draw_test'],target+'-shared-world-cache')
+            run([build/'dd2_sky_draw_test'],target+'-sky-depth-parallax')
             run([build/'dd2_prepared_application_test',root],target+'-application',timeout=180)
         run(['valgrind','--error-exitcode=86','--leak-check=full',WORK/'rewrite-native/dd2_track_draw_test'], 'memcheck-track-draw')
         for code in CODES:
@@ -154,7 +155,9 @@ def main():
                     raise ValueError('Cross-target prepared state/submission mismatch: '+code+' '+mode)
                 stats=rows['native'][-1]
                 if mode in ('start','drive') and (stats['world_triangles']==0 or stats['vehicle_models']==0 or
-                                                  stats['body_lods'][0]==0 or stats['vehicle_triangles']==0):
+                                                  stats['body_lods'][0]==0 or stats['vehicle_triangles']==0 or
+                                                  stats['sky_tested']!=8 or stats['sky_triangles']==0 or
+                                                  stats['sky_batches']==0):
                     raise ValueError('Empty prepared world/vehicle draw')
                 report['cases'].append(dict(level=code,mode=mode,rows=rows))
                 for target in ('wasm','sanitized'):

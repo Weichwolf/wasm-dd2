@@ -24,6 +24,9 @@ typedef struct {
     bool cutout_textures;
     /* Submit only cockpit and steering roles for an interior camera. */
     bool cockpit_only;
+    /* Render a camera-centered background without depth testing or writes.
+     * Restore enabled depth testing/writes before returning. */
+    bool background;
 } dd2_model_draw_options;
 
 typedef struct {

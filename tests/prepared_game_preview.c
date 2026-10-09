@@ -162,10 +162,13 @@ int main(int argc, char **argv) {
         const dd2_track_draw_stats stats = dd2_track_draw_statistics(presentation);
         printf("{\"world_triangles\":%zu,\"world_visible\":%zu,\"world_culled\":%zu,\"vehicle_"
                "triangles\":%zu,\"vehicle_models\":%zu,\"culled_models\":%zu,\"body_lods\":[%zu,%"
-               "zu,%zu],\"textures\":%zu}\n",
+               "zu,%zu],\"textures\":%zu,\"sky_tested\":%zu,\"sky_visible\":%zu,"
+               "\"sky_culled\":%zu,\"sky_triangles\":%zu,\"sky_batches\":%zu}\n",
                stats.world.triangles, stats.world.visible, stats.world.culled,
                stats.vehicle_triangles, stats.vehicle_models, stats.culled_models,
-               stats.body_lods[0], stats.body_lods[1], stats.body_lods[2], stats.uploaded_textures);
+               stats.body_lods[0], stats.body_lods[1], stats.body_lods[2], stats.uploaded_textures,
+               stats.sky.tested, stats.sky.visible, stats.sky.culled, stats.sky.triangles,
+               stats.sky.batches);
     }
     dd2_track_draw_destroy(presentation);
     dd2_renderer_destroy(renderer);

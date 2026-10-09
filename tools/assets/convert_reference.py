@@ -26,9 +26,9 @@ from assets.prepare_scenes import prepare
 ROOT = Path(__file__).resolve().parents[2]
 UNITS_PER_METER = 160.0
 TEMPLATES = dict(zip(range(5, 22), (
-    'wheel-primary', 'wheel-secondary', 'prop-07', 'prop-08', 'prop-09',
-    'prop-10', 'prop-11', 'prop-12', 'prop-13', 'prop-14', 'car-distant',
-    'car-medium', 'car-close', 'flag', 'prop-19', 'sky', 'prop-21')))
+    'wheel-primary', 'wheel-secondary', 'sky-lower-0', 'sky-lower-1', 'sky-lower-2',
+    'sky-lower-3', 'sky-upper-0', 'sky-upper-1', 'sky-upper-2', 'sky-upper-3', 'car-distant',
+    'car-medium', 'car-close', 'detached-wheel', 'detached-hood', 'detached-trunk', 'prop-21')))
 
 
 def digest(data):

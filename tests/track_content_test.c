@@ -42,6 +42,11 @@ static bool dd2_track_test_owner(void) {
         passed = passed && dd2_model_index_count(
                                dd2_track_prepared_model(track, (dd2_track_model_kind)kind)) == 3;
     }
+    for (unsigned patch = 0; patch < DD2_TRACK_SKY_PATCHES; ++patch) {
+        passed = passed && dd2_model_index_count(dd2_track_prepared_sky(track, patch)) == 3;
+    }
+    passed = passed && dd2_track_prepared_sky(track, DD2_TRACK_SKY_PATCHES) == NULL &&
+             dd2_track_prepared_sky(NULL, 0) == NULL;
     for (unsigned livery = 0; livery < DD2_CAR_LIVERIES; ++livery) {
         for (unsigned detail = 0; detail < DD2_TRACK_BODY_LODS; ++detail) {
             passed = passed && dd2_model_index_count(dd2_track_prepared_car(

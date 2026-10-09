@@ -466,9 +466,67 @@ content/report,worlds/report,game/report,reproduction-report,quality-report,
 visual-review-report,focus-report,reference-regression/report}.json. Raw successful captures are removed
 after this review. This broad work item remains active.
 
+## Prepared eight-patch sky background
+
+Prepared driving now owns a camera-centered panorama using the eight existing
+lower/upper templates. Read-only source inspection identifies sky sections 7..14
+and detached wheel/hood/trunk sections 18..20; the previous `sky` name incorrectly
+referred to a detached trunk. A standalone metadata migration relabels scene
+references and compiles them without original files or geometry conversion.
+All 9,092 mesh/PNG resources, model tables, livery bindings and 6,144 static
+placements remain unchanged. Two runs with only copied owned JSON/manifest
+reproduce all 23 metadata files exactly, without meshes or original inputs.
+
+The shared draw owner computes actual patch bounds, drops only camera
+translation, culls before lazy uploads and shares the world/vehicle texture
+cache. Its background pass writes no depth and restores world depth state even
+when every patch is culled. Modelview rotation/projection remain intact.
+Orthographic inspection and optional legacy reference rendering retain their
+existing paths. Track creation rejects any missing required sky template.
+
+Strict format/tidy gates cover 258 C/header files; 59 Native and 56 WASM CTests
+pass. Focused tests verify translation independence, rotation, hidden patches,
+matrix restoration and a farther foreground triangle overwriting the sky.
+Memcheck and fresh O1 ASan/UBSan pass. All eleven panoramas render in eight yaw
+directions plus upper/lower caps on Native, Node/WASM and sanitized: 330 images
+and 220 comparisons, maximum mean channel error 0.00029514. Prepared gameplay
+passes 132 images/88 comparisons and 36 Native, 36 sanitized and 35 actual
+Chromium comparisons, including trusted input, pause/reset, class paint,
+championship transitions, menus and missing-scene rollback.
+
+Direct inspection of all eleven driving starts and actual Native/Chromium moving
+captures finds clouds and distant terrain replacing the black void while
+retaining track/vehicle/HUD presentation. Sky-only images reveal unrelated atlas
+regions on some lower bands/caps and visible upper-cap seams/flat centers. These
+remain a material/content diagnosis; passing target-consistency checks does not
+prove correct original sky materials or completed visual quality. Optional
+source-group inspection finds one opcode-13 or opcode-15 group per patch; extra primitive
+groups do not explain the observed artifacts. No geometry was reconverted.
+
+Inspected start frames submit 37,712..144,576 total triangles, including
+864..2,272 sky triangles; caches reach 90 texture uploads. These are scoped
+submission counts, not material-budget or complete-frame/four-thread/60-FPS
+proof. Night floor/car contrast, authored skies, cockpit/deformation, lighting,
+new audio and full standalone/qualitative-superiority acceptance remain open.
+
+Evidence: /tmp/wasm-dd2/prepared-sky-0062/{quality-report,metadata-report,
+reproduction-report,source-groups-report,visual-review-report,sky/report,
+worlds/report,tracks/report,liveries/report,game/report,reference-audit-report}.json.
+The optional reference receipt records 31 Native/31 sanitized/145 Chromium
+comparisons with current source/binary hashes. Its exec session reported status
+143 after printing success and writing the passing receipt; this is not a
+clean-exit claim, and the termination cause is unconfirmed. Successful raw
+captures are removed after retaining findings and hashes. This broad item remains
+active.
+
 ## Next
 
-Add prepared visual deformation, sky/billboard
+Diagnose and correct sky-cap/lower-band material mappings and upper-cap seams
+using bounded optional reference evidence and an offline owned-asset recipe.
+Preserve normal camera/depth behavior and original-free runtime loading; keep
+this panorama contract open until the material findings are resolved.
+
+Add prepared visual deformation, billboard
 policy and a player cockpit; keep scene/opponent options unrestricted while
 selecting only player cockpit roles. Author inner door/window surrounds and use
 finer visibility groups where useful. The prototype must not rely on its

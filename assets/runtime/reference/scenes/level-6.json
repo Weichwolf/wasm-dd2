@@ -13896,7 +13896,7 @@
         ]
       ]
     },
-    "prop-07": {
+    "sky-lower-0": {
       "model": "reference/models/21e0574b92568ce288404844.dd2mesh",
       "bounds": [
         [
@@ -13911,7 +13911,7 @@
         ]
       ]
     },
-    "prop-08": {
+    "sky-lower-1": {
       "model": "reference/models/28baddeabe3d05fee4f81502.dd2mesh",
       "bounds": [
         [
@@ -13926,7 +13926,7 @@
         ]
       ]
     },
-    "prop-09": {
+    "sky-lower-2": {
       "model": "reference/models/a320785ef2e9db72c19b17de.dd2mesh",
       "bounds": [
         [
@@ -13941,7 +13941,7 @@
         ]
       ]
     },
-    "prop-10": {
+    "sky-lower-3": {
       "model": "reference/models/8a7127e4aa65411c1ea93144.dd2mesh",
       "bounds": [
         [
@@ -13956,7 +13956,7 @@
         ]
       ]
     },
-    "prop-11": {
+    "sky-upper-0": {
       "model": "reference/models/fc372e92602171c745cdf89c.dd2mesh",
       "bounds": [
         [
@@ -13971,7 +13971,7 @@
         ]
       ]
     },
-    "prop-12": {
+    "sky-upper-1": {
       "model": "reference/models/61554e3d49f604651747b0c7.dd2mesh",
       "bounds": [
         [
@@ -13986,7 +13986,7 @@
         ]
       ]
     },
-    "prop-13": {
+    "sky-upper-2": {
       "model": "reference/models/5615282f4d1098f86986e802.dd2mesh",
       "bounds": [
         [
@@ -14001,7 +14001,7 @@
         ]
       ]
     },
-    "prop-14": {
+    "sky-upper-3": {
       "model": "reference/models/41bdddd164a2921adf2bd07c.dd2mesh",
       "bounds": [
         [
@@ -14061,7 +14061,7 @@
         ]
       ]
     },
-    "flag": {
+    "detached-wheel": {
       "model": "reference/models/b2c1b56e4934f5733b03a3fc.dd2mesh",
       "bounds": [
         [
@@ -14076,7 +14076,7 @@
         ]
       ]
     },
-    "prop-19": {
+    "detached-hood": {
       "model": "reference/models/a104f116a8a16ac5802ec9d5.dd2mesh",
       "bounds": [
         [
@@ -14091,7 +14091,7 @@
         ]
       ]
     },
-    "sky": {
+    "detached-trunk": {
       "model": "reference/models/ef5e0e811e6a727dcb59c3db.dd2mesh",
       "bounds": [
         [

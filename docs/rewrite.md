@@ -29,7 +29,7 @@ acceptance requirements.
 This is the expanded target, not complete standalone acceptance. The default
 application now selects committed prepared roads/worlds/meshes/PNGs without
 Dirinfo or original sound-bank/CDDA startup inputs. Its prepared audio owner,
-body deformation, cockpit and sky rendering still need migration. The
+body deformation and cockpit still need migration. The
 reference-dependent component evidence below describes optional comparison mode. Work item 0062 owns the asset inventory, Blender/procedural/audio pipeline
 and removal of all mandatory original runtime inputs. Preserve existing useful
 functional comparisons as optional reference checks while making the default
@@ -63,7 +63,7 @@ malformed variants pass on Native/WASM/sanitized; 66 full/crop images and 44
 cross-target comparisons pass. Direct circuit/arena review finds plausible
 layout but limited floor contrast and incomplete terrain/sky. Prepared worlds
 and roads now reach default gameplay/browser presentation; cockpit,
-sky, new UI/audio content and complete four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
+new UI/audio content and complete four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
 
 The owned model renderer now selects only cockpit/steering roles for the player
 interior view and tests each material/role batch's indexed bounds against the
@@ -86,7 +86,7 @@ visual assets are not regenerated. The normal application now selects this
 prepared track/provider and renderer; complete UI/audio migration remains open. See `assets/road-format.md`.
 
 The shared track owner now accepts prepared scenes/models plus owned roads, with
-explicit close/medium/distant body, primary/secondary wheel and sky templates.
+explicit close/medium/distant body, primary/secondary wheel, detached trunk and eight sky templates.
 It releases input bytes and exposes the immutable world/road without legacy
 archive views. A directory provider reads only committed containers; missing
 content fails without a source fallback. The application and championship owner
@@ -99,8 +99,17 @@ culled before lazy model creation/submission. Opponent body LOD uses 30/90-meter
 thresholds, with the player's exterior kept close. Prepared launch renders
 640x360/4x MSAA with filtered textures and sRGB display encoding. All 22 driver/class paint variants at each body LOD now select committed models
 and PNGs; color/number remapping is offline only. Audio, damage deformation,
-complete cockpits and sky rendering remain pending;
+complete cockpits remain pending;
 this is a launch/presentation migration, not complete game/quality acceptance.
+
+Prepared driving now draws a camera-centered eight-patch sky before the world.
+The lower/upper panorama follows view rotation while ignoring translation, culls
+actual patch bounds before lazy shared texture upload, and leaves the world depth
+buffer clear. The previous `sky` label referred to a detached trunk; scene names
+now distinguish sky patches and detached wheel/hood/trunk without regenerating
+mesh or texture data. Orthographic world/car inspection keeps its existing
+background. Source-derived material quality, billboards, lighting and complete
+standalone-content acceptance remain open.
 
 From the repository root, `make rewrite-native` builds the application; run
 `/tmp/wasm-dd2/rewrite-native/dd2_app` to use committed content, or

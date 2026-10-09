@@ -17,7 +17,7 @@ from assets.verify_assets import HEADER
 from assets.prepare_scenes import compile_scene
 from assets.verify_render import image_compare
 
-MODEL_NAMES = ('car-close', 'car-medium', 'car-distant', 'wheel-primary', 'wheel-secondary', 'sky')
+MODEL_NAMES = ('car-close', 'car-medium', 'car-distant', 'wheel-primary', 'wheel-secondary', 'detached-trunk')
 
 
 def digest(data):

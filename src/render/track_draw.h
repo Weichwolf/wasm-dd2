@@ -5,6 +5,7 @@
 #include "render/camera.h"
 #include "render/driving_draw.h"
 #include "render/model_draw.h"
+#include "render/sky_draw.h"
 #include "render/world_draw.h"
 
 #include <stdbool.h>
@@ -13,6 +14,7 @@
 typedef struct dd2_track_draw dd2_track_draw;
 typedef struct {
     dd2_world_draw_stats world;
+    dd2_sky_draw_stats sky;
     size_t vehicle_models;
     size_t culled_models;
     size_t vehicle_triangles;
@@ -25,7 +27,8 @@ typedef struct {
  * reference materials or prepared world/vehicle batches with one shared texture
  * cache. Destroy before the track and its current GL context. Prepared drawing
  * uses meters, three body LODs and explicit suspended/steered/rolling wheels.
- * Intermediate prepared liveries/deformation/cockpits remain separate work. */
+ * Prepared driving adds camera-centered sky patches; deformation/cockpits remain
+ * separate work. */
 dd2_track_draw *dd2_track_draw_create(const dd2_track *track, dd2_model_image_loader loader,
                                       void *user);
 void dd2_track_draw_destroy(dd2_track_draw *draw);

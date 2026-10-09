@@ -16,6 +16,7 @@
 #include "render/mesh_draw.h"
 #include "render/model_draw.h"
 #include "render/renderer.h"
+#include "render/sky_draw.h"
 #include "render/world_draw.h"
 
 #include <GL/softgl.h>
@@ -44,6 +45,7 @@ struct dd2_track_draw {
     dd2_mesh_materials *reference;
     dd2_model_texture_cache *textures;
     dd2_world_draw *world;
+    dd2_sky_draw *sky;
     dd2_model_draw *models[DD2_TRACK_DRAW_MODELS];
     dd2_bounds bounds[DD2_TRACK_DRAW_MODELS];
     dd2_track_draw_stats stats;
@@ -64,6 +66,7 @@ void dd2_track_draw_destroy(dd2_track_draw *draw) {
         for (size_t index = 0; index < DD2_TRACK_DRAW_MODELS; ++index) {
             dd2_model_draw_destroy(draw->models[index]);
         }
+        dd2_sky_draw_destroy(draw->sky);
         dd2_world_draw_destroy(draw->world);
         dd2_model_texture_cache_destroy(draw->textures);
         dd2_mesh_materials_destroy(draw->reference);
@@ -93,7 +96,8 @@ dd2_track_draw *dd2_track_draw_create(const dd2_track *track, dd2_model_image_lo
     }
     draw->textures = dd2_model_texture_cache_create(loader, user);
     draw->world = dd2_world_draw_create_shared(world, draw->textures);
-    if (draw->world == NULL) {
+    draw->sky = dd2_sky_draw_create(track, draw->textures);
+    if (draw->world == NULL || draw->sky == NULL) {
         dd2_track_draw_destroy(draw);
         return NULL;
     }
@@ -295,7 +299,8 @@ bool dd2_track_draw_driving(dd2_track_draw *draw, dd2_driving_view view) {
         return dd2_driving_draw(draw->reference, draw->track, view);
     }
     const dd2_vehicle_vector eye = dd2_driving_camera_apply(view, (double)DD2_ROAD_UNITS_PER_METER);
-    bool passed = dd2_world_draw_frame(
+    bool passed = dd2_sky_draw_frame(draw->sky) &&
+                  dd2_world_draw_frame(
                       draw->world,
                       (dd2_model_draw_options){.double_sided = true,
                                                .cutout_textures = true,
@@ -311,5 +316,6 @@ bool dd2_track_draw_driving(dd2_track_draw *draw, dd2_driving_view view) {
                                    eye);
     }
     draw->stats.uploaded_textures = dd2_model_texture_cache_count(draw->textures);
+    draw->stats.sky = dd2_sky_draw_statistics(draw->sky);
     return passed && dd2_driving_overlay(view);
 }

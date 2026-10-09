@@ -13,7 +13,8 @@
 #include <stdint.h>
 
 enum {
-    DD2_TRACK_TEST_TEMPLATES = DD2_TRACK_MODEL_COUNT + (DD2_CAR_LIVERIES * DD2_TRACK_BODY_LODS),
+    DD2_TRACK_TEST_TEMPLATES =
+        DD2_TRACK_MODEL_COUNT + (DD2_CAR_LIVERIES * DD2_TRACK_BODY_LODS) + DD2_TRACK_SKY_PATCHES,
     DD2_TRACK_TEST_SCENE_BYTES = DD2_WORLD_TEST_BYTES + ((DD2_TRACK_TEST_TEMPLATES - 1) * 36),
     DD2_TRACK_TEST_DECIMAL_RADIX = 10,
     DD2_TRACK_TEST_TEMPLATE_BYTES = 36,
@@ -42,7 +43,7 @@ static void dd2_track_test_source(dd2_track_test_buffers buffers) {
     uint8_t *road = buffers.road;
     dd2_world_test_source(scene);
     const char *names[] = {"car-close",     "car-medium",      "car-distant",
-                           "wheel-primary", "wheel-secondary", "sky"};
+                           "wheel-primary", "wheel-secondary", "detached-trunk"};
     dd2_test_write_le32(scene + DD2_WORLD_TEST_TEMPLATE_COUNT, DD2_TRACK_TEST_TEMPLATES);
     for (size_t index = 0; index < DD2_TRACK_MODEL_COUNT; ++index) {
         uint8_t *item = scene + DD2_WORLD_TEST_TEMPLATE + (index * DD2_TRACK_TEST_TEMPLATE_BYTES);
@@ -70,6 +71,14 @@ static void dd2_track_test_source(dd2_track_test_buffers buffers) {
             dd2_model_test_name(item, name);
             dd2_test_write_le32(item + DD2_WORLD_TEST_NAME, detail);
         }
+    }
+    const char *sky_names[DD2_TRACK_SKY_PATCHES] = {"sky-lower-0", "sky-lower-1", "sky-lower-2",
+                                                    "sky-lower-3", "sky-upper-0", "sky-upper-1",
+                                                    "sky-upper-2", "sky-upper-3"};
+    for (unsigned patch = 0; patch < DD2_TRACK_SKY_PATCHES; ++patch) {
+        const size_t index = DD2_TRACK_TEST_TEMPLATES - DD2_TRACK_SKY_PATCHES + patch;
+        uint8_t *item = scene + DD2_WORLD_TEST_TEMPLATE + (index * DD2_TRACK_TEST_TEMPLATE_BYTES);
+        dd2_model_test_name(item, sky_names[patch]);
     }
     dd2_model_test_name(road, "DD2ROAD1");
     dd2_test_write_le32(road + DD2_TRACK_TEST_LAYOUT, DD2_ROAD_ARENA);

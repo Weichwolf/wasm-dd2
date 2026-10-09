@@ -10,6 +10,7 @@
 #include "render/model_draw.h"
 #include "render/model_view.h"
 #include "render/renderer.h"
+#include "render/sky_draw.h"
 #include "render/world_draw.h"
 
 #include <GL/softgl.h>
@@ -187,6 +188,70 @@ static bool dd2_prepared_world(dd2_prepared_world_capture capture) {
     return passed;
 }
 
+static void dd2_prepared_sky_camera(char angle) {
+    const double height = 0.10825317547305482;
+    const double aspect = (double)DD2_PREPARED_WIDTH / (double)DD2_PREPARED_HEIGHT;
+    const double near_plane = 0.1875;
+    const double far_plane = 937.5;
+    const float step = 45;
+    const float vertical = 90;
+    glViewport(0, 0, DD2_PREPARED_WIDTH, DD2_PREPARED_HEIGHT);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-height * aspect, height * aspect, -height, height, near_plane, far_plane);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    if (angle == 'U' || angle == 'D') {
+        glRotatef(angle == 'U' ? -vertical : vertical, 1, 0, 0);
+    } else {
+        glRotatef(-step * (float)(angle - '0'), 0, 1, 0);
+    }
+}
+
+static bool dd2_prepared_sky(dd2_prepared_world_capture capture, char angle) {
+    dd2_track *track = dd2_track_load(dd2_content_track_provider(capture.root), capture.number);
+    const dd2_render_options viewport = {.width = DD2_PREPARED_WIDTH,
+                                         .height = DD2_PREPARED_HEIGHT,
+                                         .samples = DD2_PREPARED_SAMPLES,
+                                         .output = DD2_RENDER_LINEAR_TO_SRGB};
+    dd2_renderer *renderer = track != NULL ? dd2_renderer_create(&viewport) : NULL;
+    dd2_model_texture_cache *cache =
+        renderer != NULL ? dd2_model_texture_cache_create(dd2_prepared_image, (void *)capture.root)
+                         : NULL;
+    dd2_sky_draw *draw = dd2_sky_draw_create(track, cache);
+    bool passed = false;
+    if (draw != NULL) {
+        dd2_prepared_sky_camera(angle);
+        passed = dd2_sky_draw_frame(draw) && dd2_prepared_write(renderer, capture.output) &&
+                 glGetError() == GL_NO_ERROR;
+        const dd2_sky_draw_stats stats = dd2_sky_draw_statistics(draw);
+        printf("{\"scope\":\"prepared sky diagnostic\",\"tested\":%zu,\"visible\":%zu,"
+               "\"culled\":%zu,\"triangles\":%zu,\"batches\":%zu,\"textures\":%zu}\n",
+               stats.tested, stats.visible, stats.culled, stats.triangles, stats.batches,
+               dd2_model_texture_cache_count(cache));
+    }
+    dd2_sky_draw_destroy(draw);
+    dd2_model_texture_cache_destroy(cache);
+    dd2_renderer_destroy(renderer);
+    dd2_track_destroy(track);
+    return passed;
+}
+
+static bool dd2_prepared_sky_name(const char *name) {
+    enum {
+        DD2_PREPARED_SKY_NAME = 7,
+        DD2_PREPARED_SKY_LEVEL = 4,
+        DD2_PREPARED_SKY_SEPARATOR = 5,
+        DD2_PREPARED_SKY_ANGLE = 6
+    };
+    return strlen(name) == DD2_PREPARED_SKY_NAME && strncmp(name, "sky-", 4) == 0 &&
+           name[DD2_PREPARED_SKY_SEPARATOR] == '-' &&
+           strchr("123456789AB", name[DD2_PREPARED_SKY_LEVEL]) != NULL &&
+           strchr("01234567UD", name[DD2_PREPARED_SKY_ANGLE]) != NULL;
+}
+
 int main(int argc, char **argv) {
     if (argc != DD2_PREPARED_ARGUMENTS && argc != DD2_PREPARED_ARGUMENTS + 1) {
         return EXIT_FAILURE;
@@ -197,6 +262,18 @@ int main(int argc, char **argv) {
     }
     const char *extension = strrchr(argv[2], '.');
     const char codes[] = "123456789AB";
+    if (!crop && dd2_prepared_sky_name(argv[2])) {
+        enum { DD2_PREPARED_SKY_LEVEL = 4, DD2_PREPARED_SKY_ANGLE = 6 };
+        return dd2_prepared_sky(
+                   (dd2_prepared_world_capture){
+                       .root = argv[1],
+                       .output = argv[3],
+                       .number =
+                           (unsigned)(strchr(codes, argv[2][DD2_PREPARED_SKY_LEVEL]) - codes) + 1},
+                   argv[2][DD2_PREPARED_SKY_ANGLE])
+                   ? EXIT_SUCCESS
+                   : EXIT_FAILURE;
+    }
     if (strlen(argv[2]) == 1 && strchr(codes, argv[2][0]) != NULL) {
         return dd2_prepared_world((dd2_prepared_world_capture){
                    .root = argv[1],

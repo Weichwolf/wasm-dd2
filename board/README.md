@@ -5,12 +5,21 @@ item before implementation. IDs remain stable; move the file when its state
 changes. This board follows the structure used by `wasm-fist` without importing
 its game requirements or acceptance rules.
 
+Prepared driving now renders all eight camera-centered sky patches. This fixes
+the mislabeled detached-trunk template without changing any of the 9,092 owned
+mesh/PNG resources or 6,144 static placements. Strict 258-file LLVM19 gates,
+59 Native/56 WASM tests, 330 sky images/220 comparisons and actual prepared
+Native/sanitized/Chromium gameplay checks pass. Lower-band/cap atlas artifacts
+and upper-cap seams remain visible in sky-only diagnostics; 0062 stays active.
+Evidence: /tmp/wasm-dd2/prepared-sky-0062/{quality-report,metadata-report,
+reproduction-report,visual-review-report,sky/report,game/report}.json.
+
 The latest asset step prepares the user-requested original-informed visual
 baseline under `assets/runtime/reference/`: all eleven playable levels, static
 placements and dynamic templates exported once to owned meshes/PNGs with offline
-16x subdivision. All 6,141 meshes and 693 PNGs pass complete Native/WASM/sanitized
+16x subdivision. All 6,812 meshes and 2,280 PNGs pass complete Native/WASM/sanitized
 loading without original input. A static SoftGL car-body view is inspected at
-640x360/4x MSAA. This is intermediate content; complete livery/cockpit/sky/deformation, audio
+640x360/4x MSAA. This is intermediate content; complete cockpit/deformation, sky-cap materials, audio
 and Blender content migration remain open under 0062/0010. Default prepared
 startup, scene/road integration and wheel animation now have the scoped
 evidence below. The owned scene loader and shared world renderer now

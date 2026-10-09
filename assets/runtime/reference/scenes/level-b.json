@@ -2304,7 +2304,7 @@
         ]
       ]
     },
-    "prop-07": {
+    "sky-lower-0": {
       "model": "reference/models/0ef9e6e5b9ce34b194de195b.dd2mesh",
       "bounds": [
         [
@@ -2319,7 +2319,7 @@
         ]
       ]
     },
-    "prop-08": {
+    "sky-lower-1": {
       "model": "reference/models/d855ee94ff71165ef936122a.dd2mesh",
       "bounds": [
         [
@@ -2334,7 +2334,7 @@
         ]
       ]
     },
-    "prop-09": {
+    "sky-lower-2": {
       "model": "reference/models/eebd19d4b164cb1b27db4ed2.dd2mesh",
       "bounds": [
         [
@@ -2349,7 +2349,7 @@
         ]
       ]
     },
-    "prop-10": {
+    "sky-lower-3": {
       "model": "reference/models/0460cf813cacdc95d30cd014.dd2mesh",
       "bounds": [
         [
@@ -2364,7 +2364,7 @@
         ]
       ]
     },
-    "prop-11": {
+    "sky-upper-0": {
       "model": "reference/models/fbab3f8460795f5a7b920a16.dd2mesh",
       "bounds": [
         [
@@ -2379,7 +2379,7 @@
         ]
       ]
     },
-    "prop-12": {
+    "sky-upper-1": {
       "model": "reference/models/b4a5704fcecfa5303a473e0a.dd2mesh",
       "bounds": [
         [
@@ -2394,7 +2394,7 @@
         ]
       ]
     },
-    "prop-13": {
+    "sky-upper-2": {
       "model": "reference/models/83f7ae702413042256471181.dd2mesh",
       "bounds": [
         [
@@ -2409,7 +2409,7 @@
         ]
       ]
     },
-    "prop-14": {
+    "sky-upper-3": {
       "model": "reference/models/2082c71597e3bf012215ba9f.dd2mesh",
       "bounds": [
         [
@@ -2469,7 +2469,7 @@
         ]
       ]
     },
-    "flag": {
+    "detached-wheel": {
       "model": "reference/models/64bba38e233a5dcc0dd9b1f3.dd2mesh",
       "bounds": [
         [
@@ -2484,7 +2484,7 @@
         ]
       ]
     },
-    "prop-19": {
+    "detached-hood": {
       "model": "reference/models/5b0b2b2c42be8812d78cbefe.dd2mesh",
       "bounds": [
         [
@@ -2499,7 +2499,7 @@
         ]
       ]
     },
-    "sky": {
+    "detached-trunk": {
       "model": "reference/models/4f7e89ce311be3b9d7bf4d61.dd2mesh",
       "bounds": [
         [

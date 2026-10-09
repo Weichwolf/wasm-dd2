@@ -47,7 +47,7 @@ gradient pixels are not claimed. Content hashes deduplicate exported resources.
 The initial conversion covers levels `1` through `B`: seven circuits and four
 arenas, all static objects and dynamic-template sections 5 through 21. Owned
 roads/contact/grid/AI inputs live separately under `runtime/roads/`; vehicle pose
-and wheel animation now use the prepared templates. Menu/font replacement, audio, cockpit/sky policy and complete gameplay quality remain
+and wheel animation now use the prepared templates. Menu/font replacement, audio, cockpit policy and complete gameplay quality remain
 separate migration work. Source sprite geometry is
 stored as static triangles; its camera-facing policy remains pending. The
 120 static and 440 template zero-area triangles are retained as explicit
@@ -80,13 +80,49 @@ Its explicit `--original` option executes the original close/medium/distant pain
 and number functions as an optional offline material-field oracle; this does not
 establish full-game parity. Replacement Blender/procedural content remains open.
 
+## Prepared sky
+
+Eight existing models form the camera-centered lower/upper panorama. Their
+semantic bindings correspond to source sections 7..14; detached wheel/hood/trunk
+correspond to 18..20. The former `sky` label incorrectly named section 20. The
+standalone metadata migration `tools/assets/prepare_templates.py` relabels and
+compiles committed scene JSON without original files, subdivision or geometry
+conversion. Repeating it is byte-idempotent. Section 21 retains a neutral auxiliary
+name because its role varies by level.
+
+Prepared gameplay draws the sky first using only view rotation. Patch and batch
+frustum tests run before submission; texture uploads share the world/vehicle
+cache. The pass disables depth tests/writes and restores them before drawing the
+world. Orthographic inspection retains its previous background. Some prepared
+bottom caps are flat black; other lower bands/caps expose unrelated atlas regions,
+and upper caps show seams/flat centers in sky-only diagnostics. These remain an
+open material/content diagnosis, not authored panoramic detail or evidence of
+completed visual quality.
+
+`dd2_prepared_preview ROOT sky-1-0 /tmp/wasm-dd2/sky.ppm` renders a sky-only
+diagnostic: level codes `1..9,A,B`, yaw steps `0..7` in 45-degree increments,
+and `U`/`D` for upper/lower caps. After the strict gates and a sanitized build of
+`dd2_sky_draw_test` and `dd2_prepared_preview`, run:
+
+```sh
+python3 tools/assets/verify_sky.py \
+  --sanitized-build /tmp/wasm-dd2/prepared-game-sanitized
+```
+
+This checks all eleven panoramas in ten directions on Native, Node/WASM and
+ASan/UBSan, plus no-parallax, rotation, culling and unobstructed-world-depth unit
+checks and Memcheck. Actual application/browser evidence comes from
+`tools/assets/verify_game.py`; neither diagnostic claims full-game parity,
+authored-quality superiority or 60-FPS performance.
+
 ## Scene and inventory
 
 `scenes/level-*.json` uses `format: DD2SCENE1`, a level ID, `units: meters` and
 `up: Y`. Each `objects` entry owns a stable ID, a relative model resource path,
 three-component world position and the model-local minimum/maximum AABB.
 `templates` maps names such as `car-close`, `car-medium`, `car-distant`,
-`wheel-primary`, `wheel-secondary`, `flag` and `sky` to resource paths and local
+`wheel-primary`, `wheel-secondary`, `detached-wheel`, `detached-hood`,
+`detached-trunk`, `sky-lower-0..3` and `sky-upper-0..3` to resource paths and local
 bounds. Unknown props retain neutral template names until their gameplay roles
 are migrated. Referenced paths resolve under the supplied runtime root.
 
@@ -180,7 +216,7 @@ uploads and test their posed bounds before submission. Player exterior stays
 close; NPC body LOD thresholds are 30 and 90 meters. Wheels retain suspension,
 steering and roll. Prepared paint/number variants are selected before submission.
 The baseline still needs visual damage,
-sky/billboard policy, a complete player cockpit and new audio integration.
+billboard policy, a complete player cockpit and new audio integration.
 Prepared launch is currently silent; optional reference audio is separate.
 
 Run the strict Native/WASM gates first, then use a fresh instrumented build:
@@ -194,7 +230,7 @@ cmake -S . -B /tmp/wasm-dd2/prepared-game-sanitized -G Ninja \
   -DDD2_ENABLE_CLANG_TIDY=OFF \
   '-DCMAKE_C_FLAGS=-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'
 cmake --build /tmp/wasm-dd2/prepared-game-sanitized -j4 --target \
-  dd2_track_draw_test dd2_world_draw_test dd2_prepared_game_preview \
+  dd2_track_draw_test dd2_world_draw_test dd2_sky_draw_test dd2_prepared_game_preview \
   dd2_prepared_application_test dd2_app
 PYTHONDONTWRITEBYTECODE=1 python3 tools/assets/verify_game.py \
   --sanitized-build /tmp/wasm-dd2/prepared-game-sanitized
