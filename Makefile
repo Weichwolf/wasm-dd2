@@ -331,6 +331,18 @@ clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
 
 .PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
+.PHONY: assets-convert-reference assets-reference-verify
+assets-convert-reference: ## offline one-time reference conversion; original archive is a development input only
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_reference.py
+
+assets-reference-verify: ## verify prepared geometry/maps without opening original game files
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/test_convert_reference.py
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_reference.py
+	$(MAKE) clean-logs
+
 assets-play: rewrite-native ## open the original-free authored vehicle/cockpit preview
 	/tmp/wasm-dd2/rewrite-native/dd2_content_viewer "$(ROOT)/assets/runtime"
 

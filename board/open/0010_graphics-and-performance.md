@@ -7,6 +7,27 @@ Improve resolution, textures, lighting, shadows and effects while keeping all ca
 
 ## Evidence
 
+The user now requests an original-informed intermediate visual baseline rather
+than further independent fictional prototype detail. Offline conversion exports
+all eleven levels and dynamic templates to owned DD2MESH2/PNG assets with two
+linear midpoint splits. Every retained source triangle becomes sixteen triangles;
+the complete static collection contains 2,278,128 triangles across all levels,
+not per frame. Original stored static counts range from 2,305 to 24,680 triangle
+equivalents per level; original high/medium/distant car bodies have 198/172/36
+triangle equivalents before zero-area removal, and a wheel has 12. These source
+counts do not establish submitted visibility or include all effects/overlays.
+
+Native/WASM/sanitized owned loaders verify all 6,141 prepared meshes and 693 PNGs
+without source archives. A prepared circuit-1 body image is directly inspected
+in SoftGL at 640x360/4x MSAA with filtering; silhouette, paint and UV orientation
+are plausible. Native/WASM differ at eleven pixels by at most two channel values.
+This static geometry check does not prove original-frame similarity, a full
+track view, cockpit-only submission or complete-frame throughput. The next
+renderer step is the prepared scene owner, pre-submission frustum culling and
+cockpit-only geometry, followed by actual gameplay/original screenshots and
+complete-frame measurements. See active 0062 and
+`/tmp/wasm-dd2/prepared-reference-0062/visual-report.json`.
+
 Shared textured meshes, chase camera, wheels, damage and HUD exist. Lighting, shadows, detached parts, smoke, billboard orientation and blending remain incomplete. SoftGL is our library in deps/softgl.
 
 The player explicitly prioritizes visual experience. Actual Native/browser

@@ -1,9 +1,23 @@
-# Authored game content
+# Game content
 
-This directory contains entirely rebuilt game content. Original DD2 assets,
-extracted meshes/textures, source sound banks and CD audio are not inputs.
+This directory contains authored content and the user-requested intermediate
+reference-derived exports under `runtime/reference/`. The latter are converted
+offline into our owned float meshes, PNG maps and scene placements; the game
+must consume those prepared files without original game data or subdivision.
+They will be replaced with original-informed Blender models and procedural maps.
+Original source sound banks and CD audio are not final replacement content.
 Editable Blender scenes and generated runtime exports are committed here;
 verification images, logs and builds belong under `/tmp/wasm-dd2/`.
+
+The one-time geometry conversion covers all eleven playable levels, static
+scene objects and all available dynamic templates in sections 5 through 21. It produces
+6,141 distinct `DD2MESH2` meshes and 693 deduplicated PNGs (123.5 MiB of binary
+resources). Two linear subdivisions yield 16 triangles per retained source
+triangle; 560 zero-area source triangles are explicitly inventoried. The
+6,144 retained static placements contain 2,278,128 stored triangles across all
+levels. These are whole-world counts, not submitted per-frame geometry.
+See [reference-format.md](reference-format.md) for the intermediate contract,
+verification commands and the remaining runtime migration.
 
 The first authored vehicle is the fictional Racer R1, with an exterior, four
 independent wheel assemblies and an interior containing a cage, seat/harness,

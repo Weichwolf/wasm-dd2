@@ -12,6 +12,12 @@ engine, ambience, commentary and composed music. Generated runtime assets are
 versioned alongside their reproducible sources. Substantially surpass the
 original's visual/acoustic quality in every area while retaining full gameplay.
 
+The user now explicitly permits intermediate reference-derived content:
+convert source geometry and colors once into our asset format, apply two
+linear midpoint splits offline (16x), version the prepared exports and later
+replace them with original-informed Blender models/procedural maps. The game
+must not subdivide geometry or require source DD2 files at runtime.
+
 ## Evidence
 
 The scope is explicitly expanded by the user. Current runtime startup still
@@ -175,9 +181,47 @@ Receipts: /tmp/wasm-dd2/authored-color-0062/after/report.json,
 visual-review-report.json, baseline-capture-report.json, timing/report.json
 and quality-report.json. Completed raw captures/logs are removed after review.
 
+The offline intermediate conversion is now verified for all eleven playable
+levels. Its 6,141 unique meshes and 693 PNGs occupy 129,500,317 binary bytes;
+6,144 retained static instances contain 2,278,128 stored triangles. Explicit
+omission records account for 120 static and 440 template zero-area triangles,
+including six empty static instances. All retained source triangles become
+exactly sixteen prepared triangles. Source sprites remain static geometry until
+camera-facing policy is migrated; source lighting, livery remaps, road/AI/grid,
+UI and audio are not claimed complete. The fictional Racer R1 remains a renderer
+prototype and does not count as a DD2 vehicle remake.
+
+Independent mesh decode and full C field/index re-encoding after source release,
+and every Pillow PNG pixel, agree on Native, Node/WASM and fresh O1 ASan/UBSan.
+Prepared scene references, finite placements, local bounds, resource digests and
+16x/omission accounting pass. Source-free subdivision fixtures verify retained
+surface/area/winding, UV interpolation and seams. A directly inspected SoftGL
+car-body image uses filtered textures at 640x360/4x MSAA; Native/WASM differ at
+11 pixels by at most two channel values. Separate wheel placement and actual
+game/original screenshots remain pending. Receipts are under
+`/tmp/wasm-dd2/prepared-reference-0062/`; commands are `make assets-convert-reference`
+and `make assets-reference-verify`. This proves offline conversion and owned
+loading, not standalone full-game, original parity or final qualitative acceptance.
+
+Two independent conversions and the committed copy agree for all 6,846 files
+(146,191,670 bytes including scene/inventory JSON). The strict gate covers 230
+C/header files; all 51 Native and 49 WASM CTests pass. Batch input rejection also
+proves failed partial output cleanup. Quality, reproducibility, complete loader
+and static visual receipts remain under the run directory; completed captures
+and raw comparisons are removed after recording them.
+The unchanged authored loader corpus also passes for all 21 prior assets,
+four positive PNG layouts and 131 rejection variants on all three targets.
+
 ## Next
 
-Evaluate authored normal/roughness maps with an owned tangent/material path,
+First wire the prepared scene/provider and pre-submission frustum culling;
+render only cockpit/interior geometry in cockpit views. Migrate owned road,
+progress/AI/grid and audio inputs so default Native/browser launch consumes
+committed assets without Dirinfo. Implement alpha-test/billboard/livery policy,
+place wheel templates and compare actual original/candidate gameplay images.
+Replace intermediate meshes with original-informed Blender models gradually.
+
+Then evaluate authored normal/roughness maps with an owned tangent/material path,
 improve limited linear working precision and add environmental/interior lighting. Separate fixed caliper/column roles,
 add contact shadows and improve the actual inspected vehicle/interior images.
 Implement production LOD/visibility and explicit Native thread selection against

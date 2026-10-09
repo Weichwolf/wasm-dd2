@@ -5,6 +5,16 @@ item before implementation. IDs remain stable; move the file when its state
 changes. This board follows the structure used by `wasm-fist` without importing
 its game requirements or acceptance rules.
 
+The latest asset step prepares the user-requested original-informed visual
+baseline under `assets/runtime/reference/`: all eleven playable levels, static
+placements and dynamic templates exported once to owned meshes/PNGs with offline
+16x subdivision. All 6,141 meshes and 693 PNGs pass complete Native/WASM/sanitized
+loading without original input. A static SoftGL car-body view is inspected at
+640x360/4x MSAA. This is intermediate content; default game startup, scene
+provider/frustum culling, livery/animation/road metadata and audio migration
+remain open under 0062/0010. Next wire the prepared scene/provider and replace
+the game's original-input path, then remodel against this baseline.
+
 ## Work order
 
 | WI | Deliverable | State |

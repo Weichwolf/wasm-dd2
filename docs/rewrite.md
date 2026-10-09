@@ -8,7 +8,14 @@ and scenes with complete cockpits/interiors, procedurally generated textures,
 new effects/engine/ambient/commentary audio and newly composed music, plus all
 fonts, UI and visual-effect assets. Keep editable inputs, generation scripts and
 runtime exports reproducible. Original decoded/extracted content does not count
-as replacement content. Original files and `ghidra` remain optional development
+as final remodeled content. The user now explicitly requests an intermediate
+reference-derived asset set: convert source geometry/textures offline into our
+owned containers once, apply two linear midpoint splits (16 triangles per
+retained source triangle), and commit the prepared exports. Runtime subdivision
+and original-file startup dependencies are forbidden. Preserve the original
+silhouette and UV seams initially, then replace the intermediate assets with
+original-informed Blender remodeling and procedural materials. Original files
+and `ghidra` remain optional development
 references and must not be shipped, requested at startup or used as a hidden
 fallback for missing authored assets.
 
