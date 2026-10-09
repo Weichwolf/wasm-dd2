@@ -13,7 +13,9 @@ explicit four-thread Native selection and complete-frame 60-FPS proof remain ope
 `model_draw.h` borrows an immutable owned `DD2MESH2` model and owns batched index
 storage and per-context albedo textures. Loader results transfer ownership and
 are destroyed after upload. PNG top-first rows are flipped for bottom-left UVs;
-complete box-filtered mip chains use repeat and trilinear minification.
+RGB albedo samples are decoded from sRGB to linear RGBA8 before upload. Alpha
+remains linear. Complete box-filtered mip chains use repeat and trilinear
+minification in that same working space.
 Opaque parts sharing material/role/pivot batch together; transparent parts
 remain separate and draw from far to near without depth writes. Vertex/index
 arrays use typed float positions/normals/UVs rather than original integer formats.
@@ -23,8 +25,16 @@ programs. This initial pass uses unit-zero texturing; its documented cleanup is
 not a general save/restore of arbitrary prior GL state.
 
 The initial path uses directional key/fill/ambient lighting and scalar
-metallic/roughness specular parameters. It does not yet evaluate normal/roughness
-maps or provide complete linear-light display encoding, shadows or full PBR.
+metallic/roughness specular parameters. Material base RGB, lights, filtering,
+blending and MSAA use the linear working space; `DD2_RENDER_LINEAR_TO_SRGB`
+encodes the resolved RGB into an owned display copy before presentation. Alpha
+and SoftGL's framebuffer remain unchanged, so repeated reads never double-encode
+the image. Raw output remains the default for optional original reference views.
+Immutable byte lookup tables follow the [standard sRGB transfer equations](https://www.w3.org/TR/css-color-4/#color-conversion-code).
+SoftGL's pinned texture/framebuffer storage is still RGBA8: dark shading and
+intermediate rounding lose precision, and colors clip above one. This is an LDR
+transfer correction, not HDR or full PBR. Normal/roughness maps, improved material
+response, environmental lighting and shadows remain pending.
 Part pivots drive front-wheel steering, rolling wheels and steering-wheel poses;
 the content's fixed caliper/column role separation remains a follow-up.
 `model_view.h` provides meter-space exterior/cockpit perspectives. +Z forward
@@ -40,7 +50,7 @@ The latter compares all LOD/cockpit rest/steer images on Native, WASM and fresh
 O1 ASan/UBSan including reached SoftGL sources, followed by exact same-target
 real window/canvas checks. Memcheck frees all focused render-test allocations
 with zero errors. Cross-target differences remain explicitly diagnostic.
-Direct inspected window/canvas images show a dark cockpit and missing material/
+Direct inspected window/canvas images still lack the required material/
 environment/shadow quality; active 0010/0062 retain that work.
 
 ## Optional original reference rendering

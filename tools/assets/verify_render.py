@@ -112,9 +112,11 @@ def main():
          '-DCMAKE_BUILD_TYPE=Debug', '-DDD2_ENABLE_CLANG_TIDY=OFF',
          '-DCMAKE_C_FLAGS=-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'], 'sanitized-configure')
     run(['cmake', '--build', sanitized_build, '--target', 'dd2_content_preview', 'dd2_content_viewer',
-         'dd2_model_draw_test', '-j4'], 'sanitized-build', 600)
+         'dd2_model_draw_test', 'dd2_color_test', '-j4'], 'sanitized-build', 600)
     run([sanitized_build / 'dd2_model_draw_test'], 'sanitized-pixels')
+    run([sanitized_build / 'dd2_color_test'], 'sanitized-color')
     run(['valgrind', '--error-exitcode=86', '--leak-check=full', WORK / 'rewrite-native/dd2_model_draw_test'], 'memcheck-pixels')
+    run(['valgrind', '--error-exitcode=86', '--leak-check=full', WORK / 'rewrite-native/dd2_color_test'], 'memcheck-color')
     root = ROOT / 'assets/runtime'
     inputs = sorted((root / 'models').glob('*')) + sorted((root / 'textures').glob('*'))
     before = {str(path.relative_to(ROOT)): digest(path.read_bytes()) for path in inputs}
@@ -159,6 +161,7 @@ def main():
     if before != {str(path.relative_to(ROOT)): digest(path.read_bytes()) for path in inputs}:
         raise ValueError('Rendering modified authored inputs')
     sources = ['CMakeLists.txt', 'src/render/renderer.c', 'src/render/renderer.h',
+               'src/render/color.c', 'src/render/color.h', 'tests/color_test.c',
                'src/render/model_draw.c', 'src/render/model_draw.h', 'src/render/model_view.c', 'src/render/model_view.h',
                'src/game/content_viewer.c', 'src/game/content_viewer.h', 'src/game/content_main.c',
                'src/platform/window.c', 'src/platform/window.h', 'src/platform/web/content.html', 'src/platform/web/content.js',

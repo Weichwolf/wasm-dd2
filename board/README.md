@@ -106,6 +106,13 @@ selection and complete-frame 60-FPS proof remain open. Warmed rendering/presenta
 calls measure 21.17 ms Native/30.92 ms Chromium median for the cockpit,
 without simulation/compositor costs; this already exceeds the complete-frame
 16.67-ms budget and is recorded under 0010/0062.
+The authored preview now decodes albedo/filtering in linear light and encodes
+resolved RGB into an owned display copy. Actual before/after Native/browser
+inspection confirms more legible cockpit controls; 8-bit precision, material
+response, normal/roughness maps and shadows remain incomplete. Strict LLVM19
+checks 229 files; 51/49 CTests and the real render/input corpus pass. The current
+cockpit component median is 15.91/24.52 ms Native/Chromium, with 18.01/26.64-ms
+p95. This is no isolated speedup or complete four-thread/60-FPS acceptance.
 
 Continue stabilizing ordinary races and connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work

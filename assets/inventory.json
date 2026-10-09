@@ -9,7 +9,7 @@
     "materials": "runtime/textures/materials.json",
     "audio": "runtime/audio/audio.json",
     "runtime_integrated": false,
-    "preview": {"native_target": "dd2_content_viewer", "browser_page": "src/platform/web/content.html", "original_inputs_required": false, "width": 640, "height": 360, "samples": 4, "normal_roughness_maps_evaluated": false, "production_game_integration": false, "complete_frame_60_fps_accepted": false}
+    "preview": {"native_target": "dd2_content_viewer", "browser_page": "src/platform/web/content.html", "original_inputs_required": false, "width": 640, "height": 360, "samples": 4, "linear_working_bits": 8, "srgb_input_output_transfer": true, "normal_roughness_maps_evaluated": false, "production_game_integration": false, "complete_frame_60_fps_accepted": false}
   },
   "remaining_content": [
     {"kind": "circuits", "slots": [1, 2, 3, 4, 5, 6, 7], "needs": ["Blender terrain and course geometry", "owned road/contact/progress graph", "barriers", "AI route", "scenery and lighting", "grid and start/finish metadata"], "runtime_dependency": "Original LEVx level, texture, scene and road data"},

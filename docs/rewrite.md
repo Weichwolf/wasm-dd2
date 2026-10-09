@@ -38,8 +38,10 @@ after releasing source bytes; every decoded PNG sample agrees with Pillow.
 The original-free authored vehicle preview now renders all LODs and the cockpit
 at 640x360/4x MSAA in real Native/browser windows, with camera/detail/pose/reset
 and close controls. It uses batched geometry, filtered albedo mips, basic lighting
-and transparency. Actual images remain too dark in the cockpit and lack the
-required material/environment/shadow quality. The default game still does not
+and transparency. Albedo now decodes to linear RGBA8 before filtering; resolved
+RGB encodes into an owned sRGB display copy with alpha/framebuffer unchanged.
+Actual before/after Native/browser images have more legible cockpit controls,
+but limited working precision and material/environment/shadow quality remain. The default game still does not
 select this content, and full gameplay/audio/60-FPS acceptance remains open.
 See `assets/README.md`,
 `assets/inventory.json` and active 0062 for evidence and missing integration.

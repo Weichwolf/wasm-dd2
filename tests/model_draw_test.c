@@ -8,6 +8,7 @@
 #include "render/renderer.h"
 
 #include <GL/softgl.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -21,12 +22,26 @@ enum {
     DD2_DRAW_TEST_RGB_FIXTURE = 5,
     DD2_DRAW_TEST_RGBA_FIXTURE = 15,
     DD2_DRAW_TEST_RGBA_ROW = 8,
-    DD2_DRAW_TEST_MIP_RED = 53,
-    DD2_DRAW_TEST_MIP_GREEN = 78,
-    DD2_DRAW_TEST_MIP_BLUE = 114
+    DD2_DRAW_TEST_MIP_RED = 15,
+    DD2_DRAW_TEST_MIP_GREEN = 30,
+    DD2_DRAW_TEST_MIP_BLUE = 65
 };
 static const uint32_t dd2_draw_test_two = UINT32_C(0x40000000);
 static const uint32_t dd2_draw_test_tiled = UINT32_C(0x43000000);
+static const double dd2_draw_test_decode_break = 0.04045;
+static const double dd2_draw_test_slope = 12.92;
+static const double dd2_draw_test_offset = 0.055;
+static const double dd2_draw_test_gain = 1.055;
+static const double dd2_draw_test_exponent = 2.4;
+
+static unsigned dd2_draw_test_linear(uint8_t byte) {
+    const double value = (double)byte / UINT8_MAX;
+    const double decoded =
+        value <= dd2_draw_test_decode_break
+            ? value / dd2_draw_test_slope
+            : pow((value + dd2_draw_test_offset) / dd2_draw_test_gain, dd2_draw_test_exponent);
+    return (unsigned)lround(decoded * UINT8_MAX);
+}
 
 typedef struct {
     size_t fixture;
@@ -72,11 +87,12 @@ static bool dd2_draw_test_pixels(const uint8_t *pixels, size_t fixture_index, bo
             const size_t destination =
                 ((row * DD2_DRAW_TEST_SIDE) + column) * DD2_DRAW_TEST_CHANNELS;
             for (size_t channel = 0; channel < 3; ++channel) {
-                const unsigned expected = minify ? mip[channel]
-                                                 : ((unsigned)fixture->expected[source + channel] *
-                                                        fixture->expected[source + 3] +
-                                                    (UINT8_MAX / 2)) /
-                                                       UINT8_MAX;
+                const unsigned expected =
+                    minify ? mip[channel]
+                           : (dd2_draw_test_linear(fixture->expected[source + channel]) *
+                                  fixture->expected[source + 3] +
+                              (UINT8_MAX / 2)) /
+                                 UINT8_MAX;
                 const unsigned actual = pixels[destination + channel];
                 if ((actual > expected ? actual - expected : expected - actual) > 1) {
                     return false;

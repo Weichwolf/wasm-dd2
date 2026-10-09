@@ -99,8 +99,13 @@ excludes normal simulation/event/compositor work and retains automatic SoftGL
 pools. It measures a component baseline, not complete-game FPS or the explicit
 four-thread acceptance profile.
 
-Direct review finds excessive cockpit darkness, flat display/shading, unlabeled
-instruments, body seams and missing contact shadows/environment. Normal and
+The authored preview now decodes sRGB albedo to linear RGBA8 before filtering
+and illumination, then encodes resolved RGB into an owned display copy. Alpha
+and the linear framebuffer stay unchanged; raw reference rendering remains the
+default. Actual Native/browser before/after review shows more legible cockpit
+controls, paint and alloy detail. Eight-bit working precision loses dark detail
+and exposes coarse carbon patterns; improved material/environment light,
+unlabeled instruments, body seams and missing contact shadows remain. Normal and
 roughness maps are exported but not yet evaluated by the initial scalar-material
 lighting path. Fixed calipers and the steering column still need separate motion
 roles from rolling wheels/steering-wheel geometry. The checker floor/blue clear

@@ -138,7 +138,8 @@ def main():
             values = sorted(row['milliseconds'])
             results[platform][row['label']] = dict(samples=len(values), median_ms=statistics.median(values),
                                                    p95_ms=values[math.ceil(.95 * len(values)) - 1], max_ms=max(values))
-    files = ['.clang-format', '.clang-tidy', 'src/game/content_viewer.c', 'src/render/renderer.c', 'src/render/model_draw.c', 'src/render/model_view.c',
+    files = ['.clang-format', '.clang-tidy', 'src/game/content_viewer.c', 'src/render/renderer.c', 'src/render/renderer.h',
+             'src/render/color.c', 'src/render/color.h', 'src/render/model_draw.c', 'src/render/model_view.c',
              'src/platform/window.c', 'tools/assets/measure_preview.py', 'tools/assets/measure_preview_browser.js']
     report = dict(pass_=True, measured_at=datetime.now(timezone.utc).isoformat(),
                   scope=browser['scope'], profile=dict(width=640,height=360,samples=4,render_threads='Automatic pinned SoftGL pools; explicit Native four-thread selection remains pending'),

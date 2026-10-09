@@ -2,6 +2,7 @@
 
 #include "assets/image.h"
 #include "assets/model.h"
+#include "render/color.h"
 
 #include <GL/softgl.h>
 #include <stdbool.h>
@@ -48,8 +49,11 @@ static dd2_model_mip dd2_model_mip_create(const dd2_image *image) {
         const uint8_t *source = dd2_image_pixels(image);
         for (size_t row = 0; row < mip.height; ++row) {
             for (size_t byte = 0; byte < stride; ++byte) {
+                const uint8_t value = source[((mip.height - row - 1) * stride) + byte];
                 mip.pixels[(row * stride) + byte] =
-                    source[((mip.height - row - 1) * stride) + byte];
+                    byte % DD2_MODEL_DRAW_CHANNELS == DD2_MODEL_DRAW_CHANNELS - 1
+                        ? value
+                        : dd2_color_srgb8_to_linear8(value);
             }
         }
     }

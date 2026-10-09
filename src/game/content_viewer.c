@@ -35,8 +35,10 @@ static const float dd2_content_wheel_roll = 42;
 static const float dd2_content_steering = -90;
 static const float dd2_content_grid_spacing = 2;
 
-static const dd2_render_options dd2_content_viewport = {
-    .width = DD2_CONTENT_WIDTH, .height = DD2_CONTENT_HEIGHT, .samples = DD2_CONTENT_SAMPLES};
+static const dd2_render_options dd2_content_viewport = {.width = DD2_CONTENT_WIDTH,
+                                                        .height = DD2_CONTENT_HEIGHT,
+                                                        .samples = DD2_CONTENT_SAMPLES,
+                                                        .output = DD2_RENDER_LINEAR_TO_SRGB};
 
 typedef struct {
     dd2_renderer *renderer;

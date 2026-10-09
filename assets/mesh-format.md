@@ -20,7 +20,8 @@ empty/dot/parent components and external symlinks are forbidden. Path components
 use only ASCII letters, digits, underscores, hyphens and dots. The container
 loader validates names; the future filesystem provider must enforce symlink
 containment when resolving them. Material scalar values
-are in [0,1]. Texture index `0xffffffff` means no maps. Albedo is an sRGB factor
+are in [0,1]; material base RGB is linear light and alpha is linear opacity.
+Texture index `0xffffffff` means no maps. Albedo is an sRGB factor
 multiplied by the material's base tint; roughness and normal maps are linear.
 PNG row zero is the top row. UVs use the Blender/OpenGL bottom-left convention;
 the image upload adapter must flip PNG rows to match it. Normal-map +Y follows
@@ -59,4 +60,7 @@ getters borrow arrays until destruction and return zero/NULL for a null model.
 Node/WASM and fresh O1 ASan/UBSan. A diagnostic re-encodes every typed field
 after releasing the source and compares it exactly with the independently
 validated authored container. This is format/ownership evidence. The authored
-game renderer, material/LOD selection and cockpit view remain pending.
+default game integration remains pending. The separate original-free authored
+vehicle/cockpit preview now uploads albedo in linear RGBA8, filters its mip chain
+in linear light and encodes resolved RGB for display. Normal/roughness-map shading
+and the limited 8-bit working precision remain under active 0062/0010.

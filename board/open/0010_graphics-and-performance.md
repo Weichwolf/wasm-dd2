@@ -67,8 +67,49 @@ proof. Full/cockpit component costs already exceed the 16.67-ms budget; the
 Command: make assets-preview-measure.
 Receipt: /tmp/wasm-dd2/authored-preview-timing-0062/report.json.
 
-Prioritize checked linear-light/material/display shading and authored normal/
-roughness evaluation to make the cockpit controls readable. Add contact shadows,
+Authored scene color transfer is now corrected without modifying SoftGL.
+Albedo PNG RGB decodes from sRGB before linear mip filtering/upload; material
+base colors, fixed-function illumination, transparency and MSAA share linear
+RGBA8 staging. The renderer optionally encodes resolved RGB into an owned display
+copy, retaining alpha and the original linear framebuffer. Raw reference output
+remains the default. Immutable lookup tables avoid per-pixel powers and mutable
+initialization; an independent double-precision oracle checks all 256 input bytes.
+Focused GL tests prove alpha, source-independent/in-place transforms, invalid
+requests, repeated non-destructive readback and 0x/2x/4x sample output. The existing
+upload/alpha/minification fixtures now independently expect decoded linear values.
+
+Strict LLVM19 covers 229 C/header files; 51 Native and 49 WASM CTests pass.
+The unchanged 24-image/15-Native/15-sanitized/17-Chromium corpus passes again,
+with fresh O1 ASan/UBSan including reached SoftGL sources and zero-error/no-leak
+Memcheck for both color and material tests. Cross-target diagnostic differences
+are at most 34 pixels and mean channel error 0.000266204.
+Four newly captured actual Native/browser baseline images agree exactly with
+the published b0b4f7e pixel proof. Direct before/after window/canvas inspection
+shows brighter paint/alloy and more legible steering spokes, cage, switches and
+instrument rims/faces. In a fixed dashboard/control rectangle, mean display RGB
+rises from 3.62 to 16.56 on both targets; pixels with all channels below 12 fall
+from 29188 to 1110 of 32500. This region measurement supplements direct review,
+not a qualitative-superiority verdict.
+
+The current thirty-call warmed preview baseline records full/exterior/NPC/cockpit
+medians 13.23/7.34/4.91/15.91 ms Native and
+18.11/11.01/8.05/24.52 ms Chromium. Cockpit p95 is 18.01/26.64 ms.
+This is rendering/resolve/readback/presentation submission with automatic pools,
+excluding normal simulation/events/compositor costs; differing host load means
+it is not an isolated speed comparison with the earlier run. Explicit Native
+four-thread selection and complete-game 60 FPS remain unproved. The display copy
+adds 921600 owned bytes at 640x360. RGBA8 intermediate rounding still loses dark
+material precision and exposes coarse carbon texture patterns; lower controls,
+material response, normal/roughness evaluation, lighting/environment and shadows
+remain incomplete. No default gameplay/audio behavior or authored road is supplied.
+
+Commands: make assets-render-verify; make assets-preview-measure.
+Receipts: /tmp/wasm-dd2/authored-color-0062/after/report.json,
+visual-review-report.json, baseline-capture-report.json, timing/report.json
+and quality-report.json. Completed raw captures/logs are removed after review.
+
+Prioritize authored normal/roughness evaluation, better working precision and
+environmental/interior light to preserve dark detail and make all controls readable. Add contact shadows,
 separate fixed/moving parts and connect the first authored track/sky/scenery.
 
 Use 640x360, 4x MSAA and four total render threads (including the caller) as the
