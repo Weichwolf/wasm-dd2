@@ -220,6 +220,11 @@ plus pause, mute, reset, close and sanitized lifetime. Pitch, levels and impact
 attenuation are rewrite tuning. Skid/crowd/commentary/menu effects, automatic
 game-state music selection and saved audio settings remain pending. Browser pthread builds
 need HTTPS/localhost and COOP/COEP response headers.
+The audio owner and shared application bridge additionally expose transactional
+READY preparation without immediate playback. Native/sanitized callbacks and
+actual Chromium output check silence, cursor zero, retained gain, rollback and
+explicit start. Context selection and countdown/GO integration remain under
+active 0060; this primitive does not implement automatic race/menu music.
 Physics consumers reserve a 1 MiB WASM stack for the bounded coupled-contact
 matrix, transactional twenty-body solver and nested geometry queries; the SDK's
 default 64 KiB is insufficient.

@@ -33,6 +33,14 @@ Fix findings instead of disabling checks or adding blanket suppressions. Run
 changes affecting the shared build/renderer. Preserve functional comparisons
 and add focused checks when a new gameplay subsystem is implemented.
 
+Treat visual quality as a primary acceptance criterion. Inspect actual Native
+windows and browser canvas captures with real input, including relevant moving
+gameplay, camera, vehicle/texture appearance, HUD/results and menu readability.
+Pixel regressions complement human visual inspection; numerical physics checks
+alone do not establish an acceptable player experience. Record concrete visual
+findings and follow-up work on the board, and remove completed captures after
+writing the review evidence.
+
 Maintain `board/README.md` and the current work item. Directory determines work
 item state (`open/active/closed`); preserve IDs and update evidence, next steps
 and acceptance after each verified improvement. Close only the proved contract.

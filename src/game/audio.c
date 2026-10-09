@@ -89,7 +89,8 @@ static bool dd2_game_audio_path(const char *directory, unsigned track,
     return true;
 }
 
-bool dd2_game_audio_music_load(dd2_game_audio *player, unsigned track, const char *path) {
+static bool dd2_game_audio_music_replace(dd2_game_audio *player, unsigned track, const char *path,
+                                         bool start) {
     if (player == NULL || track < DD2_MIXER_FIRST_TRACK || track > DD2_MIXER_LAST_TRACK) {
         return false;
     }
@@ -109,7 +110,7 @@ bool dd2_game_audio_music_load(dd2_game_audio *player, unsigned track, const cha
     }
     dd2_mixer *mixer = dd2_audio_device_acquire(player->device);
     const bool loaded = dd2_mixer_music_select(mixer, track, &pcm, true);
-    if (loaded) {
+    if (loaded && start) {
         dd2_mixer_music_start(mixer);
     }
     dd2_audio_device_release(player->device);
@@ -120,6 +121,14 @@ bool dd2_game_audio_music_load(dd2_game_audio *player, unsigned track, const cha
     dd2_file_release(&player->file);
     player->file = next;
     return true;
+}
+
+bool dd2_game_audio_music_load(dd2_game_audio *player, unsigned track, const char *path) {
+    return dd2_game_audio_music_replace(player, track, path, true);
+}
+
+bool dd2_game_audio_music_prepare(dd2_game_audio *player, unsigned track, const char *path) {
+    return dd2_game_audio_music_replace(player, track, path, false);
 }
 
 dd2_music_state dd2_game_audio_music_state(dd2_game_audio *player) {

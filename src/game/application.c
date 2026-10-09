@@ -488,16 +488,26 @@ int dd2_application_current_view(void) {
     return (int)race->rules.mode + 3;
 }
 
-int dd2_application_load_music(unsigned track) {
+static int dd2_application_replace_music(unsigned track, bool start) {
     dd2_application *application = dd2_current_application;
     if (application == NULL) {
         return 0;
     }
 #ifdef __EMSCRIPTEN__
-    return (int)dd2_game_audio_music_load(application->audio, track, "/Music.cdda");
+    const char *path = "/Music.cdda";
 #else
-    return (int)dd2_game_audio_music_load(application->audio, track, NULL);
+    const char *path = NULL;
 #endif
+    return start ? (int)dd2_game_audio_music_load(application->audio, track, path)
+                 : (int)dd2_game_audio_music_prepare(application->audio, track, path);
+}
+
+int dd2_application_load_music(unsigned track) {
+    return dd2_application_replace_music(track, true);
+}
+
+int dd2_application_prepare_music(unsigned track) {
+    return dd2_application_replace_music(track, false);
 }
 
 int dd2_application_music_phase(void) {

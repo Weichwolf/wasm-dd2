@@ -12,6 +12,7 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
@@ -105,6 +106,37 @@ def native_check(output, archive, binary, label):
         ui.close()
 
 
+def preparation_check(output, archive, binary, label):
+    pattern = output / (label + '.cdda')
+    malformed = output / (label + '-malformed.cdda')
+    raw = output / (label + '.pcm')
+    log_path = output / (label + '.log')
+    pattern.write_bytes(struct.pack('<hh', 12000, -6000) * 4093)
+    malformed.write_bytes(b'bad')
+    env = dict(os.environ, SDL_AUDIODRIVER='disk', SDL_DISKAUDIOFILE=str(raw),
+               SDL_DISKAUDIODELAY='21', ASAN_OPTIONS='detect_leaks=1:halt_on_error=1',
+               UBSAN_OPTIONS='halt_on_error=1')
+    with log_path.open('wb') as log:
+        run_bounded([str(binary), str(archive), str(pattern), str(malformed)],
+                    directory=output, timeout=15, env=env, stdout=log,
+                    stderr=subprocess.STDOUT, check=True)
+    rows = [json.loads(line) for line in log_path.read_text().splitlines() if line.startswith('{')]
+    if len(rows) != 1 or not rows[0]['pass_']:
+        raise ValueError(label + ': preparation checks failed')
+    captured = raw.read_bytes()
+    frames = list(struct.iter_unpack('<hh', captured))
+    first = next((index for index, frame in enumerate(frames) if frame != (0, 0)), None)
+    if first is None or first < 1024 or not any(frame == (0, 0) for frame in frames[first:]):
+        raise ValueError(label + ': missing READY/start/pause output transitions')
+    if any(frame not in ((0, 0), (6000, -3000)) for frame in frames):
+        raise ValueError(label + ': actual preparation/start PCM or gain differs')
+    return dict(pass_=True, state_checks=rows[0]['checks'], binary_sha256=digest(binary),
+                source_pcm_sha256=digest(pattern), capture_sha256=digest(raw),
+                startup_ready_silent_frames=first, captured_frames=len(frames),
+                contract='READY stays at zero through callbacks; explicit start, replacement, '
+                         'gain, pause, failed READY/PLAYING/PAUSED loads and joined close')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=WORK / 'rewrite-music-output-verification')
@@ -115,18 +147,26 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     check_space(output)
     source_names = [str(path.relative_to(ROOT)) for path in (ROOT / 'src').rglob('*') if path.is_file()]
-    source_names += ['CMakeLists.txt', 'tests/audio_device_test.c',
+    source_names += ['CMakeLists.txt', 'tests/audio_device_test.c', 'tests/music_prepare_export.c',
                      'tools/rewrite/verify_music_output.py', 'tools/rewrite/verify_music_browser.js',
                      'tools/rewrite/verify_window.py']
     source_hashes = {name: digest(ROOT / name) for name in source_names}
     archive = (ROOT / 'DestructionDerby2/Dirinfo').resolve()
     report = dict(pass_=False, scope=__doc__.strip(), source_sha256=source_hashes,
                   verified_at=datetime.now(timezone.utc).isoformat(), archive_sha256=digest(archive))
-    server = thread = sanitized = None
+    server = thread = sanitized = prepared_sanitized = None
     try:
         report['native'] = native_check(output, archive, WORK / 'rewrite-native/dd2_app', 'native-music')
         sanitized = build_sanitized(output)
         report['sanitized'] = native_check(output, archive, sanitized, 'sanitized-music')
+        report['preparation'] = {
+            'native': preparation_check(output, archive, WORK / 'rewrite-native/dd2_music_prepare_export',
+                                        'native-preparation')}
+        preparation_output = output / 'sanitized-preparation'
+        preparation_output.mkdir()
+        prepared_sanitized = build_sanitized(preparation_output, ROOT / 'tests/music_prepare_export.c')
+        report['preparation']['sanitized'] = preparation_check(
+            preparation_output, archive, prepared_sanitized, 'sanitized-preparation')
         report['sanitizer_scope'] = 'All rewrite C application units instrumented; SDL2 and pinned release SoftGL uninstrumented'
         server = ThreadingHTTPServer(('127.0.0.1', 0), partial(Handler, directory=str(BUILD)))
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -143,7 +183,7 @@ def main():
             report['browser'][rate] = json.loads((output / ('browser-music-' + rate + '.json')).read_text())
             if not report['browser'][rate]['pass_']:
                 raise ValueError('Browser playback not verified: ' + rate)
-        for log in output.glob('*.log'):
+        for log in output.rglob('*.log'):
             content = log.read_text(errors='replace')
             if 'Sanitizer:' in content or 'runtime error:' in content:
                 raise ValueError('Sanitizer finding: ' + log.name)
@@ -155,13 +195,14 @@ def main():
     finally:
         if server is not None:
             server.shutdown(); server.server_close(); thread.join(timeout=5)
-        report['log_sha256'] = {path.name: digest(path) for path in output.glob('*.log')}
+        report['log_sha256'] = {str(path.relative_to(output)): digest(path) for path in output.rglob('*.log')}
         (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
         if report['pass_']:
             if sanitized is not None: sanitized.unlink()
+            if prepared_sanitized is not None: prepared_sanitized.unlink()
             opened = open_files()
-            for path in output.iterdir():
-                if path.suffix in ('.pcm', '.log'):
+            for path in output.rglob('*'):
+                if path.suffix in ('.pcm', '.log', '.cdda'):
                     stat = path.stat()
                     if (stat.st_dev, stat.st_ino) not in opened: path.unlink()
     check_space(output)

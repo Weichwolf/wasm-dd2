@@ -52,6 +52,9 @@ int dd2_application_current_view(void);
  * staged /Music.cdda local file. Failure preserves the current playing track.
  * Phase -1 means no device/application; otherwise dd2_music_phase. */
 int dd2_application_load_music(unsigned track);
+/* Select READY without playback; the browser supplies /Music.cdda just as for
+ * load. This bridge does not select game contexts or start music at GO yet. */
+int dd2_application_prepare_music(unsigned track);
 int dd2_application_music_phase(void);
 unsigned dd2_application_music_track(void);
 unsigned dd2_application_music_frame(void);

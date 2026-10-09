@@ -79,6 +79,38 @@ async function verifyOutput(page, source, gain = 256) {
   expect(rows.reduce((total, row) => total + row.nonzero_samples, 0) > 0 || gain === 0, 'WebAudio output remained silent');
   report.comparisons.push({track: chunks[0].track, source_sha256: digest(source), callbacks: rows});
 }
+async function verifyPrepared(page, pattern) {
+  const prepared = await fixed(page, () => page.evaluate(bytes => {
+    Module.FS.writeFile('/Music.cdda', new Uint8Array(bytes));
+    try { return Module._dd2_application_prepare_music(14); }
+    finally { Module.FS.unlink('/Music.cdda'); }
+  }, Array.from(pattern)), 'Prepared track');
+  expect(prepared.phase === 1 && prepared.track === 14 && prepared.frame === 0 && prepared.fraction === 0,
+    'Preparation started playback or retained the previous cursor');
+  await page.evaluate(() => { window.musicCapture.chunks = []; window.musicCapture.silence = true; window.musicCapture.armed = true; });
+  await page.waitForFunction(() => window.musicCapture.chunks.length >= 8, null, {timeout: 15000});
+  const chunks = await page.evaluate(() => { window.musicCapture.armed = false; return window.musicCapture.chunks; });
+  for (const chunk of chunks) {
+    expect(chunk.track === 14 && chunk.frame === 0 && chunk.fraction === 0 &&
+      chunk.left.every(value => value === 0) && chunk.right.every(value => value === 0),
+      'READY emitted audio or advanced its cursor');
+  }
+  const rollback = await page.evaluate(() => {
+    Module.FS.writeFile('/Music.cdda', new Uint8Array([1, 2, 3]));
+    try {
+      return !Module._dd2_application_prepare_music(15) && Module._dd2_application_music_phase() === 1 &&
+        Module._dd2_application_music_track() === 14 && Module._dd2_application_music_frame() === 0 &&
+        Module._dd2_application_music_fraction() === 0 && Module._dd2_application_music_gain() === 256;
+    } finally { Module.FS.unlink('/Music.cdda'); }
+  });
+  expect(rollback, 'Failed preparation changed READY state');
+  expect(await page.evaluate(() => Module._dd2_application_set_music_playing(1)) === 1, 'Prepared title did not start');
+  await advances(page);
+  await verifyOutput(page, pattern);
+  report.preparation = {pass_: true, track: 14, silent_callbacks: chunks.length,
+    silent_frames: chunks.reduce((total, chunk) => total + chunk.left.length, 0), rollback: true,
+    scope: 'Actual READY output and explicit start; game-context/GO integration remains pending'};
+}
 (async () => {
   const browser = await chromium.launch({headless: true});
   try {
@@ -137,6 +169,7 @@ async function verifyOutput(page, source, gain = 256) {
     await page.locator('#canvas').click();
     await page.waitForFunction(() => Module._dd2_application_music_track() === 19);
     await verifyOutput(page, pattern);
+    await verifyPrepared(page, pattern);
     await page.locator('#music-gain').evaluate(element => { element.value = '128'; element.dispatchEvent(new Event('input', {bubbles: true})); });
     await verifyOutput(page, pattern, 128);
     await page.locator('#music-gain').evaluate(element => { element.value = '0'; element.dispatchEvent(new Event('input', {bubbles: true})); });
@@ -172,7 +205,7 @@ async function verifyOutput(page, source, gain = 256) {
     await page.waitForFunction(() => Module._dd2_application_current_level() === 0);
     expect(!errors.length, 'Browser errors: ' + errors.join('\n'));
     report.controls = ['actual local original tracks 2/3', 'transport pause/resume', 'focus freeze/resume',
-      'game pause/resume', 'malformed load rollback', 'repeat wrap', 'gain/mute', 'F10', 'close/reopen', 'pending local read cancellation'];
+      'game pause/resume', 'malformed load rollback', 'READY prepare/start and rollback', 'repeat wrap', 'gain/mute', 'F10', 'close/reopen', 'pending local read cancellation'];
     report.pass_ = true;
   } finally {
     report.errors = errors;

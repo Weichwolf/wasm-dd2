@@ -19,6 +19,10 @@ typedef struct dd2_game_audio dd2_game_audio;
 dd2_game_audio *dd2_game_audio_create(const char *archive_path, const dd2_archive *archive);
 void dd2_game_audio_destroy(dd2_game_audio *player);
 bool dd2_game_audio_music_load(dd2_game_audio *player, unsigned track, const char *path);
+/* Transactionally select a repeating track in READY at cursor zero, without
+ * starting playback. Explicit play starts it later; failed preparation retains
+ * the entire previous source/transport/gain. Device suspension is independent. */
+bool dd2_game_audio_music_prepare(dd2_game_audio *player, unsigned track, const char *path);
 bool dd2_game_audio_music_play(dd2_game_audio *player, bool playing);
 bool dd2_game_audio_music_gain(dd2_game_audio *player, unsigned gain);
 void dd2_game_audio_suspend(dd2_game_audio *player, bool suspended);

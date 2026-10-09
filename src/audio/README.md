@@ -73,9 +73,19 @@ Native starts track 2 when provisioned, F10 pauses/resumes, and F11/F12 moves
 through physical tracks 2..19. Browser file selection, music and volume controls
 use the same C transport. Audio-device failure permits visual gameplay.
 
+`dd2_game_audio_music_prepare` and the shared application bridge select an owned
+repeating title in READY at cursor zero without starting it. Explicit play starts
+it later. Preparation uses the same locked replacement as immediate loading;
+missing/invalid files retain the previous complete transport and gain. READY
+remains silent while the device is running. This is the preparation primitive
+for 0060, not automatic game-context selection or an implemented GO transition.
+
 `make rewrite-music-output-verify` compares real Native SDL disk callback output
 and browser WebAudio node samples with an independent integer CDDA oracle. It
 also checks Native ASan/UBSan lifetime and browser repeat/control/rollback/reopen.
+Native and sanitized preparation exports check READY/PLAYING/PAUSED rollback,
+replacement, retained gain and callbacks. Actual browser output checks READY
+silence and independent PCM after explicit start at both device rates.
 This establishes this rewrite's output, without claiming original audio engine
 or speaker hardware parity.
 
@@ -101,4 +111,5 @@ browser four-voice mixtures at 44,100/48,000 Hz against independent original-WAV
 resampling. Real controls exercise countdown, engine pitch, impacts, pause,
 mute, reset and close; ASan/UBSan checks event/effect units and application
 lifetime. These are scoped rewrite checks. Skid, crowd, commentary and menu
-sounds, automatic race/menu music selection and saved audio settings remain open.
+sounds and automatic race/menu music selection remain open. Saved audio gains
+and explicit preference restoration are proved under 0058.

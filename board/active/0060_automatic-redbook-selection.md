@@ -35,10 +35,29 @@ Use `make rewrite-original-music-selection-verify`. Receipt:
 This is an original component/data contract, not implemented automatic rewrite
 selection, actual output PCM or complete audio acceptance.
 
+The shared audio owner and application bridge now support transactional READY
+preparation independently of immediate loading. Selection retains gain and
+does not start or advance the cursor through device callbacks; explicit play
+starts it later. Failed preparation retains the whole previous source/transport.
+Native and fresh O1 ASan/UBSan exports pass 36 checks each, including failures
+in READY/PLAYING/PAUSED, playing replacement, pause/resume and active close.
+SDL disk captures independently match constant stereo PCM at the retained gain.
+Actual Chromium node buffers prove eight silent READY callbacks, malformed-load
+rollback and independent variable-pattern resampling after explicit start at
+the default and 48000-Hz device rates. Existing real track 2/3 PCM, immediate
+loads, controls, wrap/gain/mute and close/read cancellation remain checked.
+Use `make rewrite-music-output-verify`; receipt:
+/tmp/wasm-dd2/rewrite-redbook-preparation-0060/report.json.
+This is an accepted transport primitive, not automatic context selection or GO
+integration; 0060 remains active.
+Strict LLVM19 format/tidy passes 208 C/header files; 47 Native and 45 WASM
+CTests pass. Actual visual review is separate: 0061 records a browser modal
+canvas-loss finding; the audio primitive does not claim full visual acceptance.
+
 ## Next
 
 Implement a typed context/request owner using the committed application/session
-state. Apply requests once, prepare titles without early countdown playback and
+state. Apply requests once using READY preparation and
 preserve manual transport until a real context change. Connect Native file
 resolution and browser file availability/asynchronous loading to the existing
 locked device owner. Check preparation failure, canceled transitions, stale

@@ -109,6 +109,26 @@ the former source's exact late field, or an isolated performance improvement.
 Receipts: /tmp/wasm-dd2/rewrite-certified-arena-0053/owners/
 {identity,8-total-survive-native,8-total-survive-wasm}.json.
 
+The fresh O1 ASan/UBSan Arena-8 owner reaches the unchanged 1800-second deadline
+without natural results. Every complete prefix row passes the independent owner,
+clock, damage, pursuit and recovery checks through tick 41732; twenty engines
+remain available. The player is moving, with front damage 0.793975/0.449212.
+The valid prefix is not natural-result acceptance. Its terminal receipt retains
+the last complete public field and capture hashes; completed raw output and
+private binaries are removed. Receipt:
+/tmp/wasm-dd2/rewrite-certified-arena-0053/arena8-terminal-report.json.
+
+The remaining natural scenarios use a detached d070edc checkout and copied,
+hash-checked production Native/WASM binaries so independent audio implementation
+does not invalidate their inputs. Native Arena 9 reaches natural retirement and
+coasting results at tick 44818 (219.085 seconds survival). WASM Arena 9 exits
+without results after its last complete tick 18935; the failed advance needs a
+captured physical query, not an assumed solver cause. Sanitized Arena 9 is still
+running; Arena A/B have not started. Preserve its live files. See
+/tmp/wasm-dd2/rewrite-certified-arena-0053/frozen-input-report.json and
+frozen-build/remaining-owners/9-total-survive-{native,wasm}.json. These scoped
+receipts keep the full natural-owner contract open.
+
 ## Verified late-motion diagnosis
 
 The read-only late WASM diagnostic is now terminal after its planned 1740-second

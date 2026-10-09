@@ -65,6 +65,7 @@ its game requirements or acceptance rules.
 | [0058](active/0058_configuration-and-saved-game-actions.md) | Configuration and saved-game application actions | active |
 | [0059](closed/0059_checked-residual-fleet-motion.md) | Certify independent motion at the fleet response budget | closed |
 | [0060](active/0060_automatic-redbook-selection.md) | Automatic game/frontend Redbook selection | active |
+| [0061](active/0061_browser-modal-redraw.md) | Browser modal presentation after viewport changes | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -72,6 +73,12 @@ its game requirements or acceptance rules.
 Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
+Visual inspection of actual Native/browser play is a primary acceptance check,
+alongside pixel regressions. Current sampled HUD/dialogs are readable, but sky,
+shadows, texture quality and browser playfield placement need visual improvement.
+The review also reproduces a black browser canvas after a full-page viewport
+capture in the F2 modal; 0061 owns diagnosis and correction. Physics checks alone
+do not establish an acceptable player experience.
 
 Current vehicle work is 0005: original class drive/grip/axle parameters now
 affect actual physical fields. Closed 0059 restores all 22 strict drive/start
@@ -103,8 +110,11 @@ comparisons again with the selected-class preview and current class forces.
 
 Actual source-3145183 Arena-8 Native/WASM owners now reach natural
 engine-retirement/coasting results at ticks 15425/25530, with 72.12/122.645 seconds
-survival. Their complete independent target receipts pass; sanitized and
-all-arena acceptance remain unproved. See active 0053 and
+survival. Their complete independent target receipts pass. Sanitized Arena 8
+times out after 41732 independently valid steps without natural results.
+The frozen remaining owner suite passes Native Arena 9 but WASM exits after
+tick 18935 without results; sanitized Arena 9 is running and A/B have not started.
+Sanitized/all-arena acceptance remains unproved. See active 0053 and
 /tmp/wasm-dd2/rewrite-certified-arena-0053/owners/.
 
 Current audio preparation is 0060: it establishes the actual original CD contexts:
@@ -113,6 +123,11 @@ independent menu/asset mappings pass. Main/practice results use track 13;
 race music follows loaded level + 1 and starts at GO; championship results use
 14 and season completion 15. Automatic Native/browser application integration
 remains open. The existing saved gains are proved under 0058.
+The shared audio owner now supports transactional READY preparation separately
+from immediate playback. Native/sanitized ownership checks and actual browser
+silence/start PCM are verified under the music-output command. Next connect
+committed contexts, countdown/GO and asynchronous browser file availability;
+the preparation primitive does not close 0060.
 
 Optional diagnostic packages are installed and their access probes are recorded
 under 0010. Native Memcheck/Callgrind work without elevated privileges; perf and
