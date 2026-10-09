@@ -1,3 +1,4 @@
+#include "assets/car.h"
 #include "assets/car_class.h"
 #include "assets/model.h"
 #include "assets/road.h"
@@ -41,6 +42,16 @@ static bool dd2_track_test_owner(void) {
         passed = passed && dd2_model_index_count(
                                dd2_track_prepared_model(track, (dd2_track_model_kind)kind)) == 3;
     }
+    for (unsigned livery = 0; livery < DD2_CAR_LIVERIES; ++livery) {
+        for (unsigned detail = 0; detail < DD2_TRACK_BODY_LODS; ++detail) {
+            passed = passed && dd2_model_index_count(dd2_track_prepared_car(
+                                   track, livery, (dd2_track_model_kind)detail)) == 3;
+        }
+    }
+    passed = passed &&
+             dd2_track_prepared_car(track, DD2_CAR_LIVERIES, DD2_TRACK_MODEL_CLOSE) == NULL &&
+             dd2_track_prepared_car(track, 0, DD2_TRACK_MODEL_WHEEL_PRIMARY) == NULL &&
+             dd2_track_prepared_car(track, 0, (dd2_track_model_kind)-1) == NULL;
     passed = passed && dd2_track_prepared_model(track, DD2_TRACK_MODEL_COUNT) == NULL &&
              dd2_track_prepared_model(track, (dd2_track_model_kind)-1) == NULL;
     dd2_track_destroy(track);
@@ -64,7 +75,7 @@ static bool dd2_track_test_rejections(void) {
             return false;
         }
     }
-    for (size_t missing = 0; missing < DD2_TRACK_MODEL_COUNT; ++missing) {
+    for (size_t missing = 0; missing < DD2_TRACK_TEST_TEMPLATES; ++missing) {
         dd2_track_test_source((dd2_track_test_buffers){.scene = scene, .road = road});
         scene[DD2_WORLD_TEST_TEMPLATE + (missing * DD2_TRACK_TEST_TEMPLATE_BYTES)] = 'x';
         dd2_world_test_loader_state state = {0};

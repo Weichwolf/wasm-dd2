@@ -81,7 +81,21 @@ async function main() {
       await page.click('#reset');await match(page,code,'start');
       await page.selectOption('#view','0');
     }
-    await page.selectOption('#level','1');await page.selectOption('#view','2');
+    await page.selectOption('#level','1');await page.selectOption('#view','1');
+    const classBodies=[];
+    for(let carClass=0;carClass<3;carClass++) {
+      await page.selectOption('#car-class',String(carClass));
+      await page.waitForFunction(value=>Module._dd2_application_current_car()===value,carClass);
+      await pause(300);
+      classBodies.push(digest((await pixels(page)).subarray(0,640*300*3)));
+      await page.locator('#canvas').screenshot({path:path.join(output,`browser-class-${carClass}.png`)});
+    }
+    if(new Set(classBodies).size!==3) throw new Error('Prepared browser classes changed only the HUD');
+    await page.locator('#canvas').focus();await page.keyboard.press('F1');
+    await page.waitForFunction(()=>Module._dd2_application_current_car()===0);
+    await match(page,'1','car');
+    report.class_body_sha256=classBodies;
+    await page.selectOption('#view','2');
     await page.evaluate(()=>Module._dd2_application_set_paused(1));await page.click('#reset');
     const baseline=await pixels(page);
     await page.click('#pause');await page.locator('#canvas').focus();

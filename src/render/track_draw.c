@@ -1,6 +1,7 @@
 #include "render/track_draw.h"
 
 #include "assets/bounds.h"
+#include "assets/car.h"
 #include "assets/car_class.h"
 #include "assets/level.h"
 #include "assets/model.h"
@@ -23,7 +24,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-enum { DD2_TRACK_DRAW_MODELS = 5, DD2_TRACK_DRAW_AXES = 3 };
+enum {
+    DD2_TRACK_DRAW_BODIES = DD2_CAR_LIVERIES * DD2_TRACK_BODY_LODS,
+    DD2_TRACK_DRAW_MODELS = DD2_TRACK_DRAW_BODIES + 2,
+    DD2_TRACK_DRAW_AXES = 3
+};
 static const float dd2_track_draw_body_height = -60.0F / (float)DD2_ROAD_UNITS_PER_METER;
 static const float dd2_track_draw_wheel_width = 152.0F / (float)DD2_ROAD_UNITS_PER_METER;
 static const float dd2_track_draw_wheel_front = 291.0F / (float)DD2_ROAD_UNITS_PER_METER;
@@ -43,6 +48,16 @@ struct dd2_track_draw {
     dd2_bounds bounds[DD2_TRACK_DRAW_MODELS];
     dd2_track_draw_stats stats;
 };
+
+static const dd2_model *dd2_track_draw_source(const dd2_track *track, unsigned slot) {
+    if (slot < DD2_TRACK_DRAW_BODIES) {
+        return dd2_track_prepared_car(track, slot / DD2_TRACK_BODY_LODS,
+                                      (dd2_track_model_kind)(slot % DD2_TRACK_BODY_LODS));
+    }
+    return dd2_track_prepared_model(track, slot == DD2_TRACK_DRAW_BODIES
+                                               ? DD2_TRACK_MODEL_WHEEL_PRIMARY
+                                               : DD2_TRACK_MODEL_WHEEL_SECONDARY);
+}
 
 void dd2_track_draw_destroy(dd2_track_draw *draw) {
     if (draw != NULL) {
@@ -83,7 +98,7 @@ dd2_track_draw *dd2_track_draw_create(const dd2_track *track, dd2_model_image_lo
         return NULL;
     }
     for (unsigned kind = 0; kind < DD2_TRACK_DRAW_MODELS; ++kind) {
-        const dd2_model *model = dd2_track_prepared_model(track, (dd2_track_model_kind)kind);
+        const dd2_model *model = dd2_track_draw_source(track, kind);
         const dd2_model_vertex *vertices = dd2_model_vertices(model);
         if (vertices == NULL) {
             dd2_track_draw_destroy(draw);
@@ -118,7 +133,7 @@ bool dd2_track_draw_fit(const dd2_track *track, dd2_camera *camera, bool car) {
                : dd2_camera_fit_scene(camera, dd2_track_scene(track));
 }
 
-static bool dd2_track_draw_model(dd2_track_draw *draw, dd2_track_model_kind kind,
+static bool dd2_track_draw_model(dd2_track_draw *draw, unsigned kind,
                                  dd2_model_draw_options options) {
     float projection[DD2_FRUSTUM_MATRIX] = {0};
     float modelview[DD2_FRUSTUM_MATRIX] = {0};
@@ -131,8 +146,8 @@ static bool dd2_track_draw_model(dd2_track_draw *draw, dd2_track_model_kind kind
     }
     dd2_model_draw **model = &draw->models[kind];
     if (*model == NULL) {
-        *model = dd2_model_draw_create_shared(dd2_track_prepared_model(draw->track, kind),
-                                              draw->textures);
+        *model =
+            dd2_model_draw_create_shared(dd2_track_draw_source(draw->track, kind), draw->textures);
     }
     if (*model == NULL || !dd2_model_draw_frame(*model, options)) {
         return false;
@@ -141,8 +156,8 @@ static bool dd2_track_draw_model(dd2_track_draw *draw, dd2_track_model_kind kind
     ++draw->stats.vehicle_models;
     draw->stats.vehicle_triangles += stats.triangles;
     draw->stats.vehicle_batches += stats.batches;
-    if (kind <= DD2_TRACK_MODEL_DISTANT) {
-        ++draw->stats.body_lods[kind];
+    if (kind < DD2_TRACK_DRAW_BODIES) {
+        ++draw->stats.body_lods[kind % DD2_TRACK_BODY_LODS];
     }
     return true;
 }
@@ -200,7 +215,9 @@ static bool dd2_track_draw_vehicle(dd2_track_draw *draw, dd2_driving_view view,
     dd2_track_draw_pose(view.vehicle);
     glPushMatrix();
     glTranslatef(0, dd2_track_draw_body_height, 0);
-    bool passed = dd2_track_draw_model(draw, kind, options);
+    const unsigned livery = dd2_car_livery_index(view.driver, view.car_class);
+    bool passed =
+        dd2_track_draw_model(draw, (livery * DD2_TRACK_BODY_LODS) + (unsigned)kind, options);
     glPopMatrix();
     for (unsigned wheel = 0; wheel < DD2_VEHICLE_WHEELS && passed; ++wheel) {
         const bool front = (wheel & 1U) == 0;
@@ -231,10 +248,7 @@ static bool dd2_track_draw_vehicle(dd2_track_draw *draw, dd2_driving_view view,
         glRotatef((float)(view.wheel_roll * dd2_track_draw_degrees), 1, 0, 0);
         glScalef(dd2_track_draw_wheel_scale, dd2_track_draw_wheel_scale,
                  dd2_track_draw_wheel_scale);
-        passed = dd2_track_draw_model(draw,
-                                      (wheel & 1U) == 0 ? DD2_TRACK_MODEL_WHEEL_PRIMARY
-                                                        : DD2_TRACK_MODEL_WHEEL_SECONDARY,
-                                      options);
+        passed = dd2_track_draw_model(draw, DD2_TRACK_DRAW_BODIES + (wheel & 1U), options);
         glPopMatrix();
     }
     glPopMatrix();
@@ -243,7 +257,9 @@ static bool dd2_track_draw_vehicle(dd2_track_draw *draw, dd2_driving_view view,
 
 bool dd2_track_draw_inspect(dd2_track_draw *draw, const dd2_camera *camera, bool car,
                             dd2_render_options viewport, dd2_car_class car_class) {
-    if (draw == NULL || camera == NULL || viewport.width <= 0 || viewport.height <= 0) {
+    const unsigned livery = dd2_car_livery_index(0, car_class);
+    if (draw == NULL || camera == NULL || viewport.width <= 0 || viewport.height <= 0 ||
+        livery >= DD2_CAR_LIVERIES) {
         return false;
     }
     draw->stats = (dd2_track_draw_stats){0};
@@ -255,7 +271,7 @@ bool dd2_track_draw_inspect(dd2_track_draw *draw, const dd2_camera *camera, bool
                    : dd2_scene_draw(draw->reference, dd2_track_scene(draw->track));
     }
     const dd2_model_draw_options options = {.double_sided = true, .cutout_textures = true};
-    const bool passed = car ? dd2_track_draw_model(draw, DD2_TRACK_MODEL_CLOSE, options)
+    const bool passed = car ? dd2_track_draw_model(draw, livery * DD2_TRACK_BODY_LODS, options)
                             : dd2_world_draw_frame(draw->world, options, &draw->stats.world);
     draw->stats.uploaded_textures = dd2_model_texture_cache_count(draw->textures);
     return passed;
@@ -264,6 +280,7 @@ bool dd2_track_draw_inspect(dd2_track_draw *draw, const dd2_camera *camera, bool
 bool dd2_track_draw_driving(dd2_track_draw *draw, dd2_driving_view view) {
     if (draw == NULL || view.vehicle == NULL || !dd2_vehicle_valid(view.vehicle) ||
         view.viewport.width <= 0 || view.viewport.height <= 0 ||
+        dd2_car_livery_index(view.driver, view.car_class) >= DD2_CAR_LIVERIES ||
         view.opponent_count >= DD2_VEHICLE_FLEET_LIMIT ||
         (view.opponent_count != 0 && (view.opponents == NULL || view.opponent_rolls == NULL))) {
         return false;

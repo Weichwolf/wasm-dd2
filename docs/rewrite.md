@@ -29,7 +29,7 @@ acceptance requirements.
 This is the expanded target, not complete standalone acceptance. The default
 application now selects committed prepared roads/worlds/meshes/PNGs without
 Dirinfo or original sound-bank/CDDA startup inputs. Its prepared audio owner,
-liveries, body deformation, cockpit and sky rendering still need migration. The
+body deformation, cockpit and sky rendering still need migration. The
 reference-dependent component evidence below describes optional comparison mode. Work item 0062 owns the asset inventory, Blender/procedural/audio pipeline
 and removal of all mandatory original runtime inputs. Preserve existing useful
 functional comparisons as optional reference checks while making the default
@@ -62,7 +62,7 @@ alpha masks use depth-writing cutouts. All eleven scene field exports and 21
 malformed variants pass on Native/WASM/sanitized; 66 full/crop images and 44
 cross-target comparisons pass. Direct circuit/arena review finds plausible
 layout but limited floor contrast and incomplete terrain/sky. Prepared worlds
-and roads now reach default gameplay/browser presentation; liveries, cockpit,
+and roads now reach default gameplay/browser presentation; cockpit,
 sky, new UI/audio content and complete four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
 
 The owned model renderer now selects only cockpit/steering roles for the player
@@ -97,8 +97,9 @@ explicit 160-unit/meter convention. Close/medium/distant bodies and suspended,
 steered/rolling wheels share the world's texture cache; full posed AABBs are
 culled before lazy model creation/submission. Opponent body LOD uses 30/90-meter
 thresholds, with the player's exterior kept close. Prepared launch renders
-640x360/4x MSAA with filtered textures and sRGB display encoding. Audio, livery
-remaps, damage deformation, complete cockpits and sky rendering remain pending;
+640x360/4x MSAA with filtered textures and sRGB display encoding. All 22 driver/class paint variants at each body LOD now select committed models
+and PNGs; color/number remapping is offline only. Audio, damage deformation,
+complete cockpits and sky rendering remain pending;
 this is a launch/presentation migration, not complete game/quality acceptance.
 
 From the repository root, `make rewrite-native` builds the application; run
@@ -376,9 +377,9 @@ make clean-logs
 ```
 
 `make rewrite-play LEVEL=1` opens the native track/car/free-driving application. `make rewrite-web`
-serves the browser viewer at `http://127.0.0.1:8080/`; select the provisioned
-`DestructionDerby2/Dirinfo` file in the page. Assets remain local and are not
-included in the browser distribution. Arrow keys orbit/tilt, WASD pans, plus/minus
+serves the prepared browser game at `http://127.0.0.1:8080/` with committed
+meshes, textures and roads already packaged. Original files are optional inputs
+only in the explicit `?reference=1` comparison mode. Arrow keys orbit/tilt, WASD pans, plus/minus
 or the wheel zooms, R resets, Tab switches track/car, Page Up/Down changes level,
 and Escape closes the view. C starts Wrecking Championship and N starts Stockcar
 Championship. During a championship, tracks follow the original schedule; R

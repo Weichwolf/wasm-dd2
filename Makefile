@@ -150,8 +150,8 @@ rewrite-accidents-verify: ## verify source-inspired accident rules in full field
 .PHONY: rewrite-driving-verify
 .PHONY: rewrite-vehicle-verify
 .PHONY: rewrite-play rewrite-web rewrite-window-verify
-rewrite-play: rewrite-native ## open the interactive track/car viewer with provisioned original assets
-	/tmp/wasm-dd2/rewrite-native/dd2_app "$(GAMEDIR)/Dirinfo" "$(LEVEL)"
+rewrite-play: rewrite-native ## open the prepared game without original game files
+	/tmp/wasm-dd2/rewrite-native/dd2_app --assets "$(ROOT)/assets/runtime" "$(LEVEL)"
 
 rewrite-web: rewrite-wasm ## serve the prepared game on localhost:8080; optional reference mode uses ?reference=1
 	python3 $(ROOT)/tools/rewrite/serve.py
@@ -331,7 +331,7 @@ clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
 
 .PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
-.PHONY: assets-convert-reference assets-reference-verify assets-scenes-prepare assets-world-verify assets-world-render-verify
+.PHONY: assets-convert-reference assets-convert-liveries assets-reference-verify assets-scenes-prepare assets-world-verify assets-world-render-verify
 .PHONY: assets-convert-roads assets-roads-prepare assets-roads-verify
 .PHONY: assets-tracks-verify
 assets-tracks-verify: ## verify prepared track providers, moving fields and static scenes on all targets
@@ -377,11 +377,15 @@ assets-world-verify: ## verify owned scene fields/models and malformed-scene rol
 assets-convert-reference: ## offline one-time reference conversion; original archive is a development input only
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_reference.py
 
+assets-convert-liveries: ## one-time offline paint/number conversion; normal builds never invoke this
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_liveries.py
+
 assets-reference-verify: ## verify prepared geometry/maps without opening original game files
 	$(MAKE) clean-logs
 	$(MAKE) rewrite-check rewrite-wasm
 	ctest --preset rewrite-wasm
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/test_convert_reference.py
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_liveries.py
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_reference.py
 	$(MAKE) clean-logs
 

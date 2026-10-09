@@ -1,7 +1,8 @@
 /* Execute original sprite/class selection and high-detail car paint/number
  * remapping. Only copied fixture data is relocated; original code and files
  * remain unchanged. Opponents use the high-detail mesh for this component
- * comparison, not the original runtime's low/medium detail selection. */
+ * comparison by default. An optional detail argument selects medium/distant
+ * paint tables and the corresponding original number policy. */
 #include "pe_fixture.h"
 
 #define SpriteInfo ((void (*)(void*))(uintptr_t)0x4166c0)
@@ -97,8 +98,12 @@ static void snapshot(FILE *out,unsigned driver,unsigned car_class) {
     require(0,"terminated snapshot mesh");
 }
 int main(int argc,char **argv) {
-    FILE *out;unsigned car_class,driver;
-    require(argc==6,"original exe, sprites, high mesh, definitions and output required");
+    FILE *out;unsigned car_class,driver,detail=0;
+    require(argc==6 || argc==7,"original exe, sprites, mesh, definitions, output and optional detail required");
+    if (argc==7) {
+        require(strlen(argv[6])==1 && argv[6][0]>='0' && argv[6][0]<='2',"valid detail selector");
+        detail=(unsigned)(argv[6][0]-'0');
+    }
     map_original(argv[1]);
     sprites_size=load(argv[2],0x850000,0x10000);
     mesh_size=load(argv[3],0x8e0000,0x2000);
@@ -111,8 +116,8 @@ int main(int argc,char **argv) {
     put32(0x754390,0x860000);put32(0x754394,0x8a0000);put32(0x46765c,20);
     memset((void*)0x8e2000,0,48);put32(0x8e2028,0x8e202c);
     for (driver=0;driver<20;driver++) {
-        put32(0x78141c+driver*0x38,0x8e0000);put32(0x781420+driver*0x38,driver*0x3000);
-        put32(0x781438+driver*0x38,0x8e2000);put32(0x78143c+driver*0x38,driver*0x3000);
+        put32(0x78141c+driver*0x38,detail==1 ? 0x8e2000 : 0x8e0000);put32(0x781420+driver*0x38,driver*0x3000);
+        put32(0x781438+driver*0x38,detail==1 ? 0x8e0000 : 0x8e2000);put32(0x78143c+driver*0x38,driver*0x3000);
     }
     out=fopen(argv[5],"wb");require(out!=NULL,"open original material output");
     for (car_class=0;car_class<3;car_class++) {
@@ -120,9 +125,9 @@ int main(int argc,char **argv) {
         CarCluts();Sprite(0,"DR88A",(short*)0x7922e0);
         for (driver=0;driver<20;driver++) {
             primitives(0x860000+driver*0x3000);primitives(0x8a0000+driver*0x3000);
-            CarPaint(driver,driver,0);
+            CarPaint(driver,driver,(int)detail);
         }
-        CarDoors();
+        if (detail<2) CarDoors();
         for (driver=0;driver<20;driver++) snapshot(out,driver,car_class);
     }
     require(fclose(out)==0,"close original material output");return 0;

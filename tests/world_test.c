@@ -98,12 +98,48 @@ static bool dd2_world_test_lifetime_failures(void) {
     return rejected;
 }
 
+static bool dd2_world_test_template_limit(void) {
+    enum {
+        DD2_WORLD_TEST_TEMPLATE_LIMIT = 128,
+        DD2_WORLD_TEST_TEMPLATE_BYTES = 36,
+        DD2_WORLD_TEST_HEX_RADIX = 16
+    };
+    uint8_t bytes[DD2_WORLD_TEST_TEMPLATE +
+                  ((DD2_WORLD_TEST_TEMPLATE_LIMIT + 1) * DD2_WORLD_TEST_TEMPLATE_BYTES)] = {0};
+    dd2_world_test_source(bytes);
+    const char digits[] = "0123456789abcdef";
+    for (size_t index = 0; index <= DD2_WORLD_TEST_TEMPLATE_LIMIT; ++index) {
+        uint8_t *item = bytes + DD2_WORLD_TEST_TEMPLATE + (index * DD2_WORLD_TEST_TEMPLATE_BYTES);
+        for (size_t byte = 0; byte < DD2_WORLD_TEST_TEMPLATE_BYTES; ++byte) {
+            item[byte] = 0;
+        }
+        const char name[] = {'t', digits[index / DD2_WORLD_TEST_HEX_RADIX],
+                             digits[index % DD2_WORLD_TEST_HEX_RADIX], '\0'};
+        dd2_model_test_name(item, name);
+    }
+    dd2_test_write_le32(bytes + DD2_WORLD_TEST_TEMPLATE_COUNT, DD2_WORLD_TEST_TEMPLATE_LIMIT);
+    dd2_world_test_loader_state state = {0};
+    const size_t valid_size = sizeof(bytes) - DD2_WORLD_TEST_TEMPLATE_BYTES;
+    dd2_world *world =
+        dd2_world_create((dd2_byte_view){bytes, valid_size}, dd2_world_test_loader, &state);
+    const bool accepted =
+        world != NULL && dd2_world_template_count(world) == DD2_WORLD_TEST_TEMPLATE_LIMIT;
+    dd2_world_destroy(world);
+    dd2_test_write_le32(bytes + DD2_WORLD_TEST_TEMPLATE_COUNT, DD2_WORLD_TEST_TEMPLATE_LIMIT + 1);
+    state.calls = 0;
+    world = dd2_world_create((dd2_byte_view){bytes, sizeof(bytes)}, dd2_world_test_loader, &state);
+    const bool rejected = world == NULL && state.calls == 0;
+    dd2_world_destroy(world);
+    return accepted && rejected;
+}
+
 int main(void) {
     const size_t position = DD2_WORLD_TEST_INSTANCE + DD2_WORLD_TEST_NAME + DD2_WORLD_TEST_WORD;
     const size_t bounds = DD2_WORLD_TEST_HEADER + DD2_WORLD_TEST_PATH;
     const bool passed =
-        dd2_world_test_ownership() && dd2_world_test_invalid_names() &&
-        dd2_world_test_lifetime_failures() && dd2_world_test_reject(0, 0) &&
+        dd2_world_test_template_limit() && dd2_world_test_ownership() &&
+        dd2_world_test_invalid_names() && dd2_world_test_lifetime_failures() &&
+        dd2_world_test_reject(0, 0) &&
         dd2_world_test_reject(DD2_WORLD_TEST_RESOURCE_COUNT, UINT32_MAX) &&
         dd2_world_test_reject(DD2_WORLD_TEST_INSTANCE_COUNT, UINT32_MAX) &&
         dd2_world_test_reject(DD2_WORLD_TEST_TEMPLATE_COUNT, UINT32_MAX) &&

@@ -11,9 +11,10 @@ verification images, logs and builds belong under `/tmp/wasm-dd2/`.
 
 The one-time geometry conversion covers all eleven playable levels, static
 scene objects and all available dynamic templates in sections 5 through 21. It produces
-6,141 distinct `DD2MESH2` meshes and 693 deduplicated PNGs (123.5 MiB of binary
-resources). Two linear subdivisions yield 16 triangles per retained source
-triangle; 560 zero-area source triangles are explicitly inventoried. The
+6,812 distinct `DD2MESH2` meshes and 2,280 deduplicated PNGs (239.6 MiB of binary
+resources), including all 726 driver/class/body-LOD bindings. Two linear subdivisions yield 16 triangles per retained source
+triangle; the base conversion inventories 560 zero-area source triangles, with
+body omissions repeated explicitly in the livery records. The
 6,144 retained static placements contain 2,278,128 stored triangles across all
 levels. These are whole-world counts, not submitted per-frame geometry.
 See [reference-format.md](reference-format.md) for the intermediate contract,
@@ -30,7 +31,8 @@ and static provider images. Default Native/browser startup now selects this
 provider and shares world/car/wheel textures through the same presentation owner,
 with full vehicle pose, wheel suspension/steer/roll, pre-submit frustum culling
 and three distance LODs. It renders 640x360/4x MSAA without Dirinfo; an explicit
-reference mode remains available. Prepared audio, liveries, deformation, cockpit,
+reference mode remains available. Driver/class paint and start numbers now use
+committed close/medium/distant variants, with no runtime palette or UV conversion. Prepared audio, deformation, cockpit,
 sky and complete UI/content quality remain open.
 
 The first authored vehicle is the fictional Racer R1, with an exterior, four

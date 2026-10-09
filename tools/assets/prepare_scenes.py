@@ -43,7 +43,7 @@ def compile_scene(scene):
     names = sorted(resources)
     indices = {name: index for index, name in enumerate(names)}
     objects, templates = scene['objects'], scene['templates']
-    if len(names) > 4096 or len(objects) > 65536 or len(templates) > 64:
+    if len(names) > 4096 or len(objects) > 65536 or len(templates) > 128:
         raise ValueError('Scene counts exceed runtime allocation caps')
     identifiers = [item['id'] for item in objects]
     if len(set(identifiers)) != len(identifiers):

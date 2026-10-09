@@ -60,6 +60,19 @@ def native_checks(output, root, binary, label):
             ui.command('key', 'Return')
             ui.command('key', 'Prior')
         match('1', 'world')
+        ui.command('key', 'Tab')
+        class_images = []
+        for car_class in range(3):
+            ui.stable()
+            image = ui.image()
+            image.save(output/(label+'-class-'+str(car_class)+'.png'))
+            class_images.append(digest(image.crop((0,0,640,300)).tobytes()))
+            ui.command('key', 'F1')
+            ui.wait(lambda: digest(ui.image().crop((0,0,640,300)).tobytes()) != class_images[-1])
+        if len(set(class_images)) != 3:
+            raise ValueError('Prepared Native classes changed only the HUD')
+        match('1', 'car')
+        ui.command('key', 'Tab')
         ui.command('key', 'Return'); ui.command('key', 'r')
         baseline = ui.stable()
         ui.command('key', 'p'); ui.command('keydown', 'w')
@@ -80,7 +93,7 @@ def native_checks(output, root, binary, label):
             raise ValueError('Prepared normal Native close failed')
         return dict(pass_=True, comparisons=cases, real_input=True, moved_sha256=digest(moved),
                     paused_sha256=digest(baseline), all_eleven_tracks=True,
-                    deterministic_reset=True, no_original_arguments=True)
+                    deterministic_reset=True, no_original_arguments=True, class_body_sha256=class_images)
     finally:
         ui.close()
 
@@ -99,7 +112,7 @@ def main():
     initial = source_hash()
     report = dict(pass_=False, scope='Prepared game presentation and short original-free launches',
                   started=datetime.now(timezone.utc).isoformat(), cases=[], comparisons=[],
-                  limitations=['New audio owner, liveries, body deformation, cockpit and sky pending',
+                  limitations=['New audio owner, body deformation, cockpit and sky pending',
                                'No full-game, quality-superiority or 60-FPS acceptance'], source_sha256=initial)
     environment = dict(os.environ, SDL_VIDEODRIVER='dummy',
                        ASAN_OPTIONS='detect_leaks=1:halt_on_error=1:exitcode=86',

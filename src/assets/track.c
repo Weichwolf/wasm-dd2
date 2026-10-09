@@ -59,20 +59,56 @@ const dd2_world *dd2_track_world(const dd2_track *track) {
     return track == NULL ? NULL : track->world;
 }
 
-const dd2_model *dd2_track_prepared_model(const dd2_track *track, dd2_track_model_kind kind) {
-    static const char *const names[DD2_TRACK_MODEL_COUNT] = {
-        "car-close", "car-medium", "car-distant", "wheel-primary", "wheel-secondary", "sky"};
-    if (track == NULL || track->world == NULL || (unsigned)kind >= DD2_TRACK_MODEL_COUNT) {
+static const dd2_model *dd2_track_named_model(const dd2_track *track, const char *name) {
+    if (track == NULL || track->world == NULL) {
         return NULL;
     }
     const dd2_world_template *templates = dd2_world_templates(track->world);
     const dd2_world_resource *resources = dd2_world_resources(track->world);
     for (size_t index = 0; index < dd2_world_template_count(track->world); ++index) {
-        if (strcmp(templates[index].name, names[kind]) == 0) {
+        if (strcmp(templates[index].name, name) == 0) {
             return resources[templates[index].resource].model;
         }
     }
     return NULL;
+}
+
+const dd2_model *dd2_track_prepared_model(const dd2_track *track, dd2_track_model_kind kind) {
+    static const char *const names[DD2_TRACK_MODEL_COUNT] = {
+        "car-close", "car-medium", "car-distant", "wheel-primary", "wheel-secondary", "sky"};
+    return (unsigned)kind >= DD2_TRACK_MODEL_COUNT ? NULL
+                                                   : dd2_track_named_model(track, names[kind]);
+}
+
+const dd2_model *dd2_track_prepared_car(const dd2_track *track, unsigned livery,
+                                        dd2_track_model_kind detail) {
+    static const char *const names[DD2_TRACK_BODY_LODS] = {"car-close", "car-medium",
+                                                           "car-distant"};
+    enum { DD2_TRACK_NAME_BYTES = 32, DD2_TRACK_DECIMAL_RADIX = 10 };
+    if (livery >= DD2_CAR_LIVERIES || (unsigned)detail >= DD2_TRACK_BODY_LODS) {
+        return NULL;
+    }
+    char name[DD2_TRACK_NAME_BYTES] = {0};
+    size_t cursor = 0;
+    while (names[detail][cursor] != '\0') {
+        name[cursor] = names[detail][cursor];
+        ++cursor;
+    }
+    name[cursor++] = '-';
+    name[cursor++] = (char)('0' + (livery / DD2_TRACK_DECIMAL_RADIX));
+    name[cursor] = (char)('0' + (livery % DD2_TRACK_DECIMAL_RADIX));
+    return dd2_track_named_model(track, name);
+}
+
+static bool dd2_track_prepared_cars_valid(const dd2_track *track) {
+    for (unsigned livery = 0; livery < DD2_CAR_LIVERIES; ++livery) {
+        for (unsigned detail = 0; detail < DD2_TRACK_BODY_LODS; ++detail) {
+            if (dd2_track_prepared_car(track, livery, (dd2_track_model_kind)detail) == NULL) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 dd2_track *dd2_track_create_prepared(unsigned number, dd2_track_prepared_source source,
@@ -97,6 +133,10 @@ dd2_track *dd2_track_create_prepared(unsigned number, dd2_track_prepared_source 
             dd2_track_destroy(track);
             return NULL;
         }
+    }
+    if (!dd2_track_prepared_cars_valid(track)) {
+        dd2_track_destroy(track);
+        return NULL;
     }
     return track;
 }

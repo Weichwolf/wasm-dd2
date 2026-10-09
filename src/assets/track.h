@@ -12,7 +12,7 @@
 #include "assets/world.h"
 
 typedef struct dd2_track dd2_track;
-enum { DD2_TRACK_COUNT = 11 };
+enum { DD2_TRACK_COUNT = 11, DD2_TRACK_BODY_LODS = 3 };
 typedef enum {
     DD2_TRACK_MODEL_CLOSE,
     DD2_TRACK_MODEL_MEDIUM,
@@ -43,7 +43,8 @@ dd2_track *dd2_track_load(dd2_track_provider provider, unsigned number);
 dd2_track *dd2_track_create(const dd2_archive *archive, unsigned number);
 /* Owns the prepared scene/models and road without any original archive input.
  * Both byte views and model-loader state may be released after creation. All
- * three body LODs, two wheels and sky templates must exist. Number/layout must
+ * three base body LODs, all 22 livery/LOD variants, two wheels and sky templates
+ * must exist. Number/layout must
  * agree. Legacy level/scene/mesh/palette getters return NULL for this owner. */
 dd2_track *dd2_track_create_prepared(unsigned number, dd2_track_prepared_source source,
                                      dd2_world_model_loader loader, void *user);
@@ -51,6 +52,10 @@ void dd2_track_destroy(dd2_track *track);
 unsigned dd2_track_number(const dd2_track *track);
 const dd2_world *dd2_track_world(const dd2_track *track);
 const dd2_model *dd2_track_prepared_model(const dd2_track *track, dd2_track_model_kind kind);
+/* Livery is dd2_car_livery_index(driver, class); detail is close/medium/distant.
+ * Immutable models borrow track ownership. Invalid/missing variants return NULL. */
+const dd2_model *dd2_track_prepared_car(const dd2_track *track, unsigned livery,
+                                        dd2_track_model_kind detail);
 const dd2_level_data *dd2_track_level(const dd2_track *track);
 const dd2_texture_set *dd2_track_textures(const dd2_track *track);
 const dd2_scene *dd2_track_scene(const dd2_track *track);

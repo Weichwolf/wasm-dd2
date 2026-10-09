@@ -352,8 +352,20 @@ def native_checks(output, archive, references, binary, label='native'):
         ui.wait(acknowledged)
         unfocused = ui.stable()
         ui.command('windowfocus', ui.window)
-        if ui.stable() != unfocused:
-            raise ValueError('Native camera keeps moving after acknowledged focus loss/release')
+        refocused = ui.stable()
+        if refocused != unfocused:
+            # X11 can resize the outer window before SDL presents its centered
+            # surface. A naturally black scene border can satisfy the margin
+            # predicate while the old 640px image is still left aligned.
+            # Accept only its exact 80px centering translation; camera motion,
+            # rescaling or any changed content must still fail.
+            pending = Image.frombytes('RGB', (800, 480), unfocused).crop((0, 0, 640, 480))
+            centered = Image.new('RGB', (800, 480))
+            centered.paste(pending, (80, 0))
+            if refocused != centered.tobytes():
+                raise ValueError('Native camera changes after focus loss/release')
+        if ui.stable() != refocused:
+            raise ValueError('Native camera keeps moving after focus loss/release')
         ui.command('windowsize', ui.window, 640, 480)
         ui.command('key', 'r')
         ui.match(expected, 'focus-reset')

@@ -56,9 +56,25 @@ reference checks retain 31 Native/31 sanitized/145 Chromium comparisons.
 Direct visual review finds broader coverage and reduced aliasing but a uniform
 cyan fleet, black sky and low-contrast arena floor. Prepared gameplay is silent;
 complete livery/deformation/cockpit/sky, new audio/content and four-thread/60-FPS
-acceptance remain open. Next finish offline livery variants and the new audio
-owner, then replace this baseline with Blender/procedural content. Evidence is
+acceptance remained open at that presentation step. Its subsequent livery
+evidence follows below; the new audio owner and Blender/procedural replacement
+remain open. Evidence is
 under /tmp/wasm-dd2/prepared-presentation-0062/; active 0062 remains open.
+
+The latest paint step commits all 726 driver/class/body-LOD bindings across the
+eleven levels and uses them directly in prepared gameplay. No palette lookup,
+number UV conversion or subdivision occurs at runtime. The intermediate
+inventory now has 6,812 meshes and 2,280 PNGs; all typed fields/pixels pass on
+Native/WASM/sanitized, and all 9,115 prepared files reproduce byte-for-byte while
+retaining previous static assets. Optional original paint/number code agrees on
+40,898 material faces at close/medium/distant detail. Strict gates pass 58 Native
+and 55 WASM CTests. Actual Native/browser class changes alter body paint, and
+moving gameplay uses separate opponent paint. Prepared tests retain 132 images,
+88 cross-target checks and 36 Native/36 sanitized/35 browser comparisons. Optional
+reference checks retain 31 Native/31 sanitized/145 browser comparisons. This
+is intermediate appearance/content evidence; final Blender/procedural assets,
+audio, cockpit, sky, damage and complete-frame performance remain open. Evidence
+is under /tmp/wasm-dd2/prepared-liveries-0062/; 0062 remains active.
 
 ## Work order
 

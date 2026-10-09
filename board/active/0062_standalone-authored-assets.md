@@ -412,10 +412,63 @@ Reusable command: python3 tools/assets/verify_game.py --sanitized-build
 /tmp/wasm-dd2/prepared-presentation-0062/sanitized --output
 /tmp/wasm-dd2/prepared-game-verification. This broad item remains active.
 
+## Prepared driver/class paint and numbers
+
+The one-time offline livery converter now emits every stable driver paint plus
+the two additional human classes at all three body LODs for all eleven levels:
+726 bindings. It extracts a semantic recipe from the supported executable and
+resolves palette/page/number UV changes into committed meshes/PNGs. Runtime
+reads only those owned assets. The prepared track requires all variants; the
+renderer selects a variant/LOD before posed culling and lazy shared uploads.
+The standard `make rewrite-play` launcher now selects prepared content too.
+
+The complete intermediate inventory contains 6,812 meshes and 2,280 PNGs,
+239.6 MiB of binary resources. Independent Native/WASM/fresh sanitized exports
+verify every mesh field and PNG pixel. All eleven scenes re-encode exactly after
+source release; 21 malformed variants reject. The 128-template allocation cap
+is checked at its accepted boundary and rejects 129 before resource loading.
+Missing any of the 66 paint/body variants discards the candidate track. Repeated
+offline conversion reproduces all 9,115 files byte-for-byte; all previous 6,834
+base resources and 6,144 static placements remain unchanged. Two linear splits
+still happen only offline and retain the original 16x geometry/UV contract.
+
+An explicit optional component oracle executes the original close, medium and
+distant paint/number functions. All 40,898 selected material faces across 33
+level/LOD groups match palette, page and UV fields. This does not prove full-game
+parity. Standalone binding checks require no original inputs. Strict gates cover
+255 C/header files and pass 58 Native/55 WASM CTests. Actual prepared presentation
+passes 132 images, 88 cross-target comparisons, 36 Native/36 fresh sanitized/35
+Chromium comparisons, input/pause/reset and championship/menu rollback checks.
+Native F1 and the browser selector visibly change body paint for all three
+classes independently of the HUD. The final test-fixture parentheses correction
+leaves every verified game-core executable/WASM module byte-identical.
+
+Direct Native/browser review finds white/red Rookie, mustard/gold Amateur and
+white/dark Pro bodies with number 1, plus separate rust/red opponent paint in
+moving gameplay. The former cyan 88 fleet no longer represents every driver.
+Source materials remain coarse; sky is black, arena floors are low contrast,
+cockpit/visual damage are incomplete and prepared audio is silent. Inspected
+start frames submit 36,144-142,304 triangles; caches reach 92 texture uploads.
+These are scoped image statistics, not a material-budget or full-frame 60-FPS
+proof. Complete authored replacement and qualitative-superiority acceptance
+remain open.
+
+The optional reference focus regression exposed a test race: X11 resized its
+outer window before SDL centered the existing surface. Diagnostic before/after
+images contain identical 640x480 content translated by exactly 80 pixels; no
+camera movement occurs. The check now permits only that exact centering and
+then requires another stable observation, continuing to reject changed content.
+The full optional reference corpus passes 31 Native/31 fresh sanitized/145
+Chromium comparisons, including focus release, resizing and existing modes.
+
+Evidence: /tmp/wasm-dd2/prepared-liveries-0062/{materials/report,
+content/report,worlds/report,game/report,reproduction-report,quality-report,
+visual-review-report,focus-report,reference-regression/report}.json. Raw successful captures are removed
+after this review. This broad work item remains active.
+
 ## Next
 
-Convert driver/class livery remaps offline to owned runtime variants and verify
-actual moving fleet appearance. Add prepared visual deformation, sky/billboard
+Add prepared visual deformation, sky/billboard
 policy and a player cockpit; keep scene/opponent options unrestricted while
 selecting only player cockpit roles. Author inner door/window surrounds and use
 finer visibility groups where useful. The prototype must not rely on its
@@ -426,7 +479,9 @@ Replace intermediate meshes with original-informed Blender models gradually.
 Then evaluate authored normal/roughness maps with an owned tangent/material path,
 improve limited linear working precision and add environmental/interior lighting. Separate fixed caliper/column roles,
 add contact shadows and improve the actual inspected vehicle/interior images.
-Implement production LOD/visibility and explicit Native thread selection against
+Avoid preloading development-only inventory/scene JSON in the browser and
+consolidate prepared materials where useful. Implement production LOD/visibility
+and explicit Native thread selection against
 the complete-frame budget. Inspect actual windows/canvases with real input and
 measure complete frame costs before claiming the four-thread/60-FPS profile. Supply
 the first authored road/contact/progress graph and Blender track/scenery, then

@@ -3,6 +3,7 @@
 
 #include "asset_fixture.h"
 #include "assets/bytes.h"
+#include "assets/car.h"
 #include "assets/road.h"
 #include "assets/track.h"
 #include "model_fixture.h"
@@ -12,7 +13,9 @@
 #include <stdint.h>
 
 enum {
-    DD2_TRACK_TEST_SCENE_BYTES = DD2_WORLD_TEST_BYTES + (5 * 36),
+    DD2_TRACK_TEST_TEMPLATES = DD2_TRACK_MODEL_COUNT + (DD2_CAR_LIVERIES * DD2_TRACK_BODY_LODS),
+    DD2_TRACK_TEST_SCENE_BYTES = DD2_WORLD_TEST_BYTES + ((DD2_TRACK_TEST_TEMPLATES - 1) * 36),
+    DD2_TRACK_TEST_DECIMAL_RADIX = 10,
     DD2_TRACK_TEST_TEMPLATE_BYTES = 36,
     DD2_TRACK_TEST_ROAD_BYTES = 108,
     DD2_TRACK_TEST_ARENA = 8,
@@ -40,7 +43,7 @@ static void dd2_track_test_source(dd2_track_test_buffers buffers) {
     dd2_world_test_source(scene);
     const char *names[] = {"car-close",     "car-medium",      "car-distant",
                            "wheel-primary", "wheel-secondary", "sky"};
-    dd2_test_write_le32(scene + DD2_WORLD_TEST_TEMPLATE_COUNT, DD2_TRACK_MODEL_COUNT);
+    dd2_test_write_le32(scene + DD2_WORLD_TEST_TEMPLATE_COUNT, DD2_TRACK_TEST_TEMPLATES);
     for (size_t index = 0; index < DD2_TRACK_MODEL_COUNT; ++index) {
         uint8_t *item = scene + DD2_WORLD_TEST_TEMPLATE + (index * DD2_TRACK_TEST_TEMPLATE_BYTES);
         for (size_t byte = 0; byte < DD2_TRACK_TEST_TEMPLATE_BYTES; ++byte) {
@@ -49,6 +52,24 @@ static void dd2_track_test_source(dd2_track_test_buffers buffers) {
         dd2_model_test_name(item, names[index]);
         dd2_test_write_le32(item + DD2_WORLD_TEST_NAME,
                             (uint32_t)(index % DD2_WORLD_TEST_RESOURCES));
+    }
+    for (unsigned livery = 0; livery < DD2_CAR_LIVERIES; ++livery) {
+        for (unsigned detail = 0; detail < DD2_TRACK_BODY_LODS; ++detail) {
+            char name[DD2_WORLD_TEST_NAME] = {0};
+            size_t cursor = 0;
+            while (names[detail][cursor] != '\0') {
+                name[cursor] = names[detail][cursor];
+                ++cursor;
+            }
+            name[cursor++] = '-';
+            name[cursor++] = (char)('0' + (livery / DD2_TRACK_TEST_DECIMAL_RADIX));
+            name[cursor] = (char)('0' + (livery % DD2_TRACK_TEST_DECIMAL_RADIX));
+            const size_t index = DD2_TRACK_MODEL_COUNT + (livery * DD2_TRACK_BODY_LODS) + detail;
+            uint8_t *item =
+                scene + DD2_WORLD_TEST_TEMPLATE + (index * DD2_TRACK_TEST_TEMPLATE_BYTES);
+            dd2_model_test_name(item, name);
+            dd2_test_write_le32(item + DD2_WORLD_TEST_NAME, detail);
+        }
     }
     dd2_model_test_name(road, "DD2ROAD1");
     dd2_test_write_le32(road + DD2_TRACK_TEST_LAYOUT, DD2_ROAD_ARENA);

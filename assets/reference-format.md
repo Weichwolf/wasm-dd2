@@ -17,6 +17,7 @@ quality remains open.
 
 ```sh
 make assets-convert-reference
+make assets-convert-liveries
 make assets-reference-verify
 ```
 
@@ -46,13 +47,38 @@ gradient pixels are not claimed. Content hashes deduplicate exported resources.
 The initial conversion covers levels `1` through `B`: seven circuits and four
 arenas, all static objects and dynamic-template sections 5 through 21. Owned
 roads/contact/grid/AI inputs live separately under `runtime/roads/`; vehicle pose
-and wheel animation now use the prepared templates. Menu/font replacement, all
-livery remappings, audio, cockpit/sky policy and complete gameplay quality remain
+and wheel animation now use the prepared templates. Menu/font replacement, audio, cockpit/sky policy and complete gameplay quality remain
 separate migration work. Source sprite geometry is
 stored as static triangles; its camera-facing policy remains pending. The
 120 static and 440 template zero-area triangles are retained as explicit
 omission records, including six entirely zero-area static objects. They do not
 become invalid runtime geometry or silently count toward 16x output.
+
+## Prepared paint and numbers
+
+`make assets-convert-liveries` is a separate one-time offline step. It reads the
+supported archive and executable, extracts a semantic recipe to
+`assets/recipes/reference-liveries.json`, resolves the driver/class palette and
+number UVs, then emits owned meshes and RGBA PNGs. It exports twenty stable
+drivers plus the two additional human classes at each of three body LODs for
+all eleven levels: 726 bindings. Close, medium and distant paint regions have
+separate source opcode-group ordinals; number UV shifts preserve unused triangle
+corners. The template driver keeps its source paint. Untextured black body
+triangles follow the original initialization policy.
+
+The scene binds `car-close-00` through `car-close-21`, with corresponding medium
+and distant names. Runtime selects these immutable models by livery index and
+LOD; it does not read recipes, original palette/sprite tables or executable
+addresses, alter UVs, or subdivide geometry. The track factory requires every
+variant and fails transactionally if one is missing. Visible models lazily share
+the world's texture cache after posed frustum culling. Human preview/driving
+uses the selected class; opponents retain their stable driver paint across LODs.
+
+The complete intermediate inventory now contains 6,812 meshes and 2,280 PNGs.
+`tools/assets/verify_liveries.py` checks committed bindings without original input.
+Its explicit `--original` option executes the original close/medium/distant paint
+and number functions as an optional offline material-field oracle; this does not
+establish full-game parity. Replacement Blender/procedural content remains open.
 
 ## Scene and inventory
 
@@ -85,7 +111,7 @@ Tables are contiguous with no padding or suffix:
 
 Strings are nonempty printable ASCII, NUL-terminated and zero-padded. Mesh paths
 use safe relative components and `.dd2mesh`. Counts are capped at 4,096 resources,
-65,536 instances and 64 templates before any allocation. Placement/bounds values
+65,536 instances and 128 templates before any allocation. Placement/bounds values
 must be finite and within one million meters; loaded mesh limits remain stricter.
 The scene owner copies metadata, loads each unique mesh once into owned memory,
 and requires exact agreement between declared bounds and loaded vertex extents.
@@ -152,7 +178,8 @@ Prepared rendering uses meters, with simulation poses/camera explicitly scaled
 from the road's 160-unit/meter convention. World/car/wheel instances share texture
 uploads and test their posed bounds before submission. Player exterior stays
 close; NPC body LOD thresholds are 30 and 90 meters. Wheels retain suspension,
-steering and roll. The baseline still needs owned livery remaps, visual damage,
+steering and roll. Prepared paint/number variants are selected before submission.
+The baseline still needs visual damage,
 sky/billboard policy, a complete player cockpit and new audio integration.
 Prepared launch is currently silent; optional reference audio is separate.
 
