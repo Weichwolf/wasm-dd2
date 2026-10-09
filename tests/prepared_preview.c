@@ -2,8 +2,10 @@
 #include "assets/bytes.h"
 #include "assets/image.h"
 #include "assets/model.h"
+#include "assets/track.h"
 #include "assets/world.h"
 #include "content_file_fixture.h"
+#include "platform/content.h"
 #include "platform/file.h"
 #include "render/model_draw.h"
 #include "render/model_view.h"
@@ -136,17 +138,27 @@ typedef struct {
     const char *resource;
     const char *output;
     bool crop;
+    unsigned number;
 } dd2_prepared_world_capture;
 
 static bool dd2_prepared_world(dd2_prepared_world_capture capture) {
     const char *root = capture.root;
     dd2_file file = {0};
-    if (!dd2_content_test_read(root, capture.resource, &file)) {
-        return false;
+    dd2_track *track = NULL;
+    dd2_world *owned_world = NULL;
+    const dd2_world *world = NULL;
+    if (capture.number != 0) {
+        track = dd2_track_load(dd2_content_track_provider(root), capture.number);
+        world = dd2_track_world(track);
+    } else {
+        if (capture.resource == NULL || !dd2_content_test_read(root, capture.resource, &file)) {
+            return false;
+        }
+        owned_world = dd2_world_create((dd2_byte_view){file.data, file.size},
+                                       dd2_content_test_model, (void *)root);
+        dd2_file_release(&file);
+        world = owned_world;
     }
-    dd2_world *world = dd2_world_create((dd2_byte_view){file.data, file.size},
-                                        dd2_content_test_model, (void *)root);
-    dd2_file_release(&file);
     const dd2_render_options viewport = {.width = DD2_PREPARED_WIDTH,
                                          .height = DD2_PREPARED_HEIGHT,
                                          .samples = DD2_PREPARED_SAMPLES,
@@ -169,7 +181,8 @@ static bool dd2_prepared_world(dd2_prepared_world_capture capture) {
                stats.uploaded_textures);
     }
     dd2_world_draw_destroy(draw);
-    dd2_world_destroy(world);
+    dd2_world_destroy(owned_world);
+    dd2_track_destroy(track);
     dd2_renderer_destroy(renderer);
     return passed;
 }
@@ -183,6 +196,16 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     const char *extension = strrchr(argv[2], '.');
+    const char codes[] = "123456789AB";
+    if (strlen(argv[2]) == 1 && strchr(codes, argv[2][0]) != NULL) {
+        return dd2_prepared_world((dd2_prepared_world_capture){
+                   .root = argv[1],
+                   .output = argv[3],
+                   .crop = crop,
+                   .number = (unsigned)(strchr(codes, argv[2][0]) - codes) + 1})
+                   ? EXIT_SUCCESS
+                   : EXIT_FAILURE;
+    }
     if (extension != NULL && strcmp(extension, ".dd2scene") == 0) {
         return dd2_prepared_world((dd2_prepared_world_capture){
                    .root = argv[1], .resource = argv[2], .output = argv[3], .crop = crop})

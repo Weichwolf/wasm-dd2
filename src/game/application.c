@@ -57,6 +57,7 @@ static const float dd2_app_wheel_seconds = 0.15F;
 typedef struct {
     dd2_file file;
     dd2_archive *archive;
+    dd2_track_provider provider;
     dd2_track *track;
     dd2_renderer *renderer;
     dd2_mesh_materials *materials;
@@ -145,7 +146,7 @@ static int dd2_application_restore_practice(dd2_application *application,
     const unsigned level =
         choice.visible_track ? (unsigned)application->level : (unsigned)application->practice_level;
     dd2_track *track =
-        choice.visible_track ? dd2_track_create(application->archive, level) : application->track;
+        choice.visible_track ? dd2_track_load(application->provider, level) : application->track;
     dd2_driving *driving =
         dd2_driving_create_class(dd2_track_road(track), level, application->car_class, NULL);
     dd2_camera camera = {0};
@@ -187,8 +188,8 @@ int dd2_application_start_championship(int mode) {
         return 0;
     }
     dd2_renderer_make_current(application->renderer);
-    dd2_championship_session *session = dd2_championship_session_create_class(
-        application->archive, (dd2_race_mode)mode, application->car_class);
+    dd2_championship_session *session = dd2_championship_session_create_provider(
+        application->provider, (dd2_race_mode)mode, application->car_class);
     if (session == NULL) {
         return 0;
     }
@@ -403,7 +404,7 @@ int dd2_application_select_level(int number) {
     if (application == NULL || number < 1 || number > DD2_TRACK_COUNT) {
         return 0;
     }
-    dd2_track *track = dd2_track_create(application->archive, (unsigned)number);
+    dd2_track *track = dd2_track_load(application->provider, (unsigned)number);
     dd2_mesh_materials *materials =
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
@@ -1588,6 +1589,7 @@ static dd2_application *dd2_application_create(const char *path) {
         dd2_application_destroy(application);
         return NULL;
     }
+    application->provider = dd2_track_reference_provider(application->archive);
     const dd2_render_options viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT};
     application->window = dd2_window_create(viewport);
     application->renderer = dd2_renderer_create(&viewport);

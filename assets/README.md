@@ -22,8 +22,13 @@ verification commands and the remaining runtime migration.
 Owned gameplay road exports now live separately in `runtime/roads/`; their
 editable JSON compiles without original input. They preserve current physics
 cell identities with explicit fixed-position scale and indexed topology, without
-re-converting visual assets. See [road-format.md](road-format.md). The prepared
-game provider and default startup still need integration.
+re-converting visual assets. See [road-format.md](road-format.md). The shared
+track provider now owns these roads, prepared worlds and all three car LODs,
+both wheels and sky. It releases source bytes and fails on missing content.
+`make assets-tracks-verify` covers moving fields, championship restart ownership
+and static provider images. Normal application rendering, UI/audio and default
+prepared startup still need integration; the application currently selects the
+reference provider through the same boundary.
 
 The first authored vehicle is the fictional Racer R1, with an exterior, four
 independent wheel assemblies and an interior containing a cage, seat/harness,

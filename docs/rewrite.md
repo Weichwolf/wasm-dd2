@@ -84,6 +84,16 @@ surface, grid, barrier, lap/course and AI consumers can use this owner directly;
 visual assets are not regenerated. The normal application still needs its
 prepared track/provider, render/UI and audio migration. See `assets/road-format.md`.
 
+The shared track owner now accepts prepared scenes/models plus owned roads, with
+explicit close/medium/distant body, primary/secondary wheel and sky templates.
+It releases input bytes and exposes the immutable world/road without legacy
+archive views. A directory provider reads only committed containers; missing
+content fails without a source fallback. The application and championship owner
+now load through the same provider boundary, including candidate rounds/restarts.
+The normal application still selects the optional reference provider because its
+renderer/material, UI and audio migration is pending. Prepared factory/field and
+static scene evidence must not be described as default standalone launch.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game

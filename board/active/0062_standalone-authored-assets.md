@@ -321,14 +321,53 @@ Evidence and reproducibility reports are under
 /tmp/wasm-dd2/prepared-roads-0062/. The normal application still needs its prepared
 track/provider, UI and audio migration. This broad work item remains active.
 
+The shared track owner now loads prepared DD2SCN1 worlds/models and DD2ROAD1 roads
+through a directory provider. It requires close/medium/distant bodies, both wheel
+templates and sky, validates number/layout agreement and rejects wrong-number
+provider results. Input files and model-reader state are released before publishing
+the immutable owner. Prepared legacy archive/scene/mesh/palette getters return
+NULL, so old material code cannot silently masquerade as prepared presentation.
+The application and championship session now share this provider boundary for
+track changes, candidate rounds and restarts. Normal startup still selects the
+reference provider; prepared rendering/UI/audio integration remains pending.
+
+All eleven prepared tracks pass 120 fixed moving steps after the existing 200
+settling steps for twenty real vehicles on Native, Node/WASM and fresh O1
+ASan/UBSan. This covers 26,400 controlled vehicle steps per target; Native state
+snapshots exactly match the explicitly selected original-decoded provider.
+Cross-target comparisons retain the existing driving tolerances. Initial
+championship fields and candidate restarts preserve Amateur identity, league
+standings and old track/driving ownership on load failure or wrong-number results;
+stale candidates reject after commit. These checks do not complete a physical
+round, result continuation or a championship. Seven filesystem/content failures
+reject on all three targets without fallback or partial publication. Unaligned
+source-release/required-template/partial-loader fixtures and zero-error Memcheck
+pass. Strict LLVM19 covers 249 C/header files; 56 Native and 54 WASM CTests pass.
+
+All 66 full/crop provider scene captures and 44 cross-target image comparisons
+pass with maximum mean channel error 0.002203414351851852. Direct Native scene
+loading has exactly the same images and counters. Circuit 1's crop retains
+122,224 submitted triangles in 791 batches and 34 uploads. Direct scene review
+retains terrain gaps and a dark, low-contrast arena floor; no new graphical
+superiority is claimed. The real reference-backed application passes 31 Native,
+31 sanitized and 145 Chromium comparisons, including input/focus, track and mode
+changes, restarts, results and menus. Manual sanitizer lists now include the
+new track owner's model/world dependencies. Additional directly inspected Native
+and Chromium paused-driving captures agree exactly and retain the player/track
+and legible lap/damage HUD; the black sky, coarse materials and old 4:3 layout
+remain. These real windows still use the reference provider, not prepared default
+startup. Evidence is under
+/tmp/wasm-dd2/content-provider-0062/; command: make assets-tracks-verify.
+This broad item remains active.
+
 ## Next
 
 Wire the prepared owner/renderer into default gameplay and browser presentation;
 keep scene/opponent options unrestricted while selecting player cockpit roles.
 Author inner door/window surrounds and use finer visibility groups where useful;
 the prototype must not rely on its exterior shell to cover interior gaps.
-Bind the owned road, progress/AI/grid consumers and prepared world to a runtime
-track/provider; migrate audio and UI inputs so default Native/browser launch
+Bind the prepared track provider and vehicle/world presentation to the normal
+application; migrate audio and UI inputs so default Native/browser launch
 consumes committed assets without Dirinfo. Complete billboard/livery policy,
 place wheel templates and compare actual original/candidate gameplay images.
 Replace intermediate meshes with original-informed Blender models gradually.

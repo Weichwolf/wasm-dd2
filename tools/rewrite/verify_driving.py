@@ -99,7 +99,7 @@ def main():
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     assets_units = [ROOT / f'src/assets/{name}.c' for name in
-                    ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
+                    ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'model', 'world', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
     render_units = [ROOT / f'src/render/{name}.c' for name in ('renderer', 'color', 'mesh_draw', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
     game_units = [ROOT / f'src/game/{name}.c' for name in ('driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'drivers', 'league', 'championship', 'configuration', 'profile_menu')]

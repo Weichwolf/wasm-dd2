@@ -21,6 +21,11 @@ dd2_championship_session *dd2_championship_session_create(const dd2_archive *arc
 dd2_championship_session *dd2_championship_session_create_class(const dd2_archive *archive,
                                                                 dd2_race_mode mode,
                                                                 dd2_car_class car_class);
+/* Shared ownership/rules path for prepared content and optional references.
+ * Copies the provider; its user state must outlive the session/transitions. */
+dd2_championship_session *dd2_championship_session_create_provider(dd2_track_provider provider,
+                                                                   dd2_race_mode mode,
+                                                                   dd2_car_class car_class);
 void dd2_championship_session_destroy(dd2_championship_session *session);
 /* Advances real driving and consumes naturally frozen results once. Further
  * result-screen frames hold all simulation and scores until continuation,

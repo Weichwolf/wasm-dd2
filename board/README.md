@@ -36,8 +36,17 @@ grid, barrier, course and AI consumers after releasing input bytes. Thirty
 malformed variants reject on all three targets. Strict gates now cover 245
 C/header files, with 55 Native and 53 WASM CTests passing. This is a prepared
 road component, not standalone application startup or full-game parity.
-Next wire the prepared scene/road provider and replace the game's original-input
-path, then remodel against this baseline. UI and audio migration remain open.
+The prepared track provider now owns these roads, worlds, all three body LODs,
+two wheel templates and sky. The normal application and championship owner use
+the same provider boundary; the application still selects its reference backend
+until rendering/UI/audio migrate. All eleven short twenty-car physical prefixes
+pass on Native/WASM/fresh sanitized, with exact Native original-decoded states.
+Required-model/number/load-failure rollback and candidate championship restarts
+pass. Sixty-six provider scene images retain the previous output, and actual
+31 Native/31 sanitized/145 Chromium window comparisons pass. Strict gates cover
+249 C/header files, with 56 Native and 54 WASM CTests. Next connect prepared
+vehicle/world presentation to the application and replace default original input,
+then remodel against this baseline. UI and audio migration remain open.
 
 ## Work order
 

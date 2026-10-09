@@ -333,6 +333,16 @@ clean-logs: ## remove completed logs older than one hour, preserving open files
 .PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
 .PHONY: assets-convert-reference assets-reference-verify assets-scenes-prepare assets-world-verify assets-world-render-verify
 .PHONY: assets-convert-roads assets-roads-prepare assets-roads-verify
+.PHONY: assets-tracks-verify
+assets-tracks-verify: ## verify prepared track providers, moving fields and static scenes on all targets
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	cmake -S $(ROOT) -B /tmp/wasm-dd2/content-provider-sanitized -G Ninja -DCMAKE_C_COMPILER=clang-19 -DCMAKE_BUILD_TYPE=Debug -DDD2_ENABLE_CLANG_TIDY=OFF '-DCMAKE_C_FLAGS=-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'
+	cmake --build /tmp/wasm-dd2/content-provider-sanitized --target dd2_track_content_test dd2_track_content_export dd2_prepared_preview -j4
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_tracks.py --sanitized-build /tmp/wasm-dd2/content-provider-sanitized
+	$(MAKE) clean-logs
+
 assets-convert-roads: ## one-time offline gameplay road conversion; normal builds never invoke this
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_roads.py
 
