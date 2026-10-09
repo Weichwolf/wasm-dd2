@@ -17,9 +17,18 @@ load all eleven prepared scenes without original files, validate actual model
 bounds, cull before geometry submission and reuse texture uploads. Sixty-six
 static Native/WASM/sanitized scenes, 44 cross-target image checks, loader rollback,
 cutout depth pixels and the existing actual Native/browser preview corpus pass.
-The circuit-1 crop rejects 301/767 objects and submits 127,072 triangles. Default
-gameplay/browser world integration, cockpit-only geometry and complete-frame
-60-FPS proof still remain open. Next wire the prepared scene/provider and replace
+The circuit-1 crop rejects 301/767 objects and now submits 122,224 triangles
+after additional posed batch culling, with all 66 previous world images retained.
+Default
+gameplay/browser world integration and complete-frame 60-FPS proof still remain
+open. The shared model renderer now filters cockpit/steering roles and culls
+posed batch bounds before submission; the prototype cockpit submits 7,592 of
+31,716 triangles in nine of 41 batches. Actual Native/browser review exposes
+missing inner door/window surrounds, so complete cockpit assets remain open.
+Strict 54 Native/52 WASM CTests and actual window/canvas input checks pass.
+Paired Native warmed cockpit render calls measure 34.35 -> 14.17 ms under varying
+external build load; automatic pools and component timing do not prove 60 FPS.
+Next wire the prepared scene/provider and replace
 the game's original-input path, then remodel against this baseline.
 
 ## Work order

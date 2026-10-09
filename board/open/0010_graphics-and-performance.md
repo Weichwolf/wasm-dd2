@@ -170,6 +170,28 @@ Use bounded captured contact cases for Native Callgrind diagnosis when hardware
 counters are unavailable. Continue separate WASM/V8 sampling for browser cost;
 do not substitute instrumented Native timings for either production benchmark.
 
+The shared owned model path now excludes exterior/wheel roles from the player
+cockpit and culls indexed batch bounds after posing, before SoftGL submission.
+The prototype submits 7,592 triangles in nine batches rather than 31,716 in 41;
+all nine broad bounds intersect the straight-ahead view. Actual Native/browser
+review exposes missing inner door/window surrounds, which need authored geometry.
+The prepared circuit-1 crop additionally drops 4,848 triangles/38 batches to
+122,224/791 while every one of 66 existing world captures stays byte-identical.
+Strict 243-file LLVM19, 54 Native/52 WASM CTests, fresh reached O1 sanitizers,
+material Memcheck and the full real window/canvas input corpus pass.
+
+Under other projects' build load, thirty current warmed cockpit component calls
+measure 18.49 ms Native/25.79 ms Chromium. A same-session O3 Native ABBA comparison
+with unchanged lower-level libraries and 60 samples per view records cockpit
+34.35 -> 14.17 ms median, 55.23 -> 20.30 ms p95. Full/exterior/NPC medians are
+21.47/17.47/12.88 ms before and 24.05/16.19/11.28 ms after. Varying host load remains
+a limitation; these automatic-pool component samples exclude simulation/events/
+compositor work and do not prove the explicit four-thread/complete-game target.
+Receipts: `/tmp/wasm-dd2/cockpit-submission-0062/` quality/visual-review,
+after/world-render, timing and paired-native reports. Next complete the interior
+geometry, default prepared-world provider, Native thread selection and actual
+gameplay-frame performance evidence.
+
 ## Accept
 
 All original tracks/cars and complete game flows render correctly. Every visual change includes actual both-target image/lifecycle checks and measured performance. Original pixel identity is not required.

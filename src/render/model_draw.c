@@ -1,8 +1,10 @@
 #include "render/model_draw.h"
 
+#include "assets/bounds.h"
 #include "assets/image.h"
 #include "assets/model.h"
 #include "render/color.h"
+#include "render/frustum.h"
 
 #include <GL/softgl.h>
 #include <stdbool.h>
@@ -22,6 +24,7 @@ typedef struct {
     dd2_model_role role;
     float pivot[DD2_MODEL_DRAW_AXES];
     float center[DD2_MODEL_DRAW_AXES];
+    dd2_bounds bounds;
     size_t first;
     size_t count;
 } dd2_model_batch;
@@ -36,6 +39,8 @@ struct dd2_model_draw {
     size_t batch_count;
     dd2_model_texture_cache *cache;
     bool owns_cache;
+    float projection[DD2_FRUSTUM_MATRIX];
+    dd2_model_draw_stats stats;
 };
 
 typedef struct dd2_model_cached_texture {
@@ -243,6 +248,21 @@ static size_t dd2_model_batch_find(dd2_model_draw *draw, const dd2_model_part *p
     return index;
 }
 
+static void dd2_model_batch_vertex(dd2_model_draw *draw, dd2_model_batch *batch, uint32_t index) {
+    const dd2_model_vertex *vertex = &dd2_model_vertices(draw->model)[index];
+    for (size_t axis = 0; axis < DD2_MODEL_DRAW_AXES; ++axis) {
+        const float position = vertex->position[axis];
+        batch->center[axis] += position;
+        if (batch->count == 0 || position < batch->bounds.minimum[axis]) {
+            batch->bounds.minimum[axis] = position;
+        }
+        if (batch->count == 0 || position > batch->bounds.maximum[axis]) {
+            batch->bounds.maximum[axis] = position;
+        }
+    }
+    draw->indices[batch->first + batch->count++] = index;
+}
+
 static bool dd2_model_batches_create(dd2_model_draw *draw) {
     const size_t parts = dd2_model_part_count(draw->model);
     size_t *groups = calloc(parts, sizeof(*groups));
@@ -262,16 +282,12 @@ static bool dd2_model_batches_create(dd2_model_draw *draw) {
         batch->count = 0;
     }
     const uint32_t *source_indices = dd2_model_indices(draw->model);
-    const dd2_model_vertex *vertices = dd2_model_vertices(draw->model);
     for (size_t index = 0; index < parts; ++index) {
         const dd2_model_part *part = &source_parts[index];
         dd2_model_batch *batch = &draw->batches[groups[index]];
         for (size_t item = 0; item < part->index_count; ++item) {
             const uint32_t vertex = source_indices[part->first_index + item];
-            draw->indices[batch->first + batch->count++] = vertex;
-            for (size_t axis = 0; axis < DD2_MODEL_DRAW_AXES; ++axis) {
-                batch->center[axis] += vertices[vertex].position[axis];
-            }
+            dd2_model_batch_vertex(draw, batch, vertex);
         }
     }
     for (size_t index = 0; index < draw->batch_count; ++index) {
@@ -406,9 +422,14 @@ static void dd2_model_draw_material(const dd2_model_draw *draw, uint32_t index) 
     }
 }
 
-static void dd2_model_draw_batch(const dd2_model_draw *draw, const dd2_model_batch *batch,
+static void dd2_model_draw_batch(dd2_model_draw *draw, const dd2_model_batch *batch,
                                  dd2_model_draw_options options) {
-    dd2_model_draw_material(draw, batch->material);
+    ++draw->stats.tested;
+    if (options.cockpit_only && batch->role != DD2_MODEL_COCKPIT &&
+        batch->role != DD2_MODEL_STEERING) {
+        ++draw->stats.role_filtered;
+        return;
+    }
     glPushMatrix();
     glTranslatef(batch->pivot[0], batch->pivot[1], batch->pivot[2]);
     if (batch->role >= DD2_MODEL_WHEEL_FRONT_LEFT && batch->role <= DD2_MODEL_WHEEL_REAR_RIGHT) {
@@ -420,8 +441,18 @@ static void dd2_model_draw_batch(const dd2_model_draw *draw, const dd2_model_bat
         glRotatef(options.steering, 0, 0, 1);
     }
     glTranslatef(-batch->pivot[0], -batch->pivot[1], -batch->pivot[2]);
-    glDrawElements(GL_TRIANGLES, (GLsizei)batch->count, GL_UNSIGNED_INT,
-                   draw->indices + batch->first);
+    float modelview[DD2_FRUSTUM_MATRIX] = {0};
+    glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
+    const dd2_frustum frustum = dd2_frustum_create(draw->projection, modelview);
+    if (dd2_frustum_visible(&frustum, &batch->bounds)) {
+        dd2_model_draw_material(draw, batch->material);
+        glDrawElements(GL_TRIANGLES, (GLsizei)batch->count, GL_UNSIGNED_INT,
+                       draw->indices + batch->first);
+        ++draw->stats.batches;
+        draw->stats.triangles += batch->count / DD2_MODEL_DRAW_AXES;
+    } else {
+        ++draw->stats.culled;
+    }
     glPopMatrix();
 }
 
@@ -456,6 +487,8 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
     if (draw == NULL) {
         return false;
     }
+    draw->stats = (dd2_model_draw_stats){0};
+    glGetFloatv(GL_PROJECTION_MATRIX, draw->projection);
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -519,4 +552,8 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
 
 size_t dd2_model_draw_batch_count(const dd2_model_draw *draw) {
     return draw != NULL ? draw->batch_count : 0;
+}
+
+dd2_model_draw_stats dd2_model_draw_statistics(const dd2_model_draw *draw) {
+    return draw != NULL ? draw->stats : (dd2_model_draw_stats){0};
 }

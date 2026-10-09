@@ -313,10 +313,12 @@ bool dd2_content_capture(dd2_content_capture_options options) {
     passed = passed && dd2_content_write(state->renderer, options.path);
     GLint samples = 0;
     glGetIntegerv(GL_SAMPLES, &samples);
+    const dd2_model_draw_stats submitted = dd2_model_draw_statistics(state->draws[state->detail]);
     printf("{\"scope\":\"authored model diagnostic "
-           "only\",\"samples\":%d,\"batches\":%zu,\"triangles\":%zu}\n",
-           samples, dd2_model_draw_batch_count(state->draws[state->detail]),
-           dd2_model_index_count(state->models[state->detail]) / DD2_CONTENT_LODS);
+           "only\",\"samples\":%d,\"batches\":%zu,\"triangles\":%zu,"
+           "\"tested\":%zu,\"role_filtered\":%zu,\"culled\":%zu}\n",
+           samples, submitted.batches, submitted.triangles, submitted.tested,
+           submitted.role_filtered, submitted.culled);
     passed = passed && samples == DD2_CONTENT_SAMPLES && glGetError() == GL_NO_ERROR;
     dd2_content_close();
     return passed;

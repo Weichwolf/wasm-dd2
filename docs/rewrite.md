@@ -64,6 +64,18 @@ layout but limited floor contrast and incomplete terrain/sky. Default gameplay
 and browser-world integration, road/AI/grid/livery/UI/audio inputs and complete
 four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
 
+The owned model renderer now selects only cockpit/steering roles for the player
+interior view and tests each material/role batch's indexed bounds against the
+actual posed frustum before submission. Frame statistics count submitted geometry,
+not the complete file. The Racer R1 prototype's cockpit submits 7,592 triangles
+in nine batches instead of the complete 31,716-triangle vehicle. Its material
+groups still intersect the straight-ahead frustum, so this view has no additional
+batch culls. Real Native/browser images preserve the instruments and steering but
+expose missing inner door/window surrounds previously covered by exterior parts.
+These must be authored as interior geometry; this is no completed-cockpit or
+qualitative-superiority claim. Cockpit role selection is per model draw; scene
+and opponent draws need their own unrestricted options during gameplay integration.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game

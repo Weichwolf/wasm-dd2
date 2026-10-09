@@ -83,6 +83,7 @@ dd2_model_draw_options dd2_model_view_apply(const dd2_model_view *view,
     if (view == NULL || viewport.width <= 0 || viewport.height <= 0) {
         return options;
     }
+    options.cockpit_only = view->cockpit;
     const float yaw = view->yaw * dd2_model_view_radians;
     const float pitch = view->pitch * dd2_model_view_radians;
     float forward[] = {sinf(yaw) * cosf(pitch), sinf(pitch), cosf(yaw) * cosf(pitch)};

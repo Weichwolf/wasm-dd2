@@ -22,7 +22,17 @@ typedef struct {
     /* Treat texture alpha as a coverage mask at 0.5 with depth writes.
      * Material opacity below one still uses the transparent pass. */
     bool cutout_textures;
+    /* Submit only cockpit and steering roles for an interior camera. */
+    bool cockpit_only;
 } dd2_model_draw_options;
+
+typedef struct {
+    size_t tested;
+    size_t role_filtered;
+    size_t culled;
+    size_t batches;
+    size_t triangles;
+} dd2_model_draw_stats;
 
 /* Borrows the immutable model; owns batched indices and context-local albedo
  * textures with complete mip chains. Loader results transfer ownership and are
@@ -45,5 +55,8 @@ dd2_model_draw *dd2_model_draw_create_shared(const dd2_model *model,
 void dd2_model_draw_destroy(dd2_model_draw *draw);
 bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options);
 size_t dd2_model_draw_batch_count(const dd2_model_draw *draw);
+/* Last frame's actual submissions, after role selection and posed-bound culling.
+ * Cached batch count is independent of the current view. NULL returns zeros. */
+dd2_model_draw_stats dd2_model_draw_statistics(const dd2_model_draw *draw);
 
 #endif

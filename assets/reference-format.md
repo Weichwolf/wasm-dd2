@@ -110,8 +110,11 @@ must outlive the renderer; destroy draw caches before their world/context.
 
 The prepared diagnostic also accepts `reference/scenes/level-*.dd2scene`; an
 optional final `crop` argument narrows the overview. Circuit 1's crop rejects
-301 of 767 objects before submission: 127,072 triangles versus 190,048 for the
-whole-map overview. These static counts do not establish complete-frame FPS.
+301 of 767 objects before submission. Additional posed material/role batch tests
+reduce actual submissions to 122,224 triangles in 791 batches versus 190,048
+triangles for the whole-map overview. All 66 full/crop Native/WASM/sanitized
+images remain byte-identical to the preceding verified renderer despite the
+additional rejected geometry. These static counts do not establish complete-frame FPS.
 
 ## Evidence
 

@@ -4,6 +4,7 @@
 #include "assets/model.h"
 #include "image_fixture.h"
 #include "model_fixture.h"
+#include "render/frustum.h"
 #include "render/model_draw.h"
 #include "render/renderer.h"
 
@@ -26,6 +27,10 @@ enum {
     DD2_DRAW_TEST_MIP_GREEN = 30,
     DD2_DRAW_TEST_MIP_BLUE = 65
 };
+static const float dd2_draw_test_half = 0.5F;
+static const float dd2_draw_test_outside = 3;
+static const float dd2_draw_test_pivot = 2;
+static const float dd2_draw_test_reverse = 180;
 static const uint32_t dd2_draw_test_two = UINT32_C(0x40000000);
 static const uint32_t dd2_draw_test_tiled = UINT32_C(0x43000000);
 static const double dd2_draw_test_decode_break = 0.04045;
@@ -201,16 +206,166 @@ static bool dd2_draw_test_cutout(void) {
     return passed;
 }
 
+static void dd2_draw_test_scalar(uint8_t *destination, float value) {
+    uint32_t bits = 0;
+    const unsigned char *source = (const unsigned char *)&value;
+    unsigned char *target = (unsigned char *)&bits;
+    for (size_t index = 0; index < sizeof(bits); ++index) {
+        target[index] = source[index];
+    }
+    dd2_test_write_le32(destination, bits);
+}
+
+static void dd2_draw_test_projection(void) {
+    glViewport(0, 0, DD2_DRAW_TEST_SIDE, DD2_DRAW_TEST_SIDE);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, 1, 0, 1, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+static bool dd2_draw_test_role(dd2_model_role role, bool transparent) {
+    uint8_t bytes[DD2_MODEL_TEST_BYTES] = {0};
+    dd2_model_test_source(bytes);
+    dd2_test_write_le32(bytes + DD2_MODEL_TEST_ROLE, (uint32_t)role);
+    if (transparent) {
+        dd2_draw_test_scalar(bytes + DD2_MODEL_TEST_COLOR + ((size_t)3 * DD2_MODEL_TEST_WORD),
+                             dd2_draw_test_half);
+    }
+    dd2_renderer *renderer = dd2_renderer_create(
+        &(dd2_render_options){.width = DD2_DRAW_TEST_SIDE, .height = DD2_DRAW_TEST_SIDE});
+    dd2_model *model = dd2_model_create((dd2_byte_view){bytes, sizeof(bytes)});
+    dd2_draw_test_source source = {.fixture = DD2_DRAW_TEST_RGB_FIXTURE};
+    dd2_model_draw *draw = model != NULL && renderer != NULL
+                               ? dd2_model_draw_create(model, dd2_draw_test_loader, &source)
+                               : NULL;
+    bool passed = draw != NULL;
+    if (passed) {
+        dd2_draw_test_projection();
+        passed = dd2_model_draw_frame(draw, (dd2_model_draw_options){.cockpit_only = true});
+        const bool interior = role == DD2_MODEL_COCKPIT || role == DD2_MODEL_STEERING;
+        const dd2_model_draw_stats stats = dd2_model_draw_statistics(draw);
+        passed = passed && stats.tested == 1 && stats.culled == 0 &&
+                 stats.role_filtered == (interior ? 0U : 1U) &&
+                 stats.triangles == (interior ? 1U : 0U) && stats.batches == stats.triangles;
+        const uint8_t *pixels = dd2_renderer_pixels(renderer);
+        passed = passed && pixels != NULL;
+        if (pixels != NULL && !interior) {
+            for (size_t pixel = 0; pixel < (size_t)DD2_DRAW_TEST_SIDE * DD2_DRAW_TEST_SIDE;
+                 ++pixel) {
+                for (size_t channel = 0; channel < 3; ++channel) {
+                    passed = passed && pixels[(pixel * DD2_DRAW_TEST_CHANNELS) + channel] == 0;
+                }
+            }
+        }
+        dd2_draw_test_projection();
+        passed = passed && dd2_model_draw_frame(draw, (dd2_model_draw_options){0});
+        const dd2_model_draw_stats exterior = dd2_model_draw_statistics(draw);
+        passed = passed && exterior.tested == 1 && exterior.triangles == 1 &&
+                 exterior.batches == 1 && exterior.culled == 0 && exterior.role_filtered == 0;
+    }
+    dd2_model_draw_destroy(draw);
+    dd2_model_destroy(model);
+    dd2_renderer_destroy(renderer);
+    return passed;
+}
+
+typedef struct {
+    dd2_model_role role;
+    float local_x;
+    float translation[3];
+    dd2_model_draw_options options;
+    bool visible;
+} dd2_draw_test_visibility;
+
+static bool dd2_draw_test_visibility_case(dd2_draw_test_visibility test) {
+    uint8_t bytes[DD2_MODEL_TEST_BYTES] = {0};
+    dd2_model_test_source(bytes);
+    dd2_test_write_le32(bytes + DD2_MODEL_TEST_ROLE, (uint32_t)test.role);
+    for (size_t index = 0; index < 3; ++index) {
+        float x_pos = test.local_x;
+        if (index == 1) {
+            x_pos += 1;
+        }
+        dd2_draw_test_scalar(
+            bytes + DD2_MODEL_TEST_VERTICES + (index * DD2_MODEL_TEST_VERTEX_BYTES), x_pos);
+    }
+    dd2_draw_test_scalar(bytes + DD2_MODEL_TEST_PIVOT, dd2_draw_test_pivot);
+    dd2_renderer *renderer = dd2_renderer_create(
+        &(dd2_render_options){.width = DD2_DRAW_TEST_SIDE, .height = DD2_DRAW_TEST_SIDE});
+    dd2_model *model = dd2_model_create((dd2_byte_view){bytes, sizeof(bytes)});
+    dd2_draw_test_source source = {.fixture = DD2_DRAW_TEST_RGB_FIXTURE};
+    dd2_model_draw *draw = model != NULL && renderer != NULL
+                               ? dd2_model_draw_create(model, dd2_draw_test_loader, &source)
+                               : NULL;
+    bool passed = draw != NULL;
+    if (passed) {
+        dd2_draw_test_projection();
+        glTranslatef(test.translation[0], test.translation[1], test.translation[2]);
+        float before[DD2_FRUSTUM_MATRIX] = {0};
+        float after[DD2_FRUSTUM_MATRIX] = {0};
+        glGetFloatv(GL_MODELVIEW_MATRIX, before);
+        passed = dd2_model_draw_frame(draw, test.options);
+        glGetFloatv(GL_MODELVIEW_MATRIX, after);
+        const dd2_model_draw_stats stats = dd2_model_draw_statistics(draw);
+        passed = passed && stats.tested == 1 && stats.role_filtered == 0 &&
+                 stats.culled == (test.visible ? 0U : 1U) &&
+                 stats.triangles == (test.visible ? 1U : 0U) && stats.batches == stats.triangles &&
+                 glGetError() == GL_NO_ERROR;
+        for (size_t index = 0; index < DD2_FRUSTUM_MATRIX; ++index) {
+            passed = passed && before[index] == after[index];
+        }
+    }
+    dd2_model_draw_destroy(draw);
+    dd2_model_destroy(model);
+    dd2_renderer_destroy(renderer);
+    return passed;
+}
+
+static bool dd2_draw_test_selection(void) {
+    for (unsigned role = DD2_MODEL_EXTERIOR; role <= DD2_MODEL_STEERING; ++role) {
+        if (!dd2_draw_test_role((dd2_model_role)role, false) ||
+            !dd2_draw_test_role((dd2_model_role)role, true)) {
+            return false;
+        }
+    }
+    const dd2_draw_test_visibility cases[] = {
+        {.visible = true},
+        {.translation = {dd2_draw_test_outside, 0, 0}},
+        {.translation = {-1, 0, 0}, .visible = true},
+        {.translation = {-dd2_draw_test_half, 0, 0}, .visible = true},
+        {.translation = {0, 0, dd2_draw_test_outside}},
+        {.role = DD2_MODEL_STEERING, .options = {.steering = dd2_draw_test_reverse}},
+        {.role = DD2_MODEL_STEERING,
+         .local_x = dd2_draw_test_outside,
+         .options = {.steering = dd2_draw_test_reverse},
+         .visible = true},
+        {.role = DD2_MODEL_WHEEL_FRONT_LEFT, .options = {.front_steer = dd2_draw_test_reverse}},
+        {.role = DD2_MODEL_WHEEL_REAR_RIGHT,
+         .options = {.wheel_roll = dd2_draw_test_reverse},
+         .visible = true}};
+    for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); ++index) {
+        if (!dd2_draw_test_visibility_case(cases[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(void) {
     dd2_model_draw_destroy(NULL);
     if (dd2_model_draw_create(NULL, NULL, NULL) != NULL || dd2_model_draw_batch_count(NULL) != 0 ||
         dd2_model_draw_frame(NULL, (dd2_model_draw_options){0}) ||
         !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, false) ||
         !dd2_draw_test_case(DD2_DRAW_TEST_RGBA_FIXTURE, false) ||
-        !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, true) || !dd2_draw_test_cutout()) {
+        !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, true) || !dd2_draw_test_cutout() ||
+        !dd2_draw_test_selection() || dd2_model_draw_statistics(NULL).tested != 0) {
         return EXIT_FAILURE;
     }
     puts("{\"scope\":\"authored GL upload orientation, mipmaps, alpha, state and failure "
-         "lifetime\",\"pass\":true}");
+         "lifetime, cockpit roles and posed frustum submission\",\"pass\":true}");
     return EXIT_SUCCESS;
 }

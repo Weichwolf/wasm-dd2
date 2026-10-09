@@ -243,10 +243,54 @@ Strict LLVM19 covers 243 C/header files; 54 Native/52 WASM CTests pass. Evidence
 is under `/tmp/wasm-dd2/prepared-world-0062/`, including owned-verification,
 asset-regression, world-render, authored-render and visual-review reports.
 
+The shared model renderer now builds bounds from each batch's actual indexed
+vertices, rejects exterior/wheel roles for player cockpit draws and tests the
+remaining bounds after their pivot/steer/roll pose, before material binding or
+triangle submission. Statistics reset per frame and count actual submitted
+batches/triangles; the prepared world renderer sums these submissions. Opaque
+and transparent fixtures cover all seven roles, filtered pixels, re-selection,
+translated/behind/crossing/touching bounds, steering into/out of view, wheel poses
+and unchanged modelview matrices. No runtime subdivision or source conversion
+was added; scene/opponent options remain independently unrestricted.
+
+The prototype's rest/steer cockpit submits 7,592 triangles in nine batches, with
+32 of 41 batches rejected by role. All remaining broad material bounds intersect
+the straight-ahead frustum; no additional batch culls are claimed there. Strict
+243-file LLVM19 gates and 54 Native/52 WASM CTests pass. The 24-capture authored
+corpus, 15 Native/15 sanitized window checks and 17 Chromium comparisons pass
+with fresh O1 instrumentation including reached SoftGL and zero-error/no-leak
+material Memcheck. All 66 prepared-world images remain byte-identical to the
+previous verified captures across Native/WASM/sanitized. The circuit-1 crop now
+submits 122,224 triangles in 791 batches, omitting an additional 4,848 triangles
+and 38 batches after coarse object culling.
+
+Direct actual Native/browser review retains instrument/steering layout but
+exposes missing inner door/window surrounds previously hidden by exterior body
+geometry. Those remain authored-content defects, not completed cockpit acceptance.
+Exterior browser pixels are unchanged; old sanitized/current production Native
+exteriors differ at five pixels with mean channel error 0.000054977. A premature
+startup-black Native baseline was discarded and reacquired only after matching
+the old rendered frame.
+
+Thirty warmed current render/resolve/readback/presentation calls measure cockpit
+medians 18.49 ms Native and 25.79 ms Chromium under other projects' build load.
+A same-session O3 Native before/current ABBA comparison with 60 samples per view
+records cockpit 34.35 -> 14.17 ms median and 55.23 -> 20.30 ms p95. Host load still
+varies; full/exterior/NPC medians are 21.47/17.47/12.88 ms before and
+24.05/16.19/11.28 ms after. These are scoped component observations with automatic
+pools, excluding normal simulation/events/compositor work, not isolated throughput
+or the four-total-thread complete-game 60-FPS contract. Reports remain under
+`/tmp/wasm-dd2/cockpit-submission-0062/`: quality, visual-review, after, world-render,
+timing and paired-native. Completed raw captures/diagnostic drivers/logs are
+removed after recording their hashes and findings.
+
 ## Next
 
 Wire the prepared owner/renderer into default gameplay and browser presentation;
-render only cockpit/interior geometry in cockpit views. Migrate owned road,
+keep scene/opponent options unrestricted while selecting player cockpit roles.
+Author inner door/window surrounds and use finer visibility groups where useful;
+the prototype must not rely on its exterior shell to cover interior gaps.
+Migrate owned road,
 progress/AI/grid and audio inputs so default Native/browser launch consumes
 committed assets without Dirinfo. Complete billboard/livery policy,
 place wheel templates and compare actual original/candidate gameplay images.

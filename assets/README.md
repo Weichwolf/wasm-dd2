@@ -92,7 +92,13 @@ packaged browser preview at the printed `/content.html` URL. Tab switches
 cockpit/exterior; Page Up/Down changes detail; arrows orbit/look; +/- zooms;
 Space toggles a wheel/steering pose; R resets; Escape closes. The browser also
 provides camera/detail/pose/reset controls. Cockpit selection requires the full
-mesh. This is a content preview, not driving or a playable authored course.
+mesh cache, but submits only cockpit and steering roles. Exterior/wheel batches
+are rejected before SoftGL; remaining indexed bounds are tested after posing.
+The prototype's straight-ahead cockpit submits 7,592 triangles in nine batches,
+with 32 exterior/wheel batches omitted. The remaining broad material bounds all
+intersect this view. Missing inner door/window surrounds are now visible and
+need separate authored interior geometry. This is a content preview, not driving
+or a playable authored course.
 
 `assets-render-verify` checks decoded upload orientation, mip minification,
 alpha, state and failure cleanup; all three LODs and cockpit in rest/steer poses

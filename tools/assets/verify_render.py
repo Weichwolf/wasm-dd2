@@ -19,6 +19,7 @@ from artifacts import WORK, check_space, prepare_output, run_bounded
 from rewrite.serve import BUILD, Handler
 from rewrite.quality import ROOT, tool
 from rewrite.verify_window import NativeWindow
+from assets.verify_assets import decode_model
 
 VIEWS = [('full', 0, 'exterior'), ('exterior', 1, 'exterior'), ('npc', 2, 'exterior'), ('cockpit', 0, 'cockpit')]
 HEADER = b'P6\n640 360\n255\n'
@@ -126,6 +127,8 @@ def main():
     captures = {}
     comparisons = []
     counts = {}
+    model_names = ('racer-r1', 'racer-r1-exterior', 'racer-r1-npc')
+    models = [decode_model((root / 'models' / (name + '.dd2mesh')).read_bytes()) for name in model_names]
     for name, detail, camera in VIEWS:
         for pose in ('rest', 'steer'):
             label = name + '-' + pose
@@ -135,6 +138,20 @@ def main():
                 record = json.loads(log.read_text())
                 if record['samples'] != 4:
                     raise ValueError('Preview does not use four real samples')
+                model = models[detail]
+                triangle_limit = model['triangles']
+                if camera == 'cockpit':
+                    triangle_limit = sum(part['count'] // 3 for part in model['parts'] if part['role'] in (5, 6))
+                    if record['role_filtered'] == 0:
+                        raise ValueError('Cockpit did not reject exterior/wheel batches')
+                elif record['role_filtered'] != 0:
+                    raise ValueError('Exterior unexpectedly filters roles')
+                if not (0 < record['triangles'] <= triangle_limit):
+                    raise ValueError('Submitted geometry exceeds the selected role inventory')
+                if record['tested'] != record['role_filtered'] + record['culled'] + record['batches']:
+                    raise ValueError('Batch selection accounting differs')
+                if platform != 'native' and record != counts['native-' + label]:
+                    raise ValueError('Cross-target submitted geometry differs')
                 if not image.read_bytes().startswith(HEADER):
                     raise ValueError('Malformed preview image')
                 counts[platform + '-' + label] = record
@@ -170,7 +187,7 @@ def main():
                'tools/rewrite/serve.py', 'tools/rewrite/verify_window.py']
     pngs = {str(path.name): digest(path.read_bytes()) for path in output.glob('*.png')}
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(),
-                  scope='Authored vehicle rendering, MSAA, camera/control and resource lifetime; complete standalone game, PBR/audio/60 FPS remain pending',
+                  scope='Authored vehicle rendering, cockpit-only roles, posed culling, MSAA, camera/control and resource lifetime; complete standalone game, PBR/audio/60 FPS remain pending',
                   sanitizer_scope='Fresh O1 ASan/UBSan including reached SoftGL sources; separate strict LLVM19 gate remains mandatory',
                   inputs=before, captures=captures, review_pngs=pngs, counts=counts,
                   headless_comparisons=comparisons, windows=windows,

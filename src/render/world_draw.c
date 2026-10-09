@@ -1,7 +1,6 @@
 #include "render/world_draw.h"
 
 #include "assets/bounds.h"
-#include "assets/model.h"
 #include "assets/world.h"
 #include "render/frustum.h"
 #include "render/model_draw.h"
@@ -73,9 +72,10 @@ static bool dd2_world_draw_instance(dd2_world_draw *draw, const dd2_world_instan
     const bool passed = dd2_model_draw_frame(*model, options);
     glPopMatrix();
     if (passed) {
+        const dd2_model_draw_stats submitted = dd2_model_draw_statistics(*model);
         ++stats->visible;
-        stats->triangles += dd2_model_index_count(resource->model) / DD2_WORLD_DRAW_AXES;
-        stats->batches += dd2_model_draw_batch_count(*model);
+        stats->triangles += submitted.triangles;
+        stats->batches += submitted.batches;
     }
     return passed;
 }
