@@ -47,6 +47,19 @@
   <label>Effects <input id="effects-gain" type="range" min="0" max="256" value="256" disabled></label>
   <span id="music-status" role="status">Select track02.cdda to track19.cdda from the Redbook folder.</span>
 </div>
+<fieldset>
+  <legend>Audio preferences</legend>
+  <div class="controls">
+    <button id="saves-open" disabled>Open saves</button>
+    <label>Entry <select id="save-slot" disabled></select></label>
+    <label>Name <input id="save-name" type="text" maxlength="8" value="CONFIG" disabled></label>
+    <button id="preferences-save" disabled>Save preferences</button>
+    <button id="preferences-load" disabled>Restore audio</button>
+    <button id="save-delete" disabled>Delete entry</button>
+    <button id="saves-reload" disabled>Reload saves</button>
+  </div>
+  <p id="save-status" role="status">Open saves to keep audio preferences between visits.</p>
+</fieldset>
 <p id="status" role="status">Preparing the renderer …</p>
 <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Track view. Rotate with the arrow keys."></canvas>
 <p class="help">Championships: <kbd>C</kbd> Wrecking · <kbd>N</kbd> Stockcar · <kbd>Enter</kbd> next race after results · <kbd>R</kbd> restart the unfinished race · <kbd>Esc</kbd> leave. Tracks follow the original schedule; completed points are retained through restarts.<br>Races: <kbd>F5</kbd> Wrecking Racing/Arena · <kbd>F6</kbd> Stockcar (circuits) ·

@@ -97,9 +97,26 @@ provisioned assets remain unchanged. This is durable container storage, not
 settings application or accepted playable championship restoration. Receipt:
 /tmp/wasm-dd2/rewrite-save-store-0057-final/verification-report.json.
 
+Active 0058 now proves audio preferences through actual Native application C
+actions and browser save/restore/delete/reload controls. Thirty-seven original/
+Native/fresh sanitized cases and 23 Chromium checks preserve complete predicted
+cards, exact source effects volume, unrelated profile data, physical selection
+and pending owners. Actual engine gain, eight restored-gain WebAudio buffers,
+process restart, aborted/stale writes and canceled actions pass. Strict
+LLVM19/189-file and 42/40 gates, zero-error/no-lost-block Native Memcheck and the
+existing actual music-output regression pass. Native Memcheck uses a controlling
+terminal and retains reachable system DBus globals. Receipt:
+/tmp/wasm-dd2/rewrite-preferences-0058-publication/verification-report.json.
+This is partial configuration integration; records and playable saves remain open.
+
 ## Next
 
-Translate and validate complete typed source configuration/game state and connect actual frontend actions through the proved durable store. Replays need a separate codec. Keep selected physical identity through loading, preserve prior application state on invalid gameplay/failed writes, and prevent new ambiguous names after display compaction. Persist rewrite music gain explicitly because the source configuration does not store it.
+Translate and validate complete source configuration/game state under 0058,
+including Native human save menus. Replays need a separate codec. Keep selected
+physical identity through loading, preserve prior application state on invalid
+gameplay/failed writes and prevent new ambiguous names after display compaction.
+The versioned rewrite music extension is implemented; the original controller
+field is never music gain.
 
 ## Accept
 

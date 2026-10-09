@@ -1,13 +1,16 @@
 #include "game/application.h"
 
 #include "assets/archive.h"
+#include "assets/bytes.h"
 #include "assets/level.h"
+#include "assets/save_card.h"
 #include "assets/track.h"
 #include "audio/effects.h"
 #include "audio/mixer.h"
 #include "game/audio.h"
 #include "game/championship.h"
 #include "game/championship_session.h"
+#include "game/configuration.h"
 #include "game/course.h"
 #include "game/driving.h"
 #include "game/laps.h"
@@ -17,6 +20,7 @@
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
+#include "platform/save_store.h"
 #include "platform/window.h"
 #include "render/camera.h"
 #include "render/driving_draw.h"
@@ -57,6 +61,9 @@ typedef struct {
     dd2_championship_session *championship;
     int practice_level;
     dd2_game_audio *audio;
+    dd2_configuration configuration;
+    dd2_save_store *saves;
+    char save_names[DD2_SAVE_CARD_SLOTS][DD2_SAVE_CARD_NAME_LIMIT + 1];
     bool drive;
     bool paused;
     int level;
@@ -70,6 +77,9 @@ typedef struct {
 /* Sole active application. The callback retains its typed ownership context;
  * exports address it only on the main thread, and destruction clears the bridge. */
 static dd2_application *dd2_current_application;
+/* Keep a terminal storage receipt after close, so a final event-loop close
+ * cannot erase completion before the UI observes it. New applications reset it. */
+static dd2_save_store_result dd2_application_last_save_result;
 
 static const dd2_driving *dd2_application_driving(const dd2_application *application) {
     if (application == NULL) {
@@ -299,6 +309,7 @@ static void dd2_application_destroy(dd2_application *application) {
     if (dd2_current_application == application) {
         dd2_current_application = NULL;
     }
+    dd2_save_store_destroy(application->saves);
     dd2_mesh_materials_destroy(application->materials);
     dd2_game_audio_destroy(application->audio);
     dd2_renderer_destroy(application->renderer);
@@ -449,15 +460,112 @@ int dd2_application_set_music_playing(int playing) {
 }
 
 int dd2_application_set_music_gain(unsigned gain) {
-    return dd2_current_application != NULL
-               ? (int)dd2_game_audio_music_gain(dd2_current_application->audio, gain)
-               : 0;
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || gain > DD2_MIXER_GAIN_ONE ||
+        (application->audio != NULL && !dd2_game_audio_music_gain(application->audio, gain))) {
+        return 0;
+    }
+    return (int)dd2_configuration_set_music(&application->configuration, gain);
 }
 
 int dd2_application_set_effects_gain(unsigned gain) {
-    return dd2_current_application != NULL
-               ? (int)dd2_game_audio_effects_gain(dd2_current_application->audio, gain)
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || gain > DD2_MIXER_GAIN_ONE ||
+        (application->audio != NULL && !dd2_game_audio_effects_gain(application->audio, gain))) {
+        return 0;
+    }
+    return (int)dd2_configuration_set_effects(&application->configuration, gain);
+}
+
+unsigned dd2_application_music_gain(void) {
+    const dd2_application *application = dd2_current_application;
+    if (application == NULL) {
+        return 0;
+    }
+    return application->audio == NULL ? application->configuration.music_gain
+                                      : dd2_game_audio_music_state(application->audio).gain;
+}
+unsigned dd2_application_effects_gain(void) {
+    return dd2_current_application == NULL
+               ? 0
+               : dd2_configuration_effects_gain(&dd2_current_application->configuration);
+}
+int dd2_application_saves_open(const char *location) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL) {
+        return 0;
+    }
+    if (application->saves == NULL) {
+        application->saves = dd2_save_store_create();
+    }
+    return (int)dd2_save_store_open(application->saves, location);
+}
+int dd2_application_saves_poll(void) {
+    if (dd2_current_application != NULL && dd2_current_application->saves != NULL) {
+        dd2_application_last_save_result = dd2_save_store_poll(dd2_current_application->saves);
+    }
+    return (int)dd2_application_last_save_result;
+}
+int dd2_application_saves_phase(void) {
+    return (int)dd2_save_store_state(
+        dd2_current_application == NULL ? NULL : dd2_current_application->saves);
+}
+const dd2_save_card *dd2_application_saves_view(void) {
+    return dd2_save_store_view(dd2_current_application == NULL ? NULL
+                                                               : dd2_current_application->saves);
+}
+unsigned dd2_application_saves_count(void) {
+    return dd2_save_card_count(dd2_application_saves_view());
+}
+const char *dd2_application_save_name(unsigned logical) {
+    dd2_save_card_entry entry = {0};
+    if (dd2_current_application == NULL ||
+        !dd2_save_card_get(dd2_application_saves_view(), logical, &entry)) {
+        return NULL;
+    }
+    for (unsigned index = 0; index < sizeof(entry.name); ++index) {
+        dd2_current_application->save_names[logical][index] = entry.name[index];
+    }
+    return dd2_current_application->save_names[logical];
+}
+int dd2_application_save_kind(unsigned logical) {
+    dd2_save_card_entry entry = {0};
+    return dd2_save_card_get(dd2_application_saves_view(), logical, &entry)
+               ? (int)dd2_read_le16(entry.payload.data)
                : 0;
+}
+int dd2_application_save_preferences(unsigned logical, const char *name) {
+    dd2_application *application = dd2_current_application;
+    uint8_t block[DD2_SAVE_CARD_BLOCK_BYTES];
+    return application != NULL &&
+           dd2_configuration_write(&application->configuration,
+                                   (dd2_byte_buffer){.data = block, .size = sizeof(block)}) &&
+           dd2_save_store_put(application->saves, logical, name,
+                              (dd2_byte_view){.data = block, .size = sizeof(block)});
+}
+int dd2_application_load_preferences(unsigned logical) {
+    dd2_application *application = dd2_current_application;
+    dd2_configuration next;
+    dd2_save_card_entry entry = {0};
+    if (application == NULL || dd2_application_saves_phase() != DD2_SAVE_STORE_READY ||
+        !dd2_save_card_get(dd2_application_saves_view(), logical, &entry) ||
+        !dd2_configuration_read(entry.payload, application->configuration.music_gain, &next)) {
+        return 0;
+    }
+    const dd2_audio_gains gains = {.effects = dd2_configuration_effects_gain(&next),
+                                   .music = next.music_gain};
+    if (application->audio != NULL && !dd2_game_audio_apply_gains(application->audio, gains)) {
+        return 0;
+    }
+    application->configuration = next;
+    return 1;
+}
+int dd2_application_delete_save(unsigned logical) {
+    return dd2_current_application != NULL &&
+           dd2_save_store_delete(dd2_current_application->saves, logical);
+}
+int dd2_application_reload_saves(void) {
+    return dd2_current_application != NULL && dd2_save_store_reload(dd2_current_application->saves);
 }
 
 int dd2_application_effect_voice(unsigned query) {
@@ -989,6 +1097,13 @@ static void dd2_application_drive_frame(const dd2_input *input, float seconds) {
 
 static void dd2_application_frame(void *context) {
     dd2_application *application = context;
+    dd2_application_saves_poll();
+    if (!application->running) {
+#ifdef __EMSCRIPTEN__
+        dd2_application_close();
+#endif
+        return;
+    }
     dd2_input input = dd2_window_poll(application->window);
     if (input.quit) {
         application->running = false;
@@ -1049,6 +1164,8 @@ static dd2_application *dd2_application_create(const char *path) {
         return NULL;
     }
     application->running = true;
+    dd2_configuration_defaults(&application->configuration);
+    dd2_application_last_save_result = DD2_SAVE_STORE_IDLE;
     application->audio = dd2_game_audio_create(path, application->archive);
     if (application->audio == NULL) {
         puts("Audio output is unavailable.");
@@ -1072,13 +1189,17 @@ int dd2_application_open(const char *path, int level) {
     return 1;
 }
 
-void dd2_application_close(void) {
+int dd2_application_close(void) {
+    if (dd2_application_saves_poll() == DD2_SAVE_STORE_PENDING) {
+        return 0;
+    }
 #ifdef __EMSCRIPTEN__
     if (dd2_current_application != NULL && dd2_current_application->main_loop) {
         emscripten_cancel_main_loop();
     }
 #endif
     dd2_application_destroy(dd2_current_application);
+    return 1;
 }
 
 const dd2_driving *dd2_application_driving_view(void) {

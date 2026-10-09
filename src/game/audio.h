@@ -29,6 +29,13 @@ void dd2_game_audio_reset_effects(dd2_game_audio *audio);
 bool dd2_game_audio_update(dd2_game_audio *audio, dd2_engine_sound engine,
                            const dd2_sound_batch *events);
 bool dd2_game_audio_effects_gain(dd2_game_audio *audio, unsigned gain);
+typedef struct {
+    unsigned effects;
+    unsigned music;
+} dd2_audio_gains;
+/* Validate both values before changing either; one device lock excludes the
+ * callback from observing a partially applied preference load. */
+bool dd2_game_audio_apply_gains(dd2_game_audio *audio, dd2_audio_gains gains);
 dd2_effect_voice dd2_game_audio_effect_voice(dd2_game_audio *audio, unsigned channel);
 uint64_t dd2_game_audio_cue_count(dd2_game_audio *audio, dd2_sound_cue cue);
 

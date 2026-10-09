@@ -13,9 +13,20 @@ const musicPlay = document.getElementById('music-play');
 const musicGain = document.getElementById('music-gain');
 const effectsGain = document.getElementById('effects-gain');
 const musicStatus = document.getElementById('music-status');
+const savesOpen = document.getElementById('saves-open');
+const saveSlot = document.getElementById('save-slot');
+const saveName = document.getElementById('save-name');
+const preferencesSave = document.getElementById('preferences-save');
+const preferencesLoad = document.getElementById('preferences-load');
+const saveDelete = document.getElementById('save-delete');
+const savesReload = document.getElementById('saves-reload');
+const saveStatus = document.getElementById('save-status');
+let savePending = null;
+let saveEntries = '';
 let musicLoading = false;
 let applicationGeneration = 0;
 let loaded = false;
+let runtimeReady = false;
 let reflectedView = -1;
 let reflectedPhase = -1;
 let reflectedChampionshipPhase = -1;
@@ -26,6 +37,7 @@ var Module = {
   printErr: message => { console.error(message); },
   onAbort: () => { status.textContent = 'The renderer could not start. Reload the page.'; },
   onRuntimeInitialized: () => {
+    runtimeReady = true;
     if (!crossOriginIsolated) {
       status.textContent = 'Open this page through the provided local server.';
       return;
@@ -172,6 +184,8 @@ function reflectSelection() {
       musicPlay.disabled = musicPhase <= 0;
       musicGain.disabled = musicPhase < 0;
       effectsGain.disabled = musicPhase < 0;
+      musicGain.value = String(Module._dd2_application_music_gain());
+      effectsGain.value = String(Module._dd2_application_effects_gain());
       musicPlay.textContent = musicPhase === 2 ? 'Pause music' : 'Play music';
       if (musicPhase < 0) musicStatus.textContent = 'Audio output is unavailable.';
       finishButton.disabled = Number(view.value) < 3 || (!championship && phase === 3);
@@ -206,6 +220,91 @@ function reflectSelection() {
       status.textContent = 'View closed. Dirinfo can be opened again.';
     }
   }
+  reflectSaves();
   requestAnimationFrame(reflectSelection);
 }
 requestAnimationFrame(reflectSelection);
+
+function beginSaveAction(accepted, action) {
+  if (!accepted) {
+    const result = Module._dd2_application_saves_poll();
+    saveStatus.textContent = result === 9 ? 'That name is already used by another entry.' :
+      result === 8 ? 'All fifteen entries are occupied.' : 'The save action could not start.';
+    return;
+  }
+  savePending = action;
+  saveStatus.textContent = action + '…';
+}
+savesOpen.addEventListener('click', () => {
+  beginSaveAction(Module.ccall('dd2_application_saves_open', 'number', ['string'], ['wasm-dd2-saves-v1']), 'Opening saves');
+});
+saveSlot.addEventListener('change', () => {
+  const pointer = Module._dd2_application_save_name(Number(saveSlot.value));
+  saveName.value = pointer ? Module.UTF8ToString(pointer) : 'CONFIG';
+});
+preferencesSave.addEventListener('click', () => {
+  const logical = Number(saveSlot.value), name = saveName.value;
+  if (new TextEncoder().encode(name).length > 8) {
+    saveStatus.textContent = 'Use a shorter save name.';
+    return;
+  }
+  if (logical < Module._dd2_application_saves_count() && !window.confirm('Replace the selected entry with these audio preferences?')) {
+    saveStatus.textContent = 'Replacement canceled.';
+    return;
+  }
+  beginSaveAction(Module.ccall('dd2_application_save_preferences', 'number', ['number','string'], [logical,name]), 'Saving preferences');
+});
+preferencesLoad.addEventListener('click', () => {
+  saveStatus.textContent = Module._dd2_application_load_preferences(Number(saveSlot.value)) ?
+    'Audio preferences restored.' : 'The selected entry is not a valid audio configuration.';
+  canvas.focus();
+});
+saveDelete.addEventListener('click', () => {
+  if (!window.confirm('Delete the selected entry?')) {
+    saveStatus.textContent = 'Deletion canceled.';
+    return;
+  }
+  beginSaveAction(Module._dd2_application_delete_save(Number(saveSlot.value)), 'Deleting entry');
+});
+savesReload.addEventListener('click', () => {
+  beginSaveAction(Module._dd2_application_reload_saves(), 'Reloading saves');
+});
+function reflectSaves() {
+  const phase = loaded ? Module._dd2_application_saves_phase() : 0;
+  const result = runtimeReady ? Module._dd2_application_saves_poll() : 0;
+  if (savePending && result !== 1) {
+    saveStatus.textContent = result === 2 ? savePending + ' completed.' :
+      result === 6 ? 'Saves changed in another window. Reload saves and choose the entry again.' :
+      result === 7 ? 'The save could not be confirmed. Reload saves before making another change.' :
+      result === 3 ? 'The stored data is invalid.' : 'The save action failed; the previous preferences remain available.';
+    savePending = null;
+  }
+  savesOpen.disabled = !loaded || phase !== 0;
+  savesReload.disabled = !loaded || ![2,5].includes(phase);
+  const ready = loaded && phase === 2;
+  saveSlot.disabled = !ready;
+  saveName.disabled = !ready;
+  preferencesSave.disabled = !ready;
+  const count = loaded ? Module._dd2_application_saves_count() : 0;
+  const entries = Array.from({length: count}, (_, index) => {
+    const pointer = Module._dd2_application_save_name(index);
+    return {name: pointer ? Module.UTF8ToString(pointer) : '', kind: Module._dd2_application_save_kind(index)};
+  });
+  const signature = JSON.stringify(entries);
+  if (signature !== saveEntries) {
+    const selected = Number(saveSlot.value || 0);
+    saveSlot.replaceChildren(...Array.from({length:15}, (_, index) => {
+      const option = document.createElement('option');
+      option.value = String(index);
+      option.textContent = `${index+1} · ${entries[index] ? (entries[index].name || '(unnamed)') : 'Empty'}`;
+      return option;
+    }));
+    saveSlot.value = String(Math.min(selected,14));
+    saveEntries = signature;
+    const pointer = loaded ? Module._dd2_application_save_name(Number(saveSlot.value)) : 0;
+    saveName.value = pointer ? Module.UTF8ToString(pointer) : 'CONFIG';
+  }
+  const entry = entries[Number(saveSlot.value)];
+  preferencesLoad.disabled = !ready || !entry || ![0x1010,0x1020].includes(entry.kind);
+  saveDelete.disabled = !ready || !entry;
+}

@@ -16,6 +16,14 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-accidents-verify
 .PHONY: rewrite-race-verify
 
+.PHONY: rewrite-preferences-verify
+rewrite-preferences-verify: ## verify original-compatible audio preferences in the actual application
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_preferences.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-save-store-verify
 rewrite-save-store-verify: ## verify durable Native/IndexedDB card storage and owner lifetimes
 	$(MAKE) clean-logs

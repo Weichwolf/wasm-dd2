@@ -200,6 +200,22 @@ bool dd2_game_audio_effects_gain(dd2_game_audio *audio, unsigned gain) {
     return changed;
 }
 
+bool dd2_game_audio_apply_gains(dd2_game_audio *audio, dd2_audio_gains gains) {
+    if (audio == NULL || gains.effects > DD2_MIXER_GAIN_ONE || gains.music > DD2_MIXER_GAIN_ONE) {
+        return false;
+    }
+    dd2_mixer *mixer = dd2_audio_device_acquire(audio->device);
+    const bool valid = mixer != NULL && audio->effects != NULL;
+    if (valid) {
+        /* Both setters are allocation-free and accept these validated owners
+         * and ranges. Keep the lock until both values have been applied. */
+        dd2_effects_gain(audio->effects, mixer, gains.effects);
+        dd2_mixer_music_gain(mixer, gains.music);
+    }
+    dd2_audio_device_release(audio->device);
+    return valid;
+}
+
 dd2_effect_voice dd2_game_audio_effect_voice(dd2_game_audio *audio, unsigned channel) {
     dd2_effect_voice voice = {.sample = DD2_EFFECT_NO_SAMPLE};
     if (audio != NULL) {

@@ -156,7 +156,13 @@ strict IndexedDB transaction completion. Ninety-two Native/sanitized cases and
 25 actual Chromium checks prove full images, failure rollback, conflicting
 owners, real writer interruption and browser-process restart. Indeterminate
 Native directory synchronization requires reload and never reports success.
-Playable-state translation, replay codecs and frontend save actions remain open; see
+Audio preference actions now consume that store through the Native application C
+bridge and actual browser controls, with exact source effects volume preservation
+and a separate versioned music extension. Restoring preferences preserves the
+active session; pending writes refuse application close. See
+`src/game/configuration.md` and `make rewrite-preferences-verify`.
+Complete configuration consumption, playable-state translation, replay codecs
+and Native human save menus remain open; see
 `src/assets/README.md`, `make rewrite-save-card-verify` and
 `make rewrite-save-profile-verify`, plus `src/platform/README.md` and
 `make rewrite-save-store-verify`. Typed sound-bank/WAVE readers

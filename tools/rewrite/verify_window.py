@@ -417,15 +417,15 @@ def native_championship_checks(ui, expected):
 def build_sanitized(output, entry=None):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'audio', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+             ('archive', 'audio', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     units += [ROOT / 'src/audio/mixer.c', ROOT / 'src/audio/effects.c']
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
-    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device')]
+    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device', 'save_store', 'save_backend')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
-    units += [ROOT / f'src/game/{name}.c' for name in ('application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'league', 'drivers', 'championship', 'championship_session')]
+    units += [ROOT / f'src/game/{name}.c' for name in ('configuration', 'application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'league', 'drivers', 'championship', 'championship_session')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     units += [entry if entry is not None else ROOT / 'src/game/main.c']
-    flags = ['-std=c11', '-O1', '-g', '-I', str(ROOT / 'src'),
+    flags = ['-std=c11', '-O1', '-g', '-D_POSIX_C_SOURCE=200809L', '-I', str(ROOT / 'src'),
              '-I', str(ROOT / 'deps/softgl/libsoftgl/include'),
              '-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter', '-Wno-unused-function',
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',

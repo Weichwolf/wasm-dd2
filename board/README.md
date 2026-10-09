@@ -62,6 +62,7 @@ its game requirements or acceptance rules.
 | [0055](closed/0055_owned-save-card-container.md) | Own the original Windows save-card container | closed |
 | [0056](closed/0056_typed-save-profile.md) | Typed original configuration and profile payload | closed |
 | [0057](closed/0057_durable-save-store.md) | Durable Native/browser save-card owner | closed |
+| [0058](active/0058_configuration-and-saved-game-actions.md) | Configuration and saved-game application actions | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -70,7 +71,10 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current work is 0053 under 0002: complete WASM Arena-8 natural-result acceptance.
+Current application integration is 0058 under 0008/0003: proved audio preference
+actions now need full configuration consumers, Native human save menus and
+validated playable saved championships. Natural-race work continues under
+0053/0002: complete WASM Arena-8 natural-result acceptance.
 After closed 0054, the selected Native/sanitized owners reach natural results;
 WASM still times out at the unchanged 1800-second limit after 86042 complete ticks.
 The bounded late observer now proves moving dense-contact behavior at a matched

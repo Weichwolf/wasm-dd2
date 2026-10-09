@@ -49,9 +49,13 @@ and all bytes before replacing that record. Only transaction completion permits
 publication; abort, enqueue exception and stale owners preserve the prior image.
 JavaScript owns copied bytes and obtains current WASM heap views during polling.
 Missing storage opens empty without creating a card until a mutation succeeds.
-No persistence location defaults to provisioned game assets. Application settings,
-playable-state validation, replay encoding and frontend actions are consumers to
-implement under 0008/0003; this adapter alone does not save a playable session.
+No persistence location defaults to provisioned game assets. The application now
+consumes this owner for audio preferences through Native C actions and actual
+browser controls. It preserves pending application owners and terminal completion
+receipts across close. See `../game/configuration.md` and
+`make rewrite-preferences-verify`. Native human save menus, full configuration
+consumption, playable-state validation and replay encoding remain under
+0008/0003; this adapter alone does not save a playable session.
 `make rewrite-save-store-verify` checks independent full images, real Native
 writer interruption and Chromium process restart, faults/conflicts, sanitized
 ownership and Memcheck. Successful runs retain receipts and remove raw output.

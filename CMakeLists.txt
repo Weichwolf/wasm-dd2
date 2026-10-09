@@ -93,9 +93,9 @@ target_include_directories(dd2_ai PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_ai PUBLIC dd2_physics)
 dd2_strict_target(dd2_ai)
 
-add_library(dd2_game STATIC src/game/driving.c src/game/starting_grid.c src/game/accidents.c src/game/course.c src/game/laps.c src/game/race.c src/game/recovery.c src/game/sound_events.c src/game/league.c src/game/drivers.c src/game/championship.c src/game/championship_session.c)
+add_library(dd2_game STATIC src/game/configuration.c src/game/driving.c src/game/starting_grid.c src/game/accidents.c src/game/course.c src/game/laps.c src/game/race.c src/game/recovery.c src/game/sound_events.c src/game/league.c src/game/drivers.c src/game/championship.c src/game/championship_session.c)
 target_include_directories(dd2_game PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-target_link_libraries(dd2_game PUBLIC dd2_physics dd2_ai)
+target_link_libraries(dd2_game PUBLIC dd2_assets dd2_physics dd2_ai)
 dd2_strict_target(dd2_game)
 
 add_library(dd2_application STATIC src/game/application.c src/game/audio.c)
@@ -108,8 +108,8 @@ dd2_strict_target(dd2_app)
 if(EMSCRIPTEN)
     target_link_options(dd2_app PRIVATE -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1
         -sINITIAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 -sINVOKE_RUN=0
-        "-sEXPORTED_RUNTIME_METHODS=['FS','callMain']"
-        "-sEXPORTED_FUNCTIONS=['_main','_dd2_application_close','_dd2_application_start_championship','_dd2_application_continue_championship','_dd2_application_restart_championship','_dd2_application_exit_championship','_dd2_application_championship_phase','_dd2_application_championship_points','_dd2_application_championship_division','_dd2_application_championship_round','_dd2_application_championship_season','_dd2_application_select_level','_dd2_application_show_car','_dd2_application_current_level','_dd2_application_current_view','_dd2_application_reset_camera','_dd2_application_release_input','_dd2_application_resume_input','_dd2_application_set_driving','_dd2_application_set_paused','_dd2_application_is_paused','_dd2_application_collision_count','_dd2_application_pair_collision_count','_dd2_application_vehicle_count','_dd2_application_engine_health','_dd2_application_region_damage','_dd2_application_accident_points','_dd2_application_destructions','_dd2_application_accident_windows','_dd2_application_current_lap','_dd2_application_required_laps','_dd2_application_completed_laps','_dd2_application_lap_steps','_dd2_application_last_lap_steps','_dd2_application_best_lap_steps','_dd2_application_laps_finished','_dd2_application_start_race','_dd2_application_withdraw_race','_dd2_application_race_phase','_dd2_application_race_steps','_dd2_application_race_place','_dd2_application_race_points','_dd2_application_survival_steps','_dd2_application_race_alive','_dd2_application_load_music','_dd2_application_music_phase','_dd2_application_music_track','_dd2_application_music_frame','_dd2_application_music_fraction','_dd2_application_music_rate','_dd2_application_set_music_playing','_dd2_application_set_music_gain','_dd2_application_set_effects_gain','_dd2_application_effect_voice','_dd2_application_sound_cues']")
+        "-sEXPORTED_RUNTIME_METHODS=['FS','callMain','ccall','UTF8ToString']"
+        "-sEXPORTED_FUNCTIONS=['_main','_dd2_application_close','_dd2_application_start_championship','_dd2_application_continue_championship','_dd2_application_restart_championship','_dd2_application_exit_championship','_dd2_application_championship_phase','_dd2_application_championship_points','_dd2_application_championship_division','_dd2_application_championship_round','_dd2_application_championship_season','_dd2_application_select_level','_dd2_application_show_car','_dd2_application_current_level','_dd2_application_current_view','_dd2_application_reset_camera','_dd2_application_release_input','_dd2_application_resume_input','_dd2_application_set_driving','_dd2_application_set_paused','_dd2_application_is_paused','_dd2_application_collision_count','_dd2_application_pair_collision_count','_dd2_application_vehicle_count','_dd2_application_engine_health','_dd2_application_region_damage','_dd2_application_accident_points','_dd2_application_destructions','_dd2_application_accident_windows','_dd2_application_current_lap','_dd2_application_required_laps','_dd2_application_completed_laps','_dd2_application_lap_steps','_dd2_application_last_lap_steps','_dd2_application_best_lap_steps','_dd2_application_laps_finished','_dd2_application_start_race','_dd2_application_withdraw_race','_dd2_application_race_phase','_dd2_application_race_steps','_dd2_application_race_place','_dd2_application_race_points','_dd2_application_survival_steps','_dd2_application_race_alive','_dd2_application_load_music','_dd2_application_music_phase','_dd2_application_music_track','_dd2_application_music_frame','_dd2_application_music_fraction','_dd2_application_music_rate','_dd2_application_set_music_playing','_dd2_application_set_music_gain','_dd2_application_set_effects_gain','_dd2_application_effect_voice','_dd2_application_sound_cues','_dd2_application_music_gain','_dd2_application_effects_gain','_dd2_application_saves_open','_dd2_application_saves_poll','_dd2_application_saves_phase','_dd2_application_saves_count','_dd2_application_save_name','_dd2_application_save_kind','_dd2_application_save_preferences','_dd2_application_load_preferences','_dd2_application_delete_save','_dd2_application_reload_saves']")
     set_target_properties(dd2_app PROPERTIES SUFFIX ".js")
     configure_file(src/platform/web/index.html "${CMAKE_BINARY_DIR}/index.html" COPYONLY)
     configure_file(src/platform/web/viewer.js "${CMAKE_BINARY_DIR}/viewer.js" COPYONLY)
@@ -129,6 +129,20 @@ if(BUILD_TESTING)
         add_test(NAME rewrite_font COMMAND dd2_font_test)
     endif()
     set_tests_properties(rewrite_font PROPERTIES TIMEOUT 10)
+    add_executable(dd2_configuration_test tests/configuration_test.c)
+    target_link_libraries(dd2_configuration_test PRIVATE dd2_game)
+    dd2_strict_target(dd2_configuration_test)
+    if(EMSCRIPTEN)
+        target_link_options(dd2_configuration_test PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node -sNODERAWFS=1)
+        set_target_properties(dd2_configuration_test PROPERTIES SUFFIX ".js")
+        add_test(NAME rewrite_configuration COMMAND "${DD2_NODE}" "$<TARGET_FILE:dd2_configuration_test>")
+    else()
+        add_test(NAME rewrite_configuration COMMAND dd2_configuration_test)
+        add_executable(dd2_configuration_application_export tests/configuration_application_export.c)
+        target_link_libraries(dd2_configuration_application_export PRIVATE dd2_application)
+        dd2_strict_target(dd2_configuration_application_export)
+    endif()
+    set_tests_properties(rewrite_configuration PROPERTIES TIMEOUT 10)
     add_executable(dd2_save_store_test tests/save_store_test.c src/platform/save_store.c)
     target_link_libraries(dd2_save_store_test PRIVATE dd2_assets)
     dd2_strict_target(dd2_save_store_test)
@@ -190,7 +204,7 @@ if(BUILD_TESTING)
         target_link_options(dd2_championship_application_export PRIVATE
             -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864
             -sFORCE_FILESYSTEM=1 -sINVOKE_RUN=0
-            "-sEXPORTED_RUNTIME_METHODS=['FS','callMain']"
+            "-sEXPORTED_RUNTIME_METHODS=['FS','callMain','ccall','UTF8ToString']"
             "-sEXPORTED_FUNCTIONS=['_main','_dd2_champ_app_step','_dd2_champ_app_finish']")
         set_target_properties(dd2_championship_application_export PROPERTIES SUFFIX ".js")
     endif()

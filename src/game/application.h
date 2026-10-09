@@ -1,6 +1,7 @@
 #ifndef DD2_GAME_APPLICATION_H
 #define DD2_GAME_APPLICATION_H
 
+#include "assets/save_card.h"
 #include "assets/track.h"
 #include "game/championship.h"
 #include "game/driving.h"
@@ -10,7 +11,9 @@
  * resources; a second open is rejected. Run also owns the event loop. Close
  * cancels that owned browser loop before releasing its callback context. */
 int dd2_application_open(const char *path, int level);
-void dd2_application_close(void);
+/* Close polls completed storage first and returns zero while it is still
+ * pending. Retain/poll the application and retry; no pending owner is freed. */
+int dd2_application_close(void);
 int dd2_application_run(const char *path, int level);
 /* Shared analog/keyboard control path. Bounded frame input advances actual game
  * state and audio; pause holds it. The caller suspends on lost focus. Present
@@ -47,6 +50,26 @@ unsigned dd2_application_music_rate(void);
 int dd2_application_set_music_playing(int playing);
 int dd2_application_set_music_gain(unsigned gain);
 int dd2_application_set_effects_gain(unsigned gain);
+unsigned dd2_application_music_gain(void);
+unsigned dd2_application_effects_gain(void);
+/* Explicit dedicated Native directory / browser database, never original
+ * asset paths. Open/save/delete/reload begin requests; poll confirms completion.
+ * A preference load consumes the selected physical payload, validates it and
+ * applies both audio gains together, retaining all source profile fields for
+ * subsequent edits. Other selections, records and saved-game restoration still
+ * need their own consumers; GAME/REPLAY are rejected by this audio action. */
+int dd2_application_saves_open(const char *location);
+/* The final receipt survives application close until the next open. */
+int dd2_application_saves_poll(void);
+int dd2_application_saves_phase(void);
+unsigned dd2_application_saves_count(void);
+const dd2_save_card *dd2_application_saves_view(void);
+const char *dd2_application_save_name(unsigned logical);
+int dd2_application_save_kind(unsigned logical);
+int dd2_application_save_preferences(unsigned logical, const char *name);
+int dd2_application_load_preferences(unsigned logical);
+int dd2_application_delete_save(unsigned logical);
+int dd2_application_reload_saves(void);
 typedef enum {
     DD2_EFFECT_QUERY_SAMPLE,
     DD2_EFFECT_QUERY_PLAYING,
