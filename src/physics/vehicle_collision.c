@@ -525,20 +525,48 @@ static dd2_vehicle_contact dd2_fleet_append(dd2_fleet_recording *recording,
     return contact;
 }
 
-typedef struct {
-    double seconds;
-    bool stop;
-} dd2_fleet_remaining;
-static void dd2_fleet_remainder(dd2_vehicle *start, dd2_vehicle *next, unsigned count,
-                                dd2_fleet_remaining remaining) {
+/* At the response budget, retain contact-affected poses while certifying any
+ * independent residual travel. Freezing one body can obstruct a following body,
+ * so the stopped set grows monotonically until every remaining path is checked
+ * against the final moving/stationary field. No further response is applied. */
+static bool dd2_fleet_checked_remainder(const dd2_vehicle *start, dd2_vehicle *end, unsigned count,
+                                        const dd2_road_surface *surface,
+                                        const dd2_barrier_world *world) {
+    bool stopped[DD2_VEHICLE_FLEET_LIMIT] = {false};
     for (unsigned body = 0; body < count; ++body) {
-        start[body] = next[body];
-        if (!remaining.stop) {
-            next[body].position = dd2_collision_add(
-                start[body].position, dd2_collision_scale(next[body].velocity, remaining.seconds));
-            next[body].rotation = dd2_collision_turn(&next[body], remaining.seconds);
+        dd2_barrier_contact contact = {0};
+        if ((world != NULL &&
+             dd2_collision_sweep(&start[body], &end[body], world, &contact, NULL)) ||
+            (surface != NULL &&
+             dd2_collision_ground_sweep(&start[body], &end[body], surface, &contact, NULL))) {
+            stopped[body] = true;
+            end[body] = start[body];
         }
     }
+    for (unsigned pass = 0; pass < count; ++pass) {
+        dd2_car_pair_contacts pairs;
+        if (!dd2_car_contacts_sweep(
+                &(dd2_car_fleet_motion){.start = start, .end = end, .count = count}, &pairs)) {
+            return false;
+        }
+        bool changed = false;
+        for (unsigned pair = 0; pair < pairs.count; ++pair) {
+            const unsigned bodies[2] = {pairs.pairs[pair].first, pairs.pairs[pair].second};
+            for (unsigned index = 0; index < 2; ++index) {
+                const unsigned body = bodies[index];
+                if (!stopped[body]) {
+                    stopped[body] = true;
+                    end[body] = start[body];
+                    changed = true;
+                }
+            }
+        }
+        if (!changed) {
+            return true;
+        }
+    }
+    /* Every changing pass stops at least one of count bodies. */
+    return true;
 }
 
 /* One primary contact plus every body probe/corner and unordered pair.
@@ -841,6 +869,35 @@ static bool dd2_fleet_respond(const dd2_fleet_group_query *query, dd2_fleet_reco
     return dd2_fleet_group_response(query, &group, recorded, remaining);
 }
 
+typedef struct {
+    double seconds;
+    bool exhausted;
+} dd2_fleet_remaining;
+
+static bool dd2_fleet_finish_remainder(dd2_vehicle *start, const dd2_fleet_group_query *query,
+                                       dd2_fleet_remaining remaining) {
+    for (unsigned body = 0; body < query->count; ++body) {
+        start[body] = query->bodies[body];
+        query->bodies[body].position =
+            dd2_collision_add(start[body].position,
+                              dd2_collision_scale(query->bodies[body].velocity, remaining.seconds));
+        query->bodies[body].rotation = dd2_collision_turn(&query->bodies[body], remaining.seconds);
+    }
+    return !remaining.exhausted || dd2_fleet_checked_remainder(start, query->bodies, query->count,
+                                                               query->surface, query->world);
+}
+
+static bool dd2_fleet_apply_response(const dd2_fleet_group_query *query,
+                                     dd2_fleet_recording *recorded, bool *serial,
+                                     dd2_vehicle *start, dd2_fleet_remaining remaining) {
+    if (!dd2_fleet_respond(query, recorded, serial, remaining.seconds)) {
+        return false;
+    }
+    ++recorded->report.response_events;
+    remaining.seconds *= 1 - query->primary.contact.time;
+    return dd2_fleet_finish_remainder(start, query, remaining);
+}
+
 static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous, unsigned count,
                               const dd2_road_surface *surface, const dd2_barrier_world *world,
                               dd2_vehicle_impact *impacts, unsigned *pair_contacts,
@@ -887,17 +944,13 @@ static bool dd2_fleet_resolve(dd2_vehicle *vehicles, const dd2_vehicle *previous
         }
         const dd2_fleet_group_query query = {
             .bodies = next, .count = count, .surface = surface, .world = world, .primary = event};
-        if (!dd2_fleet_respond(&query, &recorded, &serial, remaining)) {
+        if (!dd2_fleet_apply_response(
+                &query, &recorded, &serial, start,
+                (dd2_fleet_remaining){.seconds = remaining,
+                                      .exhausted = iteration + 1 == DD2_COLLISION_ITERATIONS})) {
             return false;
         }
-        ++recorded.report.response_events;
         remaining *= 1 - event.contact.time;
-        /* Exhaustion retains every body's last checked pose, never unchecked
-         * residual motion. */
-        dd2_fleet_remainder(
-            start, next, count,
-            (dd2_fleet_remaining){.seconds = remaining,
-                                  .stop = iteration + 1 == DD2_COLLISION_ITERATIONS});
     }
     for (unsigned body = 0; body < count; ++body) {
         if (!dd2_vehicle_valid(&next[body])) {

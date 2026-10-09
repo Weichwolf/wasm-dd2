@@ -108,7 +108,11 @@ bool dd2_vehicle_collide_fleet(dd2_vehicle *vehicles, const dd2_vehicle *previou
  * another body. Isolated impacts keep their original incident speed. Nearby
  * separating supports can carry zero-impulse records at the primary event time.
  * Oversized groups retain the conservative serial response for the rest of the
- * step, stopping unchecked travel at the same response-event budget. A failed joint
+ * step at the same response-event budget. Exhaustion certifies residual motion
+ * with the existing world/pair sweeps; potentially contacting or unresolved
+ * bodies retain checked poses. Stopping an obstructing body propagates to
+ * followers until every accepted path is checked against the final field.
+ * Independent certified bodies continue without extra impulses. A failed joint
  * solve rolls the whole fleet back and clears output.
  * Damage/scoring consumers must ignore zero-impulse repair/support contacts as
  * appropriate. An unresolved pair sweep stops at its conservative time bound,

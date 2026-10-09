@@ -63,6 +63,7 @@ its game requirements or acceptance rules.
 | [0056](closed/0056_typed-save-profile.md) | Typed original configuration and profile payload | closed |
 | [0057](closed/0057_durable-save-store.md) | Durable Native/browser save-card owner | closed |
 | [0058](active/0058_configuration-and-saved-game-actions.md) | Configuration and saved-game application actions | active |
+| [0059](closed/0059_checked-residual-fleet-motion.md) | Certify independent motion at the fleet response budget | closed |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -72,6 +73,16 @@ to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
 Current vehicle work is 0005: original class drive/grip/axle parameters now
+affect actual physical fields. Closed 0059 restores all 22 strict drive/start
+comparisons by certifying independent motion after the 64-response budget.
+Four captured geometry contracts, 48 position boundary checks, 742 prior material
+checks, all eleven original ground levels, 220 recovery drops and all 45 earlier
+race scenarios pass per Native/WASM/O1 sanitized target. LLVM19 covers 207 C/header
+files; 47 Native and 45 WASM CTests pass. Memcheck reports zero errors and frees
+all allocations. Next, resume complete natural-arena acceptance under 0002/0053
+against this changed source. Complete arenas and campaigns remain open.
+
+The earlier 0005 class integration makes original drive/grip/axle parameters
 affect actual physical fields. Native F1/browser selection exposes class names,
 ratings and paint; reset/mode/track and championship restart retain owned human
 selection and Pro NPC classes. Thirty unmodified-original component cases,
@@ -79,11 +90,12 @@ selection and Pro NPC classes. Thirty unmodified-original component cases,
 real selection/lock checks, LLVM19/205-file checks and 46 Native/44 WASM CTests
 pass. Class Memcheck frees all 12 allocations with zero errors. The existing
 660 original material cases and 264 body images per target and all eleven
-scene/car datasets pass again. The strict short-drive regression still passes
-21 of 22 cases; LEVB at 800 ticks retains a position/image difference under the
-new class forces. Keep this failure under 0002; do not claim a full driving pass.
-Saved car choice consumption, complete class campaigns/body-support coverage
-and damage effects remain open. The class catalog supplies the next 0058
+scene/car datasets pass again. The class integration initially passed
+21 of 22 strict short-drive cases; 0059 now restores the complete 22-case corpus
+by checking independent motion at the fleet response budget. Material laws and
+state/image tolerances remain unchanged. Saved car choice is consumed under
+0058; complete class campaigns/body-support coverage and damage effects remain
+open. The class catalog supplies the 0058
 configuration dependency; it does not close complete vehicles.
 The complete window regression passes 31 Native/31 sanitized and 144 Chromium
 comparisons again with the selected-class preview and current class forces.

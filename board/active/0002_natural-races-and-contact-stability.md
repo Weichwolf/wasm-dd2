@@ -275,7 +275,26 @@ The independent class prefixes/selection pass; they do not replace this strict
 longer comparison. Receipt:
 /tmp/wasm-dd2/rewrite-car-class-driving-0005/diagnosis-report.json.
 
+## Checked residual fleet motion
+
+Closed 0059 restores all 22 strict original-level drive/start comparisons after
+isolating LEVB driving tick 534. Five NPC pairs exhaust the WASM 64-event clock
+and truncate a contact-free player's motion. Existing world/pair sweeps now
+certify independent residual paths and propagate frozen obstructions to followers,
+without extra impulses or larger budgets. Four captured geometry cases, 48
+position boundary selections, 742 prior material cases, eleven original ground
+levels, 220 recovery drops and all 45 previously proved race scenarios pass per
+Native/WASM/fresh O1 ASan/UBSan target. Strict LLVM19/207-file, 47/45 CTest and
+zero-error/free-allocation Memcheck gates pass. The eight-lap Stockcar and
+nine-lap Time Trial owners on circuit 5 remain naturally completed. Full natural
+arena owners are excluded from that selected regression and remain open. Receipts:
+/tmp/wasm-dd2/rewrite-fleet-remainder-0059-gates/verification-report.json and
+/tmp/wasm-dd2/rewrite-fleet-remainder-0059-race/report.json.
 ## Next
+
+Resume complete arena-owner acceptance with unchanged scenarios and deadlines
+on this changed implementation;
+the LEVB cause does not establish the late Arena-8 field's cause or natural result.
 
 Diagnose late WASM Arena-8 motion and cost under 0053 after the terminal
 source-0323ba9 timeout, retaining the unchanged scenario deadlines. Do not simply

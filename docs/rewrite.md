@@ -843,3 +843,18 @@ bodies and contact times/rows to distinguish repeated supports from legitimate
 dense pursuit. Budgets/material/health/controls remain unchanged. Completed raw
 profiling output is removed; three required typed checkpoints and receipts remain.
 Receipt: /tmp/wasm-dd2/rewrite-arena8-late-0053/diagnosis-report.json.
+
+Fleet response-budget exhaustion now certifies independent residual motion with
+the existing ground/barrier and pair sweeps. Potentially contacting or unresolved
+bodies keep checked poses; newly frozen obstructions propagate to followers.
+The shared 64-event limit and material laws remain unchanged. This fixes the
+LEVB player being stopped by five unrelated NPC pairs at driving tick 534.
+All 22 original-level drive/start comparisons pass again on Native/WASM/fresh O1
+ASan/UBSan, with unchanged state and image tolerances. Four focused budget-tail
+geometry cases, 48 position boundary checks, 742 prior material cases, all eleven
+original ground levels and 220 recovery drops pass per target, with zero Memcheck
+errors. Strict LLVM19 checks cover 207 C/header files; 47 Native and 45 WASM CTests
+pass. Work item 0059 owns this bounded contract; complete natural arenas and
+campaigns remain under 0002/0053. Receipts:
+/tmp/wasm-dd2/rewrite-fleet-remainder-0059-gates/ and
+/tmp/wasm-dd2/rewrite-fleet-remainder-0059-{driving-2,ground,recovery}/report.json.

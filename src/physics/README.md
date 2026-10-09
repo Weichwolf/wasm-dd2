@@ -218,8 +218,9 @@ together. Serial corner impulses could leave another support closing; an
 independent roof-corner normal-velocity check rejects that old behavior.
 Ground and barrier contacts share earliest selection and the remaining fixed
 step. Rebound/friction can change both linear and angular travel before the next
-sweep. At most 64 combined responses keep the last checked pose on exhaustion;
-the barrier-only entry point retains its 16-response budget. Failure preserves
+sweep. At most 64 combined responses precede a final residual-path check;
+potentially contacting travel retains the last checked pose on exhaustion.
+The barrier-only entry point retains its 16-response budget. Failure preserves
 the proposed state. Ground contact is now integrated in free driving and reset
 settling. Car-pair collision is integrated below; detached parts and automatic off-road
 recovery remain pending.
@@ -736,7 +737,11 @@ Groups above the 64-constraint group limit retain conservative serial response
 for the rest of that step. Report storage no longer selects the physical response
 or clips unrelated bodies when the first 64 records have been written.
 A failed joint solve preserves all proposed bodies and clears the public output.
-The 64-response budget keeps the last checked poses on exhaustion. An unresolved sweep also stops at its
+At the 64-response budget, existing ground/barrier and pair sweeps certify
+independent residual paths. Potentially contacting or unresolved bodies retain
+their last checked poses. Freezing a predecessor can obstruct a follower, so a
+monotonically growing stopped set rechecks pairs against the final field. No
+additional impulses or response events are applied. An unresolved sweep also stops at its
 conservative time bound, increments `unresolved_sweeps`, and leaves velocity,
 health and accident attribution without a manufactured response. Validation or final-state failure preserves
 every proposed body and clears known-size event outputs. Typed stack copies keep
