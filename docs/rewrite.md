@@ -225,6 +225,17 @@ nodejs libsdl2-dev`. The window verifier additionally needs Pillow, Xvfb,
 xdotool, Chromium and Playwright (the repository's browser launcher supports
 Debian's system Chromium).
 
+Optional Native diagnostics use Debian's `linux-perf`, `valgrind` and Intel
+`pcm` packages. PCM executables are installed under `/usr/sbin`; use their
+absolute paths when that directory is absent from the user's PATH. Installation
+does not establish counter access: on the current host, unprivileged software
+and hardware perf probes fail with `perf_event_paranoid=3`, and PCM cannot access
+MSRs/PCI configuration. Keep host security settings unchanged during game work.
+Valgrind Memcheck and Callgrind run without those counter permissions. Prefer
+bounded captured contact cases for Callgrind; its instrumented cost is not an
+ordinary Native wall-clock benchmark or a WASM performance measurement. Keep
+diagnostics under `/tmp/wasm-dd2/` and remove raw profiles after summarizing them.
+
 ```sh
 make clean-logs
 make rewrite-check

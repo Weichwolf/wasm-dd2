@@ -83,6 +83,12 @@ do not claim a full driving pass. Class physics/selection, saved car choice
 consumption and complete damage effects remain open. This supplies the next
 configuration dependency for 0058; it does not close complete vehicles.
 
+Optional diagnostic packages are installed and their access probes are recorded
+under 0010. Native Memcheck/Callgrind work without elevated privileges; perf and
+PCM counters remain unavailable to this user. Use bounded contact cases for
+instrumented cost diagnosis and separate WASM sampling. This does not establish
+a performance improvement or change the current class physics/selection task.
+
 Current application integration is 0058 under 0008/0003: player/audio profiles
 now have actual Native/browser name/save/load/delete dialogs, restart and
 validated rollback. LLVM19/197-file checks, 44 Native/42 WASM CTests, 31 original/Native/
