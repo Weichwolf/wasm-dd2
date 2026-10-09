@@ -36,10 +36,15 @@ typedef enum {
     DD2_KEY_MUSIC_NEXT,
     DD2_KEY_CHAMP_WRECKING,
     DD2_KEY_CHAMP_STOCKCAR,
+    DD2_KEY_PROFILE_NAME,
+    DD2_KEY_PROFILE_SAVE,
+    DD2_KEY_PROFILE_LOAD,
+    DD2_KEY_BACKSPACE,
     DD2_KEY_COUNT
 } dd2_key;
 
 enum { DD2_INPUT_ACTION_LIMIT = 1 };
+enum { DD2_INPUT_TEXT_BYTES = 32 };
 typedef enum { DD2_INPUT_KEY_ACTION, DD2_INPUT_WHEEL_ACTION } dd2_input_action_kind;
 typedef struct {
     dd2_input_action_kind kind;
@@ -56,6 +61,7 @@ typedef struct {
     bool quit;
     bool redraw;
     int wheel;
+    char text[DD2_INPUT_TEXT_BYTES];
 } dd2_input;
 
 /* Owns SDL video/window and a top-first presentation buffer. Logical framebuffer
@@ -76,6 +82,12 @@ void dd2_window_release_input(dd2_window *window);
 /* Refresh held/focus observations after menu actions without polling events. */
 void dd2_window_refresh_controls(const dd2_window *window, dd2_input *input);
 void dd2_window_set_focus(dd2_window *window, bool focused);
+/* Exclusive text entry consumes ordinary keyboard controls. Each text event
+ * remains ordered against Enter/Escape/Backspace; focus loss drops queued text. */
+void dd2_window_text_input(dd2_window *window, bool enabled);
+/* Menu arrows are discrete ordered commands; camera/driving arrows remain held
+ * movement. Switching modes releases held controls without dropping later input. */
+void dd2_window_menu_input(dd2_window *window, bool enabled);
 float dd2_window_elapsed(dd2_window *window);
 void dd2_window_wait(void);
 

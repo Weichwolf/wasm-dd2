@@ -6,6 +6,7 @@
 #include <SDL_blendmode.h>
 #include <SDL_events.h>
 #include <SDL_hints.h>
+#include <SDL_keyboard.h>
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 #include <SDL_pixels.h>
@@ -35,6 +36,8 @@ struct dd2_window {
     bool held[DD2_KEY_COUNT];
     uint64_t previous;
     bool focused;
+    bool text_input;
+    bool menu_input;
 };
 
 void dd2_window_destroy(dd2_window *window) {
@@ -168,6 +171,14 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_WITHDRAW;
     case SDL_SCANCODE_ESCAPE:
         return DD2_KEY_QUIT;
+    case SDL_SCANCODE_F2:
+        return DD2_KEY_PROFILE_NAME;
+    case SDL_SCANCODE_F3:
+        return DD2_KEY_PROFILE_SAVE;
+    case SDL_SCANCODE_F4:
+        return DD2_KEY_PROFILE_LOAD;
+    case SDL_SCANCODE_BACKSPACE:
+        return DD2_KEY_BACKSPACE;
     default:
         return DD2_KEY_COUNT;
     }
@@ -183,6 +194,11 @@ void dd2_window_release_input(dd2_window *window) {
 
 static void dd2_window_keyboard(dd2_window *window, dd2_input *input,
                                 const SDL_KeyboardEvent *event) {
+    if (window->text_input && event->keysym.scancode != SDL_SCANCODE_RETURN &&
+        event->keysym.scancode != SDL_SCANCODE_ESCAPE &&
+        event->keysym.scancode != SDL_SCANCODE_BACKSPACE) {
+        return;
+    }
     dd2_key key = dd2_window_key(event->keysym.scancode);
     if (event->keysym.sym == SDLK_PLUS || event->keysym.sym == SDLK_EQUALS ||
         event->keysym.sym == SDLK_KP_PLUS) {
@@ -194,17 +210,33 @@ static void dd2_window_keyboard(dd2_window *window, dd2_input *input,
         return;
     }
     const bool down = event->type == SDL_KEYDOWN;
-    if (down && event->repeat != 0) {
+    const bool menu_repeat = (window->text_input && key == DD2_KEY_BACKSPACE) ||
+                             (window->menu_input && (key == DD2_KEY_LEFT || key == DD2_KEY_RIGHT));
+    if (down && event->repeat != 0 && !menu_repeat) {
         return;
     }
-    if (down && event->repeat == 0 && !window->held[key]) {
+    if (down && (!window->held[key] || (event->repeat != 0 && menu_repeat))) {
         input->pressed[key] = true;
-        if (key >= DD2_KEY_RESET && key != DD2_KEY_BRAKE) {
+        if ((key >= DD2_KEY_RESET && key != DD2_KEY_BRAKE) ||
+            (window->menu_input && (key == DD2_KEY_LEFT || key == DD2_KEY_RIGHT))) {
             input->actions[input->action_count++] =
                 (dd2_input_action){.kind = DD2_INPUT_KEY_ACTION, .key = key};
         }
     }
     window->held[key] = down;
+}
+
+static void dd2_window_text(const dd2_window *window, dd2_input *input,
+                            const SDL_TextInputEvent *event) {
+    if (!window->text_input || !window->focused) {
+        return;
+    }
+    for (unsigned index = 0; index + 1 < sizeof(input->text); ++index) {
+        input->text[index] = event->text[index];
+        if (event->text[index] == '\0') {
+            break;
+        }
+    }
 }
 
 dd2_input dd2_window_poll(dd2_window *window) {
@@ -222,6 +254,9 @@ dd2_input dd2_window_poll(dd2_window *window) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
             dd2_window_keyboard(window, &input, &event.key);
+            break;
+        case SDL_TEXTINPUT:
+            dd2_window_text(window, &input, &event.text);
             break;
         case SDL_MOUSEWHEEL:
             if (event.wheel.y != 0) {
@@ -244,12 +279,31 @@ dd2_input dd2_window_poll(dd2_window *window) {
         default:
             break;
         }
-        if (input.action_count == DD2_INPUT_ACTION_LIMIT) {
+        if (input.action_count == DD2_INPUT_ACTION_LIMIT || input.text[0] != '\0') {
             break;
         }
     }
     dd2_window_refresh_controls(window, &input);
     return input;
+}
+
+void dd2_window_text_input(dd2_window *window, bool enabled) {
+    if (window != NULL && window->text_input != enabled) {
+        dd2_window_release_input(window);
+        window->text_input = enabled;
+        if (enabled) {
+            SDL_StartTextInput();
+        } else {
+            SDL_StopTextInput();
+        }
+    }
+}
+
+void dd2_window_menu_input(dd2_window *window, bool enabled) {
+    if (window != NULL && window->menu_input != enabled) {
+        dd2_window_release_input(window);
+        window->menu_input = enabled;
+    }
 }
 
 void dd2_window_refresh_controls(const dd2_window *window, dd2_input *input) {
@@ -270,6 +324,7 @@ void dd2_window_set_focus(dd2_window *window, bool focused) {
         window->focused = focused;
         if (!focused) {
             SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
+            SDL_FlushEvents(SDL_TEXTEDITING, SDL_TEXTINPUT);
             dd2_window_release_input(window);
         }
     }

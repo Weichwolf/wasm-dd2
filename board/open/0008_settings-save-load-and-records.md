@@ -7,7 +7,11 @@ Persist and restore profiles, names, championships, unlocks, settings and track 
 
 ## Evidence
 
-Session Time Trial clocks work. Persistent records/settings and the full save owner are absent. Original SaveGames card layout and reference fixtures exist, including fifteen slots and source championship/statistics regions.
+Session Time Trial clocks work. The current durable owner persists player/audio
+profiles; complete configuration, persistent records and playable championship
+restoration remain open. Original SaveGames fixtures include fifteen slots and
+source championship/statistics regions. The following entries retain earlier
+observations and the subsequent component proofs.
 
 An unmodified-original 38-key run saves Configuration as A, stages and commits
 Sound Effects from 4090 to 3681, and loads A to restore 4090. The first 0x197e
@@ -109,10 +113,24 @@ terminal and retains reachable system DBus globals. Receipt:
 /tmp/wasm-dd2/rewrite-preferences-0058-publication/verification-report.json.
 This is partial configuration integration; records and playable saves remain open.
 
+Active 0058 additionally proves owned human identity and actual F2/F3/F4 Native/
+browser-canvas dialogs. Eight-character edits, eleven-character legacy imports,
+all fifteen positions, cancellation/overwrite confirmation, explicit reload,
+external file conflicts, invalid-profile rollback and restart pass. HTML typing
+does not dispatch game commands; accepted identity actions immediately update
+the field/cache, fixing stale reflection over a new edit. Thirty-one original/
+Native/sanitized cases, 22 Native/sanitized dialog checks and 32 Chromium checks
+preserve complete predicted cards and original twenty-driver rosters. Strict
+LLVM19/197-file, 44/42 gates and Native Memcheck pass; the audio regression remains
+green. This is player/audio integration and partial human menus, not full settings,
+records or playable saves. Receipt:
+/tmp/wasm-dd2/rewrite-player-profile-0058-release/verification-report.json.
+
 ## Next
 
 Translate and validate complete source configuration/game state under 0058,
-including Native human save menus. Replays need a separate codec. Keep selected
+including complete Native configuration/record/file actions. Replays need a
+separate codec. Keep selected
 physical identity through loading, preserve prior application state on invalid
 gameplay/failed writes and prevent new ambiguous names after display compaction.
 The versioned rewrite music extension is implemented; the original controller

@@ -15,6 +15,10 @@ int dd2_application_open(const char *path, int level);
  * pending. Retain/poll the application and retry; no pending owner is freed. */
 int dd2_application_close(void);
 int dd2_application_run(const char *path, int level);
+/* Hosts with their own Native event loop may pump the same real SDL frame used
+ * by run. Returns 1 while running, 0 on requested close, -1 on failure. Storage
+ * still requires the usual explicit close/pending lifetime handling. */
+int dd2_application_poll_frame(void);
 /* Shared analog/keyboard control path. Bounded frame input advances actual game
  * state and audio; pause holds it. The caller suspends on lost focus. Present
  * renders the current state without advancing it. No score/state injection. */
@@ -70,6 +74,20 @@ int dd2_application_save_preferences(unsigned logical, const char *name);
 int dd2_application_load_preferences(unsigned logical);
 int dd2_application_delete_save(unsigned logical);
 int dd2_application_reload_saves(void);
+/* Full identity/audio actions consume player zero's source name, preserving
+ * eleven-character legacy names; new edits accept eight printable ASCII chars.
+ * Other configuration/game fields remain retained and unapplied. Active
+ * championships keep their human identity until exit. Audio-only load remains
+ * independent. A save captures the current identity, not dormant imported text. */
+const char *dd2_application_player_name(void);
+const char *dd2_application_driver_name(unsigned driver);
+int dd2_application_set_player_name(const char *name);
+int dd2_application_save_profile(unsigned logical, const char *name);
+int dd2_application_load_profile(unsigned logical);
+/* Read-only keyboard frontend observations. No state injection. */
+int dd2_application_profile_phase(void);
+const char *dd2_application_profile_draft(void);
+unsigned dd2_application_profile_slot(void);
 typedef enum {
     DD2_EFFECT_QUERY_SAMPLE,
     DD2_EFFECT_QUERY_PLAYING,

@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 enum { DD2_CONFIGURATION_EFFECTS_MAX = 4090, DD2_CONFIGURATION_EXTENSION_BYTES = 16 };
+enum { DD2_CONFIGURATION_NAME_LIMIT = 8 };
 
 /* Own all original profile fields. Applying audio preferences does not accept
  * a playable saved game or consume dormant championship/input selections.
@@ -29,5 +30,13 @@ bool dd2_configuration_write(const dd2_configuration *configuration, dd2_byte_bu
 unsigned dd2_configuration_effects_gain(const dd2_configuration *configuration);
 bool dd2_configuration_set_effects(dd2_configuration *configuration, unsigned gain);
 bool dd2_configuration_set_music(dd2_configuration *configuration, unsigned gain);
+/* Single-player identity consumes player zero only. Empty legacy text displays
+ * PLAYER; other dormant player/header fields remain untouched. Imported names
+ * may use the complete eleven-character source field. New menu entries keep
+ * the original eight-character contract; both consume printable ASCII. */
+const char *dd2_configuration_player(const dd2_configuration *configuration);
+bool dd2_configuration_set_player(dd2_configuration *configuration, const char *name);
+bool dd2_configuration_name_valid(const char *name);
+bool dd2_configuration_player_valid(const char *name);
 
 #endif

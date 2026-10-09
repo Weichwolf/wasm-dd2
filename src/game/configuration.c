@@ -142,3 +142,48 @@ bool dd2_configuration_set_music(dd2_configuration *configuration, unsigned gain
     configuration->music_gain = gain;
     return true;
 }
+
+static bool dd2_configuration_text_valid(const char *name, unsigned limit) {
+    if (name == NULL) {
+        return false;
+    }
+    for (unsigned index = 0; index <= limit; ++index) {
+        const unsigned char character = (unsigned char)name[index];
+        if (character == 0) {
+            return true;
+        }
+        if (index == limit || character < ' ' || character > '~') {
+            return false;
+        }
+    }
+    return false;
+}
+bool dd2_configuration_name_valid(const char *name) {
+    return dd2_configuration_text_valid(name, DD2_CONFIGURATION_NAME_LIMIT);
+}
+bool dd2_configuration_player_valid(const char *name) {
+    return dd2_configuration_text_valid(name, DD2_SAVE_PROFILE_PLAYER_NAME - 1);
+}
+const char *dd2_configuration_player(const dd2_configuration *configuration) {
+    if (configuration == NULL ||
+        !dd2_configuration_player_valid(configuration->source.players[0])) {
+        return NULL;
+    }
+    return configuration->source.players[0][0] == '\0' ? "PLAYER"
+                                                       : configuration->source.players[0];
+}
+bool dd2_configuration_set_player(dd2_configuration *configuration, const char *name) {
+    if (configuration == NULL || !dd2_configuration_player_valid(name)) {
+        return false;
+    }
+    const char *value = name[0] == '\0' ? "PLAYER" : name;
+    char next[DD2_SAVE_PROFILE_PLAYER_NAME] = {0};
+    unsigned length = 0;
+    do {
+        next[length] = value[length];
+    } while (value[length++] != '\0');
+    for (unsigned index = 0; index < length; ++index) {
+        configuration->source.players[0][index] = next[index];
+    }
+    return true;
+}

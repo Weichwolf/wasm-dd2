@@ -21,6 +21,12 @@ const preferencesLoad = document.getElementById('preferences-load');
 const saveDelete = document.getElementById('save-delete');
 const savesReload = document.getElementById('saves-reload');
 const saveStatus = document.getElementById('save-status');
+const playerName = document.getElementById('player-name');
+const playerApply = document.getElementById('player-apply');
+const playerStatus = document.getElementById('player-status');
+const profileSave = document.getElementById('profile-save');
+const profileLoad = document.getElementById('profile-load');
+let reflectedPlayer = null;
 let savePending = null;
 let saveEntries = '';
 let musicLoading = false;
@@ -269,6 +275,13 @@ saveDelete.addEventListener('click', () => {
 savesReload.addEventListener('click', () => {
   beginSaveAction(Module._dd2_application_reload_saves(), 'Reloading saves');
 });
+function reflectPlayer(force = false) {
+  const player = loaded ? Module.UTF8ToString(Module._dd2_application_player_name()) : '';
+  if (force || player !== reflectedPlayer) {
+    playerName.value = player;
+    reflectedPlayer = player;
+  }
+}
 function reflectSaves() {
   const phase = loaded ? Module._dd2_application_saves_phase() : 0;
   const result = runtimeReady ? Module._dd2_application_saves_poll() : 0;
@@ -307,4 +320,45 @@ function reflectSaves() {
   const entry = entries[Number(saveSlot.value)];
   preferencesLoad.disabled = !ready || !entry || ![0x1010,0x1020].includes(entry.kind);
   saveDelete.disabled = !ready || !entry;
+  const modal = loaded && Module._dd2_application_profile_phase() !== 0;
+  const championship = loaded && Module._dd2_application_championship_phase() >= 0;
+  reflectPlayer();
+  playerName.disabled = !loaded || championship || modal;
+  playerApply.disabled = playerName.disabled;
+  profileSave.disabled = !ready || modal;
+  profileLoad.disabled = preferencesLoad.disabled || championship || modal;
+  level.disabled = !loaded || championship || modal;
+  view.disabled = !loaded || modal;
+  if (modal) {
+    for (const control of [reset, pauseButton, finishButton, continueButton, musicFile, musicPlay,
+                          musicGain, effectsGain, savesOpen, savesReload, saveSlot, saveName,
+                          preferencesSave, preferencesLoad, saveDelete]) control.disabled = true;
+  }
 }
+
+playerApply.addEventListener('click', () => {
+  const accepted = Module.ccall('dd2_application_set_player_name', 'number', ['string'], [playerName.value]);
+  if (accepted) reflectPlayer(true);
+  playerStatus.textContent = accepted ?
+    'Player name applied.' : 'Use at most eight printable ASCII characters and leave the championship before changing your name.';
+  canvas.focus();
+});
+profileSave.addEventListener('click', () => {
+  const logical = Number(saveSlot.value), name = saveName.value;
+  if (new TextEncoder().encode(name).length > 8) {
+    saveStatus.textContent = 'Use a shorter save name.';
+    return;
+  }
+  if (logical < Module._dd2_application_saves_count() && !window.confirm('Replace the selected entry with your player name and audio settings?')) {
+    saveStatus.textContent = 'Replacement canceled.';
+    return;
+  }
+  beginSaveAction(Module.ccall('dd2_application_save_profile', 'number', ['number','string'], [logical,name]), 'Saving player and audio');
+});
+profileLoad.addEventListener('click', () => {
+  const accepted = Module._dd2_application_load_profile(Number(saveSlot.value));
+  if (accepted) reflectPlayer(true);
+  saveStatus.textContent = accepted ?
+    'Player and audio restored.' : 'The selected entry cannot restore player and audio settings.';
+  canvas.focus();
+});

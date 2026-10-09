@@ -4,6 +4,7 @@
 #include "assets/bytes.h"
 #include "assets/level.h"
 #include "assets/save_card.h"
+#include "assets/save_profile.h"
 #include "assets/track.h"
 #include "audio/effects.h"
 #include "audio/mixer.h"
@@ -12,14 +13,17 @@
 #include "game/championship_session.h"
 #include "game/configuration.h"
 #include "game/course.h"
+#include "game/drivers.h"
 #include "game/driving.h"
 #include "game/laps.h"
 #include "game/league.h"
+#include "game/profile_menu.h"
 #include "game/race.h"
 #include "game/sound_events.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
 #include "platform/file.h"
+#include "platform/save_location.h"
 #include "platform/save_store.h"
 #include "platform/window.h"
 #include "render/camera.h"
@@ -62,6 +66,8 @@ typedef struct {
     int practice_level;
     dd2_game_audio *audio;
     dd2_configuration configuration;
+    char player_name[DD2_SAVE_PROFILE_PLAYER_NAME];
+    dd2_profile_menu profile_menu;
     dd2_save_store *saves;
     char save_names[DD2_SAVE_CARD_SLOTS][DD2_SAVE_CARD_NAME_LIMIT + 1];
     bool drive;
@@ -70,6 +76,7 @@ typedef struct {
     bool car;
     bool running;
     bool dirty;
+    bool world_drawn;
     bool failed;
     bool main_loop;
 } dd2_application;
@@ -568,6 +575,263 @@ int dd2_application_reload_saves(void) {
     return dd2_current_application != NULL && dd2_save_store_reload(dd2_current_application->saves);
 }
 
+const char *dd2_application_player_name(void) {
+    return dd2_current_application == NULL ? NULL : dd2_current_application->player_name;
+}
+const char *dd2_application_driver_name(unsigned driver) {
+    if (dd2_current_application == NULL) {
+        return NULL;
+    }
+    return driver == 0 ? dd2_current_application->player_name : dd2_driver_name(driver);
+}
+static void dd2_application_copy_player(dd2_application *application, const char *name) {
+    unsigned index = 0;
+    do {
+        application->player_name[index] = name[index];
+    } while (name[index++] != '\0');
+}
+int dd2_application_set_player_name(const char *name) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || application->championship != NULL ||
+        !dd2_configuration_name_valid(name) ||
+        !dd2_configuration_set_player(&application->configuration, name)) {
+        return 0;
+    }
+    dd2_application_copy_player(application, dd2_configuration_player(&application->configuration));
+    application->dirty = true;
+    return 1;
+}
+int dd2_application_save_profile(unsigned logical, const char *name) {
+    dd2_application *application = dd2_current_application;
+    uint8_t block[DD2_SAVE_CARD_BLOCK_BYTES];
+    if (application == NULL) {
+        return 0;
+    }
+    dd2_configuration next = application->configuration;
+    return dd2_configuration_set_player(&next, application->player_name) &&
+           dd2_configuration_write(&next,
+                                   (dd2_byte_buffer){.data = block, .size = sizeof(block)}) &&
+           dd2_save_store_put(application->saves, logical, name,
+                              (dd2_byte_view){.data = block, .size = sizeof(block)});
+}
+int dd2_application_load_profile(unsigned logical) {
+    dd2_application *application = dd2_current_application;
+    dd2_configuration next;
+    dd2_save_card_entry entry = {0};
+    if (application == NULL || application->championship != NULL ||
+        dd2_application_saves_phase() != DD2_SAVE_STORE_READY ||
+        !dd2_save_card_get(dd2_application_saves_view(), logical, &entry) ||
+        !dd2_configuration_read(entry.payload, application->configuration.music_gain, &next)) {
+        return 0;
+    }
+    const char *name = dd2_configuration_player(&next);
+    const dd2_audio_gains gains = {.effects = dd2_configuration_effects_gain(&next),
+                                   .music = next.music_gain};
+    if (name == NULL ||
+        (application->audio != NULL && !dd2_game_audio_apply_gains(application->audio, gains))) {
+        return 0;
+    }
+    dd2_application_copy_player(application, name);
+    application->configuration = next;
+    application->dirty = true;
+    return 1;
+}
+int dd2_application_profile_phase(void) {
+    return dd2_current_application == NULL ? DD2_PROFILE_CLOSED
+                                           : (int)dd2_current_application->profile_menu.phase;
+}
+const char *dd2_application_profile_draft(void) {
+    return dd2_current_application == NULL ? NULL : dd2_current_application->profile_menu.draft;
+}
+unsigned dd2_application_profile_slot(void) {
+    return dd2_current_application == NULL ? 0 : dd2_current_application->profile_menu.logical;
+}
+static void dd2_application_profile_message(dd2_application *application, const char *message) {
+    application->profile_menu.phase = DD2_PROFILE_MESSAGE;
+    application->profile_menu.message = message;
+    dd2_window_text_input(application->window, false);
+    application->dirty = true;
+}
+static const char *dd2_application_profile_error(int result) {
+    switch (result) {
+    case DD2_SAVE_STORE_CONFLICT:
+        return "SAVES CHANGED. F4 RELOADS BEFORE RETRY.";
+    case DD2_SAVE_STORE_INDETERMINATE:
+        return "SAVE UNCONFIRMED. F4 RELOADS SAVES.";
+    case DD2_SAVE_STORE_DUPLICATE:
+        return "THAT NAME BELONGS TO ANOTHER ENTRY.";
+    case DD2_SAVE_STORE_FULL:
+        return "ALL FIFTEEN ENTRIES ARE OCCUPIED.";
+    case DD2_SAVE_STORE_INVALID:
+        return "STORED DATA IS INVALID.";
+    default:
+        return "SAVE ACTION FAILED. PREVIOUS DATA KEPT.";
+    }
+}
+static void dd2_application_profile_poll(dd2_application *application) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (menu->phase != DD2_PROFILE_OPEN_SAVE && menu->phase != DD2_PROFILE_OPEN_LOAD &&
+        menu->phase != DD2_PROFILE_WRITING) {
+        return;
+    }
+    const int result = dd2_application_saves_poll();
+    if (result == DD2_SAVE_STORE_PENDING) {
+        return;
+    }
+    if (result != DD2_SAVE_STORE_OK) {
+        dd2_application_profile_message(application, dd2_application_profile_error(result));
+    } else if (menu->phase == DD2_PROFILE_WRITING) {
+        dd2_application_profile_message(application, "AUDIO AND PLAYER SAVED.");
+    } else {
+        menu->phase = menu->phase == DD2_PROFILE_OPEN_SAVE ? DD2_PROFILE_SAVE_SELECT
+                                                           : DD2_PROFILE_LOAD_SELECT;
+        menu->message = NULL;
+        application->dirty = true;
+    }
+}
+static void dd2_application_profile_open(dd2_application *application, bool save) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    menu->logical = 0;
+    menu->message = NULL;
+    if (application->saves == NULL) {
+        application->saves = dd2_save_store_create();
+    }
+    const int state = dd2_application_saves_phase();
+    if (state == DD2_SAVE_STORE_READY && save) {
+        menu->phase = DD2_PROFILE_SAVE_SELECT;
+    } else if ((state == DD2_SAVE_STORE_CLOSED && dd2_save_store_open_user(application->saves)) ||
+               (!save && (state == DD2_SAVE_STORE_NEEDS_RELOAD || state == DD2_SAVE_STORE_READY) &&
+                dd2_application_reload_saves())) {
+        menu->phase = save ? DD2_PROFILE_OPEN_SAVE : DD2_PROFILE_OPEN_LOAD;
+    } else {
+        dd2_application_profile_message(application, state == DD2_SAVE_STORE_NEEDS_RELOAD
+                                                         ? "F4 RELOADS SAVES BEFORE ANOTHER CHANGE."
+                                                         : "SAVES COULD NOT BE OPENED.");
+    }
+}
+static void dd2_application_profile_save(dd2_application *application) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (dd2_application_save_profile(menu->logical, menu->draft)) {
+        menu->phase = DD2_PROFILE_WRITING;
+        menu->message = "SAVING. WAIT FOR CONFIRMATION.";
+    } else {
+        dd2_application_profile_message(
+            application, dd2_application_profile_error(dd2_application_saves_poll()));
+    }
+}
+static bool dd2_application_profile_begin(dd2_application *application, const dd2_input *input) {
+    if (input->pressed[DD2_KEY_PROFILE_NAME]) {
+        if (application->championship != NULL) {
+            dd2_application_profile_message(application, "LEAVE THE CHAMPIONSHIP TO CHANGE NAME.");
+        } else {
+            char draft[DD2_CONFIGURATION_NAME_LIMIT + 1] = {0};
+            for (unsigned index = 0; index < DD2_CONFIGURATION_NAME_LIMIT; ++index) {
+                draft[index] = application->player_name[index];
+                if (draft[index] == '\0') {
+                    break;
+                }
+            }
+            dd2_profile_menu_edit(&application->profile_menu, DD2_PROFILE_PLAYER_NAME, draft);
+        }
+        return true;
+    }
+    if (input->pressed[DD2_KEY_PROFILE_SAVE] || input->pressed[DD2_KEY_PROFILE_LOAD]) {
+        dd2_application_profile_open(application, input->pressed[DD2_KEY_PROFILE_SAVE]);
+        return true;
+    }
+    return false;
+}
+static void dd2_application_profile_name_input(dd2_application *application,
+                                               const dd2_input *input) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (input->pressed[DD2_KEY_BACKSPACE]) {
+        dd2_profile_menu_backspace(menu);
+    }
+    if (input->text[0] != '\0') {
+        menu->message = dd2_profile_menu_append(menu, input->text)
+                            ? NULL
+                            : "USE AT MOST EIGHT ASCII CHARACTERS.";
+    }
+    if (!input->pressed[DD2_KEY_DRIVE]) {
+        return;
+    }
+    if (menu->phase == DD2_PROFILE_PLAYER_NAME) {
+        if (dd2_application_set_player_name(menu->draft)) {
+            menu->phase = DD2_PROFILE_CLOSED;
+        } else {
+            dd2_application_profile_message(application, "PLAYER NAME COULD NOT BE CHANGED.");
+        }
+    } else if (menu->draft[0] == '\0') {
+        menu->message = "ENTER A SAVE NAME.";
+    } else if (menu->logical < dd2_application_saves_count()) {
+        menu->phase = DD2_PROFILE_CONFIRM;
+        menu->message = NULL;
+    } else {
+        dd2_application_profile_save(application);
+    }
+}
+static void dd2_application_profile_select_input(dd2_application *application,
+                                                 const dd2_input *input) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    int direction = 0;
+    if (input->pressed[DD2_KEY_RIGHT]) {
+        direction = 1;
+    } else if (input->pressed[DD2_KEY_LEFT]) {
+        direction = -1;
+    }
+    dd2_profile_menu_move(menu, direction);
+    if (!input->pressed[DD2_KEY_DRIVE]) {
+        return;
+    }
+    if (menu->phase == DD2_PROFILE_LOAD_SELECT) {
+        dd2_application_profile_message(application,
+                                        dd2_application_load_profile(menu->logical)
+                                            ? "AUDIO AND PLAYER RESTORED."
+                                            : "ENTRY CANNOT RESTORE AUDIO AND PLAYER.");
+    } else {
+        const char *name = dd2_application_save_name(menu->logical);
+        dd2_profile_menu_edit(menu, DD2_PROFILE_SAVE_NAME,
+                              dd2_configuration_name_valid(name) ? name : "CONFIG");
+    }
+}
+static bool dd2_application_profile_busy(dd2_profile_phase phase) {
+    return phase == DD2_PROFILE_WRITING || phase == DD2_PROFILE_OPEN_SAVE ||
+           phase == DD2_PROFILE_OPEN_LOAD;
+}
+static void dd2_application_profile_command(dd2_application *application, const dd2_input *input) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (input->pressed[DD2_KEY_QUIT]) {
+        menu->phase = DD2_PROFILE_CLOSED;
+        menu->message = NULL;
+    } else if (dd2_profile_menu_editing(menu)) {
+        dd2_application_profile_name_input(application, input);
+    } else if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT) {
+        dd2_application_profile_select_input(application, input);
+    } else if (menu->phase == DD2_PROFILE_CONFIRM && input->pressed[DD2_KEY_DRIVE]) {
+        dd2_application_profile_save(application);
+    } else if (menu->phase == DD2_PROFILE_MESSAGE && input->pressed[DD2_KEY_DRIVE]) {
+        menu->phase = DD2_PROFILE_CLOSED;
+    }
+}
+static bool dd2_application_profile_input(dd2_application *application, const dd2_input *input) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (menu->phase == DD2_PROFILE_CLOSED) {
+        if (!input->focused || !dd2_application_profile_begin(application, input)) {
+            return false;
+        }
+    } else if (!dd2_application_profile_busy(menu->phase) && input->focused) {
+        dd2_application_profile_command(application, input);
+    }
+    dd2_window_text_input(application->window, dd2_profile_menu_editing(menu));
+    dd2_window_menu_input(application->window, menu->phase != DD2_PROFILE_CLOSED);
+    dd2_window_release_input(application->window);
+    if (input->action_count != 0 || input->text[0] != '\0' || input->pressed[DD2_KEY_LEFT] ||
+        input->pressed[DD2_KEY_RIGHT]) {
+        application->dirty = true;
+    }
+    return true;
+}
+
 int dd2_application_effect_voice(unsigned query) {
     const unsigned channel = query / DD2_EFFECT_QUERY_COUNT;
     const dd2_effect_query field = (dd2_effect_query)(query % DD2_EFFECT_QUERY_COUNT);
@@ -996,7 +1260,7 @@ static void dd2_application_input(dd2_application *application, const dd2_input 
     }
 }
 
-static bool dd2_application_draw(dd2_application *application) {
+static bool dd2_application_draw_scene(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
     if (application->drive) {
         return dd2_driving_draw(
@@ -1019,10 +1283,10 @@ static bool dd2_application_draw(dd2_application *application) {
                            dd2_driving_vehicle_count(dd2_application_driving(application)) - 1,
                        .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
                (application->championship == NULL ||
-                dd2_championship_draw(
+                dd2_championship_draw_named(
                     dd2_championship_session_state(application->championship),
-                    (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT})) &&
-               dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
+                    application->player_name,
+                    (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}));
     }
     dd2_camera_apply(&application->camera,
                      (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
@@ -1032,7 +1296,23 @@ static bool dd2_application_draw(dd2_application *application) {
                                            (dd2_track_vertex){0})
                            : dd2_scene_draw(application->materials,
                                             dd2_track_scene(dd2_application_track(application)));
-    return drawn &&
+    return drawn;
+}
+static bool dd2_application_draw(dd2_application *application) {
+    dd2_renderer_make_current(application->renderer);
+    /* The modal pauses simulation/camera motion. Its opaque pane overwrites all
+     * previous dialog text in the retained framebuffer; redraw the frozen world
+     * only for the first presentation or after returning to normal play. */
+    if (!application->world_drawn || application->profile_menu.phase == DD2_PROFILE_CLOSED) {
+        if (!dd2_application_draw_scene(application)) {
+            return false;
+        }
+        application->world_drawn = true;
+    }
+    return dd2_profile_draw(
+               &application->profile_menu,
+               dd2_application_save_name(application->profile_menu.logical),
+               (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}) &&
            dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
 }
 
@@ -1066,7 +1346,7 @@ int dd2_application_advance(dd2_driving_frame frame) {
         !dd2_driving_frame_valid(frame)) {
         return 0;
     }
-    if (application->paused) {
+    if (application->paused || application->profile_menu.phase != DD2_PROFILE_CLOSED) {
         dd2_application_suspend(application);
         return 1;
     }
@@ -1098,6 +1378,7 @@ static void dd2_application_drive_frame(const dd2_input *input, float seconds) {
 static void dd2_application_frame(void *context) {
     dd2_application *application = context;
     dd2_application_saves_poll();
+    dd2_application_profile_poll(application);
     if (!application->running) {
 #ifdef __EMSCRIPTEN__
         dd2_application_close();
@@ -1108,7 +1389,10 @@ static void dd2_application_frame(void *context) {
     if (input.quit) {
         application->running = false;
     } else {
-        dd2_application_input(application, &input);
+        const bool profile = dd2_application_profile_input(application, &input);
+        if (!profile) {
+            dd2_application_input(application, &input);
+        }
         dd2_window_refresh_controls(application->window, &input);
         if (!application->running) {
 #ifdef __EMSCRIPTEN__
@@ -1116,10 +1400,12 @@ static void dd2_application_frame(void *context) {
 #endif
             return;
         }
-        dd2_application_audio_focus(application, input.focused);
+        dd2_application_audio_focus(application, input.focused && !profile);
         const float seconds = dd2_window_elapsed(application->window);
         bool moved = false;
-        if (application->drive) {
+        if (profile) {
+            dd2_application_suspend(application);
+        } else if (application->drive) {
             if (application->paused || !input.focused) {
                 dd2_application_suspend(application);
             } else {
@@ -1165,6 +1451,7 @@ static dd2_application *dd2_application_create(const char *path) {
     }
     application->running = true;
     dd2_configuration_defaults(&application->configuration);
+    dd2_application_copy_player(application, dd2_configuration_player(&application->configuration));
     dd2_application_last_save_result = DD2_SAVE_STORE_IDLE;
     application->audio = dd2_game_audio_create(path, application->archive);
     if (application->audio == NULL) {
@@ -1222,6 +1509,22 @@ dd2_application_image dd2_application_image_view(void) {
 int dd2_application_present(void) {
     dd2_application *application = dd2_current_application;
     return application != NULL && application->running && dd2_application_draw(application);
+}
+
+int dd2_application_poll_frame(void) {
+    dd2_application *application = dd2_current_application;
+    if (application == NULL || application->main_loop) {
+        return -1;
+    }
+    dd2_application_frame(application);
+    application = dd2_current_application;
+    if (application == NULL) {
+        return 0;
+    }
+    if (application->failed) {
+        return -1;
+    }
+    return (int)application->running;
 }
 
 int dd2_application_run(const char *path, int level) {

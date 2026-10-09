@@ -2,8 +2,10 @@
 
 #include "game/accidents.h"
 #include "game/championship.h"
+#include "game/configuration.h"
 #include "game/drivers.h"
 #include "game/league.h"
+#include "game/profile_menu.h"
 #include "game/race.h"
 #include "physics/vehicle_collision.h"
 #include "render/renderer.h"
@@ -29,6 +31,8 @@ enum {
     DD2_RACE_DRAW_SLASH = 36,
     DD2_RACE_DRAW_COLON = 37,
     DD2_RACE_DRAW_DOT = 38,
+    DD2_RACE_DRAW_SYMBOL_BASE = 39,
+    DD2_RACE_DRAW_SYMBOLS = 29,
     DD2_RACE_DRAW_TIME_BYTES = 10,
     DD2_RACE_DRAW_TICKS_PER_SECOND = 200,
     DD2_RACE_DRAW_SECONDS_PER_MINUTE = 60,
@@ -88,6 +92,23 @@ static const uint8_t dd2_race_draw_font[][DD2_RACE_DRAW_GLYPH_HEIGHT] = {
     {17, 17, 10, 4, 10, 17, 17},  {17, 17, 10, 4, 4, 4, 4},     {31, 1, 2, 4, 8, 16, 31},
     {1, 1, 2, 4, 8, 16, 16},      {0, 4, 4, 0, 4, 4, 0},        {0, 0, 0, 0, 0, 4, 4}};
 
+/* Printable ASCII punctuation for profile names; lower-case letters retain the
+ * existing upper-case presentation while stored identity keeps its exact case. */
+static const char dd2_race_draw_symbols[] = "!\"#$%&'()*+,-;<=>?@[\\]^_`{|}~";
+static const uint8_t dd2_race_draw_symbol_font[DD2_RACE_DRAW_SYMBOLS][DD2_RACE_DRAW_GLYPH_HEIGHT] =
+    {{4, 4, 4, 4, 4, 0, 4},        {10, 10, 10, 0, 0, 0, 0}, {10, 31, 10, 10, 31, 10, 0},
+     {4, 15, 20, 14, 5, 30, 4},    {17, 2, 4, 8, 17, 0, 0},  {12, 18, 20, 8, 21, 18, 13},
+     {4, 4, 8, 0, 0, 0, 0},        {2, 4, 8, 8, 8, 4, 2},    {8, 4, 2, 2, 2, 4, 8},
+     {0, 21, 14, 31, 14, 21, 0},   {0, 4, 4, 31, 4, 4, 0},   {0, 0, 0, 0, 4, 4, 8},
+     {0, 0, 0, 31, 0, 0, 0},       {0, 4, 4, 0, 4, 4, 8},    {2, 4, 8, 16, 8, 4, 2},
+     {0, 0, 31, 0, 31, 0, 0},      {8, 4, 2, 1, 2, 4, 8},    {14, 17, 1, 2, 4, 0, 4},
+     {14, 17, 23, 21, 23, 16, 14}, {14, 8, 8, 8, 8, 8, 14},  {16, 8, 4, 2, 1, 0, 0},
+     {14, 2, 2, 2, 2, 2, 14},      {4, 10, 17, 0, 0, 0, 0},  {0, 0, 0, 0, 0, 0, 31},
+     {8, 4, 2, 0, 0, 0, 0},        {2, 4, 4, 8, 4, 4, 2},    {4, 4, 4, 4, 4, 4, 4},
+     {8, 4, 4, 2, 4, 4, 8},        {0, 0, 9, 22, 0, 0, 0}};
+_Static_assert(sizeof(dd2_race_draw_symbols) == DD2_RACE_DRAW_SYMBOLS + 1,
+               "ASCII punctuation extent");
+
 typedef struct {
     float x;
     float y;
@@ -121,18 +142,26 @@ static unsigned dd2_race_draw_glyph(unsigned char character) {
     case '.':
         return DD2_RACE_DRAW_DOT;
     default:
-        return DD2_RACE_DRAW_DOT + 1;
+        for (unsigned index = 0; index < DD2_RACE_DRAW_SYMBOLS; ++index) {
+            if (character == (unsigned char)dd2_race_draw_symbols[index]) {
+                return DD2_RACE_DRAW_SYMBOL_BASE + index;
+            }
+        }
+        return DD2_RACE_DRAW_SYMBOL_BASE + DD2_RACE_DRAW_SYMBOLS;
     }
 }
 
 static void dd2_race_draw_text(const char *text, dd2_race_draw_pen pen) {
     for (size_t index = 0; text[index] != '\0'; ++index) {
         const unsigned glyph = dd2_race_draw_glyph((unsigned char)text[index]);
-        if (glyph <= DD2_RACE_DRAW_DOT) {
+        if (glyph < DD2_RACE_DRAW_SYMBOL_BASE + DD2_RACE_DRAW_SYMBOLS) {
+            const uint8_t *rows =
+                glyph < DD2_RACE_DRAW_SYMBOL_BASE
+                    ? dd2_race_draw_font[glyph]
+                    : dd2_race_draw_symbol_font[glyph - DD2_RACE_DRAW_SYMBOL_BASE];
             for (unsigned row = 0; row < DD2_RACE_DRAW_GLYPH_HEIGHT; ++row) {
                 for (unsigned column = 0; column < DD2_RACE_DRAW_GLYPH_WIDTH; ++column) {
-                    if ((dd2_race_draw_font[glyph][row] &
-                         (1U << (DD2_RACE_DRAW_GLYPH_WIDTH - column - 1))) != 0) {
+                    if ((rows[row] & (1U << (DD2_RACE_DRAW_GLYPH_WIDTH - column - 1))) != 0) {
                         dd2_race_draw_box(
                             pen.x + ((float)column * pen.scale),
                             pen.y + ((float)(DD2_RACE_DRAW_GLYPH_HEIGHT - row - 1) * pen.scale),
@@ -511,7 +540,8 @@ static void dd2_champ_draw_metadata(const dd2_championship *state, float scale, 
                             .scale = scale});
 }
 
-static void dd2_champ_draw_standings(const dd2_championship *state, float scale) {
+static void dd2_champ_draw_standings(const dd2_championship *state, const char *human,
+                                     float scale) {
     for (unsigned division = 0; division < DD2_LEAGUE_DIVISIONS; ++division) {
         const unsigned group_row = division / 2;
         const float left =
@@ -543,7 +573,7 @@ static void dd2_champ_draw_standings(const dd2_championship *state, float scale)
         }
         dd2_race_draw_number(standing.rank + 1,
                              (dd2_race_draw_pen){.x = left, .y = bottom, .scale = scale});
-        dd2_race_draw_text(dd2_driver_name(driver),
+        dd2_race_draw_text(driver == 0 ? human : dd2_driver_name(driver),
                            (dd2_race_draw_pen){.x = left + (dd2_champ_draw_name_offset * scale),
                                                .y = bottom,
                                                .scale = scale});
@@ -571,8 +601,10 @@ static const char *dd2_champ_draw_outcome(dd2_league_outcome outcome) {
     }
 }
 
-bool dd2_championship_draw(const dd2_championship *championship, dd2_render_options viewport) {
-    if (!dd2_championship_valid(championship) || viewport.width <= 0 || viewport.height <= 0) {
+bool dd2_championship_draw_named(const dd2_championship *championship, const char *human,
+                                 dd2_render_options viewport) {
+    if (!dd2_championship_valid(championship) || !dd2_configuration_player_valid(human) ||
+        viewport.width <= 0 || viewport.height <= 0) {
         return false;
     }
     const float scale = fminf((float)viewport.width / (float)DD2_RACE_DRAW_WIDTH,
@@ -604,7 +636,7 @@ bool dd2_championship_draw(const dd2_championship *championship, dd2_render_opti
                                                .y = dd2_race_draw_title_bottom * scale,
                                                .scale = scale});
         dd2_champ_draw_metadata(championship, scale, dd2_race_draw_header_bottom * scale);
-        dd2_champ_draw_standings(championship, scale);
+        dd2_champ_draw_standings(championship, human, scale);
         glColor3f(1, 1, 0);
         dd2_race_draw_text(dd2_champ_draw_outcome(dd2_championship_current(championship)->outcome),
                            (dd2_race_draw_pen){.x = dd2_champ_draw_left * scale,
@@ -617,6 +649,128 @@ bool dd2_championship_draw(const dd2_championship *championship, dd2_render_opti
                                                .y = dd2_champ_draw_hint_bottom * scale,
                                                .scale = scale});
     }
+    glEnd();
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    return glGetError() == GL_NO_ERROR;
+}
+
+bool dd2_championship_draw(const dd2_championship *championship, dd2_render_options viewport) {
+    return dd2_championship_draw_named(championship, dd2_driver_name(0), viewport);
+}
+
+static const char *dd2_profile_draw_title(dd2_profile_phase phase) {
+    switch (phase) {
+    case DD2_PROFILE_PLAYER_NAME:
+        return "PLAYER NAME";
+    case DD2_PROFILE_OPEN_LOAD:
+    case DD2_PROFILE_LOAD_SELECT:
+        return "RESTORE AUDIO AND PLAYER";
+    case DD2_PROFILE_MESSAGE:
+        return "AUDIO AND PLAYER STATUS";
+    default:
+        return "SAVE AUDIO AND PLAYER";
+    }
+}
+static const char *dd2_profile_draw_help(dd2_profile_phase phase) {
+    switch (phase) {
+    case DD2_PROFILE_PLAYER_NAME:
+    case DD2_PROFILE_SAVE_NAME:
+        return "EIGHT ASCII CHARACTERS. BACKSPACE EDITS.";
+    case DD2_PROFILE_CONFIRM:
+        return "ENTER REPLACES THE SELECTED ENTRY.";
+    case DD2_PROFILE_SAVE_SELECT:
+    case DD2_PROFILE_LOAD_SELECT:
+        return "LEFT/RIGHT CHOOSE AN ENTRY.";
+    default:
+        return "";
+    }
+}
+static const char *dd2_profile_draw_footer(dd2_profile_phase phase) {
+    switch (phase) {
+    case DD2_PROFILE_WRITING:
+    case DD2_PROFILE_OPEN_SAVE:
+    case DD2_PROFILE_OPEN_LOAD:
+        return "PLEASE WAIT FOR COMPLETION.";
+    case DD2_PROFILE_MESSAGE:
+        return "ENTER OR ESCAPE RETURNS.";
+    default:
+        return "ENTER CONFIRMS. ESCAPE CANCELS.";
+    }
+}
+static const float dd2_profile_draw_left = 32;
+static const float dd2_profile_draw_bottom = 160;
+static const float dd2_profile_draw_width = 576;
+static const float dd2_profile_draw_height = 176;
+static const float dd2_profile_draw_text_left = 48;
+static const float dd2_profile_draw_title_bottom = 306;
+static const float dd2_profile_draw_entry_bottom = 270;
+static const float dd2_profile_draw_number_left = 132;
+static const float dd2_profile_draw_entry_left = 190;
+static const float dd2_profile_draw_help_bottom = 220;
+static const float dd2_profile_draw_footer_bottom = 180;
+bool dd2_profile_draw(const dd2_profile_menu *menu, const char *selected,
+                      dd2_render_options viewport) {
+    if (menu == NULL || viewport.width <= 0 || viewport.height <= 0) {
+        return false;
+    }
+    if (menu->phase == DD2_PROFILE_CLOSED) {
+        return true;
+    }
+    const float scale = fminf((float)viewport.width / (float)DD2_RACE_DRAW_WIDTH,
+                              (float)viewport.height / (float)DD2_RACE_DRAW_HEIGHT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, viewport.width, 0, viewport.height, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glBegin(GL_TRIANGLES);
+    glColor3f(0, 0, 0);
+    dd2_race_draw_box(dd2_profile_draw_left * scale, dd2_profile_draw_bottom * scale,
+                      dd2_profile_draw_width * scale, dd2_profile_draw_height * scale);
+    glColor3f(1, 1, 1);
+    const char *title = dd2_profile_draw_title(menu->phase);
+    dd2_race_draw_text(title, (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
+                                                  .y = dd2_profile_draw_title_bottom * scale,
+                                                  .scale = 2 * scale});
+    if (dd2_profile_menu_editing(menu) || menu->phase == DD2_PROFILE_CONFIRM) {
+        glColor3f(1, 1, 0);
+        dd2_race_draw_text(menu->draft,
+                           (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
+                                               .y = dd2_profile_draw_entry_bottom * scale,
+                                               .scale = 3 * scale});
+        glColor3f(1, 1, 1);
+    }
+    if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT) {
+        dd2_race_draw_text("ENTRY", (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
+                                                        .y = dd2_profile_draw_entry_bottom * scale,
+                                                        .scale = 2 * scale});
+        dd2_race_draw_number(menu->logical + 1,
+                             (dd2_race_draw_pen){.x = dd2_profile_draw_number_left * scale,
+                                                 .y = dd2_profile_draw_entry_bottom * scale,
+                                                 .scale = 2 * scale});
+        dd2_race_draw_text(selected == NULL ? "EMPTY" : selected,
+                           (dd2_race_draw_pen){.x = dd2_profile_draw_entry_left * scale,
+                                               .y = dd2_profile_draw_entry_bottom * scale,
+                                               .scale = 2 * scale});
+    }
+    const char *help = dd2_profile_draw_help(menu->phase);
+    dd2_race_draw_text(menu->message == NULL ? help : menu->message,
+                       (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
+                                           .y = dd2_profile_draw_help_bottom * scale,
+                                           .scale = 2 * scale});
+    dd2_race_draw_text(dd2_profile_draw_footer(menu->phase),
+                       (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
+                                           .y = dd2_profile_draw_footer_bottom * scale,
+                                           .scale = 2 * scale});
     glEnd();
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);

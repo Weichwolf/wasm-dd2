@@ -114,6 +114,18 @@ is prevented for new entries while existing duplicate payloads remain distinct.
 This does not complete typed settings/game/replay, durable adapters or frontend
 persistence. Receipt: /tmp/wasm-dd2/rewrite-save-card-0055/verification-report.json.
 
+Active 0058 now provides Native/browser-canvas F2 name entry, F3 save selection/
+filename/occupied confirmation and F4 reload/restore, plus HTML player/audio
+controls. Thirty-two actual Chromium checks and 22 Native/sanitized X11 dialog
+checks prove typing, all fifteen positions, cancel, completion, failure/conflict
+and restart. Completed-save Escape dismisses without undoing data. Accepted HTML
+name/restore actions synchronize the field before another edit; otherwise drafts
+survive reflection. Modal panes reuse the paused world's image rather than
+redrawing the entire circuit per character. Named championship standings have
+a synthetic GL check; naturally completed named results remain unproved.
+This is a partial front end, not every original menu or saved-game action.
+Receipt: /tmp/wasm-dd2/rewrite-player-profile-0058-release/verification-report.json.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager

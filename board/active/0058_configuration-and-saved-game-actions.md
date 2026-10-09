@@ -50,15 +50,59 @@ Receipts:
 /tmp/wasm-dd2/rewrite-preferences-0058-publication/verification-report.json and
 /tmp/wasm-dd2/rewrite-preferences-0058-music-regression/report.json.
 This proves audio preference actions, not full configuration or playable
-saved-game restoration. The full contract remains active.
+saved-game restoration.
+
+The next integration owns the active human name separately from retained source
+metadata. New edits accept eight printable ASCII characters; legacy imports
+retain all eleven characters. Empty names resolve to PLAYER. Player/audio save
+captures the active identity, audio-only restore preserves it, and invalid
+player/audio imports publish neither field. Name edits and full profile loads
+are rejected while a championship owns its human identity. NPC stable IDs/names
+remain unchanged, and championship standings consume the owned human name.
+The synthetic standings GL check is not a naturally completed named season.
+
+Native F2/F3/F4 and the browser canvas now provide name entry, all fifteen save
+positions, filename entry, occupied confirmation, cancellation, completion and
+explicit reload/restore. Native defaults to SDL's dedicated per-user
+Weichwolf/wasm-dd2 folder. Actual X11 tests cover file changes, invalid names,
+conflicting writers, cancellation and fresh-process restoration. Escape after
+completed saving returns without undoing durable data; the status text says so.
+HTML actions synchronize the name field immediately, fixing a reproduced race
+where delayed reflection overwrote a subsequent edit. Actual HTML typing keeps
+game mode/track/championship unchanged. Unsaved drafts remain intact otherwise.
+
+`make rewrite-player-profile-verify` passes 31 original/Native/fresh O1 sanitized
+cases, 22 actual Native/sanitized dialog checks and 32 Chromium checks. Complete
+independently predicted images retain source fields, exact effects volume,
+name-tail bytes and reserved regions. Immutable original naming functions match
+the complete twenty-driver rosters for three names. Strict LLVM19 checks 197
+C/header files; all 44 Native/42 WASM CTests pass. Actual Native application
+Memcheck has zero errors/no lost blocks, with descriptor checks and no
+suppressions; release SDL2/SoftGL remain outside sanitizer instrumentation.
+The current audio regression also passes 37 original/Native/sanitized cases,
+23 browser checks and eight restored-gain WebAudio buffers. Receipts:
+/tmp/wasm-dd2/rewrite-player-profile-0058-release/verification-report.json and
+/tmp/wasm-dd2/rewrite-player-profile-0058-release-audio/verification-report.json.
+
+Modal rendering reuses the suspended world's framebuffer. Six alternating
+actual X11 eight-character trials measure 2.207..7.276 seconds before reuse and
+0.166..0.171 seconds after, with cancellation preserving the name. This measures
+frontend input delivery, not whole-game speed or original parity. Receipt:
+/tmp/wasm-dd2/rewrite-player-profile-0058-preflight/latency-report.json.
+Native/sanitized/browser dialogs are visually reviewed. Successful raw output
+and finished captures are removed after reporting; original data and pinned
+SoftGL remain unchanged. These prove player/audio integration and partial human
+menus, not all configuration, records or playable saved-game restoration.
+The full contract remains active.
 
 ## Next
 
-Translate and validate mode/car/track/input/name/record fields and playable saved
-championship state. Connect Native human save menus as well as browser actions;
-the currently proved Native interface is the application C bridge. These remain
-part of this item, not storage-only acceptance. Keep imported source fields and
-reserved bytes through subsequent edits and preserve active owners on failure.
+Translate and validate mode/car/track/input/record fields, other player fields
+and playable saved championship state. Connect the complete Configuration/
+Information routes and remaining Native file actions, including deletion.
+Prove named results through actual completed play; synthetic standings do not
+replace that acceptance. Keep imported source fields and reserved bytes through
+subsequent edits and preserve active owners on failure.
 
 ## Accept
 

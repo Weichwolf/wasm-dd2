@@ -47,14 +47,21 @@
   <label>Effects <input id="effects-gain" type="range" min="0" max="256" value="256" disabled></label>
   <span id="music-status" role="status">Select track02.cdda to track19.cdda from the Redbook folder.</span>
 </div>
+<div class="controls">
+  <label>Player <input id="player-name" type="text" maxlength="8" value="PLAYER" disabled></label>
+  <button id="player-apply" disabled>Apply name</button>
+  <span id="player-status" role="status">Use up to eight printable ASCII characters. Leave the championship to change your name.</span>
+</div>
 <fieldset>
-  <legend>Audio preferences</legend>
+  <legend>Saved audio and player</legend>
   <div class="controls">
     <button id="saves-open" disabled>Open saves</button>
     <label>Entry <select id="save-slot" disabled></select></label>
     <label>Name <input id="save-name" type="text" maxlength="8" value="CONFIG" disabled></label>
     <button id="preferences-save" disabled>Save preferences</button>
     <button id="preferences-load" disabled>Restore audio</button>
+    <button id="profile-save" disabled>Save player + audio</button>
+    <button id="profile-load" disabled>Restore player + audio</button>
     <button id="save-delete" disabled>Delete entry</button>
     <button id="saves-reload" disabled>Reload saves</button>
   </div>

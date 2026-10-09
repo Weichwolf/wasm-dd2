@@ -161,8 +161,18 @@ bridge and actual browser controls, with exact source effects volume preservatio
 and a separate versioned music extension. Restoring preferences preserves the
 active session; pending writes refuse application close. See
 `src/game/configuration.md` and `make rewrite-preferences-verify`.
-Complete configuration consumption, playable-state translation, replay codecs
-and Native human save menus remain open; see
+Player/audio profile actions now own the active human identity and provide F2
+name entry, F3 save selection/filename/overwrite confirmation and F4 explicit
+reload/restore on Native and the browser canvas. Browser controls expose these
+actions alongside audio-only restore. New names use eight printable ASCII
+characters; imported eleven-character names remain intact. Modal input suspends
+simulation/music and reuses the frozen world image, avoiding a full scene redraw
+for every character. An active championship locks identity while allowing audio
+restores. NPC names and stable IDs remain unchanged.
+`make rewrite-player-profile-verify` checks unmodified original rosters, complete
+independent cards, actual X11/browser input, restart and sanitized ownership.
+Complete configuration consumption, playable-state translation and replay codecs
+remain open; see
 `src/assets/README.md`, `make rewrite-save-card-verify` and
 `make rewrite-save-profile-verify`, plus `src/platform/README.md` and
 `make rewrite-save-store-verify`. Typed sound-bank/WAVE readers

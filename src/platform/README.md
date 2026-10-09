@@ -50,11 +50,14 @@ publication; abort, enqueue exception and stale owners preserve the prior image.
 JavaScript owns copied bytes and obtains current WASM heap views during polling.
 Missing storage opens empty without creating a card until a mutation succeeds.
 No persistence location defaults to provisioned game assets. The application now
-consumes this owner for audio preferences through Native C actions and actual
-browser controls. It preserves pending application owners and terminal completion
-receipts across close. See `../game/configuration.md` and
-`make rewrite-preferences-verify`. Native human save menus, full configuration
-consumption, playable-state validation and replay encoding remain under
+consumes this owner for player/audio profiles through Native C actions, actual
+F2/F3/F4 keyboard dialogs and browser controls. The default Native location is
+SDL's per-user `Weichwolf/wasm-dd2` preference folder; explicit C callers may
+provide an existing dedicated writable folder. It preserves pending application
+owners and terminal completion receipts across close. See
+`../game/configuration.md`, `make rewrite-preferences-verify` and
+`make rewrite-player-profile-verify`. Full configuration consumption,
+playable-state validation and replay encoding remain under
 0008/0003; this adapter alone does not save a playable session.
 `make rewrite-save-store-verify` checks independent full images, real Native
 writer interruption and Chromium process restart, faults/conflicts, sanitized
