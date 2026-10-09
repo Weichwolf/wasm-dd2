@@ -4,7 +4,7 @@
 original absolute addresses, registers, palette banks or original mesh opcodes.
 All integers and IEEE-754 binary32 values are little-endian. Tables are contiguous
 in the order below, with no padding or trailing bytes. Strings are nonempty,
-ASCII, NUL-terminated and zero-padded to their fixed width.
+printable ASCII (32..126), NUL-terminated and zero-padded to their fixed width.
 
 | Table | Record size | Fields |
 | --- | --- | --- |
@@ -16,7 +16,10 @@ ASCII, NUL-terminated and zero-padded to their fixed width.
 | Index | 4 bytes | vertex index (uint32); three consecutive indices form a triangle |
 
 Resource paths resolve below `assets/runtime/`; absolute paths, backslashes,
-parent components and external symlinks are forbidden. Material scalar values
+empty/dot/parent components and external symlinks are forbidden. Path components
+use only ASCII letters, digits, underscores, hyphens and dots. The container
+loader validates names; the future filesystem provider must enforce symlink
+containment when resolving them. Material scalar values
 are in [0,1]. Texture index `0xffffffff` means no maps. Albedo is an sRGB factor
 multiplied by the material's base tint; roughness and normal maps are linear.
 PNG row zero is the top row. UVs use the Blender/OpenGL bottom-left convention;
@@ -36,7 +39,8 @@ for future damage/animation; material/role batching can reduce draw submission.
 Each part owns a nonempty, triangle-aligned index range. In table order, ranges
 partition the entire index table without overlaps or gaps. Indices reference
 valid vertices; shared vertices are allowed across parts. Normals must be finite
-and unit length; geometry/UVs and pivots must be finite. Degenerate triangles
+and unit length (absolute length error at most 0.0001); geometry/UVs and pivots
+must be finite and have absolute values at most 65536. Degenerate triangles
 are removed by export, and retained winding must agree with exported normals.
 
 The verifier caps a single container at 32 texture sets, 64 materials, 4096
@@ -44,5 +48,15 @@ parts, 1,000,000 vertices and 3,000,000 indices before reading payload tables.
 Those are corruption/allocation bounds, not per-frame performance budgets.
 Default scene planning uses 100,000-200,000 submitted triangles and 20-30
 materials for the complete 60-FPS frame, with headroom for other work.
-A production C loader, renderer, material/LOD selection and cockpit view remain
-pending; the independent offline verifier is not a substitute for them.
+`src/assets/model.h` loads the container into owned typed arrays after checking
+all bounds, finite values, material references, partitions, names, triangle
+areas and winding. It accepts misaligned source bytes and can release them
+immediately after loading. Nonfinite checks inspect IEEE bits so that the
+required `-ffast-math` cannot optimize them away. Destruction accepts NULL;
+getters borrow arrays until destruction and return zero/NULL for a null model.
+
+`make assets-content-verify` checks all three committed LODs on Native,
+Node/WASM and fresh O1 ASan/UBSan. A diagnostic re-encodes every typed field
+after releasing the source and compares it exactly with the independently
+validated authored container. This is format/ownership evidence. The authored
+game renderer, material/LOD selection and cockpit view remain pending.

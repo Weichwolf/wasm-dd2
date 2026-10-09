@@ -1,8 +1,43 @@
 # Assets
 
-Decode original tracks, cars, textures and other data into documented structures.
-Validate lengths, offsets and ownership at loading boundaries. Original files
-remain ignored/provisioned data; do not embed assets or memory dumps in source.
+Load authored content and optional original references into documented typed
+structures. Validate lengths, offsets and ownership at loading boundaries.
+Authored content belongs under `assets/`; original files remain ignored optional
+development data. Do not embed original assets or memory dumps in source.
+
+## Authored content
+
+`model.h` copies a complete `DD2MESH2` container into owned texture/material/part/
+vertex/index arrays. Geometry is meters with +Y up and +Z forward; positions are
+in their reference pose and moving parts retain their rotation pivots. The source
+can be released immediately. Arrays borrow the model until destruction.
+Names, relative PNG resources, caps, exact byte extent, partitions, indices,
+material ranges, bounded finite scalars, unit normals and triangle winding are
+validated. Nonfinite input is rejected using IEEE bits under `-ffast-math`.
+See [the authored format](../../assets/mesh-format.md).
+
+`image.h` owns top-first RGBA8 samples from 8-bit noninterlaced grayscale,
+grayscale-alpha, RGB or RGBA PNGs. It checks CRCs, chunk names/order, dimensions
+(1..2048), the 32-MiB input limit, all five row filters and exact compressed/
+decoded extents. Contiguous IDATs and optional suggested RGB/RGBA palettes work.
+Indexed color, interlacing, other depths and tRNS color-key transparency are
+rejected; authored transparency must use explicit alpha. Samples are retained
+without profile/gamma conversion. Render upload must flip rows for bottom-left
+UVs; normal-map +Y follows increasing V. Source bytes may be released immediately.
+
+Null destruction and null-safe getters are valid for both owners. Focused
+`rewrite_model` and `rewrite_image` CTests run without original input. Run
+`make assets-content-verify` for all three authored LODs and eighteen maps on
+Native, Node/WASM and fresh O1 ASan/UBSan. Exact typed-field re-encoding and
+independent Pillow samples pass; corrupted input must fail without diagnostics.
+This proves content loading only. Default game startup, authored rendering,
+audio and the full standalone product remain under active 0062.
+
+PNG chunk/filter rules follow the
+[W3C PNG specification](https://www.w3.org/TR/png-3/); this loader deliberately
+supports the authored material subset described above.
+
+## Optional original archive
 
 `archive.h` provides a validated, read-only view of the original `Dirinfo`
 container. The caller owns the loaded bytes. The archive owns its directory

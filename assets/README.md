@@ -15,7 +15,10 @@ new 48-kHz stereo PCM clips include engine/road/impact/UI cues and the original
 
 This is an offline content foundation. The game still needs its original
 archive and sound bank at startup; these new exports are not integrated into
-Native/WASM gameplay. Blender studio lights/shadows are preview facilities,
+Native/WASM gameplay. Checked C mesh/PNG loaders now read every committed model
+and material map on both targets, with fresh sanitizer and corruption evidence;
+this is a loading component rather than default game integration.
+Blender studio lights/shadows are preview facilities,
 not game-renderer evidence. Commentary, all tracks/arenas, further vehicle and
 livery variants, new fonts/UI/VFX and full audio behavior remain incomplete.
 See [inventory.json](inventory.json) and [work item 0062](../board/active/0062_standalone-authored-assets.md).
@@ -29,6 +32,7 @@ must not require Blender. The source recipes are under `tools/assets/`.
 ```sh
 make assets-generate
 make assets-check
+make assets-content-verify
 make assets-preview
 ```
 
@@ -51,6 +55,14 @@ normals, triangle orientation, complete wheel/cockpit components, referenced
 maps, tile seams, PCM format/headroom/DC/boundaries and sixteen corruptions of
 each mesh. Runtime meshes, PNGs, WAVs and metadata are reproducible; Blender
 project byte identity is not promised because project/session metadata can vary.
+
+`assets-content-verify` runs strict LLVM19/build/CTest gates and compares all
+three models and eighteen PNGs through the C loaders on Native, Node/WASM and
+fresh O1 ASan/UBSan. Every model field/index and every top-first RGBA sample
+must agree. Thirty-two corrupted meshes per LOD and thirty-five malformed or
+unsupported PNG variants must fail cleanly; four positive PNG chunk layouts
+must preserve pixels. The report retains hashes under `/tmp/wasm-dd2/` and
+removes completed raw output. No original files are inputs to this check.
 
 Use LOD and visibility against the 640x360, 4x MSAA, four-total-thread,
 60-FPS planning profile. The triangle/material budget applies to the whole

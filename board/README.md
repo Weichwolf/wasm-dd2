@@ -90,8 +90,12 @@ original-asset diagnostics remain evidence, not standalone product acceptance.
 Active 0062 now proves the first authored offline foundation: an editable
 vehicle/cockpit, three mesh LODs, eighteen procedural maps and twelve new PCM
 clips. All 38 runtime exports reproduce in an independent original-free source
-tree. They are not integrated into the game; the next step is checked C content
-loading, real SoftGL exterior/cockpit drawing and the first owned track/audio
+tree. Owned C model/PNG loaders now pass exact all-field/index/sample checks for
+three models and eighteen maps on Native, Node/WASM and fresh O1 ASan/UBSan;
+96 damaged-model and 35 malformed/unsupported-PNG variants fail cleanly per
+target. Strict LLVM19 covers 216 C/header files; 49 Native and 47 WASM CTests pass.
+They are not integrated into the game; the next step is real SoftGL
+exterior/cockpit drawing and the first owned track/audio
 provider for default standalone launch.
 
 Continue stabilizing ordinary races and connect the proven league foundation

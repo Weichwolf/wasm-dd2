@@ -330,7 +330,14 @@ native wasm patch check: ## run the named reconstruction target under /tmp
 clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
 
-.PHONY: assets-generate assets-preview assets-check
+.PHONY: assets-generate assets-preview assets-check assets-content-verify
+assets-content-verify: ## check owned C mesh/PNG loading on Native, WASM and fresh sanitizers
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_content.py
+	$(MAKE) clean-logs
+
 assets-generate: ## regenerate authored Blender, procedural maps and new PCM; no original game input
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/build_assets.py
 

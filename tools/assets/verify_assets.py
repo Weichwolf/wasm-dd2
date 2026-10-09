@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import struct
 import wave
 
@@ -25,6 +26,8 @@ def string(value):
     content, padding = value.split(b'\0', 1)
     if not content or any(padding):
         raise ValueError('Empty string or nonzero padding')
+    if any(value < 32 or value > 126 for value in content):
+        raise ValueError('Non-printable asset string')
     try:
         return content.decode('ascii')
     except UnicodeDecodeError as error:
@@ -34,7 +37,10 @@ def string(value):
 def resource_name(value):
     name = string(value)
     path = Path(name)
-    if path.is_absolute() or '..' in path.parts or '\\' in name or path.suffix != '.png':
+    components = name.split('/')
+    if (path.is_absolute() or path.suffix != '.png' or
+            any(value in ('', '.', '..') or re.fullmatch(r'[A-Za-z0-9_.-]+', value) is None
+                for value in components)):
         raise ValueError('Unsafe texture resource name')
     return name
 
@@ -77,7 +83,7 @@ def decode_model(data):
         name = string(row[0])
         if name in names or row[1] >= materials or row[2] != previous_end or row[3] < 3 or row[3] % 3:
             raise ValueError('Invalid part name/material/index partition')
-        if row[2] + row[3] > indices or row[4] > 6 or any(not math.isfinite(value) for value in row[5:]):
+        if row[2] + row[3] > indices or row[4] > 6 or any(not math.isfinite(value) or abs(value) > 65536 for value in row[5:]):
             raise ValueError('Invalid part range/role/pivot')
         previous_end = row[2] + row[3]
         names.add(name)
@@ -87,8 +93,8 @@ def decode_model(data):
     if previous_end != indices:
         raise ValueError('Unowned index suffix')
     vectors = np.frombuffer(data, dtype='<f4', count=vertices * 8, offset=cursor).reshape(vertices, 8)
-    if not np.all(np.isfinite(vectors)):
-        raise ValueError('Nonfinite vertex/normal/UV')
+    if not np.all(np.isfinite(vectors)) or np.max(np.abs(vectors)) > 65536:
+        raise ValueError('Nonfinite or out-of-bound vertex/normal/UV')
     lengths = np.linalg.norm(vectors[:, 3:6].astype(np.float64), axis=1)
     if np.max(np.abs(lengths - 1)) > .0001:
         raise ValueError('Non-unit mesh normal')

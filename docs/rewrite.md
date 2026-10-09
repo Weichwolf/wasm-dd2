@@ -32,7 +32,10 @@ three owned float-mesh LODs, six procedural 1024x1024 material sets and twelve
 new PCM clips including an original music arrangement. Independent generation
 reproduces all 38 runtime files without original input; geometry/material/PCM
 checks and direct Blender-image review pass their bounded offline scope.
-The content is not yet loaded by the game. See `assets/README.md`,
+Owned C mesh/PNG loaders now validate all three LODs and eighteen maps on Native,
+Node/WASM and fresh O1 ASan/UBSan. Every typed mesh field/index re-encodes exactly
+after releasing source bytes; every decoded PNG sample agrees with Pillow.
+The content is not yet rendered or selected by the default game. See `assets/README.md`,
 `assets/inventory.json` and active 0062 for evidence and missing integration.
 
 The `master` branch is the new implementation. `ghidra` retains the executable
@@ -60,7 +63,7 @@ original comparison tools as reference material during migration.
 | `src/ai/` | Opponent behavior and driving decisions |
 | `src/render/` | SoftGL adapter, camera, geometry, materials and visual effects |
 | `src/audio/` | Effects, CD music, mixing and playback state |
-| `src/assets/` | Typed loaders for original tracks, cars, textures and data |
+| `src/assets/` | Owned authored-content loaders and optional original reference decoding |
 | `src/platform/` | Native/browser windows, input, timing and persistence |
 | `tests/` | Functional, rendering and platform regression tests |
 
@@ -271,9 +274,12 @@ default 64 KiB is insufficient.
 ## Build and mandatory quality gates
 
 Use CMake 3.25+, Ninja, Python 3, LLVM 19 (`clang`, `clang-format`, `clang-tidy`),
-Emscripten, Node and SDL2 development headers. Debian's package names are
+Emscripten, Node, SDL2 and zlib development headers. Debian's package names are
 `cmake ninja-build python3 clang-19 clang-format-19 clang-tidy-19 emscripten
-nodejs libsdl2-dev`. The window verifier additionally needs Pillow, Xvfb,
+nodejs libsdl2-dev zlib1g-dev`. WASM obtains zlib through the SDK port in the
+private `/tmp/wasm-dd2/` cache. Authored-content verification additionally needs
+NumPy and Pillow; normal builds consume the committed exports without Blender.
+The window verifier additionally needs Pillow, Xvfb,
 xdotool, Chromium and Playwright (the repository's browser launcher supports
 Debian's system Chromium).
 

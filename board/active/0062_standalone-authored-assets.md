@@ -53,10 +53,38 @@ reproducibility-report,project-report,visual-review-report}.json.
 Completed preview renders, raw logs and duplicate generated outputs are removed
 after retaining findings and hashes. The standalone content contract stays active.
 
+Owned handwritten C11 model and PNG loaders now read all three LODs and eighteen
+material maps. The model validates printable names/resource paths, exact table
+extents/caps, material references/ranges, role/pivot/index partitions, bounded
+finite geometry/UVs, unit normals, triangle areas and winding. IEEE-bit checks
+reject NaN/infinity despite -ffast-math. Typed arrays own their data; a caller
+can release even misaligned input bytes immediately. PNG decoding owns top-first
+RGBA8 and checks CRCs, chunk ordering/extents, 8-bit noninterlaced color modes,
+all five row filters and exact zlib input/output extents. Unsupported color-key,
+indexed/depth/interlaced input fails explicitly rather than losing transparency.
+
+The component corpus compares every re-encoded typed mesh field/index and every
+Pillow RGBA sample on Native, Node/WASM and fresh O1 ASan/UBSan, with no original
+files as inputs. It checks all 21 committed model/map files, 32 damaged meshes
+per LOD, 35 malformed/unsupported PNGs and four valid PNG chunk arrangements.
+Focused CTests cover source-independent lifetime, misalignment, null handling,
+all model truncations and twenty independent PNG color/filter fixtures.
+Strict LLVM19 covers 216 C/header files; 49 Native and 47 WASM CTests pass.
+The offline authored geometry/map/PCM corpus remains valid after tightening its
+reader to the same printable-resource and finite-scalar bounds.
+
+Commands: make assets-content-verify; make assets-check.
+Receipt: /tmp/wasm-dd2/authored-content-0062/report.json.
+This is loading/ownership evidence, not authored rendering, game integration,
+audible output or 60-FPS acceptance. No default game behavior changes yet.
+
 ## Next
 
-Implement an owned, checked C loader for DD2MESH2 and material maps, with actual
-Native/WASM rendering of the full/exterior/NPC exports and cockpit view. Supply
+Use the checked C loaders for actual SoftGL Native/WASM rendering of the
+full/exterior/NPC exports and cockpit view. Upload maps with correct UV/row
+orientation, mipmaps and material ownership; implement LOD/visibility against
+the complete-frame budget. Inspect actual windows/canvases with real input and
+measure complete frame costs before claiming the four-thread/60-FPS profile. Supply
 the first authored road/contact/progress graph and Blender track/scenery, then
 define the runtime content manifest/provider and new audio-owner input.
 Connect that vertical slice to default Native/browser launch without a file
