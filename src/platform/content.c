@@ -1,6 +1,7 @@
 #include "platform/content.h"
 
 #include "assets/bytes.h"
+#include "assets/image.h"
 #include "assets/model.h"
 #include "assets/track.h"
 #include "platform/file.h"
@@ -41,6 +42,16 @@ static dd2_model *dd2_content_model(void *user, const char *resource) {
     dd2_model *model = dd2_model_create((dd2_byte_view){file.data, file.size});
     dd2_file_release(&file);
     return model;
+}
+
+dd2_image *dd2_content_image(void *user, const char *resource) {
+    dd2_file file = {0};
+    if (user == NULL || resource == NULL || !dd2_content_read(user, resource, &file)) {
+        return NULL;
+    }
+    dd2_image *image = dd2_image_create_png((dd2_byte_view){file.data, file.size});
+    dd2_file_release(&file);
+    return image;
 }
 
 static dd2_track *dd2_content_track(const void *user, unsigned number) {

@@ -26,9 +26,12 @@ re-converting visual assets. See [road-format.md](road-format.md). The shared
 track provider now owns these roads, prepared worlds and all three car LODs,
 both wheels and sky. It releases source bytes and fails on missing content.
 `make assets-tracks-verify` covers moving fields, championship restart ownership
-and static provider images. Normal application rendering, UI/audio and default
-prepared startup still need integration; the application currently selects the
-reference provider through the same boundary.
+and static provider images. Default Native/browser startup now selects this
+provider and shares world/car/wheel textures through the same presentation owner,
+with full vehicle pose, wheel suspension/steer/roll, pre-submit frustum culling
+and three distance LODs. It renders 640x360/4x MSAA without Dirinfo; an explicit
+reference mode remains available. Prepared audio, liveries, deformation, cockpit,
+sky and complete UI/content quality remain open.
 
 The first authored vehicle is the fictional Racer R1, with an exterior, four
 independent wheel assemblies and an interior containing a cage, seat/harness,
@@ -44,8 +47,9 @@ file picker. It batches opaque parts, uploads filtered albedo mip chains,
 sorts transparent parts and exposes camera/detail/wheel-pose controls. The
 browser bundle includes only committed authored models/maps and metadata.
 
-The default game still needs its original archive and sound bank at startup;
-these new exports are not integrated into Native/WASM gameplay. Checked C
+The default game uses the intermediate prepared exports without original files;
+the new Racer R1 and PCM foundation exports are still separate preview content.
+Prepared gameplay is currently silent until its new audio owner is integrated. Checked C
 mesh/PNG loaders read every committed model and material map on both targets,
 with fresh sanitizer and corruption evidence.
 Blender studio lights/shadows are preview facilities,

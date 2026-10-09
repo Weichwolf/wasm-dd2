@@ -48,7 +48,7 @@ async function classPixels(page){
 async function launch(){
   context=await chromium.launchPersistentContext(path.join(output,'chromium-profile'),{headless:true,viewport:{width:1120,height:1100},args:['--no-sandbox','--disable-dev-shm-usage']});
   const page=await context.newPage();page.on('pageerror',error=>report.errors.push(String(error)));
-  await page.goto(url);await page.waitForFunction(()=>!document.querySelector('#archive').disabled);
+  await page.goto(url + '?reference=1');await page.waitForFunction(()=>!document.querySelector('#archive').disabled);
   await page.setInputFiles('#archive',archive);
   await page.waitForFunction(()=>Module._dd2_application_current_level()===1&&!document.querySelector('#saves-open').disabled);
   return page;

@@ -15,7 +15,7 @@ async function launch() {
   context = await chromium.launchPersistentContext(path.join(directory, 'chromium-profile'), {headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(String(error)));
-  await page.goto(url);
+  await page.goto(url + '?reference=1');
   await page.waitForFunction(() => window.ready === true);
   return page;
 }

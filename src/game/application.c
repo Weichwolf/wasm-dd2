@@ -3,7 +3,6 @@
 #include "assets/archive.h"
 #include "assets/bytes.h"
 #include "assets/car_class.h"
-#include "assets/level.h"
 #include "assets/save_card.h"
 #include "assets/save_profile.h"
 #include "assets/track.h"
@@ -23,15 +22,16 @@
 #include "game/sound_events.h"
 #include "physics/damage.h"
 #include "physics/vehicle.h"
+#include "platform/content.h"
 #include "platform/file.h"
 #include "platform/save_location.h"
 #include "platform/save_store.h"
 #include "platform/window.h"
 #include "render/camera.h"
 #include "render/driving_draw.h"
-#include "render/mesh_draw.h"
 #include "render/race_draw.h"
 #include "render/renderer.h"
+#include "render/track_draw.h"
 
 #include <limits.h>
 #include <stdbool.h>
@@ -48,6 +48,9 @@
 enum {
     DD2_APP_WIDTH = 640,
     DD2_APP_HEIGHT = 480,
+    DD2_APP_PREPARED_HEIGHT = 360,
+    DD2_APP_PREPARED_SAMPLES = 4,
+    DD2_APP_CONTENT_PATH_BYTES = 4096,
     DD2_APP_RACING_LEVELS = 7,
     DD2_APP_CHAMP_WRECK_VIEW = 7,
     DD2_APP_CHAMP_STOCK_VIEW = 8
@@ -60,7 +63,9 @@ typedef struct {
     dd2_track_provider provider;
     dd2_track *track;
     dd2_renderer *renderer;
-    dd2_mesh_materials *materials;
+    dd2_track_draw *presentation;
+    char content_root[DD2_APP_CONTENT_PATH_BYTES];
+    dd2_render_options viewport;
     dd2_window *window;
     dd2_camera camera;
     dd2_driving *driving;
@@ -118,18 +123,18 @@ static void dd2_application_suspend(dd2_application *application) {
 }
 
 static bool dd2_application_fit(dd2_camera *camera, const dd2_track *track, bool car) {
-    return car ? dd2_camera_fit_mesh(camera, dd2_track_car(track))
-               : dd2_camera_fit_scene(camera, dd2_track_scene(track));
+    return dd2_track_draw_fit(track, camera, car);
 }
 
-static dd2_mesh_materials *dd2_application_materials(const dd2_track *track, dd2_camera *camera) {
-    dd2_mesh_materials *materials =
-        dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
-    if (materials == NULL || !dd2_application_fit(camera, track, false)) {
-        dd2_mesh_materials_destroy(materials);
+static dd2_track_draw *dd2_application_presentation(dd2_application *application,
+                                                    const dd2_track *track, dd2_camera *camera) {
+    dd2_track_draw *presentation =
+        dd2_track_draw_create(track, dd2_content_image, application->content_root);
+    if (presentation == NULL || !dd2_application_fit(camera, track, false)) {
+        dd2_track_draw_destroy(presentation);
         return NULL;
     }
-    return materials;
+    return presentation;
 }
 
 typedef struct {
@@ -150,17 +155,18 @@ static int dd2_application_restore_practice(dd2_application *application,
     dd2_driving *driving =
         dd2_driving_create_class(dd2_track_road(track), level, application->car_class, NULL);
     dd2_camera camera = {0};
-    dd2_mesh_materials *materials = dd2_application_materials(track, &camera);
-    if (driving == NULL || materials == NULL || !dd2_application_fit(&camera, track, choice.car) ||
+    dd2_track_draw *presentation = dd2_application_presentation(application, track, &camera);
+    if (driving == NULL || presentation == NULL ||
+        !dd2_application_fit(&camera, track, choice.car) ||
         (choice.racing && !dd2_driving_set_race(driving, true, choice.mode))) {
-        dd2_mesh_materials_destroy(materials);
+        dd2_track_draw_destroy(presentation);
         dd2_driving_destroy(driving);
         if (choice.visible_track) {
             dd2_track_destroy(track);
         }
         return 0;
     }
-    dd2_mesh_materials_destroy(application->materials);
+    dd2_track_draw_destroy(application->presentation);
     dd2_championship_session_destroy(application->championship);
     dd2_driving_destroy(application->driving);
     if (choice.visible_track) {
@@ -170,7 +176,7 @@ static int dd2_application_restore_practice(dd2_application *application,
     }
     application->championship = NULL;
     application->driving = driving;
-    application->materials = materials;
+    application->presentation = presentation;
     application->camera = camera;
     application->level = application->practice_level;
     application->drive = choice.drive;
@@ -194,16 +200,16 @@ int dd2_application_start_championship(int mode) {
         return 0;
     }
     dd2_camera camera = {0};
-    dd2_mesh_materials *materials =
-        dd2_application_materials(dd2_championship_session_track(session), &camera);
-    if (materials == NULL) {
+    dd2_track_draw *presentation =
+        dd2_application_presentation(application, dd2_championship_session_track(session), &camera);
+    if (presentation == NULL) {
         dd2_championship_session_destroy(session);
         return 0;
     }
-    dd2_mesh_materials_destroy(application->materials);
+    dd2_track_draw_destroy(application->presentation);
     dd2_championship_session_destroy(application->championship);
     application->championship = session;
-    application->materials = materials;
+    application->presentation = presentation;
     application->camera = camera;
     application->level = (int)dd2_championship_session_level(session);
     application->drive = true;
@@ -230,33 +236,33 @@ static int dd2_application_championship_transition(dd2_application *application,
     dd2_camera camera = application->camera;
     const dd2_track *track = dd2_championship_transition_track(transition);
     const bool replaces_track = track != dd2_application_track(application);
-    dd2_mesh_materials *materials = application->materials;
+    dd2_track_draw *presentation = application->presentation;
     if (replaces_track) {
-        materials = dd2_application_materials(track, &camera);
+        presentation = dd2_application_presentation(application, track, &camera);
     }
-    if (materials == NULL ||
+    if (presentation == NULL ||
         !dd2_championship_transition_current(application->championship, transition)) {
         if (replaces_track) {
-            dd2_mesh_materials_destroy(materials);
+            dd2_track_draw_destroy(presentation);
         }
         dd2_championship_transition_destroy(transition);
         return 0;
     }
     if (replaces_track) {
-        dd2_mesh_materials_destroy(application->materials);
+        dd2_track_draw_destroy(application->presentation);
     }
     /* Main-thread synchronous preparation: no owner mutation between the
      * checked transition and commit, which cannot allocate or fail here. */
     if (!dd2_championship_session_commit(application->championship, transition)) {
         if (replaces_track) {
-            dd2_mesh_materials_destroy(materials);
-            application->materials = NULL;
+            dd2_track_draw_destroy(presentation);
+            application->presentation = NULL;
         }
         dd2_championship_transition_destroy(transition);
         application->failed = true;
         return 0;
     }
-    application->materials = materials;
+    application->presentation = presentation;
     application->camera = camera;
     application->level = (int)dd2_championship_session_level(application->championship);
     application->paused = false;
@@ -321,7 +327,7 @@ static void dd2_application_destroy(dd2_application *application) {
         dd2_current_application = NULL;
     }
     dd2_save_store_destroy(application->saves);
-    dd2_mesh_materials_destroy(application->materials);
+    dd2_track_draw_destroy(application->presentation);
     dd2_game_audio_destroy(application->audio);
     dd2_renderer_destroy(application->renderer);
     dd2_championship_session_destroy(application->championship);
@@ -405,9 +411,8 @@ int dd2_application_select_level(int number) {
         return 0;
     }
     dd2_track *track = dd2_track_load(application->provider, (unsigned)number);
-    dd2_mesh_materials *materials =
-        dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
+    dd2_track_draw *presentation = dd2_application_presentation(application, track, &camera);
     dd2_driving *driving = dd2_driving_create_class(dd2_track_road(track), (unsigned)number,
                                                     application->car_class, NULL);
     const dd2_race *previous_race = dd2_driving_race(dd2_application_driving(application));
@@ -422,21 +427,21 @@ int dd2_application_select_level(int number) {
             driving = NULL;
         }
     }
-    if (driving == NULL || materials == NULL ||
+    if (driving == NULL || presentation == NULL ||
         !dd2_application_fit(&camera, track, application->car)) {
-        dd2_mesh_materials_destroy(materials);
+        dd2_track_draw_destroy(presentation);
         dd2_driving_destroy(driving);
         dd2_track_destroy(track);
         return 0;
     }
-    dd2_mesh_materials_destroy(application->materials);
+    dd2_track_draw_destroy(application->presentation);
     dd2_championship_session_destroy(application->championship);
     application->championship = NULL;
     dd2_driving_destroy(application->driving);
     dd2_track_destroy(application->track);
     application->track = track;
     application->driving = driving;
-    application->materials = materials;
+    application->presentation = presentation;
     application->camera = camera;
     application->level = number;
     application->practice_level = number;
@@ -1402,8 +1407,8 @@ static void dd2_application_input(dd2_application *application, const dd2_input 
 static bool dd2_application_draw_scene(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
     if (application->drive) {
-        return dd2_driving_draw(
-                   application->materials, dd2_application_track(application),
+        return dd2_track_draw_driving(
+                   application->presentation,
                    (dd2_driving_view){
                        .vehicle = dd2_driving_vehicle(dd2_application_driving(application)),
                        .car_class = application->car_class,
@@ -1421,28 +1426,17 @@ static bool dd2_application_draw_scene(dd2_application *application) {
                            dd2_driving_wheel_rolls(dd2_application_driving(application)) + 1,
                        .opponent_count =
                            dd2_driving_vehicle_count(dd2_application_driving(application)) - 1,
-                       .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}}) &&
+                       .viewport = application->viewport}) &&
                (application->championship == NULL ||
                 dd2_championship_draw_named(
                     dd2_championship_session_state(application->championship),
-                    application->player_name,
-                    (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}));
+                    application->player_name, application->viewport));
     }
-    dd2_camera_apply(&application->camera,
-                     (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
     const bool drawn =
-        application->car
-            ? dd2_mesh_draw_car(application->materials,
-                                dd2_track_car(dd2_application_track(application)),
-                                (dd2_track_vertex){0}, NULL,
-                                dd2_track_car_livery(dd2_application_track(application), 0,
-                                                     application->car_class))
-            : dd2_scene_draw(application->materials,
-                             dd2_track_scene(dd2_application_track(application)));
-    return drawn && (!application->car ||
-                     dd2_car_class_draw(
-                         application->car_class,
-                         (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}));
+        dd2_track_draw_inspect(application->presentation, &application->camera, application->car,
+                               application->viewport, application->car_class);
+    return drawn &&
+           (!application->car || dd2_car_class_draw(application->car_class, application->viewport));
 }
 static bool dd2_application_draw(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);
@@ -1456,10 +1450,9 @@ static bool dd2_application_draw(dd2_application *application) {
         }
         application->world_drawn = true;
     }
-    return dd2_profile_draw(
-               &application->profile_menu,
-               dd2_application_save_name(application->profile_menu.logical),
-               (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}) &&
+    return dd2_profile_draw(&application->profile_menu,
+                            dd2_application_save_name(application->profile_menu.logical),
+                            application->viewport) &&
            dd2_window_present(application->window, dd2_renderer_pixels(application->renderer));
 }
 
@@ -1578,19 +1571,37 @@ static void dd2_application_frame(void *context) {
 #endif
 }
 
-static dd2_application *dd2_application_create(const char *path) {
+static dd2_application *dd2_application_create(const char *path, bool prepared) {
     dd2_application *application = calloc(1, sizeof(*application));
     if (application == NULL) {
         return NULL;
     }
-    if (!dd2_file_read(path, &application->file) ||
-        dd2_archive_open(application->file.data, application->file.size, &application->archive) !=
-            DD2_ARCHIVE_OK) {
-        dd2_application_destroy(application);
-        return NULL;
+    if (prepared) {
+        const size_t length = strlen(path);
+        if (length == 0 || length >= sizeof(application->content_root)) {
+            dd2_application_destroy(application);
+            return NULL;
+        }
+        for (size_t index = 0; index <= length; ++index) {
+            application->content_root[index] = path[index];
+        }
+        application->provider = dd2_content_track_provider(application->content_root);
+        application->viewport = (dd2_render_options){.width = DD2_APP_WIDTH,
+                                                     .height = DD2_APP_PREPARED_HEIGHT,
+                                                     .samples = DD2_APP_PREPARED_SAMPLES,
+                                                     .output = DD2_RENDER_LINEAR_TO_SRGB};
+    } else {
+        if (!dd2_file_read(path, &application->file) ||
+            dd2_archive_open(application->file.data, application->file.size,
+                             &application->archive) != DD2_ARCHIVE_OK) {
+            dd2_application_destroy(application);
+            return NULL;
+        }
+        application->provider = dd2_track_reference_provider(application->archive);
+        application->viewport =
+            (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT};
     }
-    application->provider = dd2_track_reference_provider(application->archive);
-    const dd2_render_options viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT};
+    const dd2_render_options viewport = application->viewport;
     application->window = dd2_window_create(viewport);
     application->renderer = dd2_renderer_create(&viewport);
     if (application->window == NULL || application->renderer == NULL) {
@@ -1601,7 +1612,7 @@ static dd2_application *dd2_application_create(const char *path) {
     dd2_configuration_defaults(&application->configuration);
     dd2_application_copy_player(application, dd2_configuration_player(&application->configuration));
     dd2_application_last_save_result = DD2_SAVE_STORE_IDLE;
-    application->audio = dd2_game_audio_create(path, application->archive);
+    application->audio = prepared ? NULL : dd2_game_audio_create(path, application->archive);
     if (application->audio == NULL) {
         puts("Audio output is unavailable.");
     }
@@ -1612,16 +1623,24 @@ static dd2_application *dd2_application_create(const char *path) {
     return application;
 }
 
-int dd2_application_open(const char *path, int level) {
+static int dd2_application_open_source(const char *path, int level, bool prepared) {
     if (path == NULL || dd2_current_application != NULL || level < 1 || level > DD2_TRACK_COUNT) {
         return 0;
     }
-    dd2_application *application = dd2_application_create(path);
+    dd2_application *application = dd2_application_create(path, prepared);
     if (application == NULL || !dd2_application_select_level(level)) {
         dd2_application_destroy(application);
         return 0;
     }
     return 1;
+}
+
+int dd2_application_open(const char *path, int level) {
+    return dd2_application_open_source(path, level, false);
+}
+
+int dd2_application_open_prepared(const char *root, int level) {
+    return dd2_application_open_source(root, level, true);
 }
 
 int dd2_application_close(void) {
@@ -1649,9 +1668,8 @@ dd2_application_image dd2_application_image_view(void) {
     const dd2_application *application = dd2_current_application;
     return application == NULL
                ? (dd2_application_image){0}
-               : (dd2_application_image){
-                     .pixels = dd2_renderer_pixels(application->renderer),
-                     .viewport = {.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}};
+               : (dd2_application_image){.pixels = dd2_renderer_pixels(application->renderer),
+                                         .viewport = application->viewport};
 }
 
 int dd2_application_present(void) {
@@ -1675,11 +1693,7 @@ int dd2_application_poll_frame(void) {
     return (int)application->running;
 }
 
-int dd2_application_run(const char *path, int level) {
-    if (!dd2_application_open(path, level)) {
-        puts("The original archive or track could not be loaded.");
-        return EXIT_FAILURE;
-    }
+static int dd2_application_run_loop(void) {
     dd2_application *application = dd2_current_application;
 #ifdef __EMSCRIPTEN__
     application->main_loop = true;
@@ -1694,4 +1708,20 @@ int dd2_application_run(const char *path, int level) {
     dd2_application_close();
     return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 #endif
+}
+
+int dd2_application_run(const char *path, int level) {
+    if (!dd2_application_open(path, level)) {
+        puts("The reference archive or track could not be loaded.");
+        return EXIT_FAILURE;
+    }
+    return dd2_application_run_loop();
+}
+
+int dd2_application_run_prepared(const char *root, int level) {
+    if (!dd2_application_open_prepared(root, level)) {
+        puts("The prepared game content could not be loaded.");
+        return EXIT_FAILURE;
+    }
+    return dd2_application_run_loop();
 }

@@ -456,7 +456,7 @@ async function main() {
   page.on('pageerror',error=>errors.push(String(error)));
   page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
   try {
-    await page.goto(url);
+    await page.goto(url + '?reference=1');
     await page.waitForFunction(()=>!document.querySelector('#archive').disabled,null,{timeout:60000});
     report.cross_origin_isolated=await page.evaluate(()=>crossOriginIsolated);
     if(!report.cross_origin_isolated)throw new Error('Browser workers are not isolated');

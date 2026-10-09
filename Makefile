@@ -153,7 +153,7 @@ rewrite-accidents-verify: ## verify source-inspired accident rules in full field
 rewrite-play: rewrite-native ## open the interactive track/car viewer with provisioned original assets
 	/tmp/wasm-dd2/rewrite-native/dd2_app "$(GAMEDIR)/Dirinfo" "$(LEVEL)"
 
-rewrite-web: rewrite-wasm ## serve the browser track/car viewer on localhost:8080; select Dirinfo locally
+rewrite-web: rewrite-wasm ## serve the prepared game on localhost:8080; optional reference mode uses ?reference=1
 	python3 $(ROOT)/tools/rewrite/serve.py
 
 rewrite-ground-verify: ## verify source body/road contacts and free driving on all targets

@@ -17,7 +17,7 @@ async function launch() {
 async function openPage() {
   const page=await context.newPage();
   page.on('pageerror',error=>report.errors.push(String(error)));
-  await page.goto(url);
+  await page.goto(url + '?reference=1');
   await page.waitForFunction(()=>!document.querySelector('#archive').disabled);
   await page.setInputFiles('#archive',archive);
   await page.waitForFunction(()=>Module._dd2_application_current_level()===1 && !document.querySelector('#saves-open').disabled);

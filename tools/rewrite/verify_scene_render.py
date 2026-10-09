@@ -68,7 +68,7 @@ def main():
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
-    units = [str(ROOT / f'src/assets/{name}.c') for name in ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'road', 'save_profile')]
+    units = [str(ROOT / f'src/assets/{name}.c') for name in ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'model', 'world', 'road', 'save_profile')]
     units.append(str(ROOT / 'src/physics/damage.c'))
     units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'color', 'mesh_draw', 'camera', 'damage_draw', 'score_draw', 'race_draw'))
     units.extend(str(ROOT / f'src/game/{name}.c') for name in ('race', 'course', 'drivers', 'league', 'championship', 'configuration', 'profile_menu'))

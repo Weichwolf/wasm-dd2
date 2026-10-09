@@ -2,6 +2,7 @@
 
 #include "assets/car.h"
 #include "assets/level.h"
+#include "assets/road.h"
 #include "assets/track.h"
 #include "game/race.h"
 #include "physics/vehicle.h"
@@ -31,7 +32,11 @@ static const float dd2_draw_wheel_height = -130;
 static const float dd2_draw_wheel_scale = 60.0F / 67.0F;
 static const double dd2_chase_axis_tolerance = 1e-6;
 
-static void dd2_driving_camera(dd2_driving_view view) {
+dd2_vehicle_vector dd2_driving_camera_apply(dd2_driving_view view, double units_per_meter) {
+    if (view.vehicle == NULL || view.viewport.width <= 0 || view.viewport.height <= 0 ||
+        (units_per_meter != 1 && units_per_meter != (double)DD2_ROAD_UNITS_PER_METER)) {
+        return (dd2_vehicle_vector){0};
+    }
     dd2_vehicle_vector forward =
         dd2_vehicle_rotate(view.vehicle->rotation, (dd2_vehicle_vector){.z = 1});
     double length = hypot(forward.x, forward.z);
@@ -67,11 +72,14 @@ static void dd2_driving_camera(dd2_driving_view view) {
         (float)up_axis.z,
         (float)-ray.z,
         0,
-        (float)(-(right.x * eye.x) - (right.z * eye.z)),
-        (float)(-(up_axis.x * eye.x) - (up_axis.y * eye.y) - (up_axis.z * eye.z)),
-        (float)((ray.x * eye.x) + (ray.y * eye.y) + (ray.z * eye.z)),
+        (float)((-(right.x * eye.x) - (right.z * eye.z)) / units_per_meter),
+        (float)((-(up_axis.x * eye.x) - (up_axis.y * eye.y) - (up_axis.z * eye.z)) /
+                units_per_meter),
+        (float)(((ray.x * eye.x) + (ray.y * eye.y) + (ray.z * eye.z)) / units_per_meter),
         1};
-    const double top = dd2_chase_near * dd2_chase_half_fov_tangent;
+    const double near_plane = dd2_chase_near / units_per_meter;
+    const double far_plane = dd2_chase_far / units_per_meter;
+    const double top = near_plane * dd2_chase_half_fov_tangent;
     const double aspect = (double)view.viewport.width / (double)view.viewport.height;
     glViewport(0, 0, view.viewport.width, view.viewport.height);
     glClearColor(0, 0, 0, 1);
@@ -81,9 +89,11 @@ static void dd2_driving_camera(dd2_driving_view view) {
     glDisable(GL_CULL_FACE);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-top * aspect, top * aspect, -top, top, dd2_chase_near, dd2_chase_far);
+    glFrustum(-top * aspect, top * aspect, -top, top, near_plane, far_plane);
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(matrix);
+    return (dd2_vehicle_vector){eye.x / units_per_meter, eye.y / units_per_meter,
+                                eye.z / units_per_meter};
 }
 
 static void dd2_driving_pose(const dd2_vehicle *vehicle) {
@@ -149,7 +159,7 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
         (view.opponent_count != 0 && (view.opponents == NULL || view.opponent_rolls == NULL))) {
         return false;
     }
-    dd2_driving_camera(view);
+    dd2_driving_camera_apply(view, 1);
     bool drawn = dd2_scene_draw(materials, dd2_track_scene(track)) &&
                  dd2_driving_car(materials, track, view);
     for (unsigned index = 0; index < view.opponent_count && drawn; ++index) {
@@ -162,10 +172,14 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
                                                    .wheel_roll = view.opponent_rolls[index],
                                                    .viewport = view.viewport});
     }
-    if (drawn && view.race != NULL && view.race->phase == DD2_RACE_RESULTS) {
+    return drawn && dd2_driving_overlay(view);
+}
+
+bool dd2_driving_overlay(dd2_driving_view view) {
+    if (view.race != NULL && view.race->phase == DD2_RACE_RESULTS) {
         return dd2_race_draw(view.race, view.viewport);
     }
-    return drawn && (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
+    return (view.damage == NULL || dd2_damage_draw(view.damage, view.viewport)) &&
            (view.score == NULL ||
             (view.race != NULL && view.race->rules.mode == DD2_RACE_TOTAL_DESTRUCTION) ||
             dd2_score_draw(view.score, view.viewport)) &&

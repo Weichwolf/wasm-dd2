@@ -6,7 +6,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 BUILD = Path('/tmp/wasm-dd2/rewrite-wasm')
-FILES = {'/', '/index.html', '/viewer.js', '/dd2_app.js', '/dd2_app.wasm', '/dd2_app.worker.js'}
+FILES = {'/', '/index.html', '/viewer.js', '/dd2_app.js', '/dd2_app.wasm', '/dd2_app.worker.js', '/dd2_app.data'}
 FILES.update({'/content.html', '/content.js', '/dd2_content_viewer.js',
               '/dd2_content_viewer.wasm', '/dd2_content_viewer.worker.js', '/dd2_content_viewer.data'})
 

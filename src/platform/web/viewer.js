@@ -2,6 +2,15 @@
 const canvas = document.getElementById('canvas');
 const status = document.getElementById('status');
 const archive = document.getElementById('archive');
+const referenceMode = new URLSearchParams(location.search).get('reference') === '1';
+// Establish the selected viewport before SDL's browser resize hooks initialize.
+canvas.width = 640;
+canvas.height = referenceMode ? 480 : 360;
+canvas.style.aspectRatio = referenceMode ? '4 / 3' : '16 / 9';
+archive.closest('label').hidden = !referenceMode;
+// Legacy CDDA controls belong to the optional comparison application only.
+document.getElementById('music-file').closest('.controls').hidden = !referenceMode;
+document.getElementById('music-help').hidden = !referenceMode;
 const level = document.getElementById('level');
 const view = document.getElementById('view');
 const carClass = document.getElementById('car-class');
@@ -61,10 +70,34 @@ var Module = {
       status.textContent = 'Open this page through the provided local server.';
       return;
     }
-    archive.disabled = false;
-    status.textContent = 'Select the original Dirinfo file.';
+    if (referenceMode) {
+      archive.disabled = false;
+      status.textContent = 'Select the original Dirinfo file.';
+      return;
+    }
+    try {
+      Module.callMain([]);
+      reflectOpen();
+    } catch (error) {
+      console.error(error);
+      status.textContent = 'The game content could not be opened.';
+    }
   }
 };
+
+function reflectOpen() {
+  loaded = Module._dd2_application_current_level() !== 0;
+  for (const control of [level, view, carClass, reset, pauseButton, finishButton]) control.disabled = !loaded;
+  if (!loaded) return;
+  ++applicationGeneration;
+  musicGain.value = '256';
+  effectsGain.value = '256';
+  level.value = String(Module._dd2_application_current_level());
+  view.value = '0';
+  canvas.style.aspectRatio = `${canvas.width}/${canvas.height}`;
+  status.textContent = 'Track view ready. Click the image to control the camera.';
+  canvas.focus();
+}
 
 archive.addEventListener('change', async () => {
   const file = archive.files[0];
@@ -82,17 +115,7 @@ archive.addEventListener('change', async () => {
     Module.FS.writeFile('/Dirinfo', new Uint8Array(await file.arrayBuffer()));
     try { Module.callMain(['/Dirinfo']); }
     finally { Module.FS.unlink('/Dirinfo'); }
-    loaded = Module._dd2_application_current_level() !== 0;
-    for (const control of [level, view, carClass, reset, pauseButton, finishButton]) control.disabled = !loaded;
-    if (loaded) {
-      ++applicationGeneration;
-      musicGain.value = '256';
-      effectsGain.value = '256';
-      level.value = String(Module._dd2_application_current_level());
-      view.value = '0';
-      status.textContent = 'Track view ready. Click the image to control the camera.';
-      canvas.focus();
-    }
+    reflectOpen();
   } catch (error) {
     console.error(error);
     status.textContent = 'The original file could not be opened.';
@@ -247,7 +270,7 @@ function reflectSelection() {
       for (const control of [level, view, reset, pauseButton, finishButton, continueButton]) control.disabled = true;
       for (const control of [musicFile, musicPlay, musicGain, effectsGain]) control.disabled = true;
       musicStatus.textContent = 'Select track02.cdda to track19.cdda from the Redbook folder.';
-      status.textContent = 'View closed. Dirinfo can be opened again.';
+      status.textContent = referenceMode ? 'View closed. Dirinfo can be opened again.' : 'View closed. Reload the page to play again.';
     }
   }
   reflectSaves();

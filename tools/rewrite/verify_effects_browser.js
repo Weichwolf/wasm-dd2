@@ -93,7 +93,7 @@ async function verifyCaptured(page, bank) {
       window.AudioContext = class extends Base { constructor(options) { super({...options, sampleRate: rate}); } };
     }, Number(forcedRate));
     page.on('pageerror', error => errors.push(String(error)));
-    await page.goto(url);
+    await page.goto(url + '?reference=1');
     await page.waitForFunction(() => !document.querySelector('#archive').disabled);
     await page.setInputFiles('#archive', archive);
     await page.waitForFunction(() => Module._dd2_application_current_level() === 1);

@@ -20,6 +20,7 @@ struct dd2_world_draw {
     const dd2_world *world;
     dd2_model_texture_cache *textures;
     dd2_world_cached_model *models;
+    bool owns_textures;
 };
 
 void dd2_world_draw_destroy(dd2_world_draw *draw) {
@@ -28,7 +29,9 @@ void dd2_world_draw_destroy(dd2_world_draw *draw) {
              draw->models != NULL && index < dd2_world_resource_count(draw->world); ++index) {
             dd2_model_draw_destroy(draw->models[index].handle);
         }
-        dd2_model_texture_cache_destroy(draw->textures);
+        if (draw->owns_textures) {
+            dd2_model_texture_cache_destroy(draw->textures);
+        }
         free(draw->models);
         free(draw);
     }
@@ -36,7 +39,19 @@ void dd2_world_draw_destroy(dd2_world_draw *draw) {
 
 dd2_world_draw *dd2_world_draw_create(const dd2_world *world, dd2_model_image_loader loader,
                                       void *user) {
-    if (world == NULL) {
+    dd2_model_texture_cache *textures = dd2_model_texture_cache_create(loader, user);
+    dd2_world_draw *draw = dd2_world_draw_create_shared(world, textures);
+    if (draw == NULL) {
+        dd2_model_texture_cache_destroy(textures);
+    } else {
+        draw->owns_textures = true;
+    }
+    return draw;
+}
+
+dd2_world_draw *dd2_world_draw_create_shared(const dd2_world *world,
+                                             dd2_model_texture_cache *textures) {
+    if (world == NULL || textures == NULL) {
         return NULL;
     }
     dd2_world_draw *draw = calloc(1, sizeof(*draw));
@@ -44,7 +59,7 @@ dd2_world_draw *dd2_world_draw_create(const dd2_world *world, dd2_model_image_lo
         return NULL;
     }
     draw->world = world;
-    draw->textures = dd2_model_texture_cache_create(loader, user);
+    draw->textures = textures;
     const size_t count = dd2_world_resource_count(world);
     draw->models = count != 0 ? calloc(count, sizeof(*draw->models)) : NULL;
     if (draw->textures == NULL || (count != 0 && draw->models == NULL)) {

@@ -23,6 +23,10 @@ typedef struct {
  * or submitting geometry. The GL context and world must outlive the cache. */
 dd2_world_draw *dd2_world_draw_create(const dd2_world *world, dd2_model_image_loader loader,
                                       void *user);
+/* Borrows an existing context-local texture cache shared with vehicle draws.
+ * The cache, world and GL context must outlive this owner. */
+dd2_world_draw *dd2_world_draw_create_shared(const dd2_world *world,
+                                             dd2_model_texture_cache *textures);
 void dd2_world_draw_destroy(dd2_world_draw *draw);
 bool dd2_world_draw_frame(dd2_world_draw *draw, dd2_model_draw_options options,
                           dd2_world_draw_stats *stats);

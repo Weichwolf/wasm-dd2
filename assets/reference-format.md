@@ -9,8 +9,9 @@ materials. They are not the final authored-content acceptance for 0062.
 JSON scene placements, compact `DD2SCN1` scenes and an inventory. Original archives, raw level sections,
 mesh command streams, palettes and sound banks are not shipped in this set.
 Original DD2 data is an optional offline conversion input. Ordinary builds and
-runtime loading must not invoke the converter. The default game still needs its
-provider migration before it can start without original files.
+runtime loading must not invoke the converter. The default Native/browser game
+now selects the prepared provider without original input; complete audio/content
+quality remains open.
 
 ## Offline conversion
 
@@ -43,9 +44,11 @@ existing filtered, mipmapped owned renderer, but original lighting and exact
 gradient pixels are not claimed. Content hashes deduplicate exported resources.
 
 The initial conversion covers levels `1` through `B`: seven circuits and four
-arenas, all static objects and dynamic-template sections 5 through 21. Menu/font,
-road/contact/grid/AI metadata, all livery remappings, audio, animation and complete
-gameplay integration remain separate migration work. Source sprite geometry is
+arenas, all static objects and dynamic-template sections 5 through 21. Owned
+roads/contact/grid/AI inputs live separately under `runtime/roads/`; vehicle pose
+and wheel animation now use the prepared templates. Menu/font replacement, all
+livery remappings, audio, cockpit/sky policy and complete gameplay quality remain
+separate migration work. Source sprite geometry is
 stored as static triangles; its camera-facing policy remains pending. The
 120 static and 440 template zero-area triangles are retained as explicit
 omission records, including six entirely zero-area static objects. They do not
@@ -65,8 +68,8 @@ are migrated. Referenced paths resolve under the supplied runtime root.
 subdivision/scaling policy, full resource hashes, independently decoded model
 tables, per-level counts and omissions. Provenance does not require the source
 archive at runtime. Scene metadata is currently a prepared provider input;
-the owned scene loader and renderer now consume the compiled files. Default
-gameplay provider integration still needs wiring.
+the owned scene loader and renderer consume the compiled files during default
+gameplay. An explicitly selected reference mode remains optional.
 
 ## Owned runtime scene container
 
@@ -132,3 +135,51 @@ filtered textures and display encoding. The directly inspected circuit-1 car
 body has plausible silhouette and texture orientation; Native/WASM differ at
 eleven pixels by at most two channel values. Wheels remain separate templates.
 This is a static model check, not original-frame, full-game or 60-FPS acceptance.
+
+## Prepared game presentation
+
+Default `dd2_app` reads `runtime/reference/` plus `runtime/roads/`, draws prepared
+world/car/wheel models and advances the same typed gameplay owners. Native
+`--assets directory [1..9,A,B]` selects a relocated owned-content root; an
+explicit archive filename selects optional reference comparison. The browser
+packages prepared resources and starts without a file picker; `?reference=1`
+selects the optional original-input comparison UI. Normal builds never convert
+or subdivide resources. The application owns its root path, rejects missing
+content transactionally and preserves each candidate championship track until
+its presentation has been prepared.
+
+Prepared rendering uses meters, with simulation poses/camera explicitly scaled
+from the road's 160-unit/meter convention. World/car/wheel instances share texture
+uploads and test their posed bounds before submission. Player exterior stays
+close; NPC body LOD thresholds are 30 and 90 meters. Wheels retain suspension,
+steering and roll. The baseline still needs owned livery remaps, visual damage,
+sky/billboard policy, a complete player cockpit and new audio integration.
+Prepared launch is currently silent; optional reference audio is separate.
+
+Run the strict Native/WASM gates first, then use a fresh instrumented build:
+
+```sh
+make clean-logs
+make rewrite-check rewrite-wasm
+ctest --preset rewrite-wasm
+cmake -S . -B /tmp/wasm-dd2/prepared-game-sanitized -G Ninja \
+  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_BUILD_TYPE=Debug \
+  -DDD2_ENABLE_CLANG_TIDY=OFF \
+  '-DCMAKE_C_FLAGS=-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake --build /tmp/wasm-dd2/prepared-game-sanitized -j4 --target \
+  dd2_track_draw_test dd2_world_draw_test dd2_prepared_game_preview \
+  dd2_prepared_application_test dd2_app
+PYTHONDONTWRITEBYTECODE=1 python3 tools/assets/verify_game.py \
+  --sanitized-build /tmp/wasm-dd2/prepared-game-sanitized
+make clean-logs
+```
+
+This supplemental build instruments reached SoftGL and rewrite units; strict
+analysis remains the separate Native gate. The verifier checks all eleven
+prepared worlds/car/driving prefixes on Native/Node/WASM/sanitized, shared
+cache and application lifetime, Memcheck, real Native windows and the browser
+with trusted controls. It records state/geometry separately from image tolerance.
+The browser comparison uses a 640x360 presentation canvas; wider CSS sizes scale
+presentation. Review the actual moving/menu captures and remove completed raw
+output after retaining the report. These short checks do not accept complete
+campaigns, final remodeled assets/audio or the full-frame 60-FPS target.

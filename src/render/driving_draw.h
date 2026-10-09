@@ -32,5 +32,9 @@ typedef struct {
     dd2_render_options viewport;
 } dd2_driving_view;
 bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track, dd2_driving_view view);
+/* Shared chase projection; returns eye in the selected render coordinate units.
+ * One preserves the reference fixed-unit frame, 160 selects owned meters. */
+dd2_vehicle_vector dd2_driving_camera_apply(dd2_driving_view view, double units_per_meter);
+bool dd2_driving_overlay(dd2_driving_view view);
 
 #endif

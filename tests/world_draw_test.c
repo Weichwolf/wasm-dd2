@@ -73,6 +73,26 @@ static bool dd2_world_draw_test_frames(dd2_world_draw *draw, dd2_world_draw_test
            glGetError() == GL_NO_ERROR;
 }
 
+static bool dd2_world_draw_test_shared(const dd2_world *world) {
+    dd2_world_draw_test_source source = {0};
+    dd2_model_texture_cache *cache =
+        dd2_model_texture_cache_create(dd2_world_draw_test_image, &source);
+    dd2_world_draw *first = dd2_world_draw_create_shared(world, cache);
+    dd2_world_draw *second = dd2_world_draw_create_shared(world, cache);
+    dd2_world_draw_test_camera(0);
+    dd2_world_draw_stats stats = {0};
+    bool passed = first != NULL && second != NULL &&
+                  dd2_world_draw_frame(first, (dd2_model_draw_options){0}, &stats) &&
+                  source.calls == 1;
+    dd2_world_draw_destroy(first);
+    passed = passed && dd2_world_draw_frame(second, (dd2_model_draw_options){0}, &stats) &&
+             source.calls == 1 && dd2_model_texture_cache_count(cache) == 1;
+    dd2_world_draw_destroy(second);
+    passed = passed && dd2_model_texture_cache_count(cache) == 1;
+    dd2_model_texture_cache_destroy(cache);
+    return passed;
+}
+
 int main(void) {
     uint8_t bytes[DD2_WORLD_TEST_BYTES] = {0};
     dd2_world_test_source(bytes);
@@ -84,8 +104,9 @@ int main(void) {
     dd2_world_draw_test_source source = {.fail_hidden = true};
     dd2_world_draw *draw =
         renderer != NULL ? dd2_world_draw_create(world, dd2_world_draw_test_image, &source) : NULL;
-    const bool passed =
-        draw != NULL && source.calls == 0 && dd2_world_draw_test_frames(draw, &source);
+    const bool passed = draw != NULL && source.calls == 0 &&
+                        dd2_world_draw_test_frames(draw, &source) &&
+                        dd2_world_draw_test_shared(world);
     dd2_world_draw_destroy(draw);
     dd2_world_destroy(world);
     dd2_renderer_destroy(renderer);

@@ -26,10 +26,11 @@ and measured performance. Functional rules remain mandatory; original pixel,
 PCM and asset-byte identity are reference diagnostics rather than product
 acceptance requirements.
 
-This is the expanded target, not implemented standalone acceptance. The current
-application still requires original Dirinfo and sound-bank/CDDA content; the
-reference-dependent component evidence below describes that current migration
-state. Work item 0062 owns the asset inventory, Blender/procedural/audio pipeline
+This is the expanded target, not complete standalone acceptance. The default
+application now selects committed prepared roads/worlds/meshes/PNGs without
+Dirinfo or original sound-bank/CDDA startup inputs. Its prepared audio owner,
+liveries, body deformation, cockpit and sky rendering still need migration. The
+reference-dependent component evidence below describes optional comparison mode. Work item 0062 owns the asset inventory, Blender/procedural/audio pipeline
 and removal of all mandatory original runtime inputs. Preserve existing useful
 functional comparisons as optional reference checks while making the default
 build, launch and acceptance use the replacement content.
@@ -60,9 +61,9 @@ uploads and culls invisible world AABBs before geometry submission. Prepared
 alpha masks use depth-writing cutouts. All eleven scene field exports and 21
 malformed variants pass on Native/WASM/sanitized; 66 full/crop images and 44
 cross-target comparisons pass. Direct circuit/arena review finds plausible
-layout but limited floor contrast and incomplete terrain/sky. Default gameplay
-and browser-world integration, road/AI/grid/livery/UI/audio inputs and complete
-four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
+layout but limited floor contrast and incomplete terrain/sky. Prepared worlds
+and roads now reach default gameplay/browser presentation; liveries, cockpit,
+sky, new UI/audio content and complete four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
 
 The owned model renderer now selects only cockpit/steering roles for the player
 interior view and tests each material/role batch's indexed bounds against the
@@ -81,8 +82,8 @@ Prepared gameplay roads are now separate owned `DD2ROAD1` containers under
 fixed convention. The new factory copies validated vertices, lane cells and
 indexed next/previous/branch topology without opening original files. Existing
 surface, grid, barrier, lap/course and AI consumers can use this owner directly;
-visual assets are not regenerated. The normal application still needs its
-prepared track/provider, render/UI and audio migration. See `assets/road-format.md`.
+visual assets are not regenerated. The normal application now selects this
+prepared track/provider and renderer; complete UI/audio migration remains open. See `assets/road-format.md`.
 
 The shared track owner now accepts prepared scenes/models plus owned roads, with
 explicit close/medium/distant body, primary/secondary wheel and sky templates.
@@ -90,9 +91,25 @@ It releases input bytes and exposes the immutable world/road without legacy
 archive views. A directory provider reads only committed containers; missing
 content fails without a source fallback. The application and championship owner
 now load through the same provider boundary, including candidate rounds/restarts.
-The normal application still selects the optional reference provider because its
-renderer/material, UI and audio migration is pending. Prepared factory/field and
-static scene evidence must not be described as default standalone launch.
+The normal application now uses that prepared provider and a shared track draw
+owner. World/vehicle geometry uses meters, while simulation/roads retain the
+explicit 160-unit/meter convention. Close/medium/distant bodies and suspended,
+steered/rolling wheels share the world's texture cache; full posed AABBs are
+culled before lazy model creation/submission. Opponent body LOD uses 30/90-meter
+thresholds, with the player's exterior kept close. Prepared launch renders
+640x360/4x MSAA with filtered textures and sRGB display encoding. Audio, livery
+remaps, damage deformation, complete cockpits and sky rendering remain pending;
+this is a launch/presentation migration, not complete game/quality acceptance.
+
+From the repository root, `make rewrite-native` builds the application; run
+`/tmp/wasm-dd2/rewrite-native/dd2_app` to use committed content, or
+`dd2_app --assets /absolute/runtime/directory [1..9,A,B]` from elsewhere.
+`make rewrite-web` packages the same prepared content and starts it without a
+file picker. An explicit Native `dd2_app path/Dirinfo [1..9,A,B]`, or browser
+`?reference=1`, selects the optional reference comparison application. Missing
+prepared files fail transactionally; they never open original files or run
+conversion/subdivision. The prepared content path is copied into application
+ownership, including championship continuation/restart lifetimes.
 
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
@@ -842,10 +859,9 @@ Count the calling thread as part of the four threads. Use LOD, cockpit/exterior
 visibility and material sharing to keep detailed authored assets within the
 visible scene budget.
 
-The current reference-backed viewer still renders 640x480 single-sample frames;
-this dependency upgrade does not change its framebuffer or HUD layout. Enable
-the target profile in the authored renderer alongside aspect-correct cameras,
-HUD/menu layout and explicit Native thread selection. Measure actual production
+The explicitly selected reference viewer retains 640x480 single-sample frames.
+Default prepared launch now uses 640x360/4x MSAA; complete HUD/menu design,
+authored-content migration and explicit Native thread selection remain pending. Measure actual production
 Native/browser gameplay with simulation, drawing, MSAA resolve, readback and
 presentation included. Record median and tail frame times, scene/material counts,
 CPU/browser identity and visual review evidence before accepting 60 FPS.

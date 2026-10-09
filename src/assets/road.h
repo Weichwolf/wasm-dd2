@@ -11,6 +11,7 @@ enum { DD2_ROAD_CORNERS = 4 };
 
 typedef enum { DD2_ROAD_RACING, DD2_ROAD_ARENA } dd2_road_layout;
 typedef struct dd2_road dd2_road;
+enum { DD2_ROAD_UNITS_PER_METER = 160 };
 
 typedef struct {
     uint32_t source_offset;

@@ -49,7 +49,7 @@ function(dd2_strict_target target)
 endfunction()
 
 add_library(dd2_render STATIC src/render/renderer.c src/render/mesh_draw.c src/render/camera.c src/render/driving_draw.c src/render/damage_draw.c src/render/score_draw.c src/render/race_draw.c)
-target_sources(dd2_render PRIVATE src/render/model_draw.c src/render/model_view.c src/render/color.c src/render/frustum.c src/render/world_draw.c)
+target_sources(dd2_render PRIVATE src/render/track_draw.c src/render/model_draw.c src/render/model_view.c src/render/color.c src/render/frustum.c src/render/world_draw.c)
 target_include_directories(dd2_render PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(dd2_render PRIVATE softgl dd2_assets dd2_physics dd2_game)
 dd2_strict_target(dd2_render)
@@ -119,6 +119,8 @@ dd2_strict_target(dd2_app)
 if(EMSCRIPTEN)
     target_link_options(dd2_app PRIVATE -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1
         -sINITIAL_MEMORY=67108864 -sFORCE_FILESYSTEM=1 -sINVOKE_RUN=0
+        "--preload-file=${CMAKE_CURRENT_SOURCE_DIR}/assets/runtime/reference@/content/reference"
+        "--preload-file=${CMAKE_CURRENT_SOURCE_DIR}/assets/runtime/roads@/content/roads"
         "-sEXPORTED_RUNTIME_METHODS=['FS','callMain','ccall','UTF8ToString']"
         "-sEXPORTED_FUNCTIONS=['_main','_dd2_application_present','_dd2_application_close','_dd2_application_start_championship','_dd2_application_continue_championship','_dd2_application_restart_championship','_dd2_application_exit_championship','_dd2_application_championship_phase','_dd2_application_championship_points','_dd2_application_championship_division','_dd2_application_championship_round','_dd2_application_championship_season','_dd2_application_select_level','_dd2_application_select_car','_dd2_application_current_car','_dd2_application_car_rating','_dd2_application_show_car','_dd2_application_current_level','_dd2_application_current_view','_dd2_application_reset_camera','_dd2_application_release_input','_dd2_application_resume_input','_dd2_application_set_driving','_dd2_application_set_paused','_dd2_application_is_paused','_dd2_application_collision_count','_dd2_application_pair_collision_count','_dd2_application_vehicle_count','_dd2_application_engine_health','_dd2_application_region_damage','_dd2_application_accident_points','_dd2_application_destructions','_dd2_application_accident_windows','_dd2_application_current_lap','_dd2_application_required_laps','_dd2_application_completed_laps','_dd2_application_lap_steps','_dd2_application_last_lap_steps','_dd2_application_best_lap_steps','_dd2_application_laps_finished','_dd2_application_start_race','_dd2_application_withdraw_race','_dd2_application_race_phase','_dd2_application_race_steps','_dd2_application_race_place','_dd2_application_race_points','_dd2_application_survival_steps','_dd2_application_race_alive','_dd2_application_load_music','_dd2_application_prepare_music','_dd2_application_music_phase','_dd2_application_music_track','_dd2_application_music_frame','_dd2_application_music_fraction','_dd2_application_music_rate','_dd2_application_set_music_playing','_dd2_application_set_music_gain','_dd2_application_set_effects_gain','_dd2_application_effect_voice','_dd2_application_sound_cues','_dd2_application_music_gain','_dd2_application_effects_gain','_dd2_application_saves_open','_dd2_application_saves_poll','_dd2_application_saves_phase','_dd2_application_saves_count','_dd2_application_save_name','_dd2_application_save_kind','_dd2_application_save_preferences','_dd2_application_load_preferences','_dd2_application_delete_save','_dd2_application_reload_saves','_dd2_application_player_name','_dd2_application_driver_name','_dd2_application_set_player_name','_dd2_application_save_profile','_dd2_application_load_profile','_dd2_application_profile_phase','_dd2_application_profile_draft','_dd2_application_profile_slot']")
     set_target_properties(dd2_app PROPERTIES SUFFIX ".js")
@@ -196,6 +198,34 @@ if(BUILD_TESTING)
         target_link_options(dd2_content_preview PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node
             -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
         set_target_properties(dd2_content_preview PROPERTIES SUFFIX ".js")
+    endif()
+    add_executable(dd2_track_draw_test tests/track_draw_test.c)
+    target_link_libraries(dd2_track_draw_test PRIVATE dd2_render dd2_assets dd2_physics softgl)
+    dd2_strict_target(dd2_track_draw_test)
+    if(EMSCRIPTEN)
+        target_link_options(dd2_track_draw_test PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node)
+        set_target_properties(dd2_track_draw_test PROPERTIES SUFFIX ".js")
+        add_test(NAME rewrite_track_draw COMMAND "${DD2_NODE}" "$<TARGET_FILE:dd2_track_draw_test>")
+    else()
+        add_test(NAME rewrite_track_draw COMMAND dd2_track_draw_test)
+    endif()
+    set_tests_properties(rewrite_track_draw PROPERTIES TIMEOUT 30)
+    if(NOT EMSCRIPTEN)
+        add_executable(dd2_prepared_application_test tests/prepared_application_test.c)
+        target_link_libraries(dd2_prepared_application_test PRIVATE dd2_application)
+        dd2_strict_target(dd2_prepared_application_test)
+        add_test(NAME rewrite_prepared_application COMMAND dd2_prepared_application_test
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets/runtime")
+        set_tests_properties(rewrite_prepared_application PROPERTIES TIMEOUT 120
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+    endif()
+    add_executable(dd2_prepared_game_preview tests/prepared_game_preview.c)
+    target_link_libraries(dd2_prepared_game_preview PRIVATE dd2_render dd2_assets dd2_platform dd2_game softgl)
+    dd2_strict_target(dd2_prepared_game_preview)
+    if(EMSCRIPTEN)
+        target_link_options(dd2_prepared_game_preview PRIVATE -sEXIT_RUNTIME=1 -sENVIRONMENT=node
+            -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
+        set_target_properties(dd2_prepared_game_preview PROPERTIES SUFFIX ".js")
     endif()
     add_executable(dd2_prepared_preview tests/prepared_preview.c)
     target_link_libraries(dd2_prepared_preview PRIVATE dd2_render dd2_assets dd2_platform softgl)

@@ -10,18 +10,17 @@ baseline under `assets/runtime/reference/`: all eleven playable levels, static
 placements and dynamic templates exported once to owned meshes/PNGs with offline
 16x subdivision. All 6,141 meshes and 693 PNGs pass complete Native/WASM/sanitized
 loading without original input. A static SoftGL car-body view is inspected at
-640x360/4x MSAA. This is intermediate content; default game startup, scene
-provider integration, livery/animation/road metadata and audio migration
-remain open under 0062/0010. The owned scene loader and shared world renderer now
+640x360/4x MSAA. This is intermediate content; complete livery/cockpit/sky/deformation, audio
+and Blender content migration remain open under 0062/0010. Default prepared
+startup, scene/road integration and wheel animation now have the scoped
+evidence below. The owned scene loader and shared world renderer now
 load all eleven prepared scenes without original files, validate actual model
 bounds, cull before geometry submission and reuse texture uploads. Sixty-six
 static Native/WASM/sanitized scenes, 44 cross-target image checks, loader rollback,
 cutout depth pixels and the existing actual Native/browser preview corpus pass.
 The circuit-1 crop rejects 301/767 objects and now submits 122,224 triangles
 after additional posed batch culling, with all 66 previous world images retained.
-Default
-gameplay/browser world integration and complete-frame 60-FPS proof still remain
-open. The shared model renderer now filters cockpit/steering roles and culls
+Complete content integration and complete-frame 60-FPS proof remain open. The shared model renderer now filters cockpit/steering roles and culls
 posed batch bounds before submission; the prototype cockpit submits 7,592 of
 31,716 triangles in nine of 41 batches. Actual Native/browser review exposes
 missing inner door/window surrounds, so complete cockpit assets remain open.
@@ -34,19 +33,32 @@ occupy 924,972 binary bytes. Source-free compilation reproduces the exports;
 Native/WASM/fresh O1 sanitizer checks preserve road contacts and the existing
 grid, barrier, course and AI consumers after releasing input bytes. Thirty
 malformed variants reject on all three targets. Strict gates now cover 245
-C/header files, with 55 Native and 53 WASM CTests passing. This is a prepared
-road component, not standalone application startup or full-game parity.
+C/header files, with 55 Native and 53 WASM CTests passing. This proves the prepared road component; full-game parity remains unproved.
 The prepared track provider now owns these roads, worlds, all three body LODs,
 two wheel templates and sky. The normal application and championship owner use
-the same provider boundary; the application still selects its reference backend
-until rendering/UI/audio migrate. All eleven short twenty-car physical prefixes
+the same provider boundary; the application now defaults to its prepared backend, with an explicit
+reference mode preserved. All eleven short twenty-car physical prefixes
 pass on Native/WASM/fresh sanitized, with exact Native original-decoded states.
 Required-model/number/load-failure rollback and candidate championship restarts
 pass. Sixty-six provider scene images retain the previous output, and actual
 31 Native/31 sanitized/145 Chromium window comparisons pass. Strict gates cover
-249 C/header files, with 56 Native and 54 WASM CTests. Next connect prepared
-vehicle/world presentation to the application and replace default original input,
-then remodel against this baseline. UI and audio migration remain open.
+249 C/header files, with 56 Native and 54 WASM CTests at that provider step.
+
+Prepared world/body/wheel rendering now reaches default Native/browser launch
+without original files, at 640x360/4x MSAA. Camera/pose units are explicit;
+shared uploads, body LODs and pre-submit culling preserve ownership. Current
+strict gates cover 255 C/header files and pass 58 Native/55 WASM CTests. Forty-four
+world/car/start/drive cases supply 132 images and 88 cross-target comparisons;
+actual 35 Native/35 fresh sanitized/34 Chromium comparisons and trusted input,
+reset, championship entry/restart/exit and menu/missing-scene checks pass.
+No-argument Native startup independently matches prepared scenes. Optional
+reference checks retain 31 Native/31 sanitized/145 Chromium comparisons.
+Direct visual review finds broader coverage and reduced aliasing but a uniform
+cyan fleet, black sky and low-contrast arena floor. Prepared gameplay is silent;
+complete livery/deformation/cockpit/sky, new audio/content and four-thread/60-FPS
+acceptance remain open. Next finish offline livery variants and the new audio
+owner, then replace this baseline with Blender/procedural content. Evidence is
+under /tmp/wasm-dd2/prepared-presentation-0062/; active 0062 remains open.
 
 ## Work order
 

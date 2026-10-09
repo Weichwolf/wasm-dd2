@@ -1,8 +1,11 @@
 #include "render/camera.h"
 
+#include "assets/bounds.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
+#include "assets/model.h"
 #include "assets/scene.h"
+#include "assets/world.h"
 #include "render/renderer.h"
 
 #include <GL/softgl.h>
@@ -73,6 +76,46 @@ bool dd2_camera_fit_scene(dd2_camera *camera, const dd2_scene *scene) {
     const dd2_scene_object *objects = dd2_scene_objects(scene);
     for (size_t index = 0; index < dd2_scene_object_count(scene); ++index) {
         dd2_camera_mesh_bounds(&bounds, objects[index].mesh, objects[index].origin);
+    }
+    return dd2_camera_fit(camera, bounds);
+}
+
+bool dd2_camera_fit_model(dd2_camera *camera, const dd2_model *model) {
+    dd2_camera_bounds bounds = {0};
+    const dd2_model_vertex *vertices = dd2_model_vertices(model);
+    for (size_t index = 0; index < dd2_model_vertex_count(model); ++index) {
+        for (size_t axis = 0; axis < 3; ++axis) {
+            const float value = vertices[index].position[axis];
+            if (!bounds.valid || value < bounds.min[axis]) {
+                bounds.min[axis] = value;
+            }
+            if (!bounds.valid || value > bounds.max[axis]) {
+                bounds.max[axis] = value;
+            }
+        }
+        bounds.valid = true;
+    }
+    return dd2_camera_fit(camera, bounds);
+}
+
+bool dd2_camera_fit_world(dd2_camera *camera, const dd2_world *world) {
+    dd2_camera_bounds bounds = {0};
+    const dd2_world_instance *instances = dd2_world_instances(world);
+    const dd2_world_resource *resources = dd2_world_resources(world);
+    for (size_t index = 0; index < dd2_world_instance_count(world); ++index) {
+        const dd2_world_instance *instance = &instances[index];
+        const dd2_bounds local = resources[instance->resource].bounds;
+        for (size_t axis = 0; axis < 3; ++axis) {
+            const float low = local.minimum[axis] + instance->position[axis];
+            const float high = local.maximum[axis] + instance->position[axis];
+            if (!bounds.valid || low < bounds.min[axis]) {
+                bounds.min[axis] = low;
+            }
+            if (!bounds.valid || high > bounds.max[axis]) {
+                bounds.max[axis] = high;
+            }
+        }
+        bounds.valid = true;
     }
     return dd2_camera_fit(camera, bounds);
 }

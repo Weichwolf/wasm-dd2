@@ -2,9 +2,10 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DD2 · Track viewer</title>
+<title>DD2 · Rewrite</title>
 <link rel="icon" href="data:,">
 <style>
+  [hidden] { display:none !important }
   :root { color-scheme: dark; font: 16px system-ui,sans-serif; background:#10151b; color:#e8ecf2 }
   body { margin:0; padding:28px 20px; max-width:960px; margin-inline:auto }
   header { display:flex; gap:20px; align-items:center; justify-content:space-between; flex-wrap:wrap }
@@ -17,7 +18,7 @@
   :focus-visible { outline:3px solid #79c6ff; outline-offset:3px }
   input[type=file] { display:block; max-width:260px; margin-top:8px; font:inherit }
   .controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:24px 0 16px }
-  canvas { display:block; background:#000; width:100%; height:auto; aspect-ratio:4/3; max-width:800px; margin:auto; border-radius:8px }
+  canvas { display:block; background:#000; width:100%; height:auto; aspect-ratio:16/9; max-width:800px; margin:auto; border-radius:8px }
   #status { min-height:1.5em; color:#aeb9c8 }
   .help { line-height:1.8; color:#aeb9c8; max-width:800px; margin:18px auto }
   kbd { color:#e8ecf2; background:#253044; padding:2px 5px; border-radius:4px }
@@ -79,7 +80,7 @@
   Damage: the front faces up; green/yellow/red shows increasing damage, and the bar shows engine health.
   <strong>PTS</strong>: accident points · <strong>KO</strong>: destroyed opponents. Reset also clears damage and points.<br>
   Profiles: <kbd>F2</kbd> player name · <kbd>F3</kbd> save player/car/audio · <kbd>F4</kbd> reload/restore · <kbd>Delete</kbd> select a save to delete. Deletion requires a separate confirmation.<br>
-  Music: open a local Redbook track · <kbd>F10</kbd> pause/resume music. Game pause and focus loss also pause music.<br>
+  <span id="music-help">Music: open a local Redbook track · <kbd>F10</kbd> pause/resume music. Game pause and focus loss also pause music.<br></span>
   Track/model view: <kbd>←</kbd> <kbd>→</kbd> rotate · <kbd>↑</kbd> <kbd>↓</kbd> tilt ·
   <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pan · mouse wheel or <kbd>+</kbd>/<kbd>−</kbd> zoom ·
   <kbd>R</kbd> reset · <kbd>Tab</kbd> switch view · <kbd>Page Up</kbd>/<kbd>Page Down</kbd> switch track</p>

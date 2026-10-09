@@ -420,10 +420,10 @@ def native_championship_checks(ui, expected):
 def build_sanitized(output, entry=None, link_flags=()):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('car_class', 'archive', 'audio', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'model', 'world', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
+             ('car_class', 'archive', 'audio', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'image', 'model', 'world', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     units += [ROOT / 'src/audio/mixer.c', ROOT / 'src/audio/effects.c']
-    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'color', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
-    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device', 'save_store', 'save_backend', 'save_location')]
+    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'color', 'mesh_draw', 'camera', 'track_draw', 'model_draw', 'world_draw', 'frustum', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
+    units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'content', 'window', 'audio_device', 'save_store', 'save_backend', 'save_location')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
     units += [ROOT / f'src/game/{name}.c' for name in ('profile_menu', 'configuration', 'application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'league', 'drivers', 'championship', 'championship_session')]
     units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
@@ -438,7 +438,7 @@ def build_sanitized(output, entry=None, link_flags=()):
     with (output / 'sanitizer-build.log').open('wb') as log:
         command = [tool('clang'), *flags, *map(str, units),
                    str(WORK / 'rewrite-native/softgl/libsoftgl.a'), *sdl,
-                   '-lm', *link_flags, '-o', str(binary)]
+                   '-lm', '-lz', *link_flags, '-o', str(binary)]
         (output / 'sanitizer-build.json').write_text(json.dumps({'command': command,
             'scope': 'All reached rewrite units instrumented; SDL2 and pinned release SoftGL uninstrumented'}, indent=2) + '\n')
         run_bounded(command, directory=output, timeout=180,

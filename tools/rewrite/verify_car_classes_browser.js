@@ -24,7 +24,7 @@ async function capture(page, label) {
     const page = await browser.newPage();
     page.on('pageerror', error => errors.push(String(error)));
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-    await page.goto(url);
+    await page.goto(url + '?reference=1');
     await page.waitForFunction(() => !document.getElementById('archive').disabled, null, {timeout:60000});
     await page.locator('#archive').setInputFiles(archive);
     await page.waitForFunction(() => Module._dd2_application_current_level() === 1);

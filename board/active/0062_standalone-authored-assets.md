@@ -360,16 +360,67 @@ startup. Evidence is under
 /tmp/wasm-dd2/content-provider-0062/; command: make assets-tracks-verify.
 This broad item remains active.
 
+The prepared provider now reaches the normal shared application renderer and
+becomes the default Native/browser startup. The application copies its content
+root, owns a track presentation handle and destroys that handle before its
+track/context. World, body LODs and suspended/steered/rolling wheels share one
+context-local texture cache; actual posed AABBs are culled before lazy model
+creation/submission. Simulation retains 160 units/meter while prepared drawing
+uses meters. Player exterior stays close; opponent body thresholds are 30/90 m.
+Default output is 640x360/4x MSAA with filtered maps and sRGB display encoding.
+An explicit Native archive path or browser `?reference=1` preserves optional
+reference rendering; prepared missing files fail without original fallback.
+
+Strict LLVM19 format/tidy covers 255 C/header files; 58 Native and 55 WASM CTests
+pass. Focused camera-scale, visible/hidden body LOD, borrowed shared-cache lifetime
+and full GL cleanup checks pass on both targets and fresh O1 ASan/UBSan, with
+zero Native Memcheck errors. Prepared application lifecycle checks render all
+eleven tracks, vehicle views and short controlled drives, preserve pause, copy
+caller path storage and enter/restart/exit both championship modes. Forty-four
+world/car/start/drive cases produce 132 Native/WASM/sanitized images and 88
+cross-target comparisons (maximum mean channel error 0.006624711). State and
+submission/culling/LOD/cache counts agree; raster visibility counts belong to
+the image oracle rather than a bitidentity assertion. Starting frame geometry
+ranges from 35,440 to 142,304 actual submitted world/vehicle triangles; these
+short snapshots do not establish full-frame timing or material budgets.
+
+Actual prepared windows pass 35 Native and 35 fresh sanitized comparisons, plus
+trusted throttle, pause, track wrap, deterministic reset and close. Default
+no-argument Native launch independently matches its prepared world/driving
+images. Chromium starts with eleven packaged roads and no Dirinfo, passes all
+34 prepared canvas comparisons exactly, drives with trusted keys and verifies
+both championship start/restart/exit paths, the player-name modal and missing
+scene rollback. The optional reference corpus still passes 31 Native/31
+sanitized/145 Chromium comparisons. Browser extent/aspect is now established
+before SDL resize initialization, preserving 16:9 prepared and 4:3 reference
+presentation. The prepared browser verifier uses a controlled 640x360 canvas;
+a wider CSS window scales presentation and is not a larger SoftGL render profile.
+
+Direct before/after and actual Native/browser review finds plausible preserved
+layout/vehicle pose, wider horizontal coverage, less texture/edge aliasing and
+readable HUD, championship and player-name text. The fleet still shares the
+cyan base livery, the sky is black and the arena floor remains low contrast.
+Liveries, visual deformation, cockpit, sky/billboard policy and the new audio
+owner are not complete; prepared gameplay is currently silent. No whole-game,
+quality-superiority, original-binary or four-thread/60-FPS acceptance is claimed.
+The verification driver was corrected to include the car-class HUD, retain the
+application's pause across track changes and compare pixel counts through the
+existing image oracle. Completed raw captures/logs are removed after review.
+Evidence: /tmp/wasm-dd2/prepared-presentation-0062/{quality-report,
+visual-review-report,native-default-report}.json and verification/report.json.
+Reusable command: python3 tools/assets/verify_game.py --sanitized-build
+/tmp/wasm-dd2/prepared-presentation-0062/sanitized --output
+/tmp/wasm-dd2/prepared-game-verification. This broad item remains active.
+
 ## Next
 
-Wire the prepared owner/renderer into default gameplay and browser presentation;
-keep scene/opponent options unrestricted while selecting player cockpit roles.
-Author inner door/window surrounds and use finer visibility groups where useful;
-the prototype must not rely on its exterior shell to cover interior gaps.
-Bind the prepared track provider and vehicle/world presentation to the normal
-application; migrate audio and UI inputs so default Native/browser launch
-consumes committed assets without Dirinfo. Complete billboard/livery policy,
-place wheel templates and compare actual original/candidate gameplay images.
+Convert driver/class livery remaps offline to owned runtime variants and verify
+actual moving fleet appearance. Add prepared visual deformation, sky/billboard
+policy and a player cockpit; keep scene/opponent options unrestricted while
+selecting only player cockpit roles. Author inner door/window surrounds and use
+finer visibility groups where useful. The prototype must not rely on its
+exterior shell to cover interior gaps. Bind the new PCM content to an audio
+owner and complete game-context music/effect behavior without original input.
 Replace intermediate meshes with original-informed Blender models gradually.
 
 Then evaluate authored normal/roughness maps with an owned tangent/material path,
@@ -379,9 +430,8 @@ Implement production LOD/visibility and explicit Native thread selection against
 the complete-frame budget. Inspect actual windows/canvases with real input and
 measure complete frame costs before claiming the four-thread/60-FPS profile. Supply
 the first authored road/contact/progress graph and Blender track/scenery, then
-define the runtime content manifest/provider and new audio-owner input.
-Connect that vertical slice to default Native/browser launch without a file
-picker or original archive, then replace the whole content inventory. Retain
+complete the new audio-owner input. Connect authored replacements to the
+prepared default Native/browser launch and replace the whole content inventory. Retain
 optional original functional comparisons separately from normal acceptance.
 
 Inspect actual both-target scenes/audio after every content step. Record visible

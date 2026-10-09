@@ -15,6 +15,11 @@ int dd2_application_open(const char *path, int level);
  * pending. Retain/poll the application and retry; no pending owner is freed. */
 int dd2_application_close(void);
 int dd2_application_run(const char *path, int level);
+/* Prepared launch owns a copy of the content directory path and loads only owned
+ * containers/PNGs. Missing assets fail without reference fallback. The current
+ * migration has no prepared audio owner yet. */
+int dd2_application_open_prepared(const char *root, int level);
+int dd2_application_run_prepared(const char *root, int level);
 /* Hosts with their own Native event loop may pump the same real SDL frame used
  * by run. Returns 1 while running, 0 on requested close, -1 on failure. Storage
  * still requires the usual explicit close/pending lifetime handling. */
