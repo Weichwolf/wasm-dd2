@@ -95,6 +95,20 @@ component/race contracts and unchanged deadlines; do not close on a component
 or a pre-timeout prefix alone. More completed ticks in this run do not establish
 an isolated whole-case speed improvement.
 
+## Current natural owner receipts
+
+The source-3145183 natural-owner retry follows the checked residual-motion
+correction under closed 0059 and current original class handling. Actual Native
+Arena 8 now reaches engine-retirement/coasting results at tick 15425 (72.12
+seconds survival); WASM reaches the same natural ending at tick 25530 (122.645
+seconds). The independent owner oracle checks every row, all twenty clocks,
+monotonic damage, engine retirement, pursuit and the complete 600-step coast.
+Inputs, event/material bounds and the 1800-second deadline remain unchanged.
+These two accepted target receipts do not prove sanitized or all-arena results,
+the former source's exact late field, or an isolated performance improvement.
+Receipts: /tmp/wasm-dd2/rewrite-certified-arena-0053/owners/
+{identity,8-total-survive-native,8-total-survive-wasm}.json.
+
 ## Verified late-motion diagnosis
 
 The read-only late WASM diagnostic is now terminal after its planned 1740-second

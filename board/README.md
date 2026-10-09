@@ -64,6 +64,7 @@ its game requirements or acceptance rules.
 | [0057](closed/0057_durable-save-store.md) | Durable Native/browser save-card owner | closed |
 | [0058](active/0058_configuration-and-saved-game-actions.md) | Configuration and saved-game application actions | active |
 | [0059](closed/0059_checked-residual-fleet-motion.md) | Certify independent motion at the fleet response budget | closed |
+| [0060](active/0060_automatic-redbook-selection.md) | Automatic game/frontend Redbook selection | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
@@ -99,6 +100,19 @@ open. The class catalog supplies the 0058
 configuration dependency; it does not close complete vehicles.
 The complete window regression passes 31 Native/31 sanitized and 144 Chromium
 comparisons again with the selected-class preview and current class forces.
+
+Actual source-3145183 Arena-8 Native/WASM owners now reach natural
+engine-retirement/coasting results at ticks 15425/25530, with 72.12/122.645 seconds
+survival. Their complete independent target receipts pass; sanitized and
+all-arena acceptance remain unproved. See active 0053 and
+/tmp/wasm-dd2/rewrite-certified-arena-0053/owners/.
+
+Current audio preparation is 0060: it establishes the actual original CD contexts:
+48 protected-code transport/countdown checks, six caller contexts and eleven
+independent menu/asset mappings pass. Main/practice results use track 13;
+race music follows loaded level + 1 and starts at GO; championship results use
+14 and season completion 15. Automatic Native/browser application integration
+remains open. The existing saved gains are proved under 0058.
 
 Optional diagnostic packages are installed and their access probes are recorded
 under 0010. Native Memcheck/Callgrind work without elevated privileges; perf and

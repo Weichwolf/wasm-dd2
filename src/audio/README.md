@@ -34,6 +34,28 @@ changes and stop. Global game pause is separate from an explicit music pause.
 The original track-selection, repeat and pause/restart functions establish the
 functional reference; this runtime does not claim MCI timing or PCM parity.
 
+`make rewrite-original-music-selection-verify` executes the unmodified original
+transport with an imported MCI observer and write-protected machine code. Its
+48 checks cover all eighteen physical track selections, explicit transport,
+repeat guards, failed start, disabled audio and actual countdown/GO routines.
+Unmodified caller disassembly and an independent PE data read establish the
+context mapping below. This is original component evidence; automatic rewrite
+selection remains under active 0060.
+
+| Original context | Physical Redbook track | Start |
+| --- | --- | --- |
+| Main menu and practice results | 13 | On entry |
+| Race | Loaded asset level + 1 (2..12) | At GO |
+| Championship results and intermediate season standings | 14 | On entry |
+| End of season | 15 | On entry |
+
+Each context repeats its selected track. Menu track positions map to asset
+levels `[1,2,7,5,3,6,4,10,8,9,11]`; music follows the loaded asset level, not the
+menu position. Selection seeks the title and clears the playing flag; the race
+countdown starts it only at its green boundary. Explicit pause suppresses the
+repeat poll. These checks do not establish live frontend navigation, original
+PCM output or accepted Native/browser automatic-selection behavior.
+
 `rewrite_audio_mixer` covers exact interpolation samples, mono duplication,
 fractional cursor/frame partitioning, gain/pan, final positive/negative clipping,
 replacement/locks, invalid requests, unsigned-8 PCM, high-frequency one-frame

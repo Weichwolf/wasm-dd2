@@ -208,6 +208,12 @@ rewrite-window-verify: ## verify real native/browser presentation, input, resize
 	python3 $(ROOT)/tools/rewrite/verify_window.py
 	$(MAKE) clean-logs
 
+.PHONY: rewrite-original-music-selection-verify
+rewrite-original-music-selection-verify: ## verify original CD context selection and green-light transport
+	$(MAKE) clean-logs
+	python3 $(ROOT)/tools/rewrite/verify_original_music_selection.py
+	$(MAKE) clean-logs
+
 rewrite-native: ## configure/build the readable rewrite with LLVM 19 and pinned SoftGL
 	cmake --preset rewrite-native
 	cmake --build --preset rewrite-native
