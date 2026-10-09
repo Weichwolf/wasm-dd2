@@ -5,6 +5,12 @@ item before implementation. IDs remain stable; move the file when its state
 changes. This board follows the structure used by `wasm-fist` without importing
 its game requirements or acceptance rules.
 
+System restart checkpoint: `wip/authored-skies-restart` preserves unfinished
+authored sky work and the recovery instructions in active 0062. This branch is
+not a verified improvement. `master` remains at the verified `d690bdc` baseline;
+resume the checkpoint branch and complete its validation before publishing it
+to `master`. The goal is paused for the requested restart.
+
 Prepared driving now renders all eight camera-centered sky patches. This fixes
 the mislabeled detached-trunk template without changing any of the 9,092 owned
 mesh/PNG resources or 6,144 static placements. Strict 258-file LLVM19 gates,

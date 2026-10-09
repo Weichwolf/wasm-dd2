@@ -2,6 +2,55 @@ Type: Work item
 Title: Standalone rebuilt assets, procedural textures and new audio
 Depends: 0005, 0009, 0010
 
+## System restart checkpoint: authored skies in progress
+
+The user requested that work be secured and stopped for a system restart.
+Branch `wip/authored-skies-restart` preserves this unfinished change; the last
+verified and published baseline on `master` is
+`d690bdc9143950d9d9b6b43288f0c40abc0c7357`. This checkpoint does not close any
+acceptance contract and must not be described as a verified sky improvement.
+
+The checkpoint contains eleven seeded procedural sky recipes, an editable
+`assets/blender/skies.blend` with eleven scenes/eighty-eight mesh patches and
+packed panorama images, and 101 generated runtime mesh/PNG resources under
+`assets/runtime/skies/`. Each dome contains 2,944 triangles. The generators use
+our recipes without original DD2 input. Scene preparation binds these authored
+patches while retaining the former original-informed sky templates as offline
+reference metadata. The optional reference verifier understands that metadata.
+CMake adds the new WASM preload, asset link dependencies and JSON exclusion.
+
+Generation and independent Python model decoding completed. Three Native
+preview captures completed using the existing baseline executable and the new
+data. These are preliminary diagnostics: the final captures have not been
+visually reviewed, independent reproduction has not been proved, the modified
+reference verifier has not run, and no new strict Native/WASM build, sanitizer,
+browser or cross-target visual acceptance has been established. The previous
+WASM package still contains the baseline sky data. No C renderer or SoftGL
+source was changed. Source atlas/cap observations motivated replacement; an
+exact original renderer defect was not established.
+
+Recovery after restart:
+
+1. Switch to `wip/authored-skies-restart` and read this checkpoint. All required
+   authored sources and generated runtime assets are committed; no temporary
+   capture or original game file is needed to resume this change.
+2. Run `make clean-logs`. Generate two independent original-free outputs with
+   `python3 tools/assets/build_skies.py --output /tmp/wasm-dd2/sky-recovery-a`
+   and a second output directory. Prove deterministic resources, reopen the
+   Blender project and independently verify its meshes, images and bindings.
+3. Verify `prepare_skies.py` idempotence and the modified reference corpus;
+   check that other offline preparation tools preserve authored sky bindings.
+4. Run `make rewrite-check`, `make rewrite-wasm` and
+   `ctest --preset rewrite-wasm`. Rebuild the browser package before comparing
+   its output with Native. Complete sanitized loading and actual Native/browser
+   input/presentation checks plus all eleven sky/game visual cases.
+5. Inspect panorama seams, both caps, final forest/cloud details, lighting and
+   track themes at 640x360/4x MSAA. Record defects rather than claiming quality
+   or complete-frame 60-FPS acceptance from preliminary pictures.
+6. Keep each verification run below 2 GiB, preserve at least 1 GiB free, remove
+   completed raw output after its report and run `make clean-logs` afterwards.
+   Update this work item and publish to `master` only after successful checks.
+
 ## Contract
 
 Native/WASM builds and the complete game run without any original DD2 files.

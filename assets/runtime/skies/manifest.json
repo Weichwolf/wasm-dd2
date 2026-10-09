@@ -1,0 +1,6386 @@
+{
+  "format": "DD2SKIES1",
+  "authored": true,
+  "original_inputs_required": false,
+  "recipe": "assets/recipes/skies.json",
+  "editable_blender": "assets/blender/skies.blend",
+  "generator": "tools/assets/build_skies.py",
+  "latitude_cells": 24,
+  "longitude_cells": 64,
+  "triangles_per_dome": 2944,
+  "width": 2048,
+  "height": 1024,
+  "vertical_guard": 32,
+  "files": {
+    "skies/level-1-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "0012bd02b514d33da9e52bed0bde6125436c0108ff47759d9f9802fd67edac61"
+    },
+    "skies/level-1-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "91c539c88ecd44542cdfa4150e7ad84f1b7f352236df7f962eb41f91fb54b061"
+    },
+    "skies/level-1-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "bc96cd3daa0dfaf61bb22318ec862ab067058686e0790d0343af60f1bd417f4b"
+    },
+    "skies/level-1-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "8fb1c23c3cf3a7fb7e0601675c875d7e520b1c03780d7efaa2619d3a77d8653b"
+    },
+    "skies/level-1-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "8e29f11ca87b8f20c1a8ebfa2583d1177fe68ef70af779d1fff822561c46af3f"
+    },
+    "skies/level-1-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "de4127221d01c8915850dea0f1dd6ee2c8c55dff6f40689a0287528fa4135482"
+    },
+    "skies/level-1-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "38e76308f2b83c5cb97e3d016c7a25e88d6151207eb164eeb6808fc0ddff7a0b"
+    },
+    "skies/level-1-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "0e87128ec8301d6c7d86e356c3f8237876c24ea248248ae50e7b2f25da61e12e"
+    },
+    "skies/level-1.png": {
+      "bytes": 425101,
+      "sha256": "7478ba08542a6954d350bd31ddde2065be7352b982f10f8e2c0a28d7aff95a46"
+    },
+    "skies/level-2-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "f8e54bc91f7d805736350e358d4903c63aa724048bd7c1c695d5b46b90917dc7"
+    },
+    "skies/level-2-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "f760099359af50b9189dbf2f576ea03cc21a09a0a9a996b4ea38055f02e0c301"
+    },
+    "skies/level-2-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "57ed13057433f2786814beb6beb296c59c5e2061dde53b5e6198ee79c860eb9c"
+    },
+    "skies/level-2-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "abbde9296b8fdd9f767371a67cf1c1fa95329d9daaf67225c0382cdf8bf3061e"
+    },
+    "skies/level-2-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c1efd035d3a82a6eed6f55ef8899f81eb73f925474900928d28f1cb6daf54af3"
+    },
+    "skies/level-2-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "cc99c9e295c3e86efa363b9536ad0d498ef10c9a419e4b29b158c1611f509bb6"
+    },
+    "skies/level-2-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "9f0b5a6812211f16b6b1ef48c8f843b5b26b62e7c867694239431ede97415deb"
+    },
+    "skies/level-2-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "0c5ed5e1f73c626f3a089aa3699092fcb09d1b83f96e20b18096b346be3c5a43"
+    },
+    "skies/level-2.png": {
+      "bytes": 403082,
+      "sha256": "8597e8c1171b78ffdae8136cce6a2b02c7817e3e07ad2bc8bf6c470211cde9ee"
+    },
+    "skies/level-3-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "5b38960693ae15e513787623459b4d7591b3cf70732ea495db678beeecda8f1d"
+    },
+    "skies/level-3-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c9f0546bcfe3edc020376d8c9889e01f3a3a4bb67658a5dc1b53a0e4399e5db5"
+    },
+    "skies/level-3-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "4f06d3679fb6f9a916cdf33384038914f302b951d13e998c89a22c54a0184f17"
+    },
+    "skies/level-3-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "7d01b154852319e6c631e3e823388508c6a591b927b9312efc970dc7d6148f75"
+    },
+    "skies/level-3-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c6378d287aa70f3ab1bda2dbee61777fa0f29f798cbf5d9c531995c0d8658bd5"
+    },
+    "skies/level-3-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "00013bbd36a9e1165b53dd02a09e58a036adfffda1af7461072cfa1af75bde9d"
+    },
+    "skies/level-3-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "58c3b7ada257e9ce969c453635abc42d8f30bf4379aeb3a9df5871702caae17f"
+    },
+    "skies/level-3-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "bbc94ff4fa5805f1141dad17817ade8d54e6585d3f18202d4a8a58096440b02a"
+    },
+    "skies/level-3.png": {
+      "bytes": 426243,
+      "sha256": "590b2756dd2c1aef358f96936751f9affc3c681f2067c4a17ee0eccfdb18034d"
+    },
+    "skies/level-4-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "8f96dcf0e2e42882caa7dcef6f50f5a4d4cc016f76735d23a7a72192309bdf98"
+    },
+    "skies/level-4-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "29f1ab9912af39360678f7d1ea42c56a77a52c5e7d3a6ad40be98dd1d978af9f"
+    },
+    "skies/level-4-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "17c1c598d555cff44782fb28ac8f1919c9fa21a7bb5bf35c9a70ff136ebfd38a"
+    },
+    "skies/level-4-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "943f043047b0ea4206e408cd9934c56dde73ac58f03b44591676170fc16bd8bf"
+    },
+    "skies/level-4-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "24c5febe56ab74c5939bb90253aa53d4fe2288ce35f37a1c985d9be9cbeb3e21"
+    },
+    "skies/level-4-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "74978ed4796cbe877d658558b2f4117ab4045f54895327c70575ad50f9b876b7"
+    },
+    "skies/level-4-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "2d16284ea6429c8beeccad365791918ba4a1d10251539f99b1138dd170ae39e1"
+    },
+    "skies/level-4-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "aca413f0e01d5a5e1b1338edf6da196f4f2c6f0a95426491256a5f944878afaa"
+    },
+    "skies/level-4.png": {
+      "bytes": 308471,
+      "sha256": "77838b94fa61b384f632d70cc1b3781e9e21d70817847c70ab97cb472677dee9"
+    },
+    "skies/level-5-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "8636ad26051895ba58ffd48e05030f2f3c6b27cb87b1ec152b12f1cc3481b53f"
+    },
+    "skies/level-5-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "74ff9f2b534f242a964e66c6d1c2b95224ea192724df9defdbef9f296053ffe0"
+    },
+    "skies/level-5-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "9208d90d20642c8964e9bbb6604bcfffb387ec9bc6cca1377cc72d7c176dbd50"
+    },
+    "skies/level-5-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "6662fb6231b4d3103a4c4dc282ec9731fb2e9d733898e77871e55509aad120d5"
+    },
+    "skies/level-5-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "6e230fdb8b79dab72a060a81c93139419883a4724411c582bc6d90512695f449"
+    },
+    "skies/level-5-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "2adb9eea6477245d9fca89c93428926af421baaad373ec483b7a3c46b27424c5"
+    },
+    "skies/level-5-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "a5d389ed8d79e61442edab919e87737741d403ec35bff901074c78c3ada5ef9e"
+    },
+    "skies/level-5-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "0924b63d507ea93bbcf35581bd8222cf337c67f4240f8c50530a77db26d6bb6b"
+    },
+    "skies/level-5.png": {
+      "bytes": 398966,
+      "sha256": "1ae1c42d317f642aaf5b316181ccfd1a719b532a574aedfc22d1fe8a7cb596e4"
+    },
+    "skies/level-6-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "942c3b802a683da7374ec42c287f2cab1010ed2475d6895c99e7cade52803f58"
+    },
+    "skies/level-6-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "5feb7e0337c9c3290ce062d243605ab2fefd4535992055344c4ad1dd9a6be10b"
+    },
+    "skies/level-6-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "541f201237da15d6f0d6cbdc68c2a8777ddd6155b0d4b8eddc643d66143b8fbf"
+    },
+    "skies/level-6-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c7b2f66eda8ed9d195b960a91d7bfdb0cf002af3737f240b81189368a9a90e50"
+    },
+    "skies/level-6-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "93ffa45f546e89ebd8eedc99cdd0a8ff8528b6566dcce87fe91e9d53ecbd0167"
+    },
+    "skies/level-6-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "54491ae911eaa20bd1f2fc6854d7824a545934b0a2614c18e3183eb62ad41ff0"
+    },
+    "skies/level-6-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "fa52b6aeb2f9b185fa3205907e60fdb9a7539286823d22e7270e7efcb55a37b1"
+    },
+    "skies/level-6-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "f267266ef60eb1b9d4893b364c71ffcdcbf8e5ee3b9b82918a6b9b571a891b09"
+    },
+    "skies/level-6.png": {
+      "bytes": 197539,
+      "sha256": "2d8595110a281bda276fceb2807e6306826c8121ccabf7e0366853ccdd3ccb91"
+    },
+    "skies/level-7-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "f1fbe3bd852644c8d2f56667e6ec4b743e0d53e2c8e7e8eae49d51529df6f928"
+    },
+    "skies/level-7-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c5f4d4560824ae061241c91afb628b6777aeb469d7f4e1a3dfff2bcbeb85fa76"
+    },
+    "skies/level-7-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "3a9046639ba9f6d86384888fcd6eb7c4a85514efdec3910e21ed902d5399f6e2"
+    },
+    "skies/level-7-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "549441dad9ed2626a0c741717b9cb7b08261d73fc4cb6a98bc7b303b1856a124"
+    },
+    "skies/level-7-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "4775b056a561f497a3f749da0db5a2b8756e8f31ae92a977d0c088c2c1234e65"
+    },
+    "skies/level-7-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "ff139ebfac6c20ad110dd35416a30d57ff5cb26334e711311762fb5fad16e71d"
+    },
+    "skies/level-7-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "86c7a2a7493d7d275c4191581d6e328b0c8324bf1644a7012b81f5dbaa834057"
+    },
+    "skies/level-7-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "26cc7cbc93c5a91bf84dac70043067fc3fb07da56e6276b924b8cc076cb144db"
+    },
+    "skies/level-7.png": {
+      "bytes": 423833,
+      "sha256": "9e7096037901683fb13c8f1759bfb9679d6a1e270fb7b09a90d450950be72aec"
+    },
+    "skies/level-8-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "b69d2f690b59e715a5359f57c395987689e5b7bcf033dde0ba02584b3442d9fe"
+    },
+    "skies/level-8-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "e5cf684a3ede96c0647294628c81c0eee5c6653453d33f3264779dfe3a55f209"
+    },
+    "skies/level-8-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "c7ef37f93b2ff852af5ae3b638b8df1d46c23adc27de4b8cb2923974debd1d71"
+    },
+    "skies/level-8-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "9240445c070a20f7ab69cb8b2d1d5b727283fc6a0db084f2199a0d92b41399c5"
+    },
+    "skies/level-8-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "26b40aa0ae89d8df9c2335d24d94ea95c78b974c89a16325f3c8e23d464f54a7"
+    },
+    "skies/level-8-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "2eb61e6a3cb4e794794e48fbdc084fd2628df302ecca22f0f2069d7bb76be60e"
+    },
+    "skies/level-8-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "7c6b43f165202564a0cd9cd863e57e838a5ba8cf0c7e9a3eb22f09fb294898a5"
+    },
+    "skies/level-8-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "2980f50743bd5b31578e53af5f68bbbc7617b09257793de610f77428a6a1b54c"
+    },
+    "skies/level-8.png": {
+      "bytes": 374577,
+      "sha256": "41ce239841b588bb618272797bfddca232502762d7c4ab2271e0b447d0d28fc6"
+    },
+    "skies/level-9-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "ea634f95bd87e64ea39d693976e41c938f9fb1dccf97c5d4b476e01f6cc31b93"
+    },
+    "skies/level-9-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "39451389d278f32a3b050b5bb1bcbbe2d40767e5f468a0028f7daa79d706c311"
+    },
+    "skies/level-9-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "1d94b8e17de3e56d8eab64015a2ce73fac2bdf85a0bbf3d4db097f7e8a040986"
+    },
+    "skies/level-9-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "192c3ca71e791d8ae5754f94422b007479ae6b3b63d5f30d50ab3d3f5f05fa78"
+    },
+    "skies/level-9-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "fca148783aa387e164b0edd3acaf2cc4c4352f0f46cc9fdf3a2cc9881177c67c"
+    },
+    "skies/level-9-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "21199b6f388762de10fb5623168192a8124a60e6d5740db0ffd910f30c6e7eeb"
+    },
+    "skies/level-9-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "186540200dd2290d45e0f6478a2ccdd5b73fea387923731844b2ef94edc46dd2"
+    },
+    "skies/level-9-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "9cf3b164e0d6803a7fdc4719a3b010a16672c67eeb5c0bb03935215811fbc968"
+    },
+    "skies/level-9.png": {
+      "bytes": 459605,
+      "sha256": "932b5689dd2542b23d1564af2b0d41b1b2ea997b0a3cf1379aa61c7f8a1b44ae"
+    },
+    "skies/level-a-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "f4ee76dd230bddcd29fde3e24643c9046ad31a2520faeaa24c724e94f7b3eef1"
+    },
+    "skies/level-a-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "a476bde7b4b738a7894aa1b1fa6255f54c4e35b6d1ae13201391320f20d04332"
+    },
+    "skies/level-a-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "b498984cf016ec732a722e331b085e473de94d2a154214a83a6263f5021644cf"
+    },
+    "skies/level-a-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "e71bc5994415e429cbeb8e8e12e56ca05beaea47418a6108eafa5058daf96ae8"
+    },
+    "skies/level-a-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "a4c45541e8bdf1b298ac2d75051e8c7d37da8e9f729038d5f3df1af50fad26e3"
+    },
+    "skies/level-a-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "d5706e63d1edd5d22d0e89a2c08b2b5dd4055173183b8758c77c715bc83406e8"
+    },
+    "skies/level-a-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "05e4a9b075503355d6098b673d499cf63bb9673af4a0b674939402958972bd98"
+    },
+    "skies/level-a-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "60f8514c2c27013200a7aaeebd1ae0db7ebc49e38f89aa39d5dba8aac53da771"
+    },
+    "skies/level-a.png": {
+      "bytes": 494706,
+      "sha256": "db8d15d1475439cf8e62ddd2ccf4b6b85bc6799e7985709fa7a690045bc43848"
+    },
+    "skies/level-b-lower-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "209fabce5c35bd30660de7c2054d65ce35848e4f52f2d36c07de73191d1f9780"
+    },
+    "skies/level-b-lower-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "9f351c955e866df37a16a550c5b4ec8d5b0ac8cd0898e8c962d57135c85e68fe"
+    },
+    "skies/level-b-lower-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "5606e64e099d8069af7963bc57c8fb56e3fd25f6ad3597a768abfe6509e2ee5e"
+    },
+    "skies/level-b-lower-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "b171ba035e9d5c19c089ffeb433f24631700ef86b7ada17197c6958d1cd31782"
+    },
+    "skies/level-b-upper-0.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "a23f913301f4867eaf5f5eedba7ef5c1e09f22248cf4c086c3d640b60d5432e1"
+    },
+    "skies/level-b-upper-1.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "98d5fc329599c3c08475abccb9b8681e78a15d45b8bf0b600e2ba92ed7bf3e18"
+    },
+    "skies/level-b-upper-2.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "02b035c0db3b9660bd4d3ac1c774a2349895e7af102820044021a1b7fec5f86f"
+    },
+    "skies/level-b-upper-3.dd2mesh": {
+      "bytes": 11860,
+      "sha256": "dedd5b7e9006f99bd9c438eea444bf114147d2e45812092a1554a26c1a874008"
+    },
+    "skies/level-b.png": {
+      "bytes": 395424,
+      "sha256": "0a1cff3fc38d4e50ba5a7aacddfc4300d556731b99e5e64a41d6e10c0e0cba7f"
+    },
+    "skies/normal.png": {
+      "bytes": 70,
+      "sha256": "2d30711594b47fc161a96d61adacf85af3185fa768898403d617a45da823a0ec"
+    },
+    "skies/roughness.png": {
+      "bytes": 70,
+      "sha256": "d5a51b6aed15684ec8c123e30fe5703155359d6543b6d7b47cb5766ef44939de"
+    }
+  },
+  "models": {
+    "skies/level-1-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-1-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-1-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-1-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-1-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-1-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-1-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-1-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-1.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-2-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-2-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-2-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-2-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-2-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-2-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-2-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-2-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-2.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-3-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-3-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-3-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-3-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-3-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-3-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-3-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-3-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-3.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-4-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-4-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-4-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-4-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-4-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-4-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-4-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-4-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-4.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-5-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-5-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-5-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-5-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-5-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-5-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-5-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-5-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-5.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-6-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-6-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-6-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-6-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-6-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-6-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-6-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-6-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-6.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-7-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-7-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-7-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-7-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-7-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-7-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-7-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-7-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-7.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-8-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-8-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-8-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-8-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-8-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-8-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-8-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-8-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-8.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-9-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-9-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-9-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-9-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-9-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-9-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-9-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-9-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-9.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-a-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-a-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-a-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-a-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-a-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-a-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-a-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-a-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-a.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-b-lower-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          -15.625,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-b-lower-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-b-lower-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          -15.625,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          0.0,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-b-lower-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          -15.625,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          -2.3433745545365587e-31
+        ]
+      ]
+    },
+    "skies/level-b-upper-0.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          5.858436386341397e-32,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-b-upper-1.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          1.1716872772682794e-31
+        ],
+        [
+          9.567552659010175e-16,
+          15.625,
+          15.625
+        ]
+      ]
+    },
+    "skies/level-b-upper-2.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "skies/level-b-upper-3.dd2mesh": {
+      "textures": [
+        [
+          "skies/level-b.png",
+          "skies/roughness.png",
+          "skies/normal.png"
+        ]
+      ],
+      "materials": [
+        {
+          "name": "sky-emission",
+          "rgba": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "metallic": 0.0,
+          "roughness": 1.0,
+          "texture": 0
+        }
+      ],
+      "parts": [
+        {
+          "name": "panorama",
+          "material": 0,
+          "first": 0,
+          "count": 1104,
+          "role": 0,
+          "pivot": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "vertices": 221,
+      "triangles": 368,
+      "bytes": 11860,
+      "bounds": [
+        [
+          -2.870266009461289e-15,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
+        ]
+      ]
+    }
+  },
+  "profiles": [
+    {
+      "level": "1",
+      "theme": "Golden forest morning",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-1-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-1-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-1-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-1-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-1-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-1-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-1-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-1-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "2",
+      "theme": "Clear desert mountains",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-2-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-2-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-2-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-2-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-2-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-2-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-2-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-2-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "3",
+      "theme": "Overcast green hills",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-3-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-3-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-3-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-3-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-3-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-3-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-3-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-3-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "4",
+      "theme": "Warm canyon sunset",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-4-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-4-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-4-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-4-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-4-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-4-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-4-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-4-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "5",
+      "theme": "Bright summer woodland",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-5-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-5-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-5-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-5-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-5-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-5-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-5-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-5-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "6",
+      "theme": "Purple city at night",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-6-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-6-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-6-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-6-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-6-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-6-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-6-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-6-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "7",
+      "theme": "Rose dawn over hills",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-7-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-7-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-7-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-7-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-7-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-7-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-7-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-7-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "8",
+      "theme": "Mountain arena under broken cloud",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-8-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-8-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-8-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-8-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-8-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-8-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-8-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-8-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "9",
+      "theme": "Stormy woodland arena",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-9-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-9-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-9-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-9-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-9-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-9-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-9-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-9-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "A",
+      "theme": "Blue sky over stone arena",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-a-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-a-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-a-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-a-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-a-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-a-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-a-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-a-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "level": "B",
+      "theme": "Volcanic red sky",
+      "templates": {
+        "sky-lower-0": {
+          "model": "skies/level-b-lower-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              -15.625,
+              0.0
+            ],
+            [
+              15.625,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-1": {
+          "model": "skies/level-b-lower-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              0.0,
+              15.625
+            ]
+          ]
+        },
+        "sky-lower-2": {
+          "model": "skies/level-b-lower-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              -15.625,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              0.0,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-lower-3": {
+          "model": "skies/level-b-lower-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              -15.625,
+              -15.625
+            ],
+            [
+              15.625,
+              0.0,
+              -2.3433745545365587e-31
+            ]
+          ]
+        },
+        "sky-upper-0": {
+          "model": "skies/level-b-upper-0.dd2mesh",
+          "bounds": [
+            [
+              5.858436386341397e-32,
+              0.0,
+              0.0
+            ],
+            [
+              15.625,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-1": {
+          "model": "skies/level-b-upper-1.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              1.1716872772682794e-31
+            ],
+            [
+              9.567552659010175e-16,
+              15.625,
+              15.625
+            ]
+          ]
+        },
+        "sky-upper-2": {
+          "model": "skies/level-b-upper-2.dd2mesh",
+          "bounds": [
+            [
+              -15.625,
+              0.0,
+              -15.625
+            ],
+            [
+              -1.7575309746771366e-31,
+              15.625,
+              1.913510531802035e-15
+            ]
+          ]
+        },
+        "sky-upper-3": {
+          "model": "skies/level-b-upper-3.dd2mesh",
+          "bounds": [
+            [
+              -2.870266009461289e-15,
+              0.0,
+              -15.625
+            ],
+            [
+              15.625,
+              15.625,
+              -2.3433745545365587e-31
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}

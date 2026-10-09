@@ -12616,112 +12616,97 @@
       ]
     },
     "sky-lower-0": {
-      "model": "reference/models/1aa219746613c5a71bb80109.dd2mesh",
+      "model": "skies/level-5-lower-0.dd2mesh",
       "bounds": [
         [
-          0.0,
-          -5.974999904632568,
-          -15.625
+          5.858436386341397e-32,
+          -15.625,
+          0.0
         ],
         [
           15.625,
           0.0,
-          0.0
+          15.625
         ]
       ]
     },
     "sky-lower-1": {
-      "model": "reference/models/a4d1965ed92fec3050422144.dd2mesh",
+      "model": "skies/level-5-lower-1.dd2mesh",
       "bounds": [
         [
           -15.625,
-          -5.974999904632568,
-          0.0
+          -15.625,
+          1.1716872772682794e-31
         ],
         [
-          0.0,
+          9.567552659010175e-16,
           0.0,
           15.625
         ]
       ]
     },
     "sky-lower-2": {
-      "model": "reference/models/777d5b3e89954ba3be826789.dd2mesh",
+      "model": "skies/level-5-lower-2.dd2mesh",
       "bounds": [
         [
-          0.0,
-          -5.974999904632568,
-          0.0
+          -15.625,
+          -15.625,
+          -15.625
         ],
         [
-          15.625,
+          -1.7575309746771366e-31,
           0.0,
-          15.625
+          1.913510531802035e-15
         ]
       ]
     },
     "sky-lower-3": {
-      "model": "reference/models/2e521074cae7d6e9951fbcbc.dd2mesh",
+      "model": "skies/level-5-lower-3.dd2mesh",
       "bounds": [
         [
+          -2.870266009461289e-15,
           -15.625,
-          -5.974999904632568,
           -15.625
         ],
         [
+          15.625,
           0.0,
-          0.0,
-          0.0
+          -2.3433745545365587e-31
         ]
       ]
     },
     "sky-upper-0": {
-      "model": "reference/models/1fb8fd31c3129612f90a9cf1.dd2mesh",
+      "model": "skies/level-5-upper-0.dd2mesh",
       "bounds": [
         [
+          5.858436386341397e-32,
           0.0,
-          0.0,
-          -15.625
+          0.0
         ],
         [
           15.625,
           15.625,
-          0.0
+          15.625
         ]
       ]
     },
     "sky-upper-1": {
-      "model": "reference/models/a60d55244aed0db9a8eabf2e.dd2mesh",
+      "model": "skies/level-5-upper-1.dd2mesh",
       "bounds": [
         [
           -15.625,
           0.0,
-          0.0
+          1.1716872772682794e-31
         ],
         [
-          0.0,
-          15.618749618530273,
+          9.567552659010175e-16,
+          15.625,
           15.625
         ]
       ]
     },
     "sky-upper-2": {
-      "model": "reference/models/843140940c0f5523f6f1395a.dd2mesh",
-      "bounds": [
-        [
-          0.0,
-          0.0,
-          0.0
-        ],
-        [
-          15.625,
-          15.618749618530273,
-          15.625
-        ]
-      ]
-    },
-    "sky-upper-3": {
-      "model": "reference/models/6b0b0b63339f2421efa0f922.dd2mesh",
+      "model": "skies/level-5-upper-2.dd2mesh",
       "bounds": [
         [
           -15.625,
@@ -12729,9 +12714,24 @@
           -15.625
         ],
         [
+          -1.7575309746771366e-31,
+          15.625,
+          1.913510531802035e-15
+        ]
+      ]
+    },
+    "sky-upper-3": {
+      "model": "skies/level-5-upper-3.dd2mesh",
+      "bounds": [
+        [
+          -2.870266009461289e-15,
           0.0,
-          15.618749618530273,
-          0.0
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          -2.3433745545365587e-31
         ]
       ]
     },
@@ -13815,5 +13815,131 @@
         ]
       ]
     }
+  },
+  "reference_templates": {
+    "sky-lower-0": {
+      "model": "reference/models/1aa219746613c5a71bb80109.dd2mesh",
+      "bounds": [
+        [
+          0.0,
+          -5.974999904632568,
+          -15.625
+        ],
+        [
+          15.625,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "sky-lower-1": {
+      "model": "reference/models/a4d1965ed92fec3050422144.dd2mesh",
+      "bounds": [
+        [
+          -15.625,
+          -5.974999904632568,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "sky-lower-2": {
+      "model": "reference/models/777d5b3e89954ba3be826789.dd2mesh",
+      "bounds": [
+        [
+          0.0,
+          -5.974999904632568,
+          0.0
+        ],
+        [
+          15.625,
+          0.0,
+          15.625
+        ]
+      ]
+    },
+    "sky-lower-3": {
+      "model": "reference/models/2e521074cae7d6e9951fbcbc.dd2mesh",
+      "bounds": [
+        [
+          -15.625,
+          -5.974999904632568,
+          -15.625
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "sky-upper-0": {
+      "model": "reference/models/1fb8fd31c3129612f90a9cf1.dd2mesh",
+      "bounds": [
+        [
+          0.0,
+          0.0,
+          -15.625
+        ],
+        [
+          15.625,
+          15.625,
+          0.0
+        ]
+      ]
+    },
+    "sky-upper-1": {
+      "model": "reference/models/a60d55244aed0db9a8eabf2e.dd2mesh",
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          15.618749618530273,
+          15.625
+        ]
+      ]
+    },
+    "sky-upper-2": {
+      "model": "reference/models/843140940c0f5523f6f1395a.dd2mesh",
+      "bounds": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          15.625,
+          15.618749618530273,
+          15.625
+        ]
+      ]
+    },
+    "sky-upper-3": {
+      "model": "reference/models/6b0b0b63339f2421efa0f922.dd2mesh",
+      "bounds": [
+        [
+          -15.625,
+          0.0,
+          -15.625
+        ],
+        [
+          0.0,
+          15.618749618530273,
+          0.0
+        ]
+      ]
+    }
+  },
+  "authored_sky": {
+    "manifest": "skies/manifest.json",
+    "profile": "5"
   }
 }

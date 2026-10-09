@@ -59,6 +59,15 @@ def inventory(runtime):
             raise ValueError('Unexpected prepared resource type')
     if set(models) != set(manifest['models']):
         raise ValueError('Prepared model inventory differs')
+    authored = {}
+    if manifest.get('authored_skies'):
+        sky_inventory = json.loads((runtime/manifest['authored_skies']).read_text())
+        if sky_inventory['format'] != 'DD2SKIES1' or not sky_inventory['authored']:
+            raise ValueError('Invalid authored sky inventory')
+        authored = sky_inventory['models']
+        for name, model in authored.items():
+            if not name.startswith('skies/') or decode_model((runtime/name).read_bytes()) != model:
+                raise ValueError('Authored sky model differs')
     used = set()
     for level in manifest['levels']:
         scene = json.loads(resource(runtime, level['scene']).read_text())
@@ -77,11 +86,13 @@ def inventory(runtime):
         for obj in scene['objects']:
             if len(obj['position']) != 3 or not np.all(np.isfinite(obj['position'])):
                 raise ValueError('Invalid prepared placement')
-        for item in [*scene['objects'], *scene['templates'].values()]:
-            model = models[item['model']]
+        for item in [*scene['objects'], *scene['templates'].values(),
+                     *scene.get('reference_templates', {}).values()]:
+            model = models[item['model']] if item['model'] in models else authored[item['model']]
             if item['bounds'] != model['bounds']:
                 raise ValueError('Prepared culling bounds differ')
-            used.add(item['model'])
+            if item['model'] in models:
+                used.add(item['model'])
         triangles = sum(models[obj['model']]['triangles'] for obj in scene['objects'])
         if triangles != level['prepared_triangles'] or triangles != 16 * (level['source_triangles'] - level['removed_triangles']):
             raise ValueError('Prepared scene subdivision ratio differs')
@@ -89,7 +100,8 @@ def inventory(runtime):
             raise ValueError('Uninventoried discarded source triangle')
         for name, record in level['templates'].items():
             expected = 16 * (record['source_triangles'] - len(record['removed']))
-            actual = models[scene['templates'][name]['model']]['triangles'] if name in scene['templates'] else 0
+            bindings = scene.get('reference_templates', {}) if name in scene.get('reference_templates', {}) else scene['templates']
+            actual = models[bindings[name]['model']]['triangles'] if name in bindings else 0
             if actual != expected or record['triangles'] != expected:
                 raise ValueError('Prepared template subdivision ratio differs')
     if set(models) != used:
