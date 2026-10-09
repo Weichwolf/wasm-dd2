@@ -671,7 +671,8 @@ static const char *dd2_application_profile_error(int result) {
 static void dd2_application_profile_poll(dd2_application *application) {
     dd2_profile_menu *menu = &application->profile_menu;
     if (menu->phase != DD2_PROFILE_OPEN_SAVE && menu->phase != DD2_PROFILE_OPEN_LOAD &&
-        menu->phase != DD2_PROFILE_WRITING) {
+        menu->phase != DD2_PROFILE_OPEN_DELETE && menu->phase != DD2_PROFILE_WRITING &&
+        menu->phase != DD2_PROFILE_DELETING) {
         return;
     }
     const int result = dd2_application_saves_poll();
@@ -682,14 +683,21 @@ static void dd2_application_profile_poll(dd2_application *application) {
         dd2_application_profile_message(application, dd2_application_profile_error(result));
     } else if (menu->phase == DD2_PROFILE_WRITING) {
         dd2_application_profile_message(application, "AUDIO AND PLAYER SAVED.");
+    } else if (menu->phase == DD2_PROFILE_DELETING) {
+        dd2_application_profile_message(application, "SAVE ENTRY DELETED.");
     } else {
-        menu->phase = menu->phase == DD2_PROFILE_OPEN_SAVE ? DD2_PROFILE_SAVE_SELECT
-                                                           : DD2_PROFILE_LOAD_SELECT;
+        if (menu->phase == DD2_PROFILE_OPEN_SAVE) {
+            menu->phase = DD2_PROFILE_SAVE_SELECT;
+        } else if (menu->phase == DD2_PROFILE_OPEN_DELETE) {
+            menu->phase = DD2_PROFILE_DELETE_SELECT;
+        } else {
+            menu->phase = DD2_PROFILE_LOAD_SELECT;
+        }
         menu->message = NULL;
         application->dirty = true;
     }
 }
-static void dd2_application_profile_open(dd2_application *application, bool save) {
+static void dd2_application_profile_open(dd2_application *application, dd2_profile_phase opening) {
     dd2_profile_menu *menu = &application->profile_menu;
     menu->logical = 0;
     menu->message = NULL;
@@ -697,12 +705,13 @@ static void dd2_application_profile_open(dd2_application *application, bool save
         application->saves = dd2_save_store_create();
     }
     const int state = dd2_application_saves_phase();
+    const bool save = opening == DD2_PROFILE_OPEN_SAVE;
     if (state == DD2_SAVE_STORE_READY && save) {
         menu->phase = DD2_PROFILE_SAVE_SELECT;
     } else if ((state == DD2_SAVE_STORE_CLOSED && dd2_save_store_open_user(application->saves)) ||
                (!save && (state == DD2_SAVE_STORE_NEEDS_RELOAD || state == DD2_SAVE_STORE_READY) &&
                 dd2_application_reload_saves())) {
-        menu->phase = save ? DD2_PROFILE_OPEN_SAVE : DD2_PROFILE_OPEN_LOAD;
+        menu->phase = opening;
     } else {
         dd2_application_profile_message(application, state == DD2_SAVE_STORE_NEEDS_RELOAD
                                                          ? "F4 RELOADS SAVES BEFORE ANOTHER CHANGE."
@@ -714,6 +723,16 @@ static void dd2_application_profile_save(dd2_application *application) {
     if (dd2_application_save_profile(menu->logical, menu->draft)) {
         menu->phase = DD2_PROFILE_WRITING;
         menu->message = "SAVING. WAIT FOR CONFIRMATION.";
+    } else {
+        dd2_application_profile_message(
+            application, dd2_application_profile_error(dd2_application_saves_poll()));
+    }
+}
+static void dd2_application_profile_delete(dd2_application *application) {
+    dd2_profile_menu *menu = &application->profile_menu;
+    if (dd2_application_delete_save(menu->logical)) {
+        menu->phase = DD2_PROFILE_DELETING;
+        menu->message = "DELETING. WAIT FOR CONFIRMATION.";
     } else {
         dd2_application_profile_message(
             application, dd2_application_profile_error(dd2_application_saves_poll()));
@@ -735,8 +754,15 @@ static bool dd2_application_profile_begin(dd2_application *application, const dd
         }
         return true;
     }
-    if (input->pressed[DD2_KEY_PROFILE_SAVE] || input->pressed[DD2_KEY_PROFILE_LOAD]) {
-        dd2_application_profile_open(application, input->pressed[DD2_KEY_PROFILE_SAVE]);
+    if (input->pressed[DD2_KEY_PROFILE_SAVE] || input->pressed[DD2_KEY_PROFILE_LOAD] ||
+        input->pressed[DD2_KEY_PROFILE_DELETE]) {
+        dd2_profile_phase opening = DD2_PROFILE_OPEN_LOAD;
+        if (input->pressed[DD2_KEY_PROFILE_SAVE]) {
+            opening = DD2_PROFILE_OPEN_SAVE;
+        } else if (input->pressed[DD2_KEY_PROFILE_DELETE]) {
+            opening = DD2_PROFILE_OPEN_DELETE;
+        }
+        dd2_application_profile_open(application, opening);
         return true;
     }
     return false;
@@ -780,10 +806,20 @@ static void dd2_application_profile_select_input(dd2_application *application,
         direction = -1;
     }
     dd2_profile_menu_move(menu, direction);
+    if (direction != 0) {
+        menu->message = NULL;
+    }
     if (!input->pressed[DD2_KEY_DRIVE]) {
         return;
     }
-    if (menu->phase == DD2_PROFILE_LOAD_SELECT) {
+    if (menu->phase == DD2_PROFILE_DELETE_SELECT) {
+        if (dd2_application_save_name(menu->logical) == NULL) {
+            menu->message = "THAT ENTRY IS EMPTY.";
+        } else {
+            menu->phase = DD2_PROFILE_DELETE_CONFIRM;
+            menu->message = NULL;
+        }
+    } else if (menu->phase == DD2_PROFILE_LOAD_SELECT) {
         dd2_application_profile_message(application,
                                         dd2_application_load_profile(menu->logical)
                                             ? "AUDIO AND PLAYER RESTORED."
@@ -796,7 +832,8 @@ static void dd2_application_profile_select_input(dd2_application *application,
 }
 static bool dd2_application_profile_busy(dd2_profile_phase phase) {
     return phase == DD2_PROFILE_WRITING || phase == DD2_PROFILE_OPEN_SAVE ||
-           phase == DD2_PROFILE_OPEN_LOAD;
+           phase == DD2_PROFILE_OPEN_LOAD || phase == DD2_PROFILE_OPEN_DELETE ||
+           phase == DD2_PROFILE_DELETING;
 }
 static void dd2_application_profile_command(dd2_application *application, const dd2_input *input) {
     dd2_profile_menu *menu = &application->profile_menu;
@@ -805,10 +842,13 @@ static void dd2_application_profile_command(dd2_application *application, const 
         menu->message = NULL;
     } else if (dd2_profile_menu_editing(menu)) {
         dd2_application_profile_name_input(application, input);
-    } else if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT) {
+    } else if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT ||
+               menu->phase == DD2_PROFILE_DELETE_SELECT) {
         dd2_application_profile_select_input(application, input);
     } else if (menu->phase == DD2_PROFILE_CONFIRM && input->pressed[DD2_KEY_DRIVE]) {
         dd2_application_profile_save(application);
+    } else if (menu->phase == DD2_PROFILE_DELETE_CONFIRM && input->pressed[DD2_KEY_DRIVE]) {
+        dd2_application_profile_delete(application);
     } else if (menu->phase == DD2_PROFILE_MESSAGE && input->pressed[DD2_KEY_DRIVE]) {
         menu->phase = DD2_PROFILE_CLOSED;
     }

@@ -126,6 +126,15 @@ a synthetic GL check; naturally completed named results remain unproved.
 This is a partial front end, not every original menu or saved-game action.
 Receipt: /tmp/wasm-dd2/rewrite-player-profile-0058-release/verification-report.json.
 
+Active 0058 additionally verifies the actual Native/browser-canvas Delete route:
+fresh inventory, all fifteen positions, separate occupied confirmation, empty
+entry refusal, cancellation, physical identity for duplicate GAME/REPLAY entries,
+conflicts, pending/aborted storage and restart. Complete independent cards pass
+in 44 Native/sanitized dialog checks and 45 Chromium checks; strict LLVM19/197-file,
+44/42 CTests and Native application Memcheck pass. Confirmation/completion
+rendering is visually reviewed. Full original menus remain open. Receipt:
+/tmp/wasm-dd2/rewrite-delete-0058-release/verification-report.json.
+
 ## Next
 
 Continue original navigation to resolve remaining submenus, File Manager

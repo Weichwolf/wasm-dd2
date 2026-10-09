@@ -40,6 +40,7 @@ typedef enum {
     DD2_KEY_PROFILE_SAVE,
     DD2_KEY_PROFILE_LOAD,
     DD2_KEY_BACKSPACE,
+    DD2_KEY_PROFILE_DELETE,
     DD2_KEY_COUNT
 } dd2_key;
 

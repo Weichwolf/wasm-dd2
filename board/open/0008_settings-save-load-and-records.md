@@ -126,6 +126,16 @@ green. This is player/audio integration and partial human menus, not full settin
 records or playable saves. Receipt:
 /tmp/wasm-dd2/rewrite-player-profile-0058-release/verification-report.json.
 
+Active 0058 now verifies actual Native/browser-canvas deletion with separate
+confirmation and terminal durable completion. Independent full images cover
+duplicate filenames, opaque GAME/REPLAY payloads, first/middle/last/only-entry
+deletion, compact logical inventory, empty/full cards, cancellation, conflicting
+writers, actual IndexedDB abort/pending lifetime and process restart. Forty-four
+Native/sanitized dialog checks, 45 browser checks, strict LLVM19/197-file gates,
+44/42 CTests and Native application Memcheck pass. All unaffected payload/reserved
+bytes remain intact. Full settings/records/playable saves remain open. Receipt:
+/tmp/wasm-dd2/rewrite-delete-0058-release/verification-report.json.
+
 ## Next
 
 Translate and validate complete source configuration/game state under 0058,

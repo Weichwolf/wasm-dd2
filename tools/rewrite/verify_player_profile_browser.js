@@ -18,6 +18,13 @@ function put(before,logical,name,payload){
   image.writeUInt32LE(1,p*512);image.write(name+'\0',p*512+4,'ascii');payload.copy(image,(p+1)*8192);
   return image;
 }
+function remove(before,logical){
+  const image=Buffer.from(before),occupied=[];
+  for(let p=0;p<15;++p)if(image.readUInt32LE(p*512))occupied.push(p);
+  check(logical<occupied.length,'Independent delete target is absent');
+  image.fill(0,occupied[logical]*512,occupied[logical]*512+5);
+  return image;
+}
 function named(payload,name){const result=Buffer.from(payload);result.write(name+'\0',5828,'ascii');return result;}
 function extension(music){
   const result=Buffer.alloc(16);result.write('D2CF');result.writeUInt16LE(1,4);result.writeUInt16LE(16,6);result.writeUInt16LE(music,8);
@@ -60,11 +67,14 @@ async function card(page,expected,label){
   }),database));
   check(actual.equals(expected),label+' complete IndexedDB image differs');report.cases.push({label,bytes:actual.length,sha256:hash(actual)});
 }
-async function inject(page,image){
+async function writeStored(page,image){
   await page.evaluate(({name,bytes})=>new Promise((resolve,reject)=>{
     const request=indexedDB.open(name,1);request.onerror=()=>reject(request.error);
     request.onsuccess=()=>{const db=request.result,tx=db.transaction('images','readwrite',{durability:'strict'});tx.objectStore('images').put(new Uint8Array(bytes).buffer,'SaveGames');tx.oncomplete=()=>{db.close();resolve();};tx.onabort=()=>{db.close();reject(tx.error);};};
   }),{name:database,bytes:[...image]});
+}
+async function inject(page,image){
+  await writeStored(page,image);
   await page.locator('#saves-reload').click();await wait(page);
   await page.locator('#save-slot').selectOption('0');
 }
@@ -156,6 +166,74 @@ async function editor(page,before,after){
     await current(page,'LOCAL',128,64,'profile-write-abort-keeps-live-edit');await card(page,keyboard,'profile-write-abort-retains-durable-image');
     await page.evaluate(()=>{IDBObjectStore.prototype.put=window.profilePut;});
     await page.locator('#profile-load').click();await current(page,'Browser!',128,64,'aborted-write-can-restore-prior-profile');
+    // The actual canvas Delete route operates on physical entries, regardless
+    // of payload kind or duplicate filename. No C setter drives the menu.
+    const game=Buffer.from(bytes('factory'));game.writeUInt16LE(0x3030);game[8191]=91;
+    const replay=Buffer.from(bytes('factory'));replay.writeUInt16LE(0x2020);replay[8191]=92;
+    let inventory=put(put(keyboard,1,'GAME',game),2,'REPLAY',replay);
+    inventory.write('KEY\0',512+4,'ascii');await inject(page,inventory);
+    await page.locator('#canvas').focus();await page.keyboard.press('Delete');await phase(page,11,null,0);
+    for(let i=0;i<14;++i)await page.keyboard.press('ArrowRight');await phase(page,11,null,14);
+    await page.keyboard.press('Enter');await phase(page,11,null,14);await card(page,inventory,'delete-empty-slot-refuses');
+    for(let i=0;i<14;++i)await page.keyboard.press('ArrowLeft');await phase(page,11,null,0);
+    await page.keyboard.press('Enter');await phase(page,12,null,0);
+    await page.locator('#canvas').screenshot({path:path.join(output,'delete-confirm.png')});
+    await page.keyboard.press('Escape');await phase(page,0);await card(page,inventory,'delete-separate-confirmation-cancel');
+    await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('Enter');await phase(page,12);
+    const changed=put(inventory,3,'WRITER',bytes('factory'));await writeStored(page,changed);
+    await page.keyboard.press('Enter');await phase(page,9);await card(page,changed,'delete-external-writer-conflict');
+    await page.keyboard.press('Enter');await phase(page,0);
+    await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('ArrowRight');await phase(page,11,null,1);
+    await page.keyboard.press('Enter');await phase(page,12,null,1);await page.keyboard.press('Enter');await phase(page,9);
+    inventory=remove(changed,1);await card(page,inventory,'delete-selected-physical-game-duplicate-name');
+    await current(page,'Browser!',128,64,'delete-keeps-active-player-and-audio');
+    check(await page.evaluate(()=>Module._dd2_application_saves_count())===3,'Delete did not compact logical inventory');
+    await page.keyboard.press('Escape');await phase(page,0);await card(page,inventory,'dismiss-delete-status-keeps-durable-image');
+    await page.evaluate(()=>{
+      window.profilePut=IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put=function(...args){const request=window.profilePut.apply(this,args);this.transaction.abort();return request;};
+    });
+    await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('Enter');await phase(page,12);
+    await page.keyboard.press('Enter');await phase(page,9);await card(page,inventory,'delete-transaction-abort-retains-full-image');
+    check(await page.evaluate(()=>Module._dd2_application_saves_count())===3,'Aborted delete published candidate inventory');
+    await page.evaluate(()=>{IDBObjectStore.prototype.put=window.profilePut;});
+    await page.keyboard.press('Enter');await phase(page,0);
+    // Keep a genuine strict IndexedDB transaction alive while real keys arrive.
+    // The application must retain its old accepted inventory and pending owner.
+    await page.evaluate(()=>{
+      window.holdDelete=true;window.deletePending=null;
+      IDBObjectStore.prototype.put=function(...args){
+        const request=window.profilePut.apply(this,args),store=this;
+        window.deletePending={phase:Module._dd2_application_profile_phase(),close:Module._dd2_application_close(),count:Module._dd2_application_saves_count()};
+        function keep(){const read=store.get('SaveGames');read.onsuccess=()=>{if(window.holdDelete)keep();};}keep();return request;
+      };
+    });
+    await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('ArrowRight');await phase(page,11,null,1);
+    await page.keyboard.press('Enter');await phase(page,12,null,1);await page.keyboard.press('Enter');await phase(page,13);
+    await page.waitForFunction(()=>window.deletePending!==null);
+    const pending=await page.evaluate(()=>window.deletePending);
+    check(pending.phase===13&&pending.close===0&&pending.count===3,'Pending delete published data or released application: '+JSON.stringify(pending));
+    await page.keyboard.press('Escape');await page.keyboard.press('Enter');
+    await page.evaluate(()=>new Promise(resolve=>{let frames=0;function tick(){if(++frames===4)resolve();else requestAnimationFrame(tick);}requestAnimationFrame(tick);}));
+    await phase(page,13);
+    check(await page.locator('#profile-save').isDisabled(),'Pending deletion enabled other save controls');
+    await page.evaluate(()=>{window.holdDelete=false;IDBObjectStore.prototype.put=window.profilePut;});await phase(page,9);
+    inventory=remove(inventory,1);await card(page,inventory,'pending-delete-retains-owner-until-strict-commit');
+    await page.locator('#canvas').screenshot({path:path.join(output,'delete-completed.png')});
+    report.cases.push({label:'pending-delete-refuses-close-and-dismissal',...pending});
+    await page.keyboard.press('Enter');await phase(page,0);
+    // Restart observes the durable deletion before deleting the remaining rows.
+    await context.close();context=null;page=await launch();await open(page);
+    await card(page,inventory,'fresh-browser-process-retains-deleted-physical-entries');
+    check(await page.evaluate(()=>Module._dd2_application_saves_count())===2,'Restart reconstructed wrong logical inventory');
+    await page.locator('#canvas').focus();
+    for(const label of ['delete-first-entry','delete-only-entry']){
+      await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('Enter');await phase(page,12);
+      await page.keyboard.press('Enter');await phase(page,9);inventory=remove(inventory,0);await card(page,inventory,label);
+      await page.keyboard.press('Enter');await phase(page,0);
+    }
+    await page.keyboard.press('Delete');await phase(page,11);await page.keyboard.press('Enter');await phase(page,11);
+    await card(page,inventory,'empty-card-delete-refuses-without-mutation');await page.keyboard.press('Escape');await phase(page,0);
     check(await page.evaluate(()=>Module._dd2_application_close())===1,'terminal application did not close');
     check(report.errors.length===0,'Browser errors: '+report.errors.join('; '));report.complete=true;
   }finally{

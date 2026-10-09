@@ -72,11 +72,13 @@ to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
 Current application integration is 0058 under 0008/0003: player/audio profiles
-now have actual Native/browser name/save/load dialogs, restart and validated
-rollback. LLVM19/197-file checks, 44 Native/42 WASM CTests, 31 original/Native/
-sanitized profile cases, 22 Native/sanitized dialog checks and 32 browser checks
-pass. Full configuration/records, remaining Native file actions and validated
-playable saved championships remain open. Natural-race work continues under
+now have actual Native/browser name/save/load/delete dialogs, restart and
+validated rollback. LLVM19/197-file checks, 44 Native/42 WASM CTests, 31 original/Native/
+sanitized profile cases, 44 Native/sanitized dialog checks and 45 browser checks
+pass, including deletion confirmation, complete physical images, empty/duplicate/
+GAME/REPLAY entries, external-writer conflicts and pending/aborted IndexedDB
+transactions. Full configuration/records, remaining Native configuration actions
+and validated playable saved championships remain open. Natural-race work continues under
 0053/0002: complete WASM Arena-8 natural-result acceptance.
 After closed 0054, the selected Native/sanitized owners reach natural results;
 WASM still times out at the unchanged 1800-second limit after 86042 complete ticks.

@@ -111,8 +111,9 @@ sessions and missing-next-track rollback on Native, WASM and ASan/UBSan. See
 `src/game/championship.md`. The shared application now connects Native C/N and browser entry to this owner,
 with scheduled track locking, unscored restart/exit, prepared renderer resources,
 real named division standings and explicit result continuation. Original NPC
-names and default human PLAYER are implemented; configurable identity remains
-open. `make rewrite-championship-application-verify` checks natural first-round
+names and default human PLAYER are implemented; the player/audio profile actions
+below now own configurable identity. `make rewrite-championship-application-verify`
+checks natural first-round
 application results/presentation on Native, Chromium/WASM and ASan/UBSan, separate
 from complete physical campaigns, original menus, multiplayer and saved seasons.
 Supported overturned cars now have a separate temporary availability state and

@@ -29,10 +29,12 @@ static bool dd2_input_test_press(SDL_Scancode code) {
 }
 
 static bool dd2_input_test_order(dd2_window *window) {
-    const SDL_Scancode codes[] = {SDL_SCANCODE_F8, SDL_SCANCODE_P, SDL_SCANCODE_R,
-                                  SDL_SCANCODE_F7, SDL_SCANCODE_P, SDL_SCANCODE_P};
-    const dd2_key expected[] = {DD2_KEY_TIME_TRIAL, DD2_KEY_PAUSE, DD2_KEY_RESET,
-                                DD2_KEY_WITHDRAW,   DD2_KEY_PAUSE, DD2_KEY_PAUSE};
+    const SDL_Scancode codes[] = {SDL_SCANCODE_F8,    SDL_SCANCODE_P, SDL_SCANCODE_R,
+                                  SDL_SCANCODE_F7,    SDL_SCANCODE_P, SDL_SCANCODE_P,
+                                  SDL_SCANCODE_DELETE};
+    const dd2_key expected[] = {DD2_KEY_TIME_TRIAL,    DD2_KEY_PAUSE, DD2_KEY_RESET,
+                                DD2_KEY_WITHDRAW,      DD2_KEY_PAUSE, DD2_KEY_PAUSE,
+                                DD2_KEY_PROFILE_DELETE};
     for (size_t key = 0; key < sizeof(codes) / sizeof(codes[0]); ++key) {
         if (!dd2_input_test_press(codes[key])) {
             return false;

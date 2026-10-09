@@ -51,7 +51,11 @@ JavaScript owns copied bytes and obtains current WASM heap views during polling.
 Missing storage opens empty without creating a card until a mutation succeeds.
 No persistence location defaults to provisioned game assets. The application now
 consumes this owner for player/audio profiles through Native C actions, actual
-F2/F3/F4 keyboard dialogs and browser controls. The default Native location is
+F2/F3/F4 keyboard dialogs and browser controls. The Delete key reloads the
+inventory and opens a separate deletion selection/confirmation dialog on Native
+and the focused browser canvas. Empty entries cannot be deleted. Pending deletion
+owns the application until storage acknowledges success or failure; cancelling
+the preceding confirmation preserves the card. The default Native location is
 SDL's per-user `Weichwolf/wasm-dd2` preference folder; explicit C callers may
 provide an existing dedicated writable folder. It preserves pending application
 owners and terminal completion receipts across close. See

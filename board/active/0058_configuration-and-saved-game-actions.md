@@ -93,13 +93,35 @@ Native/sanitized/browser dialogs are visually reviewed. Successful raw output
 and finished captures are removed after reporting; original data and pinned
 SoftGL remain unchanged. These prove player/audio integration and partial human
 menus, not all configuration, records or playable saved-game restoration.
+The Delete key now opens an explicitly reloaded inventory on Native and the
+focused browser canvas. All fifteen positions can be selected; an occupied
+entry shows its logical position and filename for a separate confirmation.
+Empty entries cannot be deleted. GAME/REPLAY payloads remain opaque, existing
+duplicate names identify distinct physical entries and successful deletion
+retains payload/reserved bytes while compacting the logical inventory.
+Live identity/audio remain unchanged. Pending deletion refuses dismissal and
+application close; completion is shown only after the durable store acknowledges.
+
+The extended `make rewrite-player-profile-verify` passes 31 original/Native/
+fresh O1 sanitized cases, 44 actual Native/sanitized X11 dialog checks and 45
+actual Chromium checks. Independent complete images cover full-card middle/last
+deletion, duplicate names, opaque GAME/REPLAY entries, empty/missing cards,
+confirmation cancel, first/only-entry deletion, external writer conflicts and
+fresh-process restoration. A genuine held strict IndexedDB transaction preserves
+the previous accepted inventory and refuses close/Enter/Escape until completion;
+a real abort retains the entire prior image. Strict LLVM19 checks all 197 C/header
+files; 44 Native/42 WASM CTests and zero-error/no-lost-block Native application
+Memcheck pass. Native/sanitized/browser confirmation and completion images are
+visually reviewed. Original assets and pinned SoftGL remain unchanged. Receipt:
+/tmp/wasm-dd2/rewrite-delete-0058-release/verification-report.json.
+This proves the shared deletion route, not full configuration or saved gameplay.
 The full contract remains active.
 
 ## Next
 
 Translate and validate mode/car/track/input/record fields, other player fields
 and playable saved championship state. Connect the complete Configuration/
-Information routes and remaining Native file actions, including deletion.
+Information routes and remaining Native configuration actions.
 Prove named results through actual completed play; synthetic standings do not
 replace that acceptance. Keep imported source fields and reserved bytes through
 subsequent edits and preserve active owners on failure.

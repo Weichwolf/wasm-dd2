@@ -179,6 +179,8 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_PROFILE_LOAD;
     case SDL_SCANCODE_BACKSPACE:
         return DD2_KEY_BACKSPACE;
+    case SDL_SCANCODE_DELETE:
+        return DD2_KEY_PROFILE_DELETE;
     default:
         return DD2_KEY_COUNT;
     }

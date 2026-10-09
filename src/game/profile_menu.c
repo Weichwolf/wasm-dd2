@@ -59,7 +59,8 @@ void dd2_profile_menu_backspace(dd2_profile_menu *menu) {
 }
 void dd2_profile_menu_move(dd2_profile_menu *menu, int direction) {
     if (menu == NULL || menu->logical >= DD2_SAVE_CARD_SLOTS ||
-        (menu->phase != DD2_PROFILE_SAVE_SELECT && menu->phase != DD2_PROFILE_LOAD_SELECT)) {
+        (menu->phase != DD2_PROFILE_SAVE_SELECT && menu->phase != DD2_PROFILE_LOAD_SELECT &&
+         menu->phase != DD2_PROFILE_DELETE_SELECT)) {
         return;
     }
     if (direction < 0 && menu->logical != 0) {

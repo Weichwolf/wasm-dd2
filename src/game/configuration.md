@@ -64,7 +64,12 @@ application starts.
 Native F2 edits the human name. F3 selects any of fifteen entries and edits a
 save filename; replacing an occupied entry requires a separate confirmation.
 F4 explicitly reloads the complete file and selects an entry to restore player
-and audio. Escape cancels drafts and confirmations without changing stored data.
+and audio. Delete explicitly reloads the inventory, selects one of fifteen
+logical entries and requires a separate confirmation of its name and position.
+It deletes CONFIG/STARTUP/GAME/REPLAY entries without loading their payloads;
+duplicate source names still identify the selected physical entry. Completion
+appears only after durable storage acknowledges the full candidate image.
+Escape cancels drafts and confirmations without changing stored data.
 Opening/writing must reach terminal completion before the dialog can dismiss.
 Dialogs suspend simulation and music and reuse the frozen world image underneath
 their opaque pane, so typing does not repeatedly render the whole circuit. The

@@ -24,7 +24,7 @@ from artifacts import WORK, check_space, open_files, prepare_output, run_bounded
 from rewrite.quality import ROOT
 from rewrite.serve import BUILD, Handler
 from rewrite.verify_preferences import digest, extension, preferences, BLOCK, SIZE, PREFIX
-from rewrite.verify_save_store import put
+from rewrite.verify_save_store import put, delete
 from rewrite.verify_window import NativeWindow, build_sanitized
 from verify_season_transition import EXE_SHA
 
@@ -88,6 +88,10 @@ def native_dialog(output, archive, binary, label, factory):
 
     try:
         ui.start();state(0, name='PLAYER')
+        key('Delete');state(11);key('Return');state(11)
+        if card.exists():raise ValueError('Deleting from missing saves created an image')
+        key('Escape');state(0)
+        cases.append(dict(label='delete-opening-missing-saves-does-not-create-card'))
         key('F8');key('F2');first=state(1, draft='PLAYER')
         edit('Racer_7!');last=state(1, draft='Racer_7!')
         if (first['race_steps'],first['music_frame']) != (last['race_steps'],last['music_frame']):
@@ -140,6 +144,26 @@ def native_dialog(output, archive, binary, label, factory):
         key('Return');state(0)
         key('F4');state(5);key('Escape');state(0)
         external=changed
+        key('Delete');state(11,slot=0)
+        key(*(['Right']*14));state(11,slot=14);key('Return');state(11,slot=14)
+        image(external,'delete-empty-slot-does-not-write')
+        key(*(['Left']*14));state(11,slot=0);key('Return');state(12,slot=0)
+        ui.image().save(folder/'delete-confirm.png')
+        key('Escape');state(0,name='LongName_11')
+        image(external,'delete-needs-separate-confirmation-and-cancel-keeps-image')
+        key('Delete');state(11);key('Return');state(12)
+        changed=put(external,3,'WRITER',named(factory,'WRITER'));card.write_bytes(changed)
+        key('Return');state(9,name='LongName_11')
+        image(changed,'delete-refuses-external-writer-conflict')
+        key('Return');state(0)
+        key('Delete');state(11);key('Right','Right');state(11,slot=2)
+        key('Return');state(12,slot=2);key('Return');state(9,name='LongName_11')
+        external=delete(changed,2);image(external,'delete-reloads-and-removes-middle-physical-entry')
+        ui.image().save(folder/'delete-completed.png')
+        key('Escape');state(0);image(external,'dismiss-delete-completion-retains-durable-image')
+        key('Delete');state(11);key('Return');state(12);key('Return');state(9)
+        external=delete(external,0);image(external,'delete-first-entry-compacts-logical-selection')
+        key('Return');state(0)
         key('Escape')
         if ui.process.wait(timeout=15)!=0:raise ValueError(label+' actual window did not exit cleanly')
         if 'Sanitizer:' in (folder/'native.log').read_text() or 'runtime error:' in (folder/'native.log').read_text():
@@ -152,10 +176,34 @@ def native_dialog(output, archive, binary, label, factory):
         ui.start()
         # Observe the second process through its own read-only stdout.
         observation_log=folder/'restart.log'
-        state(0,name='PLAYER');key('F4');state(5);key('Right');state(5,slot=1)
+        state(0,name='PLAYER');key('F4');state(5,slot=0)
         key('Return');state(9,name='LongName_11')
         image(external,'fresh-native-process-restores-full-legacy-identity')
-        key('Return');state(0);key('Escape')
+        key('Return');state(0)
+        # Deletion operates on card identity, including opaque GAME/REPLAY data
+        # and duplicate source names; it must never decode/load the payload.
+        inventory=bytes(SIZE)
+        for logical in range(15):
+            payload=bytearray(factory)
+            struct.pack_into('<H',payload,0,0x3030 if logical%2 else 0x2020)
+            payload[-1]=logical
+            inventory=put(inventory,logical,'S'+str(logical),bytes(payload))
+        duplicate=bytearray(inventory);duplicate[512+4:512+7]=b'S0\0';inventory=bytes(duplicate)
+        card.write_bytes(inventory)
+        key('Delete');state(11);key('Right');state(11,slot=1)
+        key('Return');state(12,slot=1);key('Return');state(9,name='LongName_11')
+        inventory=delete(inventory,1);image(inventory,'delete-duplicate-name-selected-physical-game-payload')
+        key('Return');state(0)
+        key('Delete');state(11);key(*(['Right']*13));state(11,slot=13)
+        key('Return');state(12,slot=13);key('Return');state(9,name='LongName_11')
+        inventory=delete(inventory,13);image(inventory,'delete-last-opaque-replay-keeps-all-reserved-bytes')
+        key('Return');state(0)
+        single=put(bytes(SIZE),0,'ONLY',named(factory,'OTHER'));card.write_bytes(single)
+        key('Delete');state(11);key('Return');state(12);key('Return');state(9,name='LongName_11')
+        image(delete(single,0),'delete-only-entry-keeps-live-identity')
+        key('Return');state(0);key('Delete');state(11);key('Return');state(11)
+        image(delete(single,0),'empty-card-delete-refuses-without-mutation')
+        key('Escape');state(0);key('Escape')
         if ui.process.wait(timeout=15)!=0:raise ValueError(label+' restarted window did not exit')
     finally:ui.close()
     return dict(target=label,real_x11_keys=True,cases=cases,pass_=True)
@@ -268,6 +316,7 @@ def main():
     (output/'verification-report.json').write_text(json.dumps(report,indent=2)+'\n')
     opened=open_files();removed=[];retained=[]
     keep={output/'verification-report.json',output/'browser-report.json',output/'player-profile.png'}
+    keep.update(output.rglob('*delete*.png'))
     keep.update(output/path/'sanitizer-build.json' for path in ('sanitized-build','window-sanitized-build'))
     keep.update(output/path/name for path in ('native-dialog','sanitized-dialog') for name in ('name-draft.png','save-completed.png'))
     for path in sorted(output.rglob('*'),key=lambda p:len(p.parts),reverse=True):

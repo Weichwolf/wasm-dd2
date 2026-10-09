@@ -16,7 +16,11 @@ typedef enum {
     DD2_PROFILE_SAVE_NAME,
     DD2_PROFILE_CONFIRM,
     DD2_PROFILE_WRITING,
-    DD2_PROFILE_MESSAGE
+    DD2_PROFILE_MESSAGE,
+    DD2_PROFILE_OPEN_DELETE,
+    DD2_PROFILE_DELETE_SELECT,
+    DD2_PROFILE_DELETE_CONFIRM,
+    DD2_PROFILE_DELETING
 } dd2_profile_phase;
 typedef struct {
     dd2_profile_phase phase;

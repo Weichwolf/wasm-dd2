@@ -669,8 +669,13 @@ static const char *dd2_profile_draw_title(dd2_profile_phase phase) {
     case DD2_PROFILE_OPEN_LOAD:
     case DD2_PROFILE_LOAD_SELECT:
         return "RESTORE AUDIO AND PLAYER";
+    case DD2_PROFILE_OPEN_DELETE:
+    case DD2_PROFILE_DELETE_SELECT:
+    case DD2_PROFILE_DELETE_CONFIRM:
+    case DD2_PROFILE_DELETING:
+        return "DELETE SAVE ENTRY";
     case DD2_PROFILE_MESSAGE:
-        return "AUDIO AND PLAYER STATUS";
+        return "SAVE STATUS";
     default:
         return "SAVE AUDIO AND PLAYER";
     }
@@ -682,8 +687,11 @@ static const char *dd2_profile_draw_help(dd2_profile_phase phase) {
         return "EIGHT ASCII CHARACTERS. BACKSPACE EDITS.";
     case DD2_PROFILE_CONFIRM:
         return "ENTER REPLACES THE SELECTED ENTRY.";
+    case DD2_PROFILE_DELETE_CONFIRM:
+        return "ENTER PERMANENTLY DELETES THIS ENTRY.";
     case DD2_PROFILE_SAVE_SELECT:
     case DD2_PROFILE_LOAD_SELECT:
+    case DD2_PROFILE_DELETE_SELECT:
         return "LEFT/RIGHT CHOOSE AN ENTRY.";
     default:
         return "";
@@ -694,6 +702,8 @@ static const char *dd2_profile_draw_footer(dd2_profile_phase phase) {
     case DD2_PROFILE_WRITING:
     case DD2_PROFILE_OPEN_SAVE:
     case DD2_PROFILE_OPEN_LOAD:
+    case DD2_PROFILE_OPEN_DELETE:
+    case DD2_PROFILE_DELETING:
         return "PLEASE WAIT FOR COMPLETION.";
     case DD2_PROFILE_MESSAGE:
         return "ENTER OR ESCAPE RETURNS.";
@@ -749,7 +759,8 @@ bool dd2_profile_draw(const dd2_profile_menu *menu, const char *selected,
                                                .scale = 3 * scale});
         glColor3f(1, 1, 1);
     }
-    if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT) {
+    if (menu->phase == DD2_PROFILE_SAVE_SELECT || menu->phase == DD2_PROFILE_LOAD_SELECT ||
+        menu->phase == DD2_PROFILE_DELETE_SELECT || menu->phase == DD2_PROFILE_DELETE_CONFIRM) {
         dd2_race_draw_text("ENTRY", (dd2_race_draw_pen){.x = dd2_profile_draw_text_left * scale,
                                                         .y = dd2_profile_draw_entry_bottom * scale,
                                                         .scale = 2 * scale});
