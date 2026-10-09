@@ -87,7 +87,7 @@ def main():
              '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
              '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
              '-fsanitize=address,undefined','-fno-omit-frame-pointer']
-    units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road')]
+    units = [ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','body_surface','vehicle')]
     units += [ROOT/'src/platform/file.c']
     sanitized_export = output/'dd2_vehicle_export_sanitized'
@@ -116,7 +116,7 @@ def main():
                   for platform,actual in targets.items()}
         levels.append(dict(code=code,summary=summary,max_absolute_error=errors))
         print(json.dumps(dict(code=code,pass_=True,steps=summary['steps'],errors=errors)),flush=True)
-    sources = ['src/physics/body_surface.c','src/physics/body_surface.h','src/physics/body_geometry.h','src/physics/collision_math.h','src/physics/vehicle_collision.h','src/physics/vehicle.c','src/physics/vehicle.h','src/physics/numeric.h',
+    sources = ['src/assets/car_class.c','src/assets/car_class.h','src/physics/body_surface.c','src/physics/body_surface.h','src/physics/body_geometry.h','src/physics/collision_math.h','src/physics/vehicle_collision.h','src/physics/vehicle.c','src/physics/vehicle.h','src/physics/numeric.h',
                'src/physics/road_contact.c','src/physics/road_contact.h',
                'src/physics/road_surface.c','src/physics/road_surface.h',
                'src/assets/road.c','src/assets/road.h','tests/vehicle_test.c',

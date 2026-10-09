@@ -137,7 +137,7 @@ def main():
              '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
              '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
              '-fsanitize=address,undefined','-fno-omit-frame-pointer']
-    units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
+    units = [ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
               ('road_contact','road_surface','body_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision','damage')]
     units += [ROOT/'src/game/driving.c', ROOT/'src/game/starting_grid.c', ROOT/'src/game/accidents.c', ROOT/'src/game/course.c', ROOT/'src/game/laps.c', ROOT/'src/game/race.c', ROOT/'src/game/recovery.c', ROOT/'src/game/sound_events.c', ROOT/'src/platform/file.c']

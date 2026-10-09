@@ -4,6 +4,8 @@ const status = document.getElementById('status');
 const archive = document.getElementById('archive');
 const level = document.getElementById('level');
 const view = document.getElementById('view');
+const carClass = document.getElementById('car-class');
+const carRatings = document.getElementById('car-ratings');
 const reset = document.getElementById('reset');
 const pauseButton = document.getElementById('pause');
 const finishButton = document.getElementById('finish');
@@ -70,7 +72,7 @@ archive.addEventListener('change', async () => {
     try { Module.callMain(['/Dirinfo']); }
     finally { Module.FS.unlink('/Dirinfo'); }
     loaded = Module._dd2_application_current_level() !== 0;
-    for (const control of [level, view, reset, pauseButton, finishButton]) control.disabled = !loaded;
+    for (const control of [level, view, carClass, reset, pauseButton, finishButton]) control.disabled = !loaded;
     if (loaded) {
       ++applicationGeneration;
       musicGain.value = '256';
@@ -125,6 +127,13 @@ musicGain.addEventListener('change', () => canvas.focus());
 effectsGain.addEventListener('input', () => Module._dd2_application_set_effects_gain(Number(effectsGain.value)));
 effectsGain.addEventListener('change', () => canvas.focus());
 
+carClass.addEventListener('change', () => {
+  const accepted = Module._dd2_application_select_car(Number(carClass.value));
+  status.textContent = accepted ? 'Car class selected.' : 'Leave driving or the championship before choosing a car class.';
+  carClass.value = String(Module._dd2_application_current_car());
+  canvas.focus();
+});
+
 level.addEventListener('change', () => {
   if (!Module._dd2_application_select_level(Number(level.value))) {
     status.textContent = 'The track could not be loaded.';
@@ -163,7 +172,7 @@ canvas.addEventListener('blur', () => {
 });
 canvas.addEventListener('wheel', event => event.preventDefault(), {passive:false});
 canvas.addEventListener('keydown', event => {
-  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','PageUp','PageDown',' ','Enter'].includes(event.key)) event.preventDefault();
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','PageUp','PageDown',' ','Enter','F1'].includes(event.key)) event.preventDefault();
 });
 window.addEventListener('blur', () => {
   if (loaded) Module._dd2_application_release_input();
@@ -181,6 +190,10 @@ function reflectSelection() {
       const championship = championshipPhase >= 0;
       level.disabled = championship;
       view.value = String(Module._dd2_application_current_view());
+      carClass.value = String(Module._dd2_application_current_car());
+      carClass.disabled = championship || Number(view.value) >= 2;
+      const ratings = [0, 1, 2].map(index => Module._dd2_application_car_rating(index));
+      carRatings.textContent = `Acceleration ${ratings[0]}/5 · Speed ${ratings[1]}/5 · Grip ${ratings[2]}/5`;
       pauseButton.disabled = Number(view.value) < 2;
       for (const mode of [4, 5]) view.querySelector(`option[value="${mode}"]`).disabled = current > 7;
       view.querySelector('option[value="6"]').disabled = current <= 7;
@@ -329,6 +342,7 @@ function reflectSaves() {
   profileLoad.disabled = preferencesLoad.disabled || championship || modal;
   level.disabled = !loaded || championship || modal;
   view.disabled = !loaded || modal;
+  carClass.disabled = !loaded || championship || modal || [1,3,4].includes(phase) || Number(view.value) >= 2;
   if (modal) {
     for (const control of [reset, pauseButton, finishButton, continueButton, musicFile, musicPlay,
                           musicGain, effectsGain, savesOpen, savesReload, saveSlot, saveName,

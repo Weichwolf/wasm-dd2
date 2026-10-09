@@ -207,7 +207,7 @@ def main():
            '-Wno-unused-parameter','-Wno-unused-function','-fno-strict-aliasing','-ffast-math',
            '-Werror','-Wshadow','-Wconversion','-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
            '-fsanitize=address,undefined','-fno-omit-frame-pointer']
-    units=[ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
+    units=[ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','body_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision','damage')]
     sanitized=output/'export-sanitized';test=output/'test-sanitized'
     for name,binary in (('barrier_export',sanitized),('barrier_test',test)):

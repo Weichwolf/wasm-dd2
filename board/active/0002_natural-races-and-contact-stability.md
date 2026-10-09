@@ -265,6 +265,16 @@ not a livery regression or a full cross-target driving pass. Receipts:
 Locate its first divergent accepted fleet step and retain only the corresponding
 typed contact query/work counts; preserve tolerances and full scenario coverage.
 
+After 0005 connects original class handling, the same unchanged strict corpus
+still passes 21 of 22 level/mode cases and fails LEVB at 800 steps. Current
+Native X is -5866.5017820426301, WASM -5864.8079891853395 and O1 sanitized
+-5873.595608575949. All have four supported wheels and zero player collisions.
+The complete 66-state inventory is recorded; the smaller WASM X difference
+(1.6937928572906458) does not establish convergence or a solver correction.
+The independent class prefixes/selection pass; they do not replace this strict
+longer comparison. Receipt:
+/tmp/wasm-dd2/rewrite-car-class-driving-0005/diagnosis-report.json.
+
 ## Next
 
 Diagnose late WASM Arena-8 motion and cost under 0053 after the terminal

@@ -1,6 +1,7 @@
 #ifndef DD2_ASSETS_CAR_H
 #define DD2_ASSETS_CAR_H
 
+#include "assets/car_class.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/textures.h"
@@ -8,7 +9,6 @@
 #include <stdbool.h>
 
 enum { DD2_CAR_DRIVERS = 20, DD2_CAR_PARTS = 8, DD2_CAR_LIVERIES = DD2_CAR_DRIVERS + 2 };
-typedef enum { DD2_CAR_ROOKIE, DD2_CAR_AMATEUR, DD2_CAR_PRO, DD2_CAR_CLASSES } dd2_car_class;
 typedef struct {
     unsigned page;
     unsigned palette_bank;

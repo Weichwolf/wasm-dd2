@@ -1,5 +1,6 @@
 #include "render/race_draw.h"
 
+#include "assets/car_class.h"
 #include "game/accidents.h"
 #include "game/championship.h"
 #include "game/configuration.h"
@@ -468,6 +469,66 @@ bool dd2_race_draw(const dd2_race *race, dd2_render_options viewport) {
         dd2_race_draw_results(race, scale);
     } else {
         dd2_race_draw_active(race, scale);
+    }
+    glEnd();
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_DEPTH_TEST);
+    return glGetError() == GL_NO_ERROR;
+}
+
+bool dd2_car_class_draw(dd2_car_class car_class, dd2_render_options viewport) {
+    const dd2_car_handling *handling = dd2_car_class_handling(car_class);
+    if (handling == NULL || viewport.width == 0 || viewport.height == 0) {
+        return false;
+    }
+    enum {
+        DD2_CAR_DRAW_LEFT = 16,
+        DD2_CAR_DRAW_BOTTOM = 12,
+        DD2_CAR_DRAW_COLUMN = 192,
+        DD2_CAR_DRAW_NUMBER = 84,
+        DD2_CAR_DRAW_HEIGHT = 50
+    };
+    const float scale = fminf((float)viewport.width / (float)DD2_RACE_DRAW_WIDTH,
+                              (float)viewport.height / (float)DD2_RACE_DRAW_HEIGHT);
+    const char *labels[] = {"ACCEL", "SPEED", "GRIP"};
+    const unsigned values[] = {handling->ratings.acceleration, handling->ratings.top_speed,
+                               handling->ratings.grip};
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, viewport.width, 0, viewport.height, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glBegin(GL_TRIANGLES);
+    glColor3f(0, 0, 0);
+    dd2_race_draw_box(0, 0, (float)viewport.width, (float)DD2_CAR_DRAW_HEIGHT * scale);
+    glColor3f(1, 1, 1);
+    dd2_race_draw_text(
+        "F1 CAR CLASS",
+        (dd2_race_draw_pen){.x = (float)DD2_CAR_DRAW_LEFT * scale,
+                            .y = (float)(DD2_CAR_DRAW_BOTTOM + DD2_RACE_DRAW_LINE) * scale,
+                            .scale = scale});
+    dd2_race_draw_text(
+        handling->name,
+        (dd2_race_draw_pen){.x = (float)DD2_CAR_DRAW_COLUMN * scale,
+                            .y = (float)(DD2_CAR_DRAW_BOTTOM + DD2_RACE_DRAW_LINE) * scale,
+                            .scale = scale});
+    for (unsigned index = 0; index < 3; ++index) {
+        const float left = (float)(DD2_CAR_DRAW_LEFT + (index * DD2_CAR_DRAW_COLUMN)) * scale;
+        dd2_race_draw_text(labels[index],
+                           (dd2_race_draw_pen){
+                               .x = left, .y = (float)DD2_CAR_DRAW_BOTTOM * scale, .scale = scale});
+        dd2_race_draw_number(values[index],
+                             (dd2_race_draw_pen){.x = left + ((float)DD2_CAR_DRAW_NUMBER * scale),
+                                                 .y = (float)DD2_CAR_DRAW_BOTTOM * scale,
+                                                 .scale = scale});
     }
     glEnd();
     glPopMatrix();

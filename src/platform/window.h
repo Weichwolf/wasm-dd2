@@ -41,6 +41,7 @@ typedef enum {
     DD2_KEY_PROFILE_LOAD,
     DD2_KEY_BACKSPACE,
     DD2_KEY_PROFILE_DELETE,
+    DD2_KEY_CAR_CLASS,
     DD2_KEY_COUNT
 } dd2_key;
 

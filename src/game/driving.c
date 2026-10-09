@@ -2,6 +2,7 @@
 
 #include "ai/driver.h"
 #include "assets/barriers.h"
+#include "assets/car_class.h"
 #include "assets/road.h"
 #include "game/accidents.h"
 #include "game/course.h"
@@ -45,6 +46,7 @@ struct dd2_driving {
     uint64_t collisions;
     dd2_grid_start starts[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle vehicles[DD2_VEHICLE_FLEET_LIMIT];
+    dd2_car_class classes[DD2_VEHICLE_FLEET_LIMIT];
     dd2_ai_driver drivers[DD2_VEHICLE_FLEET_LIMIT];
     dd2_vehicle_damage damages[DD2_VEHICLE_FLEET_LIMIT];
     dd2_recovery_driver recovery[DD2_VEHICLE_FLEET_LIMIT];
@@ -117,8 +119,9 @@ static bool dd2_driving_settle(const dd2_driving *driving, dd2_vehicle *vehicles
         dd2_vehicle previous[DD2_VEHICLE_FLEET_LIMIT] = {0};
         for (unsigned slot = 0; slot < driving->count; ++slot) {
             previous[slot] = vehicles[slot];
-            if (!dd2_vehicle_step(&vehicles[slot], driving->road, driving->surface,
-                                  (dd2_vehicle_control){.brake = 1})) {
+            if (!dd2_vehicle_step_class(&vehicles[slot], driving->road, driving->surface,
+                                        (dd2_vehicle_control){.brake = 1},
+                                        driving->classes[slot])) {
                 return false;
             }
         }
@@ -224,8 +227,13 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level) {
 
 dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
                                      const unsigned *slot_for_driver) {
-    if (!dd2_driving_grid_valid(slot_for_driver) || road == NULL || level == 0 ||
-        level > DD2_DRIVING_LEVELS ||
+    return dd2_driving_create_class(road, level, DD2_CAR_ROOKIE, slot_for_driver);
+}
+
+dd2_driving *dd2_driving_create_class(const dd2_road *road, unsigned level, dd2_car_class car_class,
+                                      const unsigned *slot_for_driver) {
+    if (dd2_car_class_handling(car_class) == NULL || !dd2_driving_grid_valid(slot_for_driver) ||
+        road == NULL || level == 0 || level > DD2_DRIVING_LEVELS ||
         ((level <= DD2_DRIVING_RACING_LEVELS) != (dd2_road_strip_count(road) != 0))) {
         return NULL;
     }
@@ -234,6 +242,9 @@ dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
         return NULL;
     }
     driving->road = road;
+    for (unsigned driver = 0; driver < DD2_VEHICLE_FLEET_LIMIT; ++driver) {
+        driving->classes[driver] = driver == 0 ? car_class : DD2_CAR_PRO;
+    }
     driving->count = DD2_VEHICLE_FLEET_LIMIT;
     driving->opponents = true;
     driving->damage_enabled = true;
@@ -354,6 +365,7 @@ static bool dd2_driving_step(const dd2_driving *driving, dd2_vehicle *vehicles,
     if (!dd2_vehicle_step_field(vehicles, &(dd2_vehicle_field_step){.road = driving->road,
                                                                     .surface = driving->surface,
                                                                     .controls = controls,
+                                                                    .classes = driving->classes,
                                                                     .count = driving->count}) ||
         !dd2_vehicle_collide_fleet_report(vehicles, previous, driving->count, driving->surface,
                                           driving->barrier_world, driving->working_contacts,
@@ -626,6 +638,11 @@ bool dd2_driving_set_race(dd2_driving *driving, bool enabled, dd2_race_mode mode
 
 const dd2_race *dd2_driving_race(const dd2_driving *driving) {
     return driving == NULL || !driving->racing ? NULL : &driving->race;
+}
+
+dd2_car_class dd2_driving_class(const dd2_driving *driving, unsigned driver) {
+    return driving == NULL || driver >= DD2_VEHICLE_FLEET_LIMIT ? DD2_CAR_CLASSES
+                                                                : driving->classes[driver];
 }
 
 bool dd2_driving_withdraw(dd2_driving *driving) {

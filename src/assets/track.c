@@ -3,6 +3,7 @@
 #include "assets/archive.h"
 #include "assets/bytes.h"
 #include "assets/car.h"
+#include "assets/car_class.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/road.h"

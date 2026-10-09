@@ -116,7 +116,7 @@ def main():
              '-Werror', '-Wshadow', '-Wconversion', '-Wstrict-prototypes', '-Wmissing-prototypes',
              '-Wformat=2', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
+             ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
     units += [ROOT / 'src/physics/damage.c']
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera')]
     run([tool('clang'), *flags, *units, ROOT / 'tests/car_livery_export.c', softgl,

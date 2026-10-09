@@ -1,6 +1,7 @@
 #ifndef DD2_PHYSICS_VEHICLE_H
 #define DD2_PHYSICS_VEHICLE_H
 
+#include "assets/car_class.h"
 #include "assets/road.h"
 #include "physics/road_contact.h"
 #include "physics/road_surface.h"
@@ -86,10 +87,17 @@ bool dd2_vehicle_refresh_wheels(dd2_vehicle *vehicle, const dd2_road *road,
                                 const dd2_road_surface *surface);
 bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
                       dd2_vehicle_control control);
+/* Original class traction, rear grip and drive-dependent axle weighting inside
+ * the rewrite rigid body. Does not derive forces from displayed ratings or
+ * retain class pointers. The unconfigured step above keeps its generic tuning. */
+bool dd2_vehicle_step_class(dd2_vehicle *vehicle, const dd2_road *road,
+                            const dd2_road_surface *surface, dd2_vehicle_control control,
+                            dd2_car_class car_class);
 typedef struct {
     const dd2_road *road;
     const dd2_road_surface *surface;
     const dd2_vehicle_control *controls;
+    const dd2_car_class *classes; /* NULL keeps generic tuning; otherwise count entries. */
     unsigned count;
 } dd2_vehicle_field_step;
 /* One simultaneous field step, including tires supported by other bodies.

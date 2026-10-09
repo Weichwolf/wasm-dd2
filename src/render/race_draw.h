@@ -1,6 +1,7 @@
 #ifndef DD2_RENDER_RACE_DRAW_H
 #define DD2_RENDER_RACE_DRAW_H
 
+#include "assets/car_class.h"
 #include "game/championship.h"
 #include "game/profile_menu.h"
 #include "game/race.h"
@@ -19,5 +20,7 @@ bool dd2_championship_draw_named(const dd2_championship *championship, const cha
 /* Shared Native/browser keyboard frontend overlay, borrowing text for this draw. */
 bool dd2_profile_draw(const dd2_profile_menu *menu, const char *selected,
                       dd2_render_options viewport);
+/* Class setup metadata, shared by actual Native/browser car previews. */
+bool dd2_car_class_draw(dd2_car_class car_class, dd2_render_options viewport);
 
 #endif

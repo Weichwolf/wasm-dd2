@@ -55,7 +55,7 @@ def main():
              '-fno-strict-aliasing','-ffast-math','-Werror','-Wshadow','-Wconversion',
              '-Wstrict-prototypes','-Wmissing-prototypes','-Wformat=2',
              '-fsanitize=address,undefined','-fno-omit-frame-pointer']
-    units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road')]
+    units = [ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface')]
     units += [ROOT/'src/platform/file.c']
     sanitized_export = output/'dd2_surface_export_sanitized'

@@ -137,6 +137,8 @@ static dd2_key dd2_window_key(SDL_Scancode code) {
         return DD2_KEY_PAN_DOWN;
     case SDL_SCANCODE_R:
         return DD2_KEY_RESET;
+    case SDL_SCANCODE_F1:
+        return DD2_KEY_CAR_CLASS;
     case SDL_SCANCODE_TAB:
         return DD2_KEY_VIEW;
     case SDL_SCANCODE_PAGEDOWN:

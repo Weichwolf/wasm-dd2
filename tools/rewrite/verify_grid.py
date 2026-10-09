@@ -45,7 +45,7 @@ def main():
     if digest(archive) != ORIGINAL_SHA256:
         raise ValueError('Provision the supported unmodified original Dirinfo')
 
-    units = [ROOT / f'src/assets/{name}.c' for name in ('archive', 'level', 'road', 'barriers')]
+    units = [ROOT / f'src/assets/{name}.c' for name in ('car_class', 'archive', 'level', 'road', 'barriers')]
     units += [ROOT / f'src/physics/{name}.c' for name in
               ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact',
                'contact_group', 'vehicle_collision', 'damage')]

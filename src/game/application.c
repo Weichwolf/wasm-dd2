@@ -2,7 +2,7 @@
 
 #include "assets/archive.h"
 #include "assets/bytes.h"
-#include "assets/car.h"
+#include "assets/car_class.h"
 #include "assets/level.h"
 #include "assets/save_card.h"
 #include "assets/save_profile.h"
@@ -67,6 +67,7 @@ typedef struct {
     int practice_level;
     dd2_game_audio *audio;
     dd2_configuration configuration;
+    dd2_car_class car_class;
     char player_name[DD2_SAVE_PROFILE_PLAYER_NAME];
     dd2_profile_menu profile_menu;
     dd2_save_store *saves;
@@ -145,7 +146,8 @@ static int dd2_application_restore_practice(dd2_application *application,
         choice.visible_track ? (unsigned)application->level : (unsigned)application->practice_level;
     dd2_track *track =
         choice.visible_track ? dd2_track_create(application->archive, level) : application->track;
-    dd2_driving *driving = dd2_driving_create(dd2_track_road(track), level);
+    dd2_driving *driving =
+        dd2_driving_create_class(dd2_track_road(track), level, application->car_class, NULL);
     dd2_camera camera = {0};
     dd2_mesh_materials *materials = dd2_application_materials(track, &camera);
     if (driving == NULL || materials == NULL || !dd2_application_fit(&camera, track, choice.car) ||
@@ -185,8 +187,8 @@ int dd2_application_start_championship(int mode) {
         return 0;
     }
     dd2_renderer_make_current(application->renderer);
-    dd2_championship_session *session =
-        dd2_championship_session_create(application->archive, (dd2_race_mode)mode);
+    dd2_championship_session *session = dd2_championship_session_create_class(
+        application->archive, (dd2_race_mode)mode, application->car_class);
     if (session == NULL) {
         return 0;
     }
@@ -330,6 +332,58 @@ static void dd2_application_destroy(dd2_application *application) {
     free(application);
 }
 
+int dd2_application_current_car(void) {
+    return dd2_current_application == NULL ? -1 : (int)dd2_current_application->car_class;
+}
+
+unsigned dd2_application_car_rating(unsigned rating) {
+    if (dd2_current_application == NULL) {
+        return 0;
+    }
+    const dd2_car_handling *handling = dd2_car_class_handling(dd2_current_application->car_class);
+    switch (rating) {
+    case 0:
+        return handling->ratings.acceleration;
+    case 1:
+        return handling->ratings.top_speed;
+    case 2:
+        return handling->ratings.grip;
+    default:
+        return 0;
+    }
+}
+
+int dd2_application_select_car(int car_class) {
+    dd2_application *application = dd2_current_application;
+    const int storage = dd2_application_saves_phase();
+    if (application == NULL || car_class < 0 || car_class >= DD2_CAR_CLASSES ||
+        application->drive || application->championship != NULL ||
+        application->profile_menu.phase != DD2_PROFILE_CLOSED ||
+        storage == DD2_SAVE_STORE_OPENING || storage == DD2_SAVE_STORE_WRITING ||
+        storage == DD2_SAVE_STORE_RELOADING) {
+        return 0;
+    }
+    if (application->car_class == (dd2_car_class)car_class) {
+        return 1;
+    }
+    dd2_driving *candidate =
+        dd2_driving_create_class(dd2_track_road(application->track), (unsigned)application->level,
+                                 (dd2_car_class)car_class, NULL);
+    const dd2_race *race = dd2_driving_race(application->driving);
+    if (candidate == NULL ||
+        (race != NULL && !dd2_driving_set_race(candidate, true, race->rules.mode))) {
+        dd2_driving_destroy(candidate);
+        return 0;
+    }
+    dd2_driving_destroy(application->driving);
+    application->driving = candidate;
+    application->car_class = (dd2_car_class)car_class;
+    application->dirty = true;
+    dd2_window_release_input(application->window);
+    dd2_game_audio_reset_effects(application->audio);
+    return 1;
+}
+
 int dd2_application_select_level(int number) {
     dd2_application *application = dd2_current_application;
     if (application == NULL || number < 1 || number > DD2_TRACK_COUNT) {
@@ -339,7 +393,8 @@ int dd2_application_select_level(int number) {
     dd2_mesh_materials *materials =
         dd2_mesh_materials_create(dd2_track_level(track), dd2_track_textures(track));
     dd2_camera camera = {0};
-    dd2_driving *driving = dd2_driving_create(dd2_track_road(track), (unsigned)number);
+    dd2_driving *driving = dd2_driving_create_class(dd2_track_road(track), (unsigned)number,
+                                                    application->car_class, NULL);
     const dd2_race *previous_race = dd2_driving_race(dd2_application_driving(application));
     if (driving != NULL && previous_race != NULL) {
         dd2_race_mode mode = previous_race->rules.mode;
@@ -1281,6 +1336,9 @@ static void dd2_application_action(dd2_application *application, dd2_key key) {
         dd2_application_show_car(application->drive || application->car ? 0 : 1);
     }
     dd2_application_track_input(application, input);
+    if (input->pressed[DD2_KEY_CAR_CLASS]) {
+        (void)dd2_application_select_car(((int)application->car_class + 1) % DD2_CAR_CLASSES);
+    }
     if (input->pressed[DD2_KEY_RESET]) {
         dd2_application_reset_camera();
     }
@@ -1308,6 +1366,7 @@ static bool dd2_application_draw_scene(dd2_application *application) {
                    application->materials, dd2_application_track(application),
                    (dd2_driving_view){
                        .vehicle = dd2_driving_vehicle(dd2_application_driving(application)),
+                       .car_class = application->car_class,
                        .damage = dd2_driving_damage(dd2_application_driving(application)),
                        .score = dd2_driving_accidents(dd2_application_driving(application)),
                        .lap = dd2_driving_laps(dd2_application_driving(application)),
@@ -1333,13 +1392,17 @@ static bool dd2_application_draw_scene(dd2_application *application) {
                      (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
     const bool drawn =
         application->car
-            ? dd2_mesh_draw_car(
-                  application->materials, dd2_track_car(dd2_application_track(application)),
-                  (dd2_track_vertex){0}, NULL,
-                  dd2_track_car_livery(dd2_application_track(application), 0, DD2_CAR_ROOKIE))
+            ? dd2_mesh_draw_car(application->materials,
+                                dd2_track_car(dd2_application_track(application)),
+                                (dd2_track_vertex){0}, NULL,
+                                dd2_track_car_livery(dd2_application_track(application), 0,
+                                                     application->car_class))
             : dd2_scene_draw(application->materials,
                              dd2_track_scene(dd2_application_track(application)));
-    return drawn;
+    return drawn && (!application->car ||
+                     dd2_car_class_draw(
+                         application->car_class,
+                         (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT}));
 }
 static bool dd2_application_draw(dd2_application *application) {
     dd2_renderer_make_current(application->renderer);

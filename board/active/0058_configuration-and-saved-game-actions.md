@@ -120,8 +120,12 @@ The full contract remains active.
 ## Next
 
 Translate and validate mode/car/track/input/record fields, other player fields
-and playable saved championship state. Consume the owned driver/class catalog
-being implemented under active 0005. Connect the complete Configuration/
+and playable saved championship state. Consume the now-proven 0005 class catalog
+and selected physical class transactionally. Current Native F1/browser selection
+survives live resets/track/mode/session restarts, but player/audio-only profile
+loads intentionally leave retained source car fields unapplied. Validate saved
+car identity before preparing and publishing a complete configuration candidate;
+preserve both class and active field on failure. Connect the complete Configuration/
 Information routes and remaining Native configuration actions.
 Prove named results through actual completed play; synthetic standings do not
 replace that acceptance. Keep imported source fields and reserved bytes through

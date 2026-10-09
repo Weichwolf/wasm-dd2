@@ -71,23 +71,28 @@ Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 
-Current vehicle work is 0005: owned driver/class material bindings and actual
-fleet liveries match all 660 original high-body cases per target and all 264
-Native/WASM/sanitized body images. LLVM19/201-file checks, 45 Native/43 WASM
-CTests, all eleven scene/car datasets, 31 Native/31 sanitized X11 and 144
-Chromium checks pass. Full-export Memcheck frees every block with zero errors.
-The strict short-drive regression passes 21 of 22 cases; LEVB at 800 ticks
-retains an existing position/image difference. Prior d81e289 reproduces each
-target's complete final physical state exactly. Keep this failure under 0002;
-do not claim a full driving pass. Class physics/selection, saved car choice
-consumption and complete damage effects remain open. This supplies the next
-configuration dependency for 0058; it does not close complete vehicles.
+Current vehicle work is 0005: original class drive/grip/axle parameters now
+affect actual physical fields. Native F1/browser selection exposes class names,
+ratings and paint; reset/mode/track and championship restart retain owned human
+selection and Pro NPC classes. Thirty unmodified-original component cases,
+120 short original level/mode/class prefixes per Native/WASM/sanitized target,
+real selection/lock checks, LLVM19/205-file checks and 46 Native/44 WASM CTests
+pass. Class Memcheck frees all 12 allocations with zero errors. The existing
+660 original material cases and 264 body images per target and all eleven
+scene/car datasets pass again. The strict short-drive regression still passes
+21 of 22 cases; LEVB at 800 ticks retains a position/image difference under the
+new class forces. Keep this failure under 0002; do not claim a full driving pass.
+Saved car choice consumption, complete class campaigns/body-support coverage
+and damage effects remain open. The class catalog supplies the next 0058
+configuration dependency; it does not close complete vehicles.
+The complete window regression passes 31 Native/31 sanitized and 144 Chromium
+comparisons again with the selected-class preview and current class forces.
 
 Optional diagnostic packages are installed and their access probes are recorded
 under 0010. Native Memcheck/Callgrind work without elevated privileges; perf and
 PCM counters remain unavailable to this user. Use bounded contact cases for
-instrumented cost diagnosis and separate WASM sampling. This does not establish
-a performance improvement or change the current class physics/selection task.
+instrumented cost diagnosis and separate WASM sampling. This supplies diagnostics
+for remaining contact work; it does not establish a performance improvement.
 
 Current application integration is 0058 under 0008/0003: player/audio profiles
 now have actual Native/browser name/save/load/delete dialogs, restart and

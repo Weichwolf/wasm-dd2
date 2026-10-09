@@ -55,11 +55,16 @@ presentation now connects that core to a perspective chase camera,
 full body orientation and four suspended/steered/rolling wheel models.
 Owned car material bindings now cover all twenty stable drivers and the three
 human class paint families. The actual fleet renderer uses individual palettes
-and number sprites; static car preview uses Rookie. Regional deformation retains
+and number sprites; static car preview uses the selected class. Regional deformation retains
 the selected livery. Unmodified original high-detail remapping matches all
 driver/class bindings on eleven levels; cross-target images separately check
-rendering and intact/damaged/restored ownership. Class selection/physics and
-detached parts remain under 0005; this is no original pixel parity claim.
+rendering and intact/damaged/restored ownership. The human now selects Rookie,
+Amateur or Pro outside play; NPCs use original Pro handling. Owned class identity
+survives mode/track changes and session restarts. Original drive scaling, rear
+grip and drive-dependent front/rear lateral weights operate inside the tunable
+rewrite rigid body. Displayed acceleration/speed/grip ratings remain separate
+from physical multipliers. Full class race/damage coverage and detached parts
+remain under 0005; this is no original force or pixel parity claim.
 Source track barriers and analytic arena boundaries now participate in free
 driving, with continuous collision sweeps, restitution, friction and angular
 response. Body/ground support now uses the original eight-corner contact box,
@@ -255,6 +260,18 @@ restarts an unfinished round, Enter continues results, and Escape/F7 restores th
 previous practice track without scoring an unfinished round. Named league totals
 appear after results. The browser offers the same modes and continuation/exit
 buttons. Complete physical campaigns and the original front end remain open.
+F1 cycles Rookie/Amateur/Pro outside driving and championships. The browser has
+a Car class selector; car preview shows the selected name and original ratings.
+Playing, profile dialogs and pending storage operations reject class changes
+without replacing the live field. Selection prepares the complete replacement
+before publishing and preserves the class through resets and scheduled owners.
+Saved class restoration remains under 0058; player/audio-only loads keep their
+existing partial contract. `make rewrite-car-class-verify` checks thirty isolated
+unmodified-original rating/force cases, class force behavior, 120 short original
+level/mode/class prefixes per target, session restarts and real Native/browser
+selection. These prefixes do not establish completed races or campaigns. The
+unchanged strict free-driving comparison still fails LEVB after 800 steps;
+the other 21 level/mode cases pass. See active 0002 for the current diagnostic.
 Enter starts/exits free driving; W/Up gives gas,
 S/Down reverses, A/D or Left/Right steers, Space brakes, P pauses and R returns
 to the settled grid start. The browser has equivalent selection/pause/reset

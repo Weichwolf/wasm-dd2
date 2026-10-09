@@ -1,12 +1,14 @@
 #include "archive_fixture.h"
 #include "assets/archive.h"
 #include "assets/car.h"
+#include "assets/car_class.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/scene.h"
 #include "assets/textures.h"
 #include "render/camera.h"
 #include "render/mesh_draw.h"
+#include "render/race_draw.h"
 #include "render/renderer.h"
 
 #include <stdbool.h>
@@ -76,7 +78,12 @@ static bool dd2_preview_draw(const dd2_level_data *level, const dd2_texture_set 
         prepared &&
         (car != NULL ? dd2_mesh_draw_car(materials, car, (dd2_track_vertex){0}, NULL, &livery)
                      : dd2_scene_draw(materials, scene));
-    const bool passed = drawn && dd2_preview_image(renderer, path);
+    const bool passed =
+        drawn &&
+        (car == NULL ||
+         dd2_car_class_draw(DD2_CAR_ROOKIE, (dd2_render_options){.width = DD2_PREVIEW_WIDTH,
+                                                                 .height = DD2_PREVIEW_HEIGHT})) &&
+        dd2_preview_image(renderer, path);
     dd2_mesh_materials_destroy(materials);
     dd2_renderer_destroy(renderer);
     return passed;

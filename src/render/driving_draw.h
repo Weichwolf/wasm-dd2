@@ -1,6 +1,7 @@
 #ifndef DD2_RENDER_DRIVING_DRAW_H
 #define DD2_RENDER_DRIVING_DRAW_H
 
+#include "assets/car_class.h"
 #include "assets/track.h"
 #include "game/accidents.h"
 #include "game/laps.h"

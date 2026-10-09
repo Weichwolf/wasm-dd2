@@ -100,7 +100,7 @@ def main():
         if result.returncode or 'Sanitizer:' in content or 'runtime error:' in content:
             raise RuntimeError(label+' failed: '+content[-3000:])
         return [json.loads(s) for s in content.splitlines() if s.startswith('{')]
-    units=[ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
+    units=[ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in ('road_contact','road_surface','body_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision','damage')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','driving','accidents','course','laps','race','recovery','sound_events')]
     units += [ROOT/f'src/ai/{name}.c' for name in ('path','driver')]+[ROOT/'src/platform/file.c']

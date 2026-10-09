@@ -17,6 +17,14 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-race-verify
 
 .PHONY: rewrite-car-livery-verify
+.PHONY: rewrite-car-class-verify
+rewrite-car-class-verify: ## verify original class handling and actual Native/browser selection
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_car_classes.py
+	$(MAKE) clean-logs
+
 rewrite-car-livery-verify: ## verify original car palettes/numbers and cross-target high-detail rendering
 	$(MAKE) clean-logs
 	$(MAKE) rewrite-check rewrite-wasm

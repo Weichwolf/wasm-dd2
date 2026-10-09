@@ -2,6 +2,7 @@
 #define DD2_GAME_DRIVING_H
 
 #include "ai/driver.h"
+#include "assets/car_class.h"
 #include "assets/road.h"
 #include "game/accidents.h"
 #include "game/course.h"
@@ -34,6 +35,12 @@ dd2_driving *dd2_driving_create(const dd2_road *road, unsigned level);
  * allocation. Reset and mode changes preserve each driver's physical start. */
 dd2_driving *dd2_driving_create_grid(const dd2_road *road, unsigned level,
                                      const unsigned *slot_for_driver);
+/* Copies human class selection and the assigned grid. NPCs use original Pro
+ * handling; driver identity is independent of its physical start slot. Class
+ * survives reset and mode changes. Invalid class fails before allocation. */
+dd2_driving *dd2_driving_create_class(const dd2_road *road, unsigned level, dd2_car_class car_class,
+                                      const unsigned *slot_for_driver);
+dd2_car_class dd2_driving_class(const dd2_driving *driving, unsigned driver);
 void dd2_driving_destroy(dd2_driving *driving);
 /* Validates bounded elapsed time and finite normalized analog controls. */
 bool dd2_driving_frame_valid(dd2_driving_frame frame);

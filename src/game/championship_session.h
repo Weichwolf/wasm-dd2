@@ -2,6 +2,7 @@
 #define DD2_GAME_CHAMPIONSHIP_SESSION_H
 
 #include "assets/archive.h"
+#include "assets/car_class.h"
 #include "assets/track.h"
 #include "game/championship.h"
 #include "game/driving.h"
@@ -15,6 +16,11 @@ typedef struct dd2_championship_transition dd2_championship_transition;
  * physical slots, keeping human driver zero stable. */
 dd2_championship_session *dd2_championship_session_create(const dd2_archive *archive,
                                                           dd2_race_mode mode);
+/* Owns human class for the entire session, including candidate rounds and
+ * restarts. The default constructor selects Rookie. */
+dd2_championship_session *dd2_championship_session_create_class(const dd2_archive *archive,
+                                                                dd2_race_mode mode,
+                                                                dd2_car_class car_class);
 void dd2_championship_session_destroy(dd2_championship_session *session);
 /* Advances real driving and consumes naturally frozen results once. Further
  * result-screen frames hold all simulation and scores until continuation,

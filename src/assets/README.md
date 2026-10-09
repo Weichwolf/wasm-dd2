@@ -246,8 +246,19 @@ driver/class on eleven levels. It compares all bindings and 99 painted faces
 with Native, Node/WASM and fresh ASan/UBSan. Cross-target SoftGL images cover
 twenty-two distinct skins, damaged Rookie and restored Rookie on each level.
 The fixture deliberately uses high detail for every opponent; it proves this
-material component, not original runtime LOD or pixel parity. Class physics,
-selectable frontend classes and detached-part effects remain under active 0005.
+material component, not original runtime LOD or pixel parity. Full class race/
+damage coverage and detached-part effects remain under active 0005.
+
+`assets/car_class.h` provides lightweight class identity and an immutable catalog
+of names, original displayed ratings and handling coefficients in units of 4096.
+Positive drive uses equal axle weights; coast and negative drive have distinct
+front/rear weights. The original steered axle is front, and class grip scaling
+affects the rear axle. `make rewrite-car-class-verify` independently checks these
+coefficients with isolated unmodified original drive-motion calls and compares
+all three displayed rating rows. The rewrite uses these coefficients within its
+own rigid-body tire law; ratings do not multiply forces. This is not complete
+original fixed-point force parity. The selected human class and Pro NPC classes
+are owned by the driving session independently of motion snapshots and grids.
 
 ## Sound effects and Redbook PCM
 

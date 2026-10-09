@@ -1,5 +1,6 @@
 #include "physics/vehicle.h"
 
+#include "assets/car_class.h"
 #include "assets/road.h"
 #include "physics/body_surface.h"
 #include "physics/numeric.h"
@@ -147,12 +148,40 @@ typedef struct {
     const dd2_body_surface *field;
     dd2_vehicle_force *reactions;
     unsigned body;
+    const dd2_car_handling *handling;
 } dd2_vehicle_body_support;
+
+typedef struct {
+    double traction;
+    double lateral;
+    double grip;
+} dd2_vehicle_tire_scaling;
+
+static dd2_vehicle_tire_scaling
+dd2_vehicle_class_scaling(size_t wheel, const dd2_car_handling *handling, double drive) {
+    if (handling == NULL) {
+        return (dd2_vehicle_tire_scaling){.traction = 1, .lateral = 1, .grip = 1};
+    }
+    const bool front = (wheel & 1U) == 0;
+    dd2_car_axle_weights weights = {.front = DD2_CAR_HANDLING_ONE / 2,
+                                    .rear = DD2_CAR_HANDLING_ONE / 2};
+    if (drive < 0) {
+        weights = handling->negative_drive;
+    } else if (drive == 0) {
+        weights = handling->coasting;
+    }
+    return (dd2_vehicle_tire_scaling){
+        .traction = (double)handling->traction / (double)DD2_CAR_HANDLING_ONE,
+        .lateral =
+            (double)(2 * (front ? weights.front : weights.rear)) / (double)DD2_CAR_HANDLING_ONE,
+        .grip = front ? 1 : (double)handling->rear_grip / (double)DD2_CAR_HANDLING_ONE};
+}
 
 static dd2_vehicle_vector dd2_vehicle_tire_force(const dd2_vehicle *vehicle, const dd2_road *road,
                                                  const dd2_vehicle_wheel *wheel, size_t index,
                                                  dd2_vehicle_control control,
-                                                 dd2_vehicle_vector surface_velocity) {
+                                                 dd2_vehicle_vector surface_velocity,
+                                                 const dd2_car_handling *handling) {
     const dd2_vehicle_vector normal = {.x = wheel->contact.normal[0],
                                        .y = wheel->contact.normal[1],
                                        .z = wheel->contact.normal[2]};
@@ -180,19 +209,26 @@ static dd2_vehicle_vector dd2_vehicle_tire_force(const dd2_vehicle *vehicle, con
         control.throttle >= 0 ? dd2_vehicle_forward_limit : dd2_vehicle_reverse_limit;
     /* Opposing throttle remains available while changing direction. */
     const double ratio = speed * control.throttle >= 0 ? speed / maximum : 0;
+    const double drive = (control.throttle * dd2_vehicle_drive * fmax(0, 1 - (ratio * ratio))) -
+                         (speed * control.brake * dd2_vehicle_brake_rate);
+    const dd2_vehicle_tire_scaling scaling = dd2_vehicle_class_scaling(index, handling, drive);
     double longitudinal =
         (control.throttle * dd2_vehicle_drive * fmax(0, 1 - (ratio * ratio)) /
          (double)DD2_VEHICLE_WHEELS) -
         (speed * ((control.brake * dd2_vehicle_brake_rate) + dd2_vehicle_rolling_rate) /
          (double)DD2_VEHICLE_WHEELS);
-    double lateral =
-        -dd2_vehicle_dot(velocity, right) * dd2_vehicle_lateral_rate / (double)DD2_VEHICLE_WHEELS;
+    if (handling != NULL) {
+        longitudinal = (drive * scaling.traction - (speed * dd2_vehicle_rolling_rate)) /
+                       (double)DD2_VEHICLE_WHEELS;
+    }
+    double lateral = -dd2_vehicle_dot(velocity, right) * dd2_vehicle_lateral_rate *
+                     scaling.lateral / (double)DD2_VEHICLE_WHEELS;
     double surface_scale = dd2_vehicle_body_grip;
     if (wheel->support == DD2_VEHICLE_WHEEL_ROAD) {
         const uint8_t flags = dd2_road_cells(road)[wheel->contact.cell].surface_flags;
         surface_scale = (flags & 2U) != 0 ? dd2_vehicle_loose_grip : 1;
     }
-    const double limit = wheel->load * dd2_vehicle_tire_grip * surface_scale;
+    const double limit = wheel->load * dd2_vehicle_tire_grip * surface_scale * scaling.grip;
     const double demand = hypot(longitudinal, lateral);
     if (demand > limit && demand > 0) {
         longitudinal *= limit / demand;
@@ -229,7 +265,7 @@ static dd2_vehicle_vector dd2_vehicle_wheel_force(dd2_vehicle *vehicle, const dd
                                              .min_displacement = -dd2_vehicle_bump_window,
                                              .max_displacement = dd2_vehicle_travel};
     const bool body_found =
-        support != NULL &&
+        support != NULL && support->field != NULL &&
         dd2_body_surface_wheel_sample(support->field, &body_query, support->body, &body_contact);
     dd2_surface_query road_query = query;
     if (body_found) {
@@ -282,7 +318,8 @@ static dd2_vehicle_vector dd2_vehicle_wheel_force(dd2_vehicle *vehicle, const dd
                               (dd2_vehicle_dot(velocity, normal) * dd2_vehicle_damper));
     const dd2_vehicle_vector force = dd2_vehicle_add(
         dd2_vehicle_scale(normal, wheel->load),
-        dd2_vehicle_tire_force(vehicle, road, wheel, index, control, surface_velocity));
+        dd2_vehicle_tire_force(vehicle, road, wheel, index, control, surface_velocity,
+                               support == NULL ? NULL : support->handling));
     if (wheel->support == DD2_VEHICLE_WHEEL_BODY) {
         dd2_vehicle_force *reaction = &support->reactions[wheel->body];
         reaction->linear = dd2_vehicle_add(reaction->linear, dd2_vehicle_scale(force, -1));
@@ -381,8 +418,10 @@ static void dd2_vehicle_landing(dd2_vehicle *vehicle, const dd2_vehicle *previou
     }
 }
 
-bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
-                      dd2_vehicle_control control) {
+static bool dd2_vehicle_step_configured(dd2_vehicle *vehicle, const dd2_road *road,
+                                        const dd2_road_surface *surface,
+                                        dd2_vehicle_control control,
+                                        const dd2_car_handling *handling) {
     if (vehicle == NULL || road == NULL || surface == NULL || !dd2_vehicle_valid(vehicle) ||
         vehicle->steps == UINT64_MAX || !dd2_vehicle_number_valid(&control.throttle, 1) ||
         !dd2_vehicle_number_valid(&control.brake, 1) || control.brake < 0 ||
@@ -396,9 +435,10 @@ bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road
                                        .y = -dd2_vehicle_gravity,
                                        .z = -next.velocity.z * dd2_vehicle_air_drag};
     dd2_vehicle_vector torque = {0};
+    const dd2_vehicle_body_support support = {.handling = handling};
     for (size_t index = 0; index < DD2_VEHICLE_WHEELS; ++index) {
         const dd2_vehicle_vector force =
-            dd2_vehicle_wheel_force(&next, road, surface, index, control, NULL);
+            dd2_vehicle_wheel_force(&next, road, surface, index, control, &support);
         const dd2_vehicle_vector arm =
             dd2_vehicle_add(next.wheels[index].mount, dd2_vehicle_scale(next.position, -1));
         acceleration = dd2_vehicle_add(acceleration, force);
@@ -418,6 +458,19 @@ bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road
     return true;
 }
 
+bool dd2_vehicle_step(dd2_vehicle *vehicle, const dd2_road *road, const dd2_road_surface *surface,
+                      dd2_vehicle_control control) {
+    return dd2_vehicle_step_configured(vehicle, road, surface, control, NULL);
+}
+
+bool dd2_vehicle_step_class(dd2_vehicle *vehicle, const dd2_road *road,
+                            const dd2_road_surface *surface, dd2_vehicle_control control,
+                            dd2_car_class car_class) {
+    const dd2_car_handling *handling = dd2_car_class_handling(car_class);
+    return handling != NULL &&
+           dd2_vehicle_step_configured(vehicle, road, surface, control, handling);
+}
+
 bool dd2_vehicle_step_field(dd2_vehicle *vehicles, const dd2_vehicle_field_step *step) {
     if (vehicles == NULL || step == NULL || step->road == NULL || step->surface == NULL ||
         step->controls == NULL || step->count == 0 || step->count > DD2_VEHICLE_FLEET_LIMIT) {
@@ -429,7 +482,8 @@ bool dd2_vehicle_step_field(dd2_vehicle *vehicles, const dd2_vehicle_field_step 
     }
     for (unsigned body = 0; body < step->count; ++body) {
         const dd2_vehicle_control *control = &step->controls[body];
-        if (vehicles[body].steps == UINT64_MAX ||
+        if ((step->classes != NULL && dd2_car_class_handling(step->classes[body]) == NULL) ||
+            vehicles[body].steps == UINT64_MAX ||
             !dd2_vehicle_number_valid(&control->throttle, 1) ||
             !dd2_vehicle_number_valid(&control->brake, 1) || control->brake < 0 ||
             !dd2_vehicle_number_valid(&control->steer, 1)) {
@@ -450,7 +504,10 @@ bool dd2_vehicle_step_field(dd2_vehicle *vehicles, const dd2_vehicle_field_step 
                                  .y = -dd2_vehicle_gravity,
                                  .z = -next[body].velocity.z * dd2_vehicle_air_drag};
         const dd2_vehicle_body_support support = {
-            .field = &field, .reactions = reactions, .body = body};
+            .field = &field,
+            .reactions = reactions,
+            .body = body,
+            .handling = step->classes == NULL ? NULL : dd2_car_class_handling(step->classes[body])};
         for (size_t wheel = 0; wheel < DD2_VEHICLE_WHEELS; ++wheel) {
             const dd2_vehicle_vector force = dd2_vehicle_wheel_force(
                 &next[body], step->road, step->surface, wheel, control, &support);

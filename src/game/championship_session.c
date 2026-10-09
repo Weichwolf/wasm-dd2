@@ -1,6 +1,7 @@
 #include "game/championship_session.h"
 
 #include "assets/archive.h"
+#include "assets/car_class.h"
 #include "assets/track.h"
 #include "game/championship.h"
 #include "game/driving.h"
@@ -21,6 +22,7 @@ struct dd2_championship_session {
     const dd2_archive *archive;
     dd2_championship state;
     dd2_championship_field field;
+    dd2_car_class car_class;
 };
 struct dd2_championship_transition {
     const dd2_championship_session *owner;
@@ -37,12 +39,14 @@ static void dd2_championship_field_destroy(dd2_championship_field field) {
 }
 
 static bool dd2_championship_field_prepare(const dd2_archive *archive, dd2_championship *state,
-                                           dd2_championship_field *output) {
+                                           dd2_championship_field *output,
+                                           dd2_car_class car_class) {
     unsigned slots[DD2_LEAGUE_DRIVERS] = {0};
     const unsigned track = dd2_championship_track(state);
     dd2_championship_field field = {.track = dd2_track_create(archive, track), .level = track};
     if (field.track != NULL && dd2_league_grid(&state->league, slots)) {
-        field.driving = dd2_driving_create_grid(dd2_track_road(field.track), track, slots);
+        field.driving =
+            dd2_driving_create_class(dd2_track_road(field.track), track, car_class, slots);
     }
     uint64_t ticket = 0;
     if (field.driving == NULL || !dd2_driving_set_race(field.driving, true, state->mode) ||
@@ -56,7 +60,14 @@ static bool dd2_championship_field_prepare(const dd2_archive *archive, dd2_champ
 
 dd2_championship_session *dd2_championship_session_create(const dd2_archive *archive,
                                                           dd2_race_mode mode) {
-    if (archive == NULL || (mode != DD2_RACE_WRECKING && mode != DD2_RACE_STOCKCAR)) {
+    return dd2_championship_session_create_class(archive, mode, DD2_CAR_ROOKIE);
+}
+
+dd2_championship_session *dd2_championship_session_create_class(const dd2_archive *archive,
+                                                                dd2_race_mode mode,
+                                                                dd2_car_class car_class) {
+    if (dd2_car_class_handling(car_class) == NULL || archive == NULL ||
+        (mode != DD2_RACE_WRECKING && mode != DD2_RACE_STOCKCAR)) {
         return NULL;
     }
     dd2_championship_session *session = calloc(1, sizeof(*session));
@@ -64,8 +75,9 @@ dd2_championship_session *dd2_championship_session_create(const dd2_archive *arc
         return NULL;
     }
     session->archive = archive;
+    session->car_class = car_class;
     if (!dd2_championship_reset(&session->state, mode) ||
-        !dd2_championship_field_prepare(archive, &session->state, &session->field)) {
+        !dd2_championship_field_prepare(archive, &session->state, &session->field, car_class)) {
         dd2_championship_session_destroy(session);
         return NULL;
     }
@@ -131,8 +143,8 @@ static dd2_championship_transition *dd2_championship_prepare(dd2_championship_se
         return NULL;
     }
     if (transition->next.phase == DD2_CHAMPIONSHIP_READY) {
-        if (!dd2_championship_field_prepare(session->archive, &transition->next,
-                                            &transition->field)) {
+        if (!dd2_championship_field_prepare(session->archive, &transition->next, &transition->field,
+                                            session->car_class)) {
             dd2_championship_transition_destroy(transition);
             return NULL;
         }

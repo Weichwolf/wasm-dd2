@@ -173,7 +173,7 @@ def main():
     row_table = list(struct.iter_unpack('<2i',image[0x63dcc:0x63e2c]))
     sca = [struct.unpack_from('<HBx',image,0x66da0+i*4) for i in range(20)]
     corners = [list(struct.unpack_from('<3h',image,0x66a98+i*8)) for i in range(8)]
-    units = [ROOT/f'src/assets/{name}.c' for name in ('archive','level','road','barriers')]
+    units = [ROOT/f'src/assets/{name}.c' for name in ('car_class', 'archive','level','road','barriers')]
     units += [ROOT/f'src/physics/{name}.c' for name in
               ('road_contact','road_surface','body_surface','vehicle','barrier_world','car_contact','contact_group','vehicle_collision')]
     units += [ROOT/f'src/game/{name}.c' for name in ('starting_grid','recovery')]
