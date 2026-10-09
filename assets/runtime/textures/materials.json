@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "generator": "tools/assets/generate_textures.py",
+  "authorship": "Entirely procedural coordinate hashes and authored material recipes; no input images",
+  "pixel_origin": "top-left; tangent normals use bottom-left UV with +Y increasing V",
+  "textures": [
+    {
+      "name": "asphalt",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/asphalt-albedo.png",
+          "sha256": "6f130f09faf86e9fbda77da03000193a69a441f1b7c53934ccc27b87b97a3023",
+          "bytes": 849026,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/asphalt-roughness.png",
+          "sha256": "af4e0c685cb35b244d25b51beb4b3cf5759423914c4e7e9a5f297ccc2a4a5931",
+          "bytes": 788773,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/asphalt-normal.png",
+          "sha256": "0a1b59b02347afdeaafb978d29cef69891f19a3a6f6ae29a4f5573abf29ea3d8",
+          "bytes": 2436367,
+          "color_space": "linear"
+        }
+      }
+    },
+    {
+      "name": "paint-flake",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/paint-flake-albedo.png",
+          "sha256": "c4d060b2160927e67ddf7e0d19eba74e9085f617f67a904d82df432ef09e6a68",
+          "bytes": 263366,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/paint-flake-roughness.png",
+          "sha256": "f680e7d93f68c444976a392e901b7c956982f4245240127e783a958609613fe1",
+          "bytes": 692532,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/paint-flake-normal.png",
+          "sha256": "99ad7d0c145a128b7608e3e0cf0bc321c52a2eddad6d5337af7435d21f379a6b",
+          "bytes": 186520,
+          "color_space": "linear"
+        }
+      }
+    },
+    {
+      "name": "carbon-twill",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/carbon-twill-albedo.png",
+          "sha256": "947afaf1739a84e0a2e90484e7c7531219b08cd385a3845848f3ad58b55d96d0",
+          "bytes": 788274,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/carbon-twill-roughness.png",
+          "sha256": "fd68f80e3f0b493d50286792fe97d93c8d09c19b0c87062b60bd8040f3852e40",
+          "bytes": 6014,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/carbon-twill-normal.png",
+          "sha256": "c1d4270726c8bb27fda72eb85ec2f70f84e8c3cfc379023b7799edb4dbc35d37",
+          "bytes": 15510,
+          "color_space": "linear"
+        }
+      }
+    },
+    {
+      "name": "seat-fabric",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/seat-fabric-albedo.png",
+          "sha256": "fc3d8d57d6353217b0fa4a1d8ff1dcfb8582b45c1d3f8aebb71f4a0e05e310c0",
+          "bytes": 975400,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/seat-fabric-roughness.png",
+          "sha256": "fbdd8582903a3f863489d7c1cfb2c8e9ab7953d0b58de62f8e8fcaa941650569",
+          "bytes": 775265,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/seat-fabric-normal.png",
+          "sha256": "e01193cfb09ed1d971915089e9607182a0cd0fe3a5ad985c276f4acc98ca8165",
+          "bytes": 10291,
+          "color_space": "linear"
+        }
+      }
+    },
+    {
+      "name": "tire-rubber",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/tire-rubber-albedo.png",
+          "sha256": "6913159e3ab768f5047e614263c2cca7c16bdac418b6c470d50c9c7240f8a86a",
+          "bytes": 624050,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/tire-rubber-roughness.png",
+          "sha256": "518b87bc2b2619ce28bf3f23fe8e47ecbd3e95c84ca00518e064e02f75893def",
+          "bytes": 801354,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/tire-rubber-normal.png",
+          "sha256": "aacb51f71d814631b6802d6689ab15b3f9b76b8d14fe796c98e522ab6480ae9b",
+          "bytes": 867113,
+          "color_space": "linear"
+        }
+      }
+    },
+    {
+      "name": "brushed-alloy",
+      "size": [
+        1024,
+        1024
+      ],
+      "tileable": true,
+      "albedo_usage": "Multiply the authored base tint",
+      "maps": {
+        "albedo": {
+          "path": "textures/brushed-alloy-albedo.png",
+          "sha256": "ddf89d39e3f12d4c3b2c1b70c9f3842ea747c79aacd96d7cf7a532bb96cd8ff4",
+          "bytes": 656694,
+          "color_space": "sRGB"
+        },
+        "roughness": {
+          "path": "textures/brushed-alloy-roughness.png",
+          "sha256": "008c6bdf600ff9c77cb5cafa6ae7c74b89ecdcdb7ff152b110f865bd074bc869",
+          "bytes": 5119,
+          "color_space": "linear"
+        },
+        "normal": {
+          "path": "textures/brushed-alloy-normal.png",
+          "sha256": "21577436ec57d597c5f99ba9960eebba1f2c16ac0e2f90bd93f06e1143bca46b",
+          "bytes": 6094,
+          "color_space": "linear"
+        }
+      }
+    }
+  ]
+}

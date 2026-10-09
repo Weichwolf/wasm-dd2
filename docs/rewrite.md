@@ -27,6 +27,14 @@ and removal of all mandatory original runtime inputs. Preserve existing useful
 functional comparisons as optional reference checks while making the default
 build, launch and acceptance use the replacement content.
 
+The initial authored pipeline now commits one editable Racer R1 vehicle/cockpit,
+three owned float-mesh LODs, six procedural 1024x1024 material sets and twelve
+new PCM clips including an original music arrangement. Independent generation
+reproduces all 38 runtime files without original input; geometry/material/PCM
+checks and direct Blender-image review pass their bounded offline scope.
+The content is not yet loaded by the game. See `assets/README.md`,
+`assets/inventory.json` and active 0062 for evidence and missing integration.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game

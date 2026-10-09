@@ -1,0 +1,1703 @@
+{
+  "schema": 2,
+  "generator": "tools/assets/build_vehicle.py",
+  "blender": "4.3.2",
+  "authorship": "Handwritten geometry/material recipes; no original DD2 or external asset input",
+  "units": "meters; +Y up, +Z forward; reflected Blender winding corrected",
+  "lod": "full",
+  "materials": 11,
+  "part_count": 335,
+  "vertices": 53124,
+  "triangles": 31716,
+  "bytes": 2113028,
+  "runtime_integrated": false,
+  "material_maps_exported": true,
+  "review_only": [
+    "lighting",
+    "floor",
+    "cameras",
+    "road"
+  ],
+  "cockpit_eye": [
+    -0.4000000059604645,
+    1.190000057220459,
+    -0.30000001192092896
+  ],
+  "parts": [
+    {
+      "name": "Body.Deck",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.DoorHandle",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.DoorHandle.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.FrontPillar",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.FrontPillar.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.FrontSplitter",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Grille",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.GrilleSlat",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.002",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.003",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.004",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Headlight",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.Headlight.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.Hood",
+      "role": 0,
+      "triangles": 4
+    },
+    {
+      "name": "Body.MirrorHousing",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.MirrorHousing.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.MirrorLens",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.MirrorLens.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.NoseBumper",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.RearBumper",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.RearPillar",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.RearPillar.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.RearWing",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Roof",
+      "role": 0,
+      "triangles": 90
+    },
+    {
+      "name": "Body.Shell",
+      "role": 0,
+      "triangles": 2040
+    },
+    {
+      "name": "Body.SideSkirt",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.SideSkirt.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.SideStripe",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.SideStripe.001",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.TailLight",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.TailLight.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.WindowSill",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WindowSill.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WingEndplate",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.WingEndplate.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.WingStay",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WingStay.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageCross",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageFront",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageFront.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRear",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRear.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRoof",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRoof.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.Console",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Dash",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.DoorBar",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorBar.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorDiagonal",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorDiagonal.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.FireBottle",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Firewall",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Floor",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.GaugeNeedle",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeNeedle.001",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeNeedle.002",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeRim",
+      "role": 5,
+      "triangles": 640
+    },
+    {
+      "name": "Cockpit.GaugeRim.001",
+      "role": 5,
+      "triangles": 640
+    },
+    {
+      "name": "Cockpit.GaugeRim.002",
+      "role": 5,
+      "triangles": 640
+    },
+    {
+      "name": "Cockpit.GaugeTick",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.001",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.002",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.003",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.004",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.005",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.006",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.007",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.008",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.009",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.010",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.011",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.012",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.013",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.014",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.015",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.016",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.017",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.018",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.019",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.020",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.021",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.022",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.023",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.024",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.025",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.026",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.027",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.028",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.029",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.030",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.031",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.032",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.033",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.034",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.GaugeTick.035",
+      "role": 5,
+      "triangles": 20
+    },
+    {
+      "name": "Cockpit.HarnessBar",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.HarnessBuckle",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Headliner",
+      "role": 5,
+      "triangles": 84
+    },
+    {
+      "name": "Cockpit.Headrest",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Oil",
+      "role": 5,
+      "triangles": 156
+    },
+    {
+      "name": "Cockpit.Pedal",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Pedal.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Pedal.002",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.PedalLink",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.PedalLink.001",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.PedalLink.002",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.SeatBack",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatBase",
+      "role": 5,
+      "triangles": 84
+    },
+    {
+      "name": "Cockpit.SeatBolster",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatBolster.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatShoulder",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatShoulder.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ShiftKnob",
+      "role": 5,
+      "triangles": 256
+    },
+    {
+      "name": "Cockpit.Shifter",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.ShoulderHarness",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ShoulderHarness.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Tachometer",
+      "role": 5,
+      "triangles": 156
+    },
+    {
+      "name": "Cockpit.Temperature",
+      "role": 5,
+      "triangles": 156
+    },
+    {
+      "name": "Cockpit.Toggle",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.Toggle.001",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.Toggle.002",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.Toggle.003",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.Toggle.004",
+      "role": 5,
+      "triangles": 28
+    },
+    {
+      "name": "Cockpit.ToggleBase",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ToggleBase.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ToggleBase.002",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ToggleBase.003",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ToggleBase.004",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Glass.Rear",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Side",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Side.001",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Windscreen",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Steering.Column",
+      "role": 6,
+      "triangles": 44
+    },
+    {
+      "name": "Steering.Hub",
+      "role": 6,
+      "triangles": 60
+    },
+    {
+      "name": "Steering.Spoke",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Spoke.001",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Spoke.002",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Wheel",
+      "role": 6,
+      "triangles": 640
+    },
+    {
+      "name": "WheelFL.Bolt",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Bolt.001",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Bolt.002",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Bolt.003",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Bolt.004",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Bolt.005",
+      "role": 1,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFL.Brake",
+      "role": 1,
+      "triangles": 124
+    },
+    {
+      "name": "WheelFL.Caliper",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Hub",
+      "role": 1,
+      "triangles": 60
+    },
+    {
+      "name": "WheelFL.Rim",
+      "role": 1,
+      "triangles": 124
+    },
+    {
+      "name": "WheelFL.Spoke",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.001",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.002",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.003",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.004",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.005",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Tire",
+      "role": 1,
+      "triangles": 640
+    },
+    {
+      "name": "WheelFL.Tread",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.001",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.002",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.003",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.004",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.005",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.006",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.007",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.008",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.009",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.010",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.011",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.012",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.013",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.014",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.015",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.016",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.017",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.018",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.019",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.020",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.021",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.022",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.023",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.024",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.025",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.026",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.027",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.028",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.029",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.030",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Tread.031",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Bolt",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Bolt.001",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Bolt.002",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Bolt.003",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Bolt.004",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Bolt.005",
+      "role": 2,
+      "triangles": 20
+    },
+    {
+      "name": "WheelFR.Brake",
+      "role": 2,
+      "triangles": 124
+    },
+    {
+      "name": "WheelFR.Caliper",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Hub",
+      "role": 2,
+      "triangles": 60
+    },
+    {
+      "name": "WheelFR.Rim",
+      "role": 2,
+      "triangles": 124
+    },
+    {
+      "name": "WheelFR.Spoke",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.001",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.002",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.003",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.004",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.005",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Tire",
+      "role": 2,
+      "triangles": 640
+    },
+    {
+      "name": "WheelFR.Tread",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.001",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.002",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.003",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.004",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.005",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.006",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.007",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.008",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.009",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.010",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.011",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.012",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.013",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.014",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.015",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.016",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.017",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.018",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.019",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.020",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.021",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.022",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.023",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.024",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.025",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.026",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.027",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.028",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.029",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.030",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Tread.031",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Bolt",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Bolt.001",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Bolt.002",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Bolt.003",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Bolt.004",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Bolt.005",
+      "role": 3,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRL.Brake",
+      "role": 3,
+      "triangles": 124
+    },
+    {
+      "name": "WheelRL.Caliper",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Hub",
+      "role": 3,
+      "triangles": 60
+    },
+    {
+      "name": "WheelRL.Rim",
+      "role": 3,
+      "triangles": 124
+    },
+    {
+      "name": "WheelRL.Spoke",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.001",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.002",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.003",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.004",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.005",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Tire",
+      "role": 3,
+      "triangles": 640
+    },
+    {
+      "name": "WheelRL.Tread",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.001",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.002",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.003",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.004",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.005",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.006",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.007",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.008",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.009",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.010",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.011",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.012",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.013",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.014",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.015",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.016",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.017",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.018",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.019",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.020",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.021",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.022",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.023",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.024",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.025",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.026",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.027",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.028",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.029",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.030",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Tread.031",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Bolt",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Bolt.001",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Bolt.002",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Bolt.003",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Bolt.004",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Bolt.005",
+      "role": 4,
+      "triangles": 20
+    },
+    {
+      "name": "WheelRR.Brake",
+      "role": 4,
+      "triangles": 124
+    },
+    {
+      "name": "WheelRR.Caliper",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Hub",
+      "role": 4,
+      "triangles": 60
+    },
+    {
+      "name": "WheelRR.Rim",
+      "role": 4,
+      "triangles": 124
+    },
+    {
+      "name": "WheelRR.Spoke",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.001",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.002",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.003",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.004",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.005",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Tire",
+      "role": 4,
+      "triangles": 640
+    },
+    {
+      "name": "WheelRR.Tread",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.001",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.002",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.003",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.004",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.005",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.006",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.007",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.008",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.009",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.010",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.011",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.012",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.013",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.014",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.015",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.016",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.017",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.018",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.019",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.020",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.021",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.022",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.023",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.024",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.025",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.026",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.027",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.028",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.029",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.030",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Tread.031",
+      "role": 4,
+      "triangles": 108
+    }
+  ]
+}

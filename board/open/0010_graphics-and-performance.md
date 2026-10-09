@@ -20,6 +20,14 @@ also reproduced an actually cleared modal canvas; closed 0061 now preserves
 its visible scene/dialog through viewport and same-size canvas changes.
 Review evidence: /tmp/wasm-dd2/rewrite-redbook-preparation-0060/visual-review/.
 
+Active 0062 now has an owned Blender vehicle/cockpit, three mesh LODs and
+six procedural material sets, with direct exterior/interior Cycles review.
+That review corrected winding, firewall, texture density/bump and preview-road
+problems. Body seams, unlabeled instruments, glass reflections and preview
+noise still need work. The new assets have not reached the actual SoftGL game
+renderer; studio lights/shadows and offline triangle counts prove neither
+both-target visual acceptance nor 60-FPS throughput.
+
 The 2026-10-09 host probe confirms linux-perf 6.12.111, Valgrind 3.24.0 and
 Intel PCM 202502-1 are installed. Unprivileged perf software/hardware probes
 are denied with perf_event_paranoid=3; `/usr/sbin/pcm` cannot access MSRs/PCI

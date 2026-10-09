@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "generator": "tools/assets/generate_audio.py",
+  "authorship": "New numeric synthesis and original composition; no recordings or external samples",
+  "audible_game_review": "Pending actual Native/browser runtime integration",
+  "clips": [
+    {
+      "name": "engine-idle",
+      "path": "audio/engine-idle.wav",
+      "sha256": "0f5cee7cd68038725d6e3369b7a7879aad1ae518970a768a2018bc8cee12b31e",
+      "frames": 96000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": true,
+      "peak_limit": 0.63,
+      "parameters": {
+        "rpm": 900,
+        "cylinders": 8,
+        "cycle_degrees": 720
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "engine-load",
+      "path": "audio/engine-load.wav",
+      "sha256": "342dc8107247ad2452654b7aceaa0aa76c78416a9f5e936f6f8dd90534e72d29",
+      "frames": 96000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": true,
+      "peak_limit": 0.7,
+      "parameters": {
+        "rpm": 3000,
+        "cylinders": 8,
+        "cycle_degrees": 720
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "wind",
+      "path": "audio/wind.wav",
+      "sha256": "8f5c4f657bc82f5e87e2f61ab920367722f075e142f8bb3282a0dbb66d3e47ba",
+      "frames": 96000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": true,
+      "peak_limit": 0.22,
+      "parameters": {},
+      "runtime_integrated": false
+    },
+    {
+      "name": "tire-skid",
+      "path": "audio/tire-skid.wav",
+      "sha256": "9cb2db55761eb48659a5dbbcd5081531a495e91a76d323dcc340b9c5f84a8cba",
+      "frames": 96000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": true,
+      "peak_limit": 0.53,
+      "parameters": {},
+      "runtime_integrated": false
+    },
+    {
+      "name": "body-impact",
+      "path": "audio/body-impact.wav",
+      "sha256": "700705fd33b3e700d91b35e0478c125dccf9ebece008633f02b319e9bd6829e6",
+      "frames": 40811,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.86,
+      "parameters": {},
+      "runtime_integrated": false
+    },
+    {
+      "name": "metal-impact",
+      "path": "audio/metal-impact.wav",
+      "sha256": "b601ede14e34c2e87ec7ff35a19e900306f00ca131ca39f51132708faff02cbe",
+      "frames": 33619,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.74,
+      "parameters": {},
+      "runtime_integrated": false
+    },
+    {
+      "name": "ui-navigate",
+      "path": "audio/ui-navigate.wav",
+      "sha256": "71d44cf0a2432b59ab85be6cabcddba5c742a7bfe2a41b498ad74ac7e2aadc9a",
+      "frames": 3367,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.28,
+      "parameters": {
+        "frequency_hz": 660
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "ui-confirm",
+      "path": "audio/ui-confirm.wav",
+      "sha256": "112cb12b02616c6ad9f008b454bae93e9cb6b6ca11cf64fff3efb75502cdaf02",
+      "frames": 7207,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.35,
+      "parameters": {
+        "frequency_hz": 990
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "ui-cancel",
+      "path": "audio/ui-cancel.wav",
+      "sha256": "9e71efa2780171a1a598470959a74245ca30f964682baa8373d789d40b1a41b3",
+      "frames": 9607,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.33,
+      "parameters": {
+        "frequency_hz": 330
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "countdown",
+      "path": "audio/countdown.wav",
+      "sha256": "00c76566bd166f4e9cdb62860c3e0b5f386378749ba442e140098e61faa778fb",
+      "frames": 12007,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.46,
+      "parameters": {
+        "frequency_hz": 440
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "race-start",
+      "path": "audio/race-start.wav",
+      "sha256": "1f8d6d9b238863a3ceab21841f9c7a1ab00cdb23f15fd39e02e0a0bf4471148b",
+      "frames": 19207,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": false,
+      "peak_limit": 0.52,
+      "parameters": {
+        "frequency_hz": 880
+      },
+      "runtime_integrated": false
+    },
+    {
+      "name": "music-foundry-run",
+      "path": "audio/music-foundry-run.wav",
+      "sha256": "4fa0e504b3c8896bf4f418e605b6fa2ec8ce2914e201b233675253444e1c9752",
+      "frames": 1536000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits": 16,
+      "loop": true,
+      "peak_limit": 0.8,
+      "parameters": {
+        "title": "Foundry Run",
+        "tempo_bpm": 120,
+        "bars": 16,
+        "composition": "Original authored event arrangement"
+      },
+      "runtime_integrated": false
+    }
+  ]
+}

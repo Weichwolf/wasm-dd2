@@ -32,6 +32,13 @@ integration pass on Native, ASan/UBSan and real WebAudio at 44,100/48,000 Hz:
 pause observer acknowledges a visible processed event before checking the PCM
 sink; this avoids sampling an instrumented frame before Pause has executed.
 
+Active 0062 supplies twelve new synthesized PCM clips, including engine/road/
+impact/UI cues and the original Foundry Run music arrangement. Independent
+regeneration, format/headroom/DC and loop/boundary checks pass. They are offline
+exports; gameplay still depends on BANK1.SBK/CDDA. Audible Native/browser review,
+commentary, the full soundtrack, RPM/load transitions and all event/context
+behavior remain pending.
+
 ## Next
 
 Recover event/music selection rules and connect remaining sounds to shared simulation/menu events; retain rational resampling and device-lifetime checks.

@@ -329,3 +329,17 @@ native wasm patch check: ## run the named reconstruction target under /tmp
 
 clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
+
+.PHONY: assets-generate assets-preview assets-check
+assets-generate: ## regenerate authored Blender, procedural maps and new PCM; no original game input
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/build_assets.py
+
+assets-preview: ## regenerate authored content and render review images under /tmp/wasm-dd2/
+	$(MAKE) clean-logs
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/build_assets.py --preview /tmp/wasm-dd2/authored-assets-preview
+	$(MAKE) clean-logs
+
+assets-check: ## independently validate checked-in authored meshes, maps and PCM
+	$(MAKE) clean-logs
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_assets.py --report /tmp/wasm-dd2/authored-assets-check/report.json
+	$(MAKE) clean-logs

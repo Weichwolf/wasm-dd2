@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "scope": "Every original runtime dependency must be replaced; offline authored exports are not standalone-game acceptance",
+  "standalone_runtime_accepted": false,
+  "authored_foundation": {
+    "vehicle": "Racer R1",
+    "editable_blender": "blender/racer-r1.blend",
+    "mesh_variants": ["runtime/models/racer-r1.dd2mesh", "runtime/models/racer-r1-exterior.dd2mesh", "runtime/models/racer-r1-npc.dd2mesh"],
+    "materials": "runtime/textures/materials.json",
+    "audio": "runtime/audio/audio.json",
+    "runtime_integrated": false
+  },
+  "remaining_content": [
+    {"kind": "circuits", "slots": [1, 2, 3, 4, 5, 6, 7], "needs": ["Blender terrain and course geometry", "owned road/contact/progress graph", "barriers", "AI route", "scenery and lighting", "grid and start/finish metadata"], "runtime_dependency": "Original LEVx level, texture, scene and road data"},
+    {"kind": "arenas", "slots": [8, 9, 10, 11], "needs": ["Blender terrain and arena geometry", "owned collision/support fields", "barriers", "grid and arena rules", "scenery and lighting"], "runtime_dependency": "Original LEVx level, texture, scene and road data"},
+    {"kind": "fleet", "driver_slots": 20, "class_slots": 3, "needs": ["vehicle/class geometry and tuning", "livery variants", "complete cockpits", "wheel animation", "deformable/detachable damage geometry", "LOD and material sharing"], "runtime_dependency": "Original car/wheel meshes and texture palettes"},
+    {"kind": "world", "needs": ["sky", "terrain and vegetation", "buildings and track props", "animated crowds/characters where needed", "weather and light assets"], "runtime_dependency": "Original scene meshes, sky shapes and palettes"},
+    {"kind": "presentation", "needs": ["authored font/glyph atlas", "all menu and HUD layouts", "icons and branding", "results and championship presentation", "replay and settings surfaces"], "runtime_dependency": "Original font data and unfinished frontend"},
+    {"kind": "visual effects", "needs": ["contact shadows", "dust and smoke", "skid marks", "sparks and debris", "damage effects", "lighting and material evaluation"], "runtime_dependency": "Missing or incomplete rewrite renderer features"},
+    {"kind": "audio", "needs": ["engine-speed/load transitions", "all collision and material cues", "ambience for each setting", "new commentary voices/events", "complete composed soundtrack", "music context/transport", "mixing and settings behavior"], "runtime_dependency": "Original BANK1.SBK and CDDA; new foundation clips are not integrated"},
+    {"kind": "delivery", "needs": ["owned content manifest and checked C loaders", "default Native/WASM packaging without original files", "startup without original-file picker", "full functional and visual/audio acceptance", "measured 60-FPS scene budgets"], "runtime_dependency": "Original Dirinfo startup and archive-based track/championship owners"}
+  ]
+}

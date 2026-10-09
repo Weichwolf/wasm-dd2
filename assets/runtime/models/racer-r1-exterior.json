@@ -1,0 +1,638 @@
+{
+  "schema": 2,
+  "generator": "tools/assets/build_vehicle.py",
+  "blender": "4.3.2",
+  "authorship": "Handwritten geometry/material recipes; no original DD2 or external asset input",
+  "units": "meters; +Y up, +Z forward; reflected Blender winding corrected",
+  "lod": "exterior",
+  "materials": 11,
+  "part_count": 122,
+  "vertices": 17382,
+  "triangles": 10880,
+  "bytes": 699656,
+  "runtime_integrated": false,
+  "material_maps_exported": true,
+  "review_only": [
+    "lighting",
+    "floor",
+    "cameras",
+    "road"
+  ],
+  "cockpit_eye": [
+    -0.4000000059604645,
+    1.190000057220459,
+    -0.30000001192092896
+  ],
+  "parts": [
+    {
+      "name": "Body.Deck",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.DoorHandle",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.DoorHandle.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.FrontPillar",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.FrontPillar.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.FrontSplitter",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Grille",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.GrilleSlat",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.002",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.003",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.GrilleSlat.004",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Headlight",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.Headlight.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.Hood",
+      "role": 0,
+      "triangles": 4
+    },
+    {
+      "name": "Body.MirrorHousing",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.MirrorHousing.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.MirrorLens",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.MirrorLens.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.NoseBumper",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.RearBumper",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.RearPillar",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.RearPillar.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.RearWing",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.Roof",
+      "role": 0,
+      "triangles": 90
+    },
+    {
+      "name": "Body.Shell",
+      "role": 0,
+      "triangles": 1326
+    },
+    {
+      "name": "Body.SideSkirt",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.SideSkirt.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.SideStripe",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.SideStripe.001",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Body.TailLight",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.TailLight.001",
+      "role": 0,
+      "triangles": 84
+    },
+    {
+      "name": "Body.WindowSill",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WindowSill.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WingEndplate",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.WingEndplate.001",
+      "role": 0,
+      "triangles": 108
+    },
+    {
+      "name": "Body.WingStay",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Body.WingStay.001",
+      "role": 0,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageCross",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageFront",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageFront.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRear",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRear.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRoof",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.CageRoof.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.Console",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Dash",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.DoorBar",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorBar.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorDiagonal",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.DoorDiagonal.001",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.FireBottle",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Firewall",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Floor",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.HarnessBar",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.HarnessBuckle",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.Headliner",
+      "role": 5,
+      "triangles": 84
+    },
+    {
+      "name": "Cockpit.Headrest",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatBack",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatBase",
+      "role": 5,
+      "triangles": 84
+    },
+    {
+      "name": "Cockpit.SeatBolster",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatBolster.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatShoulder",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.SeatShoulder.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ShiftKnob",
+      "role": 5,
+      "triangles": 166
+    },
+    {
+      "name": "Cockpit.Shifter",
+      "role": 5,
+      "triangles": 44
+    },
+    {
+      "name": "Cockpit.ShoulderHarness",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Cockpit.ShoulderHarness.001",
+      "role": 5,
+      "triangles": 108
+    },
+    {
+      "name": "Glass.Rear",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Side",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Side.001",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Glass.Windscreen",
+      "role": 0,
+      "triangles": 2
+    },
+    {
+      "name": "Steering.Column",
+      "role": 6,
+      "triangles": 44
+    },
+    {
+      "name": "Steering.Hub",
+      "role": 6,
+      "triangles": 60
+    },
+    {
+      "name": "Steering.Spoke",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Spoke.001",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Spoke.002",
+      "role": 6,
+      "triangles": 28
+    },
+    {
+      "name": "Steering.Wheel",
+      "role": 6,
+      "triangles": 416
+    },
+    {
+      "name": "WheelFL.Brake",
+      "role": 1,
+      "triangles": 80
+    },
+    {
+      "name": "WheelFL.Caliper",
+      "role": 1,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFL.Hub",
+      "role": 1,
+      "triangles": 60
+    },
+    {
+      "name": "WheelFL.Rim",
+      "role": 1,
+      "triangles": 80
+    },
+    {
+      "name": "WheelFL.Spoke",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.001",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.002",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.003",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.004",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Spoke.005",
+      "role": 1,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFL.Tire",
+      "role": 1,
+      "triangles": 416
+    },
+    {
+      "name": "WheelFR.Brake",
+      "role": 2,
+      "triangles": 80
+    },
+    {
+      "name": "WheelFR.Caliper",
+      "role": 2,
+      "triangles": 108
+    },
+    {
+      "name": "WheelFR.Hub",
+      "role": 2,
+      "triangles": 60
+    },
+    {
+      "name": "WheelFR.Rim",
+      "role": 2,
+      "triangles": 80
+    },
+    {
+      "name": "WheelFR.Spoke",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.001",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.002",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.003",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.004",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Spoke.005",
+      "role": 2,
+      "triangles": 28
+    },
+    {
+      "name": "WheelFR.Tire",
+      "role": 2,
+      "triangles": 416
+    },
+    {
+      "name": "WheelRL.Brake",
+      "role": 3,
+      "triangles": 80
+    },
+    {
+      "name": "WheelRL.Caliper",
+      "role": 3,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRL.Hub",
+      "role": 3,
+      "triangles": 60
+    },
+    {
+      "name": "WheelRL.Rim",
+      "role": 3,
+      "triangles": 80
+    },
+    {
+      "name": "WheelRL.Spoke",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.001",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.002",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.003",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.004",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Spoke.005",
+      "role": 3,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRL.Tire",
+      "role": 3,
+      "triangles": 416
+    },
+    {
+      "name": "WheelRR.Brake",
+      "role": 4,
+      "triangles": 80
+    },
+    {
+      "name": "WheelRR.Caliper",
+      "role": 4,
+      "triangles": 108
+    },
+    {
+      "name": "WheelRR.Hub",
+      "role": 4,
+      "triangles": 60
+    },
+    {
+      "name": "WheelRR.Rim",
+      "role": 4,
+      "triangles": 80
+    },
+    {
+      "name": "WheelRR.Spoke",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.001",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.002",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.003",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.004",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Spoke.005",
+      "role": 4,
+      "triangles": 28
+    },
+    {
+      "name": "WheelRR.Tire",
+      "role": 4,
+      "triangles": 416
+    }
+  ]
+}

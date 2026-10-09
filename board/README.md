@@ -87,7 +87,14 @@ still requires them and has not met this new contract. Active 0062 owns removal
 of those dependencies and the reproducible authored content pipeline. Prior
 original-asset diagnostics remain evidence, not standalone product acceptance.
 
-Continue stabilizing ordinary races, then connect the proven league foundation
+Active 0062 now proves the first authored offline foundation: an editable
+vehicle/cockpit, three mesh LODs, eighteen procedural maps and twelve new PCM
+clips. All 38 runtime exports reproduce in an independent original-free source
+tree. They are not integrated into the game; the next step is checked C content
+loading, real SoftGL exterior/cockpit drawing and the first owned track/audio
+provider for default standalone launch.
+
+Continue stabilizing ordinary races and connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
 Visual inspection of actual Native/browser play is a primary acceptance check,
