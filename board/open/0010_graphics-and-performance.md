@@ -28,6 +28,24 @@ cockpit-only geometry, followed by actual gameplay/original screenshots and
 complete-frame measurements. See active 0062 and
 `/tmp/wasm-dd2/prepared-reference-0062/visual-report.json`.
 
+The owned scene factory/shared renderer now loads all eleven compact scenes,
+validates actual model bounds, culls world AABBs before submission, shares albedo
+uploads and renders prepared alpha masks with depth-writing cutouts. All 66
+Native/Node-WASM/fresh O1 sanitized full/crop images and 44 cross-target checks
+pass. At most 232 pixels change; maximum mean channel error is 0.002203415.
+Circuit 1's crop rejects 301/767 objects before draw-cache creation and submits
+127,072 triangles/829 batches/34 textures rather than 190,048/1,278/40 for the
+overview. These are static diagnostics; complete-frame cost, four-thread Native
+selection and 60 FPS are not accepted. Arena 8's floor remains too dark and
+terrain/sky coverage is incomplete. The optional original-decoder static
+overview also has central terrain gaps; actual original-executable comparison
+and final remodeled visuals remain pending. World-loader, six-plane/frustum,
+shared-cache failure/retry and cutout-depth fixtures pass; component Memcheck
+has zero errors/leaks. Actual existing authored Native/browser controls/images
+remain valid. See `/tmp/wasm-dd2/prepared-world-0062/`. Next integrate the owned
+renderer into gameplay/browser presentation, apply cockpit-only submission,
+then inspect moving both-target play and measure complete frames.
+
 Shared textured meshes, chase camera, wheels, damage and HUD exist. Lighting, shadows, detached parts, smoke, billboard orientation and blending remain incomplete. SoftGL is our library in deps/softgl.
 
 The player explicitly prioritizes visual experience. Actual Native/browser

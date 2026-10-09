@@ -331,7 +331,23 @@ clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
 
 .PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
-.PHONY: assets-convert-reference assets-reference-verify
+.PHONY: assets-convert-reference assets-reference-verify assets-scenes-prepare assets-world-verify assets-world-render-verify
+assets-world-render-verify: assets-render-verify ## verify prepared world visibility and images with fresh sanitized SoftGL
+	cmake --build /tmp/wasm-dd2/authored-render-sanitized --target dd2_world_draw_test dd2_prepared_preview -j4
+	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 /tmp/wasm-dd2/authored-render-sanitized/dd2_world_draw_test
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_world_render.py --sanitized-build /tmp/wasm-dd2/authored-render-sanitized
+	$(MAKE) clean-logs
+
+assets-scenes-prepare: ## compile prepared placement JSON into owned runtime scenes; no original input
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/prepare_scenes.py
+
+assets-world-verify: ## verify owned scene fields/models and malformed-scene rollback on all targets
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_world.py
+	$(MAKE) clean-logs
+
 assets-convert-reference: ## offline one-time reference conversion; original archive is a development input only
 	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_reference.py
 

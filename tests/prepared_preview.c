@@ -1,10 +1,14 @@
+#include "assets/bounds.h"
 #include "assets/bytes.h"
 #include "assets/image.h"
 #include "assets/model.h"
+#include "assets/world.h"
+#include "content_file_fixture.h"
 #include "platform/file.h"
 #include "render/model_draw.h"
 #include "render/model_view.h"
 #include "render/renderer.h"
+#include "render/world_draw.h"
 
 #include <GL/softgl.h>
 #include <stdbool.h>
@@ -80,8 +84,112 @@ static bool dd2_prepared_write(dd2_renderer *renderer, const char *path) {
     return passed && closed;
 }
 
+static void dd2_prepared_world_camera(const dd2_world *world, dd2_render_options viewport,
+                                      bool crop) {
+    const dd2_world_resource *resources = dd2_world_resources(world);
+    const dd2_world_instance *instances = dd2_world_instances(world);
+    dd2_bounds bounds = {0};
+    for (size_t index = 0; index < dd2_world_instance_count(world); ++index) {
+        for (size_t axis = 0; axis < 3; ++axis) {
+            const dd2_world_instance *instance = &instances[index];
+            const dd2_bounds *local = &resources[instance->resource].bounds;
+            const float low = local->minimum[axis] + instance->position[axis];
+            const float high = local->maximum[axis] + instance->position[axis];
+            bounds.minimum[axis] =
+                index == 0 || low < bounds.minimum[axis] ? low : bounds.minimum[axis];
+            bounds.maximum[axis] =
+                index == 0 || high > bounds.maximum[axis] ? high : bounds.maximum[axis];
+        }
+    }
+    const float padding = 0.6F;
+    float radius = 1;
+    float center[3] = {0};
+    for (size_t axis = 0; axis < 3; ++axis) {
+        const float span = bounds.maximum[axis] - bounds.minimum[axis];
+        radius = span > radius ? span : radius;
+        center[axis] = (bounds.maximum[axis] + bounds.minimum[axis]) / 2;
+    }
+    radius *= padding;
+    if (crop) {
+        const float scale = 0.25F;
+        radius *= scale;
+    }
+    const double aspect = (double)viewport.width / viewport.height;
+    glViewport(0, 0, viewport.width, viewport.height);
+    const float sky[] = {.17F, .23F, .31F, 1};
+    glClearColor(sky[0], sky[1], sky[2], sky[3]);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-radius * aspect, radius * aspect, -radius, radius, -radius * 4, radius * 4);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    const float pitch = 55;
+    const float yaw = 30;
+    glRotatef(pitch, 1, 0, 0);
+    glRotatef(yaw, 0, 1, 0);
+    glTranslatef(-center[0], -center[1], -center[2]);
+}
+
+typedef struct {
+    const char *root;
+    const char *resource;
+    const char *output;
+    bool crop;
+} dd2_prepared_world_capture;
+
+static bool dd2_prepared_world(dd2_prepared_world_capture capture) {
+    const char *root = capture.root;
+    dd2_file file = {0};
+    if (!dd2_content_test_read(root, capture.resource, &file)) {
+        return false;
+    }
+    dd2_world *world = dd2_world_create((dd2_byte_view){file.data, file.size},
+                                        dd2_content_test_model, (void *)root);
+    dd2_file_release(&file);
+    const dd2_render_options viewport = {.width = DD2_PREPARED_WIDTH,
+                                         .height = DD2_PREPARED_HEIGHT,
+                                         .samples = DD2_PREPARED_SAMPLES,
+                                         .output = DD2_RENDER_LINEAR_TO_SRGB};
+    dd2_renderer *renderer = world != NULL ? dd2_renderer_create(&viewport) : NULL;
+    dd2_world_draw *draw =
+        renderer != NULL ? dd2_world_draw_create(world, dd2_prepared_image, (void *)root) : NULL;
+    dd2_world_draw_stats stats = {0};
+    bool passed = false;
+    if (draw != NULL) {
+        dd2_prepared_world_camera(world, viewport, capture.crop);
+        passed = dd2_world_draw_frame(
+                     draw, (dd2_model_draw_options){.double_sided = true, .cutout_textures = true},
+                     &stats) &&
+                 dd2_prepared_write(renderer, capture.output);
+        printf("{\"scope\":\"prepared static world "
+               "diagnostic\",\"objects\":%zu,\"visible\":%zu,\"culled\":%zu,\"triangles\":%zu,"
+               "\"batches\":%zu,\"textures\":%zu}\n",
+               stats.tested, stats.visible, stats.culled, stats.triangles, stats.batches,
+               stats.uploaded_textures);
+    }
+    dd2_world_draw_destroy(draw);
+    dd2_world_destroy(world);
+    dd2_renderer_destroy(renderer);
+    return passed;
+}
+
 int main(int argc, char **argv) {
-    if (argc != DD2_PREPARED_ARGUMENTS) {
+    if (argc != DD2_PREPARED_ARGUMENTS && argc != DD2_PREPARED_ARGUMENTS + 1) {
+        return EXIT_FAILURE;
+    }
+    const bool crop = argc == DD2_PREPARED_ARGUMENTS + 1;
+    if (crop && strcmp(argv[DD2_PREPARED_ARGUMENTS], "crop") != 0) {
+        return EXIT_FAILURE;
+    }
+    const char *extension = strrchr(argv[2], '.');
+    if (extension != NULL && strcmp(extension, ".dd2scene") == 0) {
+        return dd2_prepared_world((dd2_prepared_world_capture){
+                   .root = argv[1], .resource = argv[2], .output = argv[3], .crop = crop})
+                   ? EXIT_SUCCESS
+                   : EXIT_FAILURE;
+    }
+    if (crop) {
         return EXIT_FAILURE;
     }
     dd2_file file = {0};

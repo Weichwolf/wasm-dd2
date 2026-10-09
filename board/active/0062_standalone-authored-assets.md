@@ -212,12 +212,43 @@ and raw comparisons are removed after recording them.
 The unchanged authored loader corpus also passes for all 21 prior assets,
 four positive PNG layouts and 131 rejection variants on all three targets.
 
+The next component is now implemented: an owned DD2SCN1 scene factory and shared
+world renderer. Eleven compact scenes compile from committed JSON without
+opening original files or changing/subdividing their meshes. Each distinct mesh
+loads once, and its actual vertex bounds must exactly match metadata before
+culling can trust it. Resource/name/index/finite/range checks precede loading;
+bad/missing resources release the complete partial owner. All eleven complete
+typed scene re-encodings pass on Native, Node/WASM and fresh O1 ASan/UBSan after
+source release; 21 malformed variants reject, including wrong finite bounds.
+
+The renderer culls world AABBs against all six planes before creating a draw
+cache or submitting triangles. Albedo uploads are shared across model caches;
+a hidden missing texture does not block visible objects, and failed uploads can
+retry cleanly. Prepared alpha masks use alpha testing with depth writes; a new
+pixel fixture proves discarded texels reveal a later background while retained
+texels occlude it. All 66 whole/cropped scene captures and 44 cross-target checks
+pass, with at most 232 changed pixels and maximum mean channel error 0.002203415.
+Circuit 1's crop culls 301/767 objects and submits 127,072 triangles in 829 batches
+with 34 uploads, compared with 190,048/1,278/40 for the overview. This is static
+visibility accounting, not a complete four-thread/60-FPS result.
+
+Direct circuit/arena inspection finds plausible layout and texture orientation,
+but dark arena-floor contrast and incomplete sky/terrain need improvement. An
+optional original-decoder overview has the same coarse layout and central gaps;
+it is not original-executable parity. Fresh O1 sanitizer rendering includes
+reached SoftGL sources. World-cache Memcheck reports zero errors, 152 matched
+allocations/frees and no leaks. The previous authored preview retains all
+24 captures, 15 Native/15 sanitized window checks and 17 Chromium comparisons.
+Strict LLVM19 covers 243 C/header files; 54 Native/52 WASM CTests pass. Evidence
+is under `/tmp/wasm-dd2/prepared-world-0062/`, including owned-verification,
+asset-regression, world-render, authored-render and visual-review reports.
+
 ## Next
 
-First wire the prepared scene/provider and pre-submission frustum culling;
+Wire the prepared owner/renderer into default gameplay and browser presentation;
 render only cockpit/interior geometry in cockpit views. Migrate owned road,
 progress/AI/grid and audio inputs so default Native/browser launch consumes
-committed assets without Dirinfo. Implement alpha-test/billboard/livery policy,
+committed assets without Dirinfo. Complete billboard/livery policy,
 place wheel templates and compare actual original/candidate gameplay images.
 Replace intermediate meshes with original-informed Blender models gradually.
 

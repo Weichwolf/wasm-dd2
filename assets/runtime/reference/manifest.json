@@ -608810,7 +608810,8 @@
           "removed": [],
           "triangles": 976
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-1.dd2scene"
     },
     {
       "level": "2",
@@ -609699,7 +609700,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-2.dd2scene"
     },
     {
       "level": "3",
@@ -610448,7 +610450,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-3.dd2scene"
     },
     {
       "level": "4",
@@ -610924,7 +610927,8 @@
           "removed": [],
           "triangles": 768
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-4.dd2scene"
     },
     {
       "level": "5",
@@ -611378,7 +611382,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-5.dd2scene"
     },
     {
       "level": "6",
@@ -611832,7 +611837,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-6.dd2scene"
     },
     {
       "level": "7",
@@ -612772,7 +612778,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-7.dd2scene"
     },
     {
       "level": "8",
@@ -613226,7 +613233,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-8.dd2scene"
     },
     {
       "level": "9",
@@ -613680,7 +613688,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-9.dd2scene"
     },
     {
       "level": "A",
@@ -614134,7 +614143,8 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-a.dd2scene"
     },
     {
       "level": "B",
@@ -614588,7 +614598,54 @@
           "removed": [],
           "triangles": 192
         }
-      }
+      },
+      "compiled_scene": "reference/scenes/level-b.dd2scene"
     }
-  ]
+  ],
+  "compiled_scenes": {
+    "reference/scenes/level-1.dd2scene": {
+      "sha256": "c134de0c75902932a90f63adab2d70bb6779736903c5e9263a17b84928dde2e1",
+      "bytes": 106440
+    },
+    "reference/scenes/level-2.dd2scene": {
+      "sha256": "3d9d8a313f786fe5c959a8af3eb2e70068f3abd3739adba86b983cecabde5af0",
+      "bytes": 128484
+    },
+    "reference/scenes/level-3.dd2scene": {
+      "sha256": "5fb4c327fd197f29139b6243735822524501826c5929ca2f6cc54f5e92edfc85",
+      "bytes": 125084
+    },
+    "reference/scenes/level-4.dd2scene": {
+      "sha256": "8d3164db738860984453a3db84d35ed735adc59aeaf9e5cecee28118118b11c8",
+      "bytes": 139584
+    },
+    "reference/scenes/level-5.dd2scene": {
+      "sha256": "5197d8ce91bda50b4b309176610d3dfc4a6cd00800696d0d16cc4651d8dab23a",
+      "bytes": 72820
+    },
+    "reference/scenes/level-6.dd2scene": {
+      "sha256": "211efeccf28e450ec5d39a8f284d43181894151298d867f5a44d7f63251a7207",
+      "bytes": 91764
+    },
+    "reference/scenes/level-7.dd2scene": {
+      "sha256": "76b5e94d8e59ba23cbef561ab14dc2879327f7dd3bd0f985ed07e07ef6ee2d2e",
+      "bytes": 104324
+    },
+    "reference/scenes/level-8.dd2scene": {
+      "sha256": "501a5b98caa7c4e0f5f5f4987e3c0ebc61984e8e3cdbfe8feff8bd73a1ed0399",
+      "bytes": 13700
+    },
+    "reference/scenes/level-9.dd2scene": {
+      "sha256": "1ecaf7cedb6487a62edc5c2ba077dfac1cd5f159d79ca0b7680aa60d94cbb424",
+      "bytes": 22276
+    },
+    "reference/scenes/level-a.dd2scene": {
+      "sha256": "31294482d9263af74e48d08c6b2d2f4b1a242f4a1588c75045baa520dd031751",
+      "bytes": 22540
+    },
+    "reference/scenes/level-b.dd2scene": {
+      "sha256": "cb3d69ba2a42d6132a71fe2401630d357a0381b1384c8fe5cb0b8b39925815d4",
+      "bytes": 16692
+    }
+  }
 }

@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const float dd2_model_draw_dielectric = 0.04F;
 static const float dd2_model_draw_metal_diffuse = 0.65F;
@@ -33,6 +34,22 @@ struct dd2_model_draw {
     uint32_t *indices;
     size_t *order;
     size_t batch_count;
+    dd2_model_texture_cache *cache;
+    bool owns_cache;
+};
+
+typedef struct dd2_model_cached_texture {
+    char path[DD2_MODEL_NAME_BYTES];
+    GLuint texture;
+    bool alpha;
+    struct dd2_model_cached_texture *next;
+} dd2_model_cached_texture;
+
+struct dd2_model_texture_cache {
+    dd2_model_image_loader loader;
+    void *user;
+    dd2_model_cached_texture *first;
+    size_t count;
 };
 
 typedef struct {
@@ -127,10 +144,10 @@ static bool dd2_model_texture_upload(GLuint *texture, const dd2_image *image) {
     return true;
 }
 
-static bool dd2_model_draw_transparent(const dd2_model_draw *draw, uint32_t index) {
+static bool dd2_model_draw_transparent(const dd2_model_draw *draw, uint32_t index, bool cutout) {
     const dd2_model_material *material = &dd2_model_materials(draw->model)[index];
     return material->color[3] < 1 ||
-           (material->texture != DD2_MODEL_NO_TEXTURE && draw->texture_alpha != NULL &&
+           (!cutout && material->texture != DD2_MODEL_NO_TEXTURE && draw->texture_alpha != NULL &&
             draw->texture_alpha[material->texture]);
 }
 
@@ -145,12 +162,72 @@ static bool dd2_model_image_alpha(const dd2_image *image) {
     return false;
 }
 
+dd2_model_texture_cache *dd2_model_texture_cache_create(dd2_model_image_loader loader, void *user) {
+    dd2_model_texture_cache *cache = calloc(1, sizeof(*cache));
+    if (cache != NULL) {
+        cache->loader = loader;
+        cache->user = user;
+    }
+    return cache;
+}
+
+void dd2_model_texture_cache_destroy(dd2_model_texture_cache *cache) {
+    if (cache != NULL) {
+        dd2_model_cached_texture *entry = cache->first;
+        while (entry != NULL) {
+            dd2_model_cached_texture *next = entry->next;
+            glDeleteTextures(1, &entry->texture);
+            free(entry);
+            entry = next;
+        }
+        free(cache);
+    }
+}
+
+size_t dd2_model_texture_cache_count(const dd2_model_texture_cache *cache) {
+    return cache != NULL ? cache->count : 0;
+}
+
+static const dd2_model_cached_texture *dd2_model_cache_get(dd2_model_texture_cache *cache,
+                                                           const char *path) {
+    for (dd2_model_cached_texture *entry = cache->first; entry != NULL; entry = entry->next) {
+        if (strcmp(path, entry->path) == 0) {
+            return entry;
+        }
+    }
+    if (cache->loader == NULL) {
+        return NULL;
+    }
+    dd2_model_cached_texture *entry = calloc(1, sizeof(*entry));
+    if (entry == NULL) {
+        return NULL;
+    }
+    dd2_image *image = cache->loader(cache->user, path);
+    const bool uploaded = image != NULL && dd2_model_texture_upload(&entry->texture, image);
+    entry->alpha = image != NULL && dd2_model_image_alpha(image);
+    dd2_image_destroy(image);
+    if (!uploaded) {
+        if (entry->texture != 0) {
+            glDeleteTextures(1, &entry->texture);
+        }
+        free(entry);
+        return NULL;
+    }
+    for (size_t byte = 0; byte < sizeof(entry->path); ++byte) {
+        entry->path[byte] = path[byte];
+    }
+    entry->next = cache->first;
+    cache->first = entry;
+    ++cache->count;
+    return entry;
+}
+
 static size_t dd2_model_batch_find(dd2_model_draw *draw, const dd2_model_part *part) {
     for (size_t index = 0; index < draw->batch_count; ++index) {
         const dd2_model_batch *batch = &draw->batches[index];
         const bool static_role =
             part->role == DD2_MODEL_EXTERIOR || part->role == DD2_MODEL_COCKPIT;
-        if (!dd2_model_draw_transparent(draw, part->material) &&
+        if (!dd2_model_draw_transparent(draw, part->material, false) &&
             batch->material == part->material && batch->role == part->role &&
             (static_role ||
              (batch->pivot[0] == part->pivot[0] && batch->pivot[1] == part->pivot[1] &&
@@ -208,12 +285,8 @@ static bool dd2_model_batches_create(dd2_model_draw *draw) {
 
 void dd2_model_draw_destroy(dd2_model_draw *draw) {
     if (draw != NULL) {
-        if (draw->textures != NULL) {
-            for (size_t index = 0; index < dd2_model_texture_count(draw->model); ++index) {
-                if (draw->textures[index] != 0) {
-                    glDeleteTextures(1, &draw->textures[index]);
-                }
-            }
+        if (draw->owns_cache) {
+            dd2_model_texture_cache_destroy(draw->cache);
         }
         free(draw->textures);
         free(draw->texture_alpha);
@@ -224,9 +297,9 @@ void dd2_model_draw_destroy(dd2_model_draw *draw) {
     }
 }
 
-dd2_model_draw *dd2_model_draw_create(const dd2_model *model, dd2_model_image_loader loader,
-                                      void *user) {
-    if (model == NULL || (dd2_model_texture_count(model) != 0 && loader == NULL)) {
+dd2_model_draw *dd2_model_draw_create_shared(const dd2_model *model,
+                                             dd2_model_texture_cache *cache) {
+    if (model == NULL || cache == NULL) {
         return NULL;
     }
     dd2_model_draw *draw = calloc(1, sizeof(*draw));
@@ -234,6 +307,7 @@ dd2_model_draw *dd2_model_draw_create(const dd2_model *model, dd2_model_image_lo
         return NULL;
     }
     draw->model = model;
+    draw->cache = cache;
     const size_t textures = dd2_model_texture_count(model);
     draw->textures = textures == 0 ? NULL : calloc(textures, sizeof(*draw->textures));
     draw->texture_alpha = textures == 0 ? NULL : calloc(textures, sizeof(*draw->texture_alpha));
@@ -248,21 +322,37 @@ dd2_model_draw *dd2_model_draw_create(const dd2_model *model, dd2_model_image_lo
     glActiveTexture(GL_TEXTURE0);
     const dd2_model_texture *sources = dd2_model_textures(model);
     for (size_t index = 0; index < textures; ++index) {
-        dd2_image *image = loader(user, sources[index].paths[0]);
-        const bool uploaded =
-            image != NULL && dd2_model_texture_upload(&draw->textures[index], image);
-        draw->texture_alpha[index] = image != NULL && dd2_model_image_alpha(image);
-        dd2_image_destroy(image);
-        if (!uploaded) {
+        const dd2_model_cached_texture *entry = dd2_model_cache_get(cache, sources[index].paths[0]);
+        if (entry == NULL) {
             dd2_model_draw_destroy(draw);
             return NULL;
         }
+        draw->textures[index] = entry->texture;
+        draw->texture_alpha[index] = entry->alpha;
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     if (!dd2_model_batches_create(draw)) {
         dd2_model_draw_destroy(draw);
         return NULL;
     }
+    return draw;
+}
+
+dd2_model_draw *dd2_model_draw_create(const dd2_model *model, dd2_model_image_loader loader,
+                                      void *user) {
+    if (model == NULL || (dd2_model_texture_count(model) != 0 && loader == NULL)) {
+        return NULL;
+    }
+    dd2_model_texture_cache *cache = dd2_model_texture_cache_create(loader, user);
+    if (cache == NULL) {
+        return NULL;
+    }
+    dd2_model_draw *draw = dd2_model_draw_create_shared(model, cache);
+    if (draw == NULL) {
+        dd2_model_texture_cache_destroy(cache);
+        return NULL;
+    }
+    draw->owns_cache = true;
     return draw;
 }
 
@@ -344,10 +434,10 @@ static float dd2_model_batch_distance(const dd2_model_batch *batch, const float 
     return distance;
 }
 
-static size_t dd2_model_transparent_order(dd2_model_draw *draw, const float *eye) {
+static size_t dd2_model_transparent_order(dd2_model_draw *draw, const float *eye, bool cutout) {
     size_t count = 0;
     for (size_t index = 0; index < draw->batch_count; ++index) {
-        if (!dd2_model_draw_transparent(draw, draw->batches[index].material)) {
+        if (!dd2_model_draw_transparent(draw, draw->batches[index].material, cutout)) {
             continue;
         }
         size_t position = count++;
@@ -380,9 +470,19 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
     glTexCoordPointer(2, GL_FLOAT, sizeof(*vertices), vertices[0].uv);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
-    glDisable(GL_ALPHA_TEST);
+    if (options.cutout_textures) {
+        const float threshold = 0.5F;
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, threshold);
+    } else {
+        glDisable(GL_ALPHA_TEST);
+    }
     glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
+    if (options.double_sided) {
+        glDisable(GL_CULL_FACE);
+    } else {
+        glEnable(GL_CULL_FACE);
+    }
     glCullFace(GL_BACK);
     glFrontFace(options.clockwise_front ? GL_CW : GL_CCW);
     dd2_model_draw_lights();
@@ -392,11 +492,14 @@ bool dd2_model_draw_frame(dd2_model_draw *draw, dd2_model_draw_options options) 
         glDisable(GL_LIGHTING);
     }
     for (size_t index = 0; index < draw->batch_count; ++index) {
-        if (!dd2_model_draw_transparent(draw, draw->batches[index].material)) {
+        if (!dd2_model_draw_transparent(draw, draw->batches[index].material,
+                                        options.cutout_textures)) {
             dd2_model_draw_batch(draw, &draw->batches[index], options);
         }
     }
-    const size_t transparent = dd2_model_transparent_order(draw, options.eye);
+    const size_t transparent =
+        dd2_model_transparent_order(draw, options.eye, options.cutout_textures);
+    glDisable(GL_ALPHA_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);

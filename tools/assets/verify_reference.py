@@ -17,6 +17,7 @@ from artifacts import WORK, check_space, prepare_output, run_bounded
 from rewrite.quality import ROOT, tool
 from assets.verify_assets import decode_model
 from assets.verify_content import FLAGS
+from assets.prepare_scenes import compile_scene
 
 
 def digest(data):
@@ -61,6 +62,11 @@ def inventory(runtime):
     used = set()
     for level in manifest['levels']:
         scene = json.loads(resource(runtime, level['scene']).read_text())
+        compiled = resource(runtime, level['compiled_scene']).read_bytes()
+        if compiled != compile_scene(scene):
+            raise ValueError('Compiled runtime scene differs from prepared placement JSON')
+        if manifest['compiled_scenes'][level['compiled_scene']] != dict(sha256=digest(compiled), bytes=len(compiled)):
+            raise ValueError('Compiled scene digest/extent differs')
         if (scene['format'] != 'DD2SCENE1' or scene['level'] != level['level']
                 or scene['units'] != 'meters' or scene['up'] != 'Y'
                 or len(scene['objects']) != level['prepared_objects']):
@@ -88,7 +94,7 @@ def inventory(runtime):
                 raise ValueError('Prepared template subdivision ratio differs')
     if set(models) != used:
         raise ValueError('Unreferenced prepared model')
-    expected_files = {*manifest['files'], *(level['scene'] for level in manifest['levels']),
+    expected_files = {*manifest['files'], *manifest['compiled_scenes'], *(level['scene'] for level in manifest['levels']),
                       'reference/manifest.json'}
     actual_files = {str(path.relative_to(runtime)) for path in (runtime / 'reference').rglob('*')
                     if path.is_file()}

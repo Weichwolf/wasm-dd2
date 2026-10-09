@@ -11,8 +11,15 @@ placements and dynamic templates exported once to owned meshes/PNGs with offline
 16x subdivision. All 6,141 meshes and 693 PNGs pass complete Native/WASM/sanitized
 loading without original input. A static SoftGL car-body view is inspected at
 640x360/4x MSAA. This is intermediate content; default game startup, scene
-provider/frustum culling, livery/animation/road metadata and audio migration
-remain open under 0062/0010. Next wire the prepared scene/provider and replace
+provider integration, livery/animation/road metadata and audio migration
+remain open under 0062/0010. The owned scene loader and shared world renderer now
+load all eleven prepared scenes without original files, validate actual model
+bounds, cull before geometry submission and reuse texture uploads. Sixty-six
+static Native/WASM/sanitized scenes, 44 cross-target image checks, loader rollback,
+cutout depth pixels and the existing actual Native/browser preview corpus pass.
+The circuit-1 crop rejects 301/767 objects and submits 127,072 triangles. Default
+gameplay/browser world integration, cockpit-only geometry and complete-frame
+60-FPS proof still remain open. Next wire the prepared scene/provider and replace
 the game's original-input path, then remodel against this baseline.
 
 ## Work order

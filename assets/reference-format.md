@@ -6,7 +6,7 @@ development-derived placeholders for later Blender remodeling and procedural
 materials. They are not the final authored-content acceptance for 0062.
 
 `runtime/reference/` contains only our `DD2MESH2` float containers, PNG maps,
-JSON scene placements and an inventory. Original archives, raw level sections,
+JSON scene placements, compact `DD2SCN1` scenes and an inventory. Original archives, raw level sections,
 mesh command streams, palettes and sound banks are not shipped in this set.
 Original DD2 data is an optional offline conversion input. Ordinary builds and
 runtime loading must not invoke the converter. The default game still needs its
@@ -65,7 +65,53 @@ are migrated. Referenced paths resolve under the supplied runtime root.
 subdivision/scaling policy, full resource hashes, independently decoded model
 tables, per-level counts and omissions. Provenance does not require the source
 archive at runtime. Scene metadata is currently a prepared provider input;
-a production scene owner and pre-submission frustum culling still need wiring.
+the owned scene loader and renderer now consume the compiled files. Default
+gameplay provider integration still needs wiring.
+
+## Owned runtime scene container
+
+`DD2SCN1` is eight bytes including its final NUL. Three little-endian uint32
+counts follow: resources, instances and templates. The header occupies 20 bytes.
+Tables are contiguous with no padding or suffix:
+
+| Table | Bytes | Fields |
+| --- | --- | --- |
+| Resource | 88 | relative mesh path (64 bytes), local minimum XYZ and maximum XYZ (six binary32 floats) |
+| Instance | 48 | unique name (32 bytes), resource index (uint32), meter-space world XYZ (three floats) |
+| Template | 36 | unique name (32 bytes), resource index (uint32) |
+
+Strings are nonempty printable ASCII, NUL-terminated and zero-padded. Mesh paths
+use safe relative components and `.dd2mesh`. Counts are capped at 4,096 resources,
+65,536 instances and 64 templates before any allocation. Placement/bounds values
+must be finite and within one million meters; loaded mesh limits remain stricter.
+The scene owner copies metadata, loads each unique mesh once into owned memory,
+and requires exact agreement between declared bounds and loaded vertex extents.
+Malformed metadata or failed resources discard the complete partial owner.
+Arrays/models are borrowed only until scene destruction; input bytes may be
+released immediately. There are no original addresses, palette references or
+original mesh commands in this format.
+
+`make assets-scenes-prepare` compiles the committed placement JSON without any
+original input or subdivision. `make assets-world-verify` checks every scene's
+C field re-encoding after source release on Native, Node/WASM and fresh O1
+ASan/UBSan. Twenty-one malformed-scene variants must fail cleanly, including
+wrong finite bounds which could otherwise hide geometry from the frustum.
+`make assets-world-render-verify` adds all full/crop scene images and shared-cache
+lifecycle checks with fresh sanitized SoftGL, preserving the existing actual
+Native/browser vehicle preview regression first.
+
+The shared world renderer tests each translated model AABB against all six clip
+planes before creating its draw cache or submitting triangles. Visible models
+share context-local albedo uploads; unchanged images do not upload per object.
+Prepared cutout textures use alpha testing and depth writes. Empty/invalid
+frustum inputs fail open conservatively; crossing/touching bounds remain visible.
+The caller owns the GL context and matrices. World and texture-loader user state
+must outlive the renderer; destroy draw caches before their world/context.
+
+The prepared diagnostic also accepts `reference/scenes/level-*.dd2scene`; an
+optional final `crop` argument narrows the overview. Circuit 1's crop rejects
+301 of 767 objects before submission: 127,072 triangles versus 190,048 for the
+whole-map overview. These static counts do not establish complete-frame FPS.
 
 ## Evidence
 

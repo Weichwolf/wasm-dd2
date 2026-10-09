@@ -21,6 +21,7 @@ from rewrite.verify_archive import ORIGINAL_SHA256
 from rewrite.verify_levels import assets, assemble_atlas, page_rgba
 from rewrite.verify_meshes import LEVELS, level_expected
 from assets.verify_assets import HEADER, TEXTURE, MATERIAL, PART, decode_model
+from assets.prepare_scenes import prepare
 
 ROOT = Path(__file__).resolve().parents[2]
 UNITS_PER_METER = 160.0
@@ -269,6 +270,7 @@ def convert(archive, runtime):
                                  'Driving metadata, livery variants, UI and audio migration remain pending.',
                                  'The default game still uses original inputs until provider integration.'],
                     files=resources.files, models=resources.models, levels=levels)
+    prepare(runtime, manifest)
     (runtime / 'reference/manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     return manifest
 

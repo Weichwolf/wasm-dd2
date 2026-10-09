@@ -53,6 +53,17 @@ select this content, and full gameplay/audio/60-FPS acceptance remains open.
 See `assets/README.md`,
 `assets/inventory.json` and active 0062 for evidence and missing integration.
 
+The intermediate prepared geometry now has an owned DD2SCN1 scene factory and
+shared SoftGL renderer. Scene compilation reads committed placement JSON only;
+runtime reads owned scenes/meshes/PNGs, validates actual bounds, shares texture
+uploads and culls invisible world AABBs before geometry submission. Prepared
+alpha masks use depth-writing cutouts. All eleven scene field exports and 21
+malformed variants pass on Native/WASM/sanitized; 66 full/crop images and 44
+cross-target comparisons pass. Direct circuit/arena review finds plausible
+layout but limited floor contrast and incomplete terrain/sky. Default gameplay
+and browser-world integration, road/AI/grid/livery/UI/audio inputs and complete
+four-thread/60-FPS proof remain open. See `assets/reference-format.md` and 0062.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game

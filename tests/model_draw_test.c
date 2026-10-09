@@ -140,13 +140,74 @@ static bool dd2_draw_test_case(size_t fixture, bool minify) {
     return passed;
 }
 
+static bool dd2_draw_test_cutout_pixels(const uint8_t *pixels) {
+    const dd2_png_test_fixture *fixture = &dd2_png_test_fixtures[DD2_DRAW_TEST_RGBA_FIXTURE];
+    const uint8_t threshold = 127;
+    for (size_t row = 0; row < DD2_DRAW_TEST_SIDE; ++row) {
+        for (size_t column = 0; column < DD2_DRAW_TEST_SIDE; ++column) {
+            const size_t source = ((DD2_DRAW_TEST_SIDE - row - 1) * DD2_DRAW_TEST_RGBA_ROW) +
+                                  (column * DD2_DRAW_TEST_CHANNELS);
+            const size_t target = ((row * DD2_DRAW_TEST_SIDE) + column) * DD2_DRAW_TEST_CHANNELS;
+            for (size_t channel = 0; channel < 3; ++channel) {
+                unsigned expected = channel == 1 ? UINT8_MAX : 0;
+                if (fixture->expected[source + 3] > threshold) {
+                    expected = dd2_draw_test_linear(fixture->expected[source + channel]);
+                }
+                const unsigned actual = pixels[target + channel];
+                if ((actual > expected ? actual - expected : expected - actual) > 1) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+static bool dd2_draw_test_cutout(void) {
+    dd2_renderer *renderer = dd2_renderer_create(
+        &(dd2_render_options){.width = DD2_DRAW_TEST_SIDE, .height = DD2_DRAW_TEST_SIDE});
+    dd2_model *model = dd2_draw_test_model(false);
+    dd2_draw_test_source source = {.fixture = DD2_DRAW_TEST_RGBA_FIXTURE};
+    dd2_model_draw *draw = model != NULL && renderer != NULL
+                               ? dd2_model_draw_create(model, dd2_draw_test_loader, &source)
+                               : NULL;
+    bool passed = draw != NULL;
+    if (passed) {
+        glViewport(0, 0, DD2_DRAW_TEST_SIDE, DD2_DRAW_TEST_SIDE);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, 1, 0, 1, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        passed = dd2_model_draw_frame(draw, (dd2_model_draw_options){.cutout_textures = true});
+        // The green background must survive discarded alpha texels and remain
+        // occluded behind retained texels, including alpha 128 at the threshold.
+        const float behind = -0.5F;
+        glColor3f(0, 1, 0);
+        glBegin(GL_TRIANGLES);
+        glVertex3f(0, 0, behind);
+        glVertex3f(2, 0, behind);
+        glVertex3f(0, 2, behind);
+        glEnd();
+        const uint8_t *pixels = dd2_renderer_pixels(renderer);
+        passed = passed && pixels != NULL && dd2_draw_test_cutout_pixels(pixels) &&
+                 glIsEnabled(GL_ALPHA_TEST) == GL_FALSE && glGetError() == GL_NO_ERROR;
+    }
+    dd2_model_draw_destroy(draw);
+    dd2_model_destroy(model);
+    dd2_renderer_destroy(renderer);
+    return passed;
+}
+
 int main(void) {
     dd2_model_draw_destroy(NULL);
     if (dd2_model_draw_create(NULL, NULL, NULL) != NULL || dd2_model_draw_batch_count(NULL) != 0 ||
         dd2_model_draw_frame(NULL, (dd2_model_draw_options){0}) ||
         !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, false) ||
         !dd2_draw_test_case(DD2_DRAW_TEST_RGBA_FIXTURE, false) ||
-        !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, true)) {
+        !dd2_draw_test_case(DD2_DRAW_TEST_RGB_FIXTURE, true) || !dd2_draw_test_cutout()) {
         return EXIT_FAILURE;
     }
     puts("{\"scope\":\"authored GL upload orientation, mipmaps, alpha, state and failure "
