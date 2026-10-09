@@ -8,8 +8,9 @@
 
 enum { DD2_PROBE_WIDTH = 64, DD2_PROBE_HEIGHT = 64, DD2_RGBA_CHANNELS = 4, DD2_CHANNEL_MAX = 255 };
 
-static bool dd2_probe_render(void) {
-    const dd2_render_options options = {.width = DD2_PROBE_WIDTH, .height = DD2_PROBE_HEIGHT};
+static bool dd2_probe_render(int samples) {
+    const dd2_render_options options = {
+        .width = DD2_PROBE_WIDTH, .height = DD2_PROBE_HEIGHT, .samples = samples};
     dd2_renderer *renderer = dd2_renderer_create(&options);
     if (renderer == NULL) {
         return false;
@@ -34,7 +35,16 @@ static bool dd2_probe_render(void) {
     const size_t center = ((size_t)(DD2_PROBE_HEIGHT / 2) * DD2_PROBE_WIDTH + DD2_PROBE_WIDTH / 2) *
                           DD2_RGBA_CHANNELS;
     const size_t expected_bytes = (size_t)DD2_PROBE_WIDTH * DD2_PROBE_HEIGHT * DD2_RGBA_CHANNELS;
-    const bool passed = pixels != NULL && dd2_renderer_rgba_bytes(renderer) == expected_bytes &&
+    GLint actual_samples = -1;
+    glGetIntegerv(GL_SAMPLES, &actual_samples);
+    size_t partial = 0;
+    if (pixels != NULL) {
+        for (size_t index = 0; index < expected_bytes; index += DD2_RGBA_CHANNELS) {
+            partial += pixels[index] > 0 && pixels[index] < DD2_CHANNEL_MAX;
+        }
+    }
+    const bool passed = actual_samples == samples && (samples == 0 || partial != 0) &&
+                        pixels != NULL && dd2_renderer_rgba_bytes(renderer) == expected_bytes &&
                         pixels[0] == 0 && pixels[1] == 0 && pixels[2] == 0 &&
                         pixels[3] == DD2_CHANNEL_MAX && pixels[center] == DD2_CHANNEL_MAX &&
                         pixels[center + 1] == 0 && pixels[center + 2] == 0 &&
@@ -50,9 +60,9 @@ int main(void) {
         return EXIT_FAILURE;
     }
     dd2_renderer_destroy(NULL);
-    const unsigned repetitions = 2;
-    for (unsigned iteration = 0; iteration < repetitions; ++iteration) {
-        if (!dd2_probe_render()) {
+    const int sample_counts[] = {0, 2, 4};
+    for (size_t index = 0; index < sizeof(sample_counts) / sizeof(sample_counts[0]); ++index) {
+        if (!dd2_probe_render(sample_counts[index])) {
             return EXIT_FAILURE;
         }
     }

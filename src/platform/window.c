@@ -84,6 +84,12 @@ dd2_window *dd2_window_create(dd2_render_options size) {
     return window;
 }
 
+void dd2_window_set_title(dd2_window *window, const char *title) {
+    if (window != NULL && title != NULL) {
+        SDL_SetWindowTitle(window->native, title);
+    }
+}
+
 static SDL_Rect dd2_window_rectangle(const dd2_window *window, const SDL_Surface *surface) {
     SDL_Rect rectangle = {.w = surface->w, .h = surface->h};
     if ((int64_t)surface->w * window->size.height > (int64_t)surface->h * window->size.width) {

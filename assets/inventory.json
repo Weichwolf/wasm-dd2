@@ -8,7 +8,8 @@
     "mesh_variants": ["runtime/models/racer-r1.dd2mesh", "runtime/models/racer-r1-exterior.dd2mesh", "runtime/models/racer-r1-npc.dd2mesh"],
     "materials": "runtime/textures/materials.json",
     "audio": "runtime/audio/audio.json",
-    "runtime_integrated": false
+    "runtime_integrated": false,
+    "preview": {"native_target": "dd2_content_viewer", "browser_page": "src/platform/web/content.html", "original_inputs_required": false, "width": 640, "height": 360, "samples": 4, "normal_roughness_maps_evaluated": false, "production_game_integration": false, "complete_frame_60_fps_accepted": false}
   },
   "remaining_content": [
     {"kind": "circuits", "slots": [1, 2, 3, 4, 5, 6, 7], "needs": ["Blender terrain and course geometry", "owned road/contact/progress graph", "barriers", "AI route", "scenery and lighting", "grid and start/finish metadata"], "runtime_dependency": "Original LEVx level, texture, scene and road data"},
@@ -18,6 +19,6 @@
     {"kind": "presentation", "needs": ["authored font/glyph atlas", "all menu and HUD layouts", "icons and branding", "results and championship presentation", "replay and settings surfaces"], "runtime_dependency": "Original font data and unfinished frontend"},
     {"kind": "visual effects", "needs": ["contact shadows", "dust and smoke", "skid marks", "sparks and debris", "damage effects", "lighting and material evaluation"], "runtime_dependency": "Missing or incomplete rewrite renderer features"},
     {"kind": "audio", "needs": ["engine-speed/load transitions", "all collision and material cues", "ambience for each setting", "new commentary voices/events", "complete composed soundtrack", "music context/transport", "mixing and settings behavior"], "runtime_dependency": "Original BANK1.SBK and CDDA; new foundation clips are not integrated"},
-    {"kind": "delivery", "needs": ["owned runtime content manifest/provider", "authored renderer/material/LOD integration", "default Native/WASM packaging without original files", "startup without original-file picker", "full functional and visual/audio acceptance", "measured 60-FPS scene budgets"], "runtime_dependency": "Original Dirinfo startup and archive-based track/championship owners"}
+    {"kind": "delivery", "needs": ["owned runtime content manifest/provider", "default game renderer/material/LOD integration", "default Native/WASM packaging without original files", "startup without original-file picker", "full functional and visual/audio acceptance", "measured 60-FPS scene budgets"], "runtime_dependency": "Original Dirinfo startup and archive-based track/championship owners"}
   ]
 }

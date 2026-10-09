@@ -9,6 +9,8 @@ typedef struct dd2_renderer dd2_renderer;
 typedef struct {
     int width;
     int height;
+    /* Zero preserves the single-sample reference renderer; 2/4 enable MSAA. */
+    int samples;
 } dd2_render_options;
 
 /* Contexts are owned by one render thread. Returned pixels belong to SoftGL

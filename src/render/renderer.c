@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-enum { DD2_RENDER_MAX_DIMENSION = 4096, DD2_RGBA_CHANNELS = 4 };
+enum { DD2_RENDER_MAX_DIMENSION = 4096, DD2_RGBA_CHANNELS = 4, DD2_RENDER_MSAA = 4 };
 
 struct dd2_renderer {
     softgl_ctx *context;
@@ -13,7 +13,8 @@ struct dd2_renderer {
 
 dd2_renderer *dd2_renderer_create(const dd2_render_options *options) {
     if (options == NULL || options->width <= 0 || options->height <= 0 ||
-        options->width > DD2_RENDER_MAX_DIMENSION || options->height > DD2_RENDER_MAX_DIMENSION) {
+        options->width > DD2_RENDER_MAX_DIMENSION || options->height > DD2_RENDER_MAX_DIMENSION ||
+        (options->samples != 0 && options->samples != 2 && options->samples != DD2_RENDER_MSAA)) {
         return NULL;
     }
 
@@ -22,7 +23,8 @@ dd2_renderer *dd2_renderer_create(const dd2_render_options *options) {
         return NULL;
     }
 
-    renderer->context = softgl_create(options->width, options->height);
+    renderer->context =
+        softgl_create_multisample(options->width, options->height, options->samples);
     if (renderer->context == NULL) {
         free(renderer);
         return NULL;

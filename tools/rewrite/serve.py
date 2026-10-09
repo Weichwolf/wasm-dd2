@@ -7,6 +7,8 @@ from pathlib import Path
 
 BUILD = Path('/tmp/wasm-dd2/rewrite-wasm')
 FILES = {'/', '/index.html', '/viewer.js', '/dd2_app.js', '/dd2_app.wasm', '/dd2_app.worker.js'}
+FILES.update({'/content.html', '/content.js', '/dd2_content_viewer.js',
+              '/dd2_content_viewer.wasm', '/dd2_content_viewer.worker.js', '/dd2_content_viewer.data'})
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -35,11 +37,14 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8080)
+    parser.add_argument('--page', choices=('game', 'content'), default='game')
     args = parser.parse_args()
-    if not (BUILD / 'dd2_app.js').is_file():
+    executable = 'dd2_content_viewer.js' if args.page == 'content' else 'dd2_app.js'
+    if not (BUILD / executable).is_file():
         parser.error('Build first with make rewrite-wasm')
     server = ThreadingHTTPServer(('127.0.0.1', args.port), partial(Handler, directory=str(BUILD)))
-    print(f'http://127.0.0.1:{server.server_port}/', flush=True)
+    page = 'content.html' if args.page == 'content' else ''
+    print(f'http://127.0.0.1:{server.server_port}/{page}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

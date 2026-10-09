@@ -94,9 +94,18 @@ tree. Owned C model/PNG loaders now pass exact all-field/index/sample checks for
 three models and eighteen maps on Native, Node/WASM and fresh O1 ASan/UBSan;
 96 damaged-model and 35 malformed/unsupported-PNG variants fail cleanly per
 target. Strict LLVM19 covers 216 C/header files; 49 Native and 47 WASM CTests pass.
-They are not integrated into the game; the next step is real SoftGL
-exterior/cockpit drawing and the first owned track/audio
-provider for default standalone launch.
+An original-free SoftGL vehicle/cockpit preview now draws all three LODs at
+640x360/4x MSAA with filtered albedo mips, basic lights, transparency and real
+Native/browser camera/detail/pose/reset/close controls. Twenty-four Native/WASM/
+sanitized captures, 15 Native/15 sanitized exact window checks and 17 exact
+Chromium comparisons pass; strict LLVM19 covers 226 files and 50/48 CTests pass.
+The directly inspected cockpit remains too dark, with incomplete material,
+shadow/environment quality and fixed-part motion roles. This is a content preview;
+default game integration, authored track/audio providers, four-thread Native
+selection and complete-frame 60-FPS proof remain open. Warmed rendering/presentation
+calls measure 21.17 ms Native/30.92 ms Chromium median for the cockpit,
+without simulation/compositor costs; this already exceeds the complete-frame
+16.67-ms budget and is recorded under 0010/0062.
 
 Continue stabilizing ordinary races and connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work

@@ -40,6 +40,37 @@ is removed after summarizing it in
 
 ## Next
 
+The first authored SoftGL vehicle preview now draws all three LODs and cockpit
+at 640x360/4x MSAA with batched indices, filtered albedo mips, basic lighting and
+transparency. It passes 24 Native/WASM/O1 sanitized image captures, 15 Native/15
+sanitized exact window comparisons and 17 exact Chromium control/canvas checks;
+226-file strict LLVM19 and 50/48 Native/WASM CTests pass. Direct actual exterior/
+cockpit review finds an excessively dark dashboard, flat display/shading, absent
+normal/roughness evaluation, missing contact shadows/environment and unlabeled
+gauges/body seams. Source caliper/column motion roles also need correction.
+The default game remains reference-backed; this diagnostic is not standalone
+game, qualitative superiority or measured full-frame 60-FPS acceptance.
+Receipts: /tmp/wasm-dd2/authored-render-0062/{report,visual-review-report}.json.
+
+A bounded warmed preview measurement now records thirty calls per view at
+640x360/4x MSAA. Native full/exterior/NPC/cockpit median costs are
+17.79/10.70/7.97/21.17 ms; Chromium costs are
+22.17/14.34/10.28/30.92 ms. Cockpit nearest-rank p95 is
+24.65 ms Native and 47.51 ms Chromium. The measured calls include
+rendering, MSAA resolve/readback and presentation submission, excluding ordinary
+simulation/event/compositor costs. Native uses a strictly checked temporary
+source-copy driver with current Release flags/libraries; browser uses the actual
+packaged module. Automatic pinned SoftGL pools remain in use; seven total Native
+process threads are observed, which is not a four-render-thread configuration
+proof. Full/cockpit component costs already exceed the 16.67-ms budget; the
+100,000-200,000-triangle planning budget and complete-game 60 FPS remain unproved.
+Command: make assets-preview-measure.
+Receipt: /tmp/wasm-dd2/authored-preview-timing-0062/report.json.
+
+Prioritize checked linear-light/material/display shading and authored normal/
+roughness evaluation to make the cockpit controls readable. Add contact shadows,
+separate fixed/moving parts and connect the first authored track/sky/scenery.
+
 Use 640x360, 4x MSAA and four total render threads (including the caller) as the
 authored renderer's starting profile, targeting 60 FPS / 16.67 ms per complete
 frame on this machine. Plan 100,000-200,000 submitted triangles and 20-30

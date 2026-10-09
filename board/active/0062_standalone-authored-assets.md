@@ -78,11 +78,68 @@ Receipt: /tmp/wasm-dd2/authored-content-0062/report.json.
 This is loading/ownership evidence, not authored rendering, game integration,
 audible output or 60-FPS acceptance. No default game behavior changes yet.
 
+The first original-free authored vehicle preview now renders all three LODs and
+the cockpit at 640x360 with four real MSAA samples. It loads committed models/
+maps directly, packages them into a 13,894,468-byte browser data bundle and needs
+no original file picker. Opaque parts batch by material/role/pivot; transparent
+parts remain separate and sort far-to-near. Full/exterior/NPC use 41/39/24 batches
+instead of 335/122/49 part submissions. Albedo PNGs upload with corrected row/UV
+orientation, complete mip chains, repeat/trilinear filtering and owned GL resources.
+Basic lights and scalar metallic/roughness parameters illuminate the geometry;
+normal/roughness maps and complete linear-light/display shading remain pending.
+
+Twenty-four rest/steer captures cover all LODs and the cockpit on Native,
+Node/WASM and fresh O1 ASan/UBSan, including reached SoftGL code. Sixteen
+cross-target comparisons differ by at most 23 pixels and mean RGB error
+0.0000811; these are diagnostics, not original parity. Actual Native and sanitized
+windows pass fifteen exact own-target comparisons each, including camera,
+detail/cockpit/pose/reset and normal Escape exit. Chromium passes seventeen
+pixel-exact own-WASM comparisons through real controls/keyboard, viewport
+changes, invalid requests and owner close. Strict LLVM19 covers 226 C/header
+files; 50 Native and 48 WASM CTests pass. Focused pixel checks cover upload
+orientation, alpha, mip minification and failure cleanup; Memcheck frees all
+allocations with zero errors. MSAA sample queries and partial edge colors prove
+the 2x/4x renderer options; the reference viewer retains single sampling.
+
+The real checks caught and corrected duplicate batch initialization/heap writes,
+ignored Escape actions, and missing browser icon requests. The canvas verifier
+now requires exact same-target pixels and logical selection state: the initial
+cross-target tolerance could mistakenly accept a previous wheel-pose frame.
+
+Native and Chromium exterior/cockpit images were directly inspected. The body,
+wheels, pillars/cage, mirror, steering and three gauges are present. Cockpit
+darkness obscures dashboard/controls; flat blue/checker scenery, missing contact
+shadows, unlabeled instruments and body seams remain clear defects. Fixed
+calipers and the steering column require separate motion roles from rolling/
+steering-wheel parts. Current lighting is not the required higher-quality shader.
+These are actual content-preview windows, not gameplay/audio/60-FPS acceptance.
+
+Commands: make assets-play; make assets-web; make assets-render-verify.
+Receipts: /tmp/wasm-dd2/authored-render-0062/{report,browser-report,
+visual-review-report}.json and /tmp/wasm-dd2/authored-draw-0062/quality-report.json.
+Completed raw captures/logs are removed after retaining hashes and findings.
+
+A bounded warmed preview measurement now records thirty calls per view at
+640x360/4x MSAA. Native full/exterior/NPC/cockpit median costs are
+17.79/10.70/7.97/21.17 ms; Chromium costs are
+22.17/14.34/10.28/30.92 ms. Cockpit nearest-rank p95 is
+24.65 ms Native and 47.51 ms Chromium. The measured calls include
+rendering, MSAA resolve/readback and presentation submission, excluding ordinary
+simulation/event/compositor costs. Native uses a strictly checked temporary
+source-copy driver with current Release flags/libraries; browser uses the actual
+packaged module. Automatic pinned SoftGL pools remain in use; seven total Native
+process threads are observed, which is not a four-render-thread configuration
+proof. Full/cockpit component costs already exceed the 16.67-ms budget; the
+100,000-200,000-triangle planning budget and complete-game 60 FPS remain unproved.
+Command: make assets-preview-measure.
+Receipt: /tmp/wasm-dd2/authored-preview-timing-0062/report.json.
+
 ## Next
 
-Use the checked C loaders for actual SoftGL Native/WASM rendering of the
-full/exterior/NPC exports and cockpit view. Upload maps with correct UV/row
-orientation, mipmaps and material ownership; implement LOD/visibility against
+Correct dark cockpit/display shading with a checked linear-light material path
+and evaluate authored normal/roughness maps. Separate fixed caliper/column roles,
+add contact shadows and improve the actual inspected vehicle/interior images.
+Implement production LOD/visibility and explicit Native thread selection against
 the complete-frame budget. Inspect actual windows/canvases with real input and
 measure complete frame costs before claiming the four-thread/60-FPS profile. Supply
 the first authored road/contact/progress graph and Blender track/scenery, then

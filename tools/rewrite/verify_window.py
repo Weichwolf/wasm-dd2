@@ -13,6 +13,7 @@ from http.server import ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -35,10 +36,12 @@ def digest(data):
 
 
 class NativeWindow:
-    def __init__(self, output, archive, binary, label='native', arguments=None, input_pipe=False):
+    def __init__(self, output, archive, binary, label='native', arguments=None, input_pipe=False,
+                 title='Destruction Derby 2 - Track viewer'):
         self.output, self.archive, self.binary = output, archive, binary
         self.arguments = arguments if arguments is not None else [str(archive), '1']
         self.input_pipe = input_pipe
+        self.title = title
         self.env = os.environ.copy()
         # Private Xvfb has no authentication file; discard the caller's display
         # credentials and never interact with an existing desktop.
@@ -63,7 +66,7 @@ class NativeWindow:
                                         stdin=subprocess.PIPE if self.input_pipe else None)
         def ready():
             try:
-                self.window = self.command('search', '--name', '^Destruction Derby 2 - Track viewer$').splitlines()[-1]
+                self.window = self.command('search', '--name', '^' + re.escape(self.title) + '$').splitlines()[-1]
                 return True
             except (subprocess.CalledProcessError, IndexError):
                 return False

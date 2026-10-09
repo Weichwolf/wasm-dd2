@@ -35,7 +35,13 @@ checks and direct Blender-image review pass their bounded offline scope.
 Owned C mesh/PNG loaders now validate all three LODs and eighteen maps on Native,
 Node/WASM and fresh O1 ASan/UBSan. Every typed mesh field/index re-encodes exactly
 after releasing source bytes; every decoded PNG sample agrees with Pillow.
-The content is not yet rendered or selected by the default game. See `assets/README.md`,
+The original-free authored vehicle preview now renders all LODs and the cockpit
+at 640x360/4x MSAA in real Native/browser windows, with camera/detail/pose/reset
+and close controls. It uses batched geometry, filtered albedo mips, basic lighting
+and transparency. Actual images remain too dark in the cockpit and lack the
+required material/environment/shadow quality. The default game still does not
+select this content, and full gameplay/audio/60-FPS acceptance remains open.
+See `assets/README.md`,
 `assets/inventory.json` and active 0062 for evidence and missing integration.
 
 The `master` branch is the new implementation. `ghidra` retains the executable

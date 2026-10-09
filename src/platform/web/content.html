@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racer R1 — vehicle preview</title>
+<link rel="icon" href="data:,">
+<style>
+:root { color-scheme: dark; font: 15px system-ui, sans-serif; background: #111820; color: #eaf1f8; }
+body { margin: 0 auto; padding: 24px; max-width: 960px; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+h1 { margin: 0 0 16px; font-size: 24px; }
+p { color: #a6b6c7; line-height: 1.5; }
+.controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; margin: 16px 0; }
+label { display: grid; gap: 6px; }
+select, button { font: inherit; padding: 8px 12px; border: 1px solid #53677c; border-radius: 5px; background: #203040; color: inherit; }
+button[aria-pressed="true"] { background: #2e536f; }
+canvas { display: block; width: 640px; max-width: 100%; aspect-ratio: 16 / 9; height: auto; margin: 0 auto; background: #263545; outline-offset: 4px; }
+#status { min-height: 1.5em; }
+</style>
+<header><h1>Racer R1</h1><span>Vehicle preview</span></header>
+<div class="controls">
+<label>Detail<select id="detail" disabled><option value="0">Full vehicle</option><option value="1">Exterior</option><option value="2">Distant vehicle</option></select></label>
+<label>Camera<select id="camera" disabled><option value="0">Exterior</option><option value="1">Cockpit</option></select></label>
+<button id="pose" aria-pressed="false" disabled>Turn wheels</button>
+<button id="reset" disabled>Reset view</button>
+</div>
+<canvas id="canvas" width="640" height="360" tabindex="0" aria-label="Racer R1 vehicle preview"></canvas>
+<p>Arrow keys: look around · + / −: zoom · Tab: cockpit · Page Up / Down: detail · Space: turn wheels · R: reset</p>
+<p id="status" role="status">Loading vehicle…</p>
+<script src="content.js"></script>
+<script src="dd2_content_viewer.js"></script>
+</html>

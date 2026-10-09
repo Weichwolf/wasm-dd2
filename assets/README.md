@@ -13,11 +13,16 @@ material sets each provide albedo, roughness and tangent normal maps. Twelve
 new 48-kHz stereo PCM clips include engine/road/impact/UI cues and the original
 16-bar, 120-BPM music arrangement **Foundry Run**.
 
-This is an offline content foundation. The game still needs its original
-archive and sound bank at startup; these new exports are not integrated into
-Native/WASM gameplay. Checked C mesh/PNG loaders now read every committed model
-and material map on both targets, with fresh sanitizer and corruption evidence;
-this is a loading component rather than default game integration.
+The original-free `assets-play` / `assets-web` vehicle preview now draws all
+three LODs and the full cockpit with SoftGL at 640x360 and 4x MSAA, without a
+file picker. It batches opaque parts, uploads filtered albedo mip chains,
+sorts transparent parts and exposes camera/detail/wheel-pose controls. The
+browser bundle includes only committed authored models/maps and metadata.
+
+The default game still needs its original archive and sound bank at startup;
+these new exports are not integrated into Native/WASM gameplay. Checked C
+mesh/PNG loaders read every committed model and material map on both targets,
+with fresh sanitizer and corruption evidence.
 Blender studio lights/shadows are preview facilities,
 not game-renderer evidence. Commentary, all tracks/arenas, further vehicle and
 livery variants, new fonts/UI/VFX and full audio behavior remain incomplete.
@@ -34,6 +39,10 @@ make assets-generate
 make assets-check
 make assets-content-verify
 make assets-preview
+make assets-play
+make assets-web
+make assets-render-verify
+make assets-preview-measure
 ```
 
 `assets-generate` deliberately rebuilds the generated editable `.blend` from
@@ -63,6 +72,40 @@ must agree. Thirty-two corrupted meshes per LOD and thirty-five malformed or
 unsupported PNG variants must fail cleanly; four positive PNG chunk layouts
 must preserve pixels. The report retains hashes under `/tmp/wasm-dd2/` and
 removes completed raw output. No original files are inputs to this check.
+
+`assets-play` opens the actual native vehicle window. `assets-web` serves the
+packaged browser preview at the printed `/content.html` URL. Tab switches
+cockpit/exterior; Page Up/Down changes detail; arrows orbit/look; +/- zooms;
+Space toggles a wheel/steering pose; R resets; Escape closes. The browser also
+provides camera/detail/pose/reset controls. Cockpit selection requires the full
+mesh. This is a content preview, not driving or a playable authored course.
+
+`assets-render-verify` checks decoded upload orientation, mip minification,
+alpha, state and failure cleanup; all three LODs and cockpit in rest/steer poses
+on Native, Node/WASM and a fresh sanitizer build including reached SoftGL code;
+then actual Native/sanitized windows and Chromium input/canvas/resize/close.
+Same-target window/canvas comparisons are exact; cross-target diagnostics allow
+the separately recorded small raster/lighting differences. Raw frame images are
+removed after the report; review the remaining window/canvas PNGs, record findings
+and remove them when the diagnosis is complete.
+
+`assets-preview-measure` records thirty warmed render/resolve/readback/
+presentation-submission calls per view on actual Native SDL and Chromium.
+Native uses a temporary source-copy driver checked with the repository's strict
+LLVM19 configuration and linked to current Release libraries; WASM uses the
+packaged browser application. Reports retain source/build hashes and raw timing
+samples beneath `/tmp/wasm-dd2/`, then remove temporary drivers/logs. The method
+excludes normal simulation/event/compositor work and retains automatic SoftGL
+pools. It measures a component baseline, not complete-game FPS or the explicit
+four-thread acceptance profile.
+
+Direct review finds excessive cockpit darkness, flat display/shading, unlabeled
+instruments, body seams and missing contact shadows/environment. Normal and
+roughness maps are exported but not yet evaluated by the initial scalar-material
+lighting path. Fixed calipers and the steering column still need separate motion
+roles from rolling wheels/steering-wheel geometry. The checker floor/blue clear
+are diagnostic surfaces, not authored game scenery. These captures do not prove
+qualitative superiority, complete gameplay/audio or the full 60-FPS profile.
 
 Use LOD and visibility against the 640x360, 4x MSAA, four-total-thread,
 60-FPS planning profile. The triangle/material budget applies to the whole

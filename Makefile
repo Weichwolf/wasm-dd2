@@ -330,7 +330,26 @@ native wasm patch check: ## run the named reconstruction target under /tmp
 clean-logs: ## remove completed logs older than one hour, preserving open files
 	python3 $(ROOT)/tools/artifacts.py --age-seconds $(LOG_MAX_AGE)
 
-.PHONY: assets-generate assets-preview assets-check assets-content-verify
+.PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
+assets-play: rewrite-native ## open the original-free authored vehicle/cockpit preview
+	/tmp/wasm-dd2/rewrite-native/dd2_content_viewer "$(ROOT)/assets/runtime"
+
+assets-web: rewrite-wasm ## serve the packaged authored vehicle/cockpit preview
+	python3 $(ROOT)/tools/rewrite/serve.py --page content
+
+assets-preview-measure: ## measure warmed preview render/presentation calls; complete-game FPS remains unproved
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-native rewrite-wasm
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/measure_preview.py
+	$(MAKE) clean-logs
+
+assets-render-verify: ## verify authored SoftGL pixels, real windows/canvas, input and ownership
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_render.py
+	$(MAKE) clean-logs
+
 assets-content-verify: ## check owned C mesh/PNG loading on Native, WASM and fresh sanitizers
 	$(MAKE) clean-logs
 	$(MAKE) rewrite-check rewrite-wasm

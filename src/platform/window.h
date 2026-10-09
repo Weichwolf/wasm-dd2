@@ -71,6 +71,7 @@ typedef struct {
  * Present copies bottom-first RGBA before returning; the source stays borrowed.
  * One window is supported on the application's main thread. */
 dd2_window *dd2_window_create(dd2_render_options size);
+void dd2_window_set_title(dd2_window *window, const char *title);
 void dd2_window_destroy(dd2_window *window);
 bool dd2_window_present(dd2_window *window, const uint8_t *rgba);
 /* Poll stops after one keyboard command or wheel gesture, preserving later

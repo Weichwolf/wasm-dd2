@@ -3,6 +3,47 @@
 `renderer.h` owns a CPU framebuffer/context. Make it current on one render
 thread; destroy all context-owned material caches before destroying it. RGBA
 pixels are borrowed until the next draw/destruction and use bottom-first rows.
+Context creation now accepts 0/2/4 samples; zero retains the original single-sample
+reference previews. Real sample queries and partially covered edge colors check
+both MSAA modes on Native/WASM. The authored preview uses 640x360/4x MSAA;
+explicit four-thread Native selection and complete-frame 60-FPS proof remain open.
+
+## Authored models
+
+`model_draw.h` borrows an immutable owned `DD2MESH2` model and owns batched index
+storage and per-context albedo textures. Loader results transfer ownership and
+are destroyed after upload. PNG top-first rows are flipped for bottom-left UVs;
+complete box-filtered mip chains use repeat and trilinear minification.
+Opaque parts sharing material/role/pivot batch together; transparent parts
+remain separate and draw from far to near without depth writes. Vertex/index
+arrays use typed float positions/normals/UVs rather than original integer formats.
+Model/context ownership must outlive the draw cache; destroy caches first.
+The caller leaves modelview active and disables other texture units and attribute
+programs. This initial pass uses unit-zero texturing; its documented cleanup is
+not a general save/restore of arbitrary prior GL state.
+
+The initial path uses directional key/fill/ambient lighting and scalar
+metallic/roughness specular parameters. It does not yet evaluate normal/roughness
+maps or provide complete linear-light display encoding, shadows or full PBR.
+Part pivots drive front-wheel steering, rolling wheels and steering-wheel poses;
+the content's fixed caliper/column role separation remains a follow-up.
+`model_view.h` provides meter-space exterior/cockpit perspectives. +Z forward
+and +X right at the driver use a reflected view basis with clockwise front faces,
+preserving the driver-side and shifter layout rather than mirroring the interior.
+
+`dd2_content_viewer` packages only authored models/maps for the browser and loads
+them directly in Native. Camera/detail/pose/reset and clean close run through
+actual SDL/Chromium input. The checker floor is diagnostic; no authored playable
+road, driving, original-free default game or 60-FPS acceptance is implied.
+Run `make assets-play`, `make assets-web` or `make assets-render-verify`.
+The latter compares all LOD/cockpit rest/steer images on Native, WASM and fresh
+O1 ASan/UBSan including reached SoftGL sources, followed by exact same-target
+real window/canvas checks. Memcheck frees all focused render-test allocations
+with zero errors. Cross-target differences remain explicitly diagnostic.
+Direct inspected window/canvas images show a dark cockpit and missing material/
+environment/shadow quality; active 0010/0062 retain that work.
+
+## Optional original reference rendering
 
 `mesh_draw.h` renders decoded mesh and scene objects without original memory
 addresses or register emulation. The caller supplies viewport, clear/depth state
