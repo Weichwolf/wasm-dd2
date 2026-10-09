@@ -111,7 +111,7 @@ def main():
     del corrupted
 
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+             ('archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
     units += [ROOT / f'src/physics/{name}.c' for name in
               ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact',
                'contact_group', 'vehicle_collision', 'damage')]

@@ -1,5 +1,6 @@
 #include "archive_fixture.h"
 #include "assets/archive.h"
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/scene.h"
@@ -68,8 +69,13 @@ static bool dd2_preview_draw(const dd2_level_data *level, const dd2_texture_set 
     dd2_mesh_materials *materials = dd2_mesh_materials_create(level, textures);
     dd2_camera_apply(
         &camera, (dd2_render_options){.width = DD2_PREVIEW_WIDTH, .height = DD2_PREVIEW_HEIGHT});
-    const bool drawn = car != NULL ? dd2_mesh_draw(materials, car, (dd2_track_vertex){0})
-                                   : dd2_scene_draw(materials, scene);
+    dd2_car_livery livery = {0};
+    const bool prepared =
+        car == NULL || dd2_car_livery_decode(level, textures, 0, DD2_CAR_ROOKIE, &livery);
+    const bool drawn =
+        prepared &&
+        (car != NULL ? dd2_mesh_draw_car(materials, car, (dd2_track_vertex){0}, NULL, &livery)
+                     : dd2_scene_draw(materials, scene));
     const bool passed = drawn && dd2_preview_image(renderer, path);
     dd2_mesh_materials_destroy(materials);
     dd2_renderer_destroy(renderer);

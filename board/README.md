@@ -14,7 +14,7 @@ its game requirements or acceptance rules.
 | [0014](closed/0014_repository-layout-and-backlog.md) | Repository layout and backlog | closed |
 | [0015](closed/0015_typed-league-foundation.md) → [0004](open/0004_championships.md) | League foundation and complete championships | closed / open |
 | [0003](open/0003_frontend-and-menus.md) | Complete front end and menu actions | open |
-| [0005](open/0005_vehicles-and-damage.md) | Every vehicle/class/livery and damage behavior | open |
+| [0005](active/0005_vehicles-and-damage.md) | Every vehicle/class/livery and damage behavior | active |
 | [0016](active/0016_ai-tactics-and-offroad-recovery.md) | AI tactics and off-road recovery | active |
 | [0006](open/0006_replays.md) | Replays | open |
 | [0007](open/0007_keyboard-gamepad-and-platforms.md) | Keyboard/gamepad/platform lifecycle | open |
@@ -70,6 +70,18 @@ its game requirements or acceptance rules.
 Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
 remain part of the full goal; no component milestone replaces final acceptance.
+
+Current vehicle work is 0005: owned driver/class material bindings and actual
+fleet liveries match all 660 original high-body cases per target and all 264
+Native/WASM/sanitized body images. LLVM19/201-file checks, 45 Native/43 WASM
+CTests, all eleven scene/car datasets, 31 Native/31 sanitized X11 and 144
+Chromium checks pass. Full-export Memcheck frees every block with zero errors.
+The strict short-drive regression passes 21 of 22 cases; LEVB at 800 ticks
+retains an existing position/image difference. Prior d81e289 reproduces each
+target's complete final physical state exactly. Keep this failure under 0002;
+do not claim a full driving pass. Class physics/selection, saved car choice
+consumption and complete damage effects remain open. This supplies the next
+configuration dependency for 0058; it does not close complete vehicles.
 
 Current application integration is 0058 under 0008/0003: player/audio profiles
 now have actual Native/browser name/save/load/delete dialogs, restart and

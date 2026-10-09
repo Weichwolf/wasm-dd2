@@ -250,6 +250,21 @@ Receipts: /tmp/wasm-dd2/rewrite-arena8-late-0053/
 {terminal-report,diagnosis-report}.json. Completed profiler/raw output is removed;
 only three needed typed checkpoints and immutable reports remain.
 
+The 0005 livery integration exposes an existing short-drive difference on LEVB:
+at 800 ticks (one settling second, three accelerating seconds), Native X is
+-5598.515215505267, WASM -5576.752209274588 and O1 sanitized
+-5583.304927349127. All have four supported wheels, zero player collisions and
+nearly matching final speeds. The unchanged strict position/image checks fail;
+the other 21 level/mode cases pass. Fresh prior-d81e289 production Native/WASM
+and O1 sanitized builds reproduce each target's entire final state exactly;
+the old renderer also fails this image comparison. Physics, AI and reached game
+C sources remain unchanged. This establishes an existing contact/movement issue,
+not a livery regression or a full cross-target driving pass. Receipts:
+/tmp/wasm-dd2/rewrite-car-driving-0005-release/diagnosis-report.json and
+/tmp/wasm-dd2/rewrite-car-physics-baseline-0005/report.json.
+Locate its first divergent accepted fleet step and retain only the corresponding
+typed contact query/work counts; preserve tolerances and full scenario coverage.
+
 ## Next
 
 Diagnose late WASM Arena-8 motion and cost under 0053 after the terminal

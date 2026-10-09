@@ -16,6 +16,14 @@ all: rewrite-native   ## default on rewrite: readable C + SoftGL native build wi
 .PHONY: rewrite-accidents-verify
 .PHONY: rewrite-race-verify
 
+.PHONY: rewrite-car-livery-verify
+rewrite-car-livery-verify: ## verify original car palettes/numbers and cross-target high-detail rendering
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	python3 $(ROOT)/tools/rewrite/verify_car_liveries.py
+	$(MAKE) clean-logs
+
 .PHONY: rewrite-player-profile-verify
 rewrite-player-profile-verify: ## verify player/audio profiles and actual Native/browser save dialogs
 	$(MAKE) clean-logs

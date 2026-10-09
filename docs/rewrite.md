@@ -53,6 +53,13 @@ The vehicle core now advances a four-wheel rigid body with suspension, traction,
 steering, braking, reverse and vertical landings in fixed steps. Driving
 presentation now connects that core to a perspective chase camera,
 full body orientation and four suspended/steered/rolling wheel models.
+Owned car material bindings now cover all twenty stable drivers and the three
+human class paint families. The actual fleet renderer uses individual palettes
+and number sprites; static car preview uses Rookie. Regional deformation retains
+the selected livery. Unmodified original high-detail remapping matches all
+driver/class bindings on eleven levels; cross-target images separately check
+rendering and intact/damaged/restored ownership. Class selection/physics and
+detached parts remain under 0005; this is no original pixel parity claim.
 Source track barriers and analytic arena boundaries now participate in free
 driving, with continuous collision sweeps, restitution, friction and angular
 response. Body/ground support now uses the original eight-corner contact box,

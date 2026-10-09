@@ -99,16 +99,21 @@ def main():
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
     assets_units = [ROOT / f'src/assets/{name}.c' for name in
-                    ('archive', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers')]
+                    ('archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     physics_units = [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
     render_units = [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
-    game_units = [ROOT / f'src/game/{name}.c' for name in ('driving', 'starting_grid', 'accidents', 'course', 'laps', 'race','recovery','sound_events')]
+    game_units = [ROOT / f'src/game/{name}.c' for name in ('driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'drivers', 'league', 'championship', 'configuration', 'profile_menu')]
     game_units += [ROOT / f'src/ai/{name}.c' for name in ('path', 'driver')]
     preview, test = output / 'preview-sanitized', output / 'timing-sanitized'
     run([tool('clang'), *flags, *map(str, assets_units + physics_units + render_units + game_units),
          str(ROOT / 'tests/driving_preview.c'), str(WORK / 'rewrite-native/softgl/libsoftgl.a'),
          '-lm', '-o', str(preview)], 'preview-build')
-    run([tool('clang'), *flags, *map(str, assets_units + physics_units + game_units),
+    sound_fixture = output / 'sound-fixture.o'
+    run([tool('clang'), *flags, '-Ddd2_sound_events_step=dd2_drive_fixture_sound_step',
+         '-c', str(ROOT / 'src/game/sound_events.c'), '-o', str(sound_fixture)], 'sound-fixture-build')
+    test_game_units = [p for p in game_units if p.name != 'sound_events.c']
+    run([tool('clang'), *flags, *map(str, assets_units + physics_units + test_game_units),
+         str(sound_fixture),
          str(ROOT / 'tests/driving_test.c'), '-lm', '-o', str(test)], 'timing-build')
     run([str(test)], 'timing-sanitized')
     commands = {'native': [str(WORK / 'rewrite-native/dd2_driving_preview')],
@@ -144,15 +149,16 @@ def main():
             comparisons.append(dict(level=code, mode=mode, state=baseline, comparisons=results))
             print(json.dumps(dict(level=code, mode=mode, pass_=True)), flush=True)
     sources = [path for path in (ROOT / 'src').rglob('*') if path.suffix in ('.c', '.h')]
-    sources += [ROOT / 'tests/driving_preview.c', ROOT / 'tests/driving_test.c', Path(__file__).resolve()]
-    binaries = [WORK / 'rewrite-native/dd2_driving_preview', WORK / 'rewrite-wasm/dd2_driving_preview.wasm', preview, test]
+    sources += [ROOT / 'tests/driving_preview.c', ROOT / 'tests/driving_test.c',
+                ROOT / 'tests/driving_sound_fixture.h', Path(__file__).resolve()]
+    binaries = [WORK / 'rewrite-native/dd2_driving_preview', WORK / 'rewrite-wasm/dd2_driving_preview.wasm', preview, test, sound_fixture]
     report = dict(pass_=True, scope=__doc__.strip(), verified_at=datetime.now(timezone.utc).isoformat(),
                   original_sha256=ORIGINAL_SHA256, starts=expected, comparisons=comparisons, calls=calls,
                   sanitizer_scope='Rewrite C instrumented; pinned release SoftGL uninstrumented',
                   source_sha256={str(p.relative_to(ROOT)): digest(p.read_bytes()) for p in sources},
                   binary_sha256={str(p): digest(p.read_bytes()) for p in binaries})
     (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
-    preview.unlink(); test.unlink()
+    preview.unlink(); test.unlink(); sound_fixture.unlink()
     for path in output.iterdir():
         if path.suffix in ('.ppm', '.log'): path.unlink()
     check_space(output)

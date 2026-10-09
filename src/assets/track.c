@@ -2,6 +2,7 @@
 
 #include "assets/archive.h"
 #include "assets/bytes.h"
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/road.h"
@@ -18,6 +19,7 @@ struct dd2_track {
     dd2_texture_set *textures;
     dd2_scene *scene;
     dd2_mesh *car;
+    dd2_car_livery liveries[DD2_CAR_LIVERIES];
     dd2_mesh *wheels[2];
     dd2_road *road;
 };
@@ -74,6 +76,16 @@ dd2_track *dd2_track_create(const dd2_archive *archive, unsigned number) {
     const dd2_mesh_limits limits = {.texture_definitions = track->level.texture_definition_count,
                                     .palette_banks =
                                         dd2_texture_palette_bank_count(track->textures)};
+    for (unsigned index = 0; index < DD2_CAR_LIVERIES; ++index) {
+        const unsigned driver = index < DD2_CAR_DRIVERS ? index : 0;
+        const dd2_car_class car_class =
+            index < DD2_CAR_DRIVERS ? DD2_CAR_ROOKIE : (dd2_car_class)(index - DD2_CAR_DRIVERS + 1);
+        if (!dd2_car_livery_decode(&track->level, track->textures, driver, car_class,
+                                   &track->liveries[index])) {
+            dd2_track_destroy(track);
+            return NULL;
+        }
+    }
     track->scene = dd2_scene_create(
         track->level.sections[DD2_LEVEL_SCENE_BLOCKS],
         (dd2_scene_options){.compressed = number <= DD2_TRACK_RACING_COUNT, .limits = limits});
@@ -116,6 +128,11 @@ const dd2_mesh *dd2_track_car(const dd2_track *track) {
 }
 const dd2_road *dd2_track_road(const dd2_track *track) {
     return track != NULL ? track->road : NULL;
+}
+const dd2_car_livery *dd2_track_car_livery(const dd2_track *track, unsigned driver,
+                                           dd2_car_class car_class) {
+    const unsigned index = dd2_car_livery_index(driver, car_class);
+    return track == NULL || index >= DD2_CAR_LIVERIES ? NULL : &track->liveries[index];
 }
 
 const dd2_mesh *dd2_track_wheel(const dd2_track *track, unsigned wheel) {

@@ -68,9 +68,10 @@ def main():
              '-fno-strict-aliasing', '-ffast-math', '-Werror', '-Wshadow', '-Wconversion',
              '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wformat=2',
              '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
-    units = [str(ROOT / f'src/assets/{name}.c') for name in ('archive', 'level', 'textures', 'lz', 'mesh', 'scene')]
+    units = [str(ROOT / f'src/assets/{name}.c') for name in ('archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'road', 'save_profile')]
     units.append(str(ROOT / 'src/physics/damage.c'))
-    units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'mesh_draw', 'camera'))
+    units.extend(str(ROOT / f'src/render/{name}.c') for name in ('renderer', 'mesh_draw', 'camera', 'damage_draw', 'score_draw', 'race_draw'))
+    units.extend(str(ROOT / f'src/game/{name}.c') for name in ('race', 'course', 'drivers', 'league', 'championship', 'configuration', 'profile_menu'))
     sanitized_probe = output / 'dd2_mesh_render_sanitized'
     sanitized_preview = output / 'dd2_scene_preview_sanitized'
     softgl = WORK / 'rewrite-native/softgl/libsoftgl.a'
@@ -96,9 +97,9 @@ def main():
             images.append(dict(level=code, mode=mode, comparisons=comparisons))
             native.unlink()
             print(json.dumps(dict(level=code, mode=mode, pass_=True)), flush=True)
-    sources = ['src/render/mesh_draw.c', 'src/render/mesh_draw.h', 'src/render/camera.c',
-               'src/render/camera.h', 'tests/mesh_render_test.c',
-               'tests/scene_preview.c', 'tools/rewrite/verify_scene_render.py', 'CMakeLists.txt']
+    sources = [str(p.relative_to(ROOT)) for folder in ('src', 'tests')
+               for p in (ROOT / folder).rglob('*') if p.suffix in ('.c', '.h')]
+    sources += ['tools/rewrite/verify_scene_render.py', 'CMakeLists.txt']
     binaries = [WORK / 'rewrite-native/dd2_scene_preview', WORK / 'rewrite-wasm/dd2_scene_preview.js',
                 WORK / 'rewrite-wasm/dd2_scene_preview.wasm', sanitized_probe, sanitized_preview, softgl]
     report = dict(pass_=True, verified_at=datetime.now(timezone.utc).isoformat(), original_sha256=ORIGINAL_SHA256,

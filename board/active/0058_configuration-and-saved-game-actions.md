@@ -120,7 +120,8 @@ The full contract remains active.
 ## Next
 
 Translate and validate mode/car/track/input/record fields, other player fields
-and playable saved championship state. Connect the complete Configuration/
+and playable saved championship state. Consume the owned driver/class catalog
+being implemented under active 0005. Connect the complete Configuration/
 Information routes and remaining Native configuration actions.
 Prove named results through actual completed play; synthetic standings do not
 replace that acceptance. Keep imported source fields and reserved bytes through

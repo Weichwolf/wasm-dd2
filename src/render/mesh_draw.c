@@ -1,6 +1,7 @@
 #include "render/mesh_draw.h"
 
 #include "assets/bytes.h"
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/scene.h"
@@ -114,12 +115,12 @@ static bool dd2_mesh_material_bind(dd2_mesh_materials *materials, dd2_texture_sa
 }
 
 static bool dd2_mesh_cutout_scan(dd2_mesh_materials *materials, const dd2_mesh_face *face,
-                                 const dd2_texture_definition *definition) {
+                                 const dd2_texture_definition *definition, size_t corner_count) {
     unsigned min_u = definition->corners[0].u;
     unsigned max_u = min_u;
     unsigned min_v = definition->corners[0].v;
     unsigned max_v = min_v;
-    for (size_t corner = 1; corner < DD2_TEXTURE_CORNERS; ++corner) {
+    for (size_t corner = 1; corner < corner_count; ++corner) {
         const dd2_texture_uv coordinates = definition->corners[corner];
         if (coordinates.u < min_u) {
             min_u = coordinates.u;
@@ -160,25 +161,46 @@ static bool dd2_mesh_cutout(dd2_mesh_materials *materials, const dd2_mesh_face *
     const size_t index =
         ((size_t)face->palette_bank * materials->level->texture_definition_count) + face->texture;
     if (materials->cutouts[index] == 0) {
-        materials->cutouts[index] = dd2_mesh_cutout_scan(materials, face, definition)
-                                        ? DD2_MATERIAL_CUTOUT
-                                        : DD2_MATERIAL_OPAQUE;
+        materials->cutouts[index] =
+            dd2_mesh_cutout_scan(materials, face, definition, DD2_TEXTURE_CORNERS)
+                ? DD2_MATERIAL_CUTOUT
+                : DD2_MATERIAL_OPAQUE;
     }
     return materials->cutouts[index] == DD2_MATERIAL_CUTOUT;
 }
 
 static bool dd2_mesh_face_draw(dd2_mesh_materials *materials, const dd2_mesh_vector *vertices,
-                               const dd2_mesh_face *face, const dd2_vehicle_damage *damage) {
+                               const dd2_mesh_face *face, const dd2_vehicle_damage *damage,
+                               const dd2_car_livery *livery, unsigned ordinal) {
     dd2_texture_definition definition = {0};
     if (face->textured) {
+        if (!dd2_level_texture_definition(materials->level, face->texture, &definition)) {
+            return false;
+        }
+        dd2_car_surface surface = {.definition = definition, .palette_bank = face->palette_bank};
+        if (livery != NULL &&
+            !dd2_car_livery_surface(livery, face, ordinal, &definition, &surface)) {
+            return false;
+        }
+        definition = surface.definition;
+        dd2_mesh_face painted = *face;
+        painted.palette_bank = (uint16_t)surface.palette_bank;
+        if (surface.palette_bank >= dd2_texture_palette_bank_count(materials->textures)) {
+            return false;
+        }
+        /* Shifted number UVs are not represented by the immutable definition
+         * key. Scan those faces directly instead of reusing another driver's
+         * cached opacity. Uploaded pages remain shared by bank/page/cutout. */
+        const bool cutout = surface.moved ? dd2_mesh_cutout_scan(materials, &painted, &definition,
+                                                                 face->corner_count)
+                                          : dd2_mesh_cutout(materials, &painted, &definition);
         if (face->palette_bank >= dd2_texture_palette_bank_count(materials->textures) ||
-            !dd2_level_texture_definition(materials->level, face->texture, &definition) ||
             !dd2_mesh_material_bind(
                 materials,
                 (dd2_texture_sample){.page = definition.page_flags & DD2_MATERIAL_PAGE_MASK,
-                                     .palette_bank = face->palette_bank,
+                                     .palette_bank = surface.palette_bank,
                                      .shade = DD2_MATERIAL_NEUTRAL_SHADE,
-                                     .cutout = dd2_mesh_cutout(materials, face, &definition)})) {
+                                     .cutout = cutout})) {
             return false;
         }
         glEnable(GL_TEXTURE_2D);
@@ -220,8 +242,9 @@ static bool dd2_mesh_face_draw(dd2_mesh_materials *materials, const dd2_mesh_vec
     return true;
 }
 
-bool dd2_mesh_draw_damaged(dd2_mesh_materials *materials, const dd2_mesh *mesh,
-                           dd2_track_vertex position, const dd2_vehicle_damage *damage) {
+bool dd2_mesh_draw_car(dd2_mesh_materials *materials, const dd2_mesh *mesh,
+                       dd2_track_vertex position, const dd2_vehicle_damage *damage,
+                       const dd2_car_livery *livery) {
     if (materials == NULL || mesh == NULL || (damage != NULL && !dd2_damage_valid(damage))) {
         return false;
     }
@@ -235,13 +258,20 @@ bool dd2_mesh_draw_damaged(dd2_mesh_materials *materials, const dd2_mesh *mesh,
     const dd2_mesh_face *faces = dd2_mesh_faces(mesh);
     const dd2_mesh_vector *vertices = dd2_mesh_vertices(mesh);
     bool passed = true;
+    unsigned ordinals[DD2_MESH_OPCODE_COUNT] = {0};
     for (size_t index = 0; index < dd2_mesh_face_count(mesh) && passed; ++index) {
-        passed = dd2_mesh_face_draw(materials, vertices, &faces[index], deformed ? damage : NULL);
+        const unsigned ordinal = ordinals[faces[index].opcode]++;
+        passed = dd2_mesh_face_draw(materials, vertices, &faces[index], deformed ? damage : NULL,
+                                    livery, ordinal);
     }
     glPopMatrix();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_ALPHA_TEST);
     return passed && glGetError() == GL_NO_ERROR;
+}
+bool dd2_mesh_draw_damaged(dd2_mesh_materials *materials, const dd2_mesh *mesh,
+                           dd2_track_vertex position, const dd2_vehicle_damage *damage) {
+    return dd2_mesh_draw_car(materials, mesh, position, damage, NULL);
 }
 
 bool dd2_mesh_draw(dd2_mesh_materials *materials, const dd2_mesh *mesh, dd2_track_vertex position) {

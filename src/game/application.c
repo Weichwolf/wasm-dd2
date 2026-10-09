@@ -2,6 +2,7 @@
 
 #include "assets/archive.h"
 #include "assets/bytes.h"
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/save_card.h"
 #include "assets/save_profile.h"
@@ -1330,12 +1331,14 @@ static bool dd2_application_draw_scene(dd2_application *application) {
     }
     dd2_camera_apply(&application->camera,
                      (dd2_render_options){.width = DD2_APP_WIDTH, .height = DD2_APP_HEIGHT});
-    const bool drawn = application->car
-                           ? dd2_mesh_draw(application->materials,
-                                           dd2_track_car(dd2_application_track(application)),
-                                           (dd2_track_vertex){0})
-                           : dd2_scene_draw(application->materials,
-                                            dd2_track_scene(dd2_application_track(application)));
+    const bool drawn =
+        application->car
+            ? dd2_mesh_draw_car(
+                  application->materials, dd2_track_car(dd2_application_track(application)),
+                  (dd2_track_vertex){0}, NULL,
+                  dd2_track_car_livery(dd2_application_track(application), 0, DD2_CAR_ROOKIE))
+            : dd2_scene_draw(application->materials,
+                             dd2_track_scene(dd2_application_track(application)));
     return drawn;
 }
 static bool dd2_application_draw(dd2_application *application) {

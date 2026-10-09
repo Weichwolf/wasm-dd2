@@ -417,7 +417,7 @@ def native_championship_checks(ui, expected):
 def build_sanitized(output, entry=None):
     binary = output / 'dd2_app_sanitized'
     units = [ROOT / f'src/assets/{name}.c' for name in
-             ('archive', 'audio', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
+             ('archive', 'audio', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     units += [ROOT / 'src/audio/mixer.c', ROOT / 'src/audio/effects.c']
     units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device', 'save_store', 'save_backend', 'save_location')]

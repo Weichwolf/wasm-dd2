@@ -218,6 +218,37 @@ invalid references, extents and scene ownership. Reports remain under `/tmp`;
 raw successful exports are deleted. These checks establish decoded fields, not
 complete rendering behavior or game correctness.
 
+## Car liveries
+
+`car.h` copies material bindings for twenty stable driver identities and the
+three human paint families into owned values. Section 3 starts with a 32-bit
+count of 24-byte sprites: seven 16-bit words followed by a ten-byte terminated
+name. Horizontal UV is word zero; word one encodes page and vertical UV in a
+256-pixel atlas. Word five selects the CLUT bank. Selected coordinates, page,
+palette bank, table extent and names are validated before publishing a livery;
+failed decoding clears the output. `track.h` owns all twenty-two distinct skins.
+
+The high-detail body retains one immutable geometry. Typed opcode-group regions
+choose B/A/D/C/E, small B/A and number palettes, masking the original opcode's
+additional 0x02 marker on levels 3/4/6 before selecting the paint family.
+Door UVs move from the baked
+DR88A template to each driver's DR sprite with byte wrapping; unused triangle
+UVs and unrelated materials stay intact. Driver 18 keeps the original baked
+number-88 body. Human Amateur/Pro use CLT01*3/CLT01*2 and P1D1T3/P1D1T2; opponent
+paint stays independent of the human class. The driving renderer binds stable
+driver identity separately from physical start position, and applies regional
+deformation without mutating the mesh, definitions or livery. Shifted numbers
+receive their own opacity scan rather than reusing another driver's UV cache.
+
+`make rewrite-car-livery-verify` executes unmodified original class/palette,
+high-detail paint and door functions against bounded copied data for every
+driver/class on eleven levels. It compares all bindings and 99 painted faces
+with Native, Node/WASM and fresh ASan/UBSan. Cross-target SoftGL images cover
+twenty-two distinct skins, damaged Rookie and restored Rookie on each level.
+The fixture deliberately uses high detail for every opponent; it proves this
+material component, not original runtime LOD or pixel parity. Class physics,
+selectable frontend classes and detached-part effects remain under active 0005.
+
 ## Sound effects and Redbook PCM
 
 `audio.h` exposes bounded, immutable RIFF/WAVE and raw CDDA sample views.

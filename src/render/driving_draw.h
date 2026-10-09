@@ -16,6 +16,8 @@
  * full body orientation and four sprung, steered, rolling wheel models. */
 typedef struct {
     const dd2_vehicle *vehicle;
+    unsigned driver;
+    dd2_car_class car_class;
     const dd2_vehicle_damage *damage;
     const dd2_accident_driver *score;
     const dd2_lap_driver *lap;

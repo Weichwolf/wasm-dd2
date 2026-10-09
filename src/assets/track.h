@@ -2,6 +2,7 @@
 #define DD2_ASSETS_TRACK_H
 
 #include "assets/archive.h"
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/road.h"
@@ -20,6 +21,9 @@ const dd2_level_data *dd2_track_level(const dd2_track *track);
 const dd2_texture_set *dd2_track_textures(const dd2_track *track);
 const dd2_scene *dd2_track_scene(const dd2_track *track);
 const dd2_mesh *dd2_track_car(const dd2_track *track);
+/* Owned bindings for all twenty stable driver IDs and three human classes. */
+const dd2_car_livery *dd2_track_car_livery(const dd2_track *track, unsigned driver,
+                                           dd2_car_class car_class);
 const dd2_mesh *dd2_track_wheel(const dd2_track *track, unsigned wheel);
 const dd2_road *dd2_track_road(const dd2_track *track);
 

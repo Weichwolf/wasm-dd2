@@ -1,5 +1,6 @@
 #include "render/driving_draw.h"
 
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/track.h"
 #include "game/race.h"
@@ -119,8 +120,9 @@ static bool dd2_driving_car(dd2_mesh_materials *materials, const dd2_track *trac
     /* The source visual rig differs from the contact rig. Lower the body to fit
      * the suspended wheels; preserve the source visual wheel XZ placements. */
     glTranslatef(0, dd2_draw_body_height, 0);
-    bool drawn =
-        dd2_mesh_draw_damaged(materials, dd2_track_car(track), (dd2_track_vertex){0}, view.damage);
+    const dd2_car_livery *livery = dd2_track_car_livery(track, view.driver, view.car_class);
+    bool drawn = livery != NULL && dd2_mesh_draw_car(materials, dd2_track_car(track),
+                                                     (dd2_track_vertex){0}, view.damage, livery);
     glPopMatrix();
     for (unsigned wheel = 0; wheel < DD2_VEHICLE_WHEELS && drawn; ++wheel) {
         const bool front = (wheel & 1U) == 0;
@@ -153,6 +155,7 @@ bool dd2_driving_draw(dd2_mesh_materials *materials, const dd2_track *track,
     for (unsigned index = 0; index < view.opponent_count && drawn; ++index) {
         drawn = dd2_driving_car(materials, track,
                                 (dd2_driving_view){.vehicle = &view.opponents[index],
+                                                   .driver = index + 1,
                                                    .damage = view.opponent_damage == NULL
                                                                  ? NULL
                                                                  : &view.opponent_damage[index],

@@ -1,6 +1,7 @@
 #ifndef DD2_RENDER_MESH_DRAW_H
 #define DD2_RENDER_MESH_DRAW_H
 
+#include "assets/car.h"
 #include "assets/level.h"
 #include "assets/mesh.h"
 #include "assets/scene.h"
@@ -26,6 +27,12 @@ bool dd2_mesh_draw(dd2_mesh_materials *materials, const dd2_mesh *mesh, dd2_trac
  * NULL/intact damage uses the original geometry and materials. */
 bool dd2_mesh_draw_damaged(dd2_mesh_materials *materials, const dd2_mesh *mesh,
                            dd2_track_vertex position, const dd2_vehicle_damage *damage);
+/* Optional owned high-detail body livery; wheels and scene materials keep their
+ * original selection. Number pages/UVs follow the stable original driver ID.
+ * NULL livery keeps the baked source mesh, including number-88's special body. */
+bool dd2_mesh_draw_car(dd2_mesh_materials *materials, const dd2_mesh *mesh,
+                       dd2_track_vertex position, const dd2_vehicle_damage *damage,
+                       const dd2_car_livery *livery);
 bool dd2_scene_draw(dd2_mesh_materials *materials, const dd2_scene *scene);
 
 #endif
