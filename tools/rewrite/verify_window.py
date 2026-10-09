@@ -422,7 +422,7 @@ def build_sanitized(output, entry=None, link_flags=()):
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('car_class', 'archive', 'audio', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road', 'barriers', 'save_card', 'save_profile')]
     units += [ROOT / 'src/audio/mixer.c', ROOT / 'src/audio/effects.c']
-    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
+    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'color', 'mesh_draw', 'camera', 'driving_draw', 'damage_draw', 'score_draw', 'race_draw')]
     units += [ROOT / f'src/platform/{name}.c' for name in ('file', 'window', 'audio_device', 'save_store', 'save_backend', 'save_location')]
     units += [ROOT / f'src/physics/{name}.c' for name in ('road_contact', 'road_surface', 'body_surface', 'vehicle', 'barrier_world', 'car_contact', 'contact_group', 'vehicle_collision', 'damage')]
     units += [ROOT / f'src/game/{name}.c' for name in ('profile_menu', 'configuration', 'application', 'audio', 'driving', 'starting_grid', 'accidents', 'course', 'laps', 'race', 'recovery', 'sound_events', 'league', 'drivers', 'championship', 'championship_session')]

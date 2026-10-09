@@ -24,21 +24,26 @@ static void dd2_export_vertices(const dd2_road *road) {
     printf("]");
 }
 
-static uint32_t dd2_export_offset(const dd2_road_strip *strips, uint32_t index) {
-    return index != DD2_ROAD_NO_STRIP ? strips[index].source_offset : DD2_ROAD_NO_STRIP;
+static uint32_t dd2_export_offset(const dd2_road_strip *strips, uint32_t index, bool indexed) {
+    if (indexed || index == DD2_ROAD_NO_STRIP) {
+        return index;
+    }
+    return strips[index].source_offset;
 }
 
-static void dd2_export_strips(const dd2_road *road) {
+static void dd2_export_strips(const dd2_road *road, bool indexed) {
     const dd2_road_strip *strips = dd2_road_strips(road);
     printf(",\"strips\":[");
     for (size_t index = 0; index < dd2_road_strip_count(road); ++index) {
         const dd2_road_strip *strip = &strips[index];
-        printf(
-            "%s[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]", index == 0 ? "" : ",", strip->source_offset,
-            dd2_export_offset(strips, strip->next), dd2_export_offset(strips, strip->previous),
-            dd2_export_offset(strips, strip->branch), strip->main_order, (unsigned)strip->kind,
-            (unsigned)strip->lanes, (unsigned)strip->source_lane_start, (unsigned)strip->heading,
-            (unsigned)strip->source_number, (unsigned)strip->first_vertex, (unsigned)strip->flags);
+        printf("%s[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]", index == 0 ? "" : ",",
+               dd2_export_offset(strips, (uint32_t)index, indexed),
+               dd2_export_offset(strips, strip->next, indexed),
+               dd2_export_offset(strips, strip->previous, indexed),
+               dd2_export_offset(strips, strip->branch, indexed), strip->main_order,
+               (unsigned)strip->kind, (unsigned)strip->lanes, (unsigned)strip->source_lane_start,
+               (unsigned)strip->heading, (unsigned)strip->source_number,
+               (unsigned)strip->first_vertex, (unsigned)strip->flags);
     }
     printf("]");
 }
@@ -64,16 +69,17 @@ static void dd2_export_samples(const dd2_road *road, size_t index) {
     printf("]");
 }
 
-static void dd2_export_cells(const dd2_road *road) {
+static void dd2_export_cells(const dd2_road *road, bool indexed) {
     const dd2_road_cell *cells = dd2_road_cells(road);
     const dd2_road_strip *strips = dd2_road_strips(road);
     printf(",\"cells\":[");
     for (size_t index = 0; index < dd2_road_cell_count(road); ++index) {
         const dd2_road_cell *cell = &cells[index];
         printf("%s[%u,%u,%u,%u,%u,%u,%u,%u,%u", index == 0 ? "" : ",",
-               dd2_export_offset(strips, cell->strip), cell->lane, (unsigned)cell->surface_flags,
-               (unsigned)cell->heading, (unsigned)cell->triangle_mask, cell->vertices[0],
-               cell->vertices[1], cell->vertices[2], cell->vertices[3]);
+               dd2_export_offset(strips, cell->strip, indexed), cell->lane,
+               (unsigned)cell->surface_flags, (unsigned)cell->heading,
+               (unsigned)cell->triangle_mask, cell->vertices[0], cell->vertices[1],
+               cell->vertices[2], cell->vertices[3]);
         dd2_export_samples(road, index);
         printf("]");
     }
@@ -100,8 +106,8 @@ static bool dd2_export_road(const char *path, char code) {
     if (valid) {
         printf("{\"main_count\":%zu,", dd2_road_main_count(road));
         dd2_export_vertices(road);
-        dd2_export_strips(road);
-        dd2_export_cells(road);
+        dd2_export_strips(road, false);
+        dd2_export_cells(road, false);
         printf("}\n");
         valid = ferror(stdout) == 0;
     }
@@ -111,7 +117,30 @@ static bool dd2_export_road(const char *path, char code) {
     return valid;
 }
 
+static bool dd2_export_prepared(const char *path) {
+    dd2_file file = {0};
+    dd2_road *road = NULL;
+    if (dd2_file_read(path, &file)) {
+        road = dd2_road_create_prepared((dd2_byte_view){file.data, file.size});
+    }
+    dd2_file_release(&file);
+    if (road == NULL) {
+        return false;
+    }
+    printf("{\"main_count\":%zu,", dd2_road_main_count(road));
+    dd2_export_vertices(road);
+    dd2_export_strips(road, true);
+    dd2_export_cells(road, true);
+    printf("}\n");
+    const bool passed = ferror(stdout) == 0;
+    dd2_road_destroy(road);
+    return passed;
+}
+
 int main(int argc, char **argv) {
+    if (argc == 3 && strcmp(argv[1], "--prepared") == 0) {
+        return dd2_export_prepared(argv[2]) ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
     if (argc != 3 || strlen(argv[2]) != 1 || strchr("123456789AB", argv[2][0]) == NULL) {
         return EXIT_FAILURE;
     }

@@ -76,6 +76,14 @@ These must be authored as interior geometry; this is no completed-cockpit or
 qualitative-superiority claim. Cockpit role selection is per model draw; scene
 and opponent draws need their own unrestricted options during gameplay integration.
 
+Prepared gameplay roads are now separate owned `DD2ROAD1` containers under
+`assets/runtime/roads/`, with editable topology JSON and a declared 160-unit/meter
+fixed convention. The new factory copies validated vertices, lane cells and
+indexed next/previous/branch topology without opening original files. Existing
+surface, grid, barrier, lap/course and AI consumers can use this owner directly;
+visual assets are not regenerated. The normal application still needs its
+prepared track/provider, render/UI and audio migration. See `assets/road-format.md`.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game

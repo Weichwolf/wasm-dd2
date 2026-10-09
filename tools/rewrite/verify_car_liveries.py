@@ -118,7 +118,7 @@ def main():
     units = [ROOT / f'src/assets/{name}.c' for name in
              ('car_class', 'archive', 'car', 'level', 'textures', 'lz', 'mesh', 'scene', 'track', 'road')]
     units += [ROOT / 'src/physics/damage.c']
-    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'mesh_draw', 'camera')]
+    units += [ROOT / f'src/render/{name}.c' for name in ('renderer', 'color', 'mesh_draw', 'camera')]
     run([tool('clang'), *flags, *units, ROOT / 'tests/car_livery_export.c', softgl,
          '-lm', '-o', sanitized], 'sanitizer-build', 180)
     commands = {'native': [WORK / 'rewrite-native/dd2_car_livery_export'],

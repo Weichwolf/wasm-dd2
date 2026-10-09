@@ -28,8 +28,16 @@ missing inner door/window surrounds, so complete cockpit assets remain open.
 Strict 54 Native/52 WASM CTests and actual window/canvas input checks pass.
 Paired Native warmed cockpit render calls measure 34.35 -> 14.17 ms under varying
 external build load; automatic pools and component timing do not prove 60 FPS.
-Next wire the prepared scene/provider and replace
-the game's original-input path, then remodel against this baseline.
+Gameplay roads now also have owned containers and editable topology JSON for
+all eleven levels: 23,336 vertices, 3,246 indexed strips and 19,775 lane cells
+occupy 924,972 binary bytes. Source-free compilation reproduces the exports;
+Native/WASM/fresh O1 sanitizer checks preserve road contacts and the existing
+grid, barrier, course and AI consumers after releasing input bytes. Thirty
+malformed variants reject on all three targets. Strict gates now cover 245
+C/header files, with 55 Native and 53 WASM CTests passing. This is a prepared
+road component, not standalone application startup or full-game parity.
+Next wire the prepared scene/road provider and replace the game's original-input
+path, then remodel against this baseline. UI and audio migration remain open.
 
 ## Work order
 

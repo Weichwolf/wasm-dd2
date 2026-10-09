@@ -31,6 +31,28 @@ enum {
     DD2_ROAD_MERGE = 9
 };
 
+enum {
+    DD2_ROAD_CONTENT_MAGIC = 8,
+    DD2_ROAD_CONTENT_HEADER = 32,
+    DD2_ROAD_CONTENT_STRIP = 28,
+    DD2_ROAD_CONTENT_CELL = 28,
+    DD2_ROAD_CONTENT_UNITS = 160,
+    DD2_ROAD_CONTENT_POSITION_LIMIT = 160000000,
+    DD2_ROAD_CONTENT_MAX_CELLS = 1000000,
+    DD2_ROAD_CONTENT_FIRST_CELL = 12,
+    DD2_ROAD_CONTENT_MAIN_ORDER = 16,
+    DD2_ROAD_CONTENT_FLAGS = 20,
+    DD2_ROAD_CONTENT_KIND = 22,
+    DD2_ROAD_CONTENT_LANES = 23,
+    DD2_ROAD_CONTENT_HEADING = 24,
+    DD2_ROAD_CONTENT_PADDING = 25,
+    DD2_ROAD_CONTENT_CELL_STRIP = 16,
+    DD2_ROAD_CONTENT_CELL_LANE = 20,
+    DD2_ROAD_CONTENT_CELL_SURFACE = 24,
+    DD2_ROAD_CONTENT_CELL_HEADING = 25,
+    DD2_ROAD_CONTENT_CELL_MASK = 26
+};
+
 /* Original strip vertex lookup (two signed offsets per kind). Stored as format
  * constants, independent of the original executable's absolute table address. */
 static const int dd2_road_rows[DD2_ROAD_KIND_COUNT][2] = {{0, 0},   {0, 0},  {-1, -1}, {0, -1},
@@ -301,6 +323,167 @@ dd2_road *dd2_road_create(const dd2_level_data *level, dd2_road_layout layout) {
     decoded = decoded && (layout == DD2_ROAD_RACING ? dd2_road_racing_decode(road, bytes)
                                                     : dd2_road_arena_decode(road, bytes));
     if (!decoded) {
+        dd2_road_destroy(road);
+        return NULL;
+    }
+    return road;
+}
+
+static bool dd2_road_content_vertices(dd2_road *road, const uint8_t *bytes) {
+    for (size_t index = 0; index < road->vertex_count; ++index) {
+        dd2_track_vertex *vertex = &road->vertices[index];
+        const uint8_t *record = bytes + (index * DD2_ROAD_VERTEX_BYTES);
+        vertex->x = dd2_read_le_i32(record);
+        vertex->y = dd2_read_le_i32(record + DD2_ROAD_WORD_BYTES);
+        vertex->z = dd2_read_le_i32(record + ((size_t)2 * DD2_ROAD_WORD_BYTES));
+        if (vertex->x < -DD2_ROAD_CONTENT_POSITION_LIMIT ||
+            vertex->x > DD2_ROAD_CONTENT_POSITION_LIMIT ||
+            vertex->y < -DD2_ROAD_CONTENT_POSITION_LIMIT ||
+            vertex->y > DD2_ROAD_CONTENT_POSITION_LIMIT ||
+            vertex->z < -DD2_ROAD_CONTENT_POSITION_LIMIT ||
+            vertex->z > DD2_ROAD_CONTENT_POSITION_LIMIT) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool dd2_road_content_strip(dd2_road *road, size_t index, const uint8_t *record) {
+    dd2_road_strip *strip = &road->strips[index];
+    strip->next = dd2_read_le32(record);
+    strip->previous = dd2_read_le32(record + DD2_ROAD_WORD_BYTES);
+    strip->branch = dd2_read_le32(record + ((size_t)2 * DD2_ROAD_WORD_BYTES));
+    strip->first_cell = dd2_read_le32(record + DD2_ROAD_CONTENT_FIRST_CELL);
+    strip->main_order = dd2_read_le32(record + DD2_ROAD_CONTENT_MAIN_ORDER);
+    strip->flags = dd2_read_le16(record + DD2_ROAD_CONTENT_FLAGS);
+    strip->kind = record[DD2_ROAD_CONTENT_KIND];
+    strip->lanes = record[DD2_ROAD_CONTENT_LANES];
+    strip->heading = record[DD2_ROAD_CONTENT_HEADING];
+    for (size_t byte = DD2_ROAD_CONTENT_PADDING; byte < DD2_ROAD_CONTENT_STRIP; ++byte) {
+        if (record[byte] != 0) {
+            return false;
+        }
+    }
+    const bool junction = strip->kind == DD2_ROAD_SPLIT || strip->kind == DD2_ROAD_MERGE;
+    return strip->next < road->strip_count && strip->previous < road->strip_count &&
+           (junction ? strip->branch < road->strip_count : strip->branch == DD2_ROAD_NO_STRIP) &&
+           (strip->main_order == DD2_ROAD_NO_STRIP || strip->main_order < road->main_count) &&
+           strip->kind > 0 && strip->kind < DD2_ROAD_KIND_COUNT && strip->lanes > 0 &&
+           strip->lanes <= DD2_ROAD_MAX_LANES && strip->first_cell <= road->cell_count &&
+           strip->lanes <= road->cell_count - strip->first_cell;
+}
+
+static bool dd2_road_content_main(const dd2_road *road) {
+    if (road->strip_count == 0) {
+        return road->main_count == 0;
+    }
+    uint8_t *seen = calloc(road->strip_count, sizeof(*seen));
+    if (seen == NULL) {
+        return false;
+    }
+    uint32_t current = 0;
+    bool valid = true;
+    for (size_t order = 0; valid && order < road->main_count; ++order) {
+        valid = seen[current] == 0 && road->strips[current].main_order == order;
+        seen[current] = 1;
+        current = road->strips[current].next;
+    }
+    valid = valid && current == 0;
+    for (size_t index = 0; valid && index < road->strip_count; ++index) {
+        valid = (seen[index] != 0) == (road->strips[index].main_order != DD2_ROAD_NO_STRIP);
+    }
+    free(seen);
+    return valid && dd2_road_paths_valid(road, false) && dd2_road_paths_valid(road, true);
+}
+
+static bool dd2_road_content_cells(dd2_road *road, const uint8_t *bytes) {
+    for (size_t index = 0; index < road->cell_count; ++index) {
+        const uint8_t *record = bytes + (index * DD2_ROAD_CONTENT_CELL);
+        dd2_road_cell *cell = &road->cells[index];
+        for (size_t corner = 0; corner < DD2_ROAD_CORNERS; ++corner) {
+            cell->vertices[corner] = dd2_read_le32(record + (corner * DD2_ROAD_WORD_BYTES));
+            if (cell->vertices[corner] >= road->vertex_count) {
+                return false;
+            }
+        }
+        cell->strip = dd2_read_le32(record + DD2_ROAD_CONTENT_CELL_STRIP);
+        cell->lane = dd2_read_le32(record + DD2_ROAD_CONTENT_CELL_LANE);
+        cell->surface_flags = record[DD2_ROAD_CONTENT_CELL_SURFACE];
+        cell->heading = record[DD2_ROAD_CONTENT_CELL_HEADING];
+        cell->triangle_mask = record[DD2_ROAD_CONTENT_CELL_MASK];
+        if (cell->triangle_mask == 0 || cell->triangle_mask > 3 ||
+            record[DD2_ROAD_CONTENT_CELL - 1] != 0) {
+            return false;
+        }
+        if (road->strip_count == 0) {
+            if (cell->strip != DD2_ROAD_NO_STRIP) {
+                return false;
+            }
+        } else if (cell->strip >= road->strip_count ||
+                   cell->lane >= road->strips[cell->strip].lanes ||
+                   road->strips[cell->strip].first_cell + cell->lane != index) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool dd2_road_content_decode(dd2_road *road, const uint8_t *bytes) {
+    if (!dd2_road_content_vertices(road, bytes)) {
+        return false;
+    }
+    bytes += road->vertex_count * DD2_ROAD_VERTEX_BYTES;
+    size_t first = 0;
+    for (size_t index = 0; index < road->strip_count; ++index) {
+        if (!dd2_road_content_strip(road, index, bytes + (index * DD2_ROAD_CONTENT_STRIP)) ||
+            road->strips[index].first_cell != first) {
+            return false;
+        }
+        first += road->strips[index].lanes;
+    }
+    bytes += road->strip_count * DD2_ROAD_CONTENT_STRIP;
+    return (road->strip_count == 0 || first == road->cell_count) && dd2_road_content_main(road) &&
+           dd2_road_content_cells(road, bytes);
+}
+
+dd2_road *dd2_road_create_prepared(dd2_byte_view bytes) {
+    static const uint8_t magic[DD2_ROAD_CONTENT_MAGIC] = {'D', 'D', '2', 'R', 'O', 'A', 'D', '1'};
+    if (bytes.data == NULL || bytes.size < DD2_ROAD_CONTENT_HEADER) {
+        return NULL;
+    }
+    for (size_t byte = 0; byte < sizeof(magic); ++byte) {
+        if (bytes.data[byte] != magic[byte]) {
+            return NULL;
+        }
+    }
+    const uint8_t *header = bytes.data + DD2_ROAD_CONTENT_MAGIC;
+    const uint32_t layout = dd2_read_le32(header);
+    const uint32_t units = dd2_read_le32(header + DD2_ROAD_WORD_BYTES);
+    const size_t vertices = dd2_read_le32(header + ((size_t)2 * DD2_ROAD_WORD_BYTES));
+    const size_t strips = dd2_read_le32(header + ((size_t)3 * DD2_ROAD_WORD_BYTES));
+    const size_t main = dd2_read_le32(header + ((size_t)4 * DD2_ROAD_WORD_BYTES));
+    const size_t cells = dd2_read_le32(header + ((size_t)5 * DD2_ROAD_WORD_BYTES));
+    if (layout > DD2_ROAD_ARENA || units != DD2_ROAD_CONTENT_UNITS || vertices == 0 ||
+        vertices > DD2_ROAD_MAX_RECORDS || strips > DD2_ROAD_MAX_RECORDS || cells == 0 ||
+        cells > DD2_ROAD_CONTENT_MAX_CELLS || main > strips ||
+        (layout == DD2_ROAD_ARENA ? strips != 0 || main != 0 : strips == 0 || main == 0) ||
+        bytes.size != DD2_ROAD_CONTENT_HEADER + (vertices * DD2_ROAD_VERTEX_BYTES) +
+                          (strips * DD2_ROAD_CONTENT_STRIP) + (cells * DD2_ROAD_CONTENT_CELL)) {
+        return NULL;
+    }
+    dd2_road *road = calloc(1, sizeof(*road));
+    if (road == NULL) {
+        return NULL;
+    }
+    road->vertex_count = vertices;
+    road->strip_count = strips;
+    road->main_count = main;
+    road->cell_count = cells;
+    road->vertices = calloc(vertices, sizeof(*road->vertices));
+    road->strips = strips != 0 ? calloc(strips, sizeof(*road->strips)) : NULL;
+    road->cells = calloc(cells, sizeof(*road->cells));
+    if (road->vertices == NULL || (strips != 0 && road->strips == NULL) || road->cells == NULL ||
+        !dd2_road_content_decode(road, bytes.data + DD2_ROAD_CONTENT_HEADER)) {
         dd2_road_destroy(road);
         return NULL;
     }

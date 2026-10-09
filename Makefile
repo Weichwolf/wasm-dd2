@@ -332,6 +332,22 @@ clean-logs: ## remove completed logs older than one hour, preserving open files
 
 .PHONY: assets-generate assets-preview assets-check assets-content-verify assets-play assets-web assets-render-verify assets-preview-measure
 .PHONY: assets-convert-reference assets-reference-verify assets-scenes-prepare assets-world-verify assets-world-render-verify
+.PHONY: assets-convert-roads assets-roads-prepare assets-roads-verify
+assets-convert-roads: ## one-time offline gameplay road conversion; normal builds never invoke this
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/convert_roads.py
+
+assets-roads-prepare: ## compile committed road JSON without original game files
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/prepare_roads.py
+
+assets-roads-verify: ## verify owned road fields/contact/gameplay consumers on Native/WASM/sanitized
+	$(MAKE) clean-logs
+	$(MAKE) rewrite-check rewrite-wasm
+	ctest --preset rewrite-wasm
+	cmake -S $(ROOT) -B /tmp/wasm-dd2/prepared-roads-sanitized -G Ninja -DCMAKE_C_COMPILER=clang-19 -DCMAKE_BUILD_TYPE=Debug -DDD2_ENABLE_CLANG_TIDY=OFF '-DCMAKE_C_FLAGS=-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer'
+	cmake --build /tmp/wasm-dd2/prepared-roads-sanitized --target dd2_road_content_test dd2_road_export dd2_road_gameplay_export -j4
+	PYTHONDONTWRITEBYTECODE=1 python3 $(ROOT)/tools/assets/verify_roads.py --sanitized-build /tmp/wasm-dd2/prepared-roads-sanitized
+	$(MAKE) clean-logs
+
 assets-world-render-verify: assets-render-verify ## verify prepared world visibility and images with fresh sanitized SoftGL
 	cmake --build /tmp/wasm-dd2/authored-render-sanitized --target dd2_world_draw_test dd2_prepared_preview -j4
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 /tmp/wasm-dd2/authored-render-sanitized/dd2_world_draw_test

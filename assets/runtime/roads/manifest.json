@@ -1,0 +1,136 @@
+{
+  "format": "DD2ROADS1",
+  "source_sha256": "03c6ca7adc5e616a4784a82f3b1b7a1f85489e97318b7e01f867e65504d5f22b",
+  "recipe": "tools/assets/convert_roads.py",
+  "intermediate": true,
+  "units_per_meter": 160,
+  "limitations": [
+    "Intermediate reference-derived gameplay geometry, not final authored tracks.",
+    "Physics keeps quantized positions; rendering converts them to meters.",
+    "Original source offsets, raw records and unused source fields are omitted.",
+    "Default game/provider, UI and audio migration remain open."
+  ],
+  "levels": [
+    {
+      "level": "1",
+      "editable": "roads/level-1.json",
+      "vertices": 2105,
+      "strips": 340,
+      "cells": 1755,
+      "main_count": 280,
+      "resource": "roads/level-1.dd2road",
+      "bytes": 83952,
+      "sha256": "bbe45a5227e7eb310628bdd057d0f541200806d59701a3adc6dea809309e7c4a"
+    },
+    {
+      "level": "2",
+      "editable": "roads/level-2.json",
+      "vertices": 3713,
+      "strips": 671,
+      "cells": 3049,
+      "main_count": 606,
+      "resource": "roads/level-2.dd2road",
+      "bytes": 148748,
+      "sha256": "b2d2a6cd9a371d2dcce5d7fbe9c1695a8f49a1a81c26e20492cfea9d40517034"
+    },
+    {
+      "level": "3",
+      "editable": "roads/level-3.json",
+      "vertices": 3396,
+      "strips": 564,
+      "cells": 2815,
+      "main_count": 393,
+      "resource": "roads/level-3.dd2road",
+      "bytes": 135396,
+      "sha256": "276f74e426fbac191c97600dad7ec0153757ae6805c1dcfd326f4c91b20f1d87"
+    },
+    {
+      "level": "4",
+      "editable": "roads/level-4.json",
+      "vertices": 2871,
+      "strips": 616,
+      "cells": 2209,
+      "main_count": 326,
+      "resource": "roads/level-4.dd2road",
+      "bytes": 113584,
+      "sha256": "293396b1f05ee52d7b0113032988d4955768e8d32614a181548cec401ba7c87f"
+    },
+    {
+      "level": "5",
+      "editable": "roads/level-5.json",
+      "vertices": 1629,
+      "strips": 234,
+      "cells": 1392,
+      "main_count": 234,
+      "resource": "roads/level-5.dd2road",
+      "bytes": 65108,
+      "sha256": "0ea80d8121127fd6127858d1f14abf64d18648eee41846a62e005d93b7c72d9f"
+    },
+    {
+      "level": "6",
+      "editable": "roads/level-6.json",
+      "vertices": 1599,
+      "strips": 247,
+      "cells": 1352,
+      "main_count": 247,
+      "resource": "roads/level-6.dd2road",
+      "bytes": 63992,
+      "sha256": "76fafd1743ff99c82f39490124a9f1361405e14ef07489eed8deb285f87d1b59"
+    },
+    {
+      "level": "7",
+      "editable": "roads/level-7.json",
+      "vertices": 3927,
+      "strips": 574,
+      "cells": 3359,
+      "main_count": 450,
+      "resource": "roads/level-7.dd2road",
+      "bytes": 157280,
+      "sha256": "d2cbfd4a480d674a277280c8ad5de13dd1e9acba7f0a8f5105070e96fd27e1a8"
+    },
+    {
+      "level": "8",
+      "editable": "roads/level-8.json",
+      "vertices": 1024,
+      "strips": 0,
+      "cells": 961,
+      "main_count": 0,
+      "resource": "roads/level-8.dd2road",
+      "bytes": 39228,
+      "sha256": "ecafd153bf44b59e11b3b773a214e45ed34b4b0e38f9e66452f8c34b31b8bc43"
+    },
+    {
+      "level": "9",
+      "editable": "roads/level-9.json",
+      "vertices": 1024,
+      "strips": 0,
+      "cells": 961,
+      "main_count": 0,
+      "resource": "roads/level-9.dd2road",
+      "bytes": 39228,
+      "sha256": "a3c327323a4542273340c04dc3118bdcf37c3173427af05fbfaeb0475e0a3241"
+    },
+    {
+      "level": "A",
+      "editable": "roads/level-a.json",
+      "vertices": 1024,
+      "strips": 0,
+      "cells": 961,
+      "main_count": 0,
+      "resource": "roads/level-a.dd2road",
+      "bytes": 39228,
+      "sha256": "90e4cf8b2cc6b5826cf7f954a8008706a7ac653b55d4884abe617baa6fab3cb7"
+    },
+    {
+      "level": "B",
+      "editable": "roads/level-b.json",
+      "vertices": 1024,
+      "strips": 0,
+      "cells": 961,
+      "main_count": 0,
+      "resource": "roads/level-b.dd2road",
+      "bytes": 39228,
+      "sha256": "753f6b96db62aa3da8691d6e52cde1ba67187cea74b264ec5e385764ba55ec74"
+    }
+  ]
+}

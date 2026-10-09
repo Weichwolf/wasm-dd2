@@ -44,6 +44,11 @@ typedef struct {
  * The main loop starts at strip 0. game/course supplies separate branch/main
  * lap equivalence; original generated lane-start fields remain unimplemented. */
 dd2_road *dd2_road_create(const dd2_level_data *level, dd2_road_layout layout);
+/* Reads our DD2ROAD1 container, without original level/archive input. Geometry
+ * uses signed fixed positions at 160 units per meter, matching the current
+ * physics rules. Copies vertices and indexed topology; source bytes may be
+ * released immediately. Original source/provenance fields are zero. */
+dd2_road *dd2_road_create_prepared(dd2_byte_view bytes);
 void dd2_road_destroy(dd2_road *road);
 size_t dd2_road_vertex_count(const dd2_road *road);
 const dd2_track_vertex *dd2_road_vertices(const dd2_road *road);

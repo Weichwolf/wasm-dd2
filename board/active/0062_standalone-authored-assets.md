@@ -284,15 +284,52 @@ or the four-total-thread complete-game 60-FPS contract. Reports remain under
 timing and paired-native. Completed raw captures/diagnostic drivers/logs are
 removed after recording their hashes and findings.
 
+The one-time gameplay-road import now commits eleven owned DD2ROAD1 containers,
+eleven editable topology JSON files and a manifest under assets/runtime/roads/.
+Their 23,336 vertices, 3,246 indexed strips and 19,775 cells occupy 924,972 binary
+bytes. Geometry keeps the declared 160-unit/meter physics convention; the visual
+meshes/textures are unchanged. Raw original records, offsets and unused provenance
+fields are absent. Source-free JSON compilation reproduces all eleven binaries.
+The owned C factory validates counts, extent, coordinates, cell ownership and
+main/branch topology, copies the data and allows immediate input release.
+
+Native, Node/WASM and fresh O1 ASan/UBSan checks cover every field/index and
+39,550 rational triangle probes per target, with 39,302 valid contacts and maximum
+height error 3.086402244889541e-10. Existing consumers preserve 220 starting poses,
+6,492 barrier segments, course rules and 15,931 valid circuit AI queries; an
+explicit optional comparison matches the original-decoded Native consumer output
+exactly on all eleven levels. This is a typed-component comparison, not original
+executable or complete gameplay parity. Thirty malformed variants reject through
+both diagnostics on all three targets; unaligned/truncated/late-failure ownership
+fixtures and zero-error/no-leak Memcheck pass. Strict LLVM19 checks cover 245
+C/header files; 55 Native and 53 WASM CTests pass.
+
+Additional legacy scene, livery and driving image regressions pass after restoring
+the missing color.c unit in four manual sanitizer build lists. Actual original-
+dependent Native scene review retains the coarse oval/stands layout. Actual
+Chromium driving/player-contact views retain vehicle placement and readable lap
+and damage HUDs, but black sky, coarse/aliasing materials and the old 4:3 layout
+remain visible defects. These checks supply no prepared-provider or new-quality
+acceptance.
+The legacy window corpus passes with 31 Native and 31 sanitized comparisons,
+plus 145 actual Chromium comparisons and no browser errors. The first optional
+sanitizer window attempt failed its focus-return assertion; four focused repeats
+and a complete final sanitized window run pass without changing game input code.
+An intervening launcher termination has no acceptance receipt. Keep this scoped
+retry history in the reports; no focus fix or standalone-window claim is made.
+Evidence and reproducibility reports are under
+/tmp/wasm-dd2/prepared-roads-0062/. The normal application still needs its prepared
+track/provider, UI and audio migration. This broad work item remains active.
+
 ## Next
 
 Wire the prepared owner/renderer into default gameplay and browser presentation;
 keep scene/opponent options unrestricted while selecting player cockpit roles.
 Author inner door/window surrounds and use finer visibility groups where useful;
 the prototype must not rely on its exterior shell to cover interior gaps.
-Migrate owned road,
-progress/AI/grid and audio inputs so default Native/browser launch consumes
-committed assets without Dirinfo. Complete billboard/livery policy,
+Bind the owned road, progress/AI/grid consumers and prepared world to a runtime
+track/provider; migrate audio and UI inputs so default Native/browser launch
+consumes committed assets without Dirinfo. Complete billboard/livery policy,
 place wheel templates and compare actual original/candidate gameplay images.
 Replace intermediate meshes with original-informed Blender models gradually.
 

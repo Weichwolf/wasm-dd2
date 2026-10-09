@@ -19,6 +19,12 @@ levels. These are whole-world counts, not submitted per-frame geometry.
 See [reference-format.md](reference-format.md) for the intermediate contract,
 verification commands and the remaining runtime migration.
 
+Owned gameplay road exports now live separately in `runtime/roads/`; their
+editable JSON compiles without original input. They preserve current physics
+cell identities with explicit fixed-position scale and indexed topology, without
+re-converting visual assets. See [road-format.md](road-format.md). The prepared
+game provider and default startup still need integration.
+
 The first authored vehicle is the fictional Racer R1, with an exterior, four
 independent wheel assemblies and an interior containing a cage, seat/harness,
 headliner, firewall, pedals, shifter, steering assembly and three instruments.
