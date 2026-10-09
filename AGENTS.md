@@ -24,6 +24,28 @@ and frozen reference commands under `/tmp/wasm-dd2/`, never recreate them on `ma
 The rewrite may improve graphics and audio; bitidentical original output is not
 an acceptance requirement. Functional correctness and native/WASM stability are.
 
+The expanded goal is a fully standalone game. Native and WASM must build,
+launch and provide every game feature without original DD2 game files, Dirinfo,
+sound banks, CD images or Redbook files. Original data/reconstruction is optional
+development/reference evidence only; it must never be a required runtime input,
+distributed dependency or fallback that masks missing replacement content.
+
+Rebuild all game assets and keep their editable sources and generated runtime
+assets in the repository under `assets/`. Use Blender for models/scenes, including
+complete cockpits/interiors; generate textures procedurally and create new audio
+(effects, engines, ambience, commentary and composed music). Include vehicles,
+tracks, scenery, characters/props where needed, fonts, UI and visual effects in
+the replacement inventory. Authored/generated game content belongs in Git;
+temporary baking/build diagnostics and verification captures still belong in
+`/tmp/wasm-dd2/`. Keep generation scripts, parameters and exports reproducible.
+Do not treat decoded/extracted original assets as replacement content.
+
+Target a substantial quality improvement over the original in every area,
+including geometry, materials, cockpit presentation, resolution, lighting,
+shadows, effects, UI and audio. Judge actual player-visible/audible results on
+both targets with concrete before/after evidence and performance measurements.
+Functional similarity or passing physics tests alone cannot close this contract.
+
 Use the pinned `deps/softgl` submodule by default. Do not alter SoftGL sources
 as part of a game change; deliberate dependency changes need their own evidence.
 All rewrite C/header files must pass clang-format 19. All rewrite C units must

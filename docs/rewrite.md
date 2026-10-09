@@ -1,5 +1,32 @@
 # Readable C rewrite
 
+## Expanded standalone scope
+
+The required product runs completely without original DD2 game files on Native
+and WASM. All game content is rebuilt and versioned in `assets/`: Blender models
+and scenes with complete cockpits/interiors, procedurally generated textures,
+new effects/engine/ambient/commentary audio and newly composed music, plus all
+fonts, UI and visual-effect assets. Keep editable inputs, generation scripts and
+runtime exports reproducible. Original decoded/extracted content does not count
+as replacement content. Original files and `ghidra` remain optional development
+references and must not be shipped, requested at startup or used as a hidden
+fallback for missing authored assets.
+
+Visual and acoustic quality must substantially exceed the original in every
+area. Review actual gameplay and cockpit views, materials, lighting/shadows,
+effects, menus/HUD and audible output on both targets, with before/after evidence
+and measured performance. Functional rules remain mandatory; original pixel,
+PCM and asset-byte identity are reference diagnostics rather than product
+acceptance requirements.
+
+This is the expanded target, not implemented standalone acceptance. The current
+application still requires original Dirinfo and sound-bank/CDDA content; the
+reference-dependent component evidence below describes that current migration
+state. Work item 0062 owns the asset inventory, Blender/procedural/audio pipeline
+and removal of all mandatory original runtime inputs. Preserve existing useful
+functional comparisons as optional reference checks while making the default
+build, launch and acceptance use the replacement content.
+
 The `master` branch is the new implementation. `ghidra` retains the executable
 reconstruction; the annotated `reconstruction-baseline` tag records the exact
 starting point (`b1111bd`). That reference has known incomplete full-game
@@ -752,22 +779,7 @@ and remove completed raw captures without deleting files in use.
 
 ## Goal
 
-Implement a fully playable, readable and modular C11 reimplementation of
-Destruction Derby 2 on `master` in `/home/cosmo/Git/wasm-dd2`, targeting Native and
-WebAssembly with the pinned SoftGL renderer. Use `ghidra`, the
-`reconstruction-baseline` tag and the running original as references for gameplay
-and data formats. Replace absolute memory addresses and register emulation with
-documented types and clear interfaces. Implement and verify every track, vehicle,
-physics and damage model, AI behavior, game mode, menu, race, championship, replay,
-setting, keyboard/gamepad control and save/load operation, including relevant
-edge cases. Provide working sound effects and Redbook music, and continuously
-improve resolution, textures, lighting, shadows and effects. Bitidentical original
-video and audio are not required; functional correctness, stability, data
-compatibility and good gameplay on both platforms are mandatory. Enforce strict
-clang-tidy and clang-format with LLVM 19, the agreed compiler flags, reproducible
-automated checks, bounded diagnostics under `/tmp/wasm-dd2/`, and commit/push after
-each verified improvement until every game feature is implemented and no known
-functional or compatibility errors remain.
+Implement a fully playable, readable and modular standalone C11 Destruction Derby 2 reimplementation on `master` in `/home/cosmo/Git/wasm-dd2` for Native and WebAssembly with the pinned SoftGL renderer; rebuild every game asset and keep editable Blender models/scenes, complete cockpits/interiors, procedural texture generators, newly created effects/engine/ambient/commentary audio, newly composed music and all generated runtime content in the repository. Native and WASM must build, launch and provide every feature without original DD2 game files, archives, sound banks, CD images or Redbook content; use `ghidra`, the reconstruction baseline and the original only as optional development references. Replace absolute addresses/register emulation with documented types and explicit ownership; implement every track, vehicle, physics/damage model, AI behavior, mode, menu, race, championship, replay, setting, keyboard/gamepad control, save/load operation and relevant edge case, plus working cockpit views and all audio behavior. Substantially surpass the original in every visual, acoustic and gameplay-quality area through high-quality geometry, procedural materials/textures, resolution, lighting, shadows, effects, UI and newly authored audio; assess actual Native/browser gameplay, screenshots and audible output with concrete before/after evidence and measured performance, rather than relying only on physics or pixel tests. Original bitidentity is not required; standalone completeness, functional correctness, stability, appropriate data compatibility and demonstrably superior player experience on both targets are mandatory. Enforce strict clang-tidy/clang-format 19 and the agreed compiler flags, keep diagnostics bounded under `/tmp/wasm-dd2/`, maintain the backlog, remove completed captures/logs and commit/push every verified improvement until the entire expanded goal is implemented and no known functional, compatibility, content or visual/audio defects remain.
 
 `make rewrite-recovery-verify` exercises supported rest/righting boundaries and
 220 controlled physical roof-down drops per target at every original grid slot,

@@ -66,9 +66,18 @@ its game requirements or acceptance rules.
 | [0059](closed/0059_checked-residual-fleet-motion.md) | Certify independent motion at the fleet response budget | closed |
 | [0060](active/0060_automatic-redbook-selection.md) | Automatic game/frontend Redbook selection | active |
 | [0061](active/0061_browser-modal-redraw.md) | Browser modal presentation after viewport changes | active |
+| [0062](active/0062_standalone-authored-assets.md) | Standalone Blender assets, procedural textures and new audio | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
 | [0023](closed/0023_stable-driver-physical-grids.md) | Stable driver IDs in assigned physical grids | closed |
+
+The expanded product goal is standalone Native/WASM with every asset rebuilt
+and committed: Blender models/cockpits, procedural textures and newly created
+audio. Visual/acoustic quality must substantially exceed the original throughout.
+Original game files are optional development references; the current runtime
+still requires them and has not met this new contract. Active 0062 owns removal
+of those dependencies and the reproducible authored content pipeline. Prior
+original-asset diagnostics remain evidence, not standalone product acceptance.
 
 Continue stabilizing ordinary races, then connect the proven league foundation
 to full championship/front-end/save flows. Audio, input and visual work
