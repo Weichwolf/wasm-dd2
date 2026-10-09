@@ -16,7 +16,8 @@ dialogs show readable HUD/text, but a black sky, absent contact shadows and
 coarse textures. The browser's long controls section puts the canvas below much
 of the initial viewport. These are concrete visual follow-ups, not accepted
 complete graphics or an original parity claim. The full-page browser capture
-also reproduces an actually cleared modal canvas; active 0061 owns that fix.
+also reproduced an actually cleared modal canvas; closed 0061 now preserves
+its visible scene/dialog through viewport and same-size canvas changes.
 Review evidence: /tmp/wasm-dd2/rewrite-redbook-preparation-0060/visual-review/.
 
 The 2026-10-09 host probe confirms linux-perf 6.12.111, Valgrind 3.24.0 and
@@ -32,7 +33,8 @@ is removed after summarizing it in
 ## Next
 
 Establish current real window/canvas images and performance budgets, then implement reviewable visual steps with before/after evidence.
-Prioritize visible rendering/UI defects: finish 0061, then render the sky and
+Use the owned Blender/procedural content pipeline under 0062. Prioritize the
+sky and
 improve vehicle/road separation with lighting/contact shadows; reduce the
 browser controls' intrusion into the playfield as the frontend is implemented.
 

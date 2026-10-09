@@ -65,7 +65,7 @@ its game requirements or acceptance rules.
 | [0058](active/0058_configuration-and-saved-game-actions.md) | Configuration and saved-game application actions | active |
 | [0059](closed/0059_checked-residual-fleet-motion.md) | Certify independent motion at the fleet response budget | closed |
 | [0060](active/0060_automatic-redbook-selection.md) | Automatic game/frontend Redbook selection | active |
-| [0061](active/0061_browser-modal-redraw.md) | Browser modal presentation after viewport changes | active |
+| [0061](closed/0061_browser-modal-redraw.md) | Browser modal presentation after viewport changes | closed |
 | [0062](active/0062_standalone-authored-assets.md) | Standalone Blender assets, procedural textures and new audio | active |
 | [0025](active/0025_championship-application-flows.md) | Play championships through Native/browser input and presentation | active |
 | [0024](closed/0024_championship-result-owner.md) | Owning scheduled championship rounds and actual results | closed |
@@ -85,8 +85,9 @@ remain part of the full goal; no component milestone replaces final acceptance.
 Visual inspection of actual Native/browser play is a primary acceptance check,
 alongside pixel regressions. Current sampled HUD/dialogs are readable, but sky,
 shadows, texture quality and browser playfield placement need visual improvement.
-The review also reproduces a black browser canvas after a full-page viewport
-capture in the F2 modal; 0061 owns diagnosis and correction. Physics checks alone
+Closed 0061 fixes the black canvas after browser resize/capture in the F2 modal.
+Four permanent pixel/state checks and actual inspected captures prove that
+bounded correction; broader visual/standalone quality stays under 0010/0062. Physics checks alone
 do not establish an acceptable player experience.
 
 Current vehicle work is 0005: original class drive/grip/axle parameters now
@@ -122,7 +123,9 @@ engine-retirement/coasting results at ticks 15425/25530, with 72.12/122.645 seco
 survival. Their complete independent target receipts pass. Sanitized Arena 8
 times out after 41732 independently valid steps without natural results.
 The frozen remaining owner suite passes Native Arena 9 but WASM exits after
-tick 18935 without results; sanitized Arena 9 is running and A/B have not started.
+tick 18935 without results; sanitized reaches natural results at tick 40558
+(197.785 seconds survival). Every complete failed WASM prefix step is valid.
+The frozen suite is terminal and A/B have not started.
 Sanitized/all-arena acceptance remains unproved. See active 0053 and
 /tmp/wasm-dd2/rewrite-certified-arena-0053/owners/.
 

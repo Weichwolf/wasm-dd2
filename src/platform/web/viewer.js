@@ -35,6 +35,17 @@ let musicLoading = false;
 let applicationGeneration = 0;
 let loaded = false;
 let runtimeReady = false;
+let resizeRedraw = 0;
+window.addEventListener('resize', () => {
+  if (!loaded || resizeRedraw) return;
+  const generation = applicationGeneration;
+  // SDL's browser resize handler can clear even an unchanged canvas size.
+  // Present after all resize handlers, including when a modal holds simulation.
+  resizeRedraw = requestAnimationFrame(() => {
+    resizeRedraw = 0;
+    if (loaded && generation === applicationGeneration) Module._dd2_application_present();
+  });
+});
 let reflectedView = -1;
 let reflectedPhase = -1;
 let reflectedChampionshipPhase = -1;

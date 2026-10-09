@@ -415,6 +415,41 @@ async function championshipChecks(page) {
     pause_and_restart:true,trusted_restart_zero_tick:true,unscored_exit:true,cases};
 }
 
+async function modalResizeChecks(page) {
+  await page.selectOption('#view','0');
+  await page.selectOption('#level','1');
+  await page.selectOption('#view','5');
+  await page.locator('#canvas').click();
+  await page.waitForFunction(()=>Module._dd2_application_race_phase()===1,null,{timeout:15000});
+  await page.keyboard.press('F2');
+  await page.waitForFunction(()=>Module._dd2_application_profile_phase()===1);
+  await page.keyboard.press('x');
+  await stable(page);
+  const state=()=>page.evaluate(()=>({phase:Module._dd2_application_profile_phase(),
+    draft:Module.UTF8ToString(Module._dd2_application_profile_draft()),
+    level:Module._dd2_application_current_level(),racePhase:Module._dd2_application_race_phase(),
+    steps:Module._dd2_application_race_steps(),gain:Module._dd2_application_music_gain(),
+    frame:Module._dd2_application_music_frame(),fraction:Module._dd2_application_music_fraction()}));
+  const before=await state(),expected=await pixels(page);
+  if(!expected.some(value=>value!==0)||!before.draft.endsWith('x'))throw new Error('Modal visual baseline unavailable');
+  const cases=[];
+  const preserved=async label=>{
+    await pause(300);
+    if(!(await pixels(page)).equals(expected))throw new Error(label+': modal framebuffer changed or cleared');
+    if(JSON.stringify(await state())!==JSON.stringify(before))throw new Error(label+': modal/game/audio state changed');
+    cases.push({label,canvas_sha256:digest(expected),state_preserved:true});
+  };
+  await page.setViewportSize({width:680,height:900});await preserved('ordinary viewport resize');
+  await page.evaluate(()=>window.dispatchEvent(new Event('resize')));await preserved('same-size resize');
+  await page.screenshot({path:path.join(output,'browser-modal-fullpage.png'),fullPage:true});
+  await preserved('full-page capture/resize');
+  await page.locator('#canvas').screenshot({path:path.join(output,'browser-modal-after-resize.png')});
+  await page.setViewportSize({width:680,height:1000});await preserved('restore viewport');
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_profile_phase()===0);
+  await page.selectOption('#view','0');await match(page,'1','scene');
+  report.modal_resize={pass_:true,cases,before,scope:'Actual modal pixels, draft and frozen game/audio state across viewport/canvas invalidation'};
+}
+
 async function main() {
   const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:680,height:1000}});
@@ -470,6 +505,7 @@ async function main() {
     await trialChecks(page);
     await totalChecks(page);
     await championshipChecks(page);
+    await modalResizeChecks(page);
     await page.locator('#canvas').screenshot({path:path.join(output,'browser-scene.png')});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>Module._dd2_application_current_level()===0);
     await page.waitForFunction(()=>document.querySelector('#level').disabled);

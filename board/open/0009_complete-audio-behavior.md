@@ -3,7 +3,10 @@ Title: Complete sound effects and Redbook selection
 
 ## Contract
 
-Provide all reached gameplay/menu/commentary effects, pitch/spatial behavior, automatic game-state Redbook selection and persistent audio settings on both targets.
+Provide newly created, substantially improved gameplay/menu/commentary, engine
+and ambient sounds, composed music, pitch/spatial behavior, automatic context
+selection and persistent settings on both targets. All runtime audio is owned
+replacement content under 0062; original banks/CDDA are optional references.
 
 ## Evidence
 
@@ -36,3 +39,7 @@ Recover event/music selection rules and connect remaining sounds to shared simul
 ## Accept
 
 Reached original gameplay and menu audio events produce correct audible output on Native/browser; transport, selection, pause, volume and saved settings are exercised at the actual output boundary.
+
+The expanded scope requires newly generated audio with direct listening/output
+review and reproducible sources/exports. Current original-bank/CDDA decoding and
+PCM checks do not establish replacement content or standalone product acceptance.

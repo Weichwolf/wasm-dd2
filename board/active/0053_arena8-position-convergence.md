@@ -123,11 +123,17 @@ hash-checked production Native/WASM binaries so independent audio implementation
 does not invalidate their inputs. Native Arena 9 reaches natural retirement and
 coasting results at tick 44818 (219.085 seconds survival). WASM Arena 9 exits
 without results after its last complete tick 18935; the failed advance needs a
-captured physical query, not an assumed solver cause. Sanitized Arena 9 is still
-running; Arena A/B have not started. Preserve its live files. See
+captured physical query, not an assumed solver cause. Sanitized Arena 9 reaches natural results at tick 40558 (197.785 seconds
+survival). The WASM prefix passes every independent owner check through 18935;
+the complete natural-result contract fails. The frozen suite is terminal,
+and Arena A/B have not started. Completed raw logs/private sanitizer binaries
+are removed after preserving the full last public field and hashes. See
 /tmp/wasm-dd2/rewrite-certified-arena-0053/frozen-input-report.json and
 frozen-build/remaining-owners/9-total-survive-{native,wasm}.json. These scoped
-receipts keep the full natural-owner contract open.
+receipts keep the full natural-owner contract open. Aggregate terminal receipt:
+/tmp/wasm-dd2/rewrite-certified-arena-0053/arena9-terminal-report.json.
+These original-asset/reference runs do not establish the expanded standalone
+product acceptance under 0062.
 
 ## Verified late-motion diagnosis
 

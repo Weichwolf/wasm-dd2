@@ -51,8 +51,16 @@ Use `make rewrite-music-output-verify`; receipt:
 This is an accepted transport primitive, not automatic context selection or GO
 integration; 0060 remains active.
 Strict LLVM19 format/tidy passes 208 C/header files; 47 Native and 45 WASM
-CTests pass. Actual visual review is separate: 0061 records a browser modal
+CTests pass. Actual visual review is separate: closed 0061 fixes the browser modal
 canvas-loss finding; the audio primitive does not claim full visual acceptance.
+
+## Expanded content scope
+
+Automatic selection must ultimately use the newly authored/bundled music under
+0062, without requiring original CDDA files or a user file picker. Physical disc
+IDs above remain optional functional reference evidence; they do not prescribe
+the new content format or prove standalone audio. The current READY primitive
+still uses the legacy file path and is only one migration step.
 
 ## Next
 
